@@ -9,11 +9,28 @@ export default function PnLTrendChart({
   formatValue = formatNumberShort,
   tooltipData,
   tooltipFormatter,
+  series,
 }) {
 
-  const data = useMemo(() => ({
-    labels: labels ?? ['Jan','Feb','Mar','Apr','May','Jun'],
-    datasets: [
+  const datasets = useMemo(() => {
+    if (Array.isArray(series) && series.length) {
+      return series.map((s, idx) => {
+        const color = s.color || (idx === 0 ? '#34d399' : '#60a5fa')
+        return {
+          label: s.label || `Series ${idx + 1}`,
+          data: s.data || [],
+          borderColor: color,
+          backgroundColor: `${color}1a`,
+          tension: 0.3,
+          pointRadius: 2,
+          borderWidth: 2,
+          segment: { borderColor: color },
+          pointBackgroundColor: (s.data || []).map((v) => (v >= 0 ? color : '#f87171')),
+        }
+      })
+    }
+
+    return [
       {
         label: datasetLabel,
         data: dataPoints ?? [3200, 3500, 3650, 3800, 3950, 4100],
@@ -27,8 +44,13 @@ export default function PnLTrendChart({
         },
         pointBackgroundColor: (dataPoints ?? []).map((v) => (v >= 0 ? '#34d399' : '#f87171')),
       },
-    ],
-  }), [dataPoints, datasetLabel, labels])
+    ]
+  }, [dataPoints, datasetLabel, series])
+
+  const data = useMemo(() => ({
+    labels: labels ?? ['Jan','Feb','Mar','Apr','May','Jun'],
+    datasets,
+  }), [datasets, labels])
 
   const options = useMemo(() => ({
     responsive: true,
