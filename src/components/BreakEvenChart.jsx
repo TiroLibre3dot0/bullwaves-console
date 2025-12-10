@@ -7,10 +7,13 @@ export default function BreakEvenChart({
   labels,
   breakEvenIndex,
 }) {
+  const resolvedLabels = labels ?? ['Jan','Feb','Mar','Apr','May','Jun']
+  const resolvedCurve = beCurve ?? [2000, 3500, 5200, 7100, 9200, 11400]
+  const minWidth = Math.max((resolvedLabels?.length || 0) * 60, 800) // ensure long timelines stay visible
 
   const data = useMemo(() => {
-    const l = labels ?? ['Jan','Feb','Mar','Apr','May','Jun']
-    const curve = beCurve ?? [2000, 3500, 5200, 7100, 9200, 11400]
+    const l = resolvedLabels
+    const curve = resolvedCurve
     const bePoint = breakEvenIndex >= 0 ? l.map((_, idx) => (idx === breakEvenIndex ? curve[idx] : null)) : []
 
     const annotationPoints = breakEvenIndex >= 0 ? [
@@ -64,7 +67,7 @@ export default function BreakEvenChart({
         } : null,
       ].filter(Boolean),
     }
-  }, [beCurve, labels, breakEvenIndex])
+  }, [resolvedCurve, resolvedLabels, breakEvenIndex])
 
   const options = useMemo(() => ({
     responsive: true,
@@ -100,8 +103,10 @@ export default function BreakEvenChart({
   }), [breakEvenIndex])
 
   return (
-    <div className="h-full w-full">
-      <Line data={data} options={options} />
+    <div className="h-full w-full" style={{ overflowX: 'auto' }}>
+      <div style={{ minWidth, height: '100%' }}>
+        <Line data={data} options={options} />
+      </div>
     </div>
   )
 }

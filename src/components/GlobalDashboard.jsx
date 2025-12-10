@@ -393,8 +393,11 @@ export default function GlobalDashboard() {
     color: '#cbd5e1',
   };
 
+  const showInsights = false;
+  const showPerMonthTable = false;
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-3">
       <CardSection
         title="Global view"
         subtitle="Media Report + Payments Report per panorama unico"
@@ -433,7 +436,7 @@ export default function GlobalDashboard() {
         )}
       />
 
-      <div className="grid-global">
+      <div className="grid-global" style={{ alignItems: 'start', gap: 12 }}>
         <div className="card card-global" style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.10))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <h3 style={{ margin: 0 }}>Acquisition funnel</h3>
@@ -578,7 +581,7 @@ export default function GlobalDashboard() {
 
       {/* Removed redundant Best 15 block per request */}
 
-      <div className="grid-global">
+      <div className="grid-global" style={{ alignItems: 'start', gap: 12 }}>
         <div className="card card-global">
           <h3 style={{ marginBottom: 8 }}>Acquisition & quality</h3>
           <div className="kpi-grid">
@@ -640,86 +643,88 @@ export default function GlobalDashboard() {
         </div>
       </div>
 
-      <div className="card card-global" style={{ background: 'linear-gradient(120deg, rgba(34,211,238,0.08), rgba(59,130,246,0.06))' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
-          <div>
-            <h3 style={{ margin: 0 }}>Insights</h3>
-            <p style={{ margin: 0, fontSize: 12, color: '#9fb3c8' }}>Pillole rapide per capire cosa succede</p>
-          </div>
-          <span style={badgeStyle}>Auto-generated</span>
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {insights.length ? insights.map((item, idx) => (
-            <div key={idx} style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 13 }}>
-              {item}
+      {showInsights && (
+        <div className="card card-global" style={{ background: 'linear-gradient(120deg, rgba(34,211,238,0.08), rgba(59,130,246,0.06))' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
+            <div>
+              <h3 style={{ margin: 0 }}>Insights</h3>
+              <p style={{ margin: 0, fontSize: 12, color: '#9fb3c8' }}>Pillole rapide per capire cosa succede</p>
             </div>
-          )) : (
-            <div style={{ color: '#94a3b8', fontSize: 13 }}>Nessun insight disponibile per questi filtri.</div>
-          )}
+            <span style={badgeStyle}>Auto-generated</span>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {insights.length ? insights.map((item, idx) => (
+              <div key={idx} style={{ padding: '8px 10px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)', fontSize: 13 }}>
+                {item}
+              </div>
+            )) : (
+              <div style={{ color: '#94a3b8', fontSize: 13 }}>Nessun insight disponibile per questi filtri.</div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Leaderboard table removed per request; using compact chips above */}
-
-      <div className="card card-global">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ marginBottom: 8 }}>Per mese</h3>
-          <span style={badgeStyle}>PL e pagamenti per ogni mese</span>
-        </div>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Mese</th>
-                <th style={{ textAlign: 'right' }}>Visitors</th>
-                <th style={{ textAlign: 'right' }}>Reg</th>
-                <th style={{ textAlign: 'right' }}>FTD</th>
-                <th style={{ textAlign: 'right' }}>Net dep</th>
-                <th style={{ textAlign: 'right' }}>P&L</th>
-                <th style={{ textAlign: 'right' }}>Payments</th>
-                <th style={{ textAlign: 'right' }}>Profit</th>
-                <th style={{ textAlign: 'right' }}>ROI</th>
-                <th style={{ textAlign: 'right' }}>Conv%</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perMonth.map((r) => (
-                <tr key={r.monthKey}>
-                  <td>{r.monthLabel}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.visitors)}>{formatNumberShort(r.visitors)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.registrations)}>{formatNumberShort(r.registrations)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.ftd)}>{formatNumberShort(r.ftd)}</td>
-                  <td style={{ textAlign: 'right', color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.netDeposits)}>{formatEuro(r.netDeposits)}</td>
-                  <td style={{ textAlign: 'right', color: (r.pl || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.pl)}>{formatEuro(r.pl)}</td>
-                  <td style={{ textAlign: 'right', color: '#fbbf24' }} className="num" title={formatEuroFull(r.payments)}>{formatEuro(r.payments)}</td>
-                  <td style={{ textAlign: 'right', color: (r.profit || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.profit)}>{formatEuro(r.profit)}</td>
-                  <td style={{ textAlign: 'right', color: (r.roi || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatPercentDisplay(r.roi)}>{formatPercentDisplay(r.roi)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatPercentDisplay(r.conversion)}>{formatPercentDisplay(r.conversion)}</td>
-                </tr>
-              ))}
-              {perMonth.length > 0 && (
-                <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 700 }}>
-                  <td>Totale</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.visitors)}>{formatNumberShort(perMonthTotals.visitors)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.registrations)}>{formatNumberShort(perMonthTotals.registrations)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.ftd)}>{formatNumberShort(perMonthTotals.ftd)}</td>
-                  <td style={{ textAlign: 'right', color: (perMonthTotals.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.netDeposits)}>{formatEuro(perMonthTotals.netDeposits)}</td>
-                  <td style={{ textAlign: 'right', color: (perMonthTotals.pl || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.pl)}>{formatEuro(perMonthTotals.pl)}</td>
-                  <td style={{ textAlign: 'right', color: '#fbbf24' }} className="num" title={formatEuroFull(perMonthTotals.payments)}>{formatEuro(perMonthTotals.payments)}</td>
-                  <td style={{ textAlign: 'right', color: (perMonthTotals.profit || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.profit)}>{formatEuro(perMonthTotals.profit)}</td>
-                  <td style={{ textAlign: 'right', color: (perMonthTotals.roi || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatPercentDisplay(perMonthTotals.roi)}>{formatPercentDisplay(perMonthTotals.roi)}</td>
-                  <td style={{ textAlign: 'right' }} className="num" title={formatPercentDisplay(perMonthTotals.conversion)}>{formatPercentDisplay(perMonthTotals.conversion)}</td>
-                </tr>
-              )}
-              {!perMonth.length && (
+      {showPerMonthTable && (
+        <div className="card card-global">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ marginBottom: 8 }}>Per mese</h3>
+            <span style={badgeStyle}>PL e pagamenti per ogni mese</span>
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead>
                 <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>Nessun dato per i filtri correnti.</td>
+                  <th>Mese</th>
+                  <th style={{ textAlign: 'right' }}>Visitors</th>
+                  <th style={{ textAlign: 'right' }}>Reg</th>
+                  <th style={{ textAlign: 'right' }}>FTD</th>
+                  <th style={{ textAlign: 'right' }}>Net dep</th>
+                  <th style={{ textAlign: 'right' }}>P&L</th>
+                  <th style={{ textAlign: 'right' }}>Payments</th>
+                  <th style={{ textAlign: 'right' }}>Profit</th>
+                  <th style={{ textAlign: 'right' }}>ROI</th>
+                  <th style={{ textAlign: 'right' }}>Conv%</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {perMonth.map((r) => (
+                  <tr key={r.monthKey}>
+                    <td>{r.monthLabel}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.visitors)}>{formatNumberShort(r.visitors)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.registrations)}>{formatNumberShort(r.registrations)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.ftd)}>{formatNumberShort(r.ftd)}</td>
+                    <td style={{ textAlign: 'right', color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.netDeposits)}>{formatEuro(r.netDeposits)}</td>
+                    <td style={{ textAlign: 'right', color: (r.pl || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.pl)}>{formatEuro(r.pl)}</td>
+                    <td style={{ textAlign: 'right', color: '#fbbf24' }} className="num" title={formatEuroFull(r.payments)}>{formatEuro(r.payments)}</td>
+                    <td style={{ textAlign: 'right', color: (r.profit || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.profit)}>{formatEuro(r.profit)}</td>
+                    <td style={{ textAlign: 'right', color: (r.roi || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatPercentDisplay(r.roi)}>{formatPercentDisplay(r.roi)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatPercentDisplay(r.conversion)}>{formatPercentDisplay(r.conversion)}</td>
+                  </tr>
+                ))}
+                {perMonth.length > 0 && (
+                  <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 700 }}>
+                    <td>Totale</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.visitors)}>{formatNumberShort(perMonthTotals.visitors)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.registrations)}>{formatNumberShort(perMonthTotals.registrations)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(perMonthTotals.ftd)}>{formatNumberShort(perMonthTotals.ftd)}</td>
+                    <td style={{ textAlign: 'right', color: (perMonthTotals.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.netDeposits)}>{formatEuro(perMonthTotals.netDeposits)}</td>
+                    <td style={{ textAlign: 'right', color: (perMonthTotals.pl || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.pl)}>{formatEuro(perMonthTotals.pl)}</td>
+                    <td style={{ textAlign: 'right', color: '#fbbf24' }} className="num" title={formatEuroFull(perMonthTotals.payments)}>{formatEuro(perMonthTotals.payments)}</td>
+                    <td style={{ textAlign: 'right', color: (perMonthTotals.profit || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(perMonthTotals.profit)}>{formatEuro(perMonthTotals.profit)}</td>
+                    <td style={{ textAlign: 'right', color: (perMonthTotals.roi || 0) >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatPercentDisplay(perMonthTotals.roi)}>{formatPercentDisplay(perMonthTotals.roi)}</td>
+                    <td style={{ textAlign: 'right' }} className="num" title={formatPercentDisplay(perMonthTotals.conversion)}>{formatPercentDisplay(perMonthTotals.conversion)}</td>
+                  </tr>
+                )}
+                {!perMonth.length && (
+                  <tr>
+                    <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>Nessun dato per i filtri correnti.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="card card-global">
         <h3 style={{ marginBottom: 8 }}>Profit & break-even</h3>
