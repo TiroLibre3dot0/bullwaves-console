@@ -8,6 +8,7 @@ import SummaryReport from './features/media-payments/pages/SummaryReport'
 import Report from './features/media-payments/pages/Report'
 import ProfitAnalysisPage from './features/media-payments/pages/ProfitAnalysisPage'
 import AffiliateAnalysis from './features/affiliate-analysis/AffiliateAnalysis'
+import RequireAuth from './context/RequireAuth'
 
 export default function App(){
   const routes = useMemo(() => ({
@@ -53,43 +54,45 @@ export default function App(){
   };
 
   return (
-    <div className="app-root">
-      <Topbar>
-        <nav className="subnav">
-          <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
-            Overview
-          </button>
-          <button className={`tab ${view === 'executiveSummary' ? 'active' : ''}`} onClick={() => navigate('executiveSummary')}>
-            Executive Summary
-          </button>
-          <button className={`tab ${view === 'affiliateAnalysis' ? 'active' : ''}`} onClick={() => navigate('affiliateAnalysis')}>
-            Affiliate Analysis
-          </button>
-          <button className={`tab ${view === 'marketingExpenses' ? 'active' : ''}`} onClick={() => navigate('marketingExpenses')}>
-            Marketing Expenses
-          </button>
-          <button className={`tab ${view === 'cohort' ? 'active' : ''}`} onClick={() => navigate('cohort')}>
-            Cohort
-          </button>
-          <button
-            className={`tab ${view === 'orgChart' ? 'active' : ''}`}
-            onClick={() => navigate('orgChart')}
-            style={{ marginLeft: 'auto' }}
-          >
-            Org Chart
-          </button>
-        </nav>
-      </Topbar>
-      <main className="app-main">
-        {view === 'overview' && <ProfitAnalysisPage />}
-        {view === 'executiveSummary' && <GlobalDashboard />}
-        {view === 'affiliateAnalysis' && <AffiliateAnalysis />}
-        {view === 'report' && <Report />}
-        {view === 'marketingExpenses' && <InvestmentsDashboard />}
-        {view === 'cohort' && <Dashboard />}
-        {view === 'orgChart' && <OrgChart />}
-        {view === 'summary' && <SummaryReport />}
-      </main>
-    </div>
+    <RequireAuth>
+      <div className="app-root">
+        <Topbar>
+          <nav className="subnav">
+            <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
+              Overview
+            </button>
+            <button className={`tab ${view === 'executiveSummary' ? 'active' : ''}`} onClick={() => navigate('executiveSummary')}>
+              Executive Summary
+            </button>
+            <button className={`tab ${view === 'affiliateAnalysis' ? 'active' : ''}`} onClick={() => navigate('affiliateAnalysis')}>
+              Affiliate Analysis
+            </button>
+            <button className={`tab ${view === 'marketingExpenses' ? 'active' : ''}`} onClick={() => navigate('marketingExpenses')}>
+              Marketing Expenses
+            </button>
+            <button className={`tab ${view === 'cohort' ? 'active' : ''}`} onClick={() => navigate('cohort')}>
+              Cohort
+            </button>
+            <button
+              className={`tab ${view === 'orgChart' ? 'active' : ''}`}
+              onClick={() => navigate('orgChart')}
+              style={{ marginLeft: 'auto' }}
+            >
+              Org Chart
+            </button>
+          </nav>
+        </Topbar>
+        <main className="app-main">
+          {view === 'overview' && <ProfitAnalysisPage />}
+          {view === 'executiveSummary' && <GlobalDashboard />}
+          {view === 'affiliateAnalysis' && <AffiliateAnalysis />}
+          {view === 'report' && <Report />}
+          {view === 'marketingExpenses' && <InvestmentsDashboard />}
+          {view === 'cohort' && <Dashboard />}
+          {view === 'orgChart' && <OrgChart />}
+          {view === 'summary' && <SummaryReport />}
+        </main>
+      </div>
+    </RequireAuth>
   )
 }

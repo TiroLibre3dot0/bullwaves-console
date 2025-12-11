@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react'
-import BreakEvenChart from '../../../components/BreakEvenChart'
 import CardSection from '../../../components/common/CardSection'
 import FilterBar from '../../../components/common/FilterBar'
+import PnLTrendChart from '../../../components/PnLTrendChart'
+import ExecutiveAnalysisEngine from '../../executive-summary/components/ExecutiveAnalysisEngine'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent, normalizeKey } from '../../../lib/formatters'
@@ -13,22 +14,32 @@ const selectStyle = { minWidth: 160, background: '#0d1a2c', color: 'var(--text)'
 export default function GlobalDashboard() {
   const { mediaRows, payments, loading, monthOptions = [], affiliateOptions = [] } = useMediaPaymentsData()
 
+  const yearOptions = useMemo(() => {
+    const set = new Set()
+    mediaRows.forEach((r) => { if (r.year !== undefined && r.year !== null) set.add(r.year) })
+    payments.forEach((p) => { if (p.year !== undefined && p.year !== null) set.add(p.year) })
+    return Array.from(set).filter((y) => !Number.isNaN(Number(y))).sort((a, b) => a - b)
+  }, [mediaRows, payments])
+
   const [selectedMonth, setSelectedMonth] = useState('all')
+  const [selectedYear, setSelectedYear] = useState('all')
   const [selectedAffiliate, setSelectedAffiliate] = useState('all')
 
   const selectedAffiliateKey = normalizeKey(selectedAffiliate)
 
   const filteredMedia = useMemo(() => mediaRows.filter((r) => {
+    const matchYear = selectedYear === 'all' ? true : r.year === Number(selectedYear)
     const matchMonth = selectedMonth === 'all' ? true : r.monthKey === selectedMonth
     const matchAff = selectedAffiliate === 'all' ? true : normalizeKey(r.affiliate) === selectedAffiliateKey
-    return matchMonth && matchAff
-  }), [mediaRows, selectedAffiliate, selectedAffiliateKey, selectedMonth])
+    return matchYear && matchMonth && matchAff
+  }), [mediaRows, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear])
 
   const filteredPayments = useMemo(() => payments.filter((p) => {
+    const matchYear = selectedYear === 'all' ? true : p.year === Number(selectedYear)
     const matchMonth = selectedMonth === 'all' ? true : p.monthKey === selectedMonth
     const matchAff = selectedAffiliate === 'all' ? true : normalizeKey(p.affiliate) === selectedAffiliateKey
-    return matchMonth && matchAff
-  }), [payments, selectedAffiliate, selectedAffiliateKey, selectedMonth])
+    return matchYear && matchMonth && matchAff
+  }), [payments, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear])
 
   const totals = useMemo(() => {
     const sum = (field) => filteredMedia.reduce((acc, r) => acc + (Number(r[field]) || 0), 0)
@@ -115,21 +126,32 @@ export default function GlobalDashboard() {
       }))
   }, [filteredMedia, filteredPayments])
 
-  const [showAllAffiliates, setShowAllAffiliates] = useState(false)
   const affiliateLeaderboard = useLeaderboard(filteredMedia, filteredPayments)
 
   const breakEven = useMemo(() => {
-    const months = perMonth.filter((m) => m.monthIndex >= 0)
+    const months = [...perMonth]
+      .filter((m) => m.monthIndex >= 0)
+      .sort((a, b) => (a.year - b.year) || (a.monthIndex - b.monthIndex))
+
     const labels = months.map((m) => m.monthLabel)
-    const cumulative = []
-    let sum = 0
+    const cumulativeProfit = []
+    const cumulativePl = []
+    const cumulativePayments = []
+    let plSum = 0
+    let paySum = 0
+
     months.forEach((m) => {
-      sum += (m.pl || 0) - (m.payments || 0)
-      cumulative.push(sum)
+      plSum += m.pl || 0
+      paySum += m.payments || 0
+      cumulativePl.push(plSum)
+      cumulativePayments.push(paySum)
+      cumulativeProfit.push(plSum - paySum)
     })
-    const firstActive = cumulative.findIndex((v, idx) => idx === 0 || months[idx].pl || months[idx].payments)
-    const beIndex = cumulative.findIndex((v, idx) => idx >= (firstActive >= 0 ? firstActive : 0) && v >= 0)
-    return { labels, curve: cumulative, breakEvenIndex: beIndex }
+
+    const firstActive = cumulativeProfit.findIndex((v, idx) => idx === 0 || months[idx].pl || months[idx].payments)
+    const beIndex = cumulativeProfit.findIndex((v, idx) => idx >= (firstActive >= 0 ? firstActive : 0) && v >= 0)
+    const beLabel = beIndex >= 0 ? labels[beIndex] : null
+    return { labels, curve: cumulativeProfit, cumulativePl, cumulativePayments, breakEvenIndex: beIndex, breakEvenLabel: beLabel }
   }, [perMonth])
 
   const perMonthTotals = useMemo(() => {
@@ -142,7 +164,6 @@ export default function GlobalDashboard() {
       payments: 0,
       roiSum: 0,
       roiCount: 0,
-      conversions: 0,
     }
     perMonth.forEach((m) => {
       base.visitors += m.visitors || 0
@@ -204,13 +225,40 @@ export default function GlobalDashboard() {
     color: '#cbd5e1',
   }
 
+  const SHOW_QUICK_INSIGHTS = false
+  const SHOW_MONTHLY_TABLE = false
+  const SHOW_BOTTOM_KPI_ROLLUP = false
+
+  const periodLabel = useMemo(() => {
+    if (selectedYear === 'all' && selectedMonth === 'all') return 'Full period'
+    if (selectedYear !== 'all' && selectedMonth === 'all') return `Year ${selectedYear}`
+    if (selectedMonth !== 'all') {
+      const match = monthOptions.find((m) => m.key === selectedMonth)
+      if (match) return match.label
+    }
+    return 'Filtered period'
+  }, [selectedMonth, selectedYear, monthOptions])
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-3">
       <CardSection
         title="Global view"
         subtitle="Media Report + Payments Report per panorama unico"
         actions={(
           <FilterBar>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>Anno</span>
+                <select
+                  value={selectedYear}
+                  onChange={(e) => setSelectedYear(e.target.value)}
+                  style={{ ...selectStyle, minWidth: 120 }}
+                >
+                  <option value="all">Tutti</option>
+                  {yearOptions.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               <span style={{ fontSize: 12, color: '#94a3b8' }}>Mese</span>
               <select
@@ -237,14 +285,94 @@ export default function GlobalDashboard() {
                 ))}
               </select>
             </div>
-            <button className="btn secondary" style={{ padding: '8px 12px', fontSize: 12 }} onClick={() => { setSelectedAffiliate('all'); setSelectedMonth('all'); }}>
+            <button className="btn secondary" style={{ padding: '8px 12px', fontSize: 12 }} onClick={() => { setSelectedAffiliate('all'); setSelectedMonth('all'); setSelectedYear('all') }}>
               Reset filtri
             </button>
           </FilterBar>
         )}
       />
 
-      <div className="grid-global">
+      {/* PRIMARY KPI strip */}
+      <div className="card card-global" style={{ padding: 14 }}>
+        <h3 style={{ margin: 0, marginBottom: 10 }}>Executive KPIs</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+          {[{
+            label: 'Net deposits', value: totals.netDeposits, helper: 'Net dep', formatter: formatEuro,
+          }, {
+            label: 'P&L', value: totals.pl, helper: 'Total P&L', formatter: formatEuro,
+          }, {
+            label: 'Payments', value: totals.paymentsTotal, helper: 'Total payments', formatter: formatEuro,
+          }, {
+            label: 'Profit', value: totals.profit, helper: 'Profit = P&L – payments', formatter: formatEuro,
+          }, {
+            label: 'ROI avg', value: totals.roiAvg, helper: 'Avg ROI', formatter: formatPercentDisplay,
+          }].map((kpi) => (
+            <div key={kpi.label} style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
+              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>{kpi.helper}</div>
+              <div style={{ fontWeight: 700, fontSize: 24 }}>{kpi.formatter(kpi.value)}</div>
+              <div style={{ fontSize: 13, color: '#cbd5e1' }}>{kpi.label}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <ExecutiveAnalysisEngine
+        kpis={{
+          netDeposits: totals.netDeposits,
+          totalPL: totals.pl,
+          totalPayments: totals.paymentsTotal,
+          profit: totals.profit,
+          avgROI: totals.roiAvg,
+          conversionRate: totals.conversion,
+          marginPct: totals.netDeposits ? (totals.profit / Math.max(Math.abs(totals.netDeposits), 1)) * 100 : 0,
+          bestMonth: perMonth.reduce((best, m) => (best === null || m.profit > best.profit ? m : best), null),
+          worstMonth: perMonth.reduce((worst, m) => (worst === null || m.profit < worst.profit ? m : worst), null),
+          volatility: (() => {
+            const profits = perMonth.map((m) => m.profit)
+            if (profits.length < 2) return 0
+            const avg = profits.reduce((a, b) => a + b, 0) / profits.length
+            const variance = profits.reduce((acc, v) => acc + (v - avg) ** 2, 0) / profits.length
+            return Math.sqrt(variance)
+          })(),
+          recentTrend: (() => {
+            const profits = perMonth.map((m) => m.profit)
+            const last = profits.slice(-3)
+            const prev = profits.slice(-6, -3)
+            const avgLast = last.length ? last.reduce((a, b) => a + b, 0) / last.length : 0
+            const avgPrev = prev.length ? prev.reduce((a, b) => a + b, 0) / prev.length : 0
+            return avgLast - avgPrev
+          })(),
+        }}
+        periodLabel={periodLabel}
+      />
+
+      {/* SECONDARY KPI row */}
+      <div className="card card-global" style={{ padding: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <h3 style={{ margin: 0 }}>Acquisition & quality</h3>
+          <span style={badgeStyle}>Funnel health</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
+          {[{
+            label: 'Visitors', value: totals.visitors, formatter: formatNumberShort,
+          }, {
+            label: 'Registrations', value: totals.registrations, formatter: formatNumberShort,
+          }, {
+            label: 'FTD', value: totals.ftd, formatter: formatNumberShort,
+          }, {
+            label: 'QFTD', value: totals.qftd, formatter: formatNumberShort,
+          }, {
+            label: 'Conversion', value: totals.conversion, formatter: formatPercentDisplay,
+          }].map((kpi) => (
+            <div key={kpi.label} className="kpi" style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+              <span>{kpi.label}</span>
+              <strong>{kpi.formatter(kpi.value)}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid-global" style={{ alignItems: 'start', rowGap: 12 }}>
         <div className="card card-global" style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.10))' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <h3 style={{ margin: 0 }}>Acquisition funnel</h3>
@@ -387,177 +515,176 @@ export default function GlobalDashboard() {
         </div>
       </div>
 
-      <div className="grid-global">
-        <div className="card card-global">
-          <h3 style={{ marginBottom: 8 }}>Acquisition & quality</h3>
-          <div className="kpi-grid">
-            <div className="kpi" title="Visitors = somma visitors nel periodo filtrato">
-              <span>Visitors</span>
-              <strong title={formatNumberFull(totals.visitors)}>{formatNumberShort(totals.visitors)}</strong>
-            </div>
-            <div className="kpi" title="Registrations = somma registrazioni nel periodo filtrato">
-              <span>Registrations</span>
-              <strong title={formatNumberFull(totals.registrations)}>{formatNumberShort(totals.registrations)}</strong>
-            </div>
-            <div className="kpi" title="FTD = first time deposit, somma per filtri">
-              <span>FTD</span>
-              <strong title={formatNumberFull(totals.ftd)}>{formatNumberShort(totals.ftd)}</strong>
-            </div>
-            <div className="kpi" title="QFTD = qualified first time deposit">
-              <span>QFTD</span>
-              <strong title={formatNumberFull(totals.qftd)}>{formatNumberShort(totals.qftd)}</strong>
-            </div>
-            <div className="kpi" title="Conversion visitors -> registrations">
-              <span>Conversion</span>
-              <strong>{formatPercentDisplay(totals.conversion)}</strong>
-            </div>
-            <div className="kpi" title="ROI medio delle righe selezionate">
-              <span>ROI avg</span>
-              <strong>{formatPercentDisplay(totals.roiAvg)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div className="card card-global">
-          <h3 style={{ marginBottom: 8 }}>Money & performance</h3>
-          <div className="kpi-grid">
-            <div className="kpi" title="Deposits (somma)">
-              <span>Deposits</span>
-              <strong>{formatEuro(totals.deposits)}</strong>
-            </div>
-            <div className="kpi" title="Withdrawals (somma)">
-              <span>Withdrawals</span>
-              <strong>{formatEuro(totals.withdrawals)}</strong>
-            </div>
-            <div className="kpi" title="Net deposits">
-              <span>Net deposits</span>
-              <strong>{formatEuro(totals.netDeposits)}</strong>
-            </div>
-            <div className="kpi" title="P&L">
-              <span>PL</span>
-              <strong>{formatEuro(totals.pl)}</strong>
-            </div>
-            <div className="kpi" title="Payments (payout)">
-              <span>Payments</span>
-              <strong>{formatEuro(totals.paymentsTotal)}</strong>
-            </div>
-            <div className="kpi" title="Profit = PL - payments">
-              <span>Profit</span>
-              <strong>{formatEuro(totals.profit)}</strong>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="card card-global">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, gap: 8, flexWrap: 'wrap' }}>
-          <div>
-            <h3 style={{ margin: 0 }}>Monthly profit & break-even</h3>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: 12 }}>P&L - Payments cumulato</p>
-          </div>
-          <span style={badgeStyle}>Filtri attivi: mese/affiliato</span>
-        </div>
-        <BreakEvenChart labels={breakEven.labels} curve={breakEven.curve} breakEvenIndex={breakEven.breakEvenIndex} />
-      </div>
-
-      <div className="card card-global">
-        <h3 style={{ marginBottom: 8 }}>Per month (filtered)</h3>
-        <div style={{ overflowX: 'auto' }}>
-          <table className="table" style={{ minWidth: 720 }}>
-            <thead>
-              <tr>
-                <th>Month</th>
-                <th style={{ textAlign: 'right' }}>Visitors</th>
-                <th style={{ textAlign: 'right' }}>Reg</th>
-                <th style={{ textAlign: 'right' }}>FTD</th>
-                <th style={{ textAlign: 'right' }}>Net dep</th>
-                <th style={{ textAlign: 'right' }}>PL</th>
-                <th style={{ textAlign: 'right' }}>Payments</th>
-                <th style={{ textAlign: 'right' }}>Profit</th>
-                <th style={{ textAlign: 'right' }}>ROI</th>
-                <th style={{ textAlign: 'right' }}>Conversion</th>
-              </tr>
-            </thead>
-            <tbody>
-              {perMonth.length === 0 && (
-                <tr>
-                  <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>Nessun dato per i filtri selezionati</td>
-                </tr>
-              )}
-              {perMonth.map((m) => (
-                <tr key={m.monthKey}>
-                  <td>{m.monthLabel}</td>
-                  <td style={{ textAlign: 'right' }}>{formatNumberShort(m.visitors)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatNumberShort(m.registrations)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatNumberShort(m.ftd)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatEuro(m.netDeposits)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatEuro(m.pl)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatEuro(m.payments)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatEuro(m.profit)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatPercentDisplay(m.roi)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatPercentDisplay(m.conversion)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card card-global">
+      <div className="card card-global" style={{ padding: 14 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-          <div>
-            <h3 style={{ margin: 0 }}>KPI roll-up (per-month agg)</h3>
-            <p style={{ margin: 0, color: '#94a3b8', fontSize: 12 }}>Sommatoria mese filtrato</p>
-          </div>
-          <span style={badgeStyle}>Conversion, ROI, Profit</span>
+          <h3 style={{ margin: 0 }}>Performance charts</h3>
+          <span style={badgeStyle}>Filtri attivi: {periodLabel}</span>
         </div>
-        <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
-          <div className="kpi">
-            <span>Visitors</span>
-            <strong>{formatNumberShort(perMonthTotals.visitors)}</strong>
+        <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>Le serie riflettono anno/mese/affiliate selezionati. Se scegli un singolo mese viene mostrato solo quel punto.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 10 }}>
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <h4 style={{ margin: 0 }}>P&L by month</h4>
+              <span style={{ color: '#94a3b8', fontSize: 12 }}>€</span>
+            </div>
+            <div style={{ height: 220 }}>
+              <PnLTrendChart
+                labels={breakEven.labels}
+                dataPoints={perMonth.map((m) => m.pl)}
+                datasetLabel="P&L"
+                formatValue={formatEuroFull}
+                tooltipFormatter={({ value, label }) => `${label}: ${formatEuroFull(value)}`}
+              />
+            </div>
+            <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 6 }}>Break-even: {breakEven.breakEvenLabel || 'non raggiunto'}.</p>
           </div>
-          <div className="kpi">
-            <span>Registrations</span>
-            <strong>{formatNumberShort(perMonthTotals.registrations)}</strong>
+
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <h4 style={{ margin: 0 }}>Margin % by month</h4>
+              <span style={{ color: '#94a3b8', fontSize: 12 }}>%</span>
+            </div>
+            <div style={{ height: 220 }}>
+              <PnLTrendChart
+                labels={breakEven.labels}
+                dataPoints={perMonth.map((m) => {
+                  const profit = m.profit
+                  const base = Math.max(Math.abs(m.netDeposits || 0), 1)
+                  return (profit / base) * 100
+                })}
+                datasetLabel="Margin %"
+                formatValue={formatPercent}
+                tooltipFormatter={({ value, label }) => `${label}: ${formatPercent(value, 2)}`}
+              />
+            </div>
           </div>
-          <div className="kpi">
-            <span>FTD</span>
-            <strong>{formatNumberShort(perMonthTotals.ftd)}</strong>
-          </div>
-          <div className="kpi">
-            <span>Net dep</span>
-            <strong>{formatEuro(perMonthTotals.netDeposits)}</strong>
-          </div>
-          <div className="kpi">
-            <span>PL</span>
-            <strong>{formatEuro(perMonthTotals.pl)}</strong>
-          </div>
-          <div className="kpi">
-            <span>Payments</span>
-            <strong>{formatEuro(perMonthTotals.payments)}</strong>
-          </div>
-          <div className="kpi">
-            <span>Profit</span>
-            <strong>{formatEuro(perMonthTotals.profit)}</strong>
-          </div>
-          <div className="kpi">
-            <span>Conversion</span>
-            <strong>{formatPercentDisplay(perMonthTotals.conversion)}</strong>
-          </div>
-          <div className="kpi">
-            <span>ROI</span>
-            <strong>{formatPercentDisplay(perMonthTotals.roi)}</strong>
+
+          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <h4 style={{ margin: 0 }}>ROI % by month</h4>
+              <span style={{ color: '#94a3b8', fontSize: 12 }}>%</span>
+            </div>
+            <div style={{ height: 220 }}>
+              <PnLTrendChart
+                labels={breakEven.labels}
+                dataPoints={perMonth.map((m) => {
+                  if (m.roi || m.roi === 0) return m.roi
+                  const base = Math.max(Math.abs(m.payments || 0), 1)
+                  return (m.profit / base) * 100
+                })}
+                datasetLabel="ROI %"
+                formatValue={formatPercent}
+                tooltipFormatter={({ value, label }) => `${label}: ${formatPercent(value, 2)}`}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="card card-global">
-        <h3 style={{ marginBottom: 8 }}>Quick insights</h3>
-        <ul style={{ color: '#cbd5e1', margin: 0, paddingLeft: 18 }}>
-          {insights.length === 0 && <li style={{ color: '#94a3b8' }}>Nessun dato</li>}
-          {insights.map((i, idx) => (<li key={idx}>{i}</li>))}
-        </ul>
-      </div>
+      {SHOW_MONTHLY_TABLE && (
+        <div className="card card-global">
+          <h3 style={{ marginBottom: 8 }}>Per month (filtered)</h3>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table" style={{ minWidth: 720 }}>
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th style={{ textAlign: 'right' }}>Visitors</th>
+                  <th style={{ textAlign: 'right' }}>Reg</th>
+                  <th style={{ textAlign: 'right' }}>FTD</th>
+                  <th style={{ textAlign: 'right' }}>Net dep</th>
+                  <th style={{ textAlign: 'right' }}>PL</th>
+                  <th style={{ textAlign: 'right' }}>Payments</th>
+                  <th style={{ textAlign: 'right' }}>Profit</th>
+                  <th style={{ textAlign: 'right' }}>ROI</th>
+                  <th style={{ textAlign: 'right' }}>Conversion</th>
+                </tr>
+              </thead>
+              <tbody>
+                {perMonth.length === 0 && (
+                  <tr>
+                    <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>Nessun dato per i filtri selezionati</td>
+                  </tr>
+                )}
+                {perMonth.map((m) => (
+                  <tr key={m.monthKey}>
+                    <td>{m.monthLabel}</td>
+                    <td style={{ textAlign: 'right' }}>{formatNumberShort(m.visitors)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatNumberShort(m.registrations)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatNumberShort(m.ftd)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatEuro(m.netDeposits)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatEuro(m.pl)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatEuro(m.payments)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatEuro(m.profit)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatPercentDisplay(m.roi)}</td>
+                    <td style={{ textAlign: 'right' }}>{formatPercentDisplay(m.conversion)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {SHOW_BOTTOM_KPI_ROLLUP && (
+        <div className="card card-global" style={{ marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <div>
+              <h3 style={{ margin: 0 }}>KPI roll-up (per-month agg)</h3>
+              <p style={{ margin: 0, color: '#94a3b8', fontSize: 12 }}>Sommatoria mese filtrato</p>
+            </div>
+            <span style={badgeStyle}>Conversion, ROI, Profit</span>
+          </div>
+          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+            <div className="kpi">
+              <span>Visitors</span>
+              <strong>{formatNumberShort(perMonthTotals.visitors)}</strong>
+            </div>
+            <div className="kpi">
+              <span>Registrations</span>
+              <strong>{formatNumberShort(perMonthTotals.registrations)}</strong>
+            </div>
+            <div className="kpi">
+              <span>FTD</span>
+              <strong>{formatNumberShort(perMonthTotals.ftd)}</strong>
+            </div>
+            <div className="kpi">
+              <span>Net dep</span>
+              <strong>{formatEuro(perMonthTotals.netDeposits)}</strong>
+            </div>
+            <div className="kpi">
+              <span>PL</span>
+              <strong>{formatEuro(perMonthTotals.pl)}</strong>
+            </div>
+            <div className="kpi">
+              <span>Payments</span>
+              <strong>{formatEuro(perMonthTotals.payments)}</strong>
+            </div>
+            <div className="kpi">
+              <span>Profit</span>
+              <strong>{formatEuro(perMonthTotals.profit)}</strong>
+            </div>
+            <div className="kpi">
+              <span>ROI</span>
+              <strong>{formatPercentDisplay(perMonthTotals.roi)}</strong>
+            </div>
+            <div className="kpi">
+              <span>Conversion</span>
+              <strong>{formatPercentDisplay(perMonthTotals.conversion)}</strong>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {SHOW_QUICK_INSIGHTS && (
+        <div className="card card-global">
+          <h3 style={{ marginBottom: 8 }}>Quick insights</h3>
+          <ul style={{ color: '#cbd5e1', margin: 0, paddingLeft: 18 }}>
+            {insights.length === 0 && <li style={{ color: '#94a3b8' }}>Nessun dato</li>}
+            {insights.map((i, idx) => (<li key={idx}>{i}</li>))}
+          </ul>
+        </div>
+      )}
 
       {loading && (
         <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8' }}>Caricamento dati…</div>

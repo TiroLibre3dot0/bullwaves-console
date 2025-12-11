@@ -1,3 +1,4 @@
+// Legacy – not used by App.jsx
 import React, { useEffect, useMemo, useState } from 'react';
 import BreakEvenChart from './BreakEvenChart';
 import CardSection from './common/CardSection';
@@ -70,41 +71,32 @@ export default function GlobalDashboard() {
             otherCommission: cleanNumber(r['Other Commission']),
           };
         });
-        setMediaRows(parsed);
-      return (
-        <div className="w-full space-y-4">
-          <CardSection
-            title="Global view"
-            subtitle="Media Report + Payments Report per panorama unico"
-            actions={(
-              <FilterBar>
-                <PeriodSelector
-                  availableYears={periodOptions.availableYears}
-                  availableMonths={periodOptions.availableMonths}
-                  selectedYear={selectedYear}
-                  selectedMonth={selectedMonth}
-                  onYearChange={(value) => {
-                    setSelectedYear(value)
-                    if (value === 'all') setSelectedMonth('all')
-                  }}
-                  onMonthChange={(value) => setSelectedMonth(value)}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: '#94a3b8' }}>Affiliate</span>
-                  <select
-                    value={selectedAffiliate}
-                    onChange={(e) => setSelectedAffiliate(e.target.value)}
-                    style={selectStyle}
-                  >
-                    <option value="all">All affiliates</option>
-                    {affiliateOptions.map((a) => (
-                      <option key={a} value={a}>{a}</option>
-                    ))}
-                  </select>
-                </div>
-              </FilterBar>
-            )}
-          >
+            setMediaRows(parsed);
+          } catch (err) {
+            console.error('Failed to load media report', err);
+          } finally {
+            setLoadingMedia(false);
+          }
+        }
+        loadMedia();
+      }, []);
+    
+      useEffect(() => {
+        async function loadPayments() {
+          try {
+            const resp = await fetch('/Payments Report.csv');
+            if (!resp.ok) return;
+            const text = await resp.text();
+        const parsed = parseCsv(text).map((r) => {
+          const monthMeta = parseMonthFirstDate(r['Payment Date']);
+          return {
+            raw: r,
+            monthKey: monthMeta.key,
+            monthLabel: monthMeta.label,
+            monthIndex: monthMeta.monthIndex,
+            year: monthMeta.year,
+            affiliate: r.Affiliate || '—',
+            amount: cleanNumber(r.Amount),
           };
         });
         setPayments(parsed);
@@ -393,8 +385,8 @@ export default function GlobalDashboard() {
     color: '#cbd5e1',
   };
 
-  const showInsights = false;
-  const showPerMonthTable = false;
+  const SHOW_QUICK_INSIGHTS = false;
+  const SHOW_MONTHLY_TABLE = false;
 
   return (
     <div className="w-full space-y-3">
@@ -643,7 +635,7 @@ export default function GlobalDashboard() {
         </div>
       </div>
 
-      {showInsights && (
+      {SHOW_QUICK_INSIGHTS && (
         <div className="card card-global" style={{ background: 'linear-gradient(120deg, rgba(34,211,238,0.08), rgba(59,130,246,0.06))' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 6 }}>
             <div>
@@ -664,7 +656,7 @@ export default function GlobalDashboard() {
         </div>
       )}
 
-      {showPerMonthTable && (
+      {SHOW_MONTHLY_TABLE && (
         <div className="card card-global">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ marginBottom: 8 }}>Per mese</h3>
@@ -743,12 +735,14 @@ export default function GlobalDashboard() {
             <strong title={formatEuroFull(totals.profit)} style={{ color: (totals.profit || 0) >= 0 ? '#34d399' : '#f87171' }}>{formatEuro(totals.profit)}</strong>
           </div>
         </div>
-        <div style={{ height: 260 }}>
-          <BreakEvenChart
-            beCurve={breakEven.curve}
-            labels={breakEven.labels}
-            breakEvenIndex={breakEven.breakEvenIndex}
-          />
+        <div style={{ height: 260, overflowX: 'auto' }}>
+          <div style={{ minWidth: Math.max((breakEven.labels?.length || 0) * 70, 1200) }}>
+            <BreakEvenChart
+              beCurve={breakEven.curve}
+              labels={breakEven.labels}
+              breakEvenIndex={breakEven.breakEvenIndex}
+            />
+          </div>
         </div>
       </div>
 
