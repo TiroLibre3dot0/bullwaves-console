@@ -9,8 +9,15 @@ import Report from './features/media-payments/pages/Report'
 import ProfitAnalysisPage from './features/media-payments/pages/ProfitAnalysisPage'
 import AffiliateAnalysis from './features/affiliate-analysis/AffiliateAnalysis'
 import RequireAuth from './context/RequireAuth'
+import { useAuth } from './context/AuthContext'
+import { trackEvent } from './services/trackingService'
+import AdminPanel from './components/AdminPanel'
+import RoadmapPage from './features/roadmap/pages/RoadmapPage'
 
 export default function App(){
+  const { user } = useAuth()
+  const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
+
   const routes = useMemo(() => ({
     cohort: '/',
     executiveSummary: '/executive-summary',
@@ -19,6 +26,7 @@ export default function App(){
     orgChart: '/org-chart',
     overview: '/overview',
     report: '/report',
+    roadmap: '/roadmap',
   }), []);
 
   const pathToView = (pathname) => {
@@ -33,6 +41,7 @@ export default function App(){
     if (pathname.startsWith('/report')) return 'report';
     if (pathname.startsWith('/cohort')) return 'cohort';
     if (pathname.startsWith('/org-chart')) return 'orgChart';
+    if (pathname.startsWith('/roadmap')) return 'roadmap';
     if (pathname.startsWith('/summary-report')) return 'summary';
     return 'overview';
   };
@@ -46,17 +55,49 @@ export default function App(){
   }, []);
 
   const navigate = (nextView) => {
+    if (nextView === 'admin' && !isAdmin) {
+      setView('overview')
+      return
+    }
     const nextPath = routes[nextView] || '/';
+    if (nextView === 'admin') {
+      setView('admin');
+      return;
+    }
     if (window.location.pathname !== nextPath) {
       window.history.pushState({ view: nextView }, '', nextPath);
     }
     setView(nextView);
   };
 
+  useEffect(() => {
+    if (!user) return
+    const viewToSection = {
+      overview: 'overview',
+      executiveSummary: 'executive-summary',
+      affiliateAnalysis: 'affiliate-analysis',
+      marketingExpenses: 'marketing-expenses',
+      cohort: 'cohort',
+      orgChart: 'org-chart',
+      summary: 'summary',
+      roadmap: 'roadmap',
+      admin: 'admin-panel',
+    }
+    const sectionId = viewToSection[view]
+    if (!sectionId) return
+    trackEvent({
+      type: 'NAVIGATE',
+      userEmail: user.email,
+      userName: user.name,
+      userRole: user.title || user.department,
+      section: sectionId,
+    })
+  }, [view, user])
+
   return (
     <RequireAuth>
       <div className="app-root">
-        <Topbar>
+        <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin}>
           <nav className="subnav">
             <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
               Overview
@@ -68,10 +109,13 @@ export default function App(){
               Affiliate Analysis
             </button>
             <button className={`tab ${view === 'marketingExpenses' ? 'active' : ''}`} onClick={() => navigate('marketingExpenses')}>
-              Marketing Expenses
+              Affiliate Payments
             </button>
             <button className={`tab ${view === 'cohort' ? 'active' : ''}`} onClick={() => navigate('cohort')}>
               Cohort
+            </button>
+            <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
+              Roadmap
             </button>
             <button
               className={`tab ${view === 'orgChart' ? 'active' : ''}`}
@@ -89,8 +133,10 @@ export default function App(){
           {view === 'report' && <Report />}
           {view === 'marketingExpenses' && <InvestmentsDashboard />}
           {view === 'cohort' && <Dashboard />}
+          {view === 'roadmap' && <RoadmapPage />}
           {view === 'orgChart' && <OrgChart />}
           {view === 'summary' && <SummaryReport />}
+          {view === 'admin' && isAdmin && <AdminPanel />}
         </main>
       </div>
     </RequireAuth>

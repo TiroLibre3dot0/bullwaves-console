@@ -1,7 +1,7 @@
 import React from 'react'
 import { useAuth } from '../context/AuthContext'
 
-export default function Topbar({ children }){
+export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
 
@@ -17,6 +17,9 @@ export default function Topbar({ children }){
               <div className="user-name">{user.name}</div>
               <div className="user-role">{user.title || user.department}</div>
             </div>
+            {showAdmin && (
+              <button type="button" className="admin-btn" onClick={onAdminClick}>Admin</button>
+            )}
             <button type="button" className="logout-btn" onClick={logout}>Logout</button>
           </div>
         ) : (

@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { cleanNumber } from '../../../lib/formatters'
-import { calculatePayout } from '../utils/payoutLogic'
 
 const toKey = (year, monthIndex) => `${year}-${String(Number(monthIndex) + 1).padStart(2, '0')}`
 const monthLabel = (year, monthIndex) => {
@@ -13,8 +12,44 @@ const monthLabel = (year, monthIndex) => {
 // Mock negotiated CPA per affiliate until real data source is provided.
 const fallbackNegotiatedCpa = 400
 
-export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear = 'all', selectedMonth = 'all', search = '' }) {
+const commissionValue = (row) => {
+  return cleanNumber(row.commission)
+}
+
+export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear = 'all', selectedMonth = 'all', search = '', negotiatedCpaOverrides = {} }) {
   return useMemo(() => {
+    // Build monthly history per affiliate to derive dynamic CPA defaults from last 5 months.
+    const monthlyHistory = new Map()
+    mediaRows.forEach((m) => {
+      const aff = m.affiliate || '—'
+      const yearVal = Number(m.year)
+      const monthVal = Number(m.monthIndex)
+      if (!Number.isFinite(yearVal) || !Number.isFinite(monthVal)) return
+      const ymKey = yearVal * 12 + monthVal
+      if (!monthlyHistory.has(aff)) monthlyHistory.set(aff, new Map())
+      const affMap = monthlyHistory.get(aff)
+      if (!affMap.has(ymKey)) affMap.set(ymKey, { qftd: 0, commission: 0 })
+      const rec = affMap.get(ymKey)
+      rec.qftd += cleanNumber(m.qftd)
+      rec.commission += commissionValue(m)
+    })
+
+    const getAvgCpaLast5Months = (affiliate, year, monthIndex) => {
+      const aff = affiliate || '—'
+      const yearVal = Number(year)
+      const monthVal = Number(monthIndex)
+      if (!monthlyHistory.has(aff) || !Number.isFinite(yearVal) || !Number.isFinite(monthVal)) return null
+      const cutoff = yearVal * 12 + monthVal
+      const entries = Array.from(monthlyHistory.get(aff).entries())
+        .filter(([ym]) => ym < cutoff)
+        .sort((a, b) => b[0] - a[0])
+        .slice(0, 5)
+        .map(([, val]) => (val.qftd > 0 ? val.commission / val.qftd : null))
+        .filter((v) => Number.isFinite(v) && v > 0)
+      if (!entries.length) return null
+      return entries.reduce((a, b) => a + b, 0) / entries.length
+    }
+
     const matchesFilters = (row) => {
       const yearOk = selectedYear === 'all' ? true : Number(row.year) === Number(selectedYear)
       const monthOk = selectedMonth === 'all' ? true : Number(row.monthIndex) === Number(selectedMonth)
@@ -29,7 +64,11 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
     const ensure = (affiliate, year, monthIndex) => {
       const key = `${affiliate || '—'}|${year}|${monthIndex}`
       if (!affMonth.has(key)) {
-        const negotiatedCpa = fallbackNegotiatedCpa
+        const override = negotiatedCpaOverrides[affiliate] ?? negotiatedCpaOverrides[affiliate || '—']
+        const historicalAvg = getAvgCpaLast5Months(affiliate, year, monthIndex)
+        const negotiatedCpa = Number(override) > 0
+          ? Number(override)
+          : (Number.isFinite(historicalAvg) && historicalAvg > 0 ? historicalAvg : fallbackNegotiatedCpa)
         affMonth.set(key, {
           affiliateId: affiliate || '—',
           affiliateName: affiliate || '—',
@@ -40,11 +79,14 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
           ftd: 0,
           qftd: 0,
           netDeposits: 0,
+          commissionTotal: 0,
+          pl: 0,
           roi: 0,
           negotiatedCpa,
-          cpaTheoretical: 0,
-          cpaPayable: 0,
-          cpaDeferred: 0,
+          marketingExpected: 0,
+          marketingActual: 0,
+          marketingPayable: 0,
+          marketingDeferred: 0,
           totalPayments: 0,
           numberOfPayments: 0,
           paidAmount: 0,
@@ -61,7 +103,8 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       acc.ftd += cleanNumber(m.ftd)
       acc.qftd += cleanNumber(m.qftd)
       acc.netDeposits += cleanNumber(m.netDeposits)
-      acc.roi = Number(m.roi || acc.roi || 0)
+      acc.commissionTotal += commissionValue(m)
+      acc.pl += cleanNumber(m.pl)
       if (m.tier) acc.tier = m.tier
       if (!acc.type && m.type) acc.type = m.type
     })
@@ -76,20 +119,20 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
     })
 
     affMonth.forEach((entry) => {
-      const payout = calculatePayout({
-        qftd: entry.qftd,
-        negotiatedCpa: entry.negotiatedCpa,
-        netDeposits: entry.netDeposits,
-        roi: entry.roi,
-      })
-      entry.cpaTheoretical = payout.cpaTheoretical
-      entry.cpaPayable = payout.cpaPayable
-      entry.cpaDeferred = payout.cpaDeferred
-      if (entry.paidAmount >= entry.cpaPayable) {
+      const roiValue = entry.commissionTotal > 0 ? (entry.netDeposits / Math.max(entry.commissionTotal, 1)) : 0
+      entry.roi = roiValue
+
+      // Use the commission reported in Media Report as the expected amount.
+      entry.marketingExpected = entry.commissionTotal
+      const marketingActual = roiValue >= 1.5 ? entry.marketingExpected : (entry.netDeposits / 1.5)
+      entry.marketingActual = marketingActual
+      entry.marketingPayable = Math.min(entry.marketingExpected, marketingActual)
+      entry.marketingDeferred = Math.max(entry.marketingExpected - entry.marketingPayable, 0)
+      if (entry.paidAmount >= entry.marketingPayable) {
         entry.status = 'PAID'
-      } else if (entry.cpaDeferred > 0 && entry.paidAmount < entry.cpaPayable) {
+      } else if (entry.marketingDeferred > 0 && entry.paidAmount < entry.marketingPayable) {
         entry.status = 'PARTIALLY_DEFERRED'
-      } else if (entry.cpaPayable > entry.paidAmount) {
+      } else if (entry.marketingPayable > entry.paidAmount) {
         entry.status = 'TO_PAY'
       }
     })
@@ -106,28 +149,44 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
         totalQftd: 0,
         totalPaid: 0,
         totalDeferred: 0,
+        currentMonthCommission: 0,
         lastMonth: null,
         lastStatus: 'OK',
       })
       const s = summaryMap.get(key)
       s.totalQftd += row.qftd
       s.totalPaid += row.paidAmount
-      s.totalDeferred += row.cpaDeferred
+      s.totalDeferred += row.marketingDeferred
+      // Track commission maturing in the latest month in scope for this affiliate
+      if (!s.lastMonth || row.month > s.lastMonth) {
+        s.lastMonth = row.month
+        s.currentMonthCommission = row.commissionTotal
+      }
       if (!s.lastMonth || row.month > s.lastMonth) s.lastMonth = row.month
-      if (row.cpaDeferred > 0) s.lastStatus = 'HAS_ARREARS'
+      if (row.marketingDeferred > 0) s.lastStatus = 'Deferred'
       if (row.status === 'ON_HOLD') s.lastStatus = 'ON_HOLD'
     })
 
     const affiliateSummaries = Array.from(summaryMap.values()).sort((a, b) => (b.totalPaid || 0) - (a.totalPaid || 0))
 
+    const totalCurrentMonthCommission = affiliateSummaries.reduce((acc, s) => acc + (s.currentMonthCommission || 0), 0)
+
     const totals = ledger.reduce((acc, r) => {
       acc.totalQftd += r.qftd
-      acc.totalCpaTheoretical += r.cpaTheoretical
-      acc.totalCpaPayable += r.cpaPayable
-      acc.totalCpaDeferred += r.cpaDeferred
+      acc.totalMarketingExpected += r.marketingExpected
+      acc.totalMarketingActual += r.marketingActual
+      acc.totalMarketingPayable += r.marketingPayable
+      acc.totalMarketingDeferred += r.marketingDeferred
       acc.totalPaid += r.paidAmount
+      acc.totalNetDeposits += r.netDeposits
+      acc.totalCommission += r.commissionTotal
       return acc
-    }, { totalQftd: 0, totalCpaTheoretical: 0, totalCpaPayable: 0, totalCpaDeferred: 0, totalPaid: 0 })
+    }, { totalQftd: 0, totalMarketingExpected: 0, totalMarketingActual: 0, totalMarketingPayable: 0, totalMarketingDeferred: 0, totalPaid: 0, totalNetDeposits: 0, totalCommission: 0 })
+
+    totals.totalCurrentMonthCommission = totalCurrentMonthCommission
+
+    totals.avgCpa = totals.totalQftd > 0 ? totals.totalCommission / totals.totalQftd : 0
+    totals.totalRoi = totals.totalCommission > 0 ? (totals.totalNetDeposits / totals.totalCommission) : 0
 
     const timeline = new Map()
     ledger.forEach((r) => {
@@ -138,7 +197,7 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
     const timelineSeries = Array.from(timeline.values()).sort((a, b) => a.key.localeCompare(b.key))
 
     return { ledger, affiliateSummaries, totals, timelineSeries }
-  }, [mediaRows, payments, selectedMonth, selectedYear, search])
+  }, [mediaRows, payments, selectedMonth, selectedYear, search, negotiatedCpaOverrides])
 }
 
 export default useAffiliateLedger

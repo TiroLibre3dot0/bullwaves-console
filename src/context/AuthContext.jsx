@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { sections } from '../pages/orgChartData'
+import { trackEvent } from '../services/trackingService'
 
 const AuthContext = createContext({ user: null, allowlist: [], loginWithEmail: () => ({ success: false }), logout: () => {} })
 const STORAGE_KEY = 'bw-auth-user'
@@ -61,6 +62,7 @@ export function AuthProvider({ children }) {
     if (!match) return { success: false, message: 'Email not found in management allowlist.' }
 
     setUser(match)
+    trackEvent({ type: 'LOGIN', userEmail: match.email, userName: match.name, userRole: match.title || match.department })
     return { success: true, user: match }
   }
 
