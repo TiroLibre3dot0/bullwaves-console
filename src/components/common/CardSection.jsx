@@ -1,6 +1,17 @@
 import React from 'react'
 
-export default function CardSection({ title, subtitle, actions, children, background }) {
+export default function CardSection({ title, subtitle, actions, children, background, sticky = false, stickyTop = 8 }) {
+  const stickyStyles = sticky
+    ? {
+        position: 'sticky',
+        top: stickyTop,
+        zIndex: 20,
+        boxShadow: '0 12px 24px rgba(0,0,0,0.25)',
+        background: background || 'rgba(9, 16, 28, 0.96)',
+        backdropFilter: 'blur(6px)',
+      }
+    : {}
+
   return (
     <div
       className="card card-global"
@@ -9,6 +20,7 @@ export default function CardSection({ title, subtitle, actions, children, backgr
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
+        ...stickyStyles,
       }}
     >
       {(title || subtitle || actions) && (

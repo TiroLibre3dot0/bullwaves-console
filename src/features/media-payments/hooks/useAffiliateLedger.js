@@ -149,6 +149,7 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
         totalQftd: 0,
         totalPaid: 0,
         totalDeferred: 0,
+        totalPl: 0,
         currentMonthCommission: 0,
         lastMonth: null,
         lastStatus: 'OK',
@@ -157,6 +158,7 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       s.totalQftd += row.qftd
       s.totalPaid += row.paidAmount
       s.totalDeferred += row.marketingDeferred
+      s.totalPl += row.pl
       // Track commission maturing in the latest month in scope for this affiliate
       if (!s.lastMonth || row.month > s.lastMonth) {
         s.lastMonth = row.month
@@ -180,8 +182,9 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       acc.totalPaid += r.paidAmount
       acc.totalNetDeposits += r.netDeposits
       acc.totalCommission += r.commissionTotal
+      acc.totalPl += r.pl
       return acc
-    }, { totalQftd: 0, totalMarketingExpected: 0, totalMarketingActual: 0, totalMarketingPayable: 0, totalMarketingDeferred: 0, totalPaid: 0, totalNetDeposits: 0, totalCommission: 0 })
+    }, { totalQftd: 0, totalMarketingExpected: 0, totalMarketingActual: 0, totalMarketingPayable: 0, totalMarketingDeferred: 0, totalPaid: 0, totalNetDeposits: 0, totalCommission: 0, totalPl: 0 })
 
     totals.totalCurrentMonthCommission = totalCurrentMonthCommission
 

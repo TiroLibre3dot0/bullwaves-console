@@ -164,6 +164,8 @@ export default function InvestmentsDashboard() {
       <CardSection
         title="Investments / Marketing"
         subtitle="Commissioni da commissions.csv filtrabili per mese e affiliato."
+        sticky
+        stickyTop={12}
         actions={(
           <FilterBar>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

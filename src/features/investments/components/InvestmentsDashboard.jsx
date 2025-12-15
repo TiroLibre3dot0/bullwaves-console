@@ -13,7 +13,6 @@ const formatNumberFull = (value) => formatNumber(value)
 const DEFAULT_NEGOTIATED_CPA = 400
 const CPA_STORAGE_KEY = 'affiliate-cpa-overrides'
 const FINANCE_CONFIRMED_KEY = 'affiliate-finance-confirmed'
-
 const monthLabel = (m) => {
   const parts = (m || '').split('-')
   if (parts.length < 2) return m
@@ -86,11 +85,12 @@ export default function InvestmentsDashboard() {
 
   return (
     <div className="w-full space-y-4">
-      <CardSection
-        title="Affiliate Payments – Affiliate Payout Ledger"
-        subtitle="End-of-month affiliate costs based on Qualified FTD, CPA and ROI."
-        actions={(
-          <FilterBar>
+      <div style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 4, marginTop: -4, background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))', backdropFilter: 'blur(8px)' }}>
+        <CardSection
+          title="Affiliate Payments – Affiliate Payout Ledger"
+          subtitle="End-of-month affiliate costs based on Qualified FTD, CPA and ROI."
+          actions={(
+            <FilterBar>
             <YearSelector
               availableYears={availableYears}
               value={selectedYear}
@@ -116,9 +116,10 @@ export default function InvestmentsDashboard() {
             <span style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', padding: '4px 8px', borderRadius: 999, fontSize: 12, color: '#cbd5e1' }}>
               {ledger.ledger.length} monthly rows
             </span>
-          </FilterBar>
-        )}
-      />
+            </FilterBar>
+          )}
+        />
+      </div>
 
       {loading ? (
         <div className="card card-global" style={{ padding: 16 }}>Loading data…</div>
@@ -166,6 +167,7 @@ export default function InvestmentsDashboard() {
                     <th style={{ textAlign: 'right' }}>CPA</th>
                     <th style={{ textAlign: 'right' }}>Total QFTD</th>
                     <th style={{ textAlign: 'right' }} title="Paid amounts within current filters">Paid (filtered)</th>
+                    <th style={{ textAlign: 'right' }}>PL</th>
                     <th style={{ textAlign: 'right' }}>Current month comm.</th>
                     <th style={{ textAlign: 'center' }}>Finance confirmed</th>
                     <th style={{ textAlign: 'left' }}>Last month</th>
@@ -178,6 +180,7 @@ export default function InvestmentsDashboard() {
                     <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
                     <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(ledger.totals.totalQftd)}>{formatNumberShort(ledger.totals.totalQftd)}</td>
                     <td style={{ textAlign: 'right', color: '#38bdf8' }} className="num" title={formatEuroFull(ledger.totals.totalPaid)}>{formatEuro(ledger.totals.totalPaid)}</td>
+                    <td style={{ textAlign: 'right', color: ledger.totals.totalPl >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(ledger.totals.totalPl)}>{formatEuro(ledger.totals.totalPl)}</td>
                     <td style={{ textAlign: 'right', color: '#f97316' }} className="num" title={formatEuroFull(ledger.totals.totalCurrentMonthCommission)}>{formatEuro(ledger.totals.totalCurrentMonthCommission)}</td>
                     <td style={{ textAlign: 'center', color: '#94a3b8' }}>—</td>
                     <td>—</td>
@@ -200,6 +203,7 @@ export default function InvestmentsDashboard() {
                         </td>
                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(a.totalQftd)}>{formatNumberShort(a.totalQftd)}</td>
                         <td style={{ textAlign: 'right', color: '#38bdf8' }} className="num" title={formatEuroFull(a.totalPaid)}>{formatEuro(a.totalPaid)}</td>
+                        <td style={{ textAlign: 'right', color: a.totalPl >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(a.totalPl)}>{formatEuro(a.totalPl)}</td>
                         <td style={{ textAlign: 'right', color: '#f97316' }} className="num" title={formatEuroFull(a.currentMonthCommission)}>{formatEuro(a.currentMonthCommission)}</td>
                         <td style={{ textAlign: 'center' }}>
                           <input
@@ -229,6 +233,7 @@ export default function InvestmentsDashboard() {
                                     <th style={{ textAlign: 'right' }}>QFTD</th>
                                     <th style={{ textAlign: 'right' }}>Net Deposits</th>
                                     <th style={{ textAlign: 'right' }}>Commissions</th>
+                                    <th style={{ textAlign: 'right' }}>PL</th>
                                     <th style={{ textAlign: 'right' }} title="ROI = Net Deposits / Commission">ROI</th>
                                     <th style={{ textAlign: 'right' }}>CPA</th>
                                     <th style={{ textAlign: 'right' }} title="Expected = commission from Media Report">Comm expected</th>
@@ -252,6 +257,7 @@ export default function InvestmentsDashboard() {
                                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.qftd)}>{formatNumberShort(r.qftd)}</td>
                                         <td style={{ textAlign: 'right', color: '#38bdf8' }} className="num" title={formatEuroFull(r.netDeposits)}>{formatEuro(r.netDeposits)}</td>
                                         <td style={{ textAlign: 'right' }} className="num" title={formatEuroFull(r.commissionTotal)}>{formatEuro(r.commissionTotal)}</td>
+                                        <td style={{ textAlign: 'right', color: r.pl >= 0 ? '#34d399' : '#f87171' }} className="num" title={formatEuroFull(r.pl)}>{formatEuro(r.pl)}</td>
                                         <td style={{ textAlign: 'right', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6 }} className="num" title={formatNumber(r.roi, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}>
                                           <span style={{ width: 10, height: 10, borderRadius: '50%', background: r.roi >= 1.5 ? '#22c55e' : '#ef4444' }} />
                                           {formatNumber(r.roi, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -267,7 +273,7 @@ export default function InvestmentsDashboard() {
                                       </tr>
                                     ))}
                                   {!ledger.ledger.some((r) => r.affiliateId === a.affiliateId) && (
-                                    <tr><td colSpan={13} style={{ textAlign: 'center', color: '#94a3b8' }}>No monthly rows.</td></tr>
+                                    <tr><td colSpan={16} style={{ textAlign: 'center', color: '#94a3b8' }}>No monthly rows.</td></tr>
                                   )}
                                 </tbody>
                               </table>

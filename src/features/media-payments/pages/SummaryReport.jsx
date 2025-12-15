@@ -235,6 +235,14 @@ export default function SummaryReport() {
     return items
   }, [quadrants])
 
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthlyPlMatrix = useMemo(() => bestAffiliates.map((r) => ({
+    affiliate: r.affiliate,
+    monthlyPl: r.monthlyPl || Array(12).fill(0),
+    monthlyPay: r.monthlyPay || Array(12).fill(0),
+    profit: r.profit || 0,
+  })), [bestAffiliates])
+
   return (
     <div className="w-full px-4 py-6 space-y-6">
       <div style={{ fontSize: 12, color: '#94a3b8', fontWeight: 700, letterSpacing: 0.2 }}>Summary report · Media Report + Payments</div>
@@ -258,6 +266,51 @@ export default function SummaryReport() {
               <span style={{ color: '#22d3ee', fontWeight: 700 }}>{q.value}</span>
             </div>
           ))}
+        </div>
+      </aside>
+
+      <aside className="card w-full" style={{ padding: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 style={{ margin: 0 }}>Monthly PL vs payments (top 15)</h3>
+          <span style={{ fontSize: 11, color: '#94a3b8' }}>Per affiliate · PL over commissions to spot ROI drift</span>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <table className="table" style={{ minWidth: 1100, width: '100%', fontSize: 12, borderCollapse: 'separate', borderSpacing: 0 }}>
+            <thead>
+              <tr>
+                <th>Affiliate</th>
+                <th style={{ textAlign: 'right' }}>Profit</th>
+                {months.map((m) => (
+                  <th key={`head-${m}`} style={{ textAlign: 'right' }}>{m}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {monthlyPlMatrix.length === 0 && (
+                <tr>
+                  <td colSpan={months.length + 2} style={{ textAlign: 'center', color: '#94a3b8' }}>No data</td>
+                </tr>
+              )}
+              {monthlyPlMatrix.map((r) => (
+                <tr key={`pl-matrix-${r.affiliate}`}>
+                  <td style={{ fontWeight: 600 }}>{r.affiliate}</td>
+                  <td style={{ textAlign: 'right', color: (r.profit || 0) >= 0 ? '#34d399' : '#f87171', fontWeight: 600 }}>{formatEuro(r.profit || 0)}</td>
+                  {months.map((m, idx) => {
+                    const pl = r.monthlyPl[idx] || 0
+                    const pay = r.monthlyPay[idx] || 0
+                    const delta = pl - pay
+                    const color = delta >= 0 ? '#34d399' : '#f87171'
+                    return (
+                      <td key={`${r.affiliate}-${m}`} style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+                        <div style={{ color }}>{formatEuro(pl)}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8' }}>Pay {formatEuro(pay)}</div>
+                      </td>
+                    )
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </aside>
 

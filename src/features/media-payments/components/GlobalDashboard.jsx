@@ -244,6 +244,8 @@ export default function GlobalDashboard() {
       <CardSection
         title="Global view"
         subtitle="Media Report + Payments Report per panorama unico"
+        sticky
+        stickyTop={12}
         actions={(
           <FilterBar>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>

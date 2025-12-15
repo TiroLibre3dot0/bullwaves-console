@@ -13,6 +13,7 @@ import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
+import ExecutiveView from './features/executive-view/pages/ExecutiveView'
 
 export default function App(){
   const { user } = useAuth()
@@ -21,6 +22,7 @@ export default function App(){
   const routes = useMemo(() => ({
     cohort: '/',
     executiveSummary: '/executive-summary',
+    executiveView: '/executive-view',
     marketingExpenses: '/marketing-expenses',
     affiliateAnalysis: '/affiliate-analysis',
     orgChart: '/org-chart',
@@ -34,6 +36,7 @@ export default function App(){
     if (pathname.startsWith('/overview')) return 'overview';
     if (pathname.startsWith('/profit-analysis')) return 'overview';
     if (pathname.startsWith('/executive-summary')) return 'executiveSummary';
+    if (pathname.startsWith('/executive-view')) return 'executiveView';
     if (pathname.startsWith('/global')) return 'executiveSummary';
     if (pathname.startsWith('/marketing-expenses')) return 'marketingExpenses';
     if (pathname.startsWith('/investments')) return 'marketingExpenses';
@@ -75,6 +78,7 @@ export default function App(){
     const viewToSection = {
       overview: 'overview',
       executiveSummary: 'executive-summary',
+      executiveView: 'executive-view',
       affiliateAnalysis: 'affiliate-analysis',
       marketingExpenses: 'marketing-expenses',
       cohort: 'cohort',
@@ -105,6 +109,9 @@ export default function App(){
             <button className={`tab ${view === 'executiveSummary' ? 'active' : ''}`} onClick={() => navigate('executiveSummary')}>
               Executive Summary
             </button>
+            <button className={`tab ${view === 'executiveView' ? 'active' : ''}`} onClick={() => navigate('executiveView')}>
+              Executive View
+            </button>
             <button className={`tab ${view === 'affiliateAnalysis' ? 'active' : ''}`} onClick={() => navigate('affiliateAnalysis')}>
               Affiliate Analysis
             </button>
@@ -129,6 +136,7 @@ export default function App(){
         <main className="app-main">
           {view === 'overview' && <ProfitAnalysisPage />}
           {view === 'executiveSummary' && <GlobalDashboard />}
+          {view === 'executiveView' && <ExecutiveView />}
           {view === 'affiliateAnalysis' && <AffiliateAnalysis />}
           {view === 'report' && <Report />}
           {view === 'marketingExpenses' && <InvestmentsDashboard />}
