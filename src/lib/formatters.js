@@ -13,17 +13,18 @@ export function formatNumber(value, opts) {
 export function formatNumberShort(value) {
   const num = Number(value || 0);
   const abs = Math.abs(num);
-  if (abs >= 1_000_000) return `${Math.round(num / 1_000_000)}M`;
-  if (abs >= 1000) return `${Math.round(num / 1000)}k`;
+  if (abs >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1000) return `${Math.round(num / 1000)}K`;
   return defaultNumberFormat.format(Math.round(num));
 }
 
 export function formatEuro(value) {
-  return `${formatNumberShort(value)} €`;
+  return `€${formatNumberShort(value)}`;
 }
 
 export function formatEuroFull(value) {
-  return `${defaultNumberFormat.format(Number(value || 0))} €`;
+  // Keep consistent short formatting across the UI.
+  return `€${formatNumberShort(value)}`;
 }
 
 export function formatPercent(value, digits = 1) {

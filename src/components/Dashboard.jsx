@@ -1,6 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import BreakEvenChart from './BreakEvenChart';
 import PnLTrendChart from './PnLTrendChart';
+import CohortDecayView from './CohortDecayView';
 
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const inputMetrics = ['Users','Churn %','Net deposits','Commissions paid','Marketing spend'];
@@ -31,13 +32,9 @@ const friendlyCohortLabel = (raw) => {
   const datePart = raw.split(/\s|T/)[0] || raw;
   const parts = datePart.split('/').map((p) => Number(p));
   if (parts.length >= 3) {
-    const [a, b, c] = parts;
-    const dayFirst = a > 12 || (a <= 12 && b <= 12 && a > b);
-    const day = dayFirst ? a : b;
-    const month = dayFirst ? b : a;
-    const year = c;
-    const monthName = months[Math.max(0, Math.min(11, (month || 1) - 1))];
-    return `${monthName} ${year}`;
+    const [m, d, y] = parts; // month-first
+    const monthName = months[Math.max(0, Math.min(11, (m || 1) - 1))];
+    return `${monthName} ${y}`;
   }
   return raw;
 };
@@ -46,19 +43,145 @@ const formatNumberShort = (value) => {
   const num = Number(value || 0);
   const abs = Math.abs(num);
   if (abs >= 1_000_000) {
-    return `${Math.round(num / 1_000_000)}M`;
+    return `${(num / 1_000_000).toFixed(1)}M`;
   }
   if (abs >= 1000) {
-    return `${Math.round(num / 1000)}k`;
+    return `${Math.round(num / 1000)}K`;
   }
   return formatter.format(Math.round(num));
 };
 
-const formatEuro = (value) => `${formatNumberShort(value)} €`;
-const formatEuroFull = (value) => `${formatter.format(Number(value || 0))} €`;
+const formatEuro = (value) => `€${formatNumberShort(value)}`;
+// Keep consistent K/M formatting everywhere (including tooltips).
+const formatEuroFull = (value) => `€${formatNumberShort(value)}`;
 const formatNumberFull = (value) => formatter.format(Number(value || 0));
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`;
 const normalizeKey = (str = '') => str.trim().toLowerCase();
+const average = (arr = []) => {
+  const vals = arr.filter((v) => Number.isFinite(v));
+  if (!vals.length) return null;
+  return vals.reduce((s, v) => s + v, 0) / vals.length;
+};
+
+const parseCohortDateString = (raw) => {
+  if (!raw) return null;
+  const datePart = raw.split(/\s|T/)[0] || '';
+  const parts = datePart.split('/').map((p) => Number(p));
+  if (parts.length < 3) return null;
+  const [m, d, y] = parts; // month-first
+  const dt = new Date(y, (m || 1) - 1, d || 1);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+};
+
+const buildCohortMetrics = (row) => {
+  const values = row?.values || [];
+  const m0 = values[0] || 0;
+  const retainedAt = (idx) => {
+    if (!m0) return null;
+    const v = values[idx];
+    return v === undefined || v === null ? null : (v / m0) * 100;
+  };
+  const retainedM1 = retainedAt(1);
+  const retainedM3 = retainedAt(3);
+  const retainedM6 = retainedAt(6);
+
+  const halfLife = (() => {
+    if (!m0) return null;
+    for (let i = 1; i < values.length; i += 1) {
+      const v = values[i];
+      if (v === null || v === undefined) continue;
+      if ((v / m0) * 100 < 50) return i;
+    }
+    return null;
+  })();
+
+  const lifetime = (() => {
+    if (!m0) return null;
+    for (let i = 1; i < values.length; i += 1) {
+      const v = values[i];
+      if (v === null || v === undefined) continue;
+      if ((v / m0) * 100 < 10) return i;
+    }
+    return null;
+  })();
+
+  const cumulative = values.reduce((s, v) => s + (Number(v) || 0), 0);
+  const earlyShare = cumulative ? (m0 / cumulative) * 100 : null;
+
+  return {
+    retainedM1,
+    retainedM3,
+    retainedM6,
+    halfLife,
+    lifetime,
+    cumulative,
+    earlyShare,
+    m0,
+  };
+};
+
+const aggregateMetrics = (rows = []) => {
+  if (!rows.length) return null;
+  const metrics = rows.map((r) => buildCohortMetrics(r));
+  const avg = (key) => average(metrics.map((m) => m[key]).filter((v) => v !== null && v !== undefined));
+  const sum = metrics.reduce((s, m) => s + (m.cumulative || 0), 0);
+  const totalSize = metrics.reduce((s, m) => s + (m.m0 || 0), 0);
+  return {
+    retainedM1: avg('retainedM1'),
+    retainedM3: avg('retainedM3'),
+    retainedM6: avg('retainedM6'),
+    halfLife: avg('halfLife'),
+    lifetime: avg('lifetime'),
+    cumulative: sum,
+    totalSize,
+    earlyShare: avg('earlyShare'),
+  };
+};
+
+const classifyCohortHealth = (stats) => {
+  if (!stats) {
+    return {
+      flag: 'NO DATA',
+      tone: '#cbd5e1',
+      why: 'No cohort data available for this selection.',
+      meaning: 'There is not enough data to assess cohort health.',
+      nextCheck: 'Wait for more months of activity and re-check M1/M3 retained value.',
+      valueConcentration: null,
+    };
+  }
+
+  const r1 = stats.retainedM1 ?? null;
+  const r3 = stats.retainedM3 ?? null;
+  const r6 = stats.retainedM6 ?? null;
+  const hl = stats.halfLife ?? null;
+  const life = stats.lifetime ?? null;
+  const early = stats.earlyShare ?? null;
+
+  const isGreen = (r3 !== null && r3 >= 40) || (hl !== null && hl >= 3) || (life !== null && life >= 6);
+  const isOrange = !isGreen && ((r3 !== null && r3 >= 20) || (hl !== null && hl >= 2) || (life !== null && life >= 4));
+  const flag = isGreen ? 'GREEN' : isOrange ? 'ORANGE' : 'RED';
+  const tone = flag === 'GREEN' ? '#34d399' : flag === 'ORANGE' ? '#fbbf24' : '#f87171';
+
+  const why = (() => {
+    if (flag === 'GREEN') return 'Value stays strong beyond Month 0.';
+    if (early !== null && early !== undefined && early >= 60) return 'Most value is generated in Month 0.';
+    if (r1 !== null && r1 !== undefined && r1 < 25) return 'Value drops sharply after Month 0.';
+    if (r3 !== null && r3 !== undefined && r3 < 20) return 'Value fades quickly by Month 3.';
+    return 'Value declines after Month 0.';
+  })();
+
+  const meaning = (() => {
+    if (flag === 'GREEN') return 'Recurring activity sustains value across multiple months.';
+    if (flag === 'ORANGE') return 'Some repeat activity exists, but it weakens over time.';
+    return 'Business depends heavily on first-month activity and weak repeat usage.';
+  })();
+
+  const nextCheck = 'After retention actions, focus on improving M1 and M3 retained value.';
+
+  const valueConcentration = early === null || early === undefined ? null : early;
+
+  return { flag, tone, why, meaning, nextCheck, valueConcentration };
+};
 
 const matchCohortSelection = (monthIndex, selection) => {
   if (selection === null) return false;
@@ -109,11 +232,17 @@ export default function Dashboard() {
   const [plSeries, setPlSeries] = useState(() => Array(12).fill(0));
   const [selectedCohortMonth, setSelectedCohortMonth] = useState(null);
   const [selectedAffiliate, setSelectedAffiliate] = useState('all');
+  const [cohortAnalysisMetric, setCohortAnalysisMetric] = useState('netDeposits');
   const [kpiOverrides, setKpiOverrides] = useState({});
   const [reportText, setReportText] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
   const [showCohortDb, setShowCohortDb] = useState(true);
   const [showAffiliatesDetail, setShowAffiliatesDetail] = useState(true);
+  const [showCohortKpisBlock, setShowCohortKpisBlock] = useState(true);
+  const [showMonthlyAggregatesBlock, setShowMonthlyAggregatesBlock] = useState(true);
+  const [showBreakEvenBlock, setShowBreakEvenBlock] = useState(true);
+  const [showPnLTrendBlock, setShowPnLTrendBlock] = useState(true);
+  const [showTopAffiliatesBlock, setShowTopAffiliatesBlock] = useState(true);
   const [showMonthlyInfo, setShowMonthlyInfo] = useState(false);
   const [showKpiInfo, setShowKpiInfo] = useState(false);
   const [showCohortDbInfo, setShowCohortDbInfo] = useState(false);
@@ -121,6 +250,20 @@ export default function Dashboard() {
   const [showAutoReportInfo, setShowAutoReportInfo] = useState(false);
   const showCohortDbBlock = false; // temporarily hidden per request
   const showAutoReportBlock = false; // temporarily hidden per request
+  const [selectedCalendarYear, setSelectedCalendarYear] = useState('all');
+
+  const cohortMetricLabel = (() => {
+    if (cohortAnalysisMetric === 'deposits') return 'Deposits';
+    if (cohortAnalysisMetric === 'depositsCount') return 'Number of deposits';
+    if (cohortAnalysisMetric === 'withdrawals') return 'Withdrawals';
+    return 'Net deposits';
+  })();
+
+  const cohortMetricKind = cohortAnalysisMetric === 'depositsCount' ? 'count' : 'currency';
+  const retainedMetricLabel = cohortMetricKind === 'count' ? 'Retained activity' : 'Retained value';
+  // Internally the dashboard data model uses the "Net deposits" key.
+  // When metricLabel is "Deposits" we still store/compute under this key, but render labels coherently.
+  const cohortMetricDataKey = 'Net deposits';
 
   const cohortDetailRows = useMemo(() => {
     if (selectedCohortMonth === null) return cohortsDetail;
@@ -157,10 +300,10 @@ export default function Dashboard() {
     const byType = new Map();
 
     commissionsData.forEach((c) => {
-      const key = c.affiliateId || c.affiliate || '—';
+      const key = c.affiliateId || c.affiliate || 'ÔÇö';
       const acc = byAffiliate.get(key) || {
-        affiliate: c.affiliate || '—',
-        affiliateId: c.affiliateId || '—',
+        affiliate: c.affiliate || 'ÔÇö',
+        affiliateId: c.affiliateId || 'ÔÇö',
         total: 0,
         count: 0,
       };
@@ -185,7 +328,7 @@ export default function Dashboard() {
     if (!mediaRows.length) return [];
     const agg = Array.from(
       mediaRows.reduce((map, r) => {
-        const key = r.affiliate || '—';
+        const key = r.affiliate || 'ÔÇö';
         const acc = map.get(key) || { affiliate: key, registrations: 0, pl: 0, netDeposits: 0, commission: 0 };
         acc.registrations += r.registrations || 0;
         acc.pl += r.pl || 0;
@@ -248,7 +391,7 @@ export default function Dashboard() {
   const affiliateOptionGroups = useMemo(() => {
     const specialAffiliates = Object.keys(affiliateCohortFiles || {});
 
-    let names = topAffiliates.map((a) => a.affiliate || '—');
+    let names = topAffiliates.map((a) => a.affiliate || 'ÔÇö');
     // ensure dedicated-file affiliates are always selectable even if not in top list
     specialAffiliates.forEach((name) => {
       if (name && !names.includes(name)) names.push(name);
@@ -257,7 +400,7 @@ export default function Dashboard() {
       const rows = cohortsDetail.filter((d) => (d.affiliate || '').trim() !== '');
       const stats = new Map();
       rows.forEach((d) => {
-        const name = d.affiliate || '—';
+        const name = d.affiliate || 'ÔÇö';
         const total = (d.months || []).reduce((acc, v) => acc + (v || 0), 0);
         const score = Math.abs(total) + (d.cohortSize || 0);
         const current = stats.get(name) || { name, score: 0 };
@@ -279,6 +422,108 @@ export default function Dashboard() {
     const top = Array.from(new Set(names)).slice(0, 10);
     return { top };
   }, [topAffiliates, cohortsDetail, selectedAffiliate]);
+
+  const cohortCalendar = useMemo(() => {
+    const aggregated = new Map();
+    let maxMonths = 0;
+
+    cohortsDetail.forEach((row) => {
+      const date = parseCohortDateString(row.cohortDate);
+      if (!date) return;
+      const baseAbs = date.getFullYear() * 12 + date.getMonth();
+      const key = baseAbs;
+      const values = row.months || [];
+      maxMonths = Math.max(maxMonths, values.length);
+      const existing = aggregated.get(key) || {
+        id: `cohort-${key}`,
+        cohortLabel: friendlyCohortLabel(row.cohortDate),
+        cohortDateRaw: row.cohortDate,
+        cohortYear: date.getFullYear(),
+        baseAbs,
+        values: Array(values.length || 12).fill(0),
+        cohortSize: 0,
+        affiliate: 'all',
+        affiliateKey: 'all',
+      };
+      const nextValues = Array.from({ length: Math.max(existing.values.length, values.length) }).map(
+        (_, idx) => (existing.values[idx] || 0) + (values[idx] || 0)
+      );
+      aggregated.set(key, {
+        ...existing,
+        values: nextValues,
+        cohortSize: (existing.cohortSize || 0) + (row.cohortSize || 0),
+      });
+      maxMonths = Math.max(maxMonths, nextValues.length);
+    });
+
+    const parsed = Array.from(aggregated.values())
+      .map((item) => {
+        const m0 = item.values[0] || 0;
+        const normalized = item.values.map((v) => {
+          if (!m0) return null;
+          return (v / m0) * 100;
+        });
+        return { ...item, normalized };
+      })
+      .sort((a, b) => a.baseAbs - b.baseAbs);
+
+    if (!parsed.length) return { rows: [], labels: [], startAbs: 0, years: [] };
+
+    const labels = Array.from({ length: maxMonths || 12 }).map((_, idx) => `Month ${idx}`);
+    const years = Array.from(new Set(parsed.map((r) => r.cohortYear))).sort((a, b) => a - b);
+
+    return { rows: parsed, labels, startAbs: 0, years };
+  }, [cohortsDetail]);
+
+  const calendarView = useMemo(() => {
+    const filteredRows = cohortCalendar.rows.filter((r) => (selectedCalendarYear === 'all' ? true : r.cohortYear === selectedCalendarYear));
+    if (!filteredRows.length) return { rows: [], entries: [], startAbs: 0 };
+
+    const minAbs = selectedCalendarYear === 'all'
+      ? Math.min(...filteredRows.map((r) => r.baseAbs))
+      : selectedCalendarYear * 12; // Jan of selected year
+
+    const maxAbs = selectedCalendarYear === 'all'
+      ? Math.max(...filteredRows.map((r) => r.baseAbs + (r.values?.length || 0) - 1))
+      : (selectedCalendarYear * 12) + 11; // Dec of selected year
+
+    const entries = [];
+    for (let abs = minAbs; abs <= maxAbs; abs += 1) {
+      const year = Math.floor(abs / 12);
+      const month = abs % 12;
+      entries.push({ abs, label: selectedCalendarYear === 'all' ? `${months[month]} ${year}` : months[month] });
+    }
+
+    return { rows: filteredRows, entries, startAbs: minAbs };
+  }, [cohortCalendar, selectedCalendarYear]);
+
+  const overviewKpis = useMemo(() => {
+    const affiliateKey = normalizeKey(selectedAffiliate);
+    const filtered = calendarView.rows.filter((r) => (affiliateKey === 'all' ? true : r.affiliateKey === affiliateKey));
+
+    const agg = aggregateMetrics(filtered);
+    const flag = classifyCohortHealth(agg);
+
+    return {
+      avgRetainedM1: agg?.retainedM1 ?? null,
+      avgRetainedM3: agg?.retainedM3 ?? null,
+      avgRetainedM6: agg?.retainedM6 ?? null,
+      retainedM1: agg?.retainedM1 ?? null,
+      healthLabel: flag.flag,
+      healthTone: flag.tone,
+      econ: {
+        retainedM1: agg?.retainedM1,
+        retainedM3: agg?.retainedM3,
+        retainedM6: agg?.retainedM6,
+        halfLife: agg?.halfLife,
+        lifetime: agg?.lifetime,
+        why: flag.why,
+        meaning: flag.meaning,
+        nextCheck: flag.nextCheck,
+        valueConcentration: flag.valueConcentration,
+      },
+    };
+  }, [calendarView, selectedAffiliate]);
 
   function updateValue(metric, idx, value) {
     setMonthlyData((prev) => {
@@ -304,7 +549,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    async function loadNetDepositCohortDb() {
+    async function loadCohortDb() {
       try {
         const fetchCsv = async (path) => {
           const resp = await fetch(path);
@@ -313,13 +558,12 @@ export default function Dashboard() {
           return { path, text };
         };
 
-        const candidatePaths = [
-          '/top 10 Cohort Analysis PL.csv',
-          '/cohort-affiliates.csv',
-          '/Net deposits Cohort 2025.csv',
-          '/cohort.csv',
-          '/Basilatwani Cohort Analysis.csv',
-        ];
+        const candidatePaths = (() => {
+          if (cohortAnalysisMetric === 'deposits') return ['/Cohort Analysis per churn analysis Deposits.csv'];
+          if (cohortAnalysisMetric === 'depositsCount') return ['/Cohort Analysis per churn analysis deposits count since 2024.csv'];
+          if (cohortAnalysisMetric === 'withdrawals') return ['/Cohort Analysis per churn analysis Withdrawals since 2024.csv'];
+          return ['/Cohort Analysis per churn analysis Net Depositis since 2024.csv'];
+        })();
 
         let primaryFile = null;
         for (const path of candidatePaths) {
@@ -328,10 +572,13 @@ export default function Dashboard() {
           const rows = parseCsv(loaded.text);
           const hasAffiliate = rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'Affiliate');
           primaryFile = { ...loaded, rows, hasAffiliate };
-          if (hasAffiliate) break; // prefer the first file that includes affiliate detail
+          break;
         }
 
-        if (!primaryFile) return;
+        if (!primaryFile) {
+          console.warn(`Cohort source not found for metric: ${cohortAnalysisMetric}`);
+          return;
+        }
 
         const parseCohortDate = (raw) => {
           if (!raw) return null;
@@ -343,18 +590,35 @@ export default function Dashboard() {
           return Number.isNaN(dt.getTime()) ? null : dt;
         };
 
+        const getMonthKeys = (row) => {
+          if (!row) return [];
+          return Object.keys(row)
+            .filter((k) => /^Month\s+\d+$/i.test(k))
+            .sort((a, b) => {
+              const ai = Number((a.match(/\d+/) || [0])[0]);
+              const bi = Number((b.match(/\d+/) || [0])[0]);
+              return ai - bi;
+            });
+        };
+
         const parseRows = (rows, defaultAffiliate = '') =>
           rows
             .map((row) => {
               const d = parseCohortDate(row['Cohort Date']);
               if (!d) return null;
+              const monthKeys = getMonthKeys(row);
+              const monthsArr = monthKeys.map((k) => {
+                const raw = cleanNumber(row[k]);
+                if (cohortAnalysisMetric === 'withdrawals') return Math.abs(raw);
+                return raw;
+              });
               return {
                 rawDate: row['Cohort Date'],
                 date: d,
                 absIdx: d.getFullYear() * 12 + d.getMonth(),
                 affiliate: (row['Affiliate'] ?? defaultAffiliate ?? '').toString().trim(),
                 cohortSize: cleanNumber(row['Cohort Size']),
-                months: Array.from({ length: 12 }).map((_, k) => cleanNumber(row[`Month ${k}`])),
+                months: monthsArr,
               };
             })
             .filter(Boolean);
@@ -382,10 +646,11 @@ export default function Dashboard() {
           const acc = summaryMap.get(relIdx) || {
             monthIndex: relIdx,
             cohortSize: 0,
-            months: Array(12).fill(0),
+            months: Array(monthsValues.length || 12).fill(0),
           };
           acc.cohortSize += cohortSize;
-          acc.months = acc.months.map((v, idx) => v + (monthsValues[idx] || 0));
+          const maxLen = Math.max(acc.months.length, monthsValues.length);
+          acc.months = Array.from({ length: maxLen }).map((_, idx) => (acc.months[idx] || 0) + (monthsValues[idx] || 0));
           acc.m0 = (acc.m0 || 0) + (monthsValues[0] || 0);
           acc.m1 = (acc.m1 || 0) + (monthsValues[1] || 0);
           acc.m2 = (acc.m2 || 0) + (monthsValues[2] || 0);
@@ -421,12 +686,12 @@ export default function Dashboard() {
           // Keep current affiliate selection; do not reset to 'all' so switching affiliates preserves context.
         }
       } catch (err) {
-        console.error('Failed to load net deposit cohort DB', err);
+        console.error('Failed to load cohort DB', err);
       }
     }
 
-    loadNetDepositCohortDb();
-  }, []);
+    loadCohortDb();
+  }, [cohortAnalysisMetric]);
 
   useEffect(() => {
     async function loadBalance() {
@@ -457,7 +722,7 @@ export default function Dashboard() {
         const rows = parseCsv(text);
 
         const parsed = rows.map((r) => ({
-          affiliate: (r['Affiliate'] ?? '').toString().trim() || '—',
+          affiliate: (r['Affiliate'] ?? '').toString().trim() || 'ÔÇö',
           registrations: cleanNumber(r['Registrations'] ?? r['Leads']),
           pl: cleanNumber(r['PL']),
           netDeposits: cleanNumber(r['Net Deposits']),
@@ -615,7 +880,7 @@ export default function Dashboard() {
             date: d,
             monthIndex,
             affiliateId: (r['Affiliate Id'] ?? '').toString().trim(),
-            affiliate: (r['Affiliate'] ?? '').toString().trim() || '—',
+            affiliate: (r['Affiliate'] ?? '').toString().trim() || 'ÔÇö',
             amount: cleanNumber(r['Payment amount'] ?? r.amount),
             type: (r['Payment Range'] ?? r['Commission Type'] ?? '').toString().trim() || 'Other',
           };
@@ -1090,7 +1355,7 @@ export default function Dashboard() {
     : null;
 
   const netDepToCommission = (() => {
-    const net = totals['Net deposits'] || 0;
+    const net = totals[cohortMetricDataKey] || 0;
     const comm = Math.abs(totals['Commissions paid'] || 0);
     if (!comm) return null;
     return net / comm;
@@ -1099,7 +1364,7 @@ export default function Dashboard() {
   const breakEvenDisplay =
     breakEvenIndex >= 0
       ? `${breakEvenLabels[breakEvenIndex]} (${breakEvenMonthsToHit} mesi)`
-      : '—';
+      : 'ÔÇö';
 
   const displayKpis = {
     cohortUsers: kpiOverrides.cohortUsers ?? cohortUsers,
@@ -1133,7 +1398,7 @@ export default function Dashboard() {
     setReportLoading(true);
     const lines = [];
     lines.push(`Cohort size: ${formatNumberShort(displayKpis.cohortUsers)}`);
-    lines.push(`Net deposits total: ${formatEuro(totals['Net deposits'] || 0)}`);
+    lines.push(`${cohortMetricLabel} total: ${formatEuro(totals[cohortMetricDataKey] || 0)}`);
     lines.push(`Commissions paid: ${formatEuro(Math.abs(totals['Commissions paid'] || 0))}`);
     lines.push(`Marketing spend: ${formatEuro(Math.abs(totals['Marketing spend'] || 0))}`);
     lines.push(`P&L total: ${formatEuro(totals['P&L'] || 0)}`);
@@ -1191,10 +1456,10 @@ export default function Dashboard() {
       },
       {
         key: 'netDepToCommission',
-        label: 'Net dep / Commission',
+        label: `${cohortAnalysisMetric === 'deposits' ? 'Dep' : 'Net dep'} / Commission`,
         value: displayKpis.netDepToCommission,
-        formatter: (v) => (v === null ? '—' : v.toFixed(2)),
-        helper: 'If < 1.5: commission posticipata all’affiliato',
+        formatter: (v) => (v === null ? 'ÔÇö' : v.toFixed(2)),
+        helper: 'If < 1.5: commission posticipata allÔÇÖaffiliato',
         overrideKey: null,
         type: 'ratio',
         hideIfZero: true,
@@ -1243,7 +1508,7 @@ export default function Dashboard() {
         key: 'roi',
         label: 'ROI',
         value: displayKpis.roi,
-        formatter: (v) => (v === null ? '—' : formatPercent(v)),
+        formatter: (v) => (v === null ? 'ÔÇö' : formatPercent(v)),
         helper: 'ROI = (P&L - Cohort cost) / Cohort cost',
         overrideKey: null,
         type: 'percent',
@@ -1254,7 +1519,7 @@ export default function Dashboard() {
         label: 'Break-even month',
         value: displayKpis.breakEvenLabel,
         formatter: (v) => v,
-        helper: 'First month where cumulative P&L - cumulative commissions ≥ 0',
+        helper: 'First month where cumulative P&L - cumulative commissions ÔëÑ 0',
         overrideKey: 'breakEvenLabel',
         type: 'text',
         hideIfZero: false,
@@ -1262,67 +1527,234 @@ export default function Dashboard() {
     ];
 
     return items.filter((k) => !(k.hideIfZero && (!k.value || k.value === 0)));
-  }, [displayKpis]);
+  }, [displayKpis, cohortAnalysisMetric]);
 
   return (
-    <div className="w-full px-4 py-6">
+    <div className="w-full px-4 py-6 space-y-8">
+      <section className="card w-full">
+        <div className="flex justify-between items-start gap-4 flex-wrap">
+          <div>
+            <h2 className="text-base font-semibold text-slate-200 m-0">Cohort financial pulse</h2>
+            <p className="text-xs text-slate-400 m-0">{retainedMetricLabel} (%) shows how much Month 0 {cohortMetricLabel.toLowerCase()} remains over time.</p>
+          </div>
+          <div className="flex gap-3 flex-wrap items-end">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-slate-400">Metric</span>
+              <select
+                value={cohortAnalysisMetric}
+                onChange={(e) => setCohortAnalysisMetric(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[160px]"
+              >
+                <option value="netDeposits">Net deposits</option>
+                <option value="deposits">Deposits</option>
+                <option value="depositsCount">Number of deposits</option>
+                <option value="withdrawals">Withdrawals</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-slate-400">Calendar year</span>
+              <select
+                value={selectedCalendarYear}
+                onChange={(e) => setSelectedCalendarYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[140px]"
+              >
+                <option value="all">All years</option>
+                {cohortCalendar.years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs text-slate-400">Affiliate</span>
+              <select
+                value={selectedAffiliate}
+                onChange={(e) => setSelectedAffiliate(e.target.value)}
+                className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[180px]"
+              >
+                <option value="all">All affiliates</option>
+                {affiliateOptionGroups.top.map((name) => (
+                  <option key={`overview-${name}`} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          {[{
+            key: 'retainedM1',
+            label: 'Retained Month 1',
+            value: overviewKpis.avgRetainedM1,
+            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+          }, {
+            key: 'retainedM3',
+            label: 'Retained Month 3',
+            value: overviewKpis.avgRetainedM3,
+            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+          }, {
+            key: 'retainedM6',
+            label: 'Retained Month 6',
+            value: overviewKpis.avgRetainedM6,
+            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+          }, {
+            key: 'health',
+            label: 'Cohort health',
+            value: overviewKpis.healthLabel,
+            helper: 'Rule-based: retained value, half-life, lifetime',
+          }].map((card) => {
+            const isHealth = card.key === 'health';
+            const formatted = card.value === null
+              ? '—'
+              : isHealth
+                ? card.value
+                : `${Number(card.value || 0).toFixed(1)}%`;
+            const color = isHealth ? overviewKpis.healthTone : '#e2e8f0';
+            return (
+              <div key={card.key} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col gap-1" title={card.helper}>
+                <span className="text-xs text-slate-400">{card.label}</span>
+                <span className="text-xl font-semibold" style={{ color }}>{formatted}</span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col gap-3">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-xs px-2 py-1 rounded-full" style={{ background: `${overviewKpis.healthTone}22`, color: overviewKpis.healthTone, border: `1px solid ${overviewKpis.healthTone}55` }}>
+              {overviewKpis.healthLabel}
+            </span>
+            <span className="text-sm font-semibold text-slate-200">Cohort health: {overviewKpis.healthLabel}</span>
+          </div>
+
+          <div>
+            <div className="text-[11px] text-slate-400">WHY</div>
+            <div className="text-sm text-slate-200">{overviewKpis.econ?.why || 'No cohort data available for this selection.'}</div>
+          </div>
+
+          <ul className="text-sm text-slate-200 list-disc pl-5">
+            <li>
+              {retainedMetricLabel}: M1 {overviewKpis.econ?.retainedM1 === null || overviewKpis.econ?.retainedM1 === undefined ? '—' : `${overviewKpis.econ.retainedM1.toFixed(1)}%`},
+              {' '}M3 {overviewKpis.econ?.retainedM3 === null || overviewKpis.econ?.retainedM3 === undefined ? '—' : `${overviewKpis.econ.retainedM3.toFixed(1)}%`},
+              {' '}M6 {overviewKpis.econ?.retainedM6 === null || overviewKpis.econ?.retainedM6 === undefined ? '—' : `${overviewKpis.econ.retainedM6.toFixed(1)}%`}
+            </li>
+            <li>
+              Economic half-life: {(() => {
+                const v = overviewKpis.econ?.halfLife;
+                if (v === null || v === undefined) return 'not reached (retained stays above 50%)';
+                const m = Math.max(1, Math.round(v));
+                return `~${m} ${m === 1 ? 'month' : 'months'} (retained value falls below 50%)`;
+              })()}
+            </li>
+            <li>
+              Economic lifetime: {(() => {
+                const v = overviewKpis.econ?.lifetime;
+                if (v === null || v === undefined) return 'not reached (retained stays above 10%)';
+                const m = Math.max(1, Math.round(v));
+                return `~${m} ${m === 1 ? 'month' : 'months'} (retained value falls below 10%)`;
+              })()}
+            </li>
+          </ul>
+
+          {cohortMetricKind === 'currency' && overviewKpis.econ?.valueConcentration !== null && overviewKpis.econ?.valueConcentration !== undefined && (
+            <div className="text-sm text-slate-200">
+              Value concentration: {overviewKpis.econ.valueConcentration.toFixed(0)}% of total value generated in Month 0
+            </div>
+          )}
+
+          <div className="text-sm text-slate-400">
+            <span className="font-semibold text-slate-300">Meaning:</span> {overviewKpis.econ?.meaning || 'Interpretation not available.'}
+          </div>
+          <div className="text-sm text-slate-400">
+            <span className="font-semibold text-slate-300">Next check:</span> {overviewKpis.econ?.nextCheck || 'Re-check M1 and M3 retained value.'}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4">
+        <CohortDecayView
+          rows={calendarView.rows}
+          calendarEntries={calendarView.entries}
+          startAbs={calendarView.startAbs}
+          selectedAffiliate={selectedAffiliate}
+          selectedYear={selectedCalendarYear}
+          onYearChange={setSelectedCalendarYear}
+          metricLabel={cohortMetricLabel}
+          layout="split"
+          showAverageLine
+        />
+      </section>
+
       <div className="grid grid-cols-1 gap-8 items-start dashboard-grid">
-        {/* COLONNA 1: KPIs */}
+        {/* Legacy cohort inputs & reports */}
         <div className="space-y-4 w-full">
           <aside className="card w-full">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-              <h2 style={{ fontSize: 14, margin: 0 }}>Cohort KPIs</h2>
-              <button
-                aria-label="Info cohort KPIs"
-                className="btn secondary"
-                style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                onClick={() => setShowKpiInfo((v) => !v)}
-              >
-                i
-              </button>
-            </div>
-            {showKpiInfo && (
-              <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: 8 }}>
-                Users = cohort size; Active users = users*(1-churn) cumulati; Marketing & Commissions mappati per mese di acquisizione; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: se &lt; 1.5 le commissioni sono posticipate all’affiliato; Break-even = primo mese con cum. P&L - cum. commissions ≥ 0.
-              </div>
-            )}
-            <div style={{ display: 'grid', gap: 6, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
-              {cohortKpiCards.map((card) => {
-                const formatted = card.formatter ? card.formatter(card.value) : card.value;
-                const isNegative = typeof card.value === 'number' && card.value < 0;
-                const valueColor = (() => {
-                  if (card.key === 'netDepToCommission') {
-                    if (card.value === null) return '#cbd5e1';
-                    return card.value < 1.5 ? '#fbbf24' : '#34d399';
-                  }
-                  if (card.type === 'currency' || card.type === 'percent') {
-                    return isNegative ? '#f87171' : '#34d399';
-                  }
-                  return '#cbd5e1';
-                })();
-
-                return (
-                  <div
-                    key={card.key}
-                    className="small-card"
-                    style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, minHeight: 80 }}
-                    title={card.helper}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h2 style={{ fontSize: 14, margin: 0 }}>Cohort KPIs</h2>
+                  <button
+                    aria-label="Info cohort KPIs"
+                    className="btn secondary"
+                    style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                    onClick={() => setShowKpiInfo((v) => !v)}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-                      <span style={kpiLabelStyle}>{card.label}</span>
-                      <div style={{ fontWeight: 600, color: valueColor }} title={formatted}>
-                        {formatted}
-                      </div>
+                    i
+                  </button>
+                </div>
+                <button
+                  className="btn secondary"
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowCohortKpisBlock((v) => !v)}
+                >
+                  {showCohortKpisBlock ? 'Hide' : 'Show'}
+                </button>
+              </div>
+
+              {showCohortKpisBlock && (
+                <>
+                  {showKpiInfo && (
+                    <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: 8 }}>
+                      Users = cohort size; Active users = users*(1-churn) cumulati; Marketing & Commissions mappati per mese di acquisizione; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: se &lt; 1.5 le commissioni sono posticipate allÔÇÖaffiliato; Break-even = primo mese con cum. P&L - cum. commissions ÔëÑ 0.
                     </div>
-                    {card.helper && (
-                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                        {card.helper}
-                      </div>
-                    )}
+                  )}
+                  <div style={{ display: 'grid', gap: 6, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
+                    {cohortKpiCards.map((card) => {
+                      const formatted = card.formatter ? card.formatter(card.value) : card.value;
+                      const isNegative = typeof card.value === 'number' && card.value < 0;
+                      const valueColor = (() => {
+                        if (card.key === 'netDepToCommission') {
+                          if (card.value === null) return '#cbd5e1';
+                          return card.value < 1.5 ? '#fbbf24' : '#34d399';
+                        }
+                        if (card.type === 'currency' || card.type === 'percent') {
+                          return isNegative ? '#f87171' : '#34d399';
+                        }
+                        return '#cbd5e1';
+                      })();
+
+                      return (
+                        <div
+                          key={card.key}
+                          className="small-card"
+                          style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 12, minHeight: 80 }}
+                          title={card.helper}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+                            <span style={kpiLabelStyle}>{card.label}</span>
+                            <div style={{ fontWeight: 600, color: valueColor }} title={formatted}>
+                              {formatted}
+                            </div>
+                          </div>
+                          {card.helper && (
+                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                              {card.helper}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </>
+              )}
           </aside>
         </div>
 
@@ -1363,21 +1795,30 @@ export default function Dashboard() {
                       maxWidth: 780,
                     }}
                   >
-                    Net deposits e cohort size arrivano da "Net deposits Cohort 2025.csv" (classificazione per data di first deposit); le commissioni pagate vengono prese dal Balance Report e assegnate al mese di acquisizione della cohort; il P&L è aggregato per data di first deposit (stessa logica delle cohort).
+                    {cohortMetricLabel} e cohort size arrivano dal file di cohort selezionato; le commissioni pagate vengono prese dal Balance Report e assegnate al mese di acquisizione della cohort; il P&L ├¿ aggregato per data di first deposit (stessa logica delle cohort).
                   </div>
                 )}
               </div>
+              <button
+                className="btn secondary"
+                style={{ padding: '4px 10px', height: 28 }}
+                onClick={() => setShowMonthlyAggregatesBlock((v) => !v)}
+              >
+                {showMonthlyAggregatesBlock ? 'Hide' : 'Show'}
+              </button>
             </div>
 
-            <div
-              style={{
-                marginTop: 12,
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 12,
-                alignItems: 'flex-end',
-              }}
-            >
+            {showMonthlyAggregatesBlock && (
+              <>
+              <div
+                style={{
+                  marginTop: 12,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  alignItems: 'flex-end',
+                }}
+              >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <span style={{ fontSize: 12, color: '#94a3b8' }}>Cohort (mese FD)</span>
                 <select
@@ -1453,12 +1894,12 @@ export default function Dashboard() {
               </div>
 
               <div style={{ fontSize: 12, color: '#94a3b8', maxWidth: 260 }}>
-                La tabella viene popolata automaticamente con Net deposits e Cohort size della selezione.
+                La tabella viene popolata automaticamente con {cohortMetricLabel} e Cohort size della selezione.
               </div>
-            </div>
+              </div>
 
-            <div style={{ marginTop: 10 }}>
-              <table className="table w-full">
+              <div style={{ marginTop: 10 }}>
+                <table className="table w-full">
                 <thead>
                   <tr>
                     <th>Metric</th>
@@ -1497,7 +1938,7 @@ export default function Dashboard() {
                   {/* Input metrics without marketing spend */}
                   {inputMetrics.filter((r) => r !== 'Marketing spend').map((r) => (
                     <tr key={r}>
-                      <td>{r}</td>
+                      <td>{r === 'Net deposits' ? cohortMetricLabel : r}</td>
                       {months.map((m, idx) => (
                         <td key={m}>
                           <input
@@ -1621,7 +2062,7 @@ export default function Dashboard() {
                         }}
                       >
                         {breakEvenRow[idx] === null || breakEvenRow[idx] === undefined ? (
-                          <span className="num" style={{ color: '#94a3b8' }}>—</span>
+                          <span className="num" style={{ color: '#94a3b8' }}>ÔÇö</span>
                         ) : (
                           <span title={formatEuroFull(breakEvenRow[idx] || 0)} className="num">
                             {formatEuro(breakEvenRow[idx] || 0)}
@@ -1635,13 +2076,15 @@ export default function Dashboard() {
                         title={lastBreakEvenValue === null ? undefined : formatEuroFull(lastBreakEvenValue || 0)}
                         className="num"
                       >
-                        {lastBreakEvenValue === null ? '—' : formatEuro(lastBreakEvenValue || 0)}
+                        {lastBreakEvenValue === null ? 'ÔÇö' : formatEuro(lastBreakEvenValue || 0)}
                       </span>
                     </td>
                   </tr>
                 </tbody>
               </table>
-            </div>
+              </div>
+              </>
+            )}
           </main>
 
           {showCohortDbBlock && (
@@ -1745,49 +2188,79 @@ export default function Dashboard() {
         {/* COLONNA 3: grafici */}
         <div className="space-y-4 w-full flex flex-col items-end">
           <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-sm font-medium text-slate-200 m-0">Break-even analysis</h3>
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-medium text-slate-200 m-0">Break-even analysis</h3>
+                <button
+                  aria-label="Info break-even"
+                  className="btn secondary"
+                  style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                  onClick={() => setShowBreakEvenInfo((v) => !v)}
+                >
+                  i
+                </button>
+              </div>
               <button
-                aria-label="Info break-even"
                 className="btn secondary"
-                style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                onClick={() => setShowBreakEvenInfo((v) => !v)}
+                style={{ padding: '4px 10px', height: 28 }}
+                onClick={() => setShowBreakEvenBlock((v) => !v)}
               >
-                i
+                {showBreakEvenBlock ? 'Hide' : 'Show'}
               </button>
             </div>
-            {showBreakEvenInfo && (
-              <p className="text-xs text-slate-400 mb-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 10px' }}>
-                Formula: cumulative P&amp;L (da "PL Cohort Analysis.csv") meno cumulative Commissions paid (negative). Il break-even month è il primo indice in cui la curva diventa &gt;= 0.
-              </p>
+            {showBreakEvenBlock && (
+              <>
+                {showBreakEvenInfo && (
+                  <p className="text-xs text-slate-400 mb-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 10px' }}>
+                    Formula: cumulative P&amp;L (da "PL Cohort Analysis.csv") meno cumulative Commissions paid (negative). Il break-even month ├¿ il primo indice in cui la curva diventa &gt;= 0.
+                  </p>
+                )}
+                <div className="h-48 w-full flex justify-end">
+                  <BreakEvenChart
+                    beCurve={breakEvenCurve}
+                    labels={breakEvenLabels}
+                    breakEvenIndex={breakEvenIndex}
+                  />
+                </div>
+              </>
             )}
-            <div className="h-48 w-full flex justify-end">
-                <BreakEvenChart
-                  beCurve={breakEvenCurve}
-                  labels={breakEvenLabels}
-                  breakEvenIndex={breakEvenIndex}
+          </section>
+
+          <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-sm font-medium text-slate-200 m-0">P&L trend</h3>
+              <button
+                className="btn secondary"
+                style={{ padding: '4px 10px', height: 28 }}
+                onClick={() => setShowPnLTrendBlock((v) => !v)}
+              >
+                {showPnLTrendBlock ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {showPnLTrendBlock && (
+              <div className="h-48 w-full flex justify-end">
+                <PnLTrendChart
+                  dataPoints={derivedSeries['P&L']}
+                  labels={months}
                 />
-            </div>
+              </div>
+            )}
           </section>
 
           <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <h3 className="text-sm font-medium text-slate-200 mb-2">
-              P&L trend
-            </h3>
-            <div className="h-48 w-full flex justify-end">
-              <PnLTrendChart
-                dataPoints={derivedSeries['P&L']}
-                labels={months}
-              />
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <h3 className="text-sm font-medium text-slate-200 m-0">Top Performing Affiliates</h3>
+              <button
+                className="btn secondary"
+                style={{ padding: '4px 10px', height: 28 }}
+                onClick={() => setShowTopAffiliatesBlock((v) => !v)}
+              >
+                {showTopAffiliatesBlock ? 'Hide' : 'Show'}
+              </button>
             </div>
-          </section>
-
-          <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <h3 className="text-sm font-medium text-slate-200 mb-2">
-              Top Performing Affiliates
-            </h3>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="table" style={{ minWidth: 380 }}>
+            {showTopAffiliatesBlock && (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="table" style={{ minWidth: 380 }}>
                 <thead>
                   <tr>
                     <th style={{ width: 30 }}>#</th>
@@ -1796,7 +2269,7 @@ export default function Dashboard() {
                     <th style={{ textAlign: 'right' }} title="% Registrations">%R</th>
                     <th style={{ textAlign: 'right' }} title="P&amp;L">P</th>
                     <th style={{ textAlign: 'right' }} title="% P&amp;L">%P</th>
-                    <th style={{ textAlign: 'center' }} title="ROI">●</th>
+                    <th style={{ textAlign: 'center' }} title="ROI">ÔùÅ</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1805,7 +2278,7 @@ export default function Dashboard() {
                     return (
                       <tr key={`${a.affiliate}-${idx}`}>
                         <td>{idx + 1}</td>
-                        <td style={{ color: '#60a5fa', fontWeight: 600 }}>{a.affiliate || '—'}</td>
+                        <td style={{ color: '#60a5fa', fontWeight: 600 }}>{a.affiliate || 'ÔÇö'}</td>
                         <td style={{ textAlign: 'right' }} title={formatNumberFull(a.cohortSize || 0)} className="num">{formatNumberShort(a.cohortSize || 0)}</td>
                         <td style={{ textAlign: 'right' }} title={formatPercent(a.regPct)} className="num">{formatPercent(a.regPct)}</td>
                         <td style={{ textAlign: 'right' }} title={formatEuroFull(a.total || 0)} className="num">{formatEuro(a.total || 0)}</td>
@@ -1834,7 +2307,8 @@ export default function Dashboard() {
                   )}
                 </tbody>
               </table>
-            </div>
+              </div>
+            )}
           </section>
 
           {showAutoReportBlock && (
@@ -1889,3 +2363,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
