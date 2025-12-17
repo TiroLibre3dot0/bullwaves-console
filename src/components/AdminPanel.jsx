@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { getAllEvents, getUserStats, getSectionStats, getOnlineUsers } from '../services/trackingService'
 import { sections } from '../pages/orgChartData'
 
@@ -33,6 +33,7 @@ export default function AdminPanel() {
   const sectionStats = useMemo(() => getSectionStats(), [])
   const onlineUsers = useMemo(() => getOnlineUsers(events, new Date(), 5), [events])
   const managementUsers = useMemo(() => getManagementUsers(), [])
+  const [showTools, setShowTools] = useState(false)
 
   const userStatsMap = useMemo(() => {
     const map = new Map()
@@ -42,8 +43,43 @@ export default function AdminPanel() {
 
   const onlineSet = useMemo(() => new Set(onlineUsers.map((u) => (u.email || '').toLowerCase())), [onlineUsers])
 
+  const tools = [
+    { name: 'Creolabs / Qlik', href: 'https://login.qlik.com/login?state=hKFo2SBsNGtYOEs4eXM0MTQyal9qZlZZd2JxVUxGRTNvOFk4eKFupWxvZ2luo3RpZNkgSTRORnUzNW5iSl9YR2NXVTZmQ0pKV1VkeVVJeXZFMDSjY2lk2SBQRjVZa0Nhem9qUGQ2OGhHVGhXVHhMNk4wcWw3RUVKYQ&client=PF5YkCazojPd68hGThWTxL6N0ql7EEJa&protocol=oauth2&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fqlk6ufzb2vk9dn9.uk.qlikcloud.com%2Flogin%2Fcallback&nonce=cMBZFdQmCwCyxd61Cz3Ios9DY-kDPwRIHfL0PgmmhYU&code_challenge=hHRAyjfogYyP8cEyDbZGNxEG8OiGaRulBWTmBBqH-G0&code_challenge_method=S256' },
+    { name: 'CELLXPERT', href: 'https://partner.trackingaffiliates.com/v2/adminv2/#!/app/pending-affiliates/' },
+    { name: 'SKALE', href: 'https://bul934907.skalecrm.com/index.php' },
+    { name: 'BullwavesPrime Prop Admin', href: 'https://bwpadmin.bullwaves.com/login' },
+  ]
+
+  const openTool = (href) => {
+    if (!href) return
+    window.open(href, '_blank', 'noopener,noreferrer')
+  }
+
   return (
     <div className="grid-global" style={{ marginTop: 12 }}>
+      <div className="card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <h2 style={{ margin: 0 }}>Tools</h2>
+          <button className="btn secondary" style={{ padding: '6px 10px' }} onClick={() => setShowTools((v) => !v)}>
+            {showTools ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        {showTools && (
+          <div className="stack" style={{ marginTop: 12 }}>
+            {tools.map((tool) => (
+              <button
+                key={tool.name}
+                className="btn"
+                style={{ justifyContent: 'flex-start' }}
+                onClick={() => openTool(tool.href)}
+              >
+                {tool.name}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="card">
         <h2>Online now (last 5 min)</h2>
         {onlineUsers.length === 0 ? (
