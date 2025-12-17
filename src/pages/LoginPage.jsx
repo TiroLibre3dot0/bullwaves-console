@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
-const typingMessages = ['Welcome to Bullwaves Intelligence', 'Management-only access', 'Email allowlist enforced']
+const typingMessages = ['Welcome to Bullwaves Intelligence', 'Management + Finance access', 'Email allowlist enforced']
 
 export default function LoginPage() {
   const { loginWithEmail, allowlist } = useAuth()
@@ -55,7 +55,7 @@ export default function LoginPage() {
   return (
     <div className="login-shell">
       <div className="login-card">
-        <div className="login-pill subtle">Management access only</div>
+        <div className="login-pill subtle">Management + Finance access</div>
         <div className="login-typing" aria-live="polite">{displayed}</div>
         <div className="login-title">Bullwaves Intelligence</div>
         <p className="login-subtitle">Enter your work email to continue. Passwords are not required.</p>
@@ -77,7 +77,7 @@ export default function LoginPage() {
               required
             />
           </div>
-          <div className="login-hint">Only management emails from the org chart will be accepted.</div>
+          <div className="login-hint">Only Management or Finance emails from the org chart will be accepted.</div>
           {error && <div className="login-error" role="alert">{error}</div>}
           <button type="submit" className="btn login-btn">Continue</button>
         </form>
@@ -87,8 +87,8 @@ export default function LoginPage() {
         </div>
 
         {allowlistPreview && (
-          <div className="login-allowlist" aria-label="Allowlisted management">
-            <div className="allowlist-label">Who can log in</div>
+          <div className="login-allowlist" aria-label="Allowlisted management and finance">
+            <div className="allowlist-label">Who can log in (Management + Finance)</div>
             <div className="allowlist-names">{allowlistPreview}</div>
           </div>
         )}

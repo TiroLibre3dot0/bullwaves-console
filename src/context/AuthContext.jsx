@@ -5,21 +5,30 @@ import { trackEvent } from '../services/trackingService'
 const AuthContext = createContext({ user: null, allowlist: [], loginWithEmail: () => ({ success: false }), logout: () => {} })
 const STORAGE_KEY = 'bw-auth-user'
 
-function buildManagementAllowlist() {
-  const managementSection = sections.find((section) => section.id === 'management-team')
-  const roles = managementSection?.roles || []
+function buildAllowlist() {
   const deduped = new Map()
 
-  roles.forEach((role) => {
-    const email = (role.email || '').trim()
-    if (!email || email === '—') return
-    const key = email.toLowerCase()
-    deduped.set(key, {
-      name: role.name,
-      email,
-      division: role.division || '',
-      department: role.department || '',
-      title: role.title || '',
+  const allowDept = (department = '', sectionId = '') => {
+    const d = department.trim().toLowerCase()
+    if (sectionId === 'management-team') return true
+    if (sectionId === 'finance') return true
+    return d === 'finance' || d === 'reconciliation' || d === 'psp'
+  }
+
+  sections.forEach((section) => {
+    const roles = section?.roles || []
+    roles.forEach((role) => {
+      const email = (role.email || '').trim()
+      if (!email || email === '—') return
+      if (!allowDept(role.department || '', section.id)) return
+      const key = email.toLowerCase()
+      deduped.set(key, {
+        name: role.name,
+        email,
+        division: role.division || '',
+        department: role.department || '',
+        title: role.title || '',
+      })
     })
   })
 
@@ -27,7 +36,7 @@ function buildManagementAllowlist() {
 }
 
 export function AuthProvider({ children }) {
-  const allowlist = useMemo(() => buildManagementAllowlist(), [])
+  const allowlist = useMemo(() => buildAllowlist(), [])
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -59,7 +68,7 @@ export function AuthProvider({ children }) {
     if (!normalized) return { success: false, message: 'Please enter an email.' }
 
     const match = allowlist.find((entry) => entry.email.toLowerCase() === normalized)
-    if (!match) return { success: false, message: 'Email not found in management allowlist.' }
+    if (!match) return { success: false, message: 'Email not found in the allowlist (Management + Finance).' }
 
     setUser(match)
     trackEvent({ type: 'LOGIN', userEmail: match.email, userName: match.name, userRole: match.title || match.department })
