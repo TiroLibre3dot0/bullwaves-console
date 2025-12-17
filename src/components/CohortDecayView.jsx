@@ -37,7 +37,7 @@ export default function CohortDecayView({
   metricLabel = 'Net deposits',
 }) {
   const [viewMode, setViewMode] = useState('heatmap')
-  const [valueMode, setValueMode] = useState('absolute')
+  const [valueMode, setValueMode] = useState('percent')
   const [selectedRows, setSelectedRows] = useState([])
   const chartRef = useRef(null)
   const [curveFlags, setCurveFlags] = useState([])

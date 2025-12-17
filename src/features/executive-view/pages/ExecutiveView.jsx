@@ -11,7 +11,7 @@ import { sections } from '../../../pages/orgChartData'
 export default function ExecutiveView() {
     const { mediaRows, payments, loading } = useMediaPaymentsData()
     const { projects } = useRoadmapData()
-    const [scenario, setScenario] = useState('base')
+    const [scenario, setScenario] = useState('upside')
     const [assumptions, setAssumptions] = useState(() => cloneAssumptions(defaultAssumptions))
     const [projectPlan, setProjectPlan] = useState([])
     const [viewMode, setViewMode] = useState('quarter')

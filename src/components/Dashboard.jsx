@@ -250,7 +250,7 @@ export default function Dashboard() {
   const [showAutoReportInfo, setShowAutoReportInfo] = useState(false);
   const showCohortDbBlock = false; // temporarily hidden per request
   const showAutoReportBlock = false; // temporarily hidden per request
-  const [selectedCalendarYear, setSelectedCalendarYear] = useState('all');
+  const [selectedCalendarYear, setSelectedCalendarYear] = useState(2025);
 
   const cohortMetricLabel = (() => {
     if (cohortAnalysisMetric === 'deposits') return 'Deposits';
