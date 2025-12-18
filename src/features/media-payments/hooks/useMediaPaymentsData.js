@@ -63,6 +63,7 @@ const parsePaymentRow = (r) => {
     affiliate: (r.Affiliate ?? r['Affiliate'] ?? '').toString().trim() || '—',
     amount: cleanNumber(r['Payment amount'] ?? r.amount),
     type: (r['Payment Range'] ?? r['Commission Type'] ?? '').toString().trim() || 'Other',
+    details: (r.Details ?? r['Details'] ?? r.details ?? '').toString().trim(),
   }
 }
 

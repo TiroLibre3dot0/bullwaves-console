@@ -1,13 +1,57 @@
-import React from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 
 export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
+  const [showTools, setShowTools] = useState(false)
+  const hoverTimer = useRef(null)
+
+  const tools = useMemo(
+    () => [
+      { name: 'Creolabs / Qlik', href: 'https://login.qlik.com/login?state=hKFo2SBsNGtYOEs4eXM0MTQyal9qZlZZd2JxVUxGRTNvOFk4eKFupWxvZ2luo3RpZNkgSTRORnUzNW5iSl9YR2NXVTZmQ0pKV1VkeVVJeXZFMDSjY2lk2SBQRjVZa0Nhem9qUGQ2OGhHVGhXVHhMNk4wcWw3RUVKYQ&client=PF5YkCazojPd68hGThWTxL6N0ql7EEJa&protocol=oauth2&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fqlk6ufzb2vk9dn9.uk.qlikcloud.com%2Flogin%2Fcallback&nonce=cMBZFdQmCwCyxd61Cz3Ios9DY-kDPwRIHfL0PgmmhYU&code_challenge=hHRAyjfogYyP8cEyDbZGNxEG8OiGaRulBWTmBBqH-G0&code_challenge_method=S256' },
+      { name: 'CELLXPERT', href: 'https://partner.trackingaffiliates.com/v2/adminv2/#!/app/pending-affiliates/' },
+      { name: 'SKALE', href: 'https://bul934907.skalecrm.com/index.php' },
+      { name: 'BullwavesPrime Prop Admin', href: 'https://bwpadmin.bullwaves.com/login' },
+    ],
+    []
+  )
+
+  const openTool = (href) => {
+    if (!href) return
+    window.open(href, '_blank', 'noopener,noreferrer')
+  }
+
+  const handleEnter = () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current)
+    setShowTools(true)
+  }
+
+  const handleLeave = () => {
+    hoverTimer.current = setTimeout(() => setShowTools(false), 120)
+  }
 
   return (
     <header className="topbar">
-      <div className="title">Bullwaves</div>
+      <div
+        className="title logo-hit"
+        onMouseEnter={handleEnter}
+        onMouseLeave={handleLeave}
+      >
+        Bullwaves
+        {showTools && (
+          <div className="logo-tools-pop" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+            <div className="logo-tools-title">Tools</div>
+            <div className="logo-tools-list">
+              {tools.map((tool) => (
+                <button key={tool.name} className="logo-tools-item" onClick={() => openTool(tool.href)}>
+                  {tool.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="topbar-nav-slot">{children}</div>
       <div className="meta">
         {user ? (

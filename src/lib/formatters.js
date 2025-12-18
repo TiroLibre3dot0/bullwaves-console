@@ -22,9 +22,15 @@ export function formatEuro(value) {
   return `€${formatNumberShort(value)}`;
 }
 
+const euroFullFormatter = new Intl.NumberFormat('en-GB', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
 export function formatEuroFull(value) {
-  // Keep consistent short formatting across the UI.
-  return `€${formatNumberShort(value)}`;
+  return euroFullFormatter.format(Number(value || 0));
 }
 
 export function formatPercent(value, digits = 1) {

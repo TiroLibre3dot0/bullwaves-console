@@ -52,7 +52,8 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
 
     const matchesFilters = (row) => {
       const yearOk = selectedYear === 'all' ? true : Number(row.year) === Number(selectedYear)
-      const monthOk = selectedMonth === 'all' ? true : Number(row.monthIndex) === Number(selectedMonth)
+      const rowMonthKey = toKey(row.year, row.monthIndex)
+      const monthOk = selectedMonth === 'all' ? true : rowMonthKey === selectedMonth
       const searchOk = search ? (row.affiliate || '').toLowerCase().includes(search.toLowerCase()) : true
       return yearOk && monthOk && searchOk
     }
@@ -91,6 +92,7 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
           numberOfPayments: 0,
           paidAmount: 0,
           paymentDate: undefined,
+          details: [],
           status: 'TO_PAY',
         })
       }
@@ -116,9 +118,11 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       acc.numberOfPayments += 1
       if (p.date && !acc.paymentDate) acc.paymentDate = p.date?.toISOString?.().slice(0, 10)
       if (!acc.type && p.type) acc.type = p.type
+      if (p.details) acc.details.push(p.details)
     })
 
     affMonth.forEach((entry) => {
+      entry.details = Array.from(new Set(entry.details)).filter(Boolean)
       const roiValue = entry.commissionTotal > 0 ? (entry.netDeposits / Math.max(entry.commissionTotal, 1)) : 0
       entry.roi = roiValue
 

@@ -41,11 +41,21 @@ export default function InvestmentsDashboard() {
   }, [mediaRows, payments])
 
   const monthOptions = useMemo(() => {
-    if (selectedYear === 'all') return []
-    const set = new Set()
-    mediaRows.forEach((m) => Number(m.year) === Number(selectedYear) && set.add(m.monthIndex))
-    payments.forEach((p) => Number(p.year) === Number(selectedYear) && set.add(p.monthIndex))
-    return Array.from(set).sort((a, b) => a - b).map((idx) => ({ value: idx, label: monthLabel(`${selectedYear}-${String(Number(idx) + 1).padStart(2, '0')}`) }))
+    const map = new Map()
+    const add = (row) => {
+      if (row == null) return
+      if (selectedYear !== 'all' && Number(row.year) !== Number(selectedYear)) return
+      const year = Number(row.year)
+      const monthIdx = Number(row.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0) return
+      const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
+      map.set(key, monthLabel(key))
+    }
+    mediaRows.forEach(add)
+    payments.forEach(add)
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.value.localeCompare(b.value))
   }, [mediaRows, payments, selectedYear])
 
   const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
@@ -105,7 +115,6 @@ export default function InvestmentsDashboard() {
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 style={{ ...selectStyle, minWidth: 160 }}
-                disabled={selectedYear === 'all'}
               >
                 <option value="all">All months</option>
                 {monthOptions.map((m) => (
@@ -242,7 +251,7 @@ export default function InvestmentsDashboard() {
                                     <th style={{ textAlign: 'right' }} title="Deferred = expected − payable">Comm deferred</th>
                                     <th style={{ textAlign: 'right' }}>Paid</th>
                                     <th style={{ textAlign: 'left' }}>Payment date</th>
-                                    <th style={{ textAlign: 'left' }}>Status</th>
+                                    <th style={{ textAlign: 'left' }}>Details</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -269,7 +278,9 @@ export default function InvestmentsDashboard() {
                                         <td style={{ textAlign: 'right', color: '#f97316' }} className="num" title={formatEuroFull(r.marketingDeferred)}>{formatEuro(r.marketingDeferred)}</td>
                                         <td style={{ textAlign: 'right', color: '#38bdf8' }} className="num" title={formatEuroFull(r.paidAmount)}>{formatEuro(r.paidAmount)}</td>
                                         <td>{r.paymentDate || '—'}</td>
-                                        <td>{r.status}</td>
+                                        <td title={r.details?.length ? r.details.join(' | ') : '—'}>
+                                          {r.details?.length ? r.details.join(' • ') : '—'}
+                                        </td>
                                       </tr>
                                     ))}
                                   {!ledger.ledger.some((r) => r.affiliateId === a.affiliateId) && (
