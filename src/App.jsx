@@ -45,6 +45,7 @@ export default function App(){
     if (pathname.startsWith('/cohort')) return 'cohort';
     if (pathname.startsWith('/org-chart')) return 'orgChart';
     if (pathname.startsWith('/roadmap')) return 'roadmap';
+    if (pathname.startsWith('/ongoing')) return 'roadmap';
     if (pathname.startsWith('/summary-report')) return 'summary';
     return 'overview';
   };
@@ -84,7 +85,7 @@ export default function App(){
       cohort: 'cohort',
       orgChart: 'org-chart',
       summary: 'summary',
-      roadmap: 'roadmap',
+      roadmap: 'mega-stories',
       admin: 'admin-panel',
     }
     const sectionId = viewToSection[view]
@@ -122,7 +123,7 @@ export default function App(){
               Cohort
             </button>
             <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
-              Roadmap
+              Mega-Stories
             </button>
             <button
               className={`tab ${view === 'orgChart' ? 'active' : ''}`}
