@@ -6,6 +6,8 @@ import {
   logAudit,
   getAuditLog,
   loadMediaReport,
+  buildAffiliateKpiMap,
+  getAffiliateKpi,
   getAffiliateById
 } from '../services/supportUserCheckService';
 
@@ -140,8 +142,9 @@ export default function SupportUserCheck() {
 
   useEffect(() => {
     loadCsvRows().catch(e => setError(e.message));
-    // load media report in background (fail gracefully)
-    loadMediaReport().then(() => setMediaLoaded(true)).catch(() => setMediaLoaded(false))
+    // load media report and KPI map in background (fail gracefully)
+    loadMediaReport().catch(() => {})
+    buildAffiliateKpiMap().then(() => setMediaLoaded(true)).catch(() => setMediaLoaded(false))
   }, []);
 
   const handleSearch = async () => {
@@ -247,6 +250,7 @@ export default function SupportUserCheck() {
       {selected && (() => {
         const mapped = getMapped(selected)
         const affiliateMeta = getAffiliateById(mapped.affiliateId)
+        const affiliateKpi = mapped.affiliateId ? getAffiliateKpi(mapped.affiliateId) : null
         const knownAffiliate = !!(mapped.affiliateId && affiliateMeta)
         const affiliatePresent = !!mapped.affiliateId
         const shortSummary = getShortSummary(mapped)
@@ -306,6 +310,116 @@ export default function SupportUserCheck() {
                   <div><b>Commission Model:</b> {getCommissionModel(mapped)}</div>
                   <div><b>Affiliate-driven:</b> {affiliatePresent ? 'Yes' : 'No'}</div>
                   {affiliatePresent && (knownAffiliate ? <span className="badge">Known affiliate</span> : <span className="badge status" style={{ background: '#f59e0b' }}>Affiliate not found in Media Report</span>)}
+
+                  {/* Affiliate Intelligence block */}
+                  {affiliatePresent && (
+                    <div style={{ marginTop: 12 }}>
+                      {!mediaLoaded ? (
+                        <div style={{ color: 'var(--muted)' }}>Affiliate KPI source unavailable</div>
+                      ) : (
+                        affiliateKpi ? (
+                          <div className="affiliate-intel card">
+                            <h3>Affiliate Intelligence</h3>
+                            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                              {affiliateKpi.spend != null && (
+                                <div>
+                                  <b>Spend:</b>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{Number(affiliateKpi.spend).toLocaleString()}</div>
+                                </div>
+                              )}
+                              {affiliateKpi.clicks != null && (
+                                <div>
+                                  <b>Clicks:</b>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{Number(affiliateKpi.clicks).toLocaleString()}</div>
+                                </div>
+                              )}
+                              {affiliateKpi.registrations != null && (
+                                <div>
+                                  <b>Registrations:</b>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{Number(affiliateKpi.registrations).toLocaleString()}</div>
+                                </div>
+                              )}
+                              {affiliateKpi.ftd != null && (
+                                <div>
+                                  <b>FTD:</b>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{Number(affiliateKpi.ftd).toLocaleString()}</div>
+                                </div>
+                              )}
+                              {affiliateKpi.eCPA != null && (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                    <b>eCPA:</b>
+                                    <small style={{ color: 'var(--muted)', fontSize: '0.85em' }}>cost per first deposit</small>
+                                  </div>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{Number(affiliateKpi.eCPA).toFixed(2)}</div>
+                                </div>
+                              )}
+                              {affiliateKpi.CR_reg != null && (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                    <b>CR_reg:</b>
+                                    <small style={{ color: 'var(--muted)', fontSize: '0.85em' }}>registrations / clicks</small>
+                                  </div>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{(affiliateKpi.CR_reg * 100).toFixed(1)}%</div>
+                                </div>
+                              )}
+                              {affiliateKpi.CR_ftd != null && (
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                    <b>CR_ftd:</b>
+                                    <small style={{ color: 'var(--muted)', fontSize: '0.85em' }}>FTD / registrations</small>
+                                  </div>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{(affiliateKpi.CR_ftd * 100).toFixed(1)}%</div>
+                                </div>
+                              )}
+                              {affiliateKpi.ROI != null && (
+                                <div>
+                                  <b>ROI:</b>
+                                  <div style={{ color: 'var(--muted)', fontSize: '0.95em' }}>{(affiliateKpi.ROI * 100).toFixed(1) + '%'}</div>
+                                </div>
+                              )}
+                            </div>
+                            {/* Health */}
+                            {(() => {
+                              const roi = affiliateKpi.ROI
+                              const spend = affiliateKpi.spend || 0
+                              const clicks = affiliateKpi.clicks || 0
+                              const ftd = affiliateKpi.ftd || 0
+                              let health = { label: 'Unknown', color: '#f59e0b', reason: 'Data incomplete' }
+                              if (roi != null) {
+                                if (roi >= 0) health = { label: 'GREEN', color: '#16a34a', reason: 'Non-negative ROI' }
+                                else if (roi < 0 && roi >= -0.2) health = { label: 'YELLOW', color: '#f59e0b', reason: 'Slightly negative ROI' }
+                                else health = { label: 'RED', color: '#dc2626', reason: 'Strongly negative ROI' }
+                              } else if (spend < 100 && (clicks < 100 || ftd < 3)) {
+                                health = { label: 'GREEN', color: '#16a34a', reason: 'Low spend/volume' }
+                              }
+
+                              const tooltip = 'GREEN: profitable or very low spend/volume. YELLOW: slightly negative or incomplete data. RED: clearly unprofitable traffic.'
+
+                              return (
+                                <div style={{ marginTop: 8 }}>
+                                  <span className="badge" title={tooltip} style={{ background: health.color, padding: '6px 10px', fontWeight: 700, fontSize: '0.95em' }}>{health.label}</span>
+                                  <div style={{ color: 'var(--muted)', marginTop: 6 }}>Health: {health.reason}</div>
+                                </div>
+                              )
+                            })()}
+
+                            {/* Support impact hint */}
+                            <div style={{ marginTop: 10, fontWeight: 700, color: '#0f172a' }}>
+                              {(() => {
+                                if (affiliateKpi.spend != null && affiliateKpi.spend > 10000) return 'Support impact: High value traffic — prioritize response and avoid delays.'
+                                if (affiliateKpi.ftd != null && affiliateKpi.ftd >= 10) return 'Support impact: High value traffic — prioritize response and avoid delays.'
+                                if ((affiliateKpi.clicks != null && affiliateKpi.clicks < 50) || (affiliateKpi.ftd != null && affiliateKpi.ftd < 3)) return 'Support impact: Low volume — standard handling.'
+                                return 'Support impact: Data incomplete — treat as standard unless risk flags.'
+                              })()}
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ color: 'var(--muted)', marginTop: 8 }}>No KPI data for this affiliate in Media Report</div>
+                        )
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
