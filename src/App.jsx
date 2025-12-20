@@ -1,66 +1,113 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Topbar from './components/Topbar'
-import Dashboard from './components/Dashboard'
-import GlobalDashboard from './features/media-payments/components/GlobalDashboard'
-import InvestmentsDashboard from './features/investments/components/InvestmentsDashboard'
 import OrgChart from './pages/OrgChart'
 import SummaryReport from './features/media-payments/pages/SummaryReport'
 import Report from './features/media-payments/pages/Report'
-import ProfitAnalysisPage from './features/media-payments/pages/ProfitAnalysisPage'
-import AffiliateAnalysis from './features/affiliate-analysis/AffiliateAnalysis'
 import RequireAuth from './context/RequireAuth'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
-import ExecutiveView from './features/executive-view/pages/ExecutiveView'
+import AffiliateHub from './features/affiliate/pages/AffiliateHub'
+import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
+import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
+import SupportUserCheck from './features/support/pages/SupportUserCheck'
 
 export default function App(){
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
 
-  const routes = useMemo(() => ({
-    cohort: '/',
-    executiveSummary: '/executive-summary',
-    executiveView: '/executive-view',
-    marketingExpenses: '/marketing-expenses',
-    affiliateAnalysis: '/affiliate-analysis',
-    orgChart: '/org-chart',
-    overview: '/overview',
-    report: '/report',
-    roadmap: '/roadmap',
-  }), []);
+   const routes = useMemo(() => ({
+     cohort: '/',
+     executive: '/executive',
+     affiliate: '/affiliate',
+     orgChart: '/org-chart',
+     overview: '/overview',
+     report: '/report',
+     roadmap: '/roadmap',
+     supportUserCheck: '/support-user-check',
+   }), []);
 
-  const pathToView = (pathname) => {
-    if (!pathname || pathname === '/') return 'overview';
-    if (pathname.startsWith('/overview')) return 'overview';
-    if (pathname.startsWith('/profit-analysis')) return 'overview';
-    if (pathname.startsWith('/executive-summary')) return 'executiveSummary';
-    if (pathname.startsWith('/executive-view')) return 'executiveView';
-    if (pathname.startsWith('/global')) return 'executiveSummary';
-    if (pathname.startsWith('/marketing-expenses')) return 'marketingExpenses';
-    if (pathname.startsWith('/investments')) return 'marketingExpenses';
-    if (pathname.startsWith('/affiliate-analysis')) return 'affiliateAnalysis';
-    if (pathname.startsWith('/report')) return 'report';
+   const pathToView = (pathname) => {
+     if (!pathname || pathname === '/') return 'overview';
+     if (pathname.startsWith('/overview')) return 'overview';
+     if (pathname.startsWith('/profit-analysis')) return 'overview';
+     if (pathname.startsWith('/executive') || pathname.startsWith('/executive-summary') || pathname.startsWith('/executive-view') || pathname.startsWith('/global')) return 'executive';
+     if (pathname.startsWith('/affiliate') || pathname.startsWith('/affiliate-analysis')) return 'affiliate';
+     if (pathname.startsWith('/marketing-expenses')) return 'affiliate';
+     if (pathname.startsWith('/investments')) return 'affiliate';
+     if (pathname.startsWith('/report')) return 'report';
+     if (pathname.startsWith('/cohort')) return 'affiliate';
+     if (pathname.startsWith('/org-chart')) return 'orgChart';
+     if (pathname.startsWith('/roadmap')) return 'roadmap';
+     if (pathname.startsWith('/ongoing')) return 'roadmap';
+     if (pathname.startsWith('/summary-report')) return 'summary';
+     return 'overview';
+   };
+
+  const affiliateSectionFromPath = (pathname) => {
+    if (pathname.startsWith('/marketing-expenses') || pathname.startsWith('/investments')) return 'payments';
     if (pathname.startsWith('/cohort')) return 'cohort';
-    if (pathname.startsWith('/org-chart')) return 'orgChart';
-    if (pathname.startsWith('/roadmap')) return 'roadmap';
-    if (pathname.startsWith('/ongoing')) return 'roadmap';
-    if (pathname.startsWith('/summary-report')) return 'summary';
-    return 'overview';
-  };
+    return 'analysis';
+  }
 
   const [view, setView] = useState(() => pathToView(window.location.pathname));
+  const [affiliateSection, setAffiliateSection] = useState(() => affiliateSectionFromPath(window.location.pathname));
+  const [executiveSection, setExecutiveSection] = useState(() => {
+    const p = window.location.pathname
+    if (p.startsWith('/executive-summary') || p.startsWith('/global')) return 'summary';
+    if (p.startsWith('/executive-view')) return 'view';
+    return 'summary';
+  });
 
   useEffect(() => {
-    const onPop = () => setView(pathToView(window.location.pathname));
+    const onPop = () => {
+      const nextPath = window.location.pathname
+      setView(pathToView(nextPath))
+      setAffiliateSection(affiliateSectionFromPath(nextPath))
+    }
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  const goAffiliateSection = (section = 'analysis') => {
+    const pathBySection = {
+      analysis: '/affiliate-analysis',
+      payments: '/marketing-expenses',
+      cohort: '/cohort',
+    }
+    const nextPath = pathBySection[section] || '/affiliate'
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({ view: 'affiliate', section }, '', nextPath)
+    }
+    setAffiliateSection(section)
+    setView('affiliate')
+  }
+
+  const goExecutiveSection = (section = 'summary') => {
+    const pathBySection = {
+      summary: '/executive-summary',
+      view: '/executive-view',
+    }
+    const nextPath = pathBySection[section] || '/executive';
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({ view: 'executive', section }, '', nextPath)
+    }
+    setExecutiveSection(section)
+    setView('executive')
+  }
+
   const navigate = (nextView) => {
     if (nextView === 'admin' && !isAdmin) {
       setView('overview')
+      return
+    }
+    if (nextView === 'affiliate') {
+      goAffiliateSection(affiliateSection || 'analysis')
+      return
+    }
+    if (nextView === 'executive') {
+      goExecutiveSection(executiveSection || 'summary')
       return
     }
     const nextPath = routes[nextView] || '/';
@@ -80,9 +127,7 @@ export default function App(){
       overview: 'overview',
       executiveSummary: 'executive-summary',
       executiveView: 'executive-view',
-      affiliateAnalysis: 'affiliate-analysis',
-      marketingExpenses: 'marketing-expenses',
-      cohort: 'cohort',
+      affiliate: 'affiliate',
       orgChart: 'org-chart',
       summary: 'summary',
       roadmap: 'mega-stories',
@@ -107,20 +152,11 @@ export default function App(){
             <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
               Overview
             </button>
-            <button className={`tab ${view === 'executiveSummary' ? 'active' : ''}`} onClick={() => navigate('executiveSummary')}>
-              Executive Summary
+            <button className={`tab ${view === 'executive' ? 'active' : ''}`} onClick={() => goExecutiveSection('summary')}>
+              Executive Suite
             </button>
-            <button className={`tab ${view === 'executiveView' ? 'active' : ''}`} onClick={() => navigate('executiveView')}>
-              Executive View
-            </button>
-            <button className={`tab ${view === 'affiliateAnalysis' ? 'active' : ''}`} onClick={() => navigate('affiliateAnalysis')}>
-              Affiliate Analysis
-            </button>
-            <button className={`tab ${view === 'marketingExpenses' ? 'active' : ''}`} onClick={() => navigate('marketingExpenses')}>
-              Affiliate Payments
-            </button>
-            <button className={`tab ${view === 'cohort' ? 'active' : ''}`} onClick={() => navigate('cohort')}>
-              Cohort
+            <button className={`tab ${view === 'affiliate' ? 'active' : ''}`} onClick={() => goAffiliateSection('analysis')}>
+              Affiliate
             </button>
             <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
               Mega-Stories
@@ -132,19 +168,30 @@ export default function App(){
             >
               Org Chart
             </button>
+            <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => setView('supportUserCheck')}>
+              Support • User Check
+            </button>
           </nav>
         </Topbar>
         <main className="app-main">
           {view === 'overview' && <ProfitAnalysisPage />}
-          {view === 'executiveSummary' && <GlobalDashboard />}
-          {view === 'executiveView' && <ExecutiveView />}
-          {view === 'affiliateAnalysis' && <AffiliateAnalysis />}
+          {view === 'executive' && (
+            <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
+          )}
+          {view === 'affiliate' && (
+            <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
+          )}
           {view === 'report' && <Report />}
-          {view === 'marketingExpenses' && <InvestmentsDashboard />}
-          {view === 'cohort' && <Dashboard />}
           {view === 'roadmap' && <RoadmapPage />}
           {view === 'orgChart' && <OrgChart />}
           {view === 'summary' && <SummaryReport />}
+          {view === 'supportUserCheck' && (
+            <React.Suspense fallback={<div>Loading…</div>}>
+                <SupportUserCheck />
+            </React.Suspense>
+          )}
+          import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
+          import SupportUserCheck from './features/support/pages/SupportUserCheck.jsx'
           {view === 'admin' && isAdmin && <AdminPanel />}
         </main>
       </div>

@@ -19,6 +19,8 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
     []
   )
 
+  const handleOverlayClick = () => setShowTools(false)
+
   const openTool = (href) => {
     if (!href) return
     window.open(href, '_blank', 'noopener,noreferrer')
@@ -34,7 +36,9 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   }
 
   return (
-    <header className="topbar">
+    <>
+      {showTools && <div className="logo-tools-backdrop" onClick={handleOverlayClick} />}
+      <header className="topbar">
       <div
         className="title logo-hit"
         onMouseEnter={handleEnter}
@@ -72,6 +76,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
           <div className="user-chip ghost">v1.0.0</div>
         )}
       </div>
-    </header>
+      </header>
+    </>
   )
 }
