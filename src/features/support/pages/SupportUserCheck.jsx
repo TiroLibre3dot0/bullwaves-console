@@ -4,7 +4,9 @@ import {
   searchUsers,
   computePriority,
   logAudit,
-  getAuditLog
+  getAuditLog,
+  loadMediaReport,
+  getAffiliateById
 } from '../services/supportUserCheckService';
 
 const FIELD_MAP = {
@@ -129,11 +131,17 @@ export default function SupportUserCheck() {
   const [results, setResults] = useState([]);
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState('');
+  const [mediaLoaded, setMediaLoaded] = useState(false);
+  const [showFinancial, setShowFinancial] = useState(false);
+  const [showAffiliate, setShowAffiliate] = useState(false);
+  const [showRisk, setShowRisk] = useState(false);
   const [loading, setLoading] = useState(false);
   const [env] = useState('PROD');
 
   useEffect(() => {
     loadCsvRows().catch(e => setError(e.message));
+    // load media report in background (fail gracefully)
+    loadMediaReport().then(() => setMediaLoaded(true)).catch(() => setMediaLoaded(false))
   }, []);
 
   const handleSearch = async () => {
@@ -170,7 +178,23 @@ export default function SupportUserCheck() {
   const handleSelect = (row) => {
     setSelected(row);
     logAudit('select', { userId: row.userid });
+    const mapped = getMapped(row)
+    // default collapse/expand rules
+    setShowFinancial(false)
+    setShowAffiliate(!!mapped.affiliateId)
+    setShowRisk(!!(mapped.fraud || mapped.action))
   };
+
+  function getShortSummary(mapped) {
+    const full = getSupportInsight(mapped).split('\n')
+    return full.slice(0, 3).join(' ')
+  }
+
+  function fmtValueLabel(value, labelWhenEmpty = 'Not available') {
+    if (value === null || value === undefined || value === '') return labelWhenEmpty
+    if (Number(value) === 0) return ''
+    return value
+  }
 
   // --- UI ---
   return (
@@ -220,87 +244,112 @@ export default function SupportUserCheck() {
           </table>
         </div>
       )}
-      {selected && (
-        <div className="user-decision-card">
-          <div className="card-columns">
-            <div className="card">
-              <h2>Identity & Status</h2>
-              <div><b>Name:</b> {getMapped(selected).name}</div>
-              <div><b>User ID:</b> {getMapped(selected).userId}</div>
-              <div><b>MT5 Account:</b> {getMapped(selected).mt5}</div>
-              <div><b>Country:</b> {getMapped(selected).country}</div>
-              <div><b>Registration Date:</b> {getMapped(selected).regDate}</div>
-              <div><b>Status:</b> <span className={`badge status ${getMapped(selected).status?.toLowerCase()}`}>{getMapped(selected).status}</span></div>
-              <div><b>Risk:</b> <span className={`badge risk ${getRiskLevel(getMapped(selected)).toLowerCase()}`}>{getRiskLevel(getMapped(selected))}</span></div>
-              <div><b>Priority:</b> <span className="badge priority">{getPriority(getMapped(selected))}</span></div>
-              <div><b>Churn Risk:</b> <span className="badge churn">{getChurnRisk(getMapped(selected))}</span></div>
-              <div style={{ marginTop: 8 }}>
-                <button onClick={() => navigator.clipboard.writeText(getMapped(selected).userId)}>Copy IDs</button>
-                <button onClick={() => navigator.clipboard.writeText(JSON.stringify(getMapped(selected), null, 2))}>Copy user summary</button>
+      {selected && (() => {
+        const mapped = getMapped(selected)
+        const affiliateMeta = getAffiliateById(mapped.affiliateId)
+        const knownAffiliate = !!(mapped.affiliateId && affiliateMeta)
+        const affiliatePresent = !!mapped.affiliateId
+        const shortSummary = getShortSummary(mapped)
+        const presets = generatePresets(mapped)
+
+        return (
+          <div className="user-decision-card decision-first">
+            <div className="user-snapshot card">
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }}>{mapped.name}</div>
+                  <div style={{ color: 'var(--muted)', marginTop: 4 }}>{mapped.userId} · {mapped.country}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span className="badge status">{mapped.status || 'Unknown'}</span>
+                  <span className="badge priority">{getPriority(mapped)}</span>
+                  <span className={`badge risk ${getRiskLevel(mapped).toLowerCase()}`}>{getRiskLevel(mapped)}</span>
+                  <span className="badge churn">{getChurnRisk(mapped)}</span>
+                </div>
+              </div>
+              <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: 13 }} title="Some data not available from CSV source">Some data not available from CSV source</div>
+            </div>
+
+            <div className="divider" />
+
+            <div className="collapsible">
+              <div className="section-header" onClick={() => setShowFinancial(s => !s)}>
+                <strong>Financial & Activity</strong>
+                <span>{showFinancial ? '–' : '+'}</span>
+              </div>
+              {!showFinancial ? (
+                <div className="section-summary">{(mapped.totalDeposits && Number(mapped.totalDeposits) > 0) ? `${mapped.totalDeposits} deposits` : 'No deposits · No activity'}</div>
+              ) : (
+                <div className="section-body card">
+                  <div><b>Deposits:</b> {fmtValueLabel(mapped.totalDeposits, 'No deposits') || 'No deposits'}</div>
+                  <div><b>Net PL:</b> {fmtValueLabel(mapped.netPL, '—')}</div>
+                  <div><b>Volume:</b> {fmtValueLabel(mapped.volume, '—')}</div>
+                  <div><b>ROI:</b> {fmtValueLabel(mapped.roi, '—')}</div>
+                  <div><b>Last Activity:</b> {mapped.lastActivity || '—'}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="divider" />
+
+            <div className="collapsible">
+              <div className="section-header" onClick={() => setShowAffiliate(s => !s)}>
+                <strong>Affiliate & Commercial</strong>
+                <span>{showAffiliate ? '–' : '+'}</span>
+              </div>
+              {!showAffiliate ? (
+                <div className="section-summary">{affiliatePresent ? `Affiliate ID: ${mapped.affiliateId}` : 'No affiliate'}</div>
+              ) : (
+                <div className="section-body card">
+                  <div><b>Affiliate ID:</b> {mapped.affiliateId || '—'}</div>
+                  <div><b>Affiliate Name:</b> {affiliateMeta ? affiliateMeta.name : (affiliatePresent ? 'Affiliate ID present (details not found)' : '—')}</div>
+                  <div><b>Commission Model:</b> {getCommissionModel(mapped)}</div>
+                  <div><b>Affiliate-driven:</b> {affiliatePresent ? 'Yes' : 'No'}</div>
+                  {affiliatePresent && (knownAffiliate ? <span className="badge">Known affiliate</span> : <span className="badge status" style={{ background: '#f59e0b' }}>Affiliate not found in Media Report</span>)}
+                </div>
+              )}
+            </div>
+
+            <div className="divider" />
+
+            <div className="collapsible">
+              <div className="section-header" onClick={() => setShowRisk(s => !s)}>
+                <strong>Risk & Flags</strong>
+                <span>{showRisk ? '–' : '+'}</span>
+              </div>
+              {!showRisk ? (
+                <div className="section-summary">{mapped.fraud || mapped.action ? 'Flags present' : 'No major flags'}</div>
+              ) : (
+                <div className="section-body card">
+                  <div><b>Fraud/Chargeback:</b> {mapped.fraud || 'None'}</div>
+                  <div><b>Action:</b> {mapped.action || 'None'}</div>
+                </div>
+              )}
+            </div>
+
+            <div className="divider" />
+
+            <div className="how-to-respond card">
+              <h2>How to respond</h2>
+              <div style={{ marginBottom: 8, color: 'var(--muted)' }}>{shortSummary}</div>
+              <div>
+                {presets.map((p, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                    <div style={{ flex: 1 }}>{p}</div>
+                    <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(p)}>Copy</button>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="card">
-              <h2>Financial Snapshot</h2>
-              <div><b>First Deposit:</b> {getMapped(selected).firstDeposit || 'Not available (CSV source)'}</div>
-              <div><b>First Deposit Date:</b> {getMapped(selected).firstDepositDate || 'Not available (CSV source)'}</div>
-              <div><b>Deposit Count:</b> {getMapped(selected).depositCount || 'Not available (CSV source)'}</div>
-              <div><b>Total Deposits:</b> {getMapped(selected).totalDeposits || 'Not available (CSV source)'}</div>
-              <div><b>Net Deposits:</b> {getMapped(selected).netDeposits || 'Not available (CSV source)'}</div>
-              <div><b>Withdrawals:</b> {getMapped(selected).withdrawals || 'Not available (CSV source)'}</div>
-              <div><b>Net PL:</b> {getMapped(selected).netPL || 'Not available (CSV source)'}</div>
-            </div>
-            <div className="card">
-              <h2>Activity Signals</h2>
-              <div><b>Volume:</b> {getMapped(selected).volume || 'Not available (CSV source)'}</div>
-              <div><b>LOTS:</b> {getMapped(selected).lots || 'Not available (CSV source)'}</div>
-              <div><b>ROI:</b> {getMapped(selected).roi || 'Not available (CSV source)'}</div>
-              <div><b>Last Activity Date:</b> {getMapped(selected).lastActivity || 'Not available (CSV source)'}</div>
-            </div>
-            <div className="card">
-              <h2>Affiliate / Commercial</h2>
-              <div><b>Affiliate ID:</b> {getMapped(selected).affiliateId || 'Not available (CSV source)'}</div>
-              <div><b>Affiliate Commissions:</b> {getMapped(selected).affiliateCommissions || 'Not available (CSV source)'}</div>
-              <div><b>Commission Model:</b> {getCommissionModel(getMapped(selected))}</div>
-              <div><b>Affiliate-driven:</b> {getMapped(selected).affiliateId ? 'Yes' : 'No'}</div>
-            </div>
-            <div className="card">
-              <h2>Risk & Flags</h2>
-              <div><b>Fraud/Chargeback:</b> {getMapped(selected).fraud || 'None'}</div>
-              <div><b>Action:</b> {getMapped(selected).action || 'None'}</div>
+
+            <div className="next-actions card" style={{ marginTop: 12 }}>
+              <button onClick={() => alert('Escalate to Ops\n' + mapped.userId)}>Escalate to Ops</button>
+              <button onClick={() => alert('Escalate to Tech\n' + mapped.userId)}>Escalate to Tech</button>
+              <button onClick={() => alert('Escalate to Compliance\n' + mapped.userId)}>Escalate to Compliance</button>
             </div>
           </div>
-          <div className="card support-insight">
-            <h2>Support Insight</h2>
-            <textarea value={getSupportInsight(getMapped(selected))} readOnly rows={6} style={{ width: '100%' }} />
-            <div style={{ marginTop: 8 }}>
-              <button onClick={() => navigator.clipboard.writeText(getSupportInsight(getMapped(selected)))}>Copy recommended response</button>
-            </div>
-          </div>
-          <div className="card">
-            <h2>Suggested Responses</h2>
-            {(() => {
-              const mapped = getMapped(selected)
-              const presets = generatePresets(mapped)
-              return (
-                <div className="response-presets">
-                  {presets.map((p, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
-                      <div style={{ flex: 1, color: 'var(--muted)' }}>{p}</div>
-                      <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(p)} style={{ marginLeft: 12 }}>Copy</button>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
-          </div>
-          <div className="card next-actions">
-            <h2>Next Actions (Read-only Escalation)</h2>
-            <button onClick={() => alert('Escalate to Ops\n' + getMapped(selected).userId)}>Escalate to Ops</button>
-            <button onClick={() => alert('Escalate to Tech\n' + getMapped(selected).userId)}>Escalate to Tech</button>
-            <button onClick={() => alert('Escalate to Compliance\n' + getMapped(selected).userId)}>Escalate to Compliance</button>
-          </div>
-        </div>
-      )}
+        )
+      })()}
     </div>
   );
 }

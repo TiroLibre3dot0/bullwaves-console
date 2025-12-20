@@ -138,3 +138,67 @@ export function logAudit(action, payload) {
 export function getAuditLog() {
   return JSON.parse(localStorage.getItem('supportUserCheckAudit') || '[]')
 }
+
+// --- Media Report loading and affiliate lookup ---
+let _mediaCache = null
+let _affiliateMap = null
+
+export async function loadMediaReport(force = false) {
+  if (_mediaCache && !force) return _affiliateMap || {}
+  try {
+    const res = await fetch(encodeURI('/Media Report.csv'))
+    if (!res.ok) {
+      _mediaCache = []
+      _affiliateMap = {}
+      return _affiliateMap
+    }
+    const text = await res.text()
+    const { data, errors } = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true })
+    if (errors && errors.length) {
+      _mediaCache = []
+      _affiliateMap = {}
+      return _affiliateMap
+    }
+    _mediaCache = data || []
+    _affiliateMap = {}
+    // normalize rows and build map keyed by possible affiliate id fields
+    for (const rawRow of _mediaCache) {
+      const row = {}
+      for (const k of Object.keys(rawRow || {})) {
+        const nk = normalizeHeaderKey(k)
+        row[nk] = rawRow[k] == null ? '' : String(rawRow[k]).trim()
+      }
+      // try common id fields: uid, affiliateid, id
+      const idCandidates = [row.uid, row.affiliateid, row.id, row.affiliatid]
+      const id = idCandidates.find(x => x !== undefined && x !== null && String(x).trim() !== '')
+      if (id) {
+        _affiliateMap[String(id).trim()] = {
+          name: row.affiliate || row.affiliatename || row.name || '',
+          source: row.source || row.channel || '',
+          meta: row
+        }
+      }
+      // also map by affiliate name (lowercased) to help fuzzy lookups
+      const nameKey = (row.affiliate || row.affiliatename || '')
+      if (nameKey) {
+        _affiliateMap[nameKey.toString().trim().toLowerCase()] = {
+          name: nameKey,
+          source: row.source || row.channel || '',
+          meta: row
+        }
+      }
+    }
+    return _affiliateMap
+  } catch (err) {
+    _mediaCache = []
+    _affiliateMap = {}
+    return _affiliateMap
+  }
+}
+
+export function getAffiliateById(id) {
+  if (!id) return null
+  if (!_affiliateMap) return null
+  const key = String(id).trim()
+  return _affiliateMap[key] || _affiliateMap[key.toLowerCase()] || null
+}

@@ -34,6 +34,20 @@
 .support-user-check-page .response-presets { display: flex; flex-direction: column; gap: 8px; }
 .support-user-check-page .response-presets .preset { color: var(--muted); }
 .support-user-check-page .response-presets button { padding: 6px 10px; border-radius: 8px; }
+
+/* Decision-first layout styles */
+.decision-first .user-snapshot { padding: 14px; display: block; border-radius: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); }
+.decision-first .user-snapshot .badge { margin-left: 6px; }
+.decision-first .divider { height: 1px; background: rgba(255,255,255,0.02); margin: 12px 0; }
+.decision-first .collapsible { margin-bottom: 8px; }
+.decision-first .section-header { display:flex; justify-content:space-between; align-items:center; padding:10px 6px; cursor:pointer; font-weight:700; }
+.decision-first .section-summary { padding: 8px 6px; color: var(--muted); }
+.decision-first .section-body { padding: 10px; background: rgba(255,255,255,0.01); border-radius:8px; }
+.how-to-respond { background: linear-gradient(180deg, rgba(34,211,238,0.03), rgba(255,255,255,0.01)); border: none; }
+.how-to-respond h2 { margin-top: 0; }
+.badge.known { background: #10b981; }
+.badge.warn { background: #f59e0b; color: #111; }
+.next-actions button { margin-right: 8px; }
 .support-user-check-page .badge { display: inline-block; background: #1d4ed8; color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
 .support-user-check-page .badge.env { background: #0ea5e9; }
 .support-user-check-page .badge.role { background: #64748b; }
