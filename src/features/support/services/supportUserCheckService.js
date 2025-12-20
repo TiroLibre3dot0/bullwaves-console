@@ -202,3 +202,22 @@ export function getAffiliateById(id) {
   const key = String(id).trim()
   return _affiliateMap[key] || _affiliateMap[key.toLowerCase()] || null
 }
+
+// Lightweight compatibility shim: buildAffiliateKpiMap and getAffiliateKpi
+// Previous versions exposed KPI builders — provide minimal exports so
+// components importing them do not break. These do not change existing
+// calculation logic; they simply ensure the media report is loaded and
+// return `null` when KPI aggregation isn't available in this commit.
+export async function buildAffiliateKpiMap(force = false) {
+  try {
+    await loadMediaReport(force)
+    return {}
+  } catch (err) {
+    return {}
+  }
+}
+
+export function getAffiliateKpi(id) {
+  // Aggressive no-op: KPI aggregation not implemented in this version.
+  return null
+}
