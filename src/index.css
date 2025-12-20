@@ -29,6 +29,11 @@
 	.support-user-check-page .search-bar { align-items: center; }
 	.support-user-check-page .search-bar input { max-width: 520px; }
 }
+
+/* Suggested response presets */
+.support-user-check-page .response-presets { display: flex; flex-direction: column; gap: 8px; }
+.support-user-check-page .response-presets .preset { color: var(--muted); }
+.support-user-check-page .response-presets button { padding: 6px 10px; border-radius: 8px; }
 .support-user-check-page .badge { display: inline-block; background: #1d4ed8; color: #fff; border-radius: 6px; padding: 2px 8px; font-size: 12px; margin-left: 6px; }
 .support-user-check-page .badge.env { background: #0ea5e9; }
 .support-user-check-page .badge.role { background: #64748b; }

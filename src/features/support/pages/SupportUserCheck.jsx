@@ -85,6 +85,45 @@ function getSupportInsight(mapped) {
   return lines.join('\n');
 }
 
+function generatePresets(mapped) {
+  const presets = []
+  const name = mapped.name || 'Customer'
+  const priority = getPriority(mapped)
+  const churn = getChurnRisk(mapped)
+  const affiliate = mapped.affiliateId
+  const deposits = Number(mapped.totalDeposits || mapped.firstDeposit || 0)
+  const fraud = mapped.fraud
+  const action = mapped.action
+
+  if (fraud) {
+    presets.push(`Immediate action required: Please escalate ${name} to Compliance — potential fraud/chargeback detected. Reference: ${mapped.userId || 'N/A'}.`)
+  }
+
+  if (action) {
+    presets.push(`Action required: ${action}. Please follow the documented process and notify the owner. User: ${mapped.userId || 'N/A'}.`)
+  }
+
+  if (priority === 'HIGH' || deposits > 0) {
+    presets.push(`Hi ${name}, thank you for your deposit. We see activity on your account and we're here to help — please let us know any issue you're facing.`)
+  }
+
+  if (affiliate) {
+    presets.push(`Hi ${name}, we noted you joined via affiliate ${affiliate}. For commercial questions, we can connect you with their manager.`)
+  }
+
+  if (churn === 'HIGH') {
+    presets.push(`Hi ${name}, we noticed limited activity and a negative P/L — would you like support to review your trades or offers to re-engage?`)
+  }
+
+  // Fallback / friendly
+  if (presets.length === 0) {
+    presets.push(`Hi ${name}, thanks for contacting support. Please provide more details about your request so we can assist you.`)
+  }
+
+  // Return up to 3 concise presets
+  return presets.slice(0, 3)
+}
+
 export default function SupportUserCheck() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -236,6 +275,23 @@ export default function SupportUserCheck() {
             <div style={{ marginTop: 8 }}>
               <button onClick={() => navigator.clipboard.writeText(getSupportInsight(getMapped(selected)))}>Copy recommended response</button>
             </div>
+          </div>
+          <div className="card">
+            <h2>Suggested Responses</h2>
+            {(() => {
+              const mapped = getMapped(selected)
+              const presets = generatePresets(mapped)
+              return (
+                <div className="response-presets">
+                  {presets.map((p, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: 8 }}>
+                      <div style={{ flex: 1, color: 'var(--muted)' }}>{p}</div>
+                      <button className="btn-secondary" onClick={() => navigator.clipboard.writeText(p)} style={{ marginLeft: 12 }}>Copy</button>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
           <div className="card next-actions">
             <h2>Next Actions (Read-only Escalation)</h2>
