@@ -142,6 +142,9 @@ export function getAuditLog() {
 // --- Media Report loading and affiliate lookup ---
 let _mediaCache = null
 let _affiliateMap = null
+let _paymentsCache = null
+let _paymentsAffiliateMap = null
+let _affiliateKpiMap = null
 
 export async function loadMediaReport(force = false) {
   if (_mediaCache && !force) return _affiliateMap || {}
@@ -203,21 +206,136 @@ export function getAffiliateById(id) {
   return _affiliateMap[key] || _affiliateMap[key.toLowerCase()] || null
 }
 
-// Lightweight compatibility shim: buildAffiliateKpiMap and getAffiliateKpi
-// Previous versions exposed KPI builders — provide minimal exports so
-// components importing them do not break. These do not change existing
-// calculation logic; they simply ensure the media report is loaded and
-// return `null` when KPI aggregation isn't available in this commit.
+// --- Payments Report loader (Affiliate identity source of truth) ---
+export async function loadPaymentsReport(force = false) {
+  if (_paymentsCache && !force) return _paymentsAffiliateMap || {}
+  try {
+    const res = await fetch(encodeURI('/Payments Report.csv'))
+    if (!res.ok) {
+      _paymentsCache = []
+      _paymentsAffiliateMap = {}
+      return _paymentsAffiliateMap
+    }
+    const text = await res.text()
+    const { data, errors } = Papa.parse(text, { header: true, skipEmptyLines: true, dynamicTyping: true })
+    if (errors && errors.length) {
+      _paymentsCache = []
+      _paymentsAffiliateMap = {}
+      return _paymentsAffiliateMap
+    }
+    _paymentsCache = data || []
+    _paymentsAffiliateMap = {}
+    for (const rawRow of _paymentsCache) {
+      const row = {}
+      for (const k of Object.keys(rawRow || {})) {
+        const nk = normalizeHeaderKey(k)
+        row[nk] = rawRow[k] == null ? '' : String(rawRow[k]).trim()
+      }
+      // Prefer numeric affiliate id fields
+      const idCandidates = [row.affiliateid, row.id, row['affiliate id'], row.uid]
+      const idRaw = idCandidates.find(x => x !== undefined && x !== null && String(x).trim() !== '')
+      if (idRaw) {
+        const idKey = String(idRaw).replace(/\D+/g, '')
+        if (idKey) {
+          _paymentsAffiliateMap[idKey] = {
+            name: row.affiliate || row.affiliatename || row.name || '',
+            raw: row
+          }
+        }
+      }
+      // Also map by affiliate name lowercased (useful fallback)
+      const nameKey = (row.affiliate || row.affiliatename || row.name || '').toString().trim()
+      if (nameKey) _paymentsAffiliateMap[nameKey.toLowerCase()] = { name: nameKey, raw: row }
+    }
+    return _paymentsAffiliateMap
+  } catch (err) {
+    _paymentsCache = []
+    _paymentsAffiliateMap = {}
+    return _paymentsAffiliateMap
+  }
+}
+
+export function getPaymentAffiliateById(id) {
+  if (!id) return null
+  if (!_paymentsAffiliateMap) return null
+  const key = String(id).replace(/\D+/g, '')
+  if (!key) return null
+  return _paymentsAffiliateMap[key] || _paymentsAffiliateMap[key.toLowerCase()] || null
+}
+
+function parseNumberSafe(v) {
+  if (v === null || v === undefined || v === '') return null
+  if (typeof v === 'number') return v
+  const s = String(v).replace(/[^0-9.\-]+/g, '')
+  if (s === '' || s === '-' || s === '.') return null
+  const n = Number(s)
+  return Number.isFinite(n) ? n : null
+}
+
+// Build KPI aggregation map from Media Report (traffic metrics)
 export async function buildAffiliateKpiMap(force = false) {
+  if (_affiliateKpiMap && !force) return _affiliateKpiMap
   try {
     await loadMediaReport(force)
-    return {}
+    await loadPaymentsReport(force)
+    _affiliateKpiMap = {}
+    const mediaRows = _mediaCache || []
+    for (const rawRow of mediaRows) {
+      const row = {}
+      for (const k of Object.keys(rawRow || {})) {
+        const nk = normalizeHeaderKey(k)
+        row[nk] = rawRow[k] == null ? '' : rawRow[k]
+      }
+      // alias detection
+      const idCandidates = [row.affiliateid, row.id, row.uid, row.affiliatid]
+      let idKey = idCandidates.find(x => x !== undefined && x !== null && String(x).trim() !== '')
+      idKey = idKey ? String(idKey).replace(/\D+/g, '') : null
+
+      // fallback to affiliate name
+      const nameKey = (row.affiliate || row.affiliatename || row.name || '')
+      const mapKey = idKey || (nameKey ? String(nameKey).toLowerCase() : null)
+      if (!mapKey) continue
+
+      if (!_affiliateKpiMap[mapKey]) _affiliateKpiMap[mapKey] = { spend: 0, clicks: 0, registrations: 0, ftd: 0, revenue: 0 }
+
+      const m = _affiliateKpiMap[mapKey]
+      // common metric aliases
+      const clicks = parseNumberSafe(row.clicks || row.impressions || row.views || row.click)
+      const regs = parseNumberSafe(row.registrations || row.regs || row.leads)
+      const ftd = parseNumberSafe(row.ftd || row.firstdeposit || row.first_deposit)
+      const spend = parseNumberSafe(row.spend || row.spent || row.cost)
+      const revenue = parseNumberSafe(row.revenue || row.net)
+
+      if (clicks != null) m.clicks += clicks
+      if (regs != null) m.registrations += regs
+      if (ftd != null) m.ftd += ftd
+      if (spend != null) m.spend += spend
+      if (revenue != null) m.revenue += revenue
+    }
+
+    // derive metrics
+    for (const k of Object.keys(_affiliateKpiMap)) {
+      const v = _affiliateKpiMap[k]
+      v.CR_reg = (v.clicks && v.registrations) ? (v.registrations / v.clicks) : null
+      v.CR_ftd = (v.registrations && v.ftd) ? (v.ftd / v.registrations) : null
+      v.eCPA = (v.ftd && v.spend && v.ftd > 0) ? (v.spend / v.ftd) : null
+      v.ROI = (v.spend && v.revenue && v.spend !== 0) ? ((v.revenue - v.spend) / v.spend) : null
+    }
+
+    return _affiliateKpiMap
   } catch (err) {
-    return {}
+    _affiliateKpiMap = {}
+    return _affiliateKpiMap
   }
 }
 
 export function getAffiliateKpi(id) {
-  // Aggressive no-op: KPI aggregation not implemented in this version.
-  return null
+  if (!id) return null
+  if (!_affiliateKpiMap) return null
+  const key = String(id).replace(/\D+/g, '')
+  if (key && _affiliateKpiMap[key]) return _affiliateKpiMap[key]
+  const lower = String(id).toLowerCase()
+  return _affiliateKpiMap[lower] || null
 }
+
+// Note: buildAffiliateKpiMap and getAffiliateKpi are implemented above (definitive versions).
