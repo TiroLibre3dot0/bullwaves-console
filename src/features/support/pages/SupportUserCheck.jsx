@@ -1,219 +1,445 @@
-import React, { useEffect, useState, useRef } from 'react';
+// src/features/support/pages/SupportUserCheck.jsx
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  loadCsvRows,
   searchUsers,
-  computePriority,
-  loadMediaReport,
   loadPaymentsReport,
-  getPaymentAffiliateById,
-  getAffiliateKpi
-} from '../services/supportUserCheckService';
+  resolveAffiliateName,
+  buildAffiliateKpiMap,
+  getAffiliateKpi,
+  computePriority
+} from '../services/supportUserCheckService'
+import SupportUserDetails from './SupportUserDetails'
 
+// Key lists
 const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
-const USERID_KEYS = ['userid', 'user_id', 'clientid', 'user']
-const REGDATE_KEYS = ['registrationdate', 'regdate', 'externaldate']
-const TOTAL_DEPOSITS_KEYS = ['totaldeposits', 'depositcount', 'deposits']
+const USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
+const MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
+const REGDATE_KEYS = ['registrationdate', 'regdate', 'externaldate', 'registered', 'registration_date']
+const FIRST_DEPOSIT_KEYS = ['firstdeposit', 'first_deposit', 'first deposit']
+const QUALIFY_KEYS = ['qualificationdate', 'qualification_date', 'qualifydate']
+const DEPOSIT_COUNT_KEYS = ['depositcount', 'deposit_count', 'depositscount', 'deposits_count']
+const TOTAL_DEPOSITS_KEYS = ['totaldeposits', 'total_deposits', 'totaldeposit', 'total_deposit']
+const NET_DEPOSITS_KEYS = ['netdeposits', 'net_deposits']
+const WITHDRAWALS_KEYS = ['withdrawals', 'totalwithdrawals', 'total_withdrawals']
 const AFF_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
 const STATUS_KEYS = ['status']
 const COUNTRY_KEYS = ['country']
 const FRAUD_KEYS = ['fraud', 'fraudchargeback', 'fraud/chargeback']
 const ACTION_KEYS = ['action']
 
+// Trading / comms
+const LOTS_KEYS = ['lots', 'total_lots']
+const VOLUME_KEYS = ['volume', 'turnover']
+const PL_KEYS = ['pl', 'profitloss', 'netpl', 'net_pl']
+const SPREAD_KEYS = ['spread']
+const ROI_KEYS = ['roi']
+const COMMISSIONS_KEYS = ['commissions', 'affiliatecommissions', 'affiliate_commissions', 'comm']
+const AFF_COMM_KEYS = ['affiliatecommissions', 'affiliate_commissions']
+const SUB_AFF_COMM_KEYS = ['subaffiliatecommissions', 'sub_affiliate_commissions', 'sub_aff_commissions']
+const CPA_KEYS = ['cpacommission', 'cpa_commission', 'cpa']
+const CPL_KEYS = ['cplcommission', 'cpl_commission', 'cpl']
+const REVSHARE_KEYS = ['revshare', 'revsharecommission', 'revshare_commission']
+
+// helpers
 function pickField(row, candidates) {
   if (!row) return ''
   for (const k of candidates) {
-    if (row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return String(row[k]).trim()
+    const v = row?.[k]
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim()
   }
   return ''
 }
 
 function getMapped(row) {
+  if (!row) return null
   return {
+    raw: row,
     name: pickField(row, NAME_KEYS),
     userId: pickField(row, USERID_KEYS),
+    mt5: pickField(row, MT5_KEYS),
     regDate: pickField(row, REGDATE_KEYS),
+    firstDeposit: pickField(row, FIRST_DEPOSIT_KEYS),
+    qualificationDate: pickField(row, QUALIFY_KEYS),
+    depositCount: pickField(row, DEPOSIT_COUNT_KEYS),
     totalDeposits: pickField(row, TOTAL_DEPOSITS_KEYS),
+    depositNum: toNum(pickField(row, TOTAL_DEPOSITS_KEYS)),
+    netDeposits: pickField(row, NET_DEPOSITS_KEYS),
+    withdrawals: pickField(row, WITHDRAWALS_KEYS),
     affiliateId: pickField(row, AFF_KEYS),
     status: pickField(row, STATUS_KEYS),
     country: pickField(row, COUNTRY_KEYS),
     fraud: pickField(row, FRAUD_KEYS),
     action: pickField(row, ACTION_KEYS),
-    raw: row
+    lots: pickField(row, LOTS_KEYS),
+    volume: pickField(row, VOLUME_KEYS),
+    pl: pickField(row, PL_KEYS),
+    spread: pickField(row, SPREAD_KEYS),
+    roi: pickField(row, ROI_KEYS),
+    commissions: pickField(row, COMMISSIONS_KEYS),
+    affiliateCommissions: pickField(row, AFF_COMM_KEYS),
+    subAffiliateCommissions: pickField(row, SUB_AFF_COMM_KEYS),
+    commission_cpa: pickField(row, CPA_KEYS),
+    commission_cpl: pickField(row, CPL_KEYS),
+    revshare: pickField(row, REVSHARE_KEYS)
   }
 }
+
+function toNum(x) {
+  if (x === null || x === undefined) return 0
+  const n = Number(String(x).replace(/[^0-9.-]+/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+function fmtEuro(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return '—'
+  const n = toNum(v)
+  return `€${n.toLocaleString()}`
+}
+
+function fmtDollar(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return '—'
+  const n = toNum(v)
+  return `$${n.toLocaleString()}`
+}
+
+function fmtPercent(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return '—'
+  const s = String(v).trim()
+  if (s.includes('%')) return s
+  const n = Number(String(s).replace(/[^0-9.-]+/g, ''))
+  if (!Number.isFinite(n)) return s
+  const out = Math.abs(n) < 1 ? n * 100 : n
+  return `${out.toFixed(1)}%`
+}
+
+function colorForNumber(v) {
+  const n = toNum(v)
+  if (n > 0) return '#22c55e' // green
+  if (n === 0) return '#f97316' // orange
+  return '#f87171' // red
+}
+
+const sectionTitleStyle = { fontSize: 13, fontWeight: 900, color: '#fff', marginBottom: 8 }
+const sectionContentStyle = { color: '#9aa4b2' }
 
 export default function SupportUserCheck() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
-  const [selected, setSelected] = useState(null)
+  const [selectedRaw, setSelectedRaw] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [mediaLoaded, setMediaLoaded] = useState(false)
-  const [paymentsLoaded, setPaymentsLoaded] = useState(false)
-  const inputRef = useRef(null)
+  const [searched, setSearched] = useState(false)
 
+  const [paymentsLoaded, setPaymentsLoaded] = useState(false)
+  const [mediaLoaded, setMediaLoaded] = useState(false)
+  const [affiliateName, setAffiliateName] = useState(null)
+  const [affiliateKpi, setAffiliateKpi] = useState(null)
+
+  const inputRef = useRef(null)
+  const lastReqRef = useRef(0)
+
+  useEffect(() => { inputRef.current?.focus() }, [])
+
+  // Focus shortcut: press '/' to focus the search input (UI enhancement only)
   useEffect(() => {
-    // Warm up heavy CSVs but do not block UI
-    loadMediaReport().then(() => setMediaLoaded(true)).catch(() => setMediaLoaded(false))
-    loadPaymentsReport().then(() => setPaymentsLoaded(true)).catch(() => setPaymentsLoaded(false))
-    // focus input
-    if (inputRef.current) inputRef.current.focus()
+    function onKey(e) {
+      if (e.key === '/' && document.activeElement !== inputRef.current) {
+        // ignore if typing in inputs or editable fields
+        const tag = document.activeElement && document.activeElement.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return
+        e.preventDefault()
+        inputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  async function handleSearch(e) {
-    if (e) e.preventDefault()
-    if (!query || String(query).trim() === '') return
-    setLoading(true)
-    setSelected(null)
-    try {
-      const rows = await searchUsers(query)
-      setResults(rows || [])
-    } catch (err) {
+  const selected = useMemo(() => (selectedRaw ? getMapped(selectedRaw) : null), [selectedRaw])
+  const mappedResults = useMemo(() => (results || []).map((r) => ({ raw: r, mapped: getMapped(r) })), [results])
+  const cacheRef = useRef(new Map())
+  const debounceRef = useRef(null)
+  const [hoverIndex, setHoverIndex] = useState(null)
+
+  async function runSearch(q) {
+    const trimmed = String(q || '').trim()
+    if (!trimmed) {
+      // when clearing, clear results and selection (user asked to hide results when input emptied)
       setResults([])
-      console.error(err)
-    } finally {
+      setSearched(false)
+      setSelectedRaw(null)
+      setAffiliateName(null)
+      setAffiliateKpi(null)
+      setPaymentsLoaded(false)
+      setMediaLoaded(false)
       setLoading(false)
+      lastReqRef.current = (lastReqRef.current || 0) + 1
+      return
+    }
+
+    const reqId = Date.now()
+    lastReqRef.current = reqId
+    setLoading(true)
+    setSearched(true)
+
+    try {
+      // simple in-memory cache to avoid repeating heavy CSV parsing for recent queries
+      if (cacheRef.current.has(trimmed)) {
+        const cached = cacheRef.current.get(trimmed)
+        if (lastReqRef.current !== reqId) return
+        setResults(Array.isArray(cached) ? cached : [])
+        return
+      }
+
+      const rows = await searchUsers(trimmed)
+      if (lastReqRef.current !== reqId) return
+      const out = Array.isArray(rows) ? rows : []
+      cacheRef.current.set(trimmed, out)
+      setResults(out)
+    } catch (err) {
+      console.error(err)
+      if (lastReqRef.current !== reqId) return
+      setResults([])
+    } finally {
+      if (lastReqRef.current === reqId) setLoading(false)
     }
   }
 
-  function shortActivity(mapped) {
-    if (!mapped) return ''
-    if (mapped.totalDeposits && Number(mapped.totalDeposits) > 0) return `${mapped.totalDeposits} deposits`
-    return 'No deposits · No recent activity'
+  // When query becomes empty we must clear selection and return to results list (if present).
+  useEffect(() => {
+    const trimmed = String(query || '').trim()
+
+    if (!trimmed) {
+      // clear visible results when input is emptied
+      setResults([])
+      setSearched(false)
+      setSelectedRaw(null)
+      setAffiliateName(null)
+      setAffiliateKpi(null)
+      setPaymentsLoaded(false)
+      setMediaLoaded(false)
+      setLoading(false)
+      lastReqRef.current = (lastReqRef.current || 0) + 1
+    }
+  }, [query])
+
+  // Lazy-load affiliate info only when a user is selected
+  useEffect(() => {
+    let mounted = true
+
+    setAffiliateName(null)
+    setAffiliateKpi(null)
+    setPaymentsLoaded(false)
+    setMediaLoaded(false)
+
+    if (!selectedRaw) return
+
+    ;(async () => {
+      try { await loadPaymentsReport(); if (!mounted) return; setPaymentsLoaded(true) } catch (e) { if (!mounted) return; setPaymentsLoaded(true) }
+      try { const res = await resolveAffiliateName(selectedRaw); if (!mounted) return; setAffiliateName(res?.name || null) } catch (e) { if (!mounted) return; setAffiliateName(null) }
+      try { await buildAffiliateKpiMap(); if (!mounted) return; setMediaLoaded(true); const mapped = getMapped(selectedRaw); const k = mapped?.affiliateId ? getAffiliateKpi(mapped.affiliateId) : null; setAffiliateKpi(k || null) } catch (e) { if (!mounted) return; setMediaLoaded(true); setAffiliateKpi(null) }
+    })()
+
+    return () => { mounted = false }
+  }, [selectedRaw])
+
+  function onSelectUser(raw) { setSelectedRaw(raw) }
+
+  // debounce query changes to avoid firing search on every keystroke
+  useEffect(() => {
+    const trimmed = String(query || '').trim()
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    // immediate search on Enter handled onKeyDown; debounce for typing
+    debounceRef.current = setTimeout(() => {
+      runSearch(trimmed)
+    }, 140)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [query])
+  // UI-only derived values
+  const qTrim = String(query || '').trim()
+  const showHero = !searched && qTrim === '' && !selected
+
+  function initialsFor(mapped) {
+    const seed = (mapped?.name || mapped?.userId || ' ? ').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase()
+    return seed
   }
 
-  function renderUserHeader(mapped) {
+  // sort mapped results by numeric total deposits (descending) to surface biggest depositors first
+  const sortedResults = useMemo(() => {
+    if (!mappedResults || mappedResults.length === 0) return []
+    // create shallow copy and sort by mapped.depositNum (precomputed) falling back to parsed value
+    return mappedResults.slice().sort((a, b) => {
+      const aNum = (a?.mapped?.depositNum ?? toNum(a?.mapped?.totalDeposits)) || 0
+      const bNum = (b?.mapped?.depositNum ?? toNum(b?.mapped?.totalDeposits)) || 0
+      return bNum - aNum
+    })
+  }, [mappedResults])
+
+  const resultsToShow = sortedResults.length > 0 ? sortedResults.slice(0, 15) : []
+
+  // determine top-depositor threshold (top 10 results) for visual badge
+  const topThreshold = useMemo(() => {
+    if (!sortedResults || sortedResults.length === 0) return 0
+    const idx = Math.min(9, sortedResults.length - 1)
+    return (sortedResults[idx]?.mapped?.depositNum) || 0
+  }, [sortedResults])
+
+  // selected summary groups
+  const selectedSummary = selected ? {
+    account: {
+      id: selected.userId || '—',
+      mt5: selected.mt5 || '—',
+      country: selected.country || '—'
+    },
+    deposits: {
+      total: fmtEuro(selected.totalDeposits),
+      count: selected.depositCount || '0',
+      net: fmtEuro(selected.netDeposits),
+      withdrawals: fmtEuro(selected.withdrawals)
+    },
+    affiliate: {
+      id: selected.affiliateId || '—',
+      name: affiliateName || '—'
+    }
+  } : null
+
+  // If a user is selected, render the full-width Support Decision Page in-place
+  if (selected) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-        <div>
-          <div style={{ fontSize: 20, fontWeight: 800 }}>{mapped.name || mapped.userId}</div>
-          <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>{[mapped.userId, mapped.country, mapped.regDate].filter(Boolean).join(' · ')}</div>
-        </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {mapped.status ? <span className="badge status">{mapped.status}</span> : null}
-          <span className="badge priority">{computePriority(mapped.raw)}</span>
-        </div>
+      <div className="support-user-check-page" style={{ padding: 18 }}>
+        <SupportUserDetails
+          selected={selected}
+          affiliateName={affiliateName}
+          affiliateKpi={affiliateKpi}
+          paymentsLoaded={paymentsLoaded}
+          mediaLoaded={mediaLoaded}
+          fmtEuro={fmtEuro}
+          suggestedReply={suggestedReply}
+          copyToClipboard={copyToClipboard}
+          computePriority={computePriority}
+          onBack={() => { setSelectedRaw(null); setSearched(results && results.length > 0) }}
+        />
       </div>
     )
   }
 
-  function copyToClipboard(text) {
-    try { navigator.clipboard.writeText(text) } catch (e) { console.warn('clipboard failed', e) }
-  }
-
   return (
-    <div style={{ padding: 18 }}>
-      {/* Pre-search UI (kept compact and focused) */}
-      <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 18 }}>
-        <input
-          ref={inputRef}
-          placeholder="Search user by name, id or email"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          style={{ padding: '10px 12px', width: 420 }}
-        />
-        <button type="submit" className="btn-primary">Search</button>
-        <div style={{ color: 'var(--muted)', marginLeft: 12 }}>Examples: "Oliver", "12345"</div>
-      </form>
+    <div className="support-user-check-page" style={{ padding: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: showHero ? 0 : 12, minHeight: showHero ? '68vh' : undefined, alignItems: showHero ? 'center' : undefined }}>
+        <div style={{ width: '100%', maxWidth: showHero ? 680 : 980, paddingTop: showHero ? 0 : undefined }}>
+          <header style={{ display: 'flex', flexDirection: 'column', gap: showHero ? 10 : 6, marginBottom: showHero ? 0 : 10, textAlign: showHero ? 'center' : 'left' }}>
+            <div>
+              <h1 className="support-hero-title" style={{ margin: 0, fontSize: showHero ? 26 : 20, fontWeight: 900, letterSpacing: '-0.2px' }}>Support — User check</h1>
+            </div>
+            <div style={{ color: 'var(--muted)', fontSize: showHero ? 14 : 13, lineHeight: '1.35', opacity: showHero ? 0.55 : 1, marginTop: showHero ? 14 : 4, marginBottom: showHero ? 22 : 8 }}>
+              Quick identification and operational handling of a user.
+            </div>
 
-      {loading && <div style={{ color: 'var(--muted)' }}>Searching…</div>}
-
-      {/* Search results list */}
-      {!selected && results && (
-        <div style={{ display: 'grid', gap: 8 }}>
-          {results.length === 0 ? <div style={{ color: 'var(--muted)' }}>No results</div> : results.slice(0, 20).map((r, i) => {
-            const mapped = getMapped(r)
-            return (
-              <div key={i} onClick={() => setSelected(r)} style={{ padding: 10, borderRadius: 8, background: '#fff', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 700 }}>{mapped.name || mapped.userId}</div>
-                  <div style={{ color: 'var(--muted)', fontSize: 13 }}>{[mapped.userId, mapped.country, mapped.regDate].filter(Boolean).join(' · ')}</div>
-                </div>
-                <div style={{ color: 'var(--muted)', fontSize: 13 }}>{shortActivity(mapped)}</div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Selected user view */}
-      {selected && (() => {
-        const mapped = getMapped(selected)
-        const paymentAff = mapped.affiliateId ? getPaymentAffiliateById(mapped.affiliateId) : null
-        const affiliateKpi = mapped.affiliateId ? getAffiliateKpi(mapped.affiliateId) : null
-        const knownAffiliate = !!(mapped.affiliateId && paymentAff)
-
-        return (
-          <div style={{ marginTop: 12 }}>
-            {/* Top: compact header */}
-            <div style={{ marginBottom: 12 }}>{renderUserHeader(mapped)}</div>
-
-            {/* Two-column layout */}
-            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              {/* LEFT column: facts */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                {/* Account & Activity */}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Account & Activity</div>
-                  <div style={{ color: 'var(--muted)', fontSize: 14 }}>
-                    {mapped.regDate ? <span>Registered: {mapped.regDate}</span> : null}
-                    <span style={{ marginLeft: mapped.regDate ? 12 : 0 }}>{shortActivity(mapped)}</span>
-                  </div>
+            <div className={`search-bar ${showHero ? 'search-priority' : ''}`} style={{ marginTop: showHero ? 18 : 10, display: 'flex', justifyContent: 'center', transform: showHero ? 'translateY(-5vh)' : undefined }}>
+              <div style={{ width: '100%', maxWidth: showHero ? 680 : 820, position: 'relative' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: showHero ? 'transparent' : undefined, position: 'relative' }}>
+                  <span className="search-icon" aria-hidden style={ showHero ? { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 4, opacity: 0.55 } : undefined }>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.6" /></svg>
+                  </span>
+                  <input
+                    ref={inputRef}
+                    value={query}
+                    onChange={(e) => { setQuery(e.target.value) }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { if (debounceRef.current) clearTimeout(debounceRef.current); runSearch(query) } }}
+                    placeholder="Search by name, user id or MT5"
+                    className="search-input search-hero-input"
+                    aria-label="Search users"
+                    style={{ width: '100%', fontSize: 16, padding: showHero ? '16px 18px' : '12px 14px', paddingLeft: showHero ? '44px' : undefined }}
+                  />
                 </div>
 
-                {/* Affiliate & Commercial */}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Affiliate & Commercial</div>
-                  <div style={{ color: 'var(--muted)', fontSize: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {mapped.affiliateId ? <div><b>Affiliate ID:</b> {mapped.affiliateId}</div> : null}
-                    {paymentAff ? <div><b>Affiliate Name:</b> {paymentAff.name}</div> : (mapped.affiliateId ? <div style={{ color: '#f59e0b' }}>Affiliate ID present (not found in Payments)</div> : null)}
-
-                    {/* KPI / Health */}
-                    {affiliateKpi ? (
-                      <div style={{ display: 'flex', gap: 12, marginTop: 6, flexWrap: 'wrap' }}>
-                        {affiliateKpi.spend != null && <div style={{ color: 'var(--muted)' }}><small>Spend</small><div style={{ fontWeight: 700 }}>{Number(affiliateKpi.spend).toLocaleString()}</div></div>}
-                        {affiliateKpi.clicks != null && <div style={{ color: 'var(--muted)' }}><small>Clicks</small><div style={{ fontWeight: 700 }}>{Number(affiliateKpi.clicks).toLocaleString()}</div></div>}
-                        {affiliateKpi.ftd != null && <div style={{ color: 'var(--muted)' }}><small>FTD</small><div style={{ fontWeight: 700 }}>{Number(affiliateKpi.ftd).toLocaleString()}</div></div>}
-                        {affiliateKpi.ROI != null && <div style={{ color: 'var(--muted)' }}><small>ROI</small><div style={{ fontWeight: 700 }}>{(affiliateKpi.ROI * 100).toFixed(1)}%</div></div>}
-                      </div>
-                    ) : null}
+                {/* helper line under input - subtle and small */}
+                {showHero && (
+                  <div style={{ marginTop: 32, color: 'var(--muted)', fontSize: 11, display: 'flex', justifyContent: 'center', gap: 18, opacity: 0.45 }}>
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>Instant results while typing</div>
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>Press <strong>/</strong> to focus · <strong>Enter</strong> to run</div>
                   </div>
-                </div>
+                )}
 
-                {/* Risk & Flags */}
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>Risk & Flags</div>
-                  <div style={{ color: (mapped.fraud || mapped.action) ? '#dc2626' : 'var(--muted)' }}>
-                    {mapped.fraud || mapped.action ? [mapped.fraud, mapped.action].filter(Boolean).join(' · ') : 'No major flags'}
-                  </div>
-                </div>
-              </div>
-
-              {/* RIGHT column: action */}
-              <div style={{ width: 380, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div style={{ padding: 12, borderRadius: 8, background: '#fff' }}>
-                  <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 8 }}>How to respond</div>
-                  <div style={{ color: 'var(--muted)', marginBottom: 8 }}>{mapped.status ? `${mapped.status} · ${computePriority(mapped.raw)}` : computePriority(mapped.raw)}</div>
-
-                  {/* Suggested reply */}
-                  <div style={{ background: '#f8fafc', padding: 10, borderRadius: 6, marginBottom: 8 }}>
-                    <div style={{ color: '#0f172a', marginBottom: 6, fontWeight: 700 }}>Suggested reply</div>
-                    <div style={{ color: 'var(--muted)', marginBottom: 8 }}>{`Hi ${mapped.name || mapped.userId}, thanks for reaching out — we're reviewing your account.`}</div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn-primary" onClick={() => copyToClipboard(`Hi ${mapped.name || mapped.userId}, thanks for reaching out — we're reviewing your account.`)}>Copy reply</button>
-                      <button className="btn-secondary" onClick={() => alert('Open conversation window stub')}>Open convo</button>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
-                    <button className="btn-secondary" style={{ flex: 1 }} onClick={() => alert('Escalate to Ops\n' + mapped.userId)}>Escalate to Ops</button>
-                    <button className="btn-secondary" style={{ flex: 1 }} onClick={() => alert('Escalate to Compliance\n' + mapped.userId)}>Escalate to Compliance</button>
-                  </div>
-                </div>
+                {/* secondary placeholder inside input - muted examples */}
+                {/* examples removed as secondary placeholder per request */}
               </div>
             </div>
-          </div>
-        )
-      })()}
+          </header>
+
+          {/* results area (unchanged logic, compact presentation) */}
+          {searched && (
+            <div style={{ marginTop: 6 }}>
+              {loading ? (
+                <div style={{ padding: 12, textAlign: 'center' }}><span className="spinner" /> Loading…</div>
+              ) : (
+                <div className="support-list">
+                  {resultsToShow.map(({ raw, mapped }, idx) => {
+                    const isSel = selectedRaw === raw
+                    const isHover = hoverIndex === idx
+                    const initials = initialsFor(mapped)
+                    return (
+                      <div key={idx} className="support-list-item" style={{ marginBottom: 6 }}>
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => { if (e.key === 'Enter') onSelectUser(raw) }}
+                          onClick={() => onSelectUser(raw)}
+                          onMouseEnter={() => setHoverIndex(idx)}
+                          onMouseLeave={() => setHoverIndex(null)}
+                          className="support-row"
+                          style={{ border: isSel ? '1px solid rgba(99,102,241,0.9)' : undefined }}
+                        >
+                                <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}>
+                                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg,#06b6d4,#7c3aed)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{initials}</div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                      <div className="name">{mapped.name || mapped.userId || '—'}</div>
+                                      {(() => {
+                                        const isTop = mapped?.depositNum && topThreshold > 0 && mapped.depositNum >= topThreshold
+                                        return isTop ? <span className="badge top">Top</span> : null
+                                      })()}
+                                    </div>
+                                    <div className="meta">{mapped.userId || ''}{mapped.mt5 ? ` · ${mapped.mt5}` : ''}{mapped.country ? ` · ${mapped.country}` : ''}</div>
+                                  </div>
+                                </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontWeight: 900 }}>{fmtEuro(mapped.totalDeposits)}</div>
+                            <div className="deposits">{mapped.depositCount || '0'} deposits</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                  {mappedResults.length === 0 && <div className="neutral-card">No results</div>}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* selected user handled via full-page SupportUserDetails when present */}
+        </div>
+      </div>
     </div>
   )
 }
+
+function suggestedReply(mapped, affiliateName) {
+  if (!mapped) return ''
+  const name = mapped.name || mapped.userId || 'customer'
+  const hasFraudFlag = !!(mapped.fraud || mapped.action)
+  const depositsCount = toNum(mapped.depositCount)
+  const totalDeposits = toNum(mapped.totalDeposits)
+  const hasDeposits = depositsCount > 0 || totalDeposits > 0
+  const hasWithdrawals = toNum(mapped.withdrawals) > 0
+
+  if (hasFraudFlag) return `Hi ${name}, we need additional verification for this account before we can proceed. Please provide the requested documents.`
+  if (!hasDeposits) return `Hi ${name}, we can guide you through your first deposit — here are payment options and steps to get started.`
+  if (hasWithdrawals) return `Hi ${name}, we see withdrawals on your account. We'll verify processing and update you shortly.`
+  if (mapped.affiliateId) return `Hi ${name}, thanks for reaching out — we note this account was referred by an affiliate${affiliateName ? ` (${affiliateName})` : ''}. We're reviewing your account now.`
+  return `Hi ${name}, thanks for reaching out — we're reviewing your account.`
+}
+
+async function copyToClipboard(text) {
+  try { await navigator.clipboard?.writeText(text) } catch (e) { /* ignore */ }
+}
+
