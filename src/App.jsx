@@ -25,7 +25,7 @@ export default function App(){
      overview: '/overview',
      report: '/report',
      roadmap: '/roadmap',
-     supportUserCheck: '/support-user-check',
+    supportUserCheck: '/support/user-check',
    }), []);
 
    const pathToView = (pathname) => {
@@ -42,6 +42,7 @@ export default function App(){
      if (pathname.startsWith('/roadmap')) return 'roadmap';
      if (pathname.startsWith('/ongoing')) return 'roadmap';
      if (pathname.startsWith('/summary-report')) return 'summary';
+    if (pathname.startsWith('/support')) return 'supportUserCheck';
      return 'overview';
    };
 
@@ -168,7 +169,7 @@ export default function App(){
             >
               Org Chart
             </button>
-            <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => setView('supportUserCheck')}>
+            <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => navigate('supportUserCheck')}>
               Support • User Check
             </button>
           </nav>
@@ -190,8 +191,7 @@ export default function App(){
                 <SupportUserCheck />
             </React.Suspense>
           )}
-          import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
-          import SupportUserCheck from './features/support/pages/SupportUserCheck.jsx'
+ 
           {view === 'admin' && isAdmin && <AdminPanel />}
         </main>
       </div>

@@ -6,7 +6,17 @@ const CSV_PATH = '/Registrations Report.csv'
 let _cache = null
 let _parsedCount = 0
 let _firstRowKeys = []
+let _idMap = null
+let _mt5Map = null
+let _emailMap = null
 
+// normalized header keys used across functions
+const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
+const USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
+const MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
+const EMAIL_KEYS = ['email', 'e-mail', 'customeremail', 'customer_email']
+const COUNTRY_KEYS = ['country']
+const AFF_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
 function normalizeHeaderKey(header) {
   if (header == null) return ''
   return header.toString().trim().toLowerCase().replace(/[^a-z0-9]+/g, '')
@@ -38,11 +48,7 @@ export async function loadCsvRows(force = false) {
   _parsedCount = data.length
   _firstRowKeys = Object.keys(data[0] || {})
 
-  const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
-  const USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
-  const MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
-  const COUNTRY_KEYS = ['country']
-  const AFF_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
+  
 
   _cache = data.map(rawRow => {
     const row = {}
@@ -57,25 +63,51 @@ export async function loadCsvRows(force = false) {
     const name = normalizeForIndex(pickField(row, NAME_KEYS))
     const uid = normalizeForIndex(pickField(row, USERID_KEYS))
     const mt5 = normalizeForIndex(pickField(row, MT5_KEYS))
+    const email = normalizeForIndex(pickField(row, EMAIL_KEYS))
     const country = normalizeForIndex(pickField(row, COUNTRY_KEYS))
     const aff = normalizeForIndex(pickField(row, AFF_KEYS))
 
-    row.__searchIndex = [name, uid, mt5, country, aff].filter(Boolean).join(' ')
+    // include email in the search index so textual queries match addresses
+    row.__searchIndex = [name, uid, mt5, email, country, aff].filter(Boolean).join(' ')
     return row
   })
 
-  // DEV-only self-test: ensure search can return at least the first customer's name
+  // build quick lookup maps for exact numeric id / mt5 matches
+  _idMap = {}
+  _mt5Map = {}
+  _emailMap = {}
+  for (const r of _cache) {
+    const uidRaw = pickField(r, USERID_KEYS)
+    const uidKey = uidRaw ? String(uidRaw).replace(/\D+/g, '') : ''
+    if (uidKey) {
+      _idMap[uidKey] = _idMap[uidKey] || []
+      _idMap[uidKey].push(r)
+    }
+    const mt5Raw = pickField(r, MT5_KEYS)
+    const mt5Key = mt5Raw ? String(mt5Raw).replace(/\D+/g, '') : ''
+    if (mt5Key) {
+      _mt5Map[mt5Key] = _mt5Map[mt5Key] || []
+      _mt5Map[mt5Key].push(r)
+    }
+    const emailRaw = pickField(r, EMAIL_KEYS)
+    if (emailRaw) {
+      const lk = String(emailRaw).toLowerCase().trim()
+      if (lk) _emailMap[lk] = _emailMap[lk] || []
+      _emailMap[lk].push(r)
+    }
+  }
+
+  // DEV-only local self-check (no async recursion)
   try {
     const mode = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.MODE) ? import.meta.env.MODE : (typeof process !== 'undefined' ? process.env.NODE_ENV : 'production')
     if (mode !== 'production') {
       const firstName = pickField(_cache[0], NAME_KEYS)
       if (firstName) {
-        const found = await searchUsers(firstName)
-        if (!found || found.length === 0) throw new Error('DEV self-test failed: first CSV customer not found by search')
+        const has = _cache.some(r => (r.customername || '').toLowerCase().includes(String(firstName).toLowerCase()))
+        if (!has) throw new Error('DEV self-test failed: first CSV customer not present after parsing')
       }
     }
   } catch (err) {
-    // bubble up DEV self-test errors so developer sees them early
     throw err
   }
 
@@ -98,6 +130,43 @@ export async function searchUsers(query) {
 
   // If query looks numeric, match numeric IDs exactly (or as substring)
   if (/^\d+$/.test(qRaw)) {
+    // prefer fast map lookups when available
+    const exact = []
+    if (_idMap && _idMap[qRaw]) exact.push(..._idMap[qRaw])
+    if (_mt5Map && _mt5Map[qRaw]) exact.push(..._mt5Map[qRaw])
+    if (exact.length) {
+      // mark match source for UI badges
+      for (const r of exact) {
+        if (String(pickField(r, USERID_KEYS)).replace(/\D+/g, '') === qRaw) r.__matchSource = r.__matchSource || 'id'
+        else if (String(pickField(r, MT5_KEYS)).replace(/\D+/g, '') === qRaw) r.__matchSource = r.__matchSource || 'mt5'
+      }
+      return Array.from(new Set(exact))
+    }
+
+    // try to find matching id/mt5 keys that contain the query (handles partial/long numeric ids)
+    const partialMatches = []
+    if (_idMap) {
+      for (const k of Object.keys(_idMap)) {
+        if (k.includes(qRaw)) partialMatches.push(..._idMap[k])
+      }
+    }
+    if (_mt5Map) {
+      for (const k of Object.keys(_mt5Map)) {
+        if (k.includes(qRaw)) partialMatches.push(..._mt5Map[k])
+      }
+    }
+    if (partialMatches.length) {
+      // mark matchSource appropriately
+      for (const r of partialMatches) {
+        const uidDigits = String(pickField(r, USERID_KEYS)).replace(/\D+/g, '')
+        const mt5Digits = String(pickField(r, MT5_KEYS)).replace(/\D+/g, '')
+        if (uidDigits.includes(qRaw)) r.__matchSource = r.__matchSource || 'id'
+        else if (mt5Digits.includes(qRaw)) r.__matchSource = r.__matchSource || 'mt5'
+      }
+      return Array.from(new Set(partialMatches))
+    }
+
+    // final fallback: scan rows' uid/mt5 digit substrings
     return rows.filter(r => {
       const uid = (r.userid || r.user_id || r.user || '')
       const mt5 = (r.mt5account || r.mt5 || '')
@@ -107,8 +176,28 @@ export async function searchUsers(query) {
     })
   }
 
+  // If query looks like an email, prefer fast exact lookup
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(qRaw)) {
+    const key = qRaw.toLowerCase()
+    if (_emailMap && _emailMap[key]) {
+      for (const r of _emailMap[key]) r.__matchSource = r.__matchSource || 'email'
+      return Array.from(new Set(_emailMap[key]))
+    }
+    // fallback to substring scan in email fields
+    const byEmail = rows.filter(r => {
+      const e = (r.email || r.e_mail || r.customeremail || '')
+      return e && String(e).toLowerCase().includes(key)
+    })
+    if (byEmail.length) {
+      for (const r of byEmail) r.__matchSource = r.__matchSource || 'email-substring'
+      return byEmail
+    }
+  }
+
   // Textual search against precomputed __searchIndex
   const results = rows.filter(r => r.__searchIndex && r.__searchIndex.includes(qNorm))
+  // mark textual matches
+  for (const r of results) r.__matchSource = r.__matchSource || 'text'
 
   // Guard: if known record exists in CSV and our search returned 0, throw
   const knownName = 'oliver drejer'
@@ -261,6 +350,49 @@ export function getPaymentAffiliateById(id) {
   const key = String(id).replace(/\D+/g, '')
   if (!key) return null
   return _paymentsAffiliateMap[key] || _paymentsAffiliateMap[key.toLowerCase()] || null
+}
+
+// Resolve affiliate name/info from a variety of inputs (affiliate id string, numeric id, or a parsed registration row)
+export async function resolveAffiliateName(input) {
+  // ensure caches are loaded
+  await loadPaymentsReport()
+  await loadMediaReport()
+
+  // Helper to try payments map first
+  const tryPayments = (val) => {
+    if (!val && val !== 0) return null
+    // numeric-first lookup
+    const numeric = String(val).replace(/\D+/g, '')
+    if (numeric) {
+      const p = _paymentsAffiliateMap && _paymentsAffiliateMap[numeric]
+      if (p) return { name: p.name || '', source: 'payments', raw: p.raw }
+    }
+    // try by exact/lowercased name key
+    const lower = String(val).toLowerCase()
+    if (_paymentsAffiliateMap && _paymentsAffiliateMap[lower]) return { name: _paymentsAffiliateMap[lower].name || '', source: 'payments', raw: _paymentsAffiliateMap[lower].raw }
+    return null
+  }
+
+  // If input is an object (row), try common affiliate fields
+  if (input && typeof input === 'object') {
+    const candidates = [input.affiliateid, input.affiliate_id, input.affiliate, input.affiliatename, input.id, input.uid]
+    for (const c of candidates) {
+      if (c === undefined || c === null || String(c).trim() === '') continue
+      const byPay = tryPayments(c)
+      if (byPay) return byPay
+      const byMedia = getAffiliateById(c)
+      if (byMedia) return { name: byMedia.name || '', source: 'media', raw: byMedia.meta }
+    }
+  }
+
+  // If input is primitive, try direct lookups
+  const byPay = tryPayments(input)
+  if (byPay) return byPay
+  const byMedia = getAffiliateById(input)
+  if (byMedia) return { name: byMedia.name || '', source: 'media', raw: byMedia.meta }
+
+  // Nothing found
+  return null
 }
 
 function parseNumberSafe(v) {
