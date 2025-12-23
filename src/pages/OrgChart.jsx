@@ -209,8 +209,8 @@ export default function OrgChart() {
   }, [pendingScrollId, selected]);
 
   return (
-    <div className="w-full mx-auto px-4 lg:px-8 pb-10">
-      <div className="max-w-6xl mx-auto space-y-6">
+    <div className="w-full px-6 2xl:px-10">
+      <div className="w-full space-y-6">
         <header className="space-y-2">
           <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">Structure</p>
           <h1 className="text-2xl md:text-3xl font-bold text-white">Company Organizational Chart</h1>

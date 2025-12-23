@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { buildSupportDecision } from '../services/supportUserCheckService'
 
 export default function SupportUserDetails({
   selected,
@@ -187,8 +188,24 @@ export default function SupportUserDetails({
     return out
   }, [mapped, affiliateId])
 
+  // Support Decision Engine
+  const supportDecision = useMemo(() => {
+    return buildSupportDecision({
+      ...mapped,
+      paymentsLoaded,
+      mediaLoaded
+    })
+  }, [mapped, paymentsLoaded, mediaLoaded])
+
   // Action panel state
-  const [replyText, setReplyText] = useState(suggested)
+  const [replyText, setReplyText] = useState(supportDecision?.replyTemplate || suggested)
+
+  // Update reply text when support decision changes
+  React.useEffect(() => {
+    if (supportDecision?.replyTemplate) {
+      setReplyText(supportDecision.replyTemplate)
+    }
+  }, [supportDecision?.replyTemplate])
 
   function handleCopy() { copyToClipboard(replyText) }
   function handleEscalate(kind) {
@@ -197,7 +214,7 @@ export default function SupportUserDetails({
   }
 
   return (
-    <div style={{ padding: '12px 2px 24px', width: '100%', boxSizing: 'border-box' }}>
+    <div className="w-full px-6 2xl:px-10">
       {/* Top per-user timeline removed: keep the compact horizontal timeline below */}
       {/* Top bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
@@ -210,9 +227,9 @@ export default function SupportUserDetails({
         </div>
       </div>
 
-      {/* Dashboard layout: left identity card, center content, right Support Action */}
-      <div className="support-detail-grid" style={{ marginBottom: 12, display: 'grid', gridTemplateColumns: '320px minmax(0, 1fr)', gap: 24, alignItems: 'start', width: '100%' }}>
-        <aside className="identity-card card" style={{ padding: '12px 12px', textAlign: 'left', alignSelf: 'stretch', position: 'sticky', top: 12, borderRight: '1px solid rgba(255,255,255,0.04)' }}>
+      {/* Dashboard layout: left identity card, center content, right Support Decision Engine */}
+      <div className="support-detail-grid" style={{ display: 'grid', gridTemplateColumns: '[left] 360px [center] minmax(0, 1fr) [right] 480px', gap: 48, alignItems: 'start', width: '100%' }}>
+        <aside className="identity-card card min-w-0" style={{ padding: '12px 12px', textAlign: 'left', alignSelf: 'stretch', position: 'sticky', top: 12, borderRight: '1px solid rgba(255,255,255,0.04)' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <div style={{ width: 48, height: 48, borderRadius: 10, background: 'linear-gradient(135deg,#06b6d4,#7c3aed)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 16 }}>{(displayName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
             <div>
@@ -227,7 +244,13 @@ export default function SupportUserDetails({
             <div style={{ height: 12 }} />
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', marginTop: 12, paddingTop: 12 }}>
               <div style={{ fontSize: 12, color: 'var(--muted)' }}>Affiliate</div>
-              <div style={{ fontWeight: 700, marginTop: 6 }}>{affiliateId ? `${affiliateId}${affiliateName ? ` — ${affiliateName}` : ''}` : 'No affiliate'}</div>
+              <div style={{ fontWeight: 700, marginTop: 6 }}>
+                {affiliateId 
+                  ? (String(affiliateId).replace(/\D+/g, '') === '2287' 
+                      ? `${affiliateId} — Default affiliate (No affiliate)` 
+                      : `${affiliateId} — ${affiliateName || 'Unknown'}`)
+                  : 'No affiliate'}
+              </div>
             </div>
 
             {/* Commissions detail inserted into left sidebar */}
@@ -250,8 +273,7 @@ export default function SupportUserDetails({
           </div>
         </aside>
 
-        <div className="center-col" style={{ minWidth: 0, padding: '0 8px', display: 'flex', justifyContent: 'center' }}>
-          <div style={{ width: 'min(1100px, 100%)' }}>
+        <div className="center-col min-w-0 w-full max-w-none">
           <section style={{ marginBottom: 12, padding: '8px 6px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
             <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>User Timeline & Status</div>
             <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
@@ -354,9 +376,157 @@ export default function SupportUserDetails({
           </section>
 
           {/* Activity Metrics removed — key metrics moved into Financial Summary to avoid duplication. */}
-          </div>{/* end center-content */}
 
         </div>{/* end center-col */}
+
+        {/* Support Decision Engine - Right Column */}
+        <aside className="decision-engine min-w-0" style={{ alignSelf: 'stretch', position: 'sticky', top: 12 }}>
+          <div style={{ padding: 12, background: 'var(--bg)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 8, boxShadow: '0 6px 12px rgba(2,6,23,0.45)' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Support Decision Engine</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginBottom: 12 }}>
+              <div className="card" style={{ padding: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Case Type</div>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6, textTransform: 'capitalize' }}>
+                  {supportDecision?.caseType?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
+                </div>
+              </div>
+              <div className="card" style={{ padding: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Risk Level</div>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
+                  <span className={`badge ${supportDecision?.riskLevel === 'high' ? 'danger' : supportDecision?.riskLevel === 'medium' ? 'warning' : 'success'}`}>
+                    {supportDecision?.riskLevel?.toUpperCase() || 'UNKNOWN'}
+                  </span>
+                </div>
+                {supportDecision?.riskExplanation && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
+                    <div style={{ marginBottom: 4 }}>{supportDecision.riskExplanation.reason}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
+                    <div>{supportDecision.riskExplanation.impact}</div>
+                  </div>
+                )}
+              </div>
+              <div className="card" style={{ padding: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Bonus Eligibility</div>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
+                  <span className={`badge ${supportDecision?.bonusDecision?.status === 'ELIGIBLE' ? 'success' : supportDecision?.bonusDecision?.status === 'NEEDS_APPROVAL' ? 'warning' : 'danger'}`}>
+                    {supportDecision?.bonusDecision?.status?.replace(/_/g, ' ') || 'UNKNOWN'}
+                  </span>
+                </div>
+                {supportDecision?.bonusExplanation && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
+                    <div style={{ marginBottom: 4 }}>{supportDecision.bonusExplanation.reason}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
+                    <div>{supportDecision.bonusExplanation.impact}</div>
+                  </div>
+                )}
+              </div>
+              <div className="card" style={{ padding: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Affiliate Switch Eligibility</div>
+                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
+                  <span className={`badge ${supportDecision?.affiliateSwitchDecision?.status === 'ELIGIBLE' ? 'success' : supportDecision?.affiliateSwitchDecision?.status === 'NOT_ELIGIBLE' ? 'danger' : 'warning'}`}>
+                    {supportDecision?.affiliateSwitchDecision?.status?.replace(/_/g, ' ') || 'UNKNOWN'}
+                  </span>
+                </div>
+                {supportDecision?.affiliateSwitchExplanation && (
+                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
+                    <div style={{ marginBottom: 4 }}>{supportDecision.affiliateSwitchExplanation.reason}</div>
+                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
+                    <div>{supportDecision.affiliateSwitchExplanation.impact}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {supportDecision?.blockingConditions?.length > 0 && (
+              <div style={{ marginBottom: 12, padding: 8, background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', borderRadius: 6 }}>
+                <div style={{ fontSize: 11, fontWeight: 600, color: '#d97706', marginBottom: 4 }}>Blocking condition</div>
+                <div style={{ fontSize: 12, color: '#92400e' }}>
+                  {supportDecision.blockingConditions.join(', ')}
+                </div>
+              </div>
+            )}
+
+            {supportDecision?.flags?.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Flags</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {supportDecision.flags.map((flag, idx) => (
+                    <span key={idx} className="badge info">{flag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {supportDecision?.explanations?.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Analysis</div>
+                <ul style={{ fontSize: 13, color: 'var(--text)', paddingLeft: 20 }}>
+                  {supportDecision.explanations.map((exp, idx) => (
+                    <li key={idx}>{exp}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {supportDecision?.suggestedActions?.length > 0 && (
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Suggested Actions</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {supportDecision.suggestedActions.map((action, idx) => (
+                    <button
+                      key={idx}
+                      className={`btn ${action.includes('Escalate') ? 'btn-warning' : 'btn-secondary'}`}
+                      style={{ fontSize: 12, padding: '6px 12px' }}
+                      onClick={() => {
+                        if (action.includes('Escalate')) {
+                          handleEscalate(action.replace('Escalate to ', '').toLowerCase())
+                        } else if (action === 'Copy reply') {
+                          handleCopy()
+                        }
+                      }}
+                    >
+                      {action}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Suggested Reply</div>
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                style={{
+                  width: '100%',
+                  minHeight: 120,
+                  padding: 12,
+                  border: '1px solid var(--border)',
+                  borderRadius: 8,
+                  background: 'var(--bg)',
+                  color: 'var(--text)',
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                  resize: 'vertical'
+                }}
+                placeholder="Support reply template..."
+              />
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <button className="btn btn-primary" onClick={handleCopy} style={{ fontSize: 12 }}>
+                  Copy to Clipboard
+                </button>
+                {supportDecision?.bonusDecision?.reason && (
+                  <div style={{ fontSize: 11, color: 'var(--muted)', alignSelf: 'center' }}>
+                    {supportDecision.bonusDecision.reason}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </aside>
 
       </div>{/* end support-detail-grid */}
 

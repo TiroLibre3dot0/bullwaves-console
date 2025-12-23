@@ -6,7 +6,8 @@ import {
   resolveAffiliateName,
   buildAffiliateKpiMap,
   getAffiliateKpi,
-  computePriority
+  computePriority,
+  buildSupportDecision
 } from '../services/supportUserCheckService'
 import SupportUserDetails from './SupportUserDetails'
 
@@ -305,7 +306,7 @@ export default function SupportUserCheck() {
   // If a user is selected, render the full-width Support Decision Page in-place
   if (selected) {
     return (
-      <div className="support-user-check-page" style={{ padding: 18 }}>
+      <div className="support-user-check-page w-full px-6 2xl:px-10">
         <SupportUserDetails
           selected={selected}
           affiliateName={affiliateName}
@@ -323,9 +324,9 @@ export default function SupportUserCheck() {
   }
 
   return (
-    <div className="support-user-check-page" style={{ padding: 18 }}>
+    <div className="support-user-check-page w-full px-6 2xl:px-10">
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: showHero ? 0 : 12, minHeight: showHero ? '68vh' : undefined, alignItems: showHero ? 'center' : undefined }}>
-        <div style={{ width: '100%', maxWidth: showHero ? 680 : 980, paddingTop: showHero ? 0 : undefined }}>
+        <div style={{ width: '100%', paddingTop: showHero ? 0 : undefined }}>
           <header style={{ display: 'flex', flexDirection: 'column', gap: showHero ? 10 : 6, marginBottom: showHero ? 0 : 10, textAlign: showHero ? 'center' : 'left' }}>
             <div>
               <h1 className="support-hero-title" style={{ margin: 0, fontSize: showHero ? 26 : 20, fontWeight: 900, letterSpacing: '-0.2px' }}>Support — User check</h1>
@@ -425,18 +426,15 @@ export default function SupportUserCheck() {
 
 function suggestedReply(mapped, affiliateName) {
   if (!mapped) return ''
-  const name = mapped.name || mapped.userId || 'customer'
-  const hasFraudFlag = !!(mapped.fraud || mapped.action)
-  const depositsCount = toNum(mapped.depositCount)
-  const totalDeposits = toNum(mapped.totalDeposits)
-  const hasDeposits = depositsCount > 0 || totalDeposits > 0
-  const hasWithdrawals = toNum(mapped.withdrawals) > 0
-
-  if (hasFraudFlag) return `Hi ${name}, we need additional verification for this account before we can proceed. Please provide the requested documents.`
-  if (!hasDeposits) return `Hi ${name}, we can guide you through your first deposit — here are payment options and steps to get started.`
-  if (hasWithdrawals) return `Hi ${name}, we see withdrawals on your account. We'll verify processing and update you shortly.`
-  if (mapped.affiliateId) return `Hi ${name}, thanks for reaching out — we note this account was referred by an affiliate${affiliateName ? ` (${affiliateName})` : ''}. We're reviewing your account now.`
-  return `Hi ${name}, thanks for reaching out — we're reviewing your account.`
+  
+  // Use the Support Decision Engine for intelligent reply suggestions
+  const decision = buildSupportDecision({
+    ...mapped,
+    paymentsLoaded: true, // Assume loaded for reply generation
+    mediaLoaded: true
+  })
+  
+  return decision?.replyTemplate || `Hi ${mapped.name || mapped.userId || 'customer'}, thanks for reaching out — we're reviewing your account.`
 }
 
 async function copyToClipboard(text) {

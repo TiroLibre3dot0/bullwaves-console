@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { formatEuro, formatNumber, formatNumberShort, formatPercent, cleanNumber } from '../lib/formatters'
+import AffiliatePayments2 from '../features/affiliate/components/AffiliatePayments2'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
@@ -249,6 +250,10 @@ export default function Report() {
           </div>
         )}
       </aside>
+
+      <div>
+        <AffiliatePayments2 />
+      </div>
 
       <aside style={{ ...card }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
