@@ -25,8 +25,11 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
   const [showTools, setShowTools] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDataStatusPopup, setShowDataStatusPopup] = useState(false)
   const hoverTimer = useRef(null)
+
+  const isMobile = () => window.innerWidth <= 768;
 
   const tools = useMemo(
     () => [
@@ -41,30 +44,48 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
     []
   )
 
-  const handleOverlayClick = () => setShowTools(false)
+  const handleLogoClick = () => {
+    if (isMobile()) {
+      setShowTools(!showTools);
+    }
+  };
+
+  const handleOverlayClick = () => {
+    setShowTools(false)
+    setShowMobileMenu(false)
+  }
+
+  const toggleMobileMenu = () => {
+    setShowMobileMenu(!showMobileMenu)
+  }
 
   const openTool = (href) => {
-    if (!href) return
     window.open(href, '_blank', 'noopener,noreferrer')
+    setShowTools(false)
   }
 
   const handleEnter = () => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current)
-    setShowTools(true)
+    if (!isMobile()) {
+      if (hoverTimer.current) clearTimeout(hoverTimer.current)
+      setShowTools(true)
+    }
   }
 
   const handleLeave = () => {
-    hoverTimer.current = setTimeout(() => setShowTools(false), 120)
+    if (!isMobile()) {
+      hoverTimer.current = setTimeout(() => setShowTools(false), 120)
+    }
   }
 
   return (
     <>
-      {showTools && <div className="logo-tools-backdrop" onClick={handleOverlayClick} />}
+      {(showTools || showMobileMenu) && <div className="logo-tools-backdrop" onClick={handleOverlayClick} />}
       <header className="topbar">
       <div
         className="title logo-hit flex items-center"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
+        onClick={handleLogoClick}
       >
         <img src="/Logo.png" alt="Bullwaves Logo" className="h-10 w-auto transition-all duration-300 hover:scale-105 cursor-pointer mr-2" />
         {dataStatus && <DataStatusIcon dataStatus={dataStatus} onClick={() => setShowDataStatusPopup(true)} />}
@@ -81,7 +102,34 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
           </div>
         )}
       </div>
-      <div className="topbar-nav-slot">{children}</div>
+      <div className="topbar-nav-slot">
+        {/* Hamburger Menu Button - Mobile Only */}
+        <button
+          className="hamburger-menu md:hidden flex flex-col justify-center items-center w-8 h-8 space-y-1 bg-transparent border-none cursor-pointer"
+          onClick={toggleMobileMenu}
+          aria-label="Toggle navigation menu"
+        >
+          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'rotate-45 translate-y-1.5' : ''}`}></span>
+          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'opacity-0' : ''}`}></span>
+          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+        </button>
+
+        {/* Desktop Navigation */}
+        <div className="hidden md:block">
+          {children}
+        </div>
+
+        {/* Mobile Navigation Menu */}
+        {showMobileMenu && (
+          <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-gradient-to-b from-slate-900/98 to-slate-800/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
+            <div className="px-4 py-4 max-h-96 overflow-y-auto">
+              {React.cloneElement(children, {
+                onItemClick: () => setShowMobileMenu(false)
+              })}
+            </div>
+          </div>
+        )}
+      </div>
       <div className="meta">
         {user ? (
           <div className="user-chip">

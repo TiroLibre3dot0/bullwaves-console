@@ -14,6 +14,40 @@ import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
 import { DataStatusProvider } from './context/DataStatusContext'
 
+function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffiliateSection }) {
+  const handleNavClick = (action) => {
+    action();
+    onItemClick && onItemClick();
+  };
+
+  return (
+    <nav className="subnav">
+      <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('overview'))}>
+        Overview
+      </button>
+      <button className={`tab ${view === 'executive' ? 'active' : ''}`} onClick={() => handleNavClick(() => goExecutiveSection('summary'))}>
+        Executive Suite
+      </button>
+      <button className={`tab ${view === 'affiliate' ? 'active' : ''}`} onClick={() => handleNavClick(() => goAffiliateSection('analysis'))}>
+        Affiliate
+      </button>
+      <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('roadmap'))}>
+        Mega-Stories
+      </button>
+      <button
+        className={`tab ${view === 'orgChart' ? 'active' : ''}`}
+        onClick={() => handleNavClick(() => navigate('orgChart'))}
+        style={{ marginLeft: 'auto' }}
+      >
+        Org Chart
+      </button>
+      <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('supportUserCheck'))}>
+        Support • User Check
+      </button>
+    </nav>
+  );
+}
+
 export default function App(){
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
@@ -151,31 +185,8 @@ export default function App(){
       <RequireAuth>
         <div className="app-root">
           <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin}>
-            <nav className="subnav">
-            <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
-              Overview
-            </button>
-            <button className={`tab ${view === 'executive' ? 'active' : ''}`} onClick={() => goExecutiveSection('summary')}>
-              Executive Suite
-            </button>
-            <button className={`tab ${view === 'affiliate' ? 'active' : ''}`} onClick={() => goAffiliateSection('analysis')}>
-              Affiliate
-            </button>
-            <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
-              Mega-Stories
-            </button>
-            <button
-              className={`tab ${view === 'orgChart' ? 'active' : ''}`}
-              onClick={() => navigate('orgChart')}
-              style={{ marginLeft: 'auto' }}
-            >
-              Org Chart
-            </button>
-            <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => navigate('supportUserCheck')}>
-              Support • User Check
-            </button>
-          </nav>
-        </Topbar>
+            <NavComponent onItemClick={() => {}} view={view} navigate={navigate} goExecutiveSection={goExecutiveSection} goAffiliateSection={goAffiliateSection} />
+          </Topbar>
         <main className="app-main">
           {view === 'overview' && <ProfitAnalysisPage />}
           {view === 'executive' && (
