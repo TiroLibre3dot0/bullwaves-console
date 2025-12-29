@@ -6,6 +6,8 @@ import ExecutiveAnalysisEngine from '../../executive-summary/components/Executiv
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent, normalizeKey } from '../../../lib/formatters'
+import { checkDataStatus } from '../../../utils/dataStatusChecker'
+import { useDataStatus } from '../../../context/DataStatusContext'
 
 const formatNumberFull = (value) => formatNumber(value)
 const formatPercentDisplay = (value) => formatPercent(value, 2)
@@ -24,6 +26,7 @@ export default function GlobalDashboard() {
   const [selectedMonth, setSelectedMonth] = useState('all')
   const [selectedYear, setSelectedYear] = useState('all')
   const [selectedAffiliate, setSelectedAffiliate] = useState('all')
+  const { setDataStatus } = useDataStatus()
 
   const selectedAffiliateKey = normalizeKey(selectedAffiliate)
 
@@ -127,6 +130,13 @@ export default function GlobalDashboard() {
   }, [filteredMedia, filteredPayments])
 
   const affiliateLeaderboard = useLeaderboard(filteredMedia, filteredPayments)
+
+  React.useEffect(() => {
+    if (mediaRows.length > 0) {
+      const status = checkDataStatus(mediaRows, 'monthLabel', 'Media Report')
+      setDataStatus(status)
+    }
+  }, [mediaRows])
 
   const breakEven = useMemo(() => {
     const months = [...perMonth]

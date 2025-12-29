@@ -7,6 +7,8 @@ import YearSelector from '../../../components/common/YearSelector'
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../../media-payments/hooks/useMediaPaymentsData'
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
+import { checkDataStatus } from '../../../utils/dataStatusChecker'
+import { useDataStatus } from '../../../context/DataStatusContext'
 
 const selectStyle = { minWidth: 180, background: '#0d1a2c', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px' }
 const formatNumberFull = (value) => formatNumber(value)
@@ -30,6 +32,7 @@ export default function InvestmentsDashboard() {
   const [expanded, setExpanded] = useState(null)
   const [cpaOverrides, setCpaOverrides] = useState({})
   const [financeConfirmed, setFinanceConfirmed] = useState({})
+  const { setDataStatus } = useDataStatus()
 
   const ledger = useAffiliateLedger({ mediaRows, payments, selectedYear, selectedMonth, search, negotiatedCpaOverrides: cpaOverrides })
 
@@ -88,6 +91,35 @@ export default function InvestmentsDashboard() {
       console.warn('Unable to persist CPA overrides', e)
     }
   }, [cpaOverrides, financeConfirmed])
+
+  // Carica status dati
+  useEffect(() => {
+    async function loadDataStatus() {
+      try {
+        const resp = await fetch('/Payments Report.csv')
+        if (!resp.ok) return
+        const text = await resp.text()
+        const lines = text.split(/\r?\n/).filter(line => line.trim())
+        if (lines.length < 2) return
+        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+        const rows = lines.slice(1).map(line => {
+          const cols = line.split(',').map(v => v.replace(/"/g, '').trim())
+          const row = {}
+          headers.forEach((h, idx) => {
+            row[h] = cols[idx] || ''
+          })
+          return row
+        })
+        // Trova colonna data, usa 'Date' o simili
+        const dateKey = headers.find(h => h.toLowerCase().includes('date')) || headers[0]
+        const status = checkDataStatus(rows, dateKey, 'Payments Report')
+        setDataStatus(status)
+      } catch (err) {
+        console.error('Failed to load payments for status', err)
+      }
+    }
+    loadDataStatus()
+  }, [])
 
   const toggleFinanceConfirmed = (affiliateId) => {
     setFinanceConfirmed((prev) => ({ ...prev, [affiliateId]: !prev[affiliateId] }))

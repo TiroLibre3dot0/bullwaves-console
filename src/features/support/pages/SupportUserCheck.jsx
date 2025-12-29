@@ -10,6 +10,8 @@ import {
   buildSupportDecision
 } from '../services/supportUserCheckService'
 import SupportUserDetails from './SupportUserDetails'
+import { checkDataStatus } from '../../../utils/dataStatusChecker'
+import { useDataStatus } from '../../../context/DataStatusContext'
 
 // Key lists
 const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
@@ -134,11 +136,49 @@ export default function SupportUserCheck() {
   const [mediaLoaded, setMediaLoaded] = useState(false)
   const [affiliateName, setAffiliateName] = useState(null)
   const [affiliateKpi, setAffiliateKpi] = useState(null)
+  const [dataStatus, setDataStatus] = useState(null)
+  const [showDataStatusPopup, setShowDataStatusPopup] = useState(false)
+
+  const { setDataStatus: setGlobalDataStatus } = useDataStatus()
 
   const inputRef = useRef(null)
   const lastReqRef = useRef(0)
 
   useEffect(() => { inputRef.current?.focus() }, [])
+
+  // Carica dati iniziali per status
+  useEffect(() => {
+    console.log('Loading initial data for status');
+    async function loadInitialData() {
+      try {
+        const resp = await fetch('/Registrations%20Report.csv')
+        console.log('Fetch response', resp.ok);
+        if (!resp.ok) return
+        const text = await resp.text()
+        // Parse CSV come nel service
+        const lines = text.split(/\r?\n/).filter(line => line.trim())
+        if (lines.length < 2) return
+        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+        const rows = lines.slice(1).map(line => {
+          const cols = line.split(',').map(v => v.replace(/"/g, '').trim())
+          const row = {}
+          headers.forEach((h, idx) => {
+            row[h] = cols[idx] || ''
+          })
+          return row
+        })
+        // Trova la colonna data usando REGDATE_KEYS
+        const dateKey = headers.find(h => REGDATE_KEYS.includes(h.toLowerCase().replace(/[^a-z]/g, ''))) || headers[0]
+        const status = checkDataStatus(rows, dateKey, 'Registrations Report')
+        setDataStatus(status)
+        setGlobalDataStatus(status)
+        setShowDataStatusPopup(true)
+      } catch (err) {
+        console.error('Failed to load registrations for status', err)
+      }
+    }
+    loadInitialData()
+  }, [])
 
   // Focus shortcut: press '/' to focus the search input (UI enhancement only)
   useEffect(() => {

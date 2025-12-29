@@ -5,6 +5,8 @@ import CountryMapChart from '../components/profit/CountryMapChart'
 import SegmentBarChart from '../components/profit/SegmentBarChart'
 import ProfitRatioScatter from '../components/profit/ProfitRatioScatter'
 import RegistrationBarChart from '../components/profit/RegistrationBarChart'
+import { checkDataStatus } from '../utils/dataStatusChecker'
+import { useDataStatus } from '../context/DataStatusContext'
 
 const formatter = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -108,6 +110,7 @@ export default function ProfitAnalysisPage() {
   const [loading, setLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState('all')
   const [scatterEntity, setScatterEntity] = useState('affiliate')
+  const { setDataStatus } = useDataStatus()
 
   useEffect(() => {
     async function loadMedia() {
@@ -142,6 +145,9 @@ export default function ProfitAnalysisPage() {
           }
         })
         setMediaRows(parsed)
+        // Calcola lo stato dei dati
+        const status = checkDataStatus(parsed, 'monthLabel', 'Media Report')
+        setDataStatus(status)
       } catch (err) {
         console.error('Failed to load media report', err)
       } finally {

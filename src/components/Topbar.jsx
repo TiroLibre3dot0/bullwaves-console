@@ -1,7 +1,26 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useDataStatus } from '../context/DataStatusContext'
+
+function DataStatusIcon({ dataStatus }) {
+  const { status } = dataStatus;
+  const getIcon = () => {
+    switch (status) {
+      case 'updated': return <span className="text-green-500" title="Data is up to date">✅</span>;
+      case 'outdated': return <span className="text-yellow-500" title="Data may be outdated">⏰</span>;
+      case 'no-data': return <span className="text-red-500" title="No data available">⚠️</span>;
+      default: return <span className="text-gray-400" title="Unknown status">❓</span>;
+    }
+  };
+  return (
+    <div className="data-status-icon flex items-center">
+      {getIcon()}
+    </div>
+  );
+}
 
 export default function Topbar({ children, onAdminClick, showAdmin = false }){
+  const { dataStatus } = useDataStatus();
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
   const [showTools, setShowTools] = useState(false)
@@ -10,7 +29,8 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const tools = useMemo(
     () => [
       { name: 'Creolabs · Qlik Cloud', href: 'https://login.qlik.com/login?state=hKFo2SBsNGtYOEs4eXM0MTQyal9qZlZZd2JxVUxGRTNvOFk4eKFupWxvZ2luo3RpZNkgSTRORnUzNW5iSl9YR2NXVTZmQ0pKV1VkeVVJeXZFMDSjY2lk2SBQRjVZa0Nhem9qUGQ2OGhHVGhXVHhMNk4wcWw3RUVKYQ&client=PF5YkCazojPd68hGThWTxL6N0ql7EEJa&protocol=oauth2&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fqlk6ufzb2vk9dn9.uk.qlikcloud.com%2Flogin%2Fcallback&nonce=cMBZFdQmCwCyxd61Cz3Ios9DY-kDPwRIHfL0PgmmhYU&code_challenge=hHRAyjfogYyP8cEyDbZGNxEG8OiGaRulBWTmBBqH-G0&code_challenge_method=S256' },
-      { name: 'CellXpert · Affiliate Hub', href: 'https://partner.trackingaffiliates.com/v2/adminv2/#!/app/pending-affiliates/' },
+      { name: 'Trading Platform', href: 'https://trading-platform-self-two.vercel.app/trade' },
+      { name: 'CellXpert · Affiliate Hub', href: 'https://partner.trackingaffiliates.com/v2/login/admin-login/' },
       { name: 'Skale CRM · Console', href: 'https://bul934907.skalecrm.com/index.php' },
       { name: 'Skale App · Brand Manager', href: 'https://fbom.skaleapps.io/company-management/brands' },
       { name: 'Brokeree · Social Trading', href: 'http://77.76.9.111:8080/admin/' },
@@ -40,11 +60,12 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
       {showTools && <div className="logo-tools-backdrop" onClick={handleOverlayClick} />}
       <header className="topbar">
       <div
-        className="title logo-hit"
+        className="title logo-hit flex items-center"
         onMouseEnter={handleEnter}
         onMouseLeave={handleLeave}
       >
-        Bullwaves
+        <img src="/Logo.png" alt="Bullwaves Logo" className="h-10 w-auto transition-all duration-300 hover:scale-105 cursor-pointer mr-2" />
+        {dataStatus && <DataStatusIcon dataStatus={dataStatus} />}
         {showTools && (
           <div className="logo-tools-pop" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
             <div className="logo-tools-title">Tools</div>

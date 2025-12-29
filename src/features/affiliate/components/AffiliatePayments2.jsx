@@ -1,6 +1,8 @@
-﻿import React, { useState, useMemo, useCallback } from 'react';
+﻿import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import useAffiliatePayments from '../hooks/useAffiliatePayments';
 import { formatEuro } from '../../../lib/formatters';
+import { checkDataStatus } from '../../../utils/dataStatusChecker'
+import { useDataStatus } from '../../../context/DataStatusContext'
 
 const card = { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#f1f5f9', border: '1px solid #334155', borderRadius: 12, padding: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', margin: 12 };
 
@@ -19,6 +21,7 @@ export default function AffiliatePayments2() {
   const [expandedMonth, setExpandedMonth] = useState(null);
   const [filterYear, setFilterYear] = useState('');
   const [filterMonth, setFilterMonth] = useState('');
+  const { setDataStatus } = useDataStatus()
   
   const affiliates = useMemo(() => {
     if (!map) return [];
@@ -163,6 +166,34 @@ export default function AffiliatePayments2() {
       return totals;
     }
   }, [map, selectedRec]);
+
+  // Carica status dati
+  useEffect(() => {
+    async function loadDataStatus() {
+      try {
+        const resp = await fetch('/Payments Report.csv')
+        if (!resp.ok) return
+        const text = await resp.text()
+        const lines = text.split(/\r?\n/).filter(line => line.trim())
+        if (lines.length < 2) return
+        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
+        const rows = lines.slice(1).map(line => {
+          const cols = line.split(',').map(v => v.replace(/"/g, '').trim())
+          const row = {}
+          headers.forEach((h, idx) => {
+            row[h] = cols[idx] || ''
+          })
+          return row
+        })
+        const dateKey = headers.find(h => h.toLowerCase().includes('date')) || headers[0]
+        const status = checkDataStatus(rows, dateKey, 'Payments Report')
+        setDataStatus(status)
+      } catch (err) {
+        console.error('Failed to load payments for status', err)
+      }
+    }
+    loadDataStatus()
+  }, [])
 
   return (
     <div style={card}>

@@ -9,6 +9,8 @@ import AnalysisEngine from './components/AnalysisEngine'
 import { buildWeeklyAffiliateReport } from './utils/buildWeeklyAffiliateReport'
 import { computeCohortBreakEvenForAffiliate } from './utils/computeCohortBreakEvenForAffiliate'
 import { filterTop10CohortRowsForAffiliate, loadTop10CohortData } from './utils/getTop10CohortDataForAffiliate'
+import { checkDataStatus } from '../../utils/dataStatusChecker'
+import { useDataStatus } from '../../context/DataStatusContext'
 
 const badgeTone = (profit) => {
   if (profit >= 0) return { label: 'Healthy', color: '#22c55e' }
@@ -21,6 +23,7 @@ export default function AffiliateAnalysis() {
   const [selectedAffiliate, setSelectedAffiliate] = useState('')
   const [selectedYear, setSelectedYear] = useState('all')
   const [top10CohortRows, setTop10CohortRows] = useState([])
+  const { setDataStatus } = useDataStatus()
 
   const yearOptions = useMemo(() => {
     const set = new Set()
@@ -49,6 +52,13 @@ export default function AffiliateAnalysis() {
   useEffect(() => {
     loadTop10CohortData().then(setTop10CohortRows).catch(() => setTop10CohortRows([]))
   }, [])
+
+  useEffect(() => {
+    if (mediaRows.length > 0) {
+      const status = checkDataStatus(mediaRows, 'monthLabel', 'Media Report')
+      setDataStatus(status)
+    }
+  }, [mediaRows])
 
   const topAffiliates = useMemo(() => {
     const profitByAffiliate = new Map()

@@ -2,6 +2,8 @@
 import BreakEvenChart from './BreakEvenChart';
 import PnLTrendChart from './PnLTrendChart';
 import CohortDecayView from './CohortDecayView';
+import { checkDataStatus } from '../utils/dataStatusChecker';
+import { useDataStatus } from '../context/DataStatusContext';
 
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const inputMetrics = ['Users','Churn %','Net deposits','Commissions paid','Marketing spend'];
@@ -248,6 +250,7 @@ export default function Dashboard() {
   const [showCohortDbInfo, setShowCohortDbInfo] = useState(false);
   const [showBreakEvenInfo, setShowBreakEvenInfo] = useState(false);
   const [showAutoReportInfo, setShowAutoReportInfo] = useState(false);
+  const { setDataStatus } = useDataStatus();
   const showCohortDbBlock = false; // temporarily hidden per request
   const showAutoReportBlock = false; // temporarily hidden per request
   const [selectedCalendarYear, setSelectedCalendarYear] = useState(2025);
@@ -681,6 +684,9 @@ export default function Dashboard() {
         setBaseCohortsDetail(detail);
         setCohortsSummary(summary);
         setCohortsDetail(detail);
+        // Calcola lo stato dei dati
+        const status = checkDataStatus(detail, 'cohortDate', 'Cohort Analysis');
+        setDataStatus(status);
         if (summary.length) {
           setSelectedCohortMonth('all');
           // Keep current affiliate selection; do not reset to 'all' so switching affiliates preserves context.
@@ -1531,6 +1537,7 @@ export default function Dashboard() {
 
   return (
     <div className="w-full px-4 py-6 space-y-8">
+
       <section className="card w-full">
         <div className="flex justify-between items-start gap-4 flex-wrap">
           <div>

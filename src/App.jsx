@@ -12,6 +12,7 @@ import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
+import { DataStatusProvider } from './context/DataStatusContext'
 
 export default function App(){
   const { user } = useAuth()
@@ -146,10 +147,11 @@ export default function App(){
   }, [view, user])
 
   return (
-    <RequireAuth>
-      <div className="app-root">
-        <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin}>
-          <nav className="subnav">
+    <DataStatusProvider>
+      <RequireAuth>
+        <div className="app-root">
+          <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin}>
+            <nav className="subnav">
             <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => navigate('overview')}>
               Overview
             </button>
@@ -196,5 +198,6 @@ export default function App(){
         </main>
       </div>
     </RequireAuth>
+    </DataStatusProvider>
   )
 }
