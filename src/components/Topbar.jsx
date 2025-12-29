@@ -1,8 +1,9 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDataStatus } from '../context/DataStatusContext'
+import DataStatusIndicator from './DataStatusIndicator'
 
-function DataStatusIcon({ dataStatus }) {
+function DataStatusIcon({ dataStatus, onClick }) {
   const { status } = dataStatus;
   const getIcon = () => {
     switch (status) {
@@ -13,7 +14,7 @@ function DataStatusIcon({ dataStatus }) {
     }
   };
   return (
-    <div className="data-status-icon flex items-center">
+    <div className="data-status-icon flex items-center cursor-pointer" onClick={onClick}>
       {getIcon()}
     </div>
   );
@@ -24,6 +25,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
   const [showTools, setShowTools] = useState(false)
+  const [showDataStatusPopup, setShowDataStatusPopup] = useState(false)
   const hoverTimer = useRef(null)
 
   const tools = useMemo(
@@ -65,7 +67,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         onMouseLeave={handleLeave}
       >
         <img src="/Logo.png" alt="Bullwaves Logo" className="h-10 w-auto transition-all duration-300 hover:scale-105 cursor-pointer mr-2" />
-        {dataStatus && <DataStatusIcon dataStatus={dataStatus} />}
+        {dataStatus && <DataStatusIcon dataStatus={dataStatus} onClick={() => setShowDataStatusPopup(true)} />}
         {showTools && (
           <div className="logo-tools-pop" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
             <div className="logo-tools-title">Tools</div>
@@ -98,6 +100,14 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         )}
       </div>
       </header>
+      {dataStatus && (
+        <DataStatusIndicator
+          dataStatus={dataStatus}
+          showPopup={showDataStatusPopup}
+          onClosePopup={() => setShowDataStatusPopup(false)}
+          onPillClick={() => setShowDataStatusPopup(true)}
+        />
+      )}
     </>
   )
 }
