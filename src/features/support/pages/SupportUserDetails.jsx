@@ -1,5 +1,170 @@
 import React, { useMemo, useState } from 'react'
-import { buildSupportDecision } from '../services/supportUserCheckService'
+import { buildSupportDecision, buildSupportDecisions, getAffiliateOverview } from '../services/supportUserCheckService'
+
+// Decision Card Component for displaying support decisions
+function DecisionCard({ title, decision, category }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  if (!decision) return null
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'ELIGIBLE': '#10b981', // green
+      'NOT_ELIGIBLE': '#ef4444', // red
+      'NEEDS_VERIFICATION': '#f59e0b', // amber
+      'WORKAROUND_RECOMMENDED': '#8b5cf6', // violet
+      'MANUAL_APPROVAL_REQUIRED': '#f97316', // orange
+      'APPROVED_WITH_CONDITIONS': '#06b6d4', // cyan
+      'NOT_APPROVED': '#ef4444', // red
+      'NEEDS_NEW_ACCOUNT': '#f59e0b', // amber
+      'NEEDS_MANUAL_REVIEW': '#f97316', // orange
+      'ELIGIBLE_AGAIN': '#10b981', // green
+      'NEEDS_CONTEXT': '#6b7280', // gray
+      'STANDARD_PROCESS': '#10b981', // green
+      'PAYMENT_METHOD_LOCK': '#ef4444', // red
+      'NEEDS_PSP_CHECK': '#f59e0b', // amber
+      'HIGH_RISK': '#ef4444', // red
+      'MODERATE_RISK': '#f59e0b', // amber
+      'PROFITABLE': '#10b981', // green
+      'NEUTRAL': '#6b7280', // gray
+      'CRITICAL_RISK': '#dc2626' // red-600
+    }
+    return colors[status] || '#6b7280'
+  }
+
+  const statusColor = getStatusColor(decision.status)
+
+  // Defensive defaults to avoid runtime errors when shape is incomplete
+  const why = (decision && (decision.why !== undefined && decision.why !== null)) ? decision.why : '—'
+  const nextActions = Array.isArray(decision && decision.nextActions) ? decision.nextActions : (decision && decision.nextActions ? [String(decision.nextActions)] : [])
+  const signals = Array.isArray(decision && decision.signals) ? decision.signals : (decision && decision.signals ? [String(decision.signals)] : [])
+
+  return (
+    <div style={{
+      border: '1px solid var(--border)',
+      borderRadius: '8px',
+      backgroundColor: 'var(--surface)',
+      marginBottom: '12px',
+      overflow: 'hidden'
+    }}>
+      <div
+        style={{
+          padding: '12px 16px',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
+        }}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              width: '12px',
+              height: '12px',
+              borderRadius: '50%',
+              backgroundColor: statusColor,
+              flexShrink: 0
+            }}
+          />
+          <h4 style={{
+            margin: 0,
+            fontSize: '14px',
+            fontWeight: '600',
+            color: 'var(--text-primary)'
+          }}>
+            {title}
+          </h4>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: '500',
+            color: 'var(--text-secondary)',
+            backgroundColor: 'var(--surface-secondary)',
+            padding: '2px 8px',
+            borderRadius: '12px'
+          }}>
+            {(decision.status || '').replace(/_/g, ' ')}
+          </span>
+        </div>
+        <div style={{
+          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          transition: 'transform 0.2s',
+          fontSize: '12px',
+          color: 'var(--text-secondary)'
+        }}>
+          ▼
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div style={{
+          borderTop: '1px solid var(--border)',
+          backgroundColor: 'var(--surface-secondary)',
+          padding: '16px'
+        }}>
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Why:</strong>
+                <p style={{
+                  margin: '4px 0 0 0',
+                  color: 'var(--text-secondary)',
+                  fontSize: '14px',
+                  lineHeight: '1.4'
+                }}>
+                  {why || '—'}
+                </p>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Next Best Actions:</strong>
+                {nextActions.length === 0 ? (
+                  <div style={{ marginTop: 4, color: 'var(--text-secondary)' }}>—</div>
+                ) : (
+                  <ul style={{
+                    margin: '4px 0 0 0',
+                    paddingLeft: '20px',
+                    color: 'var(--text-secondary)',
+                    fontSize: '14px',
+                    lineHeight: '1.4'
+                  }}>
+                    {nextActions.map((action, idx) => (
+                      <li key={idx}>{action}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              {signals && signals.length > 0 && (
+                <div>
+                  <strong style={{ color: 'var(--text-primary)' }}>Decision Signals:</strong>
+                  <div style={{
+                    marginTop: '4px',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '6px'
+                  }}>
+                    {signals.map((signal, idx) => (
+                      <span
+                        key={idx}
+                        style={{
+                          fontSize: '12px',
+                          color: 'var(--text-secondary)',
+                          backgroundColor: 'var(--surface)',
+                          padding: '2px 8px',
+                          borderRadius: '12px',
+                          border: '1px solid var(--border)'
+                        }}
+                      >
+                        {signal}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function SupportUserDetails({
   selected,
@@ -28,10 +193,17 @@ export default function SupportUserDetails({
   const plRaw = mapped.pl || ''
   const pl = plRaw ? String(plRaw) : '—'
   const affiliateId = mapped.affiliateId || ''
-  const affiliateLabel = paymentsLoaded ? (affiliateName || '—') : 'Loading affiliate…'
+  const affiliateLabel = paymentsLoaded ? (affiliateName?.affiliateName || '—') : 'Loading affiliate…'
   const commissions = mapped.affiliateCommissions || mapped.commissions || ''
   const priority = computePriority(mapped.raw)
-  const suggested = suggestedReply(mapped, affiliateName)
+  const suggested = suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded)
+
+
+  // Normalize helper for comparing affiliate names
+  function normalizeKey(s) { return String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '') }
+  // Compute affiliate display and flags for sidebar (raw row is available lower in file)
+  // rawAffiliateName, affiliateDisplay, affiliateMappingMissing and affiliateNameMismatch
+  // will be computed after `raw` is defined to avoid temporal dead zone errors.
 
   // Timeline & metrics derived values
   function parseDate(v) {
@@ -108,6 +280,12 @@ export default function SupportUserDetails({
   const ftdAtFmt = fmtDate(ftdAt)
   const qftdAtFmt = fmtDate(qftdAt)
   const firstWithdrawalAtFmt = fmtDate(firstWithdrawalAt)
+
+  // Compute affiliate display and flags for sidebar (safe now that `raw` is defined)
+  const rawAffiliateName = pickRawField(raw, ['affiliate', 'affiliatename', 'name']) || null
+  const affiliateDisplay = paymentsLoaded ? (affiliateName?.affiliateName || (mapped.affiliateId ? String(mapped.affiliateId) : 'No affiliate')) : 'Loading affiliate…'
+  const affiliateMappingMissing = Boolean(mapped.affiliateId && (!affiliateName || !affiliateName.affiliateName))
+  const affiliateNameMismatch = Boolean(rawAffiliateName && affiliateName && affiliateName.affiliateName && normalizeKey(rawAffiliateName) !== normalizeKey(affiliateName.affiliateName))
 
   const regDateObj = parseDate(regAt)
   const firstDepositDateObj = parseDate(firstDepositAt)
@@ -189,8 +367,8 @@ export default function SupportUserDetails({
   }, [mapped, affiliateId])
 
   // Support Decision Engine
-  const supportDecision = useMemo(() => {
-    return buildSupportDecision({
+  const supportDecisions = useMemo(() => {
+    return buildSupportDecisions({
       ...mapped,
       paymentsLoaded,
       mediaLoaded
@@ -198,14 +376,60 @@ export default function SupportUserDetails({
   }, [mapped, paymentsLoaded, mediaLoaded])
 
   // Action panel state
-  const [replyText, setReplyText] = useState(supportDecision?.replyTemplate || suggested)
+  const [replyText, setReplyText] = useState(suggested)
+  const [targetAffiliateId, setTargetAffiliateId] = useState('')
 
-  // Update reply text when support decision changes
+  // Affiliate overview data - now async
+  const [currentAffiliateOverview, setCurrentAffiliateOverview] = useState(null)
+  const [targetAffiliateOverview, setTargetAffiliateOverview] = useState(null)
+  const [affiliateLoading, setAffiliateLoading] = useState(false)
+
+  // Load affiliate overview data
   React.useEffect(() => {
-    if (supportDecision?.replyTemplate) {
-      setReplyText(supportDecision.replyTemplate)
+    const loadCurrentAffiliate = async () => {
+      if (affiliateId) {
+        setAffiliateLoading(true)
+        try {
+          const overview = await getAffiliateOverview(affiliateId)
+          setCurrentAffiliateOverview(overview)
+        } catch (error) {
+          console.error('Error loading affiliate overview:', error)
+          setCurrentAffiliateOverview(null)
+        } finally {
+          setAffiliateLoading(false)
+        }
+      } else {
+        setCurrentAffiliateOverview(null)
+      }
     }
-  }, [supportDecision?.replyTemplate])
+    loadCurrentAffiliate()
+  }, [affiliateId])
+
+  React.useEffect(() => {
+    const loadTargetAffiliate = async () => {
+      if (targetAffiliateId) {
+        setAffiliateLoading(true)
+        try {
+          const overview = await getAffiliateOverview(targetAffiliateId)
+          setTargetAffiliateOverview(overview)
+        } catch (error) {
+          console.error('Error loading target affiliate overview:', error)
+          setTargetAffiliateOverview(null)
+        } finally {
+          setAffiliateLoading(false)
+        }
+      } else {
+        setTargetAffiliateOverview(null)
+      }
+    }
+    loadTargetAffiliate()
+  }, [targetAffiliateId])
+
+  // Update reply text when support decisions change
+  React.useEffect(() => {
+    // For now, use the suggested reply - can be enhanced later with decision-specific templates
+    setReplyText(suggested)
+  }, [suggested])
 
   function handleCopy() { copyToClipboard(replyText) }
   function handleEscalate(kind) {
@@ -228,7 +452,8 @@ export default function SupportUserDetails({
       </div>
 
       {/* Dashboard layout: left identity card, center content, right Support Decision Engine */}
-      <div className="support-detail-grid" style={{ display: 'grid', gridTemplateColumns: '[left] 360px [center] minmax(0, 1fr) [right] 480px', gap: 48, alignItems: 'start', width: '100%' }}>
+      <div style={{ maxWidth: 1800, margin: '0 auto', padding: '0 24px', width: '100%' }}>
+        <div className="support-detail-grid" style={{ display: 'grid', gridTemplateColumns: '360px minmax(0, 1fr) 480px', gap: 48, alignItems: 'start', width: '100%' }}>
         <aside className="identity-card card min-w-0" style={{ padding: '12px 12px', textAlign: 'left', alignSelf: 'stretch', position: 'sticky', top: 12, borderRight: '1px solid rgba(255,255,255,0.04)' }}>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <div style={{ width: 48, height: 48, borderRadius: 10, background: 'linear-gradient(135deg,#06b6d4,#7c3aed)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 800, fontSize: 16 }}>{(displayName||'?').split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase()}</div>
@@ -245,11 +470,9 @@ export default function SupportUserDetails({
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', marginTop: 12, paddingTop: 12 }}>
               <div style={{ fontSize: 12, color: 'var(--muted)' }}>Affiliate</div>
               <div style={{ fontWeight: 700, marginTop: 6 }}>
-                {affiliateId 
-                  ? (String(affiliateId).replace(/\D+/g, '') === '2287' 
-                      ? `${affiliateId} — Default affiliate (No affiliate)` 
-                      : `${affiliateId} — ${affiliateName || 'Unknown'}`)
-                  : 'No affiliate'}
+                {affiliateDisplay || 'No affiliate'}
+                {affiliateMappingMissing && <span style={{ color: 'orange', fontSize: 10, marginLeft: 8 }}>(Name missing)</span>}
+                {affiliateNameMismatch && <span style={{ color: 'red', fontSize: 10, marginLeft: 8 }}>(Mismatch)</span>}
               </div>
             </div>
 
@@ -274,6 +497,7 @@ export default function SupportUserDetails({
         </aside>
 
         <div className="center-col min-w-0 w-full max-w-none">
+          <div style={{ maxWidth: 960, margin: '0 auto', width: '100%' }}>
           <section style={{ marginBottom: 12, padding: '8px 6px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
             <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>User Timeline & Status</div>
             <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
@@ -377,125 +601,206 @@ export default function SupportUserDetails({
 
           {/* Activity Metrics removed — key metrics moved into Financial Summary to avoid duplication. */}
 
+          </div>
         </div>{/* end center-col */}
 
         {/* Support Decision Engine - Right Column */}
         <aside className="decision-engine min-w-0" style={{ alignSelf: 'stretch', position: 'sticky', top: 12 }}>
           <div style={{ padding: 12, background: 'var(--bg)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: 8, boxShadow: '0 6px 12px rgba(2,6,23,0.45)' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Support Decision Engine</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12, marginBottom: 12 }}>
-              <div className="card" style={{ padding: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Case Type</div>
-                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6, textTransform: 'capitalize' }}>
-                  {supportDecision?.caseType?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Risk Level</div>
-                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
-                  <span className={`badge ${supportDecision?.riskLevel === 'high' ? 'danger' : supportDecision?.riskLevel === 'medium' ? 'warning' : 'success'}`}>
-                    {supportDecision?.riskLevel?.toUpperCase() || 'UNKNOWN'}
-                  </span>
-                </div>
-                {supportDecision?.riskExplanation && (
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
-                    <div style={{ marginBottom: 4 }}>{supportDecision.riskExplanation.reason}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
-                    <div>{supportDecision.riskExplanation.impact}</div>
+            
+            {/* Affiliate Overview Section */}
+            {affiliateId && (
+              <div style={{ marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>Affiliate Overview</div>
+                
+                {affiliateLoading ? (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    Loading affiliate data...
+                  </div>
+                ) : currentAffiliateOverview ? (
+                  <>
+                    {/* Target Affiliate Input */}
+                    <div style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                        Compare with Affiliate ID:
+                      </div>
+                      <input
+                        type="text"
+                        value={targetAffiliateId}
+                        onChange={(e) => setTargetAffiliateId(e.target.value)}
+                        placeholder="Enter affiliate ID..."
+                        style={{
+                          width: '100%',
+                          padding: '6px 8px',
+                          border: '1px solid var(--border)',
+                          borderRadius: 4,
+                          background: 'var(--bg)',
+                          color: 'var(--text)',
+                          fontSize: 11
+                        }}
+                      />
+                    </div>
+
+                    {/* Comparison Card */}
+                    <div style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: 8,
+                      background: 'var(--surface)',
+                      overflow: 'hidden'
+                    }}>
+                      {/* Header */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: targetAffiliateOverview ? '1fr 1fr' : '1fr',
+                        borderBottom: '1px solid var(--border)',
+                        background: 'var(--bg-secondary)'
+                      }}>
+                        <div style={{
+                          padding: '8px 12px',
+                          fontSize: 11,
+                          fontWeight: 600,
+                          color: 'var(--text-secondary)',
+                          textAlign: 'center',
+                          borderRight: targetAffiliateOverview ? '1px solid var(--border)' : 'none'
+                        }}>
+                          Current: {currentAffiliateOverview.name}
+                        </div>
+                        {targetAffiliateOverview && (
+                          <div style={{
+                            padding: '8px 12px',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                            textAlign: 'center'
+                          }}>
+                            Target: {targetAffiliateOverview.name}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Metrics Grid */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: targetAffiliateOverview ? '1fr 1fr' : '1fr'
+                      }}>
+                        {/* Current Affiliate Metrics */}
+                        <div style={{
+                          padding: '12px',
+                          borderRight: targetAffiliateOverview ? '1px solid var(--border)' : 'none'
+                        }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Traffic</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.clicks?.toLocaleString() || '—'}</div>
+                            
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Registrations</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.registrations?.toLocaleString() || '—'}</div>
+                            
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>FTD</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.ftd?.toLocaleString() || '—'}</div>
+                            
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Revenue</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{fmtEuro(currentAffiliateOverview.revenue)}</div>
+                            
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>eCPA</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.ecpa ? fmtEuro(currentAffiliateOverview.ecpa) : '—'}</div>
+                            
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>ROI</div>
+                            <div style={{
+                              fontSize: 11,
+                              fontWeight: 600,
+                              textAlign: 'right',
+                              color: (currentAffiliateOverview.roi || 0) >= 0 ? '#10b981' : '#ef4444'
+                            }}>
+                              {currentAffiliateOverview.roi ? `${currentAffiliateOverview.roi.toFixed(1)}%` : '—'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Target Affiliate Metrics */}
+                        {targetAffiliateOverview && (
+                          <div style={{ padding: '12px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Traffic</div>
+                              <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.clicks?.toLocaleString() || '—'}</div>
+                              
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Registrations</div>
+                              <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.registrations?.toLocaleString() || '—'}</div>
+                              
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>FTD</div>
+                              <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.ftd?.toLocaleString() || '—'}</div>
+                              
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Revenue</div>
+                              <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{fmtEuro(targetAffiliateOverview.revenue)}</div>
+                              
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>eCPA</div>
+                              <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.ecpa ? fmtEuro(targetAffiliateOverview.ecpa) : '—'}</div>
+                              
+                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>ROI</div>
+                              <div style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textAlign: 'right',
+                                color: (targetAffiliateOverview.roi || 0) >= 0 ? '#10b981' : '#ef4444'
+                              }}>
+                                {targetAffiliateOverview.roi ? `${targetAffiliateOverview.roi.toFixed(1)}%` : '—'}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No affiliate data available
                   </div>
                 )}
               </div>
-              <div className="card" style={{ padding: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Bonus Eligibility</div>
-                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
-                  <span className={`badge ${supportDecision?.bonusDecision?.status === 'ELIGIBLE' ? 'success' : supportDecision?.bonusDecision?.status === 'NEEDS_APPROVAL' ? 'warning' : 'danger'}`}>
-                    {supportDecision?.bonusDecision?.status?.replace(/_/g, ' ') || 'UNKNOWN'}
-                  </span>
-                </div>
-                {supportDecision?.bonusExplanation && (
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
-                    <div style={{ marginBottom: 4 }}>{supportDecision.bonusExplanation.reason}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
-                    <div>{supportDecision.bonusExplanation.impact}</div>
-                  </div>
-                )}
-              </div>
-              <div className="card" style={{ padding: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)' }}>Affiliate Switch Eligibility</div>
-                <div style={{ fontWeight: 800, fontSize: 14, marginTop: 6 }}>
-                  <span className={`badge ${supportDecision?.affiliateSwitchDecision?.status === 'ELIGIBLE' ? 'success' : supportDecision?.affiliateSwitchDecision?.status === 'NOT_ELIGIBLE' ? 'danger' : 'warning'}`}>
-                    {supportDecision?.affiliateSwitchDecision?.status?.replace(/_/g, ' ') || 'UNKNOWN'}
-                  </span>
-                </div>
-                {supportDecision?.affiliateSwitchExplanation && (
-                  <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8, lineHeight: 1.4 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Reason:</div>
-                    <div style={{ marginBottom: 4 }}>{supportDecision.affiliateSwitchExplanation.reason}</div>
-                    <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 2 }}>Impact:</div>
-                    <div>{supportDecision.affiliateSwitchExplanation.impact}</div>
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
 
-            {supportDecision?.blockingConditions?.length > 0 && (
-              <div style={{ marginBottom: 12, padding: 8, background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.2)', borderRadius: 6 }}>
-                <div style={{ fontSize: 11, fontWeight: 600, color: '#d97706', marginBottom: 4 }}>Blocking condition</div>
-                <div style={{ fontSize: 12, color: '#92400e' }}>
-                  {supportDecision.blockingConditions.join(', ')}
-                </div>
+            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 16 }}>Support Decisions Engine</div>
+
+            {supportDecisions ? (
+              <div>
+                <DecisionCard
+                  title="Affiliate Switch Eligibility"
+                  decision={supportDecisions.affiliateSwitch}
+                  category="affiliateSwitch"
+                />
+                <DecisionCard
+                  title="Account Type Change"
+                  decision={supportDecisions.accountTypeChange}
+                  category="accountTypeChange"
+                />
+                <DecisionCard
+                  title="Bonus/Credit Eligibility"
+                  decision={supportDecisions.bonus}
+                  category="bonus"
+                />
+                <DecisionCard
+                  title="Withdrawal/Refund Handling"
+                  decision={supportDecisions.withdrawals}
+                  category="withdrawals"
+                />
+                <DecisionCard
+                  title="Revenue Share Analysis"
+                  decision={supportDecisions.revenueShare}
+                  category="revenueShare"
+                />
+              </div>
+            ) : (
+              <div style={{
+                padding: '20px',
+                textAlign: 'center',
+                color: 'var(--text-secondary)',
+                fontSize: '14px'
+              }}>
+                Loading decision engine...
               </div>
             )}
 
-            {supportDecision?.flags?.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Flags</div>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {supportDecision.flags.map((flag, idx) => (
-                    <span key={idx} className="badge info">{flag}</span>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {supportDecision?.explanations?.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Analysis</div>
-                <ul style={{ fontSize: 13, color: 'var(--text)', paddingLeft: 20 }}>
-                  {supportDecision.explanations.map((exp, idx) => (
-                    <li key={idx}>{exp}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {supportDecision?.suggestedActions?.length > 0 && (
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Suggested Actions</div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  {supportDecision.suggestedActions.map((action, idx) => (
-                    <button
-                      key={idx}
-                      className={`btn ${action.includes('Escalate') ? 'btn-warning' : 'btn-secondary'}`}
-                      style={{ fontSize: 12, padding: '6px 12px' }}
-                      onClick={() => {
-                        if (action.includes('Escalate')) {
-                          handleEscalate(action.replace('Escalate to ', '').toLowerCase())
-                        } else if (action === 'Copy reply') {
-                          handleCopy()
-                        }
-                      }}
-                    >
-                      {action}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div style={{ marginTop: 12 }}>
+            <div style={{ marginTop: 16 }}>
               <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Suggested Reply</div>
               <textarea
                 value={replyText}
@@ -518,19 +823,16 @@ export default function SupportUserDetails({
                 <button className="btn btn-primary" onClick={handleCopy} style={{ fontSize: 12 }}>
                   Copy to Clipboard
                 </button>
-                {supportDecision?.bonusDecision?.reason && (
-                  <div style={{ fontSize: 11, color: 'var(--muted)', alignSelf: 'center' }}>
-                    {supportDecision.bonusDecision.reason}
-                  </div>
-                )}
               </div>
             </div>
           </div>
         </aside>
 
-      </div>{/* end support-detail-grid */}
+        </div>
+      </div>{/* end support-detail-grid wrapper */}
 
       {/* Behaviour & Risk and Affiliate Impact removed (moved/aggregated into identity card). */}
     </div>
   )
 }
+

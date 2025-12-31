@@ -60,6 +60,23 @@ export function normalizeKey(str = '') {
   return str.trim().toLowerCase();
 }
 
+// New helper for normalizing affiliate names
+export function normalizeAffiliateName(name) {
+  if (!name || typeof name !== 'string') return '';
+  return name.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[^a-z0-9 ]/g, '');
+}
+
+// Normalize affiliate key: lowercase, trim, replace multiple spaces with single, remove spaces/underscores/hyphens, keep only [a-z0-9]
+export function normalizeAffiliateKey(str) {
+  if (!str || typeof str !== 'string') return '';
+  return str
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/[ \-_]/g, '')
+    .replace(/[^a-z0-9]/g, '');
+}
+
 export const formatters = {
   formatNumber,
   formatNumberShort,

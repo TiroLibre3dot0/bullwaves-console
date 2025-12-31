@@ -1,0 +1,78 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fraud Monitoring — Dashboard v2</title>
+<link rel="icon" href="/favicon.png">
+<style>body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;background:#0b1220;color:#e6eef8;padding:18px}h1{margin:0 0 12px} .panels{display:flex;gap:12px;flex-wrap:wrap} .panel{background:#071021;padding:12px;border-radius:8px;min-width:160px} table{width:100%;border-collapse:collapse} th,td{padding:6px;border-bottom:1px solid rgba(255,255,255,0.04);text-align:left} .controls{margin:12px 0} input[type=number]{width:80px} .highlight{background:#123040;padding:6px;border-radius:4px}</style>
+</head><body>
+<h1>Fraud Monitoring — Overview</h1>
+<div class="panels">
+  <div class="panel"><strong>Total accounts</strong><div id="total_accounts" class="highlight"></div></div>
+  <div class="panel"><strong>Unique holders (name+country groups)</strong><div id="unique_holders" class="highlight"></div></div>
+  <div class="panel"><strong>Multi-name groups (count>1)</strong><div id="multi_groups" class="highlight"></div></div>
+  <div class="panel"><strong>Users with ≥1 FTD</strong><div id="users_ftd" class="highlight"></div></div>
+  <div class="panel"><strong>Users with QFTD</strong><div id="users_qftd" class="highlight"></div></div>
+  <div class="panel"><strong>Groups with any FTD</strong><div id="groups_with_ftd" class="highlight"></div></div>
+  <div class="panel"><strong>Groups with any QFTD</strong><div id="groups_with_qftd" class="highlight"></div></div>
+</div>
+
+<div class="controls">
+  <label>Show groups with count ≥ <input id="minCount" type="number" value="2" min="2"> </label>
+  <label style="margin-left:12px">Show only groups with FTD <input id="onlyFTD" type="checkbox"></label>
+  <button id="refresh">Refresh</button>
+  <span id="matchInfo" style="margin-left:12px"></span>
+</div>
+
+<h2>Groups</h2>
+<table id="groupsTable"><thead><tr><th>#</th><th>Name</th><th>Country</th><th>Count</th><th>Has FTD</th><th>Has QFTD</th><th>Members (user_id(mt5))</th></tr></thead><tbody></tbody></table>
+
+<script>
+async function loadData(){
+  const [summaryRes, groupsRes] = await Promise.all([
+    fetch('/fraud_monitor_summary.json').then(r=>r.json()),
+    fetch('/fraud_monitor_name_groups.json').then(r=>r.json())
+  ])
+  return { summary: summaryRes.summary, groups: groupsRes.groups }
+}
+
+function renderSummary(s, groups){
+  document.getElementById('total_accounts').innerText = s.total_accounts
+  document.getElementById('unique_holders').innerText = groups.length
+  document.getElementById('multi_groups').innerText = groups.filter(g=>g.count>1).length
+  document.getElementById('users_ftd').innerText = s.users_with_ftd
+  document.getElementById('users_qftd').innerText = s.users_with_qftd
+  document.getElementById('groups_with_ftd').innerText = groups.filter(g=>g.has_ftd).length
+  document.getElementById('groups_with_qftd').innerText = groups.filter(g=>g.has_qftd).length
+}
+
+function renderGroups(groups){
+  const tbody = document.querySelector('#groupsTable tbody')
+  tbody.innerHTML = ''
+  groups.slice(0,2000).forEach((g,i)=>{
+    const tr = document.createElement('tr')
+    const members = (g.members||[]).map(m=> (m.user_id||'')+'('+ (m.mt5_account||'') + (m.has_ftd?'/FTD':'') + (m.has_qftd?'/QFTD':'') +')').join(', ')
+    tr.innerHTML = `<td>${i+1}</td><td>${g.name}</td><td>${g.country}</td><td>${g.count}</td><td>${g.has_ftd? 'YES' : 'NO'}</td><td>${g.has_qftd? 'YES':'NO'}</td><td>${members}</td>`
+    tbody.appendChild(tr)
+  })
+}
+
+let cached = null
+async function refresh(){
+  document.getElementById('refresh').disabled = true
+  try{
+    if (!cached) cached = await loadData()
+    const min = parseInt(document.getElementById('minCount').value||2,10)
+    const onlyFTD = document.getElementById('onlyFTD').checked
+    let groups = cached.groups || []
+    groups = groups.filter(g => g.count >= min)
+    if (onlyFTD) groups = groups.filter(g=>g.has_ftd)
+    renderSummary(cached.summary, cached.groups)
+    renderGroups(groups)
+    document.getElementById('matchInfo').innerText = groups.length + ' groups shown'
+  }catch(e){
+    document.getElementById('matchInfo').innerText = 'Error: '+e.message
+  }finally{ document.getElementById('refresh').disabled = false }
+}
+
+document.getElementById('refresh').addEventListener('click', refresh)
+window.addEventListener('load', refresh)
+</script>
+</body></html>

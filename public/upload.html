@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Upload Payments CSV</title>
+</head>
+<body>
+  <h3>Upload Payments CSV</h3>
+  <form id="f" enctype="multipart/form-data" method="post" action="/upload">
+    <input type="file" name="file" accept=".csv" />
+    <button type="submit">Upload</button>
+  </form>
+  <pre id="out"></pre>
+  <script>
+    const f = document.getElementById('f')
+    const out = document.getElementById('out')
+    f.addEventListener('submit', async e => {
+      e.preventDefault()
+      const fd = new FormData(f)
+      out.textContent = 'Uploading...'
+      const res = await fetch('/upload', { method: 'POST', body: fd })
+      const j = await res.json()
+      out.textContent = JSON.stringify(j, null, 2)
+    })
+  </script>
+</body>
+</html>

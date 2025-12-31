@@ -12,6 +12,7 @@ import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
+import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import { DataStatusProvider } from './context/DataStatusContext'
 
 function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffiliateSection }) {
@@ -31,9 +32,13 @@ function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffil
       <button className={`tab ${view === 'affiliate' ? 'active' : ''}`} onClick={() => handleNavClick(() => goAffiliateSection('analysis'))}>
         Affiliate
       </button>
+      <button className={`tab ${view === 'fraud' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('fraud'))}>
+        Fraud Monitoring
+      </button>
       <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('roadmap'))}>
         Mega-Stories
       </button>
+      {/* Lab removed */}
       <button
         className={`tab ${view === 'orgChart' ? 'active' : ''}`}
         onClick={() => handleNavClick(() => navigate('orgChart'))}
@@ -56,10 +61,12 @@ export default function App(){
      cohort: '/',
      executive: '/executive',
      affiliate: '/affiliate',
+     fraud: '/fraud-monitoring',
      orgChart: '/org-chart',
      overview: '/overview',
      report: '/report',
      roadmap: '/roadmap',
+    // lab removed
     supportUserCheck: '/support/user-check',
    }), []);
 
@@ -71,6 +78,7 @@ export default function App(){
      if (pathname.startsWith('/affiliate') || pathname.startsWith('/affiliate-analysis')) return 'affiliate';
      if (pathname.startsWith('/marketing-expenses')) return 'affiliate';
      if (pathname.startsWith('/investments')) return 'affiliate';
+     if (pathname.startsWith('/fraud')) return 'fraud';
      if (pathname.startsWith('/report')) return 'report';
      if (pathname.startsWith('/cohort')) return 'affiliate';
      if (pathname.startsWith('/org-chart')) return 'orgChart';
@@ -164,6 +172,7 @@ export default function App(){
       executiveSummary: 'executive-summary',
       executiveView: 'executive-view',
       affiliate: 'affiliate',
+      fraud: 'fraud-monitoring',
       orgChart: 'org-chart',
       summary: 'summary',
       roadmap: 'mega-stories',
@@ -195,6 +204,7 @@ export default function App(){
           {view === 'affiliate' && (
             <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
           )}
+          {view === 'fraud' && <FraudMonitoringDashboard />}
           {view === 'report' && <Report />}
           {view === 'roadmap' && <RoadmapPage />}
           {view === 'orgChart' && <OrgChart />}
@@ -204,6 +214,7 @@ export default function App(){
                 <SupportUserCheck />
             </React.Suspense>
           )}
+          {/* Lab removed */}
  
           {view === 'admin' && isAdmin && <AdminPanel />}
         </main>

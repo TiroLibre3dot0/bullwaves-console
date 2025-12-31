@@ -81,14 +81,16 @@ export default function ProfitAnalysisPage() {
   const depositsWithdrawalsByMonth = useMemo(() => {
     const map = new Map()
     filteredRows.forEach((r) => {
-      if (!map.has(r.monthIndex)) map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0 })
+      if (!map.has(r.monthIndex)) map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0, pl: 0 })
       const acc = map.get(r.monthIndex)
       acc.deposits += r.netDeposits || 0
       acc.withdrawals += r.withdrawals || 0
+      acc.pl += r.pl || 0
     })
-    return Array.from(map.entries())
+    const result = Array.from(map.entries())
       .sort((a, b) => a[0] - b[0])
       .map(([, v]) => v)
+    return result
   }, [filteredRows])
 
   const registrationsByAffiliate = useMemo(() => {
@@ -205,7 +207,7 @@ export default function ProfitAnalysisPage() {
         </div>
         <div className="card card-global">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>Net Deposits vs Withdrawals</h3>
+            <h3 style={{ margin: 0 }}>Net Deposits vs Withdrawals vs PL</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>By month</span>
           </div>
           <SegmentBarChart data={depositsWithdrawalsByMonth} />

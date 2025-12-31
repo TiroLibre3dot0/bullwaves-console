@@ -3,7 +3,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   searchUsers,
   loadPaymentsReport,
-  resolveAffiliateName,
+  resolveSearchedAffiliate,
+  getPaymentAffiliateById,
   buildAffiliateKpiMap,
   getAffiliateKpi,
   computePriority,
@@ -275,9 +276,33 @@ export default function SupportUserCheck() {
     if (!selectedRaw) return
 
     ;(async () => {
+      let resolvedAffiliate = null
       try { await loadPaymentsReport(); if (!mounted) return; setPaymentsLoaded(true) } catch (e) { if (!mounted) return; setPaymentsLoaded(true) }
-      try { const res = await resolveAffiliateName(selectedRaw); if (!mounted) return; setAffiliateName(res?.name || null) } catch (e) { if (!mounted) return; setAffiliateName(null) }
-      try { await buildAffiliateKpiMap(); if (!mounted) return; setMediaLoaded(true); const mapped = getMapped(selectedRaw); const k = mapped?.affiliateId ? getAffiliateKpi(mapped.affiliateId) : null; setAffiliateKpi(k || null) } catch (e) { if (!mounted) return; setMediaLoaded(true); setAffiliateKpi(null) }
+      try { resolvedAffiliate = await resolveSearchedAffiliate(selectedRaw); if (!mounted) return; setAffiliateName(resolvedAffiliate) } catch (e) { if (!mounted) return; setAffiliateName(null) }
+      // additional fallback: if resolution failed but the raw row contains an affiliate id, try payments mapping
+      try {
+        if ((!resolvedAffiliate || !resolvedAffiliate.affiliateName) && mapped?.affiliateId) {
+          const payInfo = await getPaymentAffiliateById(mapped.affiliateId)
+          if (payInfo && payInfo.affiliateName) {
+            if (!mounted) return
+            setAffiliateName({ affiliateId: String(mapped.affiliateId).replace(/\D+/g, ''), affiliateName: payInfo.affiliateName })
+          }
+        }
+      } catch (e) { /* ignore */ }
+      try {
+        await buildAffiliateKpiMap(); if (!mounted) return; setMediaLoaded(true)
+        const mapped = getMapped(selectedRaw)
+        // Prefer KPI lookup by resolved affiliate id (payments canonical), fallback to affiliateName
+        let k = null
+        if (resolvedAffiliate && resolvedAffiliate.affiliateId) {
+          k = await getAffiliateKpi(resolvedAffiliate.affiliateId)
+        } else if (resolvedAffiliate && resolvedAffiliate.affiliateName) {
+          k = await getAffiliateKpi(resolvedAffiliate.affiliateName)
+        } else if (mapped?.affiliateId) {
+          k = await getAffiliateKpi(mapped.affiliateId)
+        }
+        setAffiliateKpi(k || null)
+      } catch (e) { if (!mounted) return; setMediaLoaded(true); setAffiliateKpi(null) }
     })()
 
     return () => { mounted = false }
@@ -338,8 +363,8 @@ export default function SupportUserCheck() {
       withdrawals: fmtEuro(selected.withdrawals)
     },
     affiliate: {
-      id: selected.affiliateId || '—',
-      name: affiliateName || '—'
+      id: affiliateName?.affiliateId || selected.affiliateId || '—',
+      name: affiliateName?.affiliateName || '—'
     }
   } : null
 
@@ -464,16 +489,17 @@ export default function SupportUserCheck() {
   )
 }
 
-function suggestedReply(mapped, affiliateName) {
+function suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded) {
   if (!mapped) return ''
-  
+
   // Use the Support Decision Engine for intelligent reply suggestions
+  // Prefer real flags when available; otherwise assume data loaded.
   const decision = buildSupportDecision({
     ...mapped,
-    paymentsLoaded: true, // Assume loaded for reply generation
-    mediaLoaded: true
+    paymentsLoaded: (typeof paymentsLoaded === 'boolean') ? paymentsLoaded : true,
+    mediaLoaded: (typeof mediaLoaded === 'boolean') ? mediaLoaded : true
   })
-  
+
   return decision?.replyTemplate || `Hi ${mapped.name || mapped.userId || 'customer'}, thanks for reaching out — we're reviewing your account.`
 }
 

@@ -1,0 +1,25 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fraud Monitor Dashboard</title>
+<link rel="icon" href="/favicon.png">
+</head><body>
+<h1>Fraud Monitor Summary</h1>
+<div id="summary"></div>
+<h2>Top multi name+country groups (first 50)</h2>
+<table id="groups" border="1" cellpadding="4"></table>
+<!-- CSV downloads removed to display data inline in the page -->
+<script>
+async function load(){
+  const s = await fetch('/fraud_monitor_summary.json').then(r=>r.json())
+  document.getElementById('summary').innerText = JSON.stringify(s.summary, null, 2)
+  const g = await fetch('/fraud_monitor_name_groups.json').then(r=>r.json())
+  const tbl = document.getElementById('groups')
+  tbl.innerHTML = '<tr><th>Name</th><th>Country</th><th>Count</th><th>Members</th></tr>'
+  (g.groups||[]).slice(0,50).forEach(gr=>{
+    const tr = document.createElement('tr')
+    tr.innerHTML = '<td>'+gr.name+'</td><td>'+gr.country+'</td><td>'+gr.count+'</td><td>'+ (gr.members.map(function(m){ return (m.user_id||'')+'('+ (m.mt5_account||'') +')' }).join(', ')) +'</td>'
+    tbl.appendChild(tr)
+  })
+}
+load().catch(e=>{document.getElementById('summary').innerText = 'Error loading data: '+e})
+</script>
+</body></html>

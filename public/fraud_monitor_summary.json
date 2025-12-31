@@ -1,0 +1,10 @@
+{
+  "summary": {
+    "total_users": 73473,
+    "total_accounts": 73473,
+    "users_with_multiple_accounts": 0,
+    "users_with_ftd": 26183,
+    "users_with_qftd": 1523
+  },
+  "sample_multi_users": []
+}

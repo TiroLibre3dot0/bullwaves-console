@@ -1,7 +1,8 @@
 import React, { useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDataStatus } from '../context/DataStatusContext'
-import DataStatusIndicator from './DataStatusIndicator'
+import { useMediaPaymentsData } from '../features/media-payments/hooks/useMediaPaymentsData'
+import DataInfoModal from './DataInfoModal'
 
 function DataStatusIcon({ dataStatus, onClick }) {
   const { status } = dataStatus;
@@ -22,14 +23,56 @@ function DataStatusIcon({ dataStatus, onClick }) {
 
 export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const { dataStatus } = useDataStatus();
+  const { mediaRows, payments, mediaSource, paymentsSource } = useMediaPaymentsData();
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
   const [showTools, setShowTools] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  const [showDataStatusPopup, setShowDataStatusPopup] = useState(false)
+  const [showDataInfoModal, setShowDataInfoModal] = useState(false)
   const hoverTimer = useRef(null)
 
   const isMobile = () => window.innerWidth <= 768;
+
+  // Calcola informazioni sui dati più recenti
+  const getDataInfo = useMemo(() => {
+    if (!mediaRows.length && !payments.length) {
+      return { lastDate: 'Nessun dato', mediaFile: 'N/A', paymentsFile: 'N/A' };
+    }
+
+    // Trova la data più recente nei media data
+    const mediaDates = mediaRows
+      .map(r => r.monthIndex)
+      .filter(idx => idx > 0)
+      .sort((a, b) => b - a);
+    
+    // Trova la data più recente nei payments
+    const paymentDates = payments
+      .map(p => p.monthIndex)
+      .filter(idx => idx > 0)
+      .sort((a, b) => b - a);
+
+    const latestMonthIndex = Math.max(
+      mediaDates[0] || 0,
+      paymentDates[0] || 0
+    );
+
+    // Converti monthIndex in data leggibile
+    const year = Math.floor(latestMonthIndex / 12) + 2000;
+    const month = (latestMonthIndex % 12) + 1;
+    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                       'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+    const lastDate = latestMonthIndex > 0 ? `${monthNames[month - 1]} ${year}` : 'Data sconosciuta';
+
+    return {
+      lastDate,
+      mediaFile: mediaSource ? mediaSource.replace('/', '') : 'N/A',
+      paymentsFile: paymentsSource ? paymentsSource.replace('/', '') : 'N/A'
+    };
+  }, [mediaRows, payments, mediaSource, paymentsSource]);
+
+  const handleDataStatusClick = () => {
+    setShowDataInfoModal(true)
+  };
 
   const tools = useMemo(
     () => [
@@ -88,7 +131,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         onClick={handleLogoClick}
       >
         <img src="/Logo.png" alt="Bullwaves Logo" className="h-10 w-auto transition-all duration-300 hover:scale-105 cursor-pointer mr-2" />
-        {dataStatus && <DataStatusIcon dataStatus={dataStatus} onClick={() => setShowDataStatusPopup(true)} />}
+        {dataStatus && <DataStatusIcon dataStatus={dataStatus} onClick={handleDataStatusClick} />}
         {showTools && (
           <div className="logo-tools-pop" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
             <div className="logo-tools-title">Tools</div>
@@ -103,16 +146,18 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         )}
       </div>
       <div className="topbar-nav-slot">
-        {/* Hamburger Menu Button - Mobile Only */}
-        <button
-          className="hamburger-menu md:hidden flex flex-col justify-center items-center w-8 h-8 space-y-1 bg-transparent border-none cursor-pointer"
-          onClick={toggleMobileMenu}
-          aria-label="Toggle navigation menu"
-        >
-          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'rotate-45 translate-y-1.5' : ''}`}></span>
-          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'opacity-0' : ''}`}></span>
-          <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
-        </button>
+        {/* Hamburger Menu Button - Mobile Only (render only when viewport is mobile) */}
+        {typeof window !== 'undefined' && isMobile() && (
+          <button
+            className="hamburger-menu flex flex-col justify-center items-center w-8 h-8 space-y-1 bg-transparent border-none cursor-pointer"
+            onClick={toggleMobileMenu}
+            aria-label="Toggle navigation menu"
+          >
+            <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'rotate-45 translate-y-1.5' : ''}`}></span>
+            <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? 'opacity-0' : ''}`}></span>
+            <span className={`hamburger-line w-5 h-0.5 bg-current transition-all duration-300 ${showMobileMenu ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
+          </button>
+        )}
 
         {/* Desktop Navigation */}
         <div className="hidden md:block">
@@ -148,14 +193,13 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         )}
       </div>
       </header>
-      {dataStatus && (
-        <DataStatusIndicator
-          dataStatus={dataStatus}
-          showPopup={showDataStatusPopup}
-          onClosePopup={() => setShowDataStatusPopup(false)}
-          onPillClick={() => setShowDataStatusPopup(true)}
-        />
-      )}
+
+      {/* Data Info Modal */}
+      <DataInfoModal
+        isOpen={showDataInfoModal}
+        onClose={() => setShowDataInfoModal(false)}
+        dataInfo={getDataInfo}
+      />
     </>
   )
 }

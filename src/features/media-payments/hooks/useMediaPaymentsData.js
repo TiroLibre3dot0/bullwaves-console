@@ -50,8 +50,13 @@ const parseMediaRow = (r) => {
 }
 
 const parsePaymentRow = (r) => {
-  const date = r.PaymentDate ? parseMonthFirstDate(r.PaymentDate) : r['Commission Date'] ? new Date(r['Commission Date']) : null
+  // accept multiple header name variants from different CSV exports
+  const rawDate = r.PaymentDate ?? r.paymentdate ?? r['Payment Date'] ?? r['payment_date'] ?? r['Commission Date'] ?? r['commission_date']
+  const date = rawDate ? (typeof rawDate === 'string' ? parseMonthFirstDate(rawDate) : (rawDate instanceof Date ? rawDate : new Date(rawDate))) : null
   const monthMeta = date ? monthMetaFromDate(date) : { key: 'unknown', label: 'Unknown', monthIndex: -1, year: '—' }
+  const affiliateId = (r['Affiliate Id'] ?? r.affiliate_id ?? r['affiliate_id'] ?? r.affiliateId ?? '').toString().trim()
+  const affiliateName = (r.Affiliate ?? r['Affiliate'] ?? r.affiliate ?? r['affiliate'] ?? '').toString().trim() || '—'
+  const rawAmount = r['Payment amount'] ?? r.payment_amount ?? r['payment_amount'] ?? r.amount ?? r.payment_amount
   return {
     id: r.id,
     date,
@@ -59,11 +64,11 @@ const parsePaymentRow = (r) => {
     monthLabel: monthMeta.label,
     monthIndex: monthMeta.monthIndex,
     year: monthMeta.year,
-    affiliateId: (r['Affiliate Id'] ?? '').toString().trim(),
-    affiliate: (r.Affiliate ?? r['Affiliate'] ?? '').toString().trim() || '—',
-    amount: cleanNumber(r['Payment amount'] ?? r.amount),
-    type: (r['Payment Range'] ?? r['Commission Type'] ?? '').toString().trim() || 'Other',
-    details: (r.Details ?? r['Details'] ?? r.details ?? '').toString().trim(),
+    affiliateId,
+    affiliate: affiliateName,
+    amount: cleanNumber(rawAmount),
+    type: (r['Payment Range'] ?? r['Commission Type'] ?? r['payment_range'] ?? '').toString().trim() || 'Other',
+    details: (r.Details ?? r['Details'] ?? r.details ?? r.details_text ?? '').toString().trim(),
   }
 }
 
