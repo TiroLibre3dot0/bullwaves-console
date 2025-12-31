@@ -1159,6 +1159,9 @@ export default function FraudMonitoringDashboard() {
             const y = yRight(v)
             return <text key={`ry-${i}`} x={W - padR + 14} y={y + 4} fontSize={12} fill="#94a3b8" textAnchor="start">{formatShort(v)}</text>
           })}
+
+          {/* Bullwaves logo watermark */}
+          <image href="/Logo.png" x={padL + 10} y={padT} width={120} height={120} opacity={0.25} />
           </svg>
           {/* overlay controls inside chart */}
           <div style={{ position: 'absolute', right: 18, top: 12, background: palette.card, color: '#fff', padding: 8, borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontSize: 12 }}>
