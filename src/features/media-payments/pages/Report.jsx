@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { formatEuro, formatNumber, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
+import FullPageLoader from '../../../components/FullPageLoader'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
 const formatNumberFull = (value) => formatNumber(value)
@@ -143,6 +144,10 @@ export default function Report() {
       ? `Annuale ${currentYear}`
       : selectedMonth ? `Mensile ${availableMonths.find((m) => m.key === selectedMonth)?.label || ''}` : 'Mensile'
 
+  if (loading) {
+    return <FullPageLoader progress={45} subtitle="Loading report data…" />
+  }
+
   return (
     <div style={{ width: '100%', padding: '12px 4px', display: 'flex', flexDirection: 'column', gap: 16 }}>
       <aside style={{ ...card, background: 'linear-gradient(135deg, #f8fbff, #eef2ff)' }}>
@@ -182,7 +187,7 @@ export default function Report() {
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{periodLabel}</div>
           </div>
           <div style={{ fontSize: 12, color: '#475569', textAlign: 'right' }}>
-            {loading ? 'Caricamento...' : `${filteredMedia.length} righe media · ${filteredPayments.length} pagamenti`}
+            {`${filteredMedia.length} righe media · ${filteredPayments.length} pagamenti`}
             <div style={{ color: '#94a3b8', fontSize: 11 }}>Fonte: Media Report + Payments/Commissions</div>
           </div>
         </div>

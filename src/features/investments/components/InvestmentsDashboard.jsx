@@ -4,6 +4,7 @@ import CardSection from '../../../components/common/CardSection'
 import FilterBar from '../../../components/common/FilterBar'
 import KpiCard from '../../../components/common/KpiCard'
 import YearSelector from '../../../components/common/YearSelector'
+import FullPageLoader from '../../../components/FullPageLoader'
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../../media-payments/hooks/useMediaPaymentsData'
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
@@ -125,6 +126,10 @@ export default function InvestmentsDashboard() {
     setFinanceConfirmed((prev) => ({ ...prev, [affiliateId]: !prev[affiliateId] }))
   }
 
+  if (loading) {
+    return <FullPageLoader progress={45} subtitle="Loading investments data…" />
+  }
+
   return (
     <div className="w-full space-y-4">
       <div style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 4, marginTop: -4, background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))', backdropFilter: 'blur(8px)' }}>
@@ -162,47 +167,44 @@ export default function InvestmentsDashboard() {
         />
       </div>
 
-      {loading ? (
-        <div className="card card-global" style={{ padding: 16 }}>Loading data…</div>
-      ) : (
-        <>
-          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-            <KpiCard label="Total QFTD" value={formatNumberShort(ledger.totals.totalQftd)} helper={formatNumberFull(ledger.totals.totalQftd)} />
-            <KpiCard label="Avg CPA" value={formatEuro(ledger.totals.avgCpa)} helper={formatEuroFull(ledger.totals.avgCpa)} />
-            <KpiCard label="Total commissions" value={formatEuro(ledger.totals.totalCommission)} helper={formatEuroFull(ledger.totals.totalCommission)} />
-            <KpiCard label="Commission payable" value={formatEuro(ledger.totals.totalMarketingPayable)} helper={formatEuroFull(ledger.totals.totalMarketingPayable)} tone="#22c55e" />
-            <KpiCard label="Commissions deferred" value={formatEuro(ledger.totals.totalMarketingDeferred)} helper={formatEuroFull(ledger.totals.totalMarketingDeferred)} tone="#f97316" />
-            <KpiCard label="ROI" value={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} helper={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} />
-            <KpiCard label="Paid" value={formatEuro(ledger.totals.totalPaid)} helper={formatEuroFull(ledger.totals.totalPaid)} tone="#38bdf8" />
-          </div>
+      <>
+        <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
+          <KpiCard label="Total QFTD" value={formatNumberShort(ledger.totals.totalQftd)} helper={formatNumberFull(ledger.totals.totalQftd)} />
+          <KpiCard label="Avg CPA" value={formatEuro(ledger.totals.avgCpa)} helper={formatEuroFull(ledger.totals.avgCpa)} />
+          <KpiCard label="Total commissions" value={formatEuro(ledger.totals.totalCommission)} helper={formatEuroFull(ledger.totals.totalCommission)} />
+          <KpiCard label="Commission payable" value={formatEuro(ledger.totals.totalMarketingPayable)} helper={formatEuroFull(ledger.totals.totalMarketingPayable)} tone="#22c55e" />
+          <KpiCard label="Commissions deferred" value={formatEuro(ledger.totals.totalMarketingDeferred)} helper={formatEuroFull(ledger.totals.totalMarketingDeferred)} tone="#f97316" />
+          <KpiCard label="ROI" value={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} helper={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} />
+          <KpiCard label="Paid" value={formatEuro(ledger.totals.totalPaid)} helper={formatEuroFull(ledger.totals.totalPaid)} tone="#38bdf8" />
+        </div>
 
-          <div className="card card-global" style={{ minWidth: 320 }}>
-            <h3 style={{ marginBottom: 8 }}>Payout timeline</h3>
-            <div style={{ height: 260 }}>
-              <PnLTrendChart
-                labels={ledger.timelineSeries.map((m) => m.label)}
-                series={[
-                  { label: 'Paid', data: ledger.timelineSeries.map((m) => m.paid), color: '#f97316' },
-                ]}
-                formatValue={formatNumberShort}
-              />
-            </div>
+        <div className="card card-global" style={{ minWidth: 320 }}>
+          <h3 style={{ marginBottom: 8 }}>Payout timeline</h3>
+          <div style={{ height: 260 }}>
+            <PnLTrendChart
+              labels={ledger.timelineSeries.map((m) => m.label)}
+              series={[
+                { label: 'Paid', data: ledger.timelineSeries.map((m) => m.paid), color: '#f97316' },
+              ]}
+              formatValue={formatNumberShort}
+            />
           </div>
+        </div>
 
-          <div className="card card-global">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-              <h3 style={{ marginBottom: 0, flex: 1 }}>Affiliate payout summary</h3>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
-                placeholder="Search affiliate"
-                aria-label="Search affiliate"
-              />
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
+        <div className="card card-global">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <h3 style={{ marginBottom: 0, flex: 1 }}>Affiliate payout summary</h3>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
+              placeholder="Search affiliate"
+              aria-label="Search affiliate"
+            />
+          </div>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
                   <tr>
                     <th style={{ textAlign: 'left' }}>Affiliate</th>
                     <th style={{ textAlign: 'right' }}>CPA</th>
@@ -345,7 +347,6 @@ export default function InvestmentsDashboard() {
             </div>
           </div>
         </>
-      )}
     </div>
   )
 }

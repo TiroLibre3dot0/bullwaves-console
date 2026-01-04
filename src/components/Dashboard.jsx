@@ -2,6 +2,7 @@
 import BreakEvenChart from './BreakEvenChart';
 import PnLTrendChart from './PnLTrendChart';
 import CohortDecayView from './CohortDecayView';
+import FullPageLoader from './FullPageLoader';
 import { checkDataStatus } from '../utils/dataStatusChecker';
 import { useDataStatus } from '../context/DataStatusContext';
 
@@ -254,6 +255,12 @@ export default function Dashboard() {
   const showCohortDbBlock = false; // temporarily hidden per request
   const showAutoReportBlock = false; // temporarily hidden per request
   const [selectedCalendarYear, setSelectedCalendarYear] = useState(2025);
+
+  const [cohortDbLoaded, setCohortDbLoaded] = useState(false);
+  const [balanceLoaded, setBalanceLoaded] = useState(false);
+  const [mediaReportLoaded, setMediaReportLoaded] = useState(false);
+  const [plCohortLoaded, setPlCohortLoaded] = useState(false);
+  const [commissionsLoaded, setCommissionsLoaded] = useState(false);
 
   const cohortMetricLabel = (() => {
     if (cohortAnalysisMetric === 'deposits') return 'Deposits';
@@ -553,6 +560,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadCohortDb() {
+      setCohortDbLoaded(false);
       try {
         const fetchCsv = async (path) => {
           const resp = await fetch(path);
@@ -693,6 +701,8 @@ export default function Dashboard() {
         }
       } catch (err) {
         console.error('Failed to load cohort DB', err);
+      } finally {
+        setCohortDbLoaded(true);
       }
     }
 
@@ -701,6 +711,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadBalance() {
+      setBalanceLoaded(false);
       try {
         const resp = await fetch('/Balance Report.csv');
         if (!resp.ok) return;
@@ -713,6 +724,8 @@ export default function Dashboard() {
         setBalanceRows(parsed);
       } catch (err) {
         console.error('Failed to load balance report for cohort', err);
+      } finally {
+        setBalanceLoaded(true);
       }
     }
 
@@ -721,6 +734,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadMediaReport() {
+      setMediaReportLoaded(false);
       try {
         const resp = await fetch('/Media Report.csv');
         if (!resp.ok) return;
@@ -737,6 +751,8 @@ export default function Dashboard() {
         setMediaRows(parsed);
       } catch (err) {
         console.error('Failed to load media report for top affiliates', err);
+      } finally {
+        setMediaReportLoaded(true);
       }
     }
 
@@ -745,6 +761,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadPlCohort() {
+      setPlCohortLoaded(false);
       try {
         const candidatePaths = [
           '/top 10 Cohort Analysis PL.csv',
@@ -848,6 +865,8 @@ export default function Dashboard() {
         }
       } catch (err) {
         console.error('Failed to load PL cohort report', err);
+      } finally {
+        setPlCohortLoaded(true);
       }
     }
 
@@ -856,6 +875,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadCommissionsReport() {
+      setCommissionsLoaded(false);
       try {
         const candidatePaths = ['/Payments Report.csv', '/commissions.csv'];
         let text = '';
@@ -894,6 +914,8 @@ export default function Dashboard() {
         setCommissionsData(parsed);
       } catch (err) {
         console.error('Failed to load commissions report', err);
+      } finally {
+        setCommissionsLoaded(true);
       }
     }
 
@@ -1535,6 +1557,13 @@ export default function Dashboard() {
     return items.filter((k) => !(k.hideIfZero && (!k.value || k.value === 0)));
   }, [displayKpis, cohortAnalysisMetric]);
 
+  const initialReady = cohortDbLoaded && balanceLoaded && mediaReportLoaded && plCohortLoaded && commissionsLoaded;
+  const initialProgress = ((Number(cohortDbLoaded) + Number(balanceLoaded) + Number(mediaReportLoaded) + Number(plCohortLoaded) + Number(commissionsLoaded)) / 5) * 100;
+
+  if (!initialReady) {
+    return <FullPageLoader progress={initialProgress} subtitle="Loading cohort dashboard…" />;
+  }
+
   return (
     <div className="w-full px-4 py-6 space-y-8">
 
@@ -1849,7 +1878,7 @@ export default function Dashboard() {
                 >
                   {!cohortsSummary.length && (
                     <option value="" disabled>
-                      Caricamento...
+                      —
                     </option>
                   )}
                   <option value="all">Tutte le cohort</option>

@@ -14,6 +14,8 @@ import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import { DataStatusProvider } from './context/DataStatusContext'
+import FullPageLoader from './components/FullPageLoader'
+import UploadReportsPage from './pages/UploadReportsPage'
 
 function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffiliateSection }) {
   const handleNavClick = (action) => {
@@ -49,6 +51,9 @@ function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffil
       <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('supportUserCheck'))}>
         Support • User Check
       </button>
+      <button className={`tab ${view === 'upload' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('upload'))}>
+        Upload
+      </button>
     </nav>
   );
 }
@@ -68,6 +73,7 @@ export default function App(){
      roadmap: '/roadmap',
     // lab removed
     supportUserCheck: '/support/user-check',
+    upload: '/upload',
    }), []);
 
    const pathToView = (pathname) => {
@@ -86,6 +92,7 @@ export default function App(){
      if (pathname.startsWith('/ongoing')) return 'roadmap';
      if (pathname.startsWith('/summary-report')) return 'summary';
     if (pathname.startsWith('/support')) return 'supportUserCheck';
+     if (pathname.startsWith('/upload')) return 'upload';
      return 'overview';
    };
 
@@ -142,6 +149,10 @@ export default function App(){
   }
 
   const navigate = (nextView) => {
+    if (window.__bwUploadInProgress && nextView !== 'upload') {
+      const ok = window.confirm('Upload in progress. Leave this page?')
+      if (!ok) return
+    }
     if (nextView === 'admin' && !isAdmin) {
       setView('overview')
       return
@@ -210,10 +221,11 @@ export default function App(){
           {view === 'orgChart' && <OrgChart />}
           {view === 'summary' && <SummaryReport />}
           {view === 'supportUserCheck' && (
-            <React.Suspense fallback={<div>Loading…</div>}>
+            <React.Suspense fallback={<FullPageLoader progress={35} subtitle="Loading support page…" />}>
                 <SupportUserCheck />
             </React.Suspense>
           )}
+          {view === 'upload' && <UploadReportsPage />}
           {/* Lab removed */}
  
           {view === 'admin' && isAdmin && <AdminPanel />}

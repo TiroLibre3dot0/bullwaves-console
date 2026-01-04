@@ -121,6 +121,7 @@ function deriveBaselines(actualMonths) {
   return {
     totals,
     avgRegs,
+    avgFtd,
     regToFtd,
     ftdToQftd,
     plPerFtd,
@@ -141,8 +142,16 @@ function buildSeasonality(actualMonths) {
   const base = { index: Array(12).fill(1) }
   if (!actualMonths || !actualMonths.length) return base
   const take = actualMonths.slice(0, 12)
-  const values = take.map((m) => m.revenue || m.netDeposits || 0)
-  const mean = values.reduce((acc, v) => acc + v, 0) / Math.max(values.filter((v) => v > 0).length || 1, 1)
+  // Prefer positive revenue; fallback to net deposits. Avoid negative values distorting seasonality.
+  const values = take.map((m) => {
+    const rev = Number(m.revenue || 0)
+    const nd = Number(m.netDeposits || 0)
+    if (Number.isFinite(rev) && rev > 0) return rev
+    if (Number.isFinite(nd) && nd > 0) return nd
+    return 0
+  })
+  const positives = values.filter((v) => v > 0)
+  const mean = positives.reduce((acc, v) => acc + v, 0) / Math.max(positives.length || 1, 1)
   if (!mean) return base
   const index = values.map((v) => clamp(v / mean))
   return { index }
@@ -155,41 +164,26 @@ function applyForecast({ months, scenario, baselines, baseOpex, projectPlan, ass
   const seasonalityStrength = Number.isFinite(assumptions?.seasonalityStrength) ? assumptions.seasonalityStrength : 0.15
   const seasonalityIndex = baselines.seasonality?.index || Array(12).fill(1)
 
-  const guardrail = (proposed, prevVal, anchor, caps = { up: 0.45, down: 0.35 }) => {
-    if (!Number.isFinite(proposed)) return 0
-    let value = proposed
-    if (prevVal > 0) {
-      const max = prevVal * (1 + caps.up)
-      const min = prevVal * (1 - caps.down)
-      value = Math.min(max, Math.max(min, value))
-    }
-    if (anchor > 0) {
-      value = (value * 0.7) + (anchor * 0.3)
-    }
-    return Math.max(0, value)
-  }
+  const clamp01 = (v) => Math.min(1, Math.max(0, v))
+  const clampPositive = (v) => (Number.isFinite(v) ? Math.max(0, v) : 0)
 
   for (let i = startIdx; i < out.length; i += 1) {
     const month = out[i]
     const monthSlot = i - startIdx
-    const prev = out[i - 1] || {}
-    const seasonalBaseline = months[monthSlot] || {}
-    const baseRegs = prev.registrations || seasonalBaseline.registrations || baselines.avgRegs || 0
-    const convRegToFtd = baselines.regToFtd * (scenario.regToFtdLift || 1)
-    const convFtdToQftd = baselines.ftdToQftd * (scenario.ftdToQftdLift || 1)
-    const netPerFtd = baselines.plPerFtd * (scenario.netPerFtdLift || 1)
-    const cpaPerQftd = baselines.cpaPerQftd * (scenario.cpaPerQftdLift || 1)
-
     const seasonBias = seasonalityIndex[monthSlot] || 1
     const seasonFactor = 1 + seasonalityStrength * (seasonBias - 1)
+    const growthFactor = Math.pow(regGrowthMonthly, monthSlot + 1)
 
-    const proposedRegs = baseRegs * regGrowthMonthly * seasonFactor
-    const regs = guardrail(proposedRegs, prev.registrations || seasonalBaseline.registrations, baselines.avgRegs)
-    const ftd = guardrail(regs * convRegToFtd, prev.ftd || seasonalBaseline.ftd, baselines.avgFtd)
-    const qftd = guardrail(ftd * convFtdToQftd, prev.qftd || seasonalBaseline.qftd, baselines.avgQftd)
-    const revenue = guardrail(ftd * netPerFtd, prev.revenue || seasonalBaseline.revenue, baselines.avgRevenue)
-    const effectiveQftd = Math.max(qftd, baselines.avgQftd * 0.35)
-    const payouts = guardrail(effectiveQftd * cpaPerQftd, prev.payouts || seasonalBaseline.payouts, baselines.avgPayout)
+    const convRegToFtd = clamp01((baselines.regToFtd || 0) * (scenario.regToFtdLift || 1))
+    const convFtdToQftd = clamp01((baselines.ftdToQftd || 0) * (scenario.ftdToQftdLift || 1))
+    const netPerFtd = clampPositive((baselines.plPerFtd || 0) * (scenario.netPerFtdLift || 1))
+    const cpaPerQftd = clampPositive((baselines.cpaPerQftd || 0) * (scenario.cpaPerQftdLift || 1))
+
+    const regs = clampPositive((baselines.avgRegs || 0) * growthFactor * seasonFactor)
+    const ftd = clampPositive(regs * convRegToFtd)
+    const qftd = clampPositive(ftd * convFtdToQftd)
+    const revenue = clampPositive(ftd * netPerFtd)
+    const payouts = clampPositive(qftd * cpaPerQftd)
     const roadmapCosts = projectCostForMonth(projectPlan, month.key)
     const opexDubai = (() => {
       const dk = assumptions?.opex?.dubai?.startMonth || '2026-00'

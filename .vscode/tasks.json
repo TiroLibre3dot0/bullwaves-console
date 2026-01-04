@@ -1,0 +1,16 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Stop upload server :4000",
+			"type": "shell",
+			"command": "powershell",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"$pid = (Get-NetTCPConnection -LocalPort 4000 -State Listen | Select-Object -First 1 -ExpandProperty OwningProcess); if ($pid) { Stop-Process -Id $pid -Force; Write-Output (\"Stopped upload server PID=\" + $pid) } else { Write-Output \"No process listening on port 4000\" }"
+			],
+			"isBackground": false
+		}
+	]
+}

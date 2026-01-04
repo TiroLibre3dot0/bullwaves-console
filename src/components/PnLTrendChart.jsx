@@ -15,6 +15,8 @@ export default function PnLTrendChart({
   series,
   yMin,
   yMax,
+  y1Min,
+  y1Max,
   showLegend = true,
 }) {
   const datasets = useMemo(() => {
@@ -27,6 +29,7 @@ export default function PnLTrendChart({
           type: s.type || 'line',
           label: s.label || `Series ${idx + 1}`,
           data: s.data || [],
+          yAxisID: s.yAxisID,
           borderColor: color,
           backgroundColor: s.backgroundColor || (isBar ? `${color}66` : `${color}1a`),
           tension: isBar ? 0 : 0.16,
@@ -36,6 +39,7 @@ export default function PnLTrendChart({
           pointBackgroundColor: (s.data || []).map((v) => (v >= 0 ? color : '#f87171')),
           borderDash: s.borderDash,
           stack: s.stack,
+          order: s.order,
         }
       })
     }
@@ -66,10 +70,23 @@ export default function PnLTrendChart({
     maintainAspectRatio: false,
     animation: false,
     plugins: {
-      legend: { display: showLegend },
+      legend: {
+        display: showLegend,
+        labels: {
+          color: 'rgba(226,232,240,0.85)',
+          boxWidth: 10,
+          boxHeight: 10,
+          font: { size: 11 },
+        },
+      },
       tooltip: {
         mode: 'nearest',
         intersect: false,
+        backgroundColor: 'rgba(2,6,23,0.92)',
+        titleColor: 'rgba(226,232,240,0.95)',
+        bodyColor: 'rgba(226,232,240,0.9)',
+        borderColor: 'rgba(148,163,184,0.25)',
+        borderWidth: 1,
         callbacks: {
           label: (ctx) => {
             const idx = ctx.dataIndex
@@ -98,18 +115,36 @@ export default function PnLTrendChart({
         ticks: {
           callback: (val) => formatValue(val),
           font: { size: 10 },
+          color: 'rgba(226,232,240,0.7)',
         },
         grid: {
           color: 'rgba(255,255,255,0.02)',
           drawBorder: false,
         },
       },
+      y1: {
+        position: 'right',
+        min: Number.isFinite(y1Min) ? y1Min : undefined,
+        max: Number.isFinite(y1Max) ? y1Max : undefined,
+        suggestedMin: Number.isFinite(y1Min) ? y1Min : undefined,
+        suggestedMax: Number.isFinite(y1Max) ? y1Max : undefined,
+        ticks: {
+          callback: (val) => `${Number(val).toFixed(0)}%`,
+          font: { size: 10 },
+          color: 'rgba(226,232,240,0.7)',
+        },
+        grid: {
+          drawOnChartArea: false,
+          color: 'rgba(255,255,255,0.02)',
+          drawBorder: false,
+        },
+      },
       x: {
         grid: { display: false },
-        ticks: { font: { size: 10 } },
+        ticks: { font: { size: 10 }, color: 'rgba(226,232,240,0.6)' },
       },
     },
-  }), [formatValue, tooltipData, tooltipFormatter])
+  }), [formatValue, tooltipData, tooltipFormatter, yMin, yMax, y1Min, y1Max, showLegend])
 
   return <Chart type="bar" data={data} options={options} />
 }

@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
 import { useLeaderboard } from '../hooks/useLeaderboard'
+import FullPageLoader from '../../../components/FullPageLoader'
 
 const formatNumberFull = (value) => formatNumber(value)
 
@@ -242,6 +243,10 @@ export default function SummaryReport() {
     monthlyPay: r.monthlyPay || Array(12).fill(0),
     profit: r.profit || 0,
   })), [bestAffiliates])
+
+  if (loading) {
+    return <FullPageLoader progress={45} subtitle="Loading summary data…" />
+  }
 
   return (
     <div className="w-full px-4 py-6 space-y-6">
@@ -582,9 +587,6 @@ export default function SummaryReport() {
         </aside>
       </section>
 
-      {loading && (
-        <div className="card w-full" style={{ textAlign: 'center', color: '#94a3b8' }}>Caricamento dati…</div>
-      )}
     </div>
   )
 }

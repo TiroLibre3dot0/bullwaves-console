@@ -10,17 +10,91 @@
     <input type="file" name="file" accept=".csv" />
     <button type="submit">Upload</button>
   </form>
+  <div style="margin-top:12px; max-width:520px;">
+    <div id="status" style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size:12px; color:#333; margin-bottom:6px;"></div>
+    <div style="height:10px; background:#eee; border-radius:6px; overflow:hidden;">
+      <div id="bar" style="height:100%; width:0%; background:#4f46e5;"></div>
+    </div>
+  </div>
   <pre id="out"></pre>
   <script>
     const f = document.getElementById('f')
     const out = document.getElementById('out')
+    const statusEl = document.getElementById('status')
+    const bar = document.getElementById('bar')
+
+    const fmtMB = (bytes) => {
+      const n = Number(bytes || 0)
+      return (n / (1024 * 1024)).toFixed(1) + ' MB'
+    }
+
+    const setProgress = (pct) => {
+      const p = Math.max(0, Math.min(100, Number(pct) || 0))
+      bar.style.width = p.toFixed(1) + '%'
+    }
+
+    const setStatus = (msg) => {
+      statusEl.textContent = msg || ''
+    }
+
     f.addEventListener('submit', async e => {
       e.preventDefault()
-      const fd = new FormData(f)
-      out.textContent = 'Uploading...'
-      const res = await fetch('/upload', { method: 'POST', body: fd })
-      const j = await res.json()
-      out.textContent = JSON.stringify(j, null, 2)
+      const input = f.querySelector('input[type=file]')
+      const file = input && input.files && input.files[0]
+      if (!file) {
+        out.textContent = 'Select a .csv file first.'
+        return
+      }
+
+      const fd = new FormData()
+      fd.append('file', file)
+
+      out.textContent = ''
+      setProgress(0)
+      setStatus(`Uploading: 0% (0 / ${fmtMB(file.size)})`)
+
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', '/upload', true)
+
+      xhr.upload.onprogress = (ev) => {
+        if (!ev.lengthComputable) {
+          setStatus('Uploading...')
+          return
+        }
+        const pct = (ev.loaded / ev.total) * 100
+        setProgress(pct)
+        setStatus(`Uploading: ${pct.toFixed(1)}% (${fmtMB(ev.loaded)} / ${fmtMB(ev.total)})`)
+      }
+
+      xhr.onload = () => {
+        try {
+          const j = JSON.parse(xhr.responseText || '{}')
+          out.textContent = JSON.stringify(j, null, 2)
+          setProgress(100)
+          setStatus(xhr.status >= 200 && xhr.status < 300 ? 'Done.' : `Failed (HTTP ${xhr.status}).`)
+        } catch (err) {
+          out.textContent = xhr.responseText || ''
+          setStatus(xhr.status >= 200 && xhr.status < 300 ? 'Done.' : `Failed (HTTP ${xhr.status}).`)
+        }
+      }
+
+      xhr.onerror = () => {
+        setStatus('Upload failed (network error).')
+      }
+
+      xhr.onloadstart = () => {
+        setStatus(`Uploading: 0% (0 / ${fmtMB(file.size)})`)
+      }
+
+      xhr.onloadend = () => {
+        // When upload completes, the server may still be processing before it responds.
+        // If we reached 100% but no response yet, show a processing hint.
+        if (bar.style.width === '100%' && !out.textContent) {
+          setStatus('Processing on server...')
+        }
+      }
+
+      xhr.send(fd)
     })
   </script>
 </body>

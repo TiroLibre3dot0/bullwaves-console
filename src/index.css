@@ -748,6 +748,10 @@ body{font-family:"Inter", system-ui, -apple-system, 'Segoe UI', Roboto, Arial;ba
 .status-done { background: rgba(94,234,212,0.12); color: #a5f3fc; border-color: rgba(94,234,212,0.32); }
 .priority-high { background: rgba(244,114,182,0.12); color: #f9a8d4; border-color: rgba(244,114,182,0.3); }
 .priority-medium { background: rgba(94,234,212,0.1); color: #99f6e4; border-color: rgba(94,234,212,0.26); }
+
+/* Upload page: ensure native dropdown options are readable on dark UI */
+.upload-select { color-scheme: dark; }
+.upload-select option { background: var(--card); color: var(--text); }
 .priority-low { background: rgba(148,163,184,0.12); color: #cbd5e1; border-color: rgba(148,163,184,0.26); }
 .ongoing-pill { display: inline-flex; align-items: center; padding: 6px 10px; border-radius: 999px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text); font-size: 12px; font-weight: 700; }
 .ongoing-pill.subtle { background: rgba(255,255,255,0.02); color: #cbd5e1; border-color: rgba(255,255,255,0.06); }

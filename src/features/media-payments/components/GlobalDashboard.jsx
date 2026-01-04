@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import CardSection from '../../../components/common/CardSection'
 import FilterBar from '../../../components/common/FilterBar'
 import PnLTrendChart from '../../../components/PnLTrendChart'
+import FullPageLoader from '../../../components/FullPageLoader'
 import ExecutiveAnalysisEngine from '../../executive-summary/components/ExecutiveAnalysisEngine'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
@@ -248,6 +249,10 @@ export default function GlobalDashboard() {
     }
     return 'Filtered period'
   }, [selectedMonth, selectedYear, monthOptions])
+
+  if (loading) {
+    return <FullPageLoader progress={45} subtitle="Loading executive summary…" />
+  }
 
   return (
     <div className="w-full space-y-3">
@@ -698,9 +703,6 @@ export default function GlobalDashboard() {
         </div>
       )}
 
-      {loading && (
-        <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8' }}>Caricamento dati…</div>
-      )}
     </div>
   )
 }

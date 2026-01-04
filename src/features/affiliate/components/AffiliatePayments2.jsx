@@ -3,6 +3,7 @@ import useAffiliatePayments from '../hooks/useAffiliatePayments';
 import { formatEuro } from '../../../lib/formatters';
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
+import FullPageLoader from '../../../components/FullPageLoader'
 
 const card = { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#f1f5f9', border: '1px solid #334155', borderRadius: 12, padding: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', margin: 12 };
 
@@ -213,7 +214,7 @@ export default function AffiliatePayments2() {
               fontWeight: 500
             }}
           >
-            {loading ? 'Loading...' : 'Reload'}
+            {loading ? 'Loading…' : 'Reload'}
           </button>
         </div>
       </div>
@@ -373,17 +374,7 @@ export default function AffiliatePayments2() {
             {selectedRec ? 'Monthly breakdown' : 'Overall Monthly Breakdown'}
           </h4>
           {!map && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 40, color: '#64748b' }}>
-              <div style={{
-                width: 24,
-                height: 24,
-                border: '3px solid #334155',
-                borderTop: '3px solid #3b82f6',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }}></div>
-              <span style={{ marginLeft: 12 }}>Loading payments data…</span>
-            </div>
+            <FullPageLoader minHeight={260} progress={55} subtitle="Loading payments data…" />
           )}
           {map && Object.keys(filteredMonths).length === 0 && (
             <div style={{ color: '#64748b' }}>No data available.</div>

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import FullPageLoader from '../../../components/FullPageLoader'
 import KpiCard from '../../../components/profit/KpiCard'
 import RegionBarChart from '../../../components/profit/RegionBarChart'
 import CountryMapChart from '../../../components/profit/CountryMapChart'
@@ -32,6 +33,10 @@ const iso3FromName = (name) => {
 
 export default function ProfitAnalysisPage() {
   const { data: mediaRows, loading } = useMediaReport()
+
+  if (loading) {
+    return <FullPageLoader progress={35} subtitle="Loading media report…" />
+  }
   const [selectedYear, setSelectedYear] = useState('all')
   const [scatterEntity, setScatterEntity] = useState('affiliate')
 
@@ -267,9 +272,6 @@ export default function ProfitAnalysisPage() {
         </div>
       </div>
 
-      {loading && (
-        <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8' }}>Loading media report…</div>
-      )}
     </div>
   )
 }

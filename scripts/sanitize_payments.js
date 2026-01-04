@@ -218,6 +218,63 @@ parsed.data.forEach((r, idx) => {
 console.log('Rows parsed:', cleanedRows.length)
 if (malformed.length) console.warn('Malformed rows (field count mismatch):', malformed.length, malformed.slice(0,5))
 
+// Deduplication against existing `dest` (keep existing records, append new unique ones)
+let existingRows = []
+let existingFields = null
+if (fs.existsSync(dest)){
+  try {
+    const exTxt = fs.readFileSync(dest, 'utf8')
+    const exParsed = Papa.parse(exTxt, { header: true, skipEmptyLines: true, quoteChar: '"', transformHeader: normalizedHeader })
+    existingRows = exParsed.data || []
+    existingFields = exParsed.meta && exParsed.meta.fields ? exParsed.meta.fields : null
+  } catch (e){
+    console.warn('Warning: failed to parse existing dest for dedupe:', e && e.message)
+    existingRows = []
+  }
+}
+
+// prefer a stable ID key when present, otherwise fall back to a composite key
+const idField = uniqueFields.includes('id') ? 'id' : (uniqueFields.find(f => /^payment_?id$/.test(f)) || null)
+const dateField = uniqueFields.find(f => f === 'paymentdate' || f === 'payment_date' || f === 'date') || null
+const affiliateIdField = uniqueFields.find(f => f === 'affiliate_id' || f === 'affiliateid') || null
+const affiliateField = uniqueFields.find(f => f === 'affiliate' || f === 'affiliate_name') || null
+const rangeField = uniqueFields.find(f => f === 'payment_range' || f === 'range') || null
+const amountField = uniqueFields.find(f => f === 'payment_amount' || f.includes('payment') && f.includes('amount')) || null
+
+const makeKey = (r) => {
+  if (idField){
+    const id = (r[idField] || '').toString().trim()
+    if (id) return `id:${id}`
+  }
+  const d = dateField ? (r[dateField] || '').toString().trim() : ''
+  const a = affiliateIdField ? (r[affiliateIdField] || '').toString().trim() : (affiliateField ? (r[affiliateField] || '').toString().trim() : '')
+  const rr = rangeField ? (r[rangeField] || '').toString().trim() : ''
+  const amt = amountField ? (r[amountField] || '').toString().trim() : ''
+  return `c:${d}|${a}|${rr}|${amt}`
+}
+
+const existingKeys = new Set(existingRows.map(makeKey))
+const toAdd = []
+const duplicates = []
+cleanedRows.forEach(r => {
+  const k = makeKey(r)
+  if (existingKeys.has(k)) duplicates.push(r)
+  else { toAdd.push(r); existingKeys.add(k) }
+})
+
+if (duplicates.length) {
+  const dupPath = path.join(rawDir, `payments_duplicates.${timestamp}.csv`)
+  try {
+    fs.writeFileSync(dupPath, Papa.unparse(duplicates, { columns: uniqueFields }), 'utf8')
+    console.log('Wrote duplicates to', dupPath)
+  } catch (e){ console.warn('Failed to write duplicates file:', e && e.message) }
+}
+
+// final rows: existing + toAdd
+const finalFields = (existingFields && existingFields.length ? existingFields.slice() : uniqueFields.slice())
+uniqueFields.forEach(f => { if (!finalFields.includes(f)) finalFields.push(f) })
+const finalRows = existingRows.concat(toAdd)
+
 // backup existing dest
 if (fs.existsSync(dest)) {
   const bak = dest + '.' + timestamp + '.bak'
@@ -225,10 +282,10 @@ if (fs.existsSync(dest)) {
   console.log('Backed up existing', dest, '->', bak)
 }
 
-// write cleaned CSV
-const out = Papa.unparse(cleanedRows, { columns: uniqueFields })
+// write merged CSV
+const out = Papa.unparse(finalRows, { columns: finalFields })
 fs.writeFileSync(dest, out, 'utf8')
-console.log('Wrote cleaned CSV to', dest)
+console.log('Wrote merged CSV to', dest, `(existing=${existingRows.length}, added=${toAdd.length}, duplicates=${duplicates.length})`)
 
 // exit with code indicating presence of malformed rows
 if (malformed.length) process.exitCode = 3

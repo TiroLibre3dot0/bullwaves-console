@@ -5,6 +5,7 @@ import CountryMapChart from '../components/profit/CountryMapChart'
 import SegmentBarChart from '../components/profit/SegmentBarChart'
 import ProfitRatioScatter from '../components/profit/ProfitRatioScatter'
 import RegistrationBarChart from '../components/profit/RegistrationBarChart'
+import FullPageLoader from '../components/FullPageLoader'
 import { checkDataStatus } from '../utils/dataStatusChecker'
 import { useDataStatus } from '../context/DataStatusContext'
 
@@ -248,6 +249,10 @@ export default function ProfitAnalysisPage() {
     }))
   }, [filteredRows, scatterEntity, countryData])
 
+  if (loading) {
+    return <FullPageLoader progress={35} subtitle="Loading media report…" />
+  }
+
   return (
     <div className="w-full space-y-4" style={{ background: 'radial-gradient(120% 120% at 10% 20%, #0b1c24 0%, #0a0f1e 45%, #0a090f 100%)', padding: 16, borderRadius: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
@@ -333,9 +338,6 @@ export default function ProfitAnalysisPage() {
         </div>
       </div>
 
-      {loading && (
-        <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8' }}>Loading media report…</div>
-      )}
     </div>
   )
 }

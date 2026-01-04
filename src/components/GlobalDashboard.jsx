@@ -4,6 +4,7 @@ import BreakEvenChart from './BreakEvenChart';
 import CardSection from './common/CardSection';
 import FilterBar from './common/FilterBar';
 import PeriodSelector from './common/PeriodSelector';
+import FullPageLoader from './FullPageLoader';
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent, cleanNumber, cleanPercent, normalizeKey } from '../lib/formatters';
 import { monthMetaFromDate, parseCsv, parseMonthFirstDate, parseMonthLabel } from '../lib/csv';
 
@@ -440,6 +441,9 @@ export default function GlobalDashboard() {
             {acquisitionSteps.map((s) => (
               <div key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        if (loading) {
+          return <FullPageLoader progress={45} subtitle="Loading executive summary…" />
+        }
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ width: 12, height: 12, borderRadius: 4, background: s.color, display: 'inline-block' }} />
                     <strong style={{ fontSize: 13 }}>{s.label}</strong>
@@ -747,10 +751,6 @@ export default function GlobalDashboard() {
           </div>
         </div>
       </div>
-
-      {loading && (
-        <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8' }}>Caricamento report...</div>
-      )}
     </div>
   );
 }

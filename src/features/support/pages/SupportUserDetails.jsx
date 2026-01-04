@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import FullPageLoader from '../../../components/FullPageLoader'
 import { buildSupportDecision, buildSupportDecisions, getAffiliateOverview } from '../services/supportUserCheckService'
 
 // Decision Card Component for displaying support decisions
@@ -180,6 +181,11 @@ export default function SupportUserDetails({
 }) {
   if (!selected) return null
 
+  const detailsProgress = (paymentsLoaded ? 50 : 0) + (mediaLoaded ? 50 : 0)
+  if (!paymentsLoaded || !mediaLoaded) {
+    return <FullPageLoader progress={detailsProgress} subtitle="Loading user details…" />
+  }
+
   // Derived UI values (computed once)
   const mapped = selected
   const displayName = mapped.name || mapped.userId || '—'
@@ -193,7 +199,7 @@ export default function SupportUserDetails({
   const plRaw = mapped.pl || ''
   const pl = plRaw ? String(plRaw) : '—'
   const affiliateId = mapped.affiliateId || ''
-  const affiliateLabel = paymentsLoaded ? (affiliateName?.affiliateName || '—') : 'Loading affiliate…'
+  const affiliateLabel = affiliateName?.affiliateName || '—'
   const commissions = mapped.affiliateCommissions || mapped.commissions || ''
   const priority = computePriority(mapped.raw)
   const suggested = suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded)
@@ -283,7 +289,7 @@ export default function SupportUserDetails({
 
   // Compute affiliate display and flags for sidebar (safe now that `raw` is defined)
   const rawAffiliateName = pickRawField(raw, ['affiliate', 'affiliatename', 'name']) || null
-  const affiliateDisplay = paymentsLoaded ? (affiliateName?.affiliateName || (mapped.affiliateId ? String(mapped.affiliateId) : 'No affiliate')) : 'Loading affiliate…'
+  const affiliateDisplay = affiliateName?.affiliateName || (mapped.affiliateId ? String(mapped.affiliateId) : 'No affiliate')
   const affiliateMappingMissing = Boolean(mapped.affiliateId && (!affiliateName || !affiliateName.affiliateName))
   const affiliateNameMismatch = Boolean(rawAffiliateName && affiliateName && affiliateName.affiliateName && normalizeKey(rawAffiliateName) !== normalizeKey(affiliateName.affiliateName))
 
@@ -614,9 +620,7 @@ export default function SupportUserDetails({
                 <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>Affiliate Overview</div>
                 
                 {affiliateLoading ? (
-                  <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    Loading affiliate data...
-                  </div>
+                  <FullPageLoader minHeight={180} progress={60} subtitle="Loading affiliate data…" />
                 ) : currentAffiliateOverview ? (
                   <>
                     {/* Target Affiliate Input */}
@@ -789,14 +793,7 @@ export default function SupportUserDetails({
                 />
               </div>
             ) : (
-              <div style={{
-                padding: '20px',
-                textAlign: 'center',
-                color: 'var(--text-secondary)',
-                fontSize: '14px'
-              }}>
-                Loading decision engine...
-              </div>
+              <FullPageLoader minHeight={220} progress={55} subtitle="Loading decision engine…" />
             )}
 
 

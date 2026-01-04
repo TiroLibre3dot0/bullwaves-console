@@ -1,5 +1,6 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import FullPageLoader from '../../../components/FullPageLoader'
 import {
   searchUsers,
   loadPaymentsReport,
@@ -133,6 +134,8 @@ export default function SupportUserCheck() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
+  const [initializing, setInitializing] = useState(true)
+
   const [paymentsLoaded, setPaymentsLoaded] = useState(false)
   const [mediaLoaded, setMediaLoaded] = useState(false)
   const [affiliateName, setAffiliateName] = useState(null)
@@ -176,6 +179,8 @@ export default function SupportUserCheck() {
         setShowDataStatusPopup(true)
       } catch (err) {
         console.error('Failed to load registrations for status', err)
+      } finally {
+        setInitializing(false)
       }
     }
     loadInitialData()
@@ -368,6 +373,10 @@ export default function SupportUserCheck() {
     }
   } : null
 
+  if (initializing) {
+    return <FullPageLoader progress={40} subtitle="Loading support tools…" />
+  }
+
   // If a user is selected, render the full-width Support Decision Page in-place
   if (selected) {
     return (
@@ -436,7 +445,7 @@ export default function SupportUserCheck() {
           {searched && (
             <div style={{ marginTop: 6 }}>
               {loading ? (
-                <div style={{ padding: 12, textAlign: 'center' }}><span className="spinner" /> Loading…</div>
+                <FullPageLoader minHeight={220} progress={55} subtitle="Loading results…" />
               ) : (
                 <div className="support-list">
                   {resultsToShow.map(({ raw, mapped }, idx) => {

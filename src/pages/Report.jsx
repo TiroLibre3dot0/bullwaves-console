@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { formatEuro, formatNumber, formatNumberShort, formatPercent, cleanNumber } from '../lib/formatters'
 import AffiliatePayments2 from '../features/affiliate/components/AffiliatePayments2'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
+import FullPageLoader from '../components/FullPageLoader'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
 const formatNumberFull = (value) => formatNumber(value)
@@ -77,6 +78,10 @@ export default function Report() {
 
     loadReports()
   }, [])
+
+  if (loading) {
+    return <FullPageLoader progress={45} subtitle="Loading report data…" />
+  }
 
   const availableMonths = useMemo(() => {
     const seen = new Map()
@@ -262,7 +267,7 @@ export default function Report() {
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{periodLabel}</div>
           </div>
           <div style={{ fontSize: 12, color: '#475569', textAlign: 'right' }}>
-            {loading ? 'Caricamento...' : `${filteredMedia.length} righe media · ${filteredPayments.length} pagamenti`}
+            {`${filteredMedia.length} righe media · ${filteredPayments.length} pagamenti`}
             <div style={{ color: '#94a3b8', fontSize: 11 }}>Fonte: Media Report + Payments/Commissions</div>
           </div>
         </div>

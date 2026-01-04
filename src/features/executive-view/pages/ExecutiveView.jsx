@@ -3,6 +3,7 @@ import PnLTrendChart from '../../../components/PnLTrendChart'
 import { formatEuro, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../../media-payments/hooks/useMediaPaymentsData'
 import { useRoadmapData } from '../../roadmap/hooks/useRoadmapData'
+import FullPageLoader from '../../../components/FullPageLoader'
 import { buildMonthRange, buildMonthlySeries } from '../lib/monthlySeries'
 import { bandForDepartment, cloneAssumptions, defaultAssumptions } from '../lib/assumptions'
 import { buildDefaultProjectPlan, updateProjectPlan } from '../lib/roadmapCosting'
@@ -92,15 +93,24 @@ export default function ExecutiveView() {
     }, [personnelRows, personnelSummary])
 
     const labels = model.labels
-    const actualCount = model.actualCount
-    const actualMonths = model.months.slice(0, actualCount)
-    const forecastMonths = model.months.slice(actualCount, actualCount + 12)
-    const combinedMonths = [...actualMonths, ...forecastMonths]
 
-    const sum = (arr, key) => arr.reduce((acc, m) => acc + (m[key] || 0), 0)
+    const { actualCount, actualMonths, forecastMonths, combinedMonths } = useMemo(() => {
+      const ac = Number(model?.actualCount ?? 12)
+      const months = Array.isArray(model?.months) ? model.months : []
+      const actual = months.slice(0, ac)
+      const forecast = months.slice(ac, ac + 12)
+      return {
+        actualCount: ac,
+        actualMonths: actual,
+        forecastMonths: forecast,
+        combinedMonths: [...actual, ...forecast],
+      }
+    }, [model])
+
+    const sum = (arr, key) => (arr || []).reduce((acc, m) => acc + (m?.[key] || 0), 0)
     const calcRoi = (monthsArr) => {
-      const totalP = monthsArr.reduce((acc, m) => acc + (m.pnl || 0), 0)
-      const totalCost = monthsArr.reduce((acc, m) => acc + ((m.payouts || 0) + (m.opex || 0)), 0)
+      const totalP = (monthsArr || []).reduce((acc, m) => acc + (m?.pnl || 0), 0)
+      const totalCost = (monthsArr || []).reduce((acc, m) => acc + ((m?.payouts || 0) + (m?.opex || 0)), 0)
       return totalCost ? (totalP / totalCost) * 100 : 0
     }
     const yoyDelta = (future, base) => {
@@ -108,26 +118,29 @@ export default function ExecutiveView() {
       return ((future - base) / Math.abs(base)) * 100
     }
 
-    const totals2025 = {
-      regs: sum(actualMonths, 'registrations'),
-      ftd: sum(actualMonths, 'ftd'),
-      qftd: sum(actualMonths, 'qftd'),
-      revenue: sum(actualMonths, 'revenue'),
-      ebitda: sum(actualMonths, 'ebitda'),
-      payouts: sum(actualMonths, 'payouts'),
-      opex: sum(actualMonths, 'opex'),
-      roi: calcRoi(actualMonths),
-    }
-    const totals2026 = {
-      regs: sum(forecastMonths, 'registrations'),
-      ftd: sum(forecastMonths, 'ftd'),
-      qftd: sum(forecastMonths, 'qftd'),
-      revenue: sum(forecastMonths, 'revenue'),
-      ebitda: sum(forecastMonths, 'ebitda'),
-      payouts: sum(forecastMonths, 'payouts'),
-      opex: sum(forecastMonths, 'opex'),
-      roi: calcRoi(forecastMonths),
-    }
+    const { totals2025, totals2026 } = useMemo(() => {
+      const t25 = {
+        regs: sum(actualMonths, 'registrations'),
+        ftd: sum(actualMonths, 'ftd'),
+        qftd: sum(actualMonths, 'qftd'),
+        revenue: sum(actualMonths, 'revenue'),
+        ebitda: sum(actualMonths, 'ebitda'),
+        payouts: sum(actualMonths, 'payouts'),
+        opex: sum(actualMonths, 'opex'),
+        roi: calcRoi(actualMonths),
+      }
+      const t26 = {
+        regs: sum(forecastMonths, 'registrations'),
+        ftd: sum(forecastMonths, 'ftd'),
+        qftd: sum(forecastMonths, 'qftd'),
+        revenue: sum(forecastMonths, 'revenue'),
+        ebitda: sum(forecastMonths, 'ebitda'),
+        payouts: sum(forecastMonths, 'payouts'),
+        opex: sum(forecastMonths, 'opex'),
+        roi: calcRoi(forecastMonths),
+      }
+      return { totals2025: t25, totals2026: t26 }
+    }, [actualMonths, forecastMonths])
 
     const aggregateQuarters = useMemo(() => {
       const map = new Map()
@@ -232,10 +245,28 @@ export default function ExecutiveView() {
     const computeBounds = (arr, cap = Infinity) => {
       const values = (arr || []).filter((v) => Number.isFinite(v))
       if (!values.length) return { min: -1, max: 1 }
-      const maxAbs = Math.max(...values.map((v) => Math.abs(v))) || 1
-      const padded = maxAbs * 1.2
-      const bound = Math.min(padded, cap)
-      return { min: -bound, max: bound }
+
+      const minVal = Math.min(...values)
+      const maxVal = Math.max(...values)
+      const span = Math.max(1, Math.abs(maxVal - minVal))
+      const pad = span * 0.12
+      // Always include zero baseline for easier interpretation.
+      let min = Math.min(minVal, 0) - pad
+      let max = Math.max(maxVal, 0) + pad
+
+      // Cap extreme ranges (safety guard)
+      if (Number.isFinite(cap)) {
+        min = Math.max(-cap, min)
+        max = Math.min(cap, max)
+      }
+
+      // If range is effectively flat, give it some visible height.
+      if (Math.abs(max - min) < 1) {
+        min -= 1
+        max += 1
+      }
+
+      return { min, max }
     }
 
     const mainBounds = useMemo(() => {
@@ -243,10 +274,11 @@ export default function ExecutiveView() {
       if (metricToggles.revenue) pools.push(...sanitizedSeries.revenue)
       if (metricToggles.opex) pools.push(...sanitizedSeries.opex)
       if (metricToggles.payouts) pools.push(...sanitizedSeries.payouts)
-      if (metricToggles.roi) pools.push(...sanitizedSeries.roi)
       if (metricToggles.ebitda) pools.push(...sanitizedSeries.ebitda)
       return computeBounds(pools)
     }, [metricToggles, sanitizedSeries])
+
+    const roiAxisBounds = useMemo(() => computeBounds(sanitizedSeries.roi, 1_000), [sanitizedSeries])
 
     const roiBounds = useMemo(() => computeBounds(sanitizedSeries.roi), [sanitizedSeries])
     const qftdBounds = useMemo(() => computeBounds(sanitizedSeries.qftd), [sanitizedSeries])
@@ -404,6 +436,10 @@ export default function ExecutiveView() {
       </span>
     )
 
+    if (loading) {
+      return <FullPageLoader progress={45} subtitle="Loading executive data…" />
+    }
+
     return (
       <div className="w-full space-y-4">
         <div className="card" style={{ display: 'grid', gridTemplateColumns: '1.2fr auto', gap: 12, alignItems: 'center' }}>
@@ -425,7 +461,7 @@ export default function ExecutiveView() {
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#cbd5e1', padding: '6px 10px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}>Model v2.0</span>
+            <span style={{ fontSize: 12, color: '#cbd5e1', padding: '6px 10px', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12 }}>Model v2.1</span>
             {['base', 'conservative', 'upside'].map((key) => (
               <button
                 key={key}
@@ -486,14 +522,21 @@ export default function ExecutiveView() {
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {[{ key: 'revenue', label: 'Closed P&L' }, { key: 'ebitda', label: 'EBITDA' }, { key: 'opex', label: 'OPEX' }, { key: 'payouts', label: 'Commissions' }, { key: 'roi', label: 'ROI' }].map((metric) => (
-                        <label key={metric.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#cbd5e1', background: 'rgba(255,255,255,0.02)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)' }}>
+                      {[
+                        { key: 'revenue', label: 'Closed P&L', color: '#22d3ee' },
+                        { key: 'ebitda', label: 'EBITDA', color: 'rgba(34,197,94,0.9)' },
+                        { key: 'opex', label: 'OPEX', color: 'rgba(249,115,22,0.9)' },
+                        { key: 'payouts', label: 'Commissions', color: '#facc15' },
+                        { key: 'roi', label: 'ROI', color: '#a3e635' },
+                      ].map((metric) => (
+                        <label key={metric.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#cbd5e1', background: 'rgba(255,255,255,0.02)', padding: '3px 8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)' }}>
                           <input
                             type="checkbox"
                             checked={metricToggles[metric.key]}
                             onChange={() => handleMetricToggle(metric.key)}
                             style={{ accentColor: '#22d3ee' }}
                           />
+                          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 3, background: metric.color, boxShadow: '0 0 0 1px rgba(255,255,255,0.06)' }} />
                           {metric.label}
                         </label>
                       ))}
@@ -519,7 +562,7 @@ export default function ExecutiveView() {
                           return { actual, forecast }
                         }
 
-                        const makeLine = (data, color, label) => ({
+                        const makeLine = (data, color, label, yAxisID) => ({
                           label,
                           data,
                           type: 'line',
@@ -528,6 +571,7 @@ export default function ExecutiveView() {
                           pointRadius: 1,
                           tension: isQuarter ? 0.14 : 0.18,
                           backgroundColor: 'transparent',
+                          yAxisID,
                           segment: {
                             borderDash: (ctx) => {
                               const idx = Number(ctx?.p0DataIndex ?? -1)
@@ -605,14 +649,16 @@ export default function ExecutiveView() {
                           )
                         }
 
-                        if (metricToggles.revenue) datasets.push(makeLine(sanitizedSeries.revenue, '#22d3ee', 'Closed P&L'))
-                        if (metricToggles.payouts) datasets.push(makeLine(sanitizedSeries.payouts, '#facc15', 'Commissions'))
-                        if (metricToggles.roi) datasets.push(makeLine(sanitizedSeries.roi, '#a3e635', 'ROI'))
+                        if (metricToggles.revenue) datasets.push(makeLine(sanitizedSeries.revenue, '#22d3ee', 'Closed P&L', 'y'))
+                        if (metricToggles.payouts) datasets.push(makeLine(sanitizedSeries.payouts, '#facc15', 'Commissions', 'y'))
+                        if (metricToggles.roi) datasets.push(makeLine(sanitizedSeries.roi, '#a3e635', 'ROI', 'y1'))
 
                         return datasets
                       })()}
                       yMin={mainBounds.min}
                       yMax={mainBounds.max}
+                      y1Min={roiAxisBounds.min}
+                      y1Max={roiAxisBounds.max}
                       showLegend={false}
                       tooltipData={periodSeries.labels.map((label, idx) => ({
                         label,
@@ -1125,10 +1171,6 @@ export default function ExecutiveView() {
               </div>
             </div>
           </div>
-        )}
-
-        {loading && (
-          <div className="card" style={{ textAlign: 'center', color: '#94a3b8' }}>Loading media/payments…</div>
         )}
       </div>
     )

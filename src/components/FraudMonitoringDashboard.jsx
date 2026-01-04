@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import Papa from 'papaparse'
+import FullPageLoader from './FullPageLoader'
 
 // New, cleaner Fraud Monitoring Dashboard
 export default function FraudMonitoringDashboard() {
@@ -34,8 +35,41 @@ export default function FraudMonitoringDashboard() {
   const [ftdUpliftMar, setFtdUpliftMar] = useState(5)
   const [qftdUpliftFeb, setQftdUpliftFeb] = useState(5)
   const [qftdUpliftMar, setQftdUpliftMar] = useState(5)
+  const [useMtdScaling, setUseMtdScaling] = useState(true)
 
   const sum = (arr) => arr.reduce((a, b) => a + b, 0)
+
+  const initialLoading = useMemo(() => {
+    // loading covers seed cases; mediaLoaded/csvLoaded cover CSV parsing; nameGroups starts as null
+    return !!loading || !mediaLoaded || !csvLoaded || nameGroups === null
+  }, [loading, mediaLoaded, csvLoaded, nameGroups])
+
+  const initialProgress = useMemo(() => {
+    const steps = [
+      { done: !loading },
+      { done: !!mediaLoaded },
+      { done: !!csvLoaded },
+      { done: nameGroups !== null }
+    ]
+    const doneCount = steps.reduce((s, x) => s + (x.done ? 1 : 0), 0)
+    return (doneCount / steps.length) * 100
+  }, [loading, mediaLoaded, csvLoaded, nameGroups])
+
+  // persist MTD scaling preference
+  useEffect(() => {
+    try {
+      const saved = typeof window !== 'undefined' ? window.localStorage.getItem('bullwaves_fraud_mtd_scaling') : null
+      if (saved === '0') setUseMtdScaling(false)
+      if (saved === '1') setUseMtdScaling(true)
+    } catch (e) { /* ignore */ }
+  }, [])
+
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return
+      window.localStorage.setItem('bullwaves_fraud_mtd_scaling', useMtdScaling ? '1' : '0')
+    } catch (e) { /* ignore */ }
+  }, [useMtdScaling])
 
   useEffect(() => {
     // seed sample cases (replace with real analysis later)
@@ -79,6 +113,9 @@ export default function FraudMonitoringDashboard() {
         })
         const mSeries = Object.keys(seriesMap).map(k => ({ date: k, ...seriesMap[k] }))
         const parsedM = mSeries.map(s => {
+          // Prefer our month-aware parser so labels like "1/2026" become valid timestamps
+          const parsed = parseRowToDate({ Month: s.date, month: s.date, date: s.date })
+          if (parsed && !isNaN(parsed.getTime())) return { ...s, _ts: parsed.getTime(), dateISO: parsed.toISOString().slice(0,10) }
           const d = new Date(s.date)
           if (!isNaN(d.getTime())) return { ...s, _ts: d.getTime(), dateISO: d.toISOString().slice(0,10) }
           const alt = Date.parse(s.date)
@@ -231,7 +268,8 @@ export default function FraudMonitoringDashboard() {
 
         const totalPL = accounts.reduce((s,a) => s + (Number(a.profit || 0) - Number(a.loss || 0)), 0)
 
-        setCsvRecap({ totalAccounts, uniqueAccountIds, uniqueHolders, singleAccountHolders, multiAccountCount, withDeposit, buckets, avgEquity, avgProfit, avgLoss, depositStats: { total: depositTotal, max: depositMax, min: depositMin, avg: depositAvg }, totalPL, payingUsers: withDeposit, losingUsersPercentage: 0 })
+        const computedLosingRatio = mediaSummary.totalNetDeposits ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100 : 0
+        setCsvRecap({ totalAccounts, uniqueAccountIds, uniqueHolders, singleAccountHolders, multiAccountCount, withDeposit, buckets, avgEquity, avgProfit, avgLoss, depositStats: { total: depositTotal, max: depositMax, min: depositMin, avg: depositAvg }, totalPL, payingUsers: withDeposit, losingUsersPercentage: computedLosingRatio })
         setCsvLoaded(true)
       },
       error: (err) => { console.error('CSV parse error', err); setCsvLoaded(true) }
@@ -443,7 +481,7 @@ export default function FraudMonitoringDashboard() {
     const totalPL = accounts.reduce((s,a) => s + (Number(a.profit || 0) - Number(a.loss || 0)), 0)
     const losingUsersPercentage = mediaSummary.totalNetDeposits ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100 : 0
     return { totalAccounts, uniqueAccountIds, uniqueHolders, singleAccountHolders, multiAccountCount, withDeposit, buckets, avgEquity, avgProfit, avgLoss, depositStats: { total: depositTotal, max: depositMax, min: depositMin, avg: depositAvg }, totalPL, payingUsers: withDeposit, losingUsersPercentage }
-  }, [filteredCsvAccounts])
+  }, [filteredCsvAccounts, mediaSummary])
 
   // display recap depending on yearFilter
   const displayCsvRecap = yearFilter && yearFilter !== 'all' ? filteredCsvRecap : csvRecap
@@ -503,8 +541,14 @@ export default function FraudMonitoringDashboard() {
 
   // update csvRecap losingUsersPercentage when mediaSummary changes
   useEffect(() => {
-    setCsvRecap(prev => ({ ...prev, losingUsersPercentage: mediaSummary.totalNetDeposits ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100 : 0 }))
-  }, [mediaSummary])
+    if (!csvRecap) return
+    const next = mediaSummary.totalNetDeposits ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100 : 0
+    setCsvRecap(prev => {
+      if (!prev) return prev
+      if (Math.abs((prev.losingUsersPercentage || 0) - next) < 1e-9) return prev
+      return ({ ...prev, losingUsersPercentage: next })
+    })
+  }, [mediaSummary, csvRecap])
 
   // filtered media series for chart
   const filteredMediaSeries = useMemo(() => {
@@ -697,9 +741,14 @@ export default function FraudMonitoringDashboard() {
       return end.getTime()
     }
 
+    const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key)
+
     const series = months.map((k, i) => {
       const d = monthKeyToDate(k)
-      return { date: d, key: k, _ts: monthKeyToEndTs(k), cumRegs: cumRegs[i], cumFTD: cumFtd[i], cumQFTD: cumQftd[i], regs: monthlyRegs[i], ftd: monthlyFtd[i], qftd: monthlyQftd[i] }
+      // hasData=true when at least one source has an explicit row/month for this key.
+      // This is important to avoid treating future months (filled with zeros by range) as real data.
+      const hasData = hasOwn(regByMonth, k) || hasOwn(ftdByMonth, k) || hasOwn(qftdByMonth, k)
+      return { date: d, key: k, _ts: monthKeyToEndTs(k), cumRegs: cumRegs[i], cumFTD: cumFtd[i], cumQFTD: cumQftd[i], regs: monthlyRegs[i], ftd: monthlyFtd[i], qftd: monthlyQftd[i], hasData }
     })
 
     // Dev-only concise debug log
@@ -733,6 +782,20 @@ export default function FraudMonitoringDashboard() {
     const regsM = series.map(s => Number(s.regs != null ? s.regs : (s.regsM != null ? s.regsM : 0)))
     const ftdM = series.map(s => Number(s.ftd != null ? s.ftd : (s.ftdM != null ? s.ftdM : 0)))
     const qftdM = series.map(s => Number(s.qftd != null ? s.qftd : (s.qftdM != null ? s.qftdM : 0)))
+
+    // When data arrives asynchronously across sources (e.g. Media Report updated for Jan 2026
+    // but Registrations Report still ends in 2025), the last month may have regs=0.
+    // The forecast uses caps based on prevRegsM, so we must anchor to the last meaningful month.
+    const lastIndexWhere = (arr, pred) => {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        if (pred(arr[i], i)) return i
+      }
+      return -1
+    }
+    const lastRegsIdx = lastIndexWhere(regsM, (v) => Number(v) > 0)
+    const lastFtdIdx = lastIndexWhere(ftdM, (v) => Number(v) > 0)
+    const lastQftdIdx = lastIndexWhere(qftdM, (v) => Number(v) > 0)
+    const anchorIdx = Math.max(0, lastRegsIdx !== -1 ? lastRegsIdx : (series.length - 1))
 
     // Helper: EWMA
     const ewma = (arr, alpha = 0.35) => {
@@ -817,10 +880,20 @@ export default function FraudMonitoringDashboard() {
     const histMaxFtdRate = Math.min(0.45, Math.max(...ftdRates) * 1.1)
     const histMaxQftdRate = Math.min(0.90, Math.max(...qftdRates) * 1.1)
 
-    // Milestones
+    const parseYYYYMMUtc = (yyyymm) => {
+      const m = String(yyyymm || '').trim().match(/^(\d{4})-(\d{2})$/)
+      if (!m) return null
+      const y = Number(m[1])
+      const mo = Number(m[2])
+      if (isNaN(y) || isNaN(mo) || mo < 1 || mo > 12) return null
+      return new Date(Date.UTC(y, mo - 1, 1))
+    }
+
+    // Milestones (uplifts (%) wired to the overlay inputs)
     const milestones = [
       { key: 'solitics', date: '2026-01', upliftFtd: 0.03, upliftQftd: 0.02 },
-      { key: 'ui_rollout', date: '2026-02', upliftFtd: 0.04, upliftQftd: 0.03 },
+      { key: 'ui_rollout_feb', date: '2026-02', upliftFtd: (Number(ftdUpliftFeb) || 0) / 100, upliftQftd: (Number(qftdUpliftFeb) || 0) / 100 },
+      { key: 'ui_rollout_mar', date: '2026-03', upliftFtd: (Number(ftdUpliftMar) || 0) / 100, upliftQftd: (Number(qftdUpliftMar) || 0) / 100 },
       { key: 'marketing', date: '2026-04', upliftFtd: 0.05, upliftQftd: 0.03 }
     ]
 
@@ -837,16 +910,18 @@ export default function FraudMonitoringDashboard() {
     let runFtd = series[series.length-1].cumFTD || 0
     let runQftd = series[series.length-1].cumQFTD || 0
 
-    let prevRegsM = regsM[regsM.length-1] || 0
-    let prevFtdM = ftdM[ftdM.length-1] || 0
-    let prevQftdM = qftdM[qftdM.length-1] || 0
+    let prevRegsM = (lastRegsIdx !== -1 ? regsM[lastRegsIdx] : (regsM[regsM.length-1] || 0))
+    let prevFtdM = (lastFtdIdx !== -1 ? ftdM[lastFtdIdx] : (ftdM[ftdM.length-1] || 0))
+    let prevQftdM = (lastQftdIdx !== -1 ? qftdM[lastQftdIdx] : (qftdM[qftdM.length-1] || 0))
 
-    let prevFtdRate = ftdRateEwma[ftdRateEwma.length-1] || 0
-    let prevQftdRate = qftdRateEwma[qftdRateEwma.length-1] || 0
+    const lastValidFtdRateIdx = lastIndexWhere(regsM, (v, i) => Number(v) > 0 && Number(ftdM[i]) >= 0)
+    const lastValidQftdRateIdx = lastIndexWhere(ftdM, (v, i) => Number(v) > 0 && Number(qftdM[i]) >= 0)
+    let prevFtdRate = lastValidFtdRateIdx !== -1 ? (Number(ftdM[lastValidFtdRateIdx]) / Math.max(1, Number(regsM[lastValidFtdRateIdx]))) : (ftdRateEwma[ftdRateEwma.length-1] || 0)
+    let prevQftdRate = lastValidQftdRateIdx !== -1 ? (Number(qftdM[lastValidQftdRateIdx]) / Math.max(1, Number(ftdM[lastValidQftdRateIdx]))) : (qftdRateEwma[qftdRateEwma.length-1] || 0)
 
-    const lastBaselineRegs = regsBaseline[regsBaseline.length-1]
-    const lastBaselineFtd = ftdBaseline[ftdBaseline.length-1]
-    const lastBaselineQftd = qftdBaseline[qftdBaseline.length-1]
+    const lastBaselineRegs = regsBaseline[anchorIdx] != null ? regsBaseline[anchorIdx] : regsBaseline[regsBaseline.length-1]
+    const lastBaselineFtd = ftdBaseline[Math.max(0, lastFtdIdx !== -1 ? lastFtdIdx : anchorIdx)] != null ? ftdBaseline[Math.max(0, lastFtdIdx !== -1 ? lastFtdIdx : anchorIdx)] : ftdBaseline[ftdBaseline.length-1]
+    const lastBaselineQftd = qftdBaseline[Math.max(0, lastQftdIdx !== -1 ? lastQftdIdx : anchorIdx)] != null ? qftdBaseline[Math.max(0, lastQftdIdx !== -1 ? lastQftdIdx : anchorIdx)] : qftdBaseline[qftdBaseline.length-1]
 
     let monthIdx = 0
     for (let d = new Date(startProj); d <= endProj; d = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth()+1, 1))) {
@@ -867,8 +942,9 @@ export default function FraudMonitoringDashboard() {
       let ftdUplift = 0
       let qftdUplift = 0
       milestones.forEach(m => {
-        const mDate = new Date(m.date + '-01')
-        const monthsSince = (year - mDate.getUTCFullYear()) * 12 + (month - mDate.getUTCMonth())
+        const mDate = parseYYYYMMUtc(m.date)
+        if (!mDate) return
+        const monthsSince = (year - mDate.getUTCFullYear()) * 12 + (month - (mDate.getUTCMonth() + 1))
         const rampVal = ramp(monthsSince, 0, 3) // 3-month ramp
         ftdUplift += m.upliftFtd * rampVal
         qftdUplift += m.upliftQftd * rampVal
@@ -965,8 +1041,28 @@ export default function FraudMonitoringDashboard() {
 
     // hover handlers are defined after fullSeries is computed so they can use totalCount
 
-    // Projection (linear regression) up to Dec 2026
-    const projInfo = forecastTo2026(data)
+    // Projection (model-based) up to Dec 2026.
+    // IMPORTANT:
+    // 1) Ignore trailing months with no source rows (they appear as zeros due to range extension).
+    // 2) Exclude the *current* month from model-fitting even if it has partial real data
+    //    (so the projection stays stable and doesn't get distorted by MTD values).
+    const dataForForecast = (() => {
+      if (!data || data.length < 2) return data
+      const pad2 = (n) => String(n).padStart(2, '0')
+      const now = new Date()
+      const currentKey = `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}`
+
+      // prefer the last month that has data AND is not the current month
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i] && data[i].hasData && data[i].key && data[i].key !== currentKey) return data.slice(0, i + 1)
+      }
+      // fallback to last hasData month
+      for (let i = data.length - 1; i >= 0; i--) {
+        if (data[i] && data[i].hasData) return data.slice(0, i + 1)
+      }
+      return data
+    })()
+    const projInfo = forecastTo2026(dataForForecast)
     const proj = projInfo && projInfo.projected && projInfo.projected.length ? projInfo.projected : []
 
     const maxRegs = Math.max(...series.map(s => s.regsCum), ...proj.map(p => p.regsCum), 1)
@@ -1020,7 +1116,82 @@ export default function FraudMonitoringDashboard() {
     }
 
     // Build full series (real + projected) for consistent x scale and hover
-    const projMapped = proj.map(p => ({ date: p.date, _ts: p._ts, regsM: p.regsM, ftdM: p.ftdM, qftdM: p.qftdM, regsCum: p.regsCum, ftdCum: p.ftdCum, qftdCum: p.qftdCum, ftdRate: p.ftdRate || 0, qftdRate: p.qftdRate || 0 }))
+    let projMapped = proj.map(p => ({ key: p.key, date: p.date, _ts: p._ts, regsM: p.regsM, ftdM: p.ftdM, qftdM: p.qftdM, regsCum: p.regsCum, ftdCum: p.ftdCum, qftdCum: p.qftdCum, ftdRate: p.ftdRate || 0, qftdRate: p.qftdRate || 0 }))
+
+    // Month extension: if the current month has partial real data (e.g. first days of Jan),
+    // update ONLY that month by scaling MTD values to a full-month estimate, while keeping
+    // the rest of the projection increments intact (only an offset to cumulative values).
+    // This makes the projection effectively "svincolata" from real data beyond a simple baseline adjustment.
+    ;(() => {
+      if (!useMtdScaling) return
+      if (!projMapped || projMapped.length === 0) return
+      const pad2 = (n) => String(n).padStart(2, '0')
+      const now = new Date()
+      const currentKey = `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}`
+      const daysElapsed = now.getUTCDate()
+      const daysInMonth = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate()
+      if (!daysElapsed || daysElapsed <= 0 || !daysInMonth) return
+      // if we're at (or beyond) month end, don't scale
+      if (daysElapsed >= daysInMonth) return
+
+      const actual = (data || []).find(d => d && d.key === currentKey && d.hasData)
+      if (!actual) return
+
+      const projIdx = projMapped.findIndex(p => p && p.key === currentKey)
+      if (projIdx === -1) return
+
+      const scale = daysInMonth / Math.max(1, daysElapsed)
+      const est = {
+        regsM: actual.regs != null ? Math.round(Number(actual.regs || 0) * scale) : null,
+        ftdM: actual.ftd != null ? Math.round(Number(actual.ftd || 0) * scale) : null,
+        qftdM: actual.qftd != null ? Math.round(Number(actual.qftd || 0) * scale) : null,
+      }
+
+      const prev = projIdx === 0
+        ? (series[series.length - 1] || null)
+        : (projMapped[projIdx - 1] || null)
+      if (!prev) return
+
+      const old = projMapped[projIdx]
+      const prevRegsCum = Number(prev.regsCum || 0)
+      const prevFtdCum = Number(prev.ftdCum || 0)
+      const prevQftdCum = Number(prev.qftdCum || 0)
+
+      const newRegsM = est.regsM != null && !isNaN(est.regsM) ? Math.max(0, est.regsM) : old.regsM
+      const newFtdM = est.ftdM != null && !isNaN(est.ftdM) ? Math.max(0, est.ftdM) : old.ftdM
+      const newQftdM = est.qftdM != null && !isNaN(est.qftdM) ? Math.max(0, Math.min(est.qftdM, newFtdM)) : old.qftdM
+
+      const newRegsCum = prevRegsCum + Number(newRegsM || 0)
+      const newFtdCum = prevFtdCum + Number(newFtdM || 0)
+      const newQftdCum = prevQftdCum + Number(newQftdM || 0)
+
+      const dRegs = newRegsCum - Number(old.regsCum || 0)
+      const dFtd = newFtdCum - Number(old.ftdCum || 0)
+      const dQftd = newQftdCum - Number(old.qftdCum || 0)
+
+      // apply adjustment: rewrite this month, then offset all future cumulatives
+      projMapped = projMapped.map((p, i) => {
+        if (!p) return p
+        if (i < projIdx) return p
+        if (i === projIdx) {
+          return {
+            ...p,
+            regsM: newRegsM,
+            ftdM: newFtdM,
+            qftdM: newQftdM,
+            regsCum: newRegsCum,
+            ftdCum: newFtdCum,
+            qftdCum: newQftdCum,
+          }
+        }
+        return {
+          ...p,
+          regsCum: Number(p.regsCum || 0) + dRegs,
+          ftdCum: Number(p.ftdCum || 0) + dFtd,
+          qftdCum: Number(p.qftdCum || 0) + dQftd,
+        }
+      })
+    })()
     const fullSeries = [...series, ...projMapped]
     const totalCount = Math.max(1, fullSeries.length - 1)
 
@@ -1166,6 +1337,15 @@ export default function FraudMonitoringDashboard() {
           {/* overlay controls inside chart */}
           <div style={{ position: 'absolute', right: 18, top: 12, background: palette.card, color: '#fff', padding: 8, borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontSize: 12 }}>
             <div style={{ fontWeight: 700, marginBottom: 6 }}>Uplifts (%)</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#e2e8f0' }}>
+              <input
+                type="checkbox"
+                checked={useMtdScaling}
+                onChange={(e) => setUseMtdScaling(!!e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>MTD scaling (estendi mese corrente)</span>
+            </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
                 <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Feb</label>
@@ -1342,7 +1522,15 @@ export default function FraudMonitoringDashboard() {
   function openModal(c) { setModalCase(c) }
   function closeModal() { setModalCase(null) }
 
-  if (loading) return (<div style={{ padding: 40, color: palette.muted }}>Loading fraud scan…</div>)
+  if (initialLoading) {
+    return (
+      <FullPageLoader
+        progress={initialProgress}
+        subtitle="Loading dashboard data…"
+        colors={{ surface: palette.surface, muted: palette.muted, accent: palette.info, barBg: 'rgba(255,255,255,0.08)' }}
+      />
+    )
+  }
 
   return (
     <div style={{ padding: 16, color: '#dbeafe' }}>
@@ -1629,7 +1817,12 @@ export default function FraudMonitoringDashboard() {
                 </div>
               </div>
             ) : (
-              <div style={{ color: palette.muted, textAlign: 'center', padding: 20, fontStyle: 'italic' }}>Loading commissions…</div>
+              <FullPageLoader
+                minHeight={220}
+                progress={60}
+                subtitle="Loading commissions…"
+                colors={{ surface: palette.card, muted: palette.muted, accent: palette.info, barBg: 'rgba(255,255,255,0.08)' }}
+              />
             )}
           </div>
         </div>
