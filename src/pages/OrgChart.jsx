@@ -1,7 +1,8 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 import { departmentColors, divisionColors, getFlagData, sections } from './orgChartData';
 
-function SectionCard({ title, roles = [], bullets = [] }) {
+function SectionCard({ title, roles = [], bullets = [], t }) {
   const hasGrid = roles && roles.length > 0;
   return (
     <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm" aria-labelledby={title.replace(/\s+/g, '-').toLowerCase()}>
@@ -57,10 +58,10 @@ function SectionCard({ title, roles = [], bullets = [] }) {
               </div>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">{r.duties}</p>
               <div className="mt-2 grid grid-cols-2 gap-1 text-[11px] text-slate-400">
-                {r.division && <span><span className="text-slate-500">Division:</span> {r.division}</span>}
-                {r.department && <span><span className="text-slate-500">Dept:</span> {r.department}</span>}
-                {r.region && <span><span className="text-slate-500">Region:</span> {r.region}</span>}
-                {r.email && <span className="col-span-2 break-all"><span className="text-slate-500">Email:</span> {r.email}</span>}
+                {r.division && <span><span className="text-slate-500">{t('orgChart.role.division')}:</span> {r.division}</span>}
+                {r.department && <span><span className="text-slate-500">{t('orgChart.role.dept')}:</span> {r.department}</span>}
+                {r.region && <span><span className="text-slate-500">{t('orgChart.role.region')}:</span> {r.region}</span>}
+                {r.email && <span className="col-span-2 break-all"><span className="text-slate-500">{t('orgChart.role.email')}:</span> {r.email}</span>}
               </div>
             </div>
           ))}
@@ -76,41 +77,41 @@ function SectionCard({ title, roles = [], bullets = [] }) {
   );
 }
 
-function HierarchyBlock({ selected }) {
+function HierarchyBlock({ selected, t }) {
   const labelMap = {
-    'management-team': 'Management Team',
-    'area-responsibility': 'Area Responsibility Layer',
-    'support-team': 'Support Team',
-    operations: 'Operations',
-    dealing: 'Dealing / PSP',
-    affiliation: 'Affiliation',
-    'business-development': 'Business Development',
-    marketing: 'Marketing',
-    finance: 'Finance',
-    payments: 'Payments',
-    compliance: 'Compliance',
+    'management-team': t('orgChart.hierarchyItem.management'),
+    'area-responsibility': t('orgChart.hierarchyItem.areaLayer'),
+    'support-team': t('orgChart.hierarchyItem.support'),
+    operations: t('orgChart.hierarchyItem.operations'),
+    dealing: t('orgChart.hierarchyItem.dealing'),
+    affiliation: t('orgChart.hierarchyItem.affiliation'),
+    'business-development': t('orgChart.hierarchyItem.businessDev'),
+    marketing: t('orgChart.hierarchyItem.marketing'),
+    finance: t('orgChart.hierarchyItem.financePayments'),
+    payments: t('orgChart.hierarchyItem.financePayments'),
+    compliance: t('orgChart.hierarchyItem.compliance'),
   };
 
   const fullItems = [
-    'CEO / Leadership',
-    'Management Team',
-    'Area Responsibility Layer',
-    'Support Team',
-    'Operations',
-    'Dealing / PSP',
-    'Affiliation',
-    'Business Development',
-    'Marketing',
-    'Finance & Payments',
-    'Compliance',
+    t('orgChart.hierarchyItem.ceo'),
+    t('orgChart.hierarchyItem.management'),
+    t('orgChart.hierarchyItem.areaLayer'),
+    t('orgChart.hierarchyItem.support'),
+    t('orgChart.hierarchyItem.operations'),
+    t('orgChart.hierarchyItem.dealing'),
+    t('orgChart.hierarchyItem.affiliation'),
+    t('orgChart.hierarchyItem.businessDev'),
+    t('orgChart.hierarchyItem.marketing'),
+    t('orgChart.hierarchyItem.financePayments'),
+    t('orgChart.hierarchyItem.compliance'),
   ];
 
   const selectedLabel = labelMap[selected];
   const items = selected === 'all'
     ? fullItems
     : selected === 'management-team'
-      ? ['CEO / Leadership', 'Management Team']
-      : ['CEO / Leadership', 'Management Team', selectedLabel || ''];
+      ? [t('orgChart.hierarchyItem.ceo'), t('orgChart.hierarchyItem.management')]
+      : [t('orgChart.hierarchyItem.ceo'), t('orgChart.hierarchyItem.management'), selectedLabel || ''];
 
   return (
     <div className="flex flex-col items-center gap-2 py-6">
@@ -128,28 +129,28 @@ function HierarchyBlock({ selected }) {
   );
 }
 
-function TableOfContents({ selected, onSelect }) {
+function TableOfContents({ selected, onSelect, t }) {
   const links = [
-    { id: 'management-team', label: 'Management' },
-    { id: 'area-responsibility', label: 'Area Layer' },
-    { id: 'support-team', label: 'Support' },
-    { id: 'operations', label: 'Operations' },
-    { id: 'affiliation', label: 'Affiliation' },
-    { id: 'business-development', label: 'Business Dev' },
-    { id: 'marketing', label: 'Marketing' },
-    { id: 'finance', label: 'Finance' },
-    { id: 'payments', label: 'Payments' },
-    { id: 'compliance', label: 'Compliance' },
-    { id: 'dealing', label: 'Dealing Desk' },
+    { id: 'management-team', label: t('orgChart.toc.management') },
+    { id: 'area-responsibility', label: t('orgChart.toc.areaLayer') },
+    { id: 'support-team', label: t('orgChart.toc.support') },
+    { id: 'operations', label: t('orgChart.toc.operations') },
+    { id: 'affiliation', label: t('orgChart.toc.affiliation') },
+    { id: 'business-development', label: t('orgChart.toc.businessDev') },
+    { id: 'marketing', label: t('orgChart.toc.marketing') },
+    { id: 'finance', label: t('orgChart.toc.finance') },
+    { id: 'payments', label: t('orgChart.toc.payments') },
+    { id: 'compliance', label: t('orgChart.toc.compliance') },
+    { id: 'dealing', label: t('orgChart.toc.dealing') },
   ];
   return (
-    <nav className="flex flex-wrap gap-2 items-center text-sm mb-4" aria-label="Table of contents">
+    <nav className="flex flex-wrap gap-2 items-center text-sm mb-4" aria-label={t('orgChart.toc.ariaLabel')}>
       <button
         type="button"
         onClick={() => onSelect('all')}
         className={`px-3 py-1 rounded-full border text-slate-200 transition ${selected === 'all' ? 'border-cyan-400 bg-cyan-500/10 text-white' : 'border-slate-700 bg-slate-900/70 hover:border-cyan-400 hover:text-white'}`}
       >
-        Tutti
+        {t('orgChart.toc.all')}
       </button>
       {links.map((link) => (
         <button
@@ -166,6 +167,7 @@ function TableOfContents({ selected, onSelect }) {
 }
 
 export default function OrgChart() {
+  const { t } = useI18n();
   const [selected, setSelected] = useState('management-team');
   const [searchTerm, setSearchTerm] = useState('');
   const [pendingScrollId, setPendingScrollId] = useState(null);
@@ -212,15 +214,15 @@ export default function OrgChart() {
     <div className="w-full px-6 2xl:px-10">
       <div className="w-full space-y-6">
         <header className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">Structure</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-white">Company Organizational Chart</h1>
-          <p className="text-sm text-slate-300 max-w-3xl">Hierarchy, responsibility layer, and department rosters with job title, division, department, region, and email per person.</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">{t('orgChart.structure')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white">{t('orgChart.title')}</h1>
+          <p className="text-sm text-slate-300 max-w-3xl">{t('orgChart.description')}</p>
           <form onSubmit={handleSearchSubmit} className="flex flex-wrap gap-3 items-center mt-3">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Cerca per nome e premi Invio"
+              placeholder={t('orgChart.search.placeholder')}
               className="bg-slate-900 text-slate-100 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-cyan-400 focus:outline-none"
               style={{ minWidth: 240 }}
             />
@@ -228,17 +230,17 @@ export default function OrgChart() {
               type="submit"
               className="px-3 py-2 rounded-lg border border-cyan-500 text-cyan-100 bg-cyan-500/10 text-sm"
             >
-              Vai al reparto
+              {t('orgChart.search.submit')}
             </button>
           </form>
         </header>
 
-        <TableOfContents selected={selected} onSelect={setSelected} />
+        <TableOfContents selected={selected} onSelect={setSelected} t={t} />
 
-        <section aria-label="Hierarchy" className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-100 mb-2">Hierarchy</h2>
-          <p className="text-sm text-slate-300">CEO / Leadership cascading to operational teams.</p>
-          <HierarchyBlock selected={selected} />
+        <section aria-label={t('orgChart.hierarchy.ariaLabel')} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-100 mb-2">{t('orgChart.hierarchy.title')}</h2>
+          <p className="text-sm text-slate-300">{t('orgChart.hierarchy.subtitle')}</p>
+          <HierarchyBlock selected={selected} t={t} />
         </section>
 
         <div className="space-y-6">
@@ -251,7 +253,7 @@ export default function OrgChart() {
                 sectionRefs.current[section.id] = el;
               }}
             >
-              <SectionCard title={section.title} roles={section.roles} bullets={section.bullets} />
+              <SectionCard title={t(`orgChart.sectionTitle.${section.id}`) || section.title} roles={section.roles} bullets={section.bullets} t={t} />
             </div>
           ))}
         </div>

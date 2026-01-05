@@ -463,7 +463,8 @@ export function buildSupportDecision(selectedUser) {
 		default: replyTemplate = 'Thanks — we\'re reviewing and will follow up shortly.'
 	}
 
-	return { caseType, riskLevel, replyTemplate }
+	const replyKey = `support.reply.caseType.${caseType}`
+	return { caseType, riskLevel, replyTemplate, replyKey }
 }
 
 export function buildSupportDecisions(selectedUser) {
@@ -485,21 +486,39 @@ export function buildSupportDecisions(selectedUser) {
 	if (!hasAffiliate) {
 		decisions.affiliateSwitch = {
 			status: 'NEEDS_CONTEXT',
+			whyKey: 'support.decision.affiliateSwitch.noAffiliate.why',
 			why: 'No affiliate assigned on this account.',
+			nextActionsI18n: [
+				{ key: 'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm' },
+				{ key: 'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount' },
+			],
 			nextActions: ['Verify CRM affiliate attribution.', 'If user wants a new affiliate, open a NEW account via affiliate link.']
 		}
 	} else if (hasCommissions) {
 		decisions.affiliateSwitch = {
 			status: 'NOT_ELIGIBLE',
+			whyKey: 'support.decision.affiliateSwitch.hasCommissions.why',
 			why: 'Account already generated affiliate commissions. Switching would create cost/attribution issues.',
+			nextActionsI18n: [
+				{ key: 'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch' },
+				{ key: 'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount' },
+				{ key: 'support.decision.affiliateSwitch.hasCommissions.action.escalate' },
+			],
 			nextActions: ['Do NOT switch the existing account.', 'If user insists, propose opening a NEW account under the requested affiliate link (min deposit may apply).', 'Escalate to Emanuele for final approval if needed.'],
+			signalsI18n: [{ key: 'support.decision.signal.commissionsGt0' }],
 			signals: ['Commissions > 0']
 		}
 	} else {
 		decisions.affiliateSwitch = {
 			status: 'ELIGIBLE',
+			whyKey: 'support.decision.affiliateSwitch.noCommissions.why',
 			why: 'No affiliate commissions generated on current account. Switch has no attribution cost.',
+			nextActionsI18n: [
+				{ key: 'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch' },
+				{ key: 'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated' },
+			],
 			nextActions: ['Proceed with switch (CRM + Skale).', 'Confirm affiliate updated consistently in both systems.'],
+			signalsI18n: [{ key: 'support.decision.signal.commissionsEq0' }],
 			signals: ['Commissions = 0']
 		}
 	}
@@ -508,8 +527,14 @@ export function buildSupportDecisions(selectedUser) {
 	if (withdrawalRatio > 0.7 && deposits > 0) {
 		decisions.accountTypeChange = {
 			status: 'NEEDS_MANUAL_REVIEW',
+			whyKey: 'support.decision.accountTypeChange.highWithdrawalRatio.why',
 			why: 'High withdrawal ratio suggests potential abuse; manual review required before account type change.',
+			nextActionsI18n: [
+				{ key: 'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk' },
+				{ key: 'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange' },
+			],
 			nextActions: ['Escalate to risk team for manual review.', 'Hold account type change until clearance.'],
+			signalsI18n: [{ key: 'support.decision.signal.highWithdrawalRatio' }],
 			signals: ['High withdrawal ratio']
 		}
 	} else {
@@ -517,7 +542,12 @@ export function buildSupportDecisions(selectedUser) {
 		if (withdrawals > 0) next.unshift('Require KYC/PSP check before changing type')
 		decisions.accountTypeChange = {
 			status: 'APPROVED_WITH_CONDITIONS',
+			whyKey: 'support.decision.accountTypeChange.approvedWithConditions.why',
 			why: 'Account type change allowed with operational checks.',
+			nextActionsI18n: [
+				...(withdrawals > 0 ? [{ key: 'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp' }] : []),
+				{ key: 'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks' },
+			],
 			nextActions: next
 		}
 	}
@@ -526,27 +556,43 @@ export function buildSupportDecisions(selectedUser) {
 	if (hasCommissions && deposits > 0) {
 		decisions.bonus = {
 			status: 'NEEDS_VERIFICATION',
+			whyKey: 'support.decision.bonus.hasCommissionsAndDeposits.why',
 			why: 'Account has affiliate commissions and deposits — bonus allocation requires verification to avoid double-cost.',
+			nextActionsI18n: [
+				{ key: 'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership' },
+				{ key: 'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm' },
+			],
 			nextActions: ['Verify affiliate commission ownership and marketing agreement before granting bonus.', 'If approved, record reason in CRM.'],
+			signalsI18n: [
+				{ key: 'support.decision.signal.commissionsGt0' },
+				{ key: 'support.decision.signal.depositsEq', params: { value: deposits } },
+			],
 			signals: ['Commissions > 0', `Deposits = ${deposits}`]
 		}
 	} else if (deposits === 0) {
 		decisions.bonus = {
 			status: 'NOT_ELIGIBLE',
+			whyKey: 'support.decision.bonus.noDeposits.why',
 			why: 'No deposits on account — bonus requires deposit activity.',
+			nextActionsI18n: [{ key: 'support.decision.bonus.noDeposits.action.informFunding' }],
 			nextActions: ['Inform user about funding options and minimum deposit requirements.']
 		}
 	} else if (isHighValue) {
 		decisions.bonus = {
 			status: 'ELIGIBLE',
+			whyKey: 'support.decision.bonus.highValue.why',
 			why: 'High-value user eligible for bonus, subject to KYC.',
+			nextActionsI18n: [{ key: 'support.decision.bonus.highValue.action.proceedKyc' }],
 			nextActions: ['Proceed with bonus offer and initiate KYC if not present.'],
+			signalsI18n: [{ key: 'support.decision.signal.highValueUser' }],
 			signals: ['High value user']
 		}
 	} else {
 		decisions.bonus = {
 			status: 'ELIGIBLE',
+			whyKey: 'support.decision.bonus.standard.why',
 			why: 'User eligible for standard promotional offers.',
+			nextActionsI18n: [{ key: 'support.decision.bonus.standard.action.offerStandard' }],
 			nextActions: ['Offer standard bonus per promotions catalogue.']
 		}
 	}
@@ -555,21 +601,36 @@ export function buildSupportDecisions(selectedUser) {
 	if (withdrawals > 0 && deposits > 0 && withdrawalRatio > 0.7) {
 		decisions.withdrawals = {
 			status: 'HIGH_RISK',
+			whyKey: 'support.decision.withdrawals.highRisk.why',
 			why: 'High withdrawal ratio vs deposits.',
+			nextActionsI18n: [
+				{ key: 'support.decision.withdrawals.highRisk.action.holdInvestigate' },
+				{ key: 'support.decision.withdrawals.highRisk.action.checkPspKyc' },
+			],
 			nextActions: ['Hold and investigate.', 'Check PSP/KYC, trading activity, and payment methods.'],
+			signalsI18n: [{ key: 'support.decision.signal.highWithdrawalRatio' }],
 			signals: ['High withdrawal ratio']
 		}
 	} else if (withdrawals > 0) {
 		decisions.withdrawals = {
 			status: 'NEEDS_PSP_CHECK',
+			whyKey: 'support.decision.withdrawals.needsPspCheck.why',
 			why: 'Withdrawals detected — verify PSP and KYC before processing.',
+			nextActionsI18n: [
+				{ key: 'support.decision.withdrawals.needsPspCheck.action.verifyPsp' },
+				{ key: 'support.decision.withdrawals.needsPspCheck.action.confirmKyc' },
+				{ key: 'support.decision.withdrawals.needsPspCheck.action.processSla' },
+			],
 			nextActions: ['Verify PSP status.', 'Confirm KYC.', 'Process according to SLA.'],
+			signalsI18n: [{ key: 'support.decision.signal.withdrawalsGt0' }],
 			signals: ['Withdrawals > 0']
 		}
 	} else {
 		decisions.withdrawals = {
 			status: 'STANDARD_PROCESS',
+			whyKey: 'support.decision.withdrawals.standardProcess.why',
 			why: 'No withdrawals; follow standard processing.',
+			nextActionsI18n: [{ key: 'support.decision.withdrawals.standardProcess.action.noAction' }],
 			nextActions: ['No action required.']
 		}
 	}
@@ -578,34 +639,63 @@ export function buildSupportDecisions(selectedUser) {
 	if (pl < 0 && deposits > 0 && Math.abs(pl) > deposits * 0.5) {
 		decisions.revenueShare = {
 			status: 'CRITICAL_RISK',
+			whyKey: 'support.decision.revenueShare.criticalRisk.why',
 			why: 'Large negative P/L relative to deposits indicating potential retention/abuse risk.',
+			nextActionsI18n: [
+				{ key: 'support.decision.revenueShare.criticalRisk.action.reviewRetention' },
+				{ key: 'support.decision.revenueShare.criticalRisk.action.considerLimits' },
+			],
 			nextActions: ['Review retention strategy and fraud indicators.', 'Consider special handling or limits.'],
+			signalsI18n: [
+				{ key: 'support.decision.signal.pl' },
+				{ key: 'support.decision.signal.plEq', params: { value: pl } },
+				{ key: 'support.decision.signal.depositsEqNoSpace', params: { value: deposits } },
+			],
 			signals: ['P/L', `PL=${pl}`, `Deposits=${deposits}`]
 		}
 	} else if (pl > 0 && withdrawals > 0) {
 		decisions.revenueShare = {
 			status: 'NEUTRAL',
+			whyKey: 'support.decision.revenueShare.profitAndWithdrawals.why',
 			why: 'User shows profit and has withdrawals — monitor for churn/cashout.',
+			nextActionsI18n: [
+				{ key: 'support.decision.revenueShare.profitAndWithdrawals.action.monitor' },
+				{ key: 'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance' },
+			],
 			nextActions: ['Monitor cashout behavior.', 'Ensure tax/compliance reporting if needed.'],
+			signalsI18n: [
+				{ key: 'support.decision.signal.plPositive' },
+				{ key: 'support.decision.signal.withdrawalsDetected' },
+			],
 			signals: ['P/L positive', 'Withdrawals detected']
 		}
 	} else if (deposits === 0) {
 		decisions.revenueShare = {
 			status: 'NEUTRAL',
+			whyKey: 'support.decision.revenueShare.noDeposits.why',
 			why: 'No deposits — revenue impact is neutral.',
+			nextActionsI18n: [{ key: 'support.decision.revenueShare.noDeposits.action.noAction' }],
 			nextActions: ['No revenue actions required.']
 		}
 	} else if (pl < 0) {
 		decisions.revenueShare = {
 			status: 'PROFITABLE',
+			whyKey: 'support.decision.revenueShare.netLoss.why',
 			why: 'User is net-loss (negative P/L) which may be beneficial for revenue share depending on contract.',
+			nextActionsI18n: [{ key: 'support.decision.revenueShare.netLoss.action.reviewContract' }],
 			nextActions: ['Review contract terms and retention options.'],
+			signalsI18n: [
+				{ key: 'support.decision.signal.plNegative' },
+				{ key: 'support.decision.signal.plEq', params: { value: pl } },
+			],
 			signals: ['P/L negative', `PL=${pl}`]
 		}
 	} else {
 		decisions.revenueShare = {
 			status: 'NEUTRAL',
+			whyKey: 'support.decision.revenueShare.noIndicators.why',
 			why: 'No significant revenue indicators.',
+			nextActionsI18n: [{ key: 'support.decision.revenueShare.noIndicators.action.noAction' }],
 			nextActions: ['No action required.']
 		}
 	}

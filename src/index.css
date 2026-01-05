@@ -265,6 +265,13 @@ body{font-family:"Inter", system-ui, -apple-system, 'Segoe UI', Roboto, Arial;ba
 .admin-btn:hover{background:rgba(34,211,238,0.2);color:white}
 .logout-btn{background:rgba(255,255,255,0.06);color:var(--text);border:1px solid rgba(255,255,255,0.1);padding:6px 10px;border-radius:9px;font-weight:600;font-size:12px;cursor:pointer;transition:all 120ms ease}
 .logout-btn:hover{border-color:rgba(34,211,238,0.5);color:#dff7ff}
+.lang-switch{display:flex;align-items:center}
+.lang-select{background:rgba(255,255,255,0.04);color:var(--text);border:1px solid rgba(255,255,255,0.10);padding:6px 8px;border-radius:9px;font-weight:800;font-size:12px;cursor:pointer}
+.lang-select:focus{outline:none;border-color:rgba(34,211,238,0.45);box-shadow:0 10px 24px rgba(34,211,238,0.12)}
+
+select{background:rgba(255,255,255,0.04);color:var(--text);border:1px solid rgba(255,255,255,0.10);color-scheme:dark}
+select option, select optgroup{background:var(--card);color:var(--text)}
+
 .logo-tools-pop{position:absolute;left:0;top:48px;background:rgba(11,18,33,0.96);border:1px solid rgba(255,255,255,0.08);border-radius:10px;box-shadow:0 14px 32px rgba(0,0,0,0.35);padding:10px 12px;min-width:220px;z-index:80;backdrop-filter:blur(10px)}
 .logo-tools-title{font-size:12px;color:#94a3b8;margin-bottom:6px;letter-spacing:0.2px;text-transform:uppercase}
 .logo-tools-list{display:flex;flex-direction:column;gap:6px}
@@ -877,7 +884,10 @@ textarea { font-family: "Inter", system-ui, -apple-system, 'Segoe UI', Roboto, A
 }
 
 /* Login */
-.login-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px;background:radial-gradient(120% 120% at 10% 10%, #0c1b32 0%, #050d1d 45%, #040915 100%)}
+.login-shell{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:30px;position:relative;background-image:radial-gradient(120% 120% at 10% 10%, rgba(12,27,50,0.92) 0%, rgba(5,13,29,0.92) 45%, rgba(4,9,21,0.96) 100%), url('/auth-trader-bg.jpg');background-size:cover;background-position:center;background-repeat:no-repeat}
+.login-brand{position:absolute;top:18px;left:18px;display:flex;align-items:center}
+.login-brand img{height:34px;width:auto;display:block;object-fit:contain;cursor:pointer;transition:transform 0.3s ease}
+.login-brand img:hover{transform:scale(1.05)}
 .login-card{width:min(520px,90vw);background:linear-gradient(145deg, rgba(9,15,28,0.92), rgba(7,12,22,0.94));border:1px solid rgba(255,255,255,0.06);border-radius:18px;padding:26px;box-shadow:0 30px 80px rgba(0,0,0,0.45);backdrop-filter:blur(10px)}
 .login-typing{min-height:26px;font-size:17px;font-weight:700;color:#e0f2ff;margin:4px 0 2px 0;letter-spacing:0.01em}
 .login-title{font-size:26px;font-weight:800;margin:2px 0 6px 0;color:white}

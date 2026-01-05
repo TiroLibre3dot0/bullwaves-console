@@ -1,16 +1,23 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
-
-const typingMessages = ['Welcome to Bullwaves Intelligence', 'Management + Finance + Support access', 'Email allowlist enforced']
+import { useI18n } from '../i18n/I18nContext'
 
 export default function LoginPage() {
-  const { loginWithEmail, allowlist } = useAuth()
+  const { loginWithEmail } = useAuth()
+  const { t, locale, setLocale, locales } = useI18n()
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
+
   const [messageIndex, setMessageIndex] = useState(0)
   const [charIndex, setCharIndex] = useState(0)
   const [displayed, setDisplayed] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const typingMessages = useMemo(() => [
+    t('login.typing.welcome'),
+    t('login.typing.access'),
+    t('login.typing.allowlist'),
+  ], [t])
 
   useEffect(() => {
     const current = typingMessages[messageIndex]
@@ -34,15 +41,13 @@ export default function LoginPage() {
       }
     }, pause || (isDeleting ? 40 : 85))
     return () => clearTimeout(interval)
-  }, [charIndex, isDeleting, messageIndex])
-
-  const allowlistPreview = useMemo(() => allowlist.map((person) => person.name).join(' • '), [allowlist])
+  }, [charIndex, isDeleting, messageIndex, typingMessages])
 
   const onSubmit = (e) => {
     e.preventDefault()
     const result = loginWithEmail(email)
     if (!result.success) {
-      setError(result.message || 'Unable to log in.')
+      setError(result.message || t('login.error.unable'))
       return
     }
     setError('')
@@ -54,14 +59,31 @@ export default function LoginPage() {
 
   return (
     <div className="login-shell">
+      <div className="login-brand" aria-label="Bullwaves">
+        <img src="/Logo.png" alt="Bullwaves" loading="eager" />
+      </div>
       <div className="login-card">
-        <div className="login-pill subtle">Management + Finance + Support access</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+          <div />
+          <div className="lang-switch" title={t('lang.label')}>
+            <select
+              className="lang-select"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value)}
+              aria-label={t('lang.label')}
+            >
+              {locales.map((l) => (
+                <option key={l.id} value={l.id}>{l.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="login-typing" aria-live="polite">{displayed}</div>
-        <div className="login-title">Bullwaves Intelligence</div>
-        <p className="login-subtitle">Enter your work email to continue. Passwords are not required.</p>
+        <div className="login-title">{t('login.title')}</div>
+        <p className="login-subtitle">{t('login.subtitle')}</p>
 
         <form className="login-form" onSubmit={onSubmit}>
-          <label className="login-label" htmlFor="email">Work email</label>
+          <label className="login-label" htmlFor="email">{t('login.workEmail')}</label>
           <div className="login-input-wrap">
             <div className="login-icon" aria-hidden="true">
               <img src="/favicon.png" alt="Bullwaves" loading="lazy" />
@@ -70,28 +92,21 @@ export default function LoginPage() {
               id="email"
               type="email"
               className="login-input"
-              placeholder="you@bullwaves.com"
+              placeholder={t('login.placeholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               required
             />
           </div>
-          <div className="login-hint">Only Management, Finance, or Support emails from the org chart will be accepted.</div>
+          <div className="login-hint">{t('login.hint')}</div>
           {error && <div className="login-error" role="alert">{error}</div>}
-          <button type="submit" className="btn login-btn">Continue</button>
+          <button type="submit" className="btn login-btn">{t('login.continue')}</button>
         </form>
 
         <div className="login-meta">
-          <button type="button" className="linkish" onClick={openOrgChart}>View Organization Chart ↗</button>
+          <button type="button" className="linkish" onClick={openOrgChart}>{t('login.viewOrgChart')}</button>
         </div>
-
-        {allowlistPreview && (
-          <div className="login-allowlist" aria-label="Allowlisted management, finance, and support">
-            <div className="allowlist-label">Who can log in (Management + Finance + Support)</div>
-            <div className="allowlist-names">{allowlistPreview}</div>
-          </div>
-        )}
       </div>
     </div>
   )

@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ongoingItems from '../data/ongoingItems'
 import { strategicObjectives, projects2026 } from '../../roadmap/data/roadmapData'
+import { useI18n } from '../../../i18n/I18nContext'
 
-const statusLabel = { active: 'Active', blocked: 'Blocked', done: 'Done' }
-const priorityLabel = { high: 'High', medium: 'Medium', low: 'Low' }
 const platformAreas = ['Trading', 'Analytics', 'Payments', 'Infra', 'Profile', 'Internal']
 const departments = ['Infrastructure', 'Product', 'Data', 'Compliance', 'UX', 'Partners']
 const statusFilters = ['All', 'Active', 'Blocked', 'Done']
@@ -39,16 +38,17 @@ function loadTasks(seed) {
 }
 
 export default function OngoingPage() {
+  const { t } = useI18n()
   const megaMap = useMemo(() => mapById(strategicObjectives), [])
   const storyMap = useMemo(() => mapById(projects2026, 'activity'), [])
 
   const validateTask = useCallback((task) => {
-    if (!megaMap[task.megaStoryId]) return { valid: false, reason: 'Unknown megaStoryId' }
+    if (!megaMap[task.megaStoryId]) return { valid: false, reason: t('ongoing.triage.reason.unknownMegaStoryId') }
     const story = storyMap[task.storyId]
-    if (!story) return { valid: false, reason: 'Unknown storyId' }
-    if (story.objectiveId && story.objectiveId !== task.megaStoryId) return { valid: false, reason: 'storyId not under megaStoryId' }
+    if (!story) return { valid: false, reason: t('ongoing.triage.reason.unknownStoryId') }
+    if (story.objectiveId && story.objectiveId !== task.megaStoryId) return { valid: false, reason: t('ongoing.triage.reason.storyNotUnderMegaStoryId') }
     return { valid: true }
-  }, [megaMap, storyMap])
+  }, [megaMap, storyMap, t])
 
   const [tasks, setTasks] = useState(() => loadTasks(ongoingItems))
   const [viewMode, setViewMode] = useState('active')
@@ -82,7 +82,7 @@ export default function OngoingPage() {
   }, [tasks])
 
   const resetToSeed = () => {
-    const ok = window.confirm('This will overwrite local changes and reset to seed data. Continue?')
+    const ok = window.confirm(t('ongoing.confirm.resetToSeed'))
     if (!ok) return
     setTasks(ongoingItems)
     try {
@@ -119,7 +119,7 @@ export default function OngoingPage() {
       .filter((t) => (storyFilter === 'All' ? true : t.storyId === storyFilter))
       .filter((t) => (departmentFilter === 'All' ? true : t.department === departmentFilter))
       .filter((t) => (platformFilter === 'All' ? true : t.platformArea === platformFilter))
-      .filter((t) => (statusFilter === 'All' ? true : statusLabel[t.status] === statusFilter))
+      .filter((t) => (statusFilter === 'All' ? true : t.status === statusFilter.toLowerCase()))
       .sort((a, b) => {
         const statusRank = { active: 0, blocked: 1, done: 2 }
         const priorityRank = { high: 0, medium: 1, low: 2 }
@@ -205,82 +205,86 @@ export default function OngoingPage() {
     <div className="ongoing-page">
       <div className="ongoing-header card-global">
         <div className="ongoing-title-wrap">
-          <p className="ongoing-label">Execution layer</p>
-          <h1 className="ongoing-title">Execution Board</h1>
-          <p className="ongoing-subtitle">Active tasks tied to 2026 Roadmap mega-stories and stories.</p>
+          <p className="ongoing-label">{t('ongoing.header.layerLabel')}</p>
+          <h1 className="ongoing-title">{t('ongoing.header.title')}</h1>
+          <p className="ongoing-subtitle">{t('ongoing.header.subtitle')}</p>
         </div>
         <div className="ongoing-header-actions">
           <div className="ongoing-counter-pill">
             <span className="pill-dot dot-progress" aria-hidden="true" />
-            <span>{totals.active} active</span>
+            <span>{t('ongoing.counters.active', { count: totals.active })}</span>
             <span className="pill-sep">·</span>
-            <span className="pill-blocked">{totals.blocked} blocked</span>
+            <span className="pill-blocked">{t('ongoing.counters.blocked', { count: totals.blocked })}</span>
             <span className="pill-sep">·</span>
-            <span>{totals.done} done</span>
+            <span>{t('ongoing.counters.done', { count: totals.done })}</span>
           </div>
-          <button type="button" className="btn secondary" onClick={resetToSeed}>Reset to seed</button>
+          <button type="button" className="btn secondary" onClick={resetToSeed}>{t('ongoing.actions.resetToSeed')}</button>
           <div className="ongoing-toggle">
-            <button type="button" className={`chip ${viewMode === 'active' ? 'active' : ''}`} onClick={() => setViewMode('active')}>Active</button>
-            <button type="button" className={`chip ${viewMode === 'done' ? 'active' : ''}`} onClick={() => setViewMode('done')}>Done</button>
+            <button type="button" className={`chip ${viewMode === 'active' ? 'active' : ''}`} onClick={() => setViewMode('active')}>{t('ongoing.toggle.active')}</button>
+            <button type="button" className={`chip ${viewMode === 'done' ? 'active' : ''}`} onClick={() => setViewMode('done')}>{t('ongoing.toggle.done')}</button>
           </div>
         </div>
       </div>
 
       <div className="ongoing-kpi-grid">
         <div className="ongoing-kpi card">
-          <span className="kpi-label">Active execution</span>
+          <span className="kpi-label">{t('ongoing.kpis.activeExecution')}</span>
           <div className="kpi-value">{totals.active + totals.blocked}</div>
         </div>
         <div className="ongoing-kpi card">
-          <span className="kpi-label">Active</span>
+          <span className="kpi-label">{t('ongoing.kpis.active')}</span>
           <div className="kpi-value">{totals.active}</div>
         </div>
         <div className="ongoing-kpi card">
-          <span className="kpi-label">Blocked</span>
+          <span className="kpi-label">{t('ongoing.kpis.blocked')}</span>
           <div className="kpi-value">{totals.blocked}</div>
         </div>
         <div className="ongoing-kpi card">
-          <span className="kpi-label">Done / History</span>
+          <span className="kpi-label">{t('ongoing.kpis.doneHistory')}</span>
           <div className="kpi-value">{totals.done}</div>
         </div>
       </div>
 
       <div className="ongoing-filters card">
         <div className="filter-field">
-          <label>Mega-Story</label>
+          <label>{t('ongoing.filters.megaStory')}</label>
           <select value={megaFilter} onChange={(e) => setMegaFilter(e.target.value)}>
-            <option value="All">All</option>
+            <option value="All">{t('common.all')}</option>
             {Object.keys(megaMap).map((id) => (
               <option key={id} value={id}>{megaLabel(id)}</option>
             ))}
           </select>
         </div>
         <div className="filter-field">
-          <label>Story</label>
+          <label>{t('ongoing.filters.story')}</label>
           <select value={storyFilter} onChange={(e) => setStoryFilter(e.target.value)}>
             {storyOptions.map((id) => (
-              <option key={id} value={id}>{id === 'All' ? 'All' : storyLabel(id)}</option>
+              <option key={id} value={id}>{id === 'All' ? t('common.all') : storyLabel(id)}</option>
             ))}
           </select>
         </div>
         <div className="filter-field">
-          <label>Department</label>
+          <label>{t('ongoing.filters.department')}</label>
           <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
-            <option value="All">All</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+            <option value="All">{t('common.all')}</option>
+            {departments.map((d) => <option key={d} value={d}>{t(`departments.${d}`)}</option>)}
           </select>
         </div>
         <div className="filter-field">
-          <label>Platform area</label>
+          <label>{t('ongoing.filters.platformArea')}</label>
           <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)}>
-            <option value="All">All</option>
-            {platformAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+            <option value="All">{t('common.all')}</option>
+            {platformAreas.map((p) => <option key={p} value={p}>{t(`ongoing.platformArea.${p}`)}</option>)}
           </select>
         </div>
         <div className="filter-field">
-          <label>Status</label>
+          <label>{t('ongoing.filters.status')}</label>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} disabled={viewMode === 'done'}>
-            {statusFilters.map((s) => <option key={s} value={s}>{s}</option>)}
+            {statusFilters.map((s) => (
+              <option key={s} value={s}>
+                {s === 'All' ? t('common.all') : t(`ongoing.status.${s.toLowerCase()}`)}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -289,10 +293,10 @@ export default function OngoingPage() {
         <div className="ongoing-feed card">
           <div className="ongoing-feed-header">
             <div>
-              <p className="ongoing-label">{viewMode === 'done' ? 'History' : 'Execution feed'}</p>
-              <h3 className="ongoing-feed-title">{viewMode === 'done' ? 'Completed tasks' : 'Active execution'}</h3>
+              <p className="ongoing-label">{viewMode === 'done' ? t('ongoing.feed.historyLabel') : t('ongoing.feed.executionFeedLabel')}</p>
+              <h3 className="ongoing-feed-title">{viewMode === 'done' ? t('ongoing.feed.completedTasksTitle') : t('ongoing.feed.activeExecutionTitle')}</h3>
             </div>
-            <span className="feed-count">{baseFiltered.length} items</span>
+            <span className="feed-count">{t('ongoing.feed.itemsCount', { count: baseFiltered.length })}</span>
           </div>
           <div className="ongoing-feed-list">
             {baseFiltered.map((item) => (
@@ -308,33 +312,33 @@ export default function OngoingPage() {
                     <div className="ongoing-card-meta">
                       <span className="ongoing-pill subtle">{megaLabel(item.megaStoryId)}</span>
                       <span className="ongoing-pill subtle">{storyLabel(item.storyId)}</span>
-                      <span className={`ongoing-badge status-${item.status}`}>{statusLabel[item.status]}</span>
-                      <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
+                      <span className={`ongoing-badge status-${item.status}`}>{t(`ongoing.status.${item.status}`)}</span>
+                      <span className={`ongoing-badge priority-${item.priority}`}>{t(`ongoing.priority.${item.priority}`)}</span>
                       <span className="ongoing-pill">{item.owner}</span>
                     </div>
                   </div>
-                  <div className="ongoing-updated">{viewMode === 'done' ? `Completed ${item.completedAt || '—'}` : `Created ${item.createdAt}`}</div>
+                  <div className="ongoing-updated">{viewMode === 'done' ? t('ongoing.card.completed', { date: item.completedAt || '—' }) : t('ongoing.card.created', { date: item.createdAt })}</div>
                 </div>
                 <div className="ongoing-line">
-                  <span className="label">Next step</span>
+                  <span className="label">{t('ongoing.labels.nextStep')}</span>
                   <span className="value">{item.nextStep}</span>
                 </div>
                 {item.status === 'blocked' && item.dependencies?.length > 0 && (
                   <div className="ongoing-line">
-                    <span className="label">Blocker</span>
+                    <span className="label">{t('ongoing.labels.blocker')}</span>
                     <span className="value">{item.dependencies.join(' • ')}</span>
                   </div>
                 )}
                 {viewMode === 'done' && item.impactType && (
                   <div className="ongoing-line">
-                    <span className="label">Impact</span>
-                    <span className="value">{`${item.impactType} · ${item.impactedDepartment} · ${item.impactedPlatformArea}`}</span>
+                    <span className="label">{t('ongoing.labels.impact')}</span>
+                    <span className="value">{`${t(`ongoing.impactType.${item.impactType}`)} · ${t(`departments.${item.impactedDepartment}`)} · ${t(`ongoing.platformArea.${item.impactedPlatformArea}`)}`}</span>
                   </div>
                 )}
               </button>
             ))}
             {baseFiltered.length === 0 && (
-              <div className="ongoing-empty">No tasks match the current filters.</div>
+              <div className="ongoing-empty">{t('ongoing.empty.noTasksMatchFilters')}</div>
             )}
           </div>
         </div>
@@ -344,32 +348,32 @@ export default function OngoingPage() {
             <div className="ongoing-details-content">
               <div className="ongoing-detail-head">
                 <div>
-                  <p className="ongoing-label">Details</p>
+                  <p className="ongoing-label">{t('ongoing.details.title')}</p>
                   <h3 className="ongoing-detail-title">{selectedTask.title}</h3>
                   <div className="detail-subline">{megaLabel(selectedTask.megaStoryId)} · {storyLabel(selectedTask.storyId)}</div>
                 </div>
                 <div className="ongoing-detail-badges">
-                  <span className={`ongoing-badge status-${selectedTask.status}`}>{statusLabel[selectedTask.status]}</span>
-                  <span className={`ongoing-badge priority-${selectedTask.priority}`}>{priorityLabel[selectedTask.priority]}</span>
-                  <span className="ongoing-pill">{selectedTask.department}</span>
-                  <span className="ongoing-pill subtle">{selectedTask.platformArea}</span>
+                  <span className={`ongoing-badge status-${selectedTask.status}`}>{t(`ongoing.status.${selectedTask.status}`)}</span>
+                  <span className={`ongoing-badge priority-${selectedTask.priority}`}>{t(`ongoing.priority.${selectedTask.priority}`)}</span>
+                  <span className="ongoing-pill">{t(`departments.${selectedTask.department}`)}</span>
+                  <span className="ongoing-pill subtle">{t(`ongoing.platformArea.${selectedTask.platformArea}`)}</span>
                 </div>
               </div>
 
               {selectedValidation && !selectedValidation.valid && (
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Needs triage</div>
+                  <div className="detail-label">{t('ongoing.triage.needsTriage')}</div>
                   <p className="detail-text">{selectedValidation.reason}</p>
-                  <div className="detail-label" style={{ marginTop: 8 }}>Mega-Story</div>
+                  <div className="detail-label" style={{ marginTop: 8 }}>{t('ongoing.filters.megaStory')}</div>
                   <select value={fixMega} onChange={(e) => { setFixMega(e.target.value); setFixStory('') }}>
-                    <option value="">Select mega-story</option>
+                    <option value="">{t('ongoing.triage.selectMegaStory')}</option>
                     {Object.keys(megaMap).map((id) => (
                       <option key={id} value={id}>{megaLabel(id)}</option>
                     ))}
                   </select>
-                  <div className="detail-label" style={{ marginTop: 8 }}>Story</div>
+                  <div className="detail-label" style={{ marginTop: 8 }}>{t('ongoing.filters.story')}</div>
                   <select value={fixStory} onChange={(e) => setFixStory(e.target.value)} disabled={!fixMega}>
-                    <option value="">Select story</option>
+                    <option value="">{t('ongoing.triage.selectStory')}</option>
                     {triageFixStories.map((s) => (
                       <option key={s.id} value={s.id}>{s.label}</option>
                     ))}
@@ -385,51 +389,51 @@ export default function OngoingPage() {
                         )))
                       }}
                     >
-                      Save mapping
+                      {t('ongoing.triage.saveMapping')}
                     </button>
                   </div>
                 </div>
               )}
 
               <div className="ongoing-detail-section">
-                <div className="detail-label">Objective</div>
+                <div className="detail-label">{t('ongoing.details.objective')}</div>
                 <p className="detail-text">{selectedTask.objective}</p>
               </div>
               <div className="ongoing-detail-section">
-                <div className="detail-label">Next step</div>
+                <div className="detail-label">{t('ongoing.details.nextStep')}</div>
                 <p className="detail-text">{selectedTask.nextStep}</p>
               </div>
               {selectedTask.dependencies?.length > 0 && (
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Dependencies / blockers</div>
+                  <div className="detail-label">{t('ongoing.details.dependenciesBlockers')}</div>
                   <p className="detail-text">{selectedTask.dependencies.join(' · ')}</p>
                 </div>
               )}
               <div className="ongoing-detail-section">
-                <div className="detail-label">Created</div>
+                <div className="detail-label">{t('ongoing.details.created')}</div>
                 <p className="detail-text">{selectedTask.createdAt}</p>
               </div>
 
               {selectedTask.status === 'done' && (
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Impact</div>
-                  <p className="detail-text">{selectedTask.impactType ? `${selectedTask.impactType} · ${selectedTask.impactedDepartment} · ${selectedTask.impactedPlatformArea}` : 'Captured when marked done.'}</p>
-                  {selectedTask.impactedKPI && <p className="detail-text">KPI: {selectedTask.impactedKPI}</p>}
-                  {selectedTask.impactNote && <p className="detail-text">Note: {selectedTask.impactNote}</p>}
-                  {selectedTask.completedAt && <p className="detail-text">Completed on {selectedTask.completedAt}</p>}
+                  <div className="detail-label">{t('ongoing.details.impact')}</div>
+                  <p className="detail-text">{selectedTask.impactType ? `${t(`ongoing.impactType.${selectedTask.impactType}`)} · ${t(`departments.${selectedTask.impactedDepartment}`)} · ${t(`ongoing.platformArea.${selectedTask.impactedPlatformArea}`)}` : t('ongoing.details.capturedWhenDone')}</p>
+                  {selectedTask.impactedKPI && <p className="detail-text">{t('ongoing.details.kpi')}: {selectedTask.impactedKPI}</p>}
+                  {selectedTask.impactNote && <p className="detail-text">{t('ongoing.details.note')}: {selectedTask.impactNote}</p>}
+                  {selectedTask.completedAt && <p className="detail-text">{t('ongoing.details.completedOn', { date: selectedTask.completedAt })}</p>}
                 </div>
               )}
 
               {selectedTask.status !== 'done' && selectedValidation?.valid && (
                 <div className="ongoing-detail-actions">
-                  <button type="button" className="btn secondary" onClick={handleMarkDone}>Mark as done</button>
+                  <button type="button" className="btn secondary" onClick={handleMarkDone}>{t('ongoing.actions.markAsDone')}</button>
                 </div>
               )}
             </div>
           ) : (
             <div className="ongoing-empty">
-              <p className="ongoing-label">Details panel</p>
-              <h3 className="ongoing-feed-title">Select a task to see details.</h3>
+              <p className="ongoing-label">{t('ongoing.details.panelTitle')}</p>
+              <h3 className="ongoing-feed-title">{t('ongoing.details.selectTask')}</h3>
             </div>
           )}
         </aside>
@@ -440,44 +444,44 @@ export default function OngoingPage() {
           <div className="modal-card">
             <div className="modal-header">
               <div>
-                <div className="detail-label">Mark as done</div>
+                <div className="detail-label">{t('ongoing.modal.title')}</div>
                 <h3 style={{ margin: 0 }}>{selectedTask?.title}</h3>
               </div>
-              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>Close</button>
+              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>{t('common.close')}</button>
             </div>
 
             <div className="modal-section">
-              <div className="label">Impact type</div>
+              <div className="label">{t('ongoing.modal.impactType')}</div>
               <select value={impactDraft.impactType} onChange={(e) => setImpactDraft((d) => ({ ...d, impactType: e.target.value }))}>
-                <option value="">Select impact type</option>
-                {impactTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                <option value="">{t('ongoing.modal.selectImpactType')}</option>
+                {impactTypes.map((impactType) => <option key={impactType} value={impactType}>{t(`ongoing.impactType.${impactType}`)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted department</div>
+              <div className="label">{t('ongoing.modal.impactedDepartment')}</div>
               <select value={impactDraft.impactedDepartment} onChange={(e) => setImpactDraft((d) => ({ ...d, impactedDepartment: e.target.value }))}>
-                <option value="">Select department</option>
-                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                <option value="">{t('ongoing.modal.selectDepartment')}</option>
+                {departments.map((d) => <option key={d} value={d}>{t(`departments.${d}`)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted platform area</div>
+              <div className="label">{t('ongoing.modal.impactedPlatformArea')}</div>
               <select value={impactDraft.impactedPlatformArea} onChange={(e) => setImpactDraft((d) => ({ ...d, impactedPlatformArea: e.target.value }))}>
-                <option value="">Select area</option>
-                {platformAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+                <option value="">{t('ongoing.modal.selectPlatformArea')}</option>
+                {platformAreas.map((p) => <option key={p} value={p}>{t(`ongoing.platformArea.${p}`)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted KPI</div>
+              <div className="label">{t('ongoing.modal.impactedKpi')}</div>
               <input
                 type="text"
                 value={impactDraft.impactedKPI}
                 onChange={(e) => setImpactDraft((d) => ({ ...d, impactedKPI: e.target.value }))}
-                placeholder="Example: Payout SLA compliance"
+                placeholder={t('ongoing.placeholder.example')}
               />
             </div>
             <div className="modal-section">
-              <div className="label">Impact note (optional)</div>
+              <div className="label">{t('ongoing.modal.impactNoteOptional')}</div>
               <textarea
                 rows={3}
                 value={impactDraft.impactNote}
@@ -486,8 +490,8 @@ export default function OngoingPage() {
             </div>
 
             <div className="ongoing-detail-actions" style={{ marginTop: 6 }}>
-              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>Cancel</button>
-              <button type="button" className="btn" onClick={saveImpact}>Save impact & close</button>
+              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>{t('common.cancel')}</button>
+              <button type="button" className="btn" onClick={saveImpact}>{t('ongoing.modal.saveImpactClose')}</button>
             </div>
           </div>
         </div>
@@ -496,8 +500,8 @@ export default function OngoingPage() {
       <div className="card" style={{ marginTop: 12 }}>
         <div className="ongoing-feed-header" style={{ cursor: 'pointer' }} onClick={() => setTriageOpen((v) => !v)}>
           <div>
-            <p className="ongoing-label">Needs triage</p>
-            <h3 className="ongoing-feed-title">Mapping fixes required</h3>
+            <p className="ongoing-label">{t('ongoing.triage.needsTriage')}</p>
+            <h3 className="ongoing-feed-title">{t('ongoing.triage.mappingFixesRequired')}</h3>
           </div>
           <div className="ongoing-pill subtle">{triageTasks.length}</div>
         </div>
@@ -514,18 +518,18 @@ export default function OngoingPage() {
                   <div>
                     <div className="ongoing-card-title">{item.title}</div>
                     <div className="ongoing-card-meta">
-                      <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
+                          <span className={`ongoing-badge priority-${item.priority}`}>{t(`ongoing.priority.${item.priority}`)}</span>
                     </div>
                   </div>
-                  <div className="ongoing-updated">{item.megaStoryId || 'no mega'} · {item.storyId || 'no story'}</div>
+                  <div className="ongoing-updated">{item.megaStoryId || t('ongoing.triage.noMega')} · {item.storyId || t('ongoing.triage.noStory')}</div>
                 </div>
                 <div className="ongoing-line">
-                  <span className="label">Reason</span>
+                  <span className="label">{t('ongoing.triage.reasonLabel')}</span>
                   <span className="value">{item.triageReason}</span>
                 </div>
               </button>
             ))}
-            {triageTasks.length === 0 && <div className="ongoing-empty">No tasks need triage.</div>}
+            {triageTasks.length === 0 && <div className="ongoing-empty">{t('ongoing.triage.noTasks')}</div>}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import FullPageLoader from '../../../components/FullPageLoader'
+import { useI18n } from '../../../i18n/I18nContext'
 import {
   searchUsers,
   loadPaymentsReport,
@@ -128,6 +129,8 @@ const sectionTitleStyle = { fontSize: 13, fontWeight: 900, color: '#fff', margin
 const sectionContentStyle = { color: '#9aa4b2' }
 
 export default function SupportUserCheck() {
+  const { t } = useI18n()
+
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [selectedRaw, setSelectedRaw] = useState(null)
@@ -374,7 +377,7 @@ export default function SupportUserCheck() {
   } : null
 
   if (initializing) {
-    return <FullPageLoader progress={40} subtitle="Loading support tools…" />
+    return <FullPageLoader progress={40} subtitle={t('support.loader.tools')} />
   }
 
   // If a user is selected, render the full-width Support Decision Page in-place
@@ -388,10 +391,10 @@ export default function SupportUserCheck() {
           paymentsLoaded={paymentsLoaded}
           mediaLoaded={mediaLoaded}
           fmtEuro={fmtEuro}
-          suggestedReply={suggestedReply}
+          suggestedReply={(mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg) => suggestedReply(t, mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg)}
           copyToClipboard={copyToClipboard}
           computePriority={computePriority}
-          onBack={() => { setSelectedRaw(null); setSearched(results && results.length > 0) }}
+          onBack={() => setSelectedRaw(null)}
         />
       </div>
     )
@@ -403,10 +406,10 @@ export default function SupportUserCheck() {
         <div style={{ width: '100%', paddingTop: showHero ? 0 : undefined }}>
           <header style={{ display: 'flex', flexDirection: 'column', gap: showHero ? 10 : 6, marginBottom: showHero ? 0 : 10, textAlign: showHero ? 'center' : 'left' }}>
             <div>
-              <h1 className="support-hero-title" style={{ margin: 0, fontSize: showHero ? 26 : 20, fontWeight: 900, letterSpacing: '-0.2px' }}>Support — User check</h1>
+              <h1 className="support-hero-title" style={{ margin: 0, fontSize: showHero ? 26 : 20, fontWeight: 900, letterSpacing: '-0.2px' }}>{t('support.userCheck.title')}</h1>
             </div>
             <div style={{ color: 'var(--muted)', fontSize: showHero ? 14 : 13, lineHeight: '1.35', opacity: showHero ? 0.55 : 1, marginTop: showHero ? 14 : 4, marginBottom: showHero ? 22 : 8 }}>
-              Quick identification and operational handling of a user.
+              {t('support.userCheck.subtitle')}
             </div>
 
             <div className={`search-bar ${showHero ? 'search-priority' : ''}`} style={{ marginTop: showHero ? 18 : 10, display: 'flex', justifyContent: 'center', transform: showHero ? 'translateY(-5vh)' : undefined }}>
@@ -420,9 +423,9 @@ export default function SupportUserCheck() {
                     value={query}
                     onChange={(e) => { setQuery(e.target.value) }}
                     onKeyDown={(e) => { if (e.key === 'Enter') { if (debounceRef.current) clearTimeout(debounceRef.current); runSearch(query) } }}
-                    placeholder="Search by name, user id or MT5"
+                    placeholder={t('support.search.placeholder')}
                     className="search-input search-hero-input"
-                    aria-label="Search users"
+                    aria-label={t('support.search.ariaLabel')}
                     style={{ width: '100%', fontSize: 16, padding: showHero ? '16px 18px' : '12px 14px', paddingLeft: showHero ? '44px' : undefined }}
                   />
                 </div>
@@ -430,8 +433,8 @@ export default function SupportUserCheck() {
                 {/* helper line under input - subtle and small */}
                 {showHero && (
                   <div style={{ marginTop: 32, color: 'var(--muted)', fontSize: 11, display: 'flex', justifyContent: 'center', gap: 18, opacity: 0.45 }}>
-                    <div style={{ minWidth: 160, textAlign: 'center' }}>Instant results while typing</div>
-                    <div style={{ minWidth: 160, textAlign: 'center' }}>Press <strong>/</strong> to focus · <strong>Enter</strong> to run</div>
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>{t('support.userCheck.hint.instant')}</div>
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>{t('support.userCheck.hint.press')} <strong>/</strong> {t('support.userCheck.hint.toFocus')} · <strong>{t('common.keys.enter')}</strong> {t('support.userCheck.hint.toRun')}</div>
                   </div>
                 )}
 
@@ -445,7 +448,7 @@ export default function SupportUserCheck() {
           {searched && (
             <div style={{ marginTop: 6 }}>
               {loading ? (
-                <FullPageLoader minHeight={220} progress={55} subtitle="Loading results…" />
+                <FullPageLoader minHeight={220} progress={55} subtitle={t('support.loader.results')} />
               ) : (
                 <div className="support-list">
                   {resultsToShow.map(({ raw, mapped }, idx) => {
@@ -471,7 +474,7 @@ export default function SupportUserCheck() {
                                       <div className="name">{mapped.name || mapped.userId || '—'}</div>
                                       {(() => {
                                         const isTop = mapped?.depositNum && topThreshold > 0 && mapped.depositNum >= topThreshold
-                                        return isTop ? <span className="badge top">Top</span> : null
+                                        return isTop ? <span className="badge top">{t('support.userCheck.badge.top')}</span> : null
                                       })()}
                                     </div>
                                     <div className="meta">{mapped.userId || ''}{mapped.mt5 ? ` · ${mapped.mt5}` : ''}{mapped.country ? ` · ${mapped.country}` : ''}</div>
@@ -479,13 +482,13 @@ export default function SupportUserCheck() {
                                 </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: 900 }}>{fmtEuro(mapped.totalDeposits)}</div>
-                            <div className="deposits">{mapped.depositCount || '0'} deposits</div>
+                            <div className="deposits">{t('support.userCheck.deposits', { count: mapped.depositCount || '0' })}</div>
                           </div>
                         </div>
                       </div>
                     )
                   })}
-                  {mappedResults.length === 0 && <div className="neutral-card">No results</div>}
+                  {mappedResults.length === 0 && <div className="neutral-card">{t('support.userCheck.noResults')}</div>}
                 </div>
               )}
             </div>
@@ -498,7 +501,7 @@ export default function SupportUserCheck() {
   )
 }
 
-function suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded) {
+function suggestedReply(t, mapped, affiliateName, paymentsLoaded, mediaLoaded) {
   if (!mapped) return ''
 
   // Use the Support Decision Engine for intelligent reply suggestions
@@ -509,7 +512,13 @@ function suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded) {
     mediaLoaded: (typeof mediaLoaded === 'boolean') ? mediaLoaded : true
   })
 
-  return decision?.replyTemplate || `Hi ${mapped.name || mapped.userId || 'customer'}, thanks for reaching out — we're reviewing your account.`
+  if (decision?.replyKey) {
+    const name = mapped.name || mapped.userId || t('support.reply.customerFallback')
+    return t(decision.replyKey, { name })
+  }
+
+  const name = mapped.name || mapped.userId || t('support.reply.customerFallback')
+  return t('support.reply.fallback', { name })
 }
 
 async function copyToClipboard(text) {

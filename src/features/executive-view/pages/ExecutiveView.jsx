@@ -8,8 +8,10 @@ import { buildMonthRange, buildMonthlySeries } from '../lib/monthlySeries'
 import { bandForDepartment, cloneAssumptions, defaultAssumptions } from '../lib/assumptions'
 import { buildDefaultProjectPlan, updateProjectPlan } from '../lib/roadmapCosting'
 import { sections } from '../../../pages/orgChartData'
+import { useI18n } from '../../../i18n/I18nContext'
 
 export default function ExecutiveView() {
+  const { t } = useI18n()
     const { mediaRows, payments, loading } = useMediaPaymentsData()
     const { projects } = useRoadmapData()
     const [scenario, setScenario] = useState('upside')
@@ -389,7 +391,7 @@ export default function ExecutiveView() {
             e.stopPropagation()
             setOpenInfo((prev) => (prev === id ? null : id))
           }}
-          aria-label="Show explanation"
+          aria-label={t('executiveView.aria.showExplanation')}
           style={{
             width: 18,
             height: 18,
@@ -437,7 +439,7 @@ export default function ExecutiveView() {
     )
 
     if (loading) {
-      return <FullPageLoader progress={45} subtitle="Loading executive data…" />
+      return <FullPageLoader progress={45} subtitle={t('executiveView.loader.data')} />
     }
 
     return (
@@ -1023,7 +1025,7 @@ export default function ExecutiveView() {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10, flexWrap: 'wrap' }}>
                 <input
                   type="text"
-                  placeholder="Search name/role/department"
+                  placeholder={t('executiveView.search.placeholder')}
                   value={peopleSearch}
                   onChange={(e) => setPeopleSearch(e.target.value)}
                   style={{ padding: 8, borderRadius: 8, background: '#0f172a', color: 'white', border: '1px solid rgba(255,255,255,0.08)', minWidth: 240 }}

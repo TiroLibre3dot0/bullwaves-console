@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from 'react'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { buildSupportDecision, buildSupportDecisions, getAffiliateOverview } from '../services/supportUserCheckService'
+import { useI18n } from '../../../i18n/I18nContext'
 
 // Decision Card Component for displaying support decisions
 function DecisionCard({ title, decision, category }) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const { t } = useI18n()
 
   if (!decision) return null
 
@@ -34,11 +36,28 @@ function DecisionCard({ title, decision, category }) {
   }
 
   const statusColor = getStatusColor(decision.status)
+  const statusKey = decision?.status ? `support.decision.status.${decision.status}` : ''
+  const statusLabelRaw = statusKey ? t(statusKey) : ''
+  const statusLabel = (statusKey && statusLabelRaw !== statusKey)
+    ? statusLabelRaw
+    : ((decision.status || '').replace(/_/g, ' '))
 
   // Defensive defaults to avoid runtime errors when shape is incomplete
-  const why = (decision && (decision.why !== undefined && decision.why !== null)) ? decision.why : '—'
-  const nextActions = Array.isArray(decision && decision.nextActions) ? decision.nextActions : (decision && decision.nextActions ? [String(decision.nextActions)] : [])
-  const signals = Array.isArray(decision && decision.signals) ? decision.signals : (decision && decision.signals ? [String(decision.signals)] : [])
+  const why = decision?.whyKey ? t(decision.whyKey, decision.whyParams || {}) : ((decision && (decision.why !== undefined && decision.why !== null)) ? decision.why : '—')
+  const nextActionsRaw = Array.isArray(decision?.nextActionsI18n)
+    ? decision.nextActionsI18n
+    : (Array.isArray(decision && decision.nextActions) ? decision.nextActions : (decision && decision.nextActions ? [String(decision.nextActions)] : []))
+  const nextActions = nextActionsRaw.map((item) => {
+    if (item && typeof item === 'object' && item.key) return t(item.key, item.params || {})
+    return String(item)
+  })
+  const signalsRaw = Array.isArray(decision?.signalsI18n)
+    ? decision.signalsI18n
+    : (Array.isArray(decision && decision.signals) ? decision.signals : (decision && decision.signals ? [String(decision.signals)] : []))
+  const signals = signalsRaw.map((item) => {
+    if (item && typeof item === 'object' && item.key) return t(item.key, item.params || {})
+    return String(item)
+  })
 
   return (
     <div style={{
@@ -84,7 +103,7 @@ function DecisionCard({ title, decision, category }) {
             padding: '2px 8px',
             borderRadius: '12px'
           }}>
-            {(decision.status || '').replace(/_/g, ' ')}
+            {statusLabel}
           </span>
         </div>
         <div style={{
@@ -104,7 +123,7 @@ function DecisionCard({ title, decision, category }) {
           padding: '16px'
         }}>
               <div style={{ marginBottom: '12px' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Why:</strong>
+                <strong style={{ color: 'var(--text-primary)' }}>{t('support.details.decision.why')}:</strong>
                 <p style={{
                   margin: '4px 0 0 0',
                   color: 'var(--text-secondary)',
@@ -116,7 +135,7 @@ function DecisionCard({ title, decision, category }) {
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Next Best Actions:</strong>
+                <strong style={{ color: 'var(--text-primary)' }}>{t('support.details.decision.nextActions')}:</strong>
                 {nextActions.length === 0 ? (
                   <div style={{ marginTop: 4, color: 'var(--text-secondary)' }}>—</div>
                 ) : (
@@ -136,7 +155,7 @@ function DecisionCard({ title, decision, category }) {
 
               {signals && signals.length > 0 && (
                 <div>
-                  <strong style={{ color: 'var(--text-primary)' }}>Decision Signals:</strong>
+                  <strong style={{ color: 'var(--text-primary)' }}>{t('support.details.decision.signals')}:</strong>
                   <div style={{
                     marginTop: '4px',
                     display: 'flex',
@@ -181,9 +200,11 @@ export default function SupportUserDetails({
 }) {
   if (!selected) return null
 
+  const { t } = useI18n()
+
   const detailsProgress = (paymentsLoaded ? 50 : 0) + (mediaLoaded ? 50 : 0)
   if (!paymentsLoaded || !mediaLoaded) {
-    return <FullPageLoader progress={detailsProgress} subtitle="Loading user details…" />
+    return <FullPageLoader progress={detailsProgress} subtitle={t('support.details.loader.userDetails')} />
   }
 
   // Derived UI values (computed once)
@@ -289,7 +310,7 @@ export default function SupportUserDetails({
 
   // Compute affiliate display and flags for sidebar (safe now that `raw` is defined)
   const rawAffiliateName = pickRawField(raw, ['affiliate', 'affiliatename', 'name']) || null
-  const affiliateDisplay = affiliateName?.affiliateName || (mapped.affiliateId ? String(mapped.affiliateId) : 'No affiliate')
+  const affiliateDisplay = affiliateName?.affiliateName || (mapped.affiliateId ? String(mapped.affiliateId) : t('support.details.noAffiliate'))
   const affiliateMappingMissing = Boolean(mapped.affiliateId && (!affiliateName || !affiliateName.affiliateName))
   const affiliateNameMismatch = Boolean(rawAffiliateName && affiliateName && affiliateName.affiliateName && normalizeKey(rawAffiliateName) !== normalizeKey(affiliateName.affiliateName))
 
@@ -355,22 +376,6 @@ export default function SupportUserDetails({
   const volumeVal = mapped.volume != null ? mapped.volume : (mapped.Volume || mapped.VOLUME || null)
   const lotsVal = mapped.lots != null ? mapped.lots : (mapped.LOTS || mapped.Lot || null)
   const spreadVal = mapped.spread != null ? mapped.spread : (mapped.Spread || null)
-
-  // Behaviour & risk rules
-  const rules = useMemo(() => {
-    const out = []
-    const dNum = Number(String((mapped.totalDeposits || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-    const wNum = Number(String((mapped.withdrawals || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-    const vNum = Number(String((mapped.volume || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-    const plNum = Number(String((mapped.pl || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-
-    if (dNum > 0 && wNum > 0) out.push('Withdrawals detected after deposit')
-    if (dNum > 0 && vNum === 0) out.push('Deposit with no trading activity')
-    if (vNum > 0 && Math.abs(plNum) < Math.max(1, vNum * 0.02)) out.push('High volume with low/neutral P/L')
-    if (plNum < 0 && Math.abs(plNum) > Math.max(1, vNum * 0.05)) out.push('Negative P/L relative to volume')
-    if (affiliateId) out.push('Affiliate-driven account')
-    return out
-  }, [mapped, affiliateId])
 
   // Support Decision Engine
   const supportDecisions = useMemo(() => {
@@ -439,7 +444,7 @@ export default function SupportUserDetails({
 
   function handleCopy() { copyToClipboard(replyText) }
   function handleEscalate(kind) {
-    if (!confirm(`Escalate ${accountId} to ${kind}?`)) return
+    if (!confirm(t('support.details.confirmEscalate', { accountId, kind }))) return
     console.log('escalate', { userId: accountId, kind, selected: mapped })
   }
 
@@ -449,11 +454,18 @@ export default function SupportUserDetails({
       {/* Top bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button className="btn-secondary" onClick={onBack}>← Back to results</button>
+          <button className="btn-secondary" onClick={onBack}>← {t('support.details.backToResults')}</button>
           <div style={{ fontSize: 18, fontWeight: 700 }}>{displayName}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <div className="badge priority" style={{ fontWeight: 800 }}>{priority || 'Medium'}</div>
+          <div className="badge priority" style={{ fontWeight: 800 }}>
+            {(() => {
+              const p = priority || 'medium'
+              const key = `support.details.priority.${p}`
+              const label = t(key)
+              return label !== key ? label : p
+            })()}
+          </div>
         </div>
       </div>
 
@@ -466,35 +478,35 @@ export default function SupportUserDetails({
             <div>
               <div style={{ fontSize: 18, fontWeight: 900 }}>{displayName}</div>
               <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>{country} · {mt5}</div>
-              <div style={{ marginTop: 8 }} className="badge status">{mapped.status || 'Status'}</div>
+              <div style={{ marginTop: 8 }} className="badge status">{mapped.status || t('support.details.statusFallback')}</div>
             </div>
           </div>
             <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: 'var(--muted)' }}>Account</div>
+            <div style={{ fontSize: 12, color: 'var(--muted)' }}>{t('support.details.account')}</div>
             <div style={{ fontWeight: 800, marginTop: 6 }}>{accountId}</div>
             <div style={{ height: 12 }} />
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.03)', marginTop: 12, paddingTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>Affiliate</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>{t('support.details.affiliate')}</div>
               <div style={{ fontWeight: 700, marginTop: 6 }}>
-                {affiliateDisplay || 'No affiliate'}
-                {affiliateMappingMissing && <span style={{ color: 'orange', fontSize: 10, marginLeft: 8 }}>(Name missing)</span>}
-                {affiliateNameMismatch && <span style={{ color: 'red', fontSize: 10, marginLeft: 8 }}>(Mismatch)</span>}
+                {affiliateDisplay || t('support.details.noAffiliate')}
+                {affiliateMappingMissing && <span style={{ color: 'orange', fontSize: 10, marginLeft: 8 }}>({t('support.details.affiliateNameMissing')})</span>}
+                {affiliateNameMismatch && <span style={{ color: 'red', fontSize: 10, marginLeft: 8 }}>({t('support.details.affiliateNameMismatch')})</span>}
               </div>
             </div>
 
             {/* Commissions detail inserted into left sidebar */}
             <div style={{ marginTop: 12, borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>Commissions</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>{t('support.details.commissions.title')}</div>
               <div style={{ fontWeight: 800, fontSize: 18, marginTop: 8 }}>{commissionsTotal}</div>
               <div style={{ marginTop: 10, display: 'grid', gap: 8, fontSize: 13 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>Revshare</div><div>{revshareComm ? (fmtEuro ? fmtEuro(revshareComm) : String(revshareComm)) : '—'}</div></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>CPA</div><div>{cpaEffective ? (fmtEuro ? fmtEuro(cpaEffective) : String(cpaEffective)) : '—'}</div></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>CPL</div><div>{cplComm ? (fmtEuro ? fmtEuro(cplComm) : String(cplComm)) : '—'}</div></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.revshare')}</div><div>{revshareComm ? (fmtEuro ? fmtEuro(revshareComm) : String(revshareComm)) : '—'}</div></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.cpa')}</div><div>{cpaEffective ? (fmtEuro ? fmtEuro(cpaEffective) : String(cpaEffective)) : '—'}</div></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.cpl')}</div><div>{cplComm ? (fmtEuro ? fmtEuro(cplComm) : String(cplComm)) : '—'}</div></div>
                 {affiliateEffective ? (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>Affiliate</div><div>{fmtEuro ? fmtEuro(affiliateEffective) : String(affiliateEffective)}</div></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.affiliate')}</div><div>{fmtEuro ? fmtEuro(affiliateEffective) : String(affiliateEffective)}</div></div>
                 ) : null}
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>Sub-affiliate</div><div>{subAffiliateComm ? (fmtEuro ? fmtEuro(subAffiliateComm) : String(subAffiliateComm)) : '—'}</div></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>Other</div><div>{otherComm ? (fmtEuro ? fmtEuro(otherComm) : String(otherComm)) : '—'}</div></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.subAffiliate')}</div><div>{subAffiliateComm ? (fmtEuro ? fmtEuro(subAffiliateComm) : String(subAffiliateComm)) : '—'}</div></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--muted)' }}><div>{t('support.details.commissions.other')}</div><div>{otherComm ? (fmtEuro ? fmtEuro(otherComm) : String(otherComm)) : '—'}</div></div>
               </div>
             </div>
 
@@ -505,7 +517,7 @@ export default function SupportUserDetails({
         <div className="center-col min-w-0 w-full max-w-none">
           <div style={{ maxWidth: 960, margin: '0 auto', width: '100%' }}>
           <section style={{ marginBottom: 12, padding: '8px 6px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', borderRadius: 8 }}>
-            <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>User Timeline & Status</div>
+            <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 14 }}>{t('support.details.userTimeline.title')}</div>
             <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
                 <div className="timeline" style={{ padding: 8, background: 'rgba(255,255,255,0.03)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.04)', boxShadow: '0 6px 12px rgba(2,6,23,0.45)' }}>
@@ -514,32 +526,40 @@ export default function SupportUserDetails({
                       <div className={`timeline-dot ${regDateObj ? 'reached milestone-reg' : ''}`} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800 }}>Registration</div>
-                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{regAtFmt ? regAtFmt : <span className="text-muted">Not reached</span>}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800 }}>{t('support.details.userTimeline.registration')}</div>
+                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{regAtFmt ? regAtFmt : <span className="text-muted">{t('support.details.userTimeline.notReached')}</span>}</div>
                     </div>
                   </div>
 
-                  {regDateObj && (firstDepositAt || qftdDateObj) && <div className="timeline-gap" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 8 }}>{firstDepositAt ? `+${Math.max(0, Math.round((parseDate(firstDepositAt) - regDateObj) / (1000*60*60*24)))}d` : ''}</div>}
+                  {regDateObj && (firstDepositAt || qftdDateObj) && (
+                    <div className="timeline-gap" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 8 }}>
+                      {firstDepositAt ? t('support.details.userTimeline.daysDelta', { days: Math.max(0, Math.round((parseDate(firstDepositAt) - regDateObj) / (1000 * 60 * 60 * 24))) }) : ''}
+                    </div>
+                  )}
 
                   <div className="timeline-item" style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
                     <div className="timeline-dot-wrapper">
                       <div className={`timeline-dot ${parseDate(firstDepositAt) ? 'reached milestone-dep' : ''}`} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800 }}>Deposit date</div>
-                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{firstDepositAtFmt ? firstDepositAtFmt : <span className="text-muted">Not reached</span>}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800 }}>{t('support.details.userTimeline.depositDate')}</div>
+                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{firstDepositAtFmt ? firstDepositAtFmt : <span className="text-muted">{t('support.details.userTimeline.notReached')}</span>}</div>
                     </div>
                   </div>
 
-                  {parseDate(firstDepositAt) && qftdDateObj && <div className="timeline-gap" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 8 }}>+{Math.max(0, Math.round((qftdDateObj - parseDate(firstDepositAt)) / (1000*60*60*24)))}d</div>}
+                  {parseDate(firstDepositAt) && qftdDateObj && (
+                    <div className="timeline-gap" style={{ textAlign: 'center', color: 'var(--muted)', marginBottom: 8 }}>
+                      {t('support.details.userTimeline.daysDelta', { days: Math.max(0, Math.round((qftdDateObj - parseDate(firstDepositAt)) / (1000 * 60 * 60 * 24))) })}
+                    </div>
+                  )}
 
                   <div className="timeline-item" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                     <div className="timeline-dot-wrapper">
                       <div className={`timeline-dot ${qftdDateObj ? 'reached milestone-qftd' : ''}`} />
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      <div style={{ fontSize: 13, fontWeight: 800 }}>Qualification</div>
-                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{qftdAtFmt ? qftdAtFmt : <span className="text-muted">Not reached</span>}</div>
+                      <div style={{ fontSize: 13, fontWeight: 800 }}>{t('support.details.userTimeline.qualification')}</div>
+                      <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600 }}>{qftdAtFmt ? qftdAtFmt : <span className="text-muted">{t('support.details.userTimeline.notReached')}</span>}</div>
                     </div>
                   </div>
                 </div>
@@ -550,27 +570,27 @@ export default function SupportUserDetails({
 
           <section style={{ marginTop: 8, marginBottom: 8 }}>
             <div style={{ padding: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Financial Summary</div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>{t('support.details.financialSummary.title')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 12 }}>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Total deposits</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.financialSummary.totalDeposits')}</div>
                   <div style={{ fontWeight: 800, fontSize: 16, marginTop: 6 }}>{totalDeposits}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Net deposits</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.financialSummary.netDeposits')}</div>
                   <div style={{ fontWeight: 800, fontSize: 16, marginTop: 6 }}>{netDeposits}</div>
                 </div>
                 
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Net cash flow</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.financialSummary.netCashFlow')}</div>
                   <div style={{ fontWeight: 800, fontSize: 16, marginTop: 6 }}>{netCashFlow != null ? netCashFlow : '—'}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}># Deposits</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.financialSummary.depositsCount')}</div>
                   <div style={{ fontWeight: 800, fontSize: 16, marginTop: 6 }}>{depositsCountVal != null ? depositsCountVal : '—'}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>First deposit</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.financialSummary.firstDeposit')}</div>
                   <div style={{ fontWeight: 800, fontSize: 16, marginTop: 6 }}>{firstDepositAmount ? firstDepositAmount : '—'}</div>
                 </div>
               </div>
@@ -579,26 +599,26 @@ export default function SupportUserDetails({
 
           <section style={{ marginTop: 6, marginBottom: 12 }}>
             <div style={{ padding: 12 }}>
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>Trading Performance</div>
+              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 10 }}>{t('support.details.tradingPerformance.title')}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Volume</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.tradingPerformance.volume')}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, marginTop: 6 }}>{volumeVal != null ? volumeVal : '—'}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Lots</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.tradingPerformance.lots')}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, marginTop: 6 }}>{lotsVal != null ? lotsVal : '—'}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>Spread</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.tradingPerformance.spread')}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, marginTop: 6 }}>{spreadVal != null ? spreadVal : '—'}</div>
                 </div>
                 <div className="card" style={metricCardStyle}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>P/L</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.tradingPerformance.pl')}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, marginTop: 6, color: Number(String((mapped.pl||'').toString().replace(/[^0-9.-]+/g,'')||0)) < 0 ? '#f87171' : '#22c55e' }}>{pl}</div>
                 </div>
                 <div className="card" style={{ ...metricCardStyle, gridColumn: '1 / -1' }}>
-                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>ROI</div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{t('support.details.tradingPerformance.roi')}</div>
                   <div style={{ fontWeight: 800, fontSize: 15, marginTop: 6 }}>{roiVal != null ? roiVal : '—'}</div>
                 </div>
               </div>
@@ -617,22 +637,22 @@ export default function SupportUserDetails({
             {/* Affiliate Overview Section */}
             {affiliateId && (
               <div style={{ marginBottom: 20 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>Affiliate Overview</div>
+                <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 12 }}>{t('support.details.affiliateOverview.title')}</div>
                 
                 {affiliateLoading ? (
-                  <FullPageLoader minHeight={180} progress={60} subtitle="Loading affiliate data…" />
+                  <FullPageLoader minHeight={180} progress={60} subtitle={t('support.details.affiliateOverview.loading')} />
                 ) : currentAffiliateOverview ? (
                   <>
                     {/* Target Affiliate Input */}
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 6 }}>
-                        Compare with Affiliate ID:
+                        {t('support.details.affiliateOverview.compareLabel')}
                       </div>
                       <input
                         type="text"
                         value={targetAffiliateId}
                         onChange={(e) => setTargetAffiliateId(e.target.value)}
-                        placeholder="Enter affiliate ID..."
+                        placeholder={t('support.details.affiliateOverview.enterPlaceholder')}
                         style={{
                           width: '100%',
                           padding: '6px 8px',
@@ -667,7 +687,7 @@ export default function SupportUserDetails({
                           textAlign: 'center',
                           borderRight: targetAffiliateOverview ? '1px solid var(--border)' : 'none'
                         }}>
-                          Current: {currentAffiliateOverview.name}
+                          {t('support.details.affiliateOverview.currentPrefix')}: {currentAffiliateOverview.name}
                         </div>
                         {targetAffiliateOverview && (
                           <div style={{
@@ -677,7 +697,7 @@ export default function SupportUserDetails({
                             color: 'var(--text-secondary)',
                             textAlign: 'center'
                           }}>
-                            Target: {targetAffiliateOverview.name}
+                            {t('support.details.affiliateOverview.targetPrefix')}: {targetAffiliateOverview.name}
                           </div>
                         )}
                       </div>
@@ -693,22 +713,22 @@ export default function SupportUserDetails({
                           borderRight: targetAffiliateOverview ? '1px solid var(--border)' : 'none'
                         }}>
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Traffic</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.traffic')}</div>
                             <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.clicks?.toLocaleString() || '—'}</div>
                             
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Registrations</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.registrations')}</div>
                             <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.registrations?.toLocaleString() || '—'}</div>
                             
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>FTD</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.ftd')}</div>
                             <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.ftd?.toLocaleString() || '—'}</div>
                             
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>Revenue</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.revenue')}</div>
                             <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{fmtEuro(currentAffiliateOverview.revenue)}</div>
                             
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>eCPA</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.ecpa')}</div>
                             <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{currentAffiliateOverview.ecpa ? fmtEuro(currentAffiliateOverview.ecpa) : '—'}</div>
                             
-                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>ROI</div>
+                            <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.roi')}</div>
                             <div style={{
                               fontSize: 11,
                               fontWeight: 600,
@@ -724,22 +744,22 @@ export default function SupportUserDetails({
                         {targetAffiliateOverview && (
                           <div style={{ padding: '12px' }}>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Traffic</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.traffic')}</div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.clicks?.toLocaleString() || '—'}</div>
                               
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Registrations</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.registrations')}</div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.registrations?.toLocaleString() || '—'}</div>
                               
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>FTD</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.ftd')}</div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.ftd?.toLocaleString() || '—'}</div>
                               
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>Revenue</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.revenue')}</div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{fmtEuro(targetAffiliateOverview.revenue)}</div>
                               
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>eCPA</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.ecpa')}</div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>{targetAffiliateOverview.ecpa ? fmtEuro(targetAffiliateOverview.ecpa) : '—'}</div>
                               
-                              <div style={{ fontSize: 10, color: 'var(--muted)' }}>ROI</div>
+                                <div style={{ fontSize: 10, color: 'var(--muted)' }}>{t('support.details.affiliateOverview.metrics.roi')}</div>
                               <div style={{
                                 fontSize: 11,
                                 fontWeight: 600,
@@ -756,49 +776,49 @@ export default function SupportUserDetails({
                   </>
                 ) : (
                   <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
-                    No affiliate data available
+                    {t('support.details.affiliateOverview.noData')}
                   </div>
                 )}
               </div>
             )}
 
-            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 16 }}>Support Decisions Engine</div>
+            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 16 }}>{t('support.details.supportDecisions.title')}</div>
 
             {supportDecisions ? (
               <div>
                 <DecisionCard
-                  title="Affiliate Switch Eligibility"
+                  title={t('support.details.supportDecisions.affiliateSwitch')}
                   decision={supportDecisions.affiliateSwitch}
                   category="affiliateSwitch"
                 />
                 <DecisionCard
-                  title="Account Type Change"
+                  title={t('support.details.supportDecisions.accountTypeChange')}
                   decision={supportDecisions.accountTypeChange}
                   category="accountTypeChange"
                 />
                 <DecisionCard
-                  title="Bonus/Credit Eligibility"
+                  title={t('support.details.supportDecisions.bonus')}
                   decision={supportDecisions.bonus}
                   category="bonus"
                 />
                 <DecisionCard
-                  title="Withdrawal/Refund Handling"
+                  title={t('support.details.supportDecisions.withdrawals')}
                   decision={supportDecisions.withdrawals}
                   category="withdrawals"
                 />
                 <DecisionCard
-                  title="Revenue Share Analysis"
+                  title={t('support.details.supportDecisions.revenueShare')}
                   decision={supportDecisions.revenueShare}
                   category="revenueShare"
                 />
               </div>
             ) : (
-              <FullPageLoader minHeight={220} progress={55} subtitle="Loading decision engine…" />
+              <FullPageLoader minHeight={220} progress={55} subtitle={t('support.details.loader.decisionEngine')} />
             )}
 
 
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>Suggested Reply</div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 6 }}>{t('support.details.suggestedReply.title')}</div>
               <textarea
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
@@ -814,11 +834,11 @@ export default function SupportUserDetails({
                   fontFamily: 'monospace',
                   resize: 'vertical'
                 }}
-                placeholder="Support reply template..."
+                placeholder={t('support.details.suggestedReply.placeholder')}
               />
               <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
                 <button className="btn btn-primary" onClick={handleCopy} style={{ fontSize: 12 }}>
-                  Copy to Clipboard
+                  {t('support.details.copyToClipboard')}
                 </button>
               </div>
             </div>

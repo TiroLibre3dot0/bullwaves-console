@@ -1,3 +1,13 @@
+node_modules/
+dist/
+
+# Generated report artifacts / backups (keep local)
+public/*.bak
+public/*.csv.*.bak
+public/raw/
+
+# Local debug scripts
+scripts/roi_debug.js
 node_modules
 dist
 .env.local

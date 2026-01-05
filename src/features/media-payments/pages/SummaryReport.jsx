@@ -3,10 +3,12 @@ import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPerc
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import FullPageLoader from '../../../components/FullPageLoader'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const formatNumberFull = (value) => formatNumber(value)
 
 export default function SummaryReport() {
+  const { t } = useI18n()
   const { mediaRows, payments, loading } = useMediaPaymentsData()
   const leaderboard = useLeaderboard(mediaRows, payments)
 
@@ -245,7 +247,7 @@ export default function SummaryReport() {
   })), [bestAffiliates])
 
   if (loading) {
-    return <FullPageLoader progress={45} subtitle="Loading summary data…" />
+    return <FullPageLoader progress={45} subtitle={t('mediaPayments.summary.loader.data')} />
   }
 
   return (

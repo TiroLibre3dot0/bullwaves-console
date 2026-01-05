@@ -11,14 +11,16 @@ import { computeCohortBreakEvenForAffiliate } from './utils/computeCohortBreakEv
 import { filterTop10CohortRowsForAffiliate, loadTop10CohortData } from './utils/getTop10CohortDataForAffiliate'
 import { checkDataStatus } from '../../utils/dataStatusChecker'
 import { useDataStatus } from '../../context/DataStatusContext'
+import { useI18n } from '../../i18n/I18nContext'
 
-const badgeTone = (profit) => {
-  if (profit >= 0) return { label: 'Healthy', color: '#22c55e' }
-  if (profit > -1000) return { label: 'Watch', color: '#f59e0b' }
-  return { label: 'At risk', color: '#ef4444' }
+const badgeTone = (t, profit) => {
+  if (profit >= 0) return { label: t('affiliateAnalysis.badge.healthy'), color: '#22c55e' }
+  if (profit > -1000) return { label: t('affiliateAnalysis.badge.watch'), color: '#f59e0b' }
+  return { label: t('affiliateAnalysis.badge.atRisk'), color: '#ef4444' }
 }
 
 export default function AffiliateAnalysis() {
+  const { t } = useI18n()
   const { mediaRows, payments, affiliateOptions } = useMediaPaymentsData()
   const [selectedAffiliate, setSelectedAffiliate] = useState('')
   const [selectedYear, setSelectedYear] = useState('all')
@@ -132,10 +134,9 @@ export default function AffiliateAnalysis() {
     if (!cohortRowsForAffiliate.length) return []
 
     const monthsCount = Math.max(...cohortRowsForAffiliate.map((r) => (r.months || []).length), 12)
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     const byMonth = Array.from({ length: monthsCount }, (_, idx) => ({
       monthIndex: idx,
-      monthLabel: monthNames[idx] || `Month ${idx + 1}`,
+      monthLabel: t('affiliateAnalysis.cohort.monthLabel', { index: idx + 1 }),
       pl: 0,
       commissions: 0,
     }))
@@ -160,7 +161,7 @@ export default function AffiliateAnalysis() {
     })
 
     return byMonth
-  }, [filteredPayments, selectedAffiliate, top10CohortRows])
+  }, [filteredPayments, selectedAffiliate, top10CohortRows, t])
 
   const analysisReport = useMemo(() => {
     if (!selectedAffiliate) return null
@@ -195,35 +196,35 @@ export default function AffiliateAnalysis() {
     const metrics = []
     const add = (label, value, helper, tone) => metrics.push({ label, value, helper, tone })
 
-    add('CPA', formatEuro(Math.round(k.cpa || 0)), 'Payments / FTD')
-    add('ARPU', formatEuro(Math.round(k.arpu || 0)), 'PL / registrations')
+    add(t('affiliateAnalysis.metrics.cpa'), formatEuro(Math.round(k.cpa || 0)), t('affiliateAnalysis.metrics.helper.paymentsDivFtd'))
+    add(t('affiliateAnalysis.metrics.arpu'), formatEuro(Math.round(k.arpu || 0)), t('affiliateAnalysis.metrics.helper.plDivRegistrations'))
 
     const ltvUsers = totals?.users || k.registrations || 0
-    if (ltvUsers) add('LTV / user', formatEuro(Math.round((k.totalPL || 0) / Math.max(ltvUsers, 1))), 'PL / users')
+    if (ltvUsers) add(t('affiliateAnalysis.metrics.ltvPerUser'), formatEuro(Math.round((k.totalPL || 0) / Math.max(ltvUsers, 1))), t('affiliateAnalysis.metrics.helper.plDivUsers'))
 
-    if (k.totalPL) add('Profit margin', formatPercent((k.totalProfit || 0) / Math.max(k.totalPL, 1) * 100, 1), 'Profit vs PL')
+    if (k.totalPL) add(t('affiliateAnalysis.metrics.profitMargin'), formatPercent((k.totalProfit || 0) / Math.max(k.totalPL, 1) * 100, 1), t('affiliateAnalysis.metrics.helper.profitVsPl'))
 
-    add('Churn %', formatPercent(k.churnPct || 0, 1), 'Weighted churn %')
+    add(t('affiliateAnalysis.metrics.churnPct'), formatPercent(k.churnPct || 0, 1), t('affiliateAnalysis.metrics.helper.weightedChurnPct'))
 
     const visitors = totals?.visitors || totals?.users
-    if (visitors) add('Conversion rate', formatPercent((k.registrations || 0) / Math.max(visitors, 1) * 100, 1), 'Registrations / visitors')
+    if (visitors) add(t('affiliateAnalysis.metrics.conversionRate'), formatPercent((k.registrations || 0) / Math.max(visitors, 1) * 100, 1), t('affiliateAnalysis.metrics.helper.registrationsDivVisitors'))
 
-    if (k.registrations) add('FTD ratio', formatPercent((k.ftd || 0) / Math.max(k.registrations, 1) * 100, 1), 'FTD / registrations')
-    if (k.ftd) add('QFTD ratio', formatPercent((k.qftd || 0) / Math.max(k.ftd, 1) * 100, 1), 'QFTD / FTD')
+    if (k.registrations) add(t('affiliateAnalysis.metrics.ftdRatio'), formatPercent((k.ftd || 0) / Math.max(k.registrations, 1) * 100, 1), t('affiliateAnalysis.metrics.helper.ftdDivRegistrations'))
+    if (k.ftd) add(t('affiliateAnalysis.metrics.qftdRatio'), formatPercent((k.qftd || 0) / Math.max(k.ftd, 1) * 100, 1), t('affiliateAnalysis.metrics.helper.qftdDivFtd'))
 
-    if (withdrawalsTotal) add('Withdrawals', formatEuro(withdrawalsTotal), 'Total withdrawals')
+    if (withdrawalsTotal) add(t('affiliateAnalysis.metrics.withdrawals'), formatEuro(withdrawalsTotal), t('affiliateAnalysis.metrics.helper.totalWithdrawals'))
 
-    if (k.bestMonth) add('Best Month', k.bestMonth.monthLabel || k.bestMonth.monthKey || '—', 'By profit')
-    if (k.worstMonth) add('Worst Month', k.worstMonth.monthLabel || k.worstMonth.monthKey || '—', 'By profit')
+    if (k.bestMonth) add(t('affiliateAnalysis.metrics.bestMonth'), k.bestMonth.monthLabel || k.bestMonth.monthKey || '—', t('affiliateAnalysis.metrics.helper.byProfit'))
+    if (k.worstMonth) add(t('affiliateAnalysis.metrics.worstMonth'), k.worstMonth.monthLabel || k.worstMonth.monthKey || '—', t('affiliateAnalysis.metrics.helper.byProfit'))
 
     return metrics
-  }, [analysisReport, totals, withdrawalsTotal])
+  }, [analysisReport, totals, withdrawalsTotal, t])
 
-  const heroBadge = badgeTone(totals?.profit || 0)
+  const heroBadge = badgeTone(t, totals?.profit || 0)
   const emptyState = !selectedAffiliate
 
   const renderTopAffiliates = (
-    <CardSection title="Top 10 Affiliates (by Profit)" subtitle="Select an affiliate to view its analysis">
+    <CardSection title={t('affiliateAnalysis.topAffiliates.title')} subtitle={t('affiliateAnalysis.topAffiliates.subtitle')}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10 }}>
         {topAffiliates.map((a) => {
           const isActive = selectedAffiliate === a.affiliate
@@ -244,9 +245,9 @@ export default function AffiliateAnalysis() {
               onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)' }}
             >
               <div style={{ fontWeight: 700, marginBottom: 4 }}>{a.affiliate || '—'}</div>
-              <div style={{ fontSize: 12, color: '#cbd5e1' }}>Profit {formatEuro(a.profit || 0)}</div>
+              <div style={{ fontSize: 12, color: '#cbd5e1' }}>{t('affiliateAnalysis.topAffiliates.profit', { value: formatEuro(a.profit || 0) })}</div>
               <div style={{ fontSize: 11, color: a.hasCohort ? '#22d3ee' : '#94a3b8', marginTop: 4 }}>
-                {a.hasCohort ? 'Cohort ✓' : 'No Cohort'}
+                {a.hasCohort ? t('affiliateAnalysis.topAffiliates.cohortYes') : t('affiliateAnalysis.topAffiliates.cohortNo')}
               </div>
             </button>
           )
@@ -262,23 +263,23 @@ export default function AffiliateAnalysis() {
         className="card card-global"
         style={{ padding: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', cursor: 'pointer' }}
       >
-        ← Back to Top Affiliates
+        {t('affiliateAnalysis.button.backToTopAffiliates')}
       </button>
 
       <CardSection
-        title={`Affiliate Analysis ${selectedAffiliate ? `– ${selectedAffiliate}` : ''}`}
-        subtitle={`Performance overview · Period: ${analysisReport?.periodMeta?.displayLabel || analysisReport?.periodLabel || '—'}`}
+        title={t('affiliateAnalysis.header.title', { affiliate: selectedAffiliate })}
+        subtitle={t('affiliateAnalysis.header.subtitle', { period: analysisReport?.periodMeta?.displayLabel || analysisReport?.periodLabel || '—' })}
         actions={(
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             <YearSelector availableYears={yearOptions} value={selectedYear} onChange={(val) => setSelectedYear(val)} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ color: '#94a3b8', fontSize: 12 }}>Affiliate</label>
+              <label style={{ color: '#94a3b8', fontSize: 12 }}>{t('affiliateAnalysis.filters.affiliate')}</label>
               <select
                 value={selectedAffiliate}
                 onChange={(e) => setSelectedAffiliate(e.target.value)}
                 style={{ background: '#0f172a', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', minWidth: 200 }}
               >
-                <option value="">Select affiliate…</option>
+                <option value="">{t('affiliateAnalysis.filters.selectAffiliate')}</option>
                 {affiliateOptions.map((a) => (
                   <option key={a} value={a}>{a}</option>
                 ))}
@@ -286,7 +287,7 @@ export default function AffiliateAnalysis() {
             </div>
             {selectedAffiliate && (
               <span style={{ padding: '6px 10px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', color: heroBadge.color, fontWeight: 700, fontSize: 12 }}>
-                {heroBadge.label} · Profit {formatEuro(totals?.profit || 0)}
+                {t('affiliateAnalysis.badgeWithProfit', { label: heroBadge.label, value: formatEuro(totals?.profit || 0) })}
               </span>
             )}
           </div>
@@ -294,31 +295,31 @@ export default function AffiliateAnalysis() {
       />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-        <KpiCard label="Net Deposits" value={formatEuro(totals.netDeposits)} helper={formatEuroFull(totals.netDeposits)} tone="#22d3ee" />
-        <KpiCard label="PL" value={formatEuro(totals.pl)} helper="Total P&L" tone="#10b981" />
-        <KpiCard label="Profit" value={formatEuro(totals.profit)} helper="PL − payments" tone={totals.profit >= 0 ? '#34d399' : '#ef4444'} />
-        <KpiCard label="ROI" value={`${(totals.roi || 0).toFixed(1)}%`} helper="Profit / payments" tone={totals.roi >= 0 ? '#34d399' : '#ef4444'} />
-        <KpiCard label="Payments" value={formatEuro(totals.paymentsTotal)} helper="Commission / payouts" tone="#f59e0b" />
-        <KpiCard label="FTD / Reg" value={`${formatNumberShort(totals.ftd)} / ${formatNumberShort(totals.registrations)}`} helper="First deposits vs registrations" tone="#fbbf24" />
+        <KpiCard label={t('affiliateAnalysis.kpi.netDeposits')} value={formatEuro(totals.netDeposits)} helper={formatEuroFull(totals.netDeposits)} tone="#22d3ee" />
+        <KpiCard label={t('affiliateAnalysis.kpi.pl')} value={formatEuro(totals.pl)} helper={t('affiliateAnalysis.kpiHelper.totalPnL')} tone="#10b981" />
+        <KpiCard label={t('affiliateAnalysis.kpi.profit')} value={formatEuro(totals.profit)} helper={t('affiliateAnalysis.kpiHelper.plMinusPayments')} tone={totals.profit >= 0 ? '#34d399' : '#ef4444'} />
+        <KpiCard label={t('affiliateAnalysis.kpi.roi')} value={`${(totals.roi || 0).toFixed(1)}%`} helper={t('affiliateAnalysis.kpiHelper.profitDivPayments')} tone={totals.roi >= 0 ? '#34d399' : '#ef4444'} />
+        <KpiCard label={t('affiliateAnalysis.kpi.payments')} value={formatEuro(totals.paymentsTotal)} helper={t('affiliateAnalysis.kpiHelper.commissionPayouts')} tone="#f59e0b" />
+        <KpiCard label={t('affiliateAnalysis.kpi.ftdPerReg')} value={`${formatNumberShort(totals.ftd)} / ${formatNumberShort(totals.registrations)}`} helper={t('affiliateAnalysis.kpiHelper.firstDepositsVsRegistrations')} tone="#fbbf24" />
       </div>
 
       <AnalysisEngine
         affiliateName={selectedAffiliate}
-        periodLabel={analysisReport?.periodLabel || 'This period'}
+        periodLabel={analysisReport?.periodLabel || t('affiliateAnalysis.period.thisPeriod')}
         kpis={analysisReport?.kpis}
       />
 
-      <CardSection title="Financial metrics" subtitle="Efficiency snapshots">
+      <CardSection title={t('affiliateAnalysis.sections.financialMetrics.title')} subtitle={t('affiliateAnalysis.sections.financialMetrics.subtitle')}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
-          <KpiCard label="Payback vs deposits" value={formatPercent((totals.profit / Math.max(totals.netDeposits || 1, 1)) * 100)} helper="Profit / net deposits" />
-          <KpiCard label="Payout ratio" value={formatPercent((totals.paymentsTotal / Math.max(totals.netDeposits || 1, 1)) * 100)} helper="Payments / net deposits" tone="#f59e0b" />
-          <KpiCard label="PL per FTD" value={formatEuro(Math.round(totals.ftd ? totals.pl / totals.ftd : 0))} helper="PL / FTD" />
-          <KpiCard label="Profit per user" value={formatEuro(Math.round(totals.users ? totals.profit / totals.users : 0))} helper="Profit / users" />
+          <KpiCard label={t('affiliateAnalysis.financial.paybackVsDeposits')} value={formatPercent((totals.profit / Math.max(totals.netDeposits || 1, 1)) * 100)} helper={t('affiliateAnalysis.financial.helper.profitDivNetDeposits')} />
+          <KpiCard label={t('affiliateAnalysis.financial.payoutRatio')} value={formatPercent((totals.paymentsTotal / Math.max(totals.netDeposits || 1, 1)) * 100)} helper={t('affiliateAnalysis.financial.helper.paymentsDivNetDeposits')} tone="#f59e0b" />
+          <KpiCard label={t('affiliateAnalysis.financial.plPerFtd')} value={formatEuro(Math.round(totals.ftd ? totals.pl / totals.ftd : 0))} helper={t('affiliateAnalysis.financial.helper.plDivFtd')} />
+          <KpiCard label={t('affiliateAnalysis.financial.profitPerUser')} value={formatEuro(Math.round(totals.users ? totals.profit / totals.users : 0))} helper={t('affiliateAnalysis.financial.helper.profitDivUsers')} />
         </div>
       </CardSection>
 
       {analysisReport?.kpis && (
-        <CardSection title="All Key Metrics for this Affiliate" subtitle="Full KPI snapshot for this affiliate">
+        <CardSection title={t('affiliateAnalysis.sections.allKeyMetrics.title')} subtitle={t('affiliateAnalysis.sections.allKeyMetrics.subtitle')}>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
             {keyMetrics.map((m) => (
               <KpiCard key={m.label} label={m.label} value={m.value} helper={m.helper} tone={m.tone} />
@@ -327,13 +328,13 @@ export default function AffiliateAnalysis() {
         </CardSection>
       )}
 
-      <CardSection title="Monthly trends" subtitle="Net Deposits, PL, Profit">
+      <CardSection title={t('affiliateAnalysis.sections.monthlyTrends.title')} subtitle={t('affiliateAnalysis.sections.monthlyTrends.subtitle')}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
           <div className="card card-global" style={{ height: 260 }}>
             <PnLTrendChart
               dataPoints={monthly.map((m) => m.netDeposits)}
               labels={monthly.map((m) => m.monthLabel)}
-              datasetLabel="Net Deposits"
+              datasetLabel={t('affiliateAnalysis.chart.netDeposits')}
               formatValue={(v) => formatEuro(v)}
             />
           </div>
@@ -341,7 +342,7 @@ export default function AffiliateAnalysis() {
             <PnLTrendChart
               dataPoints={monthly.map((m) => m.pl)}
               labels={monthly.map((m) => m.monthLabel)}
-              datasetLabel="PL"
+              datasetLabel={t('affiliateAnalysis.chart.pl')}
               formatValue={(v) => formatEuro(v)}
             />
           </div>
@@ -349,7 +350,7 @@ export default function AffiliateAnalysis() {
             <PnLTrendChart
               dataPoints={monthly.map((m) => m.profit)}
               labels={monthly.map((m) => m.monthLabel)}
-              datasetLabel="Profit"
+              datasetLabel={t('affiliateAnalysis.chart.profit')}
               formatValue={(v) => formatEuro(v)}
             />
           </div>
@@ -364,7 +365,7 @@ export default function AffiliateAnalysis() {
 
       {!selectedAffiliate && (
         <div className="card card-global" style={{ textAlign: 'center', color: '#94a3b8', padding: 16 }}>
-          Select an affiliate to view its analysis
+          {t('affiliateAnalysis.empty.selectAffiliate')}
         </div>
       )}
 

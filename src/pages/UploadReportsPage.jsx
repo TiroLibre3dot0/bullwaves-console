@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useI18n } from '../i18n/I18nContext'
 
 export default function UploadReportsPage() {
+  const { t } = useI18n()
+
   const [file, setFile] = useState(null)
   const [reportType, setReportType] = useState('payments')
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -69,21 +72,21 @@ export default function UploadReportsPage() {
     if (!data) return ''
     const lines = []
     const typeLabel = data.type || reportType
-    lines.push('OK')
-    lines.push(`Type: ${typeLabel}`)
-    if (data.dest) lines.push(`Updated: ${data.dest}`)
-    if (data.rawBackup) lines.push(`Raw backup: ${data.rawBackup}`)
-    if (data.sanitizer) lines.push(`Sanitizer: ${data.sanitizer}`)
+    lines.push(t('upload.result.ok'))
+    lines.push(`${t('upload.result.type')}: ${typeLabel}`)
+    if (data.dest) lines.push(`${t('upload.result.updated')}: ${data.dest}`)
+    if (data.rawBackup) lines.push(`${t('upload.result.rawBackup')}: ${data.rawBackup}`)
+    if (data.sanitizer) lines.push(`${t('upload.result.sanitizer')}: ${data.sanitizer}`)
 
     const s = data.summary
     if (s && (typeof s.existing === 'number' || typeof s.added === 'number' || typeof s.duplicates === 'number')) {
       lines.push('')
-      lines.push('Summary:')
-      if (typeof s.existing === 'number') lines.push(`- Existing: ${s.existing}`)
-      if (typeof s.added === 'number') lines.push(`- Added: ${s.added}`)
-      if (typeof s.duplicates === 'number') lines.push(`- Duplicates: ${s.duplicates}`)
-      if (typeof s.affiliateUpdates === 'number') lines.push(`- Affiliate updates: ${s.affiliateUpdates}`)
-      if (typeof s.fieldUpdates === 'number') lines.push(`- Field updates: ${s.fieldUpdates}`)
+      lines.push(`${t('upload.result.summary')}:`)
+      if (typeof s.existing === 'number') lines.push(`- ${t('upload.result.summary.existing')}: ${s.existing}`)
+      if (typeof s.added === 'number') lines.push(`- ${t('upload.result.summary.added')}: ${s.added}`)
+      if (typeof s.duplicates === 'number') lines.push(`- ${t('upload.result.summary.duplicates')}: ${s.duplicates}`)
+      if (typeof s.affiliateUpdates === 'number') lines.push(`- ${t('upload.result.summary.affiliateUpdates')}: ${s.affiliateUpdates}`)
+      if (typeof s.fieldUpdates === 'number') lines.push(`- ${t('upload.result.summary.fieldUpdates')}: ${s.fieldUpdates}`)
     }
 
     // Append a short stdout tail for troubleshooting (kept compact)
@@ -92,14 +95,14 @@ export default function UploadReportsPage() {
       const outLines = out.split(/\r?\n/).filter(Boolean)
       const tail = outLines.slice(-20).join('\n')
       lines.push('')
-      lines.push('Last logs:')
+      lines.push(`${t('upload.result.lastLogs')}:`)
       lines.push(tail)
     }
 
     const err = String(data.stderr || '').trim()
     if (err) {
       lines.push('')
-      lines.push('Warnings/Errors:')
+      lines.push(`${t('upload.result.warningsErrors')}:`)
       lines.push(err)
     }
 
@@ -114,7 +117,7 @@ export default function UploadReportsPage() {
     setUploadProgress(0)
     setServerProgress(0)
     setResultText('')
-    setStatus(`Uploading: 0% (0 / ${sizeLabel})`)
+    setStatus(`${t('upload.status.uploadingPrefix')}: 0% (0 / ${sizeLabel})`)
 
     const fd = new FormData()
     fd.append('type', reportType)
@@ -135,19 +138,19 @@ export default function UploadReportsPage() {
 
     xhr.upload.onprogress = (ev) => {
       if (!ev.lengthComputable) {
-        setStatus('Uploading…')
+        setStatus(t('upload.status.uploadingShort'))
         return
       }
       const pct = (ev.loaded / ev.total) * 100
       setUploadProgress(pct)
       const loadedMB = (ev.loaded / (1024 * 1024)).toFixed(1)
       const totalMB = (ev.total / (1024 * 1024)).toFixed(1)
-      setStatus(`Uploading: ${pct.toFixed(1)}% (${loadedMB} / ${totalMB} MB)`)
+      setStatus(`${t('upload.status.uploadingPrefix')}: ${pct.toFixed(1)}% (${loadedMB} / ${totalMB} MB)`)
     }
 
     xhr.upload.onload = () => {
       setUploadProgress(100)
-      setStatus('Processing on server…')
+      setStatus(t('upload.status.processingOnServer'))
     }
 
     xhr.onprogress = () => {
@@ -199,7 +202,7 @@ export default function UploadReportsPage() {
       } else if (!sawTerminalMessage) {
         setResultText(xhr.responseText || '')
       }
-      setStatus(ok ? 'Done.' : `Failed (HTTP ${xhr.status}).`)
+      setStatus(ok ? t('upload.status.done') : `${t('upload.status.failed')} (HTTP ${xhr.status}).`)
 
       if (ok) {
         try {
@@ -218,7 +221,7 @@ export default function UploadReportsPage() {
 
     xhr.onerror = () => {
       setIsUploading(false)
-      setStatus('Upload failed (network error).')
+      setStatus(t('upload.status.networkError'))
     }
 
     xhr.send(fd)
@@ -227,11 +230,11 @@ export default function UploadReportsPage() {
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', padding: '14px 12px' }}>
       <div className="card card-global" style={{ marginBottom: 12 }}>
-        <h2 style={{ marginBottom: 6 }}>Upload reports</h2>
+        <h2 style={{ marginBottom: 6 }}>{t('upload.title')}</h2>
         <div style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.35 }}>
-          Upload a CSV and the system will sanitize it and update the reports.
+          {t('upload.description.line1')}
           <div style={{ marginTop: 6 }}>
-            Choose the report type explicitly to avoid relying on the file name.
+            {t('upload.description.line2')}
           </div>
         </div>
       </div>
@@ -254,9 +257,9 @@ export default function UploadReportsPage() {
                 colorScheme: 'dark',
               }}
             >
-              <option value="registrations">Registrations</option>
-              <option value="payments">Payments</option>
-              <option value="media">Media</option>
+              <option value="registrations">{t('upload.type.registrations')}</option>
+              <option value="payments">{t('upload.type.payments')}</option>
+              <option value="media">{t('upload.type.media')}</option>
             </select>
             <input
               type="file"
@@ -279,20 +282,20 @@ export default function UploadReportsPage() {
               disabled={!file || isUploading}
               style={{ opacity: (!file || isUploading) ? 0.6 : 1 }}
             >
-              {isUploading ? 'Uploading…' : 'Upload'}
+              {isUploading ? t('upload.button.uploading') : t('upload.button.upload')}
             </button>
           </div>
 
           {file && (
             <div style={{ color: 'var(--muted)', fontSize: 12 }}>
-              Selected: <span style={{ color: 'var(--text)' }}>{file.name}</span> ({sizeLabel})
+              {t('upload.label.selected')}: <span style={{ color: 'var(--text)' }}>{file.name}</span> ({sizeLabel})
             </div>
           )}
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ color: 'var(--muted)', fontSize: 12 }}>{status}</div>
-              <div style={{ color: 'var(--muted)', fontSize: 12 }}>Upload {Math.round(uploadProgress)}% • Server {Math.round(serverProgress)}%</div>
+              <div style={{ color: 'var(--muted)', fontSize: 12 }}>{t('upload.progress.upload')} {Math.round(uploadProgress)}% • {t('upload.progress.server')} {Math.round(serverProgress)}%</div>
             </div>
             <div style={{ height: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, uploadProgress))}%`, background: 'rgba(34, 211, 238, 0.75)' }} />
@@ -305,7 +308,7 @@ export default function UploadReportsPage() {
       </div>
 
       <div className="card card-global">
-        <h3 style={{ marginBottom: 8 }}>Response</h3>
+        <h3 style={{ marginBottom: 8 }}>{t('upload.response.title')}</h3>
         <pre style={{
           margin: 0,
           whiteSpace: 'pre-wrap',
@@ -317,7 +320,7 @@ export default function UploadReportsPage() {
           padding: 12,
           minHeight: 90,
         }}>
-          {resultText || '—'}
+          {resultText || t('upload.emptyDash')}
         </pre>
       </div>
     </div>

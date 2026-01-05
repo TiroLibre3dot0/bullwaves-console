@@ -3,11 +3,13 @@ import { formatEuro, formatNumber, formatNumberShort, formatPercent, cleanNumber
 import AffiliatePayments2 from '../features/affiliate/components/AffiliatePayments2'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
 import FullPageLoader from '../components/FullPageLoader'
+import { useI18n } from '../i18n/I18nContext'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
 const formatNumberFull = (value) => formatNumber(value)
 
 export default function Report() {
+  const { t } = useI18n()
   const [mediaRows, setMediaRows] = useState([])
   const [payments, setPayments] = useState([])
   const [mode, setMode] = useState('global') // global | annual | monthly
@@ -87,7 +89,7 @@ export default function Report() {
   }, [])
 
   if (loading) {
-    return <FullPageLoader progress={45} subtitle="Loading report data…" />
+    return <FullPageLoader progress={45} subtitle={t('report.loader.data')} />
   }
 
   const availableMonths = useMemo(() => {
@@ -226,35 +228,37 @@ export default function Report() {
   const muted = { color: '#475569' }
 
   const periodLabel = mode === 'global'
-    ? 'Globale'
+    ? t('report.period.global')
     : mode === 'annual'
-      ? `Annuale ${currentYear}`
-      : selectedMonth ? `Mensile ${availableMonths.find((m) => m.key === selectedMonth)?.label || ''}` : 'Mensile'
+      ? t('report.period.annual', { year: currentYear })
+      : selectedMonth
+        ? t('report.period.monthly', { month: availableMonths.find((m) => m.key === selectedMonth)?.label || '' })
+        : t('report.period.monthlyFallback')
 
   return (
     <div style={{ width: '100%', padding: '12px 4px', display: 'flex', flexDirection: 'column', gap: 16 }}>
       <aside style={{ ...card, background: 'linear-gradient(135deg, #f8fbff, #eef2ff)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 0.2, color: '#475569', fontWeight: 700 }}>Report</div>
-            <h2 style={{ margin: '4px 0', color: '#0f172a' }}>Periodo rapido</h2>
-            <p style={{ ...muted, margin: 0 }}>Base chiara per export. Fonte: Media Report + Payments/Commissions.</p>
+            <div style={{ fontSize: 12, letterSpacing: 0.2, color: '#475569', fontWeight: 700 }}>{t('report.header.label')}</div>
+            <h2 style={{ margin: '4px 0', color: '#0f172a' }}>{t('report.header.title')}</h2>
+            <p style={{ ...muted, margin: 0 }}>{t('report.header.subtitle')}</p>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button style={pill(mode === 'monthly')} onClick={() => setMode('monthly')}>Mensile</button>
-            <button style={pill(mode === 'annual')} onClick={() => setMode('annual')}>Annuale</button>
-            <button style={pill(mode === 'global')} onClick={() => setMode('global')}>Globale</button>
+            <button style={pill(mode === 'monthly')} onClick={() => setMode('monthly')}>{t('report.modes.monthly')}</button>
+            <button style={pill(mode === 'annual')} onClick={() => setMode('annual')}>{t('report.modes.annual')}</button>
+            <button style={pill(mode === 'global')} onClick={() => setMode('global')}>{t('report.modes.global')}</button>
           </div>
         </div>
         {mode === 'monthly' && (
           <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ ...muted, fontWeight: 700 }}>Mese</span>
+            <span style={{ ...muted, fontWeight: 700 }}>{t('report.filters.month')}</span>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
               style={{ padding: '6px 9px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontWeight: 700 }}
             >
-              {availableMonths.length === 0 && <option value="">Nessun mese</option>}
+              {availableMonths.length === 0 && <option value="">{t('report.filters.noMonths')}</option>}
               {availableMonths.map((m) => (
                 <option key={m.key} value={m.key}>{m.label}</option>
               ))}
@@ -270,66 +274,66 @@ export default function Report() {
       <aside style={{ ...card }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>Periodo</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>{t('report.summary.periodLabel')}</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{periodLabel}</div>
           </div>
           <div style={{ fontSize: 12, color: '#475569', textAlign: 'right' }}>
-            {`${filteredMedia.length} righe media · ${filteredPayments.length} pagamenti`}
-            <div style={{ color: '#94a3b8', fontSize: 11 }}>Fonte: Media Report + Payments/Commissions</div>
+            {t('report.summary.rowsLine', { media: filteredMedia.length, payments: filteredPayments.length })}
+            <div style={{ color: '#94a3b8', fontSize: 11 }}>{t('report.summary.sourceLine')}</div>
           </div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>CPA</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#0ea5e9' }}>{formatEuro(Math.round(totals.cpa || 0))}</div>
-            <div style={{ fontSize: 11, ...muted }}>Payments / FTD</div>
+            <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.cpaHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>ARPU</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{formatEuro(Math.round(totals.arpu || 0))}</div>
-            <div style={{ fontSize: 11, ...muted }}>PL / registrations</div>
+            <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.arpuHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>Profit</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: totals.profit >= 0 ? '#0f172a' : '#dc2626' }}>{formatEuroShort(totals.profit)}</div>
-            <div style={{ fontSize: 11, ...muted }}>PL - payments</div>
+            <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.profitHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>ROI</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: totals.roi >= 0 ? '#0f172a' : '#dc2626' }}>{`${(totals.roi || 0).toFixed(1)}%`}</div>
-            <div style={{ fontSize: 11, ...muted }}>Profit / payments</div>
+            <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.roiHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>Volume</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a' }}>{formatter.format(totals.registrations)} reg · {formatter.format(totals.ftd)} FTD</div>
-            <div style={{ fontSize: 11, ...muted }}>Registrazioni e FTD</div>
+            <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.volumeHint')}</div>
           </div>
         </div>
       </aside>
 
       <aside style={{ ...card }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <h3 style={{ margin: 0, color: '#0f172a' }}>Top affiliati (8)</h3>
-          <span style={{ fontSize: 12, ...muted }}>Ordine per profitto · Fonte media+payments</span>
+          <h3 style={{ margin: 0, color: '#0f172a' }}>{t('report.topAffiliates.title')}</h3>
+          <span style={{ fontSize: 12, ...muted }}>{t('report.topAffiliates.subtitle')}</span>
         </div>
         <div style={{ overflowX: 'auto', marginTop: 10 }}>
           <table className="table" style={{ minWidth: 720, color: '#0f172a' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', color: '#475569', background: '#eef2ff' }}>Affiliate</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>Reg</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>FTD</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>CPA</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>ARPU</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>ROI</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>Profit</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>Break-even</th>
+                <th style={{ textAlign: 'left', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.affiliate')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.reg')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.ftd')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.cpa')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.arpu')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.roi')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.profit')}</th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.breakEven')}</th>
               </tr>
             </thead>
             <tbody>
               {topAffiliates.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: 12, color: '#94a3b8' }}>Nessun dato nel periodo selezionato</td>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: 12, color: '#94a3b8' }}>{t('report.table.empty.noDataForPeriod')}</td>
                 </tr>
               )}
               {topAffiliates.map((r) => (
@@ -341,7 +345,7 @@ export default function Report() {
                   <td style={{ textAlign: 'right', color: '#10b981' }}>{formatEuro(Math.round(r.arpu || 0))}</td>
                   <td style={{ textAlign: 'right', color: r.roi >= 0 ? '#0f172a' : '#dc2626' }}>{`${(r.roi || 0).toFixed(1)}%`}</td>
                   <td style={{ textAlign: 'right', color: r.profit >= 0 ? '#0f172a' : '#dc2626' }}>{formatEuroShort(r.profit)}</td>
-                  <td style={{ textAlign: 'right', color: '#2563eb' }}>{r.breakEvenMonths !== null ? `${r.breakEvenMonths} mesi` : 'n/d'}</td>
+                  <td style={{ textAlign: 'right', color: '#2563eb' }}>{r.breakEvenMonths !== null ? t('report.table.breakEvenMonths', { count: r.breakEvenMonths }) : t('common.na')}</td>
                 </tr>
               ))}
             </tbody>
@@ -351,14 +355,14 @@ export default function Report() {
 
       <aside style={{ ...card }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
-          <h3 style={{ margin: 0, color: '#0f172a' }}>Note per export</h3>
-          <span style={{ fontSize: 12, ...muted }}>Base layout pronta per aggiungere pulsante export</span>
+          <h3 style={{ margin: 0, color: '#0f172a' }}>{t('report.exportNotes.title')}</h3>
+          <span style={{ fontSize: 12, ...muted }}>{t('report.exportNotes.subtitle')}</span>
         </div>
         <ul style={{ marginTop: 8, paddingLeft: 18, color: '#0f172a', lineHeight: 1.5 }}>
-          <li>Layout chiaro e tabella già ordinata per profitto.</li>
-          <li>Filtro periodo: globale (tutti i dati), annuale (anno corrente), mensile (mese selezionato).</li>
-          <li>Metriche chiave: CPA, ARPU, profit, volume (reg/FTD), break-even stimato.</li>
-          <li>Pronto a collegare un bottone di export (PDF/CSV) senza stravolgere il layout.</li>
+          <li>{t('report.exportNotes.item1')}</li>
+          <li>{t('report.exportNotes.item2')}</li>
+          <li>{t('report.exportNotes.item3')}</li>
+          <li>{t('report.exportNotes.item4')}</li>
         </ul>
       </aside>
     </div>

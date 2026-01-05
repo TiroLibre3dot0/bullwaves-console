@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ongoingItems from '../../ongoing/data/ongoingItems'
 import { strategicObjectives, projects2026 } from '../data/roadmapData'
 import WeeklyMapView from '../components/WeeklyMapView'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const statusLabel = { active: 'Active', blocked: 'Blocked', done: 'Done' }
 const priorityLabel = { high: 'High', medium: 'Medium', low: 'Low' }
@@ -39,14 +40,16 @@ function loadTasks(seed) {
 }
 
 export default function RoadmapPage() {
+  const { t } = useI18n()
+
   const megaMap = useMemo(() => mapById(strategicObjectives), [])
   const storyMap = useMemo(() => mapById(projects2026, 'activity'), [])
 
   const validateTask = useCallback((task) => {
-    if (!megaMap[task.megaStoryId]) return { valid: false, reason: 'Unknown megaStoryId' }
+    if (!megaMap[task.megaStoryId]) return { valid: false, reasonKey: 'roadmap.validation.unknownMegaStoryId' }
     const story = storyMap[task.storyId]
-    if (!story) return { valid: false, reason: 'Unknown storyId' }
-    if (story.objectiveId && story.objectiveId !== task.megaStoryId) return { valid: false, reason: 'storyId not under megaStoryId' }
+    if (!story) return { valid: false, reasonKey: 'roadmap.validation.unknownStoryId' }
+    if (story.objectiveId && story.objectiveId !== task.megaStoryId) return { valid: false, reasonKey: 'roadmap.validation.storyNotUnderMega' }
     return { valid: true }
   }, [megaMap, storyMap])
 
@@ -106,7 +109,7 @@ export default function RoadmapPage() {
   }, [selectedMega, megaFilter])
 
   const resetToSeed = () => {
-    const ok = window.confirm('This will overwrite local changes and reset to seed data. Continue?')
+    const ok = window.confirm(t('roadmap.reset.confirm'))
     if (!ok) return
     setTasks(ongoingItems)
     try {
@@ -124,7 +127,7 @@ export default function RoadmapPage() {
       if (verdict.valid) {
         valid.push(task)
       } else {
-        triage.push({ ...task, triageReason: verdict.reason })
+        triage.push({ ...task, triageReason: verdict.reasonKey })
       }
     })
     return { validTasks: valid, triageTasks: triage }
@@ -228,6 +231,12 @@ export default function RoadmapPage() {
   const megaLabel = (megaId) => megaMap[megaId]?.label || megaId
   const focusedStoryId = selectedStoryId || selectedTask?.storyId || null
 
+  const statusText = (status) => t(`roadmap.status.${status}`)
+  const priorityText = (priority) => t(`roadmap.priority.${priority}`)
+  const departmentText = (dept) => t(`roadmap.department.${String(dept || '').toLowerCase()}`) || dept
+  const platformAreaText = (area) => t(`roadmap.platformArea.${String(area || '').toLowerCase()}`) || area
+  const impactTypeText = (impactType) => t(`roadmap.impactType.${impactType}`) || impactType
+
   const megaStats = useMemo(() => {
     return strategicObjectives.map((obj) => {
       const list = validTasks.filter((t) => t.megaStoryId === obj.id)
@@ -237,6 +246,15 @@ export default function RoadmapPage() {
       const lastImpact = done
         .filter((t) => t.completedAt)
         .sort((a, b) => b.completedAt.localeCompare(a.completedAt))[0]
+
+      const lastImpactLabel = lastImpact
+        ? t('roadmap.mega.lastImpactValue', {
+          impactType: impactTypeText(lastImpact.impactType || 'impact'),
+          department: lastImpact.impactedDepartment || t('roadmap.mega.impact.unknownDepartment'),
+          area: lastImpact.impactedPlatformArea || t('roadmap.mega.impact.unknownArea'),
+        })
+        : t('roadmap.mega.noImpactYet')
+
       return {
         id: obj.id,
         label: obj.label,
@@ -245,12 +263,10 @@ export default function RoadmapPage() {
         done: done.length,
         departments: Array.from(departmentsSet),
         platforms: Array.from(platformsSet),
-        lastImpact: lastImpact
-          ? `${lastImpact.impactType || 'impact'} - ${lastImpact.impactedDepartment || 'dept'} - ${lastImpact.impactedPlatformArea || 'area'}`
-          : 'No impact captured yet',
+        lastImpact: lastImpactLabel,
       }
     })
-  }, [validTasks])
+  }, [impactTypeText, t, validTasks])
 
   const storiesForSelected = useMemo(() => {
     if (!selectedMega) return []
@@ -300,66 +316,70 @@ export default function RoadmapPage() {
     <div className="roadmap-page">
       <div className="roadmap-header card-global">
         <div>
-          <h1>Mega-Stories Board</h1>
-          <p className="text-muted">Strategic mega-stories with execution drill-down.</p>
+          <h1>{t('roadmap.header.title')}</h1>
+          <p className="text-muted">{t('roadmap.header.subtitle')}</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="ongoing-toggle">
-            <button type="button" className={`chip ${boardSubView === 'mega' ? 'active' : ''}`} onClick={() => setBoardSubView('mega')}>Mega Stories</button>
-            <button type="button" className={`chip ${boardSubView === 'weekly' ? 'active' : ''}`} onClick={() => setBoardSubView('weekly')}>Weekly Map</button>
+            <button type="button" className={`chip ${boardSubView === 'mega' ? 'active' : ''}`} onClick={() => setBoardSubView('mega')}>{t('roadmap.subView.megaStories')}</button>
+            <button type="button" className={`chip ${boardSubView === 'weekly' ? 'active' : ''}`} onClick={() => setBoardSubView('weekly')}>{t('roadmap.subView.weeklyMap')}</button>
           </div>
           <div className="ongoing-counter-pill">
             <span className="pill-dot dot-progress" aria-hidden="true" />
-            <span>{totals.active} active</span>
+            <span>{t('roadmap.counter.active', { count: totals.active })}</span>
             <span className="pill-sep">&middot;</span>
-            <span className="pill-blocked">{totals.blocked} blocked</span>
+            <span className="pill-blocked">{t('roadmap.counter.blocked', { count: totals.blocked })}</span>
             <span className="pill-sep">&middot;</span>
-            <span>{totals.done} done</span>
+            <span>{t('roadmap.counter.done', { count: totals.done })}</span>
           </div>
-          <button type="button" className="btn secondary" onClick={resetToSeed}>Reset to seed</button>
+          <button type="button" className="btn secondary" onClick={resetToSeed}>{t('roadmap.reset.button')}</button>
           <div className="ongoing-toggle">
-            <button type="button" className={`chip ${viewMode === 'active' ? 'active' : ''}`} onClick={() => setViewMode('active')}>Active</button>
-            <button type="button" className={`chip ${viewMode === 'done' ? 'active' : ''}`} onClick={() => setViewMode('done')}>Done</button>
+            <button type="button" className={`chip ${viewMode === 'active' ? 'active' : ''}`} onClick={() => setViewMode('active')}>{t('roadmap.viewMode.active')}</button>
+            <button type="button" className={`chip ${viewMode === 'done' ? 'active' : ''}`} onClick={() => setViewMode('done')}>{t('roadmap.viewMode.done')}</button>
           </div>
         </div>
       </div>
 
       <div className="ongoing-filters card">
         <div className="filter-field">
-          <label>Mega-Story</label>
+          <label>{t('roadmap.filters.megaStory')}</label>
           <select value={megaFilter} onChange={(e) => selectMega(e.target.value === 'All' ? null : e.target.value)}>
-            <option value="All">All</option>
+            <option value="All">{t('roadmap.filters.all')}</option>
             {Object.keys(megaMap).map((id) => (
               <option key={id} value={id}>{megaLabel(id)}</option>
             ))}
           </select>
         </div>
         <div className="filter-field">
-          <label>Story</label>
+          <label>{t('roadmap.filters.story')}</label>
           <select value={storyFilter} onChange={(e) => setStoryFilter(e.target.value)}>
             {storyOptions.map((id) => (
-              <option key={id} value={id}>{id === 'All' ? 'All' : storyLabel(id)}</option>
+              <option key={id} value={id}>{id === 'All' ? t('roadmap.filters.all') : storyLabel(id)}</option>
             ))}
           </select>
         </div>
         <div className="filter-field">
-          <label>Department</label>
+          <label>{t('roadmap.filters.department')}</label>
           <select value={departmentFilter} onChange={(e) => setDepartmentFilter(e.target.value)}>
-            <option value="All">All</option>
-            {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+            <option value="All">{t('roadmap.filters.all')}</option>
+            {departments.map((d) => <option key={d} value={d}>{departmentText(d)}</option>)}
           </select>
         </div>
         <div className="filter-field">
-          <label>Platform area</label>
+          <label>{t('roadmap.filters.platformArea')}</label>
           <select value={platformFilter} onChange={(e) => setPlatformFilter(e.target.value)}>
-            <option value="All">All</option>
-            {platformAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+            <option value="All">{t('roadmap.filters.all')}</option>
+            {platformAreas.map((p) => <option key={p} value={p}>{platformAreaText(p)}</option>)}
           </select>
         </div>
         <div className="filter-field">
-          <label>Status</label>
+          <label>{t('roadmap.filters.status')}</label>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} disabled={viewMode === 'done'}>
-            {statusFilters.map((s) => <option key={s} value={s}>{s}</option>)}
+            {statusFilters.map((s) => (
+              <option key={s} value={s}>
+                {s === 'All' ? t('roadmap.filters.all') : s === 'Active' ? statusText('active') : s === 'Blocked' ? statusText('blocked') : statusText('done')}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -378,10 +398,10 @@ export default function RoadmapPage() {
             >
               <div className="mega-top">
                 <div>
-                  <div className="mega-tag">Mega-story</div>
+                  <div className="mega-tag">{t('roadmap.mega.tag')}</div>
                   <div className="mega-name">{mega.label}</div>
                 </div>
-                <div className="mega-total">{total} tasks</div>
+                <div className="mega-total">{t('roadmap.mega.totalTasks', { count: total })}</div>
               </div>
 
               <div className="mega-progress">
@@ -389,36 +409,36 @@ export default function RoadmapPage() {
                   <div className="mega-progress-fill" style={{ width: `${donePct}%` }} />
                 </div>
                 <div className="mega-progress-meta">
-                  <span>{mega.done} done ({donePct}%)</span>
-                  <span>{mega.active + mega.blocked} in flight</span>
+                  <span>{t('roadmap.mega.progress.donePct', { done: mega.done, pct: donePct })}</span>
+                  <span>{t('roadmap.mega.progress.inFlight', { count: mega.active + mega.blocked })}</span>
                 </div>
               </div>
 
               <div className="mega-metrics">
-                <span className="mega-chip status-active">Active {mega.active}</span>
-                <span className="mega-chip status-blocked">Blocked {mega.blocked}</span>
-                <span className="mega-chip status-done">Done {mega.done}</span>
+                <span className="mega-chip status-active">{statusText('active')} {mega.active}</span>
+                <span className="mega-chip status-blocked">{statusText('blocked')} {mega.blocked}</span>
+                <span className="mega-chip status-done">{statusText('done')} {mega.done}</span>
               </div>
 
               <div className="mega-meta">
-                <span className="label">Departments</span>
+                <span className="label">{t('roadmap.mega.departments')}</span>
                 <div className="mega-pill-row">
                   {(mega.departments.length ? mega.departments : ['—']).map((d) => (
-                    <span key={d} className="mega-pill">{d}</span>
+                    <span key={d} className="mega-pill">{d === '—' ? '—' : departmentText(d)}</span>
                   ))}
                 </div>
               </div>
               <div className="mega-meta">
-                <span className="label">Platform</span>
+                <span className="label">{t('roadmap.mega.platform')}</span>
                 <div className="mega-pill-row">
                   {(mega.platforms.length ? mega.platforms : ['—']).map((p) => (
-                    <span key={p} className="mega-pill subtle">{p}</span>
+                    <span key={p} className="mega-pill subtle">{p === '—' ? '—' : platformAreaText(p)}</span>
                   ))}
                 </div>
               </div>
 
               <div className="mega-impact">
-                <span className="label">Last impact</span>
+                <span className="label">{t('roadmap.mega.lastImpact')}</span>
                 <span className="value">{mega.lastImpact}</span>
               </div>
             </button>
@@ -436,15 +456,15 @@ export default function RoadmapPage() {
             <div className="card" style={{ padding: 14 }}>
               <div className="ongoing-feed-header" style={{ alignItems: 'flex-start' }}>
                 <div>
-                  <p className="ongoing-label">Mega-Story</p>
+                  <p className="ongoing-label">{t('roadmap.mega.focusLabel')}</p>
                   <h3 className="ongoing-feed-title">{megaLabel(selectedMega)}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                   <div className="ongoing-toggle">
-                    <button type="button" className={`chip ${megaSubView === 'mega' ? 'active' : ''}`} onClick={() => setMegaSubView('mega')}>Mega Stories</button>
-                    <button type="button" className={`chip ${megaSubView === 'weekly' ? 'active' : ''}`} onClick={() => setMegaSubView('weekly')}>Weekly Map (filtered)</button>
+                    <button type="button" className={`chip ${megaSubView === 'mega' ? 'active' : ''}`} onClick={() => setMegaSubView('mega')}>{t('roadmap.subView.megaStories')}</button>
+                    <button type="button" className={`chip ${megaSubView === 'weekly' ? 'active' : ''}`} onClick={() => setMegaSubView('weekly')}>{t('roadmap.subView.weeklyMapFiltered')}</button>
                   </div>
-                  <span className="feed-count">{baseFiltered.filter((t) => t.megaStoryId === selectedMega).length} items</span>
+                  <span className="feed-count">{t('roadmap.feed.items', { count: baseFiltered.filter((t) => t.megaStoryId === selectedMega).length })}</span>
                 </div>
               </div>
 
@@ -482,11 +502,11 @@ export default function RoadmapPage() {
                               <div>
                                 <div className="ongoing-card-title">{story.activity}</div>
                                 <div className="ongoing-card-meta">
-                                  <span className="ongoing-pill subtle">{story.area || 'Area TBD'}</span>
-                                  <span className="ongoing-pill subtle">{story.department || 'Dept TBD'}</span>
+                                  <span className="ongoing-pill subtle">{story.area || t('roadmap.story.areaTbd')}</span>
+                                  <span className="ongoing-pill subtle">{story.department || t('roadmap.story.deptTbd')}</span>
                                 </div>
                               </div>
-                              <div className="ongoing-updated">{tasksForStory.length} tasks</div>
+                              <div className="ongoing-updated">{t('roadmap.story.tasksCount', { count: tasksForStory.length })}</div>
                             </div>
                           </button>
 
@@ -503,33 +523,33 @@ export default function RoadmapPage() {
                                     <div>
                                       <div className="ongoing-card-title">{item.title}</div>
                                       <div className="ongoing-card-meta">
-                                        <span className={`ongoing-badge status-${item.status}`}>{statusLabel[item.status]}</span>
-                                        <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
+                                            <span className={`ongoing-badge status-${item.status}`}>{statusText(item.status)}</span>
+                                            <span className={`ongoing-badge priority-${item.priority}`}>{priorityText(item.priority)}</span>
                                         <span className="ongoing-pill">{item.owner}</span>
                                       </div>
                                     </div>
-                                    <div className="ongoing-updated">{viewMode === 'done' ? `Completed ${item.completedAt || '-'}` : `Created ${item.createdAt}`}</div>
+                                        <div className="ongoing-updated">{viewMode === 'done' ? t('roadmap.task.completedAt', { date: item.completedAt || '-' }) : t('roadmap.task.createdAt', { date: item.createdAt })}</div>
                                   </div>
                                   <div className="ongoing-line">
-                                    <span className="label">Next step</span>
+                                        <span className="label">{t('roadmap.task.nextStep')}</span>
                                     <span className="value">{item.nextStep}</span>
                                   </div>
                                   {item.status === 'blocked' && item.dependencies?.length > 0 && (
                                     <div className="ongoing-line">
-                                      <span className="label">Blocker</span>
+                                          <span className="label">{t('roadmap.task.blocker')}</span>
                                       <span className="value">{item.dependencies.join(' - ')}</span>
                                     </div>
                                   )}
                                   {viewMode === 'done' && item.impactType && (
                                     <div className="ongoing-line">
-                                      <span className="label">Impact</span>
-                                      <span className="value">{`${item.impactType} - ${item.impactedDepartment} - ${item.impactedPlatformArea}`}</span>
+                                          <span className="label">{t('roadmap.task.impact')}</span>
+                                          <span className="value">{`${impactTypeText(item.impactType)} - ${item.impactedDepartment} - ${item.impactedPlatformArea}`}</span>
                                     </div>
                                   )}
                                 </button>
                               ))}
                               {tasksForStory.length === 0 && (
-                                <div className="ongoing-empty">No tasks for this story under current filters.</div>
+                                    <div className="ongoing-empty">{t('roadmap.empty.noTasksForStory')}</div>
                               )}
                             </div>
                           )}
@@ -537,7 +557,7 @@ export default function RoadmapPage() {
                       )
                     })}
                     {storiesForSelected.length === 0 && (
-                      <div className="ongoing-empty">No stories mapped to this mega-story yet.</div>
+                          <div className="ongoing-empty">{t('roadmap.empty.noStoriesForMega')}</div>
                     )}
                   </div>
                 </>
@@ -553,14 +573,14 @@ export default function RoadmapPage() {
                 <div className="ongoing-details-content">
                 <div className="ongoing-detail-head">
                   <div>
-                    <p className="ongoing-label">Details</p>
+                        <p className="ongoing-label">{t('roadmap.details.title')}</p>
                     <h3 className="ongoing-detail-title">{selectedTask.title}</h3>
                         <div className="detail-subline">{megaLabel(selectedTask.megaStoryId)} - {storyLabel(selectedTask.storyId)}</div>
-                        <div className="detail-story-link">Story focus: {storyLabel(selectedTask.storyId)}</div>
+                            <div className="detail-story-link">{t('roadmap.details.storyFocus', { story: storyLabel(selectedTask.storyId) })}</div>
                   </div>
                   <div className="ongoing-detail-badges">
-                    <span className={`ongoing-badge status-${selectedTask.status}`}>{statusLabel[selectedTask.status]}</span>
-                    <span className={`ongoing-badge priority-${selectedTask.priority}`}>{priorityLabel[selectedTask.priority]}</span>
+                        <span className={`ongoing-badge status-${selectedTask.status}`}>{statusText(selectedTask.status)}</span>
+                        <span className={`ongoing-badge priority-${selectedTask.priority}`}>{priorityText(selectedTask.priority)}</span>
                     <span className="ongoing-pill">{selectedTask.department}</span>
                     <span className="ongoing-pill subtle">{selectedTask.platformArea}</span>
                   </div>
@@ -568,18 +588,18 @@ export default function RoadmapPage() {
 
                 {selectedValidation && !selectedValidation.valid && (
                   <div className="ongoing-detail-section">
-                    <div className="detail-label">Needs triage</div>
-                    <p className="detail-text">{selectedValidation.reason}</p>
-                    <div className="detail-label" style={{ marginTop: 8 }}>Mega-Story</div>
+                    <div className="detail-label">{t('roadmap.triage.needsTriage')}</div>
+                    <p className="detail-text">{t(selectedValidation.reasonKey)}</p>
+                    <div className="detail-label" style={{ marginTop: 8 }}>{t('roadmap.filters.megaStory')}</div>
                     <select value={fixMega} onChange={(e) => { setFixMega(e.target.value); setFixStory('') }}>
-                      <option value="">Select mega-story</option>
+                      <option value="">{t('roadmap.triage.selectMegaStory')}</option>
                       {Object.keys(megaMap).map((id) => (
                         <option key={id} value={id}>{megaLabel(id)}</option>
                       ))}
                     </select>
-                    <div className="detail-label" style={{ marginTop: 8 }}>Story</div>
+                    <div className="detail-label" style={{ marginTop: 8 }}>{t('roadmap.filters.story')}</div>
                     <select value={fixStory} onChange={(e) => setFixStory(e.target.value)} disabled={!fixMega}>
-                      <option value="">Select story</option>
+                      <option value="">{t('roadmap.triage.selectStory')}</option>
                       {triageFixStories.map((s) => (
                         <option key={s.id} value={s.id}>{s.label}</option>
                       ))}
@@ -595,59 +615,59 @@ export default function RoadmapPage() {
                           )))
                         }}
                       >
-                        Save mapping
+                        {t('roadmap.triage.saveMapping')}
                       </button>
                     </div>
                   </div>
                 )}
 
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Objective</div>
+                  <div className="detail-label">{t('roadmap.details.objective')}</div>
                   <p className="detail-text">{selectedTask.objective}</p>
                 </div>
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Next step</div>
+                  <div className="detail-label">{t('roadmap.task.nextStep')}</div>
                   <p className="detail-text">{selectedTask.nextStep}</p>
                 </div>
                 {selectedTask.dependencies?.length > 0 && (
                   <div className="ongoing-detail-section">
-                    <div className="detail-label">Dependencies / blockers</div>
+                    <div className="detail-label">{t('roadmap.details.dependencies')}</div>
                     <p className="detail-text">{selectedTask.dependencies.join(' - ')}
                     </p>
                   </div>
                 )}
                 <div className="ongoing-detail-section">
-                  <div className="detail-label">Created</div>
+                  <div className="detail-label">{t('roadmap.details.created')}</div>
                   <p className="detail-text">{selectedTask.createdAt}</p>
                 </div>
 
                 {selectedTask.status === 'done' && (
                   <div className="ongoing-detail-section">
-                    <div className="detail-label">Impact</div>
-                    <p className="detail-text">{selectedTask.impactType ? `${selectedTask.impactType} - ${selectedTask.impactedDepartment} - ${selectedTask.impactedPlatformArea}` : 'Captured when marked done.'}</p>
-                    {selectedTask.impactedKPI && <p className="detail-text">KPI: {selectedTask.impactedKPI}</p>}
-                    {selectedTask.impactNote && <p className="detail-text">Note: {selectedTask.impactNote}</p>}
-                    {selectedTask.completedAt && <p className="detail-text">Completed on {selectedTask.completedAt}</p>}
+                    <div className="detail-label">{t('roadmap.task.impact')}</div>
+                    <p className="detail-text">{selectedTask.impactType ? `${impactTypeText(selectedTask.impactType)} - ${selectedTask.impactedDepartment} - ${selectedTask.impactedPlatformArea}` : t('roadmap.impact.capturedOnDone')}</p>
+                    {selectedTask.impactedKPI && <p className="detail-text">{t('roadmap.impact.kpi', { kpi: selectedTask.impactedKPI })}</p>}
+                    {selectedTask.impactNote && <p className="detail-text">{t('roadmap.impact.note', { note: selectedTask.impactNote })}</p>}
+                    {selectedTask.completedAt && <p className="detail-text">{t('roadmap.impact.completedOn', { date: selectedTask.completedAt })}</p>}
                   </div>
                 )}
 
                 {selectedTask.status !== 'done' && selectedValidation?.valid && (
                   <div className="ongoing-detail-actions">
-                    <button type="button" className="btn secondary" onClick={handleMarkDone}>Mark as done</button>
+                    <button type="button" className="btn secondary" onClick={handleMarkDone}>{t('roadmap.markDone.button')}</button>
                   </div>
                 )}
                 </div>
               ) : (
                 <div className="ongoing-empty">
-                  <p className="ongoing-label">Details panel</p>
-                  <h3 className="ongoing-feed-title">Select a task to see details.</h3>
+                  <p className="ongoing-label">{t('roadmap.details.panelTitle')}</p>
+                  <h3 className="ongoing-feed-title">{t('roadmap.details.selectTask')}</h3>
                 </div>
               )}
             </aside>
           ) : null}
         </div>
       ) : (
-        <div className="ongoing-empty">Select a mega-story to drill down.</div>
+        <div className="ongoing-empty">{t('roadmap.empty.selectMega')}</div>
       )}
 
       {showImpactModal && (
@@ -655,44 +675,44 @@ export default function RoadmapPage() {
           <div className="modal-card">
             <div className="modal-header">
               <div>
-                <div className="detail-label">Mark as done</div>
+                <div className="detail-label">{t('roadmap.markDone.title')}</div>
                 <h3 style={{ margin: 0 }}>{selectedTask?.title}</h3>
               </div>
-              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>Close</button>
+              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>{t('roadmap.common.close')}</button>
             </div>
 
             <div className="modal-section">
-              <div className="label">Impact type</div>
+              <div className="label">{t('roadmap.markDone.impactType')}</div>
               <select value={impactDraft.impactType} onChange={(e) => setImpactDraft((d) => ({ ...d, impactType: e.target.value }))}>
-                <option value="">Select impact type</option>
-                {impactTypes.map((t) => <option key={t} value={t}>{t}</option>)}
+                <option value="">{t('roadmap.markDone.selectImpactType')}</option>
+                {impactTypes.map((tp) => <option key={tp} value={tp}>{impactTypeText(tp)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted department</div>
+              <div className="label">{t('roadmap.markDone.impactedDepartment')}</div>
               <select value={impactDraft.impactedDepartment} onChange={(e) => setImpactDraft((d) => ({ ...d, impactedDepartment: e.target.value }))}>
-                <option value="">Select department</option>
-                {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                <option value="">{t('roadmap.markDone.selectDepartment')}</option>
+                {departments.map((d) => <option key={d} value={d}>{departmentText(d)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted platform area</div>
+              <div className="label">{t('roadmap.markDone.impactedPlatformArea')}</div>
               <select value={impactDraft.impactedPlatformArea} onChange={(e) => setImpactDraft((d) => ({ ...d, impactedPlatformArea: e.target.value }))}>
-                <option value="">Select area</option>
-                {platformAreas.map((p) => <option key={p} value={p}>{p}</option>)}
+                <option value="">{t('roadmap.markDone.selectArea')}</option>
+                {platformAreas.map((p) => <option key={p} value={p}>{platformAreaText(p)}</option>)}
               </select>
             </div>
             <div className="modal-section">
-              <div className="label">Impacted KPI</div>
+              <div className="label">{t('roadmap.markDone.impactedKpi')}</div>
               <input
                 type="text"
                 value={impactDraft.impactedKPI}
                 onChange={(e) => setImpactDraft((d) => ({ ...d, impactedKPI: e.target.value }))}
-                placeholder="Example: Payout SLA compliance"
+                placeholder={t('roadmap.markDone.kpiPlaceholder')}
               />
             </div>
             <div className="modal-section">
-              <div className="label">Impact note (optional)</div>
+              <div className="label">{t('roadmap.markDone.impactNoteOptional')}</div>
               <textarea
                 rows={3}
                 value={impactDraft.impactNote}
@@ -701,8 +721,8 @@ export default function RoadmapPage() {
             </div>
 
             <div className="ongoing-detail-actions" style={{ marginTop: 6 }}>
-              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>Cancel</button>
-              <button type="button" className="btn" onClick={saveImpact}>Save impact & close</button>
+              <button type="button" className="btn secondary" onClick={() => setShowImpactModal(false)}>{t('roadmap.common.cancel')}</button>
+              <button type="button" className="btn" onClick={saveImpact}>{t('roadmap.markDone.saveAndClose')}</button>
             </div>
           </div>
         </div>
@@ -711,8 +731,8 @@ export default function RoadmapPage() {
       <div className="card" style={{ marginTop: 12 }}>
         <div className="ongoing-feed-header" style={{ cursor: 'pointer' }} onClick={() => setTriageOpen((v) => !v)}>
           <div>
-            <p className="ongoing-label">Needs triage</p>
-            <h3 className="ongoing-feed-title">Mapping fixes required</h3>
+            <p className="ongoing-label">{t('roadmap.triage.needsTriage')}</p>
+            <h3 className="ongoing-feed-title">{t('roadmap.triage.mappingFixesRequired')}</h3>
           </div>
           <div className="ongoing-pill subtle">{triageTasks.length}</div>
         </div>
@@ -729,18 +749,18 @@ export default function RoadmapPage() {
                   <div>
                     <div className="ongoing-card-title">{item.title}</div>
                     <div className="ongoing-card-meta">
-                      <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
+                      <span className={`ongoing-badge priority-${item.priority}`}>{priorityText(item.priority)}</span>
                     </div>
                   </div>
-                  <div className="ongoing-updated">{item.megaStoryId || 'no mega'} - {item.storyId || 'no story'}</div>
+                  <div className="ongoing-updated">{item.megaStoryId || t('roadmap.triage.noMega')} - {item.storyId || t('roadmap.triage.noStory')}</div>
                 </div>
                 <div className="ongoing-line">
-                  <span className="label">Reason</span>
-                  <span className="value">{item.triageReason}</span>
+                  <span className="label">{t('roadmap.triage.reason')}</span>
+                  <span className="value">{t(item.triageReason)}</span>
                 </div>
               </button>
             ))}
-            {triageTasks.length === 0 && <div className="ongoing-empty">No tasks need triage.</div>}
+            {triageTasks.length === 0 && <div className="ongoing-empty">{t('roadmap.triage.noTasks')}</div>}
           </div>
         )}
       </div>

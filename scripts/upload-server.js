@@ -64,6 +64,17 @@ function tryParseSummaryLine(line, current) {
     return next
   }
 
+  // Media sanitizer summary (upsert)
+  // Example:
+  // Existing rows: 123 New added: 45 Updated: 67
+  m = s.match(/Existing rows:\s*(\d+)\s+New added:\s*(\d+)\s+Updated:\s*(\d+)/i)
+  if (m) {
+    next.existing = Number(m[1])
+    next.added = Number(m[2])
+    next.updated = Number(m[3])
+    return next
+  }
+
   // Payments sanitizer summary
   // Example:
   // Wrote merged CSV to public\Payments Report.csv (existing=1, added=2, duplicates=3)

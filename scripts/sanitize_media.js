@@ -203,27 +203,35 @@ function makeKey(row){
   return JSON.stringify(row)
 }
 
-const existingKeySet = new Set()
-existingRows.forEach(r => existingKeySet.add(makeKey(r)))
+const originalExistingCount = existingRows.length
 
-let duplicatesRemoved = 0
-const filteredNew = []
-for (const r of cleanedRows){
+const keyToIndex = new Map()
+existingRows.forEach((r, idx) => keyToIndex.set(makeKey(r), idx))
+
+let updatedCount = 0
+let addedCount = 0
+for (const r of cleanedRows) {
   const k = makeKey(r)
-  if (existingKeySet.has(k)) { duplicatesRemoved++; continue }
-  existingKeySet.add(k)
-  filteredNew.push(r)
+  if (keyToIndex.has(k)) {
+    const idx = keyToIndex.get(k)
+    existingRows[idx] = Object.assign({}, existingRows[idx], r)
+    updatedCount++
+  } else {
+    existingRows.push(r)
+    keyToIndex.set(k, existingRows.length - 1)
+    addedCount++
+  }
 }
 
-const finalRows = existingRows.concat(filteredNew)
+const finalRows = existingRows
 
 // backup existing dest
 if (dryRun){
   console.log('Dry-run summary:')
-  console.log(' Existing rows in dest:', existingRows.length)
+  console.log(' Existing rows in dest:', originalExistingCount)
   console.log(' Parsed incoming rows:', cleanedRows.length)
-  console.log(' Unique new rows to add:', finalRows.length - existingRows.length)
-  console.log(' Duplicates detected and skipped:', duplicatesRemoved)
+  console.log(' New added:', addedCount)
+  console.log(' Updated:', updatedCount)
   if (malformed.length) console.warn('Malformed rows detected:', malformed.length)
   process.exit(0)
 }
@@ -242,7 +250,7 @@ try {
   // backup existing dest (already performed earlier)
   fs.renameSync(tmpDest, dest)
   console.log('Wrote cleaned CSV to', dest)
-  console.log('Existing rows:', existingRows.length, 'New added:', finalRows.length - existingRows.length)
+  console.log('Existing rows:', originalExistingCount, 'New added:', addedCount, 'Updated:', updatedCount)
 } catch (e){
   console.error('Failed to write cleaned CSV atomically:', e && e.message)
   try {

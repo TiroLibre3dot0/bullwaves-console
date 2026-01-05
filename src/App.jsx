@@ -17,8 +17,11 @@ import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import { DataStatusProvider } from './context/DataStatusContext'
 import FullPageLoader from './components/FullPageLoader'
 import UploadReportsPage from './pages/UploadReportsPage'
+import { translate } from './i18n/translations'
+import { useI18n } from './i18n/I18nContext'
 
 export default function App(){
+  const { t } = useI18n()
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
@@ -153,7 +156,8 @@ export default function App(){
       nextView = 'supportUserCheck'
     }
     if (window.__bwUploadInProgress && nextView !== 'upload') {
-      const ok = window.confirm('Upload in progress. Leave this page?')
+      const locale = typeof window !== 'undefined' ? (window.localStorage.getItem('bw-locale') || 'en') : 'en'
+      const ok = window.confirm(translate(locale, 'app.uploadLeaveConfirm'))
       if (!ok) return
     }
     if (nextView === 'admin' && !isAdmin) {
@@ -237,7 +241,7 @@ export default function App(){
                 {view === 'orgChart' && <OrgChart />}
                 {view === 'summary' && <SummaryReport />}
                 {view === 'supportUserCheck' && (
-                  <React.Suspense fallback={<FullPageLoader progress={35} subtitle="Loading support page…" />}>
+                  <React.Suspense fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}>
                     <SupportUserCheck />
                   </React.Suspense>
                 )}

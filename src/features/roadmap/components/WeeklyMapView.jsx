@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../../context/AuthContext'
+import { useI18n } from '../../../i18n/I18nContext'
 import {
   deleteWeeklyTask,
   ensureSeededCurrentWeek,
@@ -13,82 +14,77 @@ import {
   upsertWeeklyTask,
 } from '../utils/weeklyMapStore'
 
-const weeklyStatusColumns = [
-  { id: 'planned', label: 'Planned' },
-  { id: 'in_progress', label: 'In progress' },
-  { id: 'blocked', label: 'Blocked' },
-  { id: 'done', label: 'Done' },
-]
-
 const departments = ['Infrastructure', 'Product', 'Data', 'Compliance', 'UX', 'Partners']
 
-const TASK_CHECKLISTS = {
-  'Prepare Solitics call': {
-    title: 'Prepare Solitics call — Checklist',
-    sections: [
-      {
-        title: 'USE CASES',
-        items: [
-          'What concrete user behaviors are we trying to detect?',
-          'Which retention or churn scenarios matter most right now?',
-        ],
-      },
-      {
-        title: 'DATA & INTEGRATION',
-        items: [
-          'What is the minimum dataset needed to generate value?',
-          'What can be excluded safely?',
-        ],
-      },
-      {
-        title: 'DECISION-MAKING',
-        items: [
-          'What decisions should Solitics actively support?',
-          'What remains internal decision logic?',
-        ],
-      },
-      {
-        title: 'OWNERSHIP & LIMITS',
-        items: [
-          'What Solitics should NOT do?',
-          'How do we measure success after 30 days?',
-        ],
-      },
-    ],
-  },
-  'Prepare call with Stamatis': {
-    title: 'Prepare call with Stamatis — Checklist',
-    sections: [
-      {
-        title: 'PRIORITIES',
-        items: [
-          'What is the single top priority for the next 30–60 days?',
-          'What can explicitly be deprioritized?',
-        ],
-      },
-      {
-        title: 'GOVERNANCE',
-        items: [
-          'Who decides what enters or exits the roadmap?',
-          'What defines success or failure of an initiative?',
-        ],
-      },
-      {
-        title: 'ROLE & AUTONOMY',
-        items: [
-          'Which decisions can be taken autonomously?',
-          'When is escalation required?',
-        ],
-      },
-      {
-        title: 'CLOSURE',
-        items: [
-          'What concrete decisions must be taken in this call?',
-          'What follow-up is required after the call?',
-        ],
-      },
-    ],
-  },
+function getTaskChecklists(t) {
+  return {
+    'Prepare Solitics call': {
+      title: t('weeklyMap.checklists.prepareSolitics.title'),
+      sections: [
+        {
+          title: t('weeklyMap.checklists.common.useCases.title'),
+          items: [
+            t('weeklyMap.checklists.prepareSolitics.useCases.item1'),
+            t('weeklyMap.checklists.prepareSolitics.useCases.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.dataIntegration.title'),
+          items: [
+            t('weeklyMap.checklists.prepareSolitics.data.item1'),
+            t('weeklyMap.checklists.prepareSolitics.data.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.decisionMaking.title'),
+          items: [
+            t('weeklyMap.checklists.prepareSolitics.decisions.item1'),
+            t('weeklyMap.checklists.prepareSolitics.decisions.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.ownershipLimits.title'),
+          items: [
+            t('weeklyMap.checklists.prepareSolitics.ownership.item1'),
+            t('weeklyMap.checklists.prepareSolitics.ownership.item2'),
+          ],
+        },
+      ],
+    },
+    'Prepare call with Stamatis': {
+      title: t('weeklyMap.checklists.prepareStamatis.title'),
+      sections: [
+        {
+          title: t('weeklyMap.checklists.common.priorities.title'),
+          items: [
+            t('weeklyMap.checklists.prepareStamatis.priorities.item1'),
+            t('weeklyMap.checklists.prepareStamatis.priorities.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.governance.title'),
+          items: [
+            t('weeklyMap.checklists.prepareStamatis.governance.item1'),
+            t('weeklyMap.checklists.prepareStamatis.governance.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.roleAutonomy.title'),
+          items: [
+            t('weeklyMap.checklists.prepareStamatis.autonomy.item1'),
+            t('weeklyMap.checklists.prepareStamatis.autonomy.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.closure.title'),
+          items: [
+            t('weeklyMap.checklists.prepareStamatis.closure.item1'),
+            t('weeklyMap.checklists.prepareStamatis.closure.item2'),
+          ],
+        },
+      ],
+    },
+  }
 }
 
 function makeId() {
@@ -96,6 +92,14 @@ function makeId() {
 }
 
 export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) {
+  const { t } = useI18n()
+  const weeklyStatusColumns = useMemo(() => [
+    { id: 'planned', label: t('weeklyMap.columns.planned') },
+    { id: 'in_progress', label: t('weeklyMap.columns.inProgress') },
+    { id: 'blocked', label: t('weeklyMap.columns.blocked') },
+    { id: 'done', label: t('weeklyMap.columns.done') },
+  ], [t])
+  const TASK_CHECKLISTS = useMemo(() => getTaskChecklists(t), [t])
   const currentWeek = useMemo(() => getWeekRange(new Date()), [])
   const { user } = useAuth()
   const currentUserName = user?.name || ''
@@ -262,7 +266,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
   const removeTask = (taskId) => {
     if (readOnly) return
-    const ok = window.confirm('Delete this weekly task?')
+    const ok = window.confirm(t('weeklyMap.confirm.deleteTask'))
     if (!ok) return
     setStore((prev) => {
       const updated = deleteWeeklyTask(prev, selectedBucket.week_start, taskId)
@@ -294,7 +298,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
   const totalTasks = tasksFiltered.length
 
-  const headerTitle = filterMegaStoryId ? 'Weekly Map — filtered by Mega-Story' : 'Weekly Map (All Mega-Stories)'
+  const headerTitle = filterMegaStoryId ? t('weeklyMap.header.filteredTitle') : t('weeklyMap.header.allTitle')
 
   const modalNode = checklistOpen && typeof document !== 'undefined'
     ? createPortal(
@@ -315,10 +319,10 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             <div>
               <div style={{ fontWeight: 800 }}>{checklistData.title}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                Read-only focus mode — use this to prepare decisions.
+                {t('weeklyMap.modal.readOnlyHint')}
               </div>
             </div>
-            <button type="button" className="btn secondary" onClick={() => setChecklistTask(null)}>Close</button>
+            <button type="button" className="btn secondary" onClick={() => setChecklistTask(null)}>{t('common.close')}</button>
           </div>
 
           {checklistData.sections.map((section) => (
@@ -347,24 +351,24 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
           {filterMegaStoryId ? (
             <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>{megaLabel(filterMegaStoryId)}</h3>
           ) : (
-            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>Execution contract for the week</h3>
+            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>{t('weeklyMap.header.executionContract')}</h3>
           )}
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-            Week {selectedBucket.week_start} → {selectedBucket.week_end}
-            {isCurrentWeek ? ' (CURRENT WEEK)' : ''}
-            {selectedBucket.status === 'archived' || !isCurrentWeek ? ' (archived, read-only)' : ''}
+            {t('weeklyMap.header.weekRange', { start: selectedBucket.week_start, end: selectedBucket.week_end })}
+            {isCurrentWeek ? ` ${t('weeklyMap.header.currentWeekBadge')}` : ''}
+            {selectedBucket.status === 'archived' || !isCurrentWeek ? ` ${t('weeklyMap.header.archivedReadOnlyBadge')}` : ''}
           </div>
           <div className="ongoing-counter-pill" style={{ marginTop: 8 }}>
             <span className="pill-dot dot-progress" aria-hidden="true" />
-            <span>Execution commitments</span>
+            <span>{t('weeklyMap.header.executionCommitments')}</span>
             <span className="pill-sep">&middot;</span>
-            <span>{totalTasks} tasks</span>
+            <span>{t('weeklyMap.header.tasksCount', { count: totalTasks })}</span>
           </div>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, color: 'var(--muted)' }}>Week</label>
+            <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.filters.week')}</label>
             <select
               value={selectedWeekStart}
               onChange={(e) => setSelectedWeekStart(e.target.value)}
@@ -372,7 +376,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             >
               {weeks.map((w) => (
                 <option key={w.week_start} value={w.week_start}>
-                  {w.week_start} → {w.week_end}{w.week_start === currentWeek.week_start ? ' (current)' : ''}
+                  {w.week_start} → {w.week_end}{w.week_start === currentWeek.week_start ? ` ${t('weeklyMap.filters.currentBadge')}` : ''}
                 </option>
               ))}
             </select>
@@ -448,24 +452,24 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                               }}
                               style={{ padding: '6px 8px', fontSize: 12 }}
                             >
-                              Delete
+                              {t('common.delete')}
                             </button>
                           ) : null}
                         </div>
                         <div className="roadmap-meta">
                           {!filterMegaStoryId ? (
                             <div>
-                              <span className="label">Mega</span>
+                              <span className="label">{t('weeklyMap.card.mega')}</span>
                               <span className="value"> {megaLabel(t.megaStoryId || megaId)}</span>
                             </div>
                           ) : null}
 
                           <div>
-                            <span className="label">Dept</span>
+                            <span className="label">{t('weeklyMap.card.dept')}</span>
                             <span className="value"> {t.department || '—'}</span>
                           </div>
                           <div>
-                            <span className="label">Story</span>
+                            <span className="label">{t('weeklyMap.card.story')}</span>
                             <span className="value"> {t.storyId ? storyLabel(t.storyId) : '—'}</span>
                           </div>
                         </div>
@@ -475,7 +479,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                       </div>
                     )})}
                     {(byStatus[col.id] || []).length === 0 ? (
-                      <div style={{ color: '#64748b', fontSize: 12 }}>No tasks</div>
+                      <div style={{ color: '#64748b', fontSize: 12 }}>{t('weeklyMap.empty.noTasks')}</div>
                     ) : null}
                   </div>
                 </div>
@@ -489,7 +493,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
       <div style={{ marginTop: 14, opacity: readOnly ? 0.6 : 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-            Add a new commitment (current week only)
+            {t('weeklyMap.actions.addCommitmentHint')}
           </div>
           <button
             type="button"
@@ -498,7 +502,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             disabled={readOnly}
             style={{ padding: '8px 10px', fontSize: 13 }}
           >
-            {showCreate ? 'Hide form' : 'Add commitment'}
+            {showCreate ? t('weeklyMap.actions.hideForm') : t('weeklyMap.actions.addCommitment')}
           </button>
         </div>
 
@@ -507,14 +511,14 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 0.9fr', gap: 8, alignItems: 'end' }}>
               {!filterMegaStoryId ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 11, color: 'var(--muted)' }}>Mega-Story</label>
+                  <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.megaStory')}</label>
                   <select
                     value={draft.megaStoryId}
                     onChange={(e) => setDraft((d) => ({ ...d, megaStoryId: e.target.value }))}
                     disabled={readOnly}
                     style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
                   >
-                    <option value="">Select…</option>
+                    <option value="">{t('common.selectEllipsis')}</option>
                     {megaOptions.map((m) => (
                       <option key={m.id} value={m.id}>{m.label}</option>
                     ))}
@@ -523,18 +527,18 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
               ) : null}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Title</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.title')}</label>
                 <input
                   value={draft.title}
                   onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
-                  placeholder="Weekly task title"
+                  placeholder={t('weeklyMap.placeholders.weeklyTaskTitle')}
                   disabled={readOnly}
                   style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
                 />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Story (optional)</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.storyOptional')}</label>
                 <select
                   value={draft.storyId}
                   onChange={(e) => setDraft((d) => ({ ...d, storyId: e.target.value }))}
@@ -549,45 +553,45 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Department</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.department')}</label>
                 <select
                   value={draft.department}
                   onChange={(e) => setDraft((d) => ({ ...d, department: e.target.value }))}
                   disabled={readOnly}
                   style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
                 >
-                  {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                  {departments.map((d) => <option key={d} value={d}>{t(`departments.${d}`)}</option>)}
                 </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Owner</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.owner')}</label>
                 <input
                   value={draft.owner}
                   onChange={(e) => setDraft((d) => ({ ...d, owner: e.target.value }))}
-                  placeholder="Owner"
+                  placeholder={t('weeklyMap.placeholders.owner')}
                   disabled={readOnly}
                   style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
                 />
               </div>
 
               <button type="button" className="btn" onClick={createTask} disabled={readOnly} style={{ height: 38 }}>
-                Save
+                {t('common.save')}
               </button>
             </div>
 
             <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Expected impact (mandatory)</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.expectedImpactMandatory')}</label>
                 <input
                   value={draft.expectedImpact}
                   onChange={(e) => setDraft((d) => ({ ...d, expectedImpact: e.target.value }))}
-                  placeholder="Why it matters this week"
+                  placeholder={t('weeklyMap.placeholders.expectedImpact')}
                   disabled={readOnly}
                   style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
                 />
                 <div style={{ fontSize: 11, color: 'var(--muted)' }}>
-                  Without Expected impact, the task can’t be saved.
+                  {t('weeklyMap.validation.expectedImpactRequired')}
                 </div>
               </div>
             </div>

@@ -5,6 +5,7 @@ import FilterBar from './common/FilterBar';
 import KpiCard from './common/KpiCard';
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercentRounded, cleanNumber } from '../lib/formatters';
 import { parseCsv } from '../lib/csv';
+import { useI18n } from '../i18n/I18nContext';
 
 const monthsNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const formatNumberFull = (value) => formatNumber(value);
@@ -20,6 +21,7 @@ function parseMonth(date) {
 }
 
 export default function InvestmentsDashboard() {
+  const { t } = useI18n();
   const [rows, setRows] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedAffiliate, setSelectedAffiliate] = useState('all');
@@ -163,7 +165,7 @@ export default function InvestmentsDashboard() {
     <div className="w-full space-y-4">
       <CardSection
         title="Investments / Marketing"
-        subtitle="Commissioni da commissions.csv filtrabili per mese e affiliato."
+        subtitle={t('investmentsLegacy.subtitle.commissionsFilter')}
         sticky
         stickyTop={12}
         actions={(

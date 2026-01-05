@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { sections } from '../pages/orgChartData'
 import { trackEvent } from '../services/trackingService'
+import { translate } from '../i18n/translations'
 
 const AuthContext = createContext({ user: null, allowlist: [], loginWithEmail: () => ({ success: false }), logout: () => {} })
 const STORAGE_KEY = 'bw-auth-user'
@@ -69,7 +70,10 @@ export function AuthProvider({ children }) {
     if (!normalized) return { success: false, message: 'Please enter an email.' }
 
     const match = allowlist.find((entry) => entry.email.toLowerCase() === normalized)
-    if (!match) return { success: false, message: 'Email not found in the allowlist (Management + Finance).' }
+    if (!match) {
+      const locale = typeof window !== 'undefined' ? (window.localStorage.getItem('bw-locale') || 'en') : 'en'
+      return { success: false, message: translate(locale, 'auth.emailNotAllowlisted') }
+    }
 
     setUser(match)
     trackEvent({ type: 'LOGIN', userEmail: match.email, userName: match.name, userRole: match.title || match.department })

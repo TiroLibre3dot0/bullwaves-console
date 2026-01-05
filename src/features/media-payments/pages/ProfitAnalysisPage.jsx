@@ -8,6 +8,7 @@ import ProfitRatioScatter from '../../../components/profit/ProfitRatioScatter'
 import RegistrationBarChart from '../../../components/profit/RegistrationBarChart'
 import PnLTrendChart from '../../../components/PnLTrendChart'
 import { useMediaReport } from '../hooks/useMediaPaymentsData'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const formatter = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const formatNumberShort = (value) => {
@@ -32,10 +33,11 @@ const iso3FromName = (name) => {
 }
 
 export default function ProfitAnalysisPage() {
+  const { t } = useI18n()
   const { data: mediaRows, loading } = useMediaReport()
 
   if (loading) {
-    return <FullPageLoader progress={35} subtitle="Loading media report…" />
+    return <FullPageLoader progress={35} subtitle={t('mediaPayments.profitAnalysis.loader.mediaReport')} />
   }
   const [selectedYear, setSelectedYear] = useState('all')
   const [scatterEntity, setScatterEntity] = useState('affiliate')

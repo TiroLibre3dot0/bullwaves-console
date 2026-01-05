@@ -4,6 +4,7 @@ import { formatEuro } from '../../../lib/formatters';
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import FullPageLoader from '../../../components/FullPageLoader'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const card = { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#f1f5f9', border: '1px solid #334155', borderRadius: 12, padding: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', margin: 12 };
 
@@ -16,6 +17,7 @@ function monthLabel(m) {
 }
 
 export default function AffiliatePayments2() {
+  const { t } = useI18n();
   const { loading, error, map, reload, getAffiliate } = useAffiliatePayments();
   const [selected, setSelected] = useState(null);
   const [detail, setDetail] = useState(null);
@@ -374,7 +376,7 @@ export default function AffiliatePayments2() {
             {selectedRec ? 'Monthly breakdown' : 'Overall Monthly Breakdown'}
           </h4>
           {!map && (
-            <FullPageLoader minHeight={260} progress={55} subtitle="Loading payments data…" />
+            <FullPageLoader minHeight={260} progress={55} subtitle={t('affiliatePayments2.loader.data')} />
           )}
           {map && Object.keys(filteredMonths).length === 0 && (
             <div style={{ color: '#64748b' }}>No data available.</div>

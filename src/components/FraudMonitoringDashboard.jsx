@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react'
 import Papa from 'papaparse'
 import FullPageLoader from './FullPageLoader'
+import { useI18n } from '../i18n/I18nContext'
 
 // New, cleaner Fraud Monitoring Dashboard
 export default function FraudMonitoringDashboard() {
+  const { t } = useI18n()
   const [cases, setCases] = useState([])
   const [loading, setLoading] = useState(true)
   const [query, setQuery] = useState('')
@@ -1227,7 +1229,7 @@ export default function FraudMonitoringDashboard() {
     return (
       <div style={{ overflowX: 'auto', padding: 6, position: 'relative' }}>
         <div style={{ display: 'block' }}>
-          <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block' }} role="img" aria-label="Platform growth cumulative chart" onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+          <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block' }} role="img" aria-label={t('fraud.chart.aria.platformGrowthCumulative')} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
           {/* subtle horizontal guides for left axis only */}
           {Array.from({ length: 4 }).map((_, i) => {
             const v = Math.round(i * (topLeft / 3))
@@ -1526,7 +1528,7 @@ export default function FraudMonitoringDashboard() {
     return (
       <FullPageLoader
         progress={initialProgress}
-        subtitle="Loading dashboard data…"
+        subtitle={t('fraud.loader.dashboardData')}
         colors={{ surface: palette.surface, muted: palette.muted, accent: palette.info, barBg: 'rgba(255,255,255,0.08)' }}
       />
     )
@@ -1841,7 +1843,7 @@ export default function FraudMonitoringDashboard() {
               <FullPageLoader
                 minHeight={220}
                 progress={60}
-                subtitle="Loading commissions…"
+                subtitle={t('fraud.loader.commissions')}
                 colors={{ surface: palette.card, muted: palette.muted, accent: palette.info, barBg: 'rgba(255,255,255,0.08)' }}
               />
             )}
@@ -1852,20 +1854,20 @@ export default function FraudMonitoringDashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 12 }}>
         <div />
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name / affiliate / text" style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: '#cbd5e1' }} />
+          <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={t('fraud.filters.search.placeholder')} style={{ padding: '8px 10px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: '#cbd5e1' }} />
           <select value={severity} onChange={e=>setSeverity(e.target.value)} style={{ padding: '8px', borderRadius: 8, background: palette.card, color: '#fff' }}>
-            <option value="ALL">All severities</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="HIGH">High</option>
-            <option value="MEDIUM">Medium</option>
-            <option value="LOW">Low</option>
+            <option value="ALL">{t('fraud.filters.severity.all')}</option>
+            <option value="CRITICAL">{t('fraud.filters.severity.critical')}</option>
+            <option value="HIGH">{t('fraud.filters.severity.high')}</option>
+            <option value="MEDIUM">{t('fraud.filters.severity.medium')}</option>
+            <option value="LOW">{t('fraud.filters.severity.low')}</option>
           </select>
-          <input value={affiliateFilter} onChange={e=>setAffiliateFilter(e.target.value)} placeholder="Affiliate id" style={{ padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: '#cbd5e1' }} />
+          <input value={affiliateFilter} onChange={e=>setAffiliateFilter(e.target.value)} placeholder={t('fraud.filters.affiliateId.placeholder')} style={{ padding: '8px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)', background: 'transparent', color: '#cbd5e1' }} />
           <label style={{ display:'flex', alignItems:'center', gap:6 }}>
-            <input type="checkbox" checked={useNameGroups} onChange={e=>setUseNameGroups(e.target.checked)} /> Use name+country groups
+            <input type="checkbox" checked={useNameGroups} onChange={e=>setUseNameGroups(e.target.checked)} /> {t('fraud.filters.useNameCountryGroups')}
           </label>
           <label style={{ display:'flex', alignItems:'center', gap:6 }}>
-            Min count
+            {t('fraud.filters.minCount')}
             <input type="number" value={groupMinCount} onChange={e=>setGroupMinCount(Number(e.target.value||0))} style={{ width:80, padding:'6px', borderRadius:6, background:palette.card, color:'#fff' }} />
           </label>
         </div>

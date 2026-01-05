@@ -2,12 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { formatEuro, formatNumber, formatNumberShort, formatPercent } from '../../../lib/formatters'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
 import FullPageLoader from '../../../components/FullPageLoader'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
 const formatNumberFull = (value) => formatNumber(value)
 const formatter = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
 export default function Report() {
+  const { t } = useI18n()
   const { mediaRows, payments, loading, monthOptions } = useMediaPaymentsData()
   const [mode, setMode] = useState('global') // global | annual | monthly
   const [selectedMonth, setSelectedMonth] = useState('')
@@ -145,7 +147,7 @@ export default function Report() {
       : selectedMonth ? `Mensile ${availableMonths.find((m) => m.key === selectedMonth)?.label || ''}` : 'Mensile'
 
   if (loading) {
-    return <FullPageLoader progress={45} subtitle="Loading report data…" />
+    return <FullPageLoader progress={45} subtitle={t('mediaPayments.report.loader.data')} />
   }
 
   return (

@@ -10,21 +10,37 @@ import { useMediaPaymentsData } from '../../media-payments/hooks/useMediaPayment
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
+import { useI18n } from '../../../i18n/I18nContext'
 
 const selectStyle = { minWidth: 180, background: '#0d1a2c', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px' }
 const formatNumberFull = (value) => formatNumber(value)
 const DEFAULT_NEGOTIATED_CPA = 400
 const CPA_STORAGE_KEY = 'affiliate-cpa-overrides'
 const FINANCE_CONFIRMED_KEY = 'affiliate-finance-confirmed'
-const monthLabel = (m) => {
+const toIntlLocale = (locale) => {
+  if (locale === 'it') return 'it-IT'
+  if (locale === 'sr') return 'sr-RS'
+  return 'en-US'
+}
+
+const monthLabel = (locale, m) => {
   const parts = (m || '').split('-')
   if (parts.length < 2) return m
-  const idx = Number(parts[1]) - 1
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  return `${names[idx] || m} ${parts[0]}`
+
+  const year = Number(parts[0])
+  const monthIdx = Number(parts[1]) - 1
+  if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0 || monthIdx > 11) return m
+
+  try {
+    const date = new Date(year, monthIdx, 1)
+    return new Intl.DateTimeFormat(toIntlLocale(locale), { month: 'short', year: 'numeric' }).format(date)
+  } catch {
+    return m
+  }
 }
 
 export default function InvestmentsDashboard() {
+  const { t, locale } = useI18n()
   const { payments, mediaRows, loading } = useMediaPaymentsData()
   const [selectedYear, setSelectedYear] = useState('all')
   const [selectedMonth, setSelectedMonth] = useState('all')
@@ -53,14 +69,14 @@ export default function InvestmentsDashboard() {
       const monthIdx = Number(row.monthIndex)
       if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0) return
       const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
-      map.set(key, monthLabel(key))
+      map.set(key, monthLabel(locale, key))
     }
     mediaRows.forEach(add)
     payments.forEach(add)
     return Array.from(map.entries())
       .map(([value, label]) => ({ value, label }))
       .sort((a, b) => a.value.localeCompare(b.value))
-  }, [mediaRows, payments, selectedYear])
+  }, [mediaRows, payments, selectedYear, locale])
 
   const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
   const setAffiliateCpa = (affiliateId, value) => {
@@ -127,15 +143,15 @@ export default function InvestmentsDashboard() {
   }
 
   if (loading) {
-    return <FullPageLoader progress={45} subtitle="Loading investments data…" />
+    return <FullPageLoader progress={45} subtitle={t('investments.loader.data')} />
   }
 
   return (
     <div className="w-full space-y-4">
       <div style={{ position: 'sticky', top: 0, zIndex: 40, paddingTop: 4, marginTop: -4, background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))', backdropFilter: 'blur(8px)' }}>
         <CardSection
-          title="Affiliate Payments – Affiliate Payout Ledger"
-          subtitle="End-of-month affiliate costs based on Qualified FTD, CPA and ROI."
+          title={t('investments.header.title')}
+          subtitle={t('investments.header.subtitle')}
           actions={(
             <FilterBar>
             <YearSelector
@@ -147,20 +163,20 @@ export default function InvestmentsDashboard() {
               }}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Month</span>
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('investments.filters.month')}</span>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 style={{ ...selectStyle, minWidth: 160 }}
               >
-                <option value="all">All months</option>
+                <option value="all">{t('investments.filters.allMonths')}</option>
                 {monthOptions.map((m) => (
                   <option key={m.value} value={m.value}>{m.label}</option>
                 ))}
               </select>
             </div>
             <span style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)', padding: '4px 8px', borderRadius: 999, fontSize: 12, color: '#cbd5e1' }}>
-              {ledger.ledger.length} monthly rows
+              {t('investments.badge.monthlyRows', { count: ledger.ledger.length })}
             </span>
             </FilterBar>
           )}
@@ -169,22 +185,22 @@ export default function InvestmentsDashboard() {
 
       <>
         <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-          <KpiCard label="Total QFTD" value={formatNumberShort(ledger.totals.totalQftd)} helper={formatNumberFull(ledger.totals.totalQftd)} />
-          <KpiCard label="Avg CPA" value={formatEuro(ledger.totals.avgCpa)} helper={formatEuroFull(ledger.totals.avgCpa)} />
-          <KpiCard label="Total commissions" value={formatEuro(ledger.totals.totalCommission)} helper={formatEuroFull(ledger.totals.totalCommission)} />
-          <KpiCard label="Commission payable" value={formatEuro(ledger.totals.totalMarketingPayable)} helper={formatEuroFull(ledger.totals.totalMarketingPayable)} tone="#22c55e" />
-          <KpiCard label="Commissions deferred" value={formatEuro(ledger.totals.totalMarketingDeferred)} helper={formatEuroFull(ledger.totals.totalMarketingDeferred)} tone="#f97316" />
-          <KpiCard label="ROI" value={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} helper={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} />
-          <KpiCard label="Paid" value={formatEuro(ledger.totals.totalPaid)} helper={formatEuroFull(ledger.totals.totalPaid)} tone="#38bdf8" />
+          <KpiCard label={t('investments.kpi.totalQftd')} value={formatNumberShort(ledger.totals.totalQftd)} helper={formatNumberFull(ledger.totals.totalQftd)} />
+          <KpiCard label={t('investments.kpi.avgCpa')} value={formatEuro(ledger.totals.avgCpa)} helper={formatEuroFull(ledger.totals.avgCpa)} />
+          <KpiCard label={t('investments.kpi.totalCommissions')} value={formatEuro(ledger.totals.totalCommission)} helper={formatEuroFull(ledger.totals.totalCommission)} />
+          <KpiCard label={t('investments.kpi.commissionPayable')} value={formatEuro(ledger.totals.totalMarketingPayable)} helper={formatEuroFull(ledger.totals.totalMarketingPayable)} tone="#22c55e" />
+          <KpiCard label={t('investments.kpi.commissionsDeferred')} value={formatEuro(ledger.totals.totalMarketingDeferred)} helper={formatEuroFull(ledger.totals.totalMarketingDeferred)} tone="#f97316" />
+          <KpiCard label={t('investments.kpi.roi')} value={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} helper={formatNumber(ledger.totals.totalRoi, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} />
+          <KpiCard label={t('investments.kpi.paid')} value={formatEuro(ledger.totals.totalPaid)} helper={formatEuroFull(ledger.totals.totalPaid)} tone="#38bdf8" />
         </div>
 
         <div className="card card-global" style={{ minWidth: 320 }}>
-          <h3 style={{ marginBottom: 8 }}>Payout timeline</h3>
+          <h3 style={{ marginBottom: 8 }}>{t('investments.section.payoutTimeline')}</h3>
           <div style={{ height: 260 }}>
             <PnLTrendChart
               labels={ledger.timelineSeries.map((m) => m.label)}
               series={[
-                { label: 'Paid', data: ledger.timelineSeries.map((m) => m.paid), color: '#f97316' },
+                { label: t('investments.kpi.paid'), data: ledger.timelineSeries.map((m) => m.paid), color: '#f97316' },
               ]}
               formatValue={formatNumberShort}
             />
@@ -193,33 +209,33 @@ export default function InvestmentsDashboard() {
 
         <div className="card card-global">
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <h3 style={{ marginBottom: 0, flex: 1 }}>Affiliate payout summary</h3>
+            <h3 style={{ marginBottom: 0, flex: 1 }}>{t('investments.section.affiliatePayoutSummary')}</h3>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
-              placeholder="Search affiliate"
-              aria-label="Search affiliate"
+              placeholder={t('investments.search.placeholder')}
+              aria-label={t('investments.search.aria')}
             />
           </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                   <tr>
-                    <th style={{ textAlign: 'left' }}>Affiliate</th>
-                    <th style={{ textAlign: 'right' }}>CPA</th>
-                    <th style={{ textAlign: 'right' }}>Total QFTD</th>
-                    <th style={{ textAlign: 'right' }} title="Paid amounts within current filters">Paid (filtered)</th>
-                    <th style={{ textAlign: 'right' }}>PL</th>
-                    <th style={{ textAlign: 'right' }}>Current month comm.</th>
-                    <th style={{ textAlign: 'center' }}>Finance confirmed</th>
-                    <th style={{ textAlign: 'left' }}>Last month</th>
-                    <th style={{ textAlign: 'left' }}>Details</th>
+                    <th style={{ textAlign: 'left' }}>{t('investments.table.header.affiliate')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('investments.table.header.cpa')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('investments.table.header.totalQftd')}</th>
+                    <th style={{ textAlign: 'right' }} title={t('investments.table.title.paidFiltered')}>{t('investments.table.header.paidFiltered')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('investments.table.header.pl')}</th>
+                    <th style={{ textAlign: 'right' }}>{t('investments.table.header.currentMonthCommission')}</th>
+                    <th style={{ textAlign: 'center' }}>{t('investments.table.header.financeConfirmed')}</th>
+                    <th style={{ textAlign: 'left' }}>{t('investments.table.header.lastMonth')}</th>
+                    <th style={{ textAlign: 'left' }}>{t('investments.table.header.details')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 600 }}>
-                    <td>Totals (filters)</td>
+                    <td>{t('investments.table.row.totals')}</td>
                     <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
                     <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(ledger.totals.totalQftd)}>{formatNumberShort(ledger.totals.totalQftd)}</td>
                     <td style={{ textAlign: 'right', color: '#38bdf8' }} className="num" title={formatEuroFull(ledger.totals.totalPaid)}>{formatEuro(ledger.totals.totalPaid)}</td>
@@ -241,7 +257,7 @@ export default function InvestmentsDashboard() {
                             onChange={(e) => setAffiliateCpa(a.affiliateId, e.target.value)}
                             placeholder={`${formatEuroFull(DEFAULT_NEGOTIATED_CPA)}`}
                             style={{ width: 90, background: 'rgba(255,255,255,0.04)', color: '#e2e8f0', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 6, padding: '4px 6px' }}
-                            title="Override CPA for this affiliate"
+                            title={t('investments.input.title.overrideCpa')}
                           />
                         </td>
                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(a.totalQftd)}>{formatNumberShort(a.totalQftd)}</td>
@@ -253,13 +269,13 @@ export default function InvestmentsDashboard() {
                             type="checkbox"
                             checked={!!financeConfirmed[a.affiliateId]}
                             onChange={() => toggleFinanceConfirmed(a.affiliateId)}
-                            title="Mark as confirmed by finance"
+                            title={t('investments.checkbox.title.financeConfirmed')}
                           />
                         </td>
-                        <td>{a.lastMonth ? monthLabel(a.lastMonth) : '—'}</td>
+                        <td>{a.lastMonth ? monthLabel(locale, a.lastMonth) : '—'}</td>
                         <td>
                           <button className="btn" onClick={() => toggleExpand(a.affiliateId)}>
-                            {expanded === a.affiliateId ? 'Hide' : 'Details'}
+                            {expanded === a.affiliateId ? t('common.hide') : t('investments.button.details')}
                           </button>
                         </td>
                       </tr>
@@ -270,22 +286,22 @@ export default function InvestmentsDashboard() {
                               <table className="table" style={{ width: '100%' }}>
                                 <thead>
                                   <tr>
-                                    <th style={{ textAlign: 'left' }}>Month</th>
-                                    <th style={{ textAlign: 'right' }}>Reg</th>
-                                    <th style={{ textAlign: 'right' }}>FTD</th>
-                                    <th style={{ textAlign: 'right' }}>QFTD</th>
-                                    <th style={{ textAlign: 'right' }}>Net Deposits</th>
-                                    <th style={{ textAlign: 'right' }}>Commissions</th>
-                                    <th style={{ textAlign: 'right' }}>PL</th>
-                                    <th style={{ textAlign: 'right' }} title="ROI = Net Deposits / Commission">ROI</th>
-                                    <th style={{ textAlign: 'right' }}>CPA</th>
-                                    <th style={{ textAlign: 'right' }} title="Expected = commission from Media Report">Comm expected</th>
-                                    <th style={{ textAlign: 'right' }} title="Actual uses ROI guardrail: if ROI >= 1.5 use expected, else Net Deposits / 1.5">Comm actual</th>
-                                    <th style={{ textAlign: 'right' }} title="Payable = min(expected, actual)">Comm payable</th>
-                                    <th style={{ textAlign: 'right' }} title="Deferred = expected − payable">Comm deferred</th>
-                                    <th style={{ textAlign: 'right' }}>Paid</th>
-                                    <th style={{ textAlign: 'left' }}>Payment date</th>
-                                    <th style={{ textAlign: 'left' }}>Details</th>
+                                    <th style={{ textAlign: 'left' }}>{t('investments.details.header.month')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.reg')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.ftd')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.qftd')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.netDeposits')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.commissions')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.pl')}</th>
+                                    <th style={{ textAlign: 'right' }} title={t('investments.details.title.roiFormula')}>{t('investments.details.header.roi')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.cpa')}</th>
+                                    <th style={{ textAlign: 'right' }} title={t('investments.details.title.commExpected')}>{t('investments.details.header.commExpected')}</th>
+                                    <th style={{ textAlign: 'right' }} title={t('investments.details.title.commActual')}>{t('investments.details.header.commActual')}</th>
+                                    <th style={{ textAlign: 'right' }} title={t('investments.details.title.commPayable')}>{t('investments.details.header.commPayable')}</th>
+                                    <th style={{ textAlign: 'right' }} title={t('investments.details.title.commDeferred')}>{t('investments.details.header.commDeferred')}</th>
+                                    <th style={{ textAlign: 'right' }}>{t('investments.details.header.paid')}</th>
+                                    <th style={{ textAlign: 'left' }}>{t('investments.details.header.paymentDate')}</th>
+                                    <th style={{ textAlign: 'left' }}>{t('investments.details.header.details')}</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -294,7 +310,7 @@ export default function InvestmentsDashboard() {
                                     .sort((x, y) => (y.year - x.year) || (y.monthIndex - x.monthIndex))
                                     .map((r) => (
                                       <tr key={`${r.month}-${r.affiliateId}`}>
-                                        <td>{monthLabel(r.month)}</td>
+                                        <td>{monthLabel(locale, r.month)}</td>
                                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.registrations)}>{formatNumberShort(r.registrations)}</td>
                                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.ftd)}>{formatNumberShort(r.ftd)}</td>
                                         <td style={{ textAlign: 'right' }} className="num" title={formatNumberFull(r.qftd)}>{formatNumberShort(r.qftd)}</td>
@@ -318,7 +334,7 @@ export default function InvestmentsDashboard() {
                                       </tr>
                                     ))}
                                   {!ledger.ledger.some((r) => r.affiliateId === a.affiliateId) && (
-                                    <tr><td colSpan={16} style={{ textAlign: 'center', color: '#94a3b8' }}>No monthly rows.</td></tr>
+                                    <tr><td colSpan={16} style={{ textAlign: 'center', color: '#94a3b8' }}>{t('investments.details.empty.noMonthlyRows')}</td></tr>
                                   )}
                                 </tbody>
                               </table>
@@ -329,7 +345,7 @@ export default function InvestmentsDashboard() {
                     </React.Fragment>
                   ))}
                   {!ledger.affiliateSummaries.length && (
-                    <tr><td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>No affiliates for current filters.</td></tr>
+                    <tr><td colSpan={7} style={{ textAlign: 'center', color: '#94a3b8' }}>{t('investments.table.empty.noAffiliates')}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -340,7 +356,9 @@ export default function InvestmentsDashboard() {
                     onClick={() => setShowAllAffiliates((prev) => !prev)}
                     style={{ padding: '8px 14px' }}
                   >
-                    {showAllAffiliates ? 'Show top 10' : `Show all (${ledger.affiliateSummaries.length})`}
+                    {showAllAffiliates
+                      ? t('investments.button.showTop10')
+                      : t('investments.button.showAll', { count: ledger.affiliateSummaries.length })}
                   </button>
                 </div>
               )}

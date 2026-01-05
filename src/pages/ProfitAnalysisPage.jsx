@@ -8,6 +8,7 @@ import RegistrationBarChart, { MetricBarChart } from '../components/profit/Regis
 import FullPageLoader from '../components/FullPageLoader'
 import { checkDataStatus } from '../utils/dataStatusChecker'
 import { useDataStatus } from '../context/DataStatusContext'
+import { useI18n } from '../i18n/I18nContext'
 
 const formatter = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -107,6 +108,7 @@ function regionToSegment(region) {
 }
 
 export default function ProfitAnalysisPage() {
+  const { t } = useI18n()
   const [mediaRows, setMediaRows] = useState([])
   const [paymentsRows, setPaymentsRows] = useState([])
   const [loading, setLoading] = useState(true)
@@ -375,7 +377,7 @@ export default function ProfitAnalysisPage() {
   }, [filteredRows, scatterEntity, countryData])
 
   if (loading) {
-    return <FullPageLoader progress={35} subtitle="Loading media report…" />
+    return <FullPageLoader progress={35} subtitle={t('profitAnalysis.loader.mediaReport')} />
   }
 
   return (

@@ -5,6 +5,7 @@ import CohortDecayView from './CohortDecayView';
 import FullPageLoader from './FullPageLoader';
 import { checkDataStatus } from '../utils/dataStatusChecker';
 import { useDataStatus } from '../context/DataStatusContext';
+import { useI18n } from '../i18n/I18nContext';
 
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const inputMetrics = ['Users','Churn %','Net deposits','Commissions paid','Marketing spend'];
@@ -144,11 +145,11 @@ const aggregateMetrics = (rows = []) => {
 const classifyCohortHealth = (stats) => {
   if (!stats) {
     return {
-      flag: 'NO DATA',
+      flag: 'NO_DATA',
       tone: '#cbd5e1',
-      why: 'No cohort data available for this selection.',
-      meaning: 'There is not enough data to assess cohort health.',
-      nextCheck: 'Wait for more months of activity and re-check M1/M3 retained value.',
+      whyKey: 'dashboard.cohortHealth.why.noData',
+      meaningKey: 'dashboard.cohortHealth.meaning.noData',
+      nextCheckKey: 'dashboard.cohortHealth.nextCheck.noData',
       valueConcentration: null,
     };
   }
@@ -166,24 +167,24 @@ const classifyCohortHealth = (stats) => {
   const tone = flag === 'GREEN' ? '#34d399' : flag === 'ORANGE' ? '#fbbf24' : '#f87171';
 
   const why = (() => {
-    if (flag === 'GREEN') return 'Value stays strong beyond Month 0.';
-    if (early !== null && early !== undefined && early >= 60) return 'Most value is generated in Month 0.';
-    if (r1 !== null && r1 !== undefined && r1 < 25) return 'Value drops sharply after Month 0.';
-    if (r3 !== null && r3 !== undefined && r3 < 20) return 'Value fades quickly by Month 3.';
-    return 'Value declines after Month 0.';
+    if (flag === 'GREEN') return 'dashboard.cohortHealth.why.green';
+    if (early !== null && early !== undefined && early >= 60) return 'dashboard.cohortHealth.why.early';
+    if (r1 !== null && r1 !== undefined && r1 < 25) return 'dashboard.cohortHealth.why.r1Low';
+    if (r3 !== null && r3 !== undefined && r3 < 20) return 'dashboard.cohortHealth.why.r3Low';
+    return 'dashboard.cohortHealth.why.default';
   })();
 
   const meaning = (() => {
-    if (flag === 'GREEN') return 'Recurring activity sustains value across multiple months.';
-    if (flag === 'ORANGE') return 'Some repeat activity exists, but it weakens over time.';
-    return 'Business depends heavily on first-month activity and weak repeat usage.';
+    if (flag === 'GREEN') return 'dashboard.cohortHealth.meaning.green';
+    if (flag === 'ORANGE') return 'dashboard.cohortHealth.meaning.orange';
+    return 'dashboard.cohortHealth.meaning.red';
   })();
 
-  const nextCheck = 'After retention actions, focus on improving M1 and M3 retained value.';
+  const nextCheck = 'dashboard.cohortHealth.nextCheck.default';
 
   const valueConcentration = early === null || early === undefined ? null : early;
 
-  return { flag, tone, why, meaning, nextCheck, valueConcentration };
+  return { flag, tone, whyKey: why, meaningKey: meaning, nextCheckKey: nextCheck, valueConcentration };
 };
 
 const matchCohortSelection = (monthIndex, selection) => {
@@ -212,6 +213,8 @@ const getSelectionStart = (selection) => {
 };
 
 export default function Dashboard() {
+  const { t } = useI18n();
+
   const emptyMonthlyData = () => {
     const base = {};
     inputMetrics.forEach((m) => {
@@ -479,7 +482,7 @@ export default function Dashboard() {
 
     if (!parsed.length) return { rows: [], labels: [], startAbs: 0, years: [] };
 
-    const labels = Array.from({ length: maxMonths || 12 }).map((_, idx) => `Month ${idx}`);
+    const labels = Array.from({ length: maxMonths || 12 }).map((_, idx) => t('dashboard.monthLabel', { index: idx }));
     const years = Array.from(new Set(parsed.map((r) => r.cohortYear))).sort((a, b) => a - b);
 
     return { rows: parsed, labels, startAbs: 0, years };
@@ -527,9 +530,9 @@ export default function Dashboard() {
         retainedM6: agg?.retainedM6,
         halfLife: agg?.halfLife,
         lifetime: agg?.lifetime,
-        why: flag.why,
-        meaning: flag.meaning,
-        nextCheck: flag.nextCheck,
+        whyKey: flag.whyKey,
+        meaningKey: flag.meaningKey,
+        nextCheckKey: flag.nextCheckKey,
         valueConcentration: flag.valueConcentration,
       },
     };
@@ -1568,7 +1571,7 @@ export default function Dashboard() {
   const initialProgress = ((Number(cohortDbLoaded) + Number(balanceLoaded) + Number(mediaReportLoaded) + Number(plCohortLoaded) + Number(commissionsLoaded)) / 5) * 100;
 
   if (!initialReady) {
-    return <FullPageLoader progress={initialProgress} subtitle="Loading cohort dashboard…" />;
+    return <FullPageLoader progress={initialProgress} subtitle={t('dashboard.loader.cohort')} />;
   }
 
   return (
@@ -1577,44 +1580,44 @@ export default function Dashboard() {
       <section className="card w-full">
         <div className="flex justify-between items-start gap-4 flex-wrap">
           <div>
-            <h2 className="text-base font-semibold text-slate-200 m-0">Cohort financial pulse</h2>
-            <p className="text-xs text-slate-400 m-0">{retainedMetricLabel} (%) shows how much Month 0 {cohortMetricLabel.toLowerCase()} remains over time.</p>
+            <h2 className="text-base font-semibold text-slate-200 m-0">{t('dashboard.pulse.title')}</h2>
+            <p className="text-xs text-slate-400 m-0">{t('dashboard.pulse.subtitle', { retainedMetricLabel, cohortMetric: cohortMetricLabel.toLowerCase() })}</p>
           </div>
           <div className="flex gap-3 flex-wrap items-end">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Metric</span>
+              <span className="text-xs text-slate-400">{t('dashboard.pulse.filter.metricLabel')}</span>
               <select
                 value={cohortAnalysisMetric}
                 onChange={(e) => setCohortAnalysisMetric(e.target.value)}
                 className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[160px]"
               >
-                <option value="netDeposits">Net deposits</option>
-                <option value="deposits">Deposits</option>
-                <option value="depositsCount">Number of deposits</option>
-                <option value="withdrawals">Withdrawals</option>
+                <option value="netDeposits">{t('dashboard.metric.netDeposits')}</option>
+                <option value="deposits">{t('dashboard.metric.deposits')}</option>
+                <option value="depositsCount">{t('dashboard.metric.depositsCount')}</option>
+                <option value="withdrawals">{t('dashboard.metric.withdrawals')}</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Calendar year</span>
+              <span className="text-xs text-slate-400">{t('dashboard.pulse.filter.calendarYearLabel')}</span>
               <select
                 value={selectedCalendarYear}
                 onChange={(e) => setSelectedCalendarYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
                 className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[140px]"
               >
-                <option value="all">All years</option>
+                <option value="all">{t('dashboard.years.all')}</option>
                 {cohortCalendar.years.map((y) => (
                   <option key={y} value={y}>{y}</option>
                 ))}
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-slate-400">Affiliate</span>
+              <span className="text-xs text-slate-400">{t('dashboard.pulse.filter.affiliateLabel')}</span>
               <select
                 value={selectedAffiliate}
                 onChange={(e) => setSelectedAffiliate(e.target.value)}
                 className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[180px]"
               >
-                <option value="all">All affiliates</option>
+                <option value="all">{t('dashboard.affiliates.all')}</option>
                 {affiliateOptionGroups.top.map((name) => (
                   <option key={`overview-${name}`} value={name}>
                     {name}
@@ -1624,33 +1627,39 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
           {[{
             key: 'retainedM1',
-            label: 'Retained Month 1',
+            label: t('dashboard.kpiCards.retainedM1'),
             value: overviewKpis.avgRetainedM1,
-            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+            helper: t('dashboard.kpiCards.retained.helper', { metric: cohortMetricLabel.toLowerCase() }),
           }, {
             key: 'retainedM3',
-            label: 'Retained Month 3',
+            label: t('dashboard.kpiCards.retainedM3'),
             value: overviewKpis.avgRetainedM3,
-            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+            helper: t('dashboard.kpiCards.retained.helper', { metric: cohortMetricLabel.toLowerCase() }),
           }, {
             key: 'retainedM6',
-            label: 'Retained Month 6',
+            label: t('dashboard.kpiCards.retainedM6'),
             value: overviewKpis.avgRetainedM6,
-            helper: `Primary metric: retained ${cohortMetricLabel.toLowerCase()} vs Month 0`,
+            helper: t('dashboard.kpiCards.retained.helper', { metric: cohortMetricLabel.toLowerCase() }),
           }, {
             key: 'health',
-            label: 'Cohort health',
+            label: t('dashboard.kpiCards.health'),
             value: overviewKpis.healthLabel,
-            helper: 'Rule-based: retained value, half-life, lifetime',
+            helper: t('dashboard.kpiCards.health.helper'),
           }].map((card) => {
             const isHealth = card.key === 'health';
             const formatted = card.value === null
               ? '—'
               : isHealth
-                ? card.value
+                ? (() => {
+                    const label = String(card.value || '').toUpperCase();
+                    if (label === 'GREEN') return t('dashboard.health.green');
+                    if (label === 'ORANGE') return t('dashboard.health.orange');
+                    if (label === 'RED') return t('dashboard.health.red');
+                    return t('dashboard.health.noData');
+                  })()
                 : `${Number(card.value || 0).toFixed(1)}%`;
             const color = isHealth ? overviewKpis.healthTone : '#e2e8f0';
             return (
@@ -1664,14 +1673,29 @@ export default function Dashboard() {
         <div className="mt-4 rounded-xl border border-slate-800 bg-slate-900/70 p-4 flex flex-col gap-3">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-xs px-2 py-1 rounded-full" style={{ background: `${overviewKpis.healthTone}22`, color: overviewKpis.healthTone, border: `1px solid ${overviewKpis.healthTone}55` }}>
-              {overviewKpis.healthLabel}
+              {(() => {
+                const label = String(overviewKpis.healthLabel || '').toUpperCase();
+                if (label === 'GREEN') return t('dashboard.health.green');
+                if (label === 'ORANGE') return t('dashboard.health.orange');
+                if (label === 'RED') return t('dashboard.health.red');
+                return t('dashboard.health.noData');
+              })()}
             </span>
-            <span className="text-sm font-semibold text-slate-200">Cohort health: {overviewKpis.healthLabel}</span>
+            <span className="text-sm font-semibold text-slate-200">
+              {t('dashboard.cohortHealth.title')}:{' '}
+              {(() => {
+                const label = String(overviewKpis.healthLabel || '').toUpperCase();
+                if (label === 'GREEN') return t('dashboard.health.green');
+                if (label === 'ORANGE') return t('dashboard.health.orange');
+                if (label === 'RED') return t('dashboard.health.red');
+                return t('dashboard.health.noData');
+              })()}
+            </span>
           </div>
 
           <div>
-            <div className="text-[11px] text-slate-400">WHY</div>
-            <div className="text-sm text-slate-200">{overviewKpis.econ?.why || 'No cohort data available for this selection.'}</div>
+            <div className="text-[11px] text-slate-400">{t('dashboard.cohortHealth.whyLabel')}</div>
+            <div className="text-sm text-slate-200">{overviewKpis.econ?.whyKey ? t(overviewKpis.econ.whyKey) : t('dashboard.cohortHealth.noData')}</div>
           </div>
 
           <ul className="text-sm text-slate-200 list-disc pl-5">
@@ -1681,34 +1705,36 @@ export default function Dashboard() {
               {' '}M6 {overviewKpis.econ?.retainedM6 === null || overviewKpis.econ?.retainedM6 === undefined ? '—' : `${overviewKpis.econ.retainedM6.toFixed(1)}%`}
             </li>
             <li>
-              Economic half-life: {(() => {
+              {t('dashboard.cohortHealth.halfLife.label')}: {(() => {
                 const v = overviewKpis.econ?.halfLife;
-                if (v === null || v === undefined) return 'not reached (retained stays above 50%)';
+                if (v === null || v === undefined) return t('dashboard.cohortHealth.halfLife.notReached');
                 const m = Math.max(1, Math.round(v));
-                return `~${m} ${m === 1 ? 'month' : 'months'} (retained value falls below 50%)`;
+                return t('dashboard.cohortHealth.halfLife.reached', { months: m, unit: m === 1 ? t('common.month') : t('common.months') });
               })()}
             </li>
             <li>
-              Economic lifetime: {(() => {
+              {t('dashboard.cohortHealth.lifetime.label')}: {(() => {
                 const v = overviewKpis.econ?.lifetime;
-                if (v === null || v === undefined) return 'not reached (retained stays above 10%)';
+                if (v === null || v === undefined) return t('dashboard.cohortHealth.lifetime.notReached');
                 const m = Math.max(1, Math.round(v));
-                return `~${m} ${m === 1 ? 'month' : 'months'} (retained value falls below 10%)`;
+                return t('dashboard.cohortHealth.lifetime.reached', { months: m, unit: m === 1 ? t('common.month') : t('common.months') });
               })()}
             </li>
           </ul>
 
           {cohortMetricKind === 'currency' && overviewKpis.econ?.valueConcentration !== null && overviewKpis.econ?.valueConcentration !== undefined && (
             <div className="text-sm text-slate-200">
-              Value concentration: {overviewKpis.econ.valueConcentration.toFixed(0)}% of total value generated in Month 0
+              {t('dashboard.cohortHealth.valueConcentration', { pct: overviewKpis.econ.valueConcentration.toFixed(0) })}
             </div>
           )}
 
           <div className="text-sm text-slate-400">
-            <span className="font-semibold text-slate-300">Meaning:</span> {overviewKpis.econ?.meaning || 'Interpretation not available.'}
+            <span className="font-semibold text-slate-300">{t('dashboard.cohortHealth.meaningLabel')}:</span>{' '}
+            {overviewKpis.econ?.meaningKey ? t(overviewKpis.econ.meaningKey) : t('dashboard.cohortHealth.interpretationUnavailable')}
           </div>
           <div className="text-sm text-slate-400">
-            <span className="font-semibold text-slate-300">Next check:</span> {overviewKpis.econ?.nextCheck || 'Re-check M1 and M3 retained value.'}
+            <span className="font-semibold text-slate-300">{t('dashboard.cohortHealth.nextCheckLabel')}:</span>{' '}
+            {overviewKpis.econ?.nextCheckKey ? t(overviewKpis.econ.nextCheckKey) : t('dashboard.cohortHealth.recheckFallback')}
           </div>
         </div>
       </section>
@@ -1733,9 +1759,9 @@ export default function Dashboard() {
           <aside className="card w-full">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <h2 style={{ fontSize: 14, margin: 0 }}>Cohort KPIs</h2>
+                  <h2 style={{ fontSize: 14, margin: 0 }}>{t('dashboard.cohortKpis.title')}</h2>
                   <button
-                    aria-label="Info cohort KPIs"
+                    aria-label={t('dashboard.cohortKpis.infoAria')}
                     className="btn secondary"
                     style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
                     onClick={() => setShowKpiInfo((v) => !v)}
@@ -1748,7 +1774,7 @@ export default function Dashboard() {
                   style={{ padding: '4px 10px', height: 28 }}
                   onClick={() => setShowCohortKpisBlock((v) => !v)}
                 >
-                  {showCohortKpisBlock ? 'Hide' : 'Show'}
+                  {showCohortKpisBlock ? t('common.hide') : t('common.show')}
                 </button>
               </div>
 
@@ -1756,7 +1782,7 @@ export default function Dashboard() {
                 <>
                   {showKpiInfo && (
                     <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: 8 }}>
-                      Users = cohort size; Active users = users*(1-churn) cumulati; Marketing & Commissions mappati per mese di acquisizione; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: se &lt; 1.5 le commissioni sono posticipate allÔÇÖaffiliato; Break-even = primo mese con cum. P&L - cum. commissions ÔëÑ 0.
+                      {t('dashboard.cohortKpis.infoText')}
                     </div>
                   )}
                   <div style={{ display: 'grid', gap: 6, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
@@ -1817,7 +1843,7 @@ export default function Dashboard() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <h2 style={{ marginBottom: 4, marginTop: 0 }}>Monthly aggregates</h2>
                   <button
-                    aria-label="Info sui dati"
+                    aria-label={t('dashboard.monthlyAggregates.infoAria')}
                     className="btn secondary"
                     style={{ padding: '2px 6px', height: 26, minWidth: 26 }}
                     onClick={() => setShowMonthlyInfo((v) => !v)}
@@ -1838,7 +1864,7 @@ export default function Dashboard() {
                       maxWidth: 780,
                     }}
                   >
-                    {cohortMetricLabel} e cohort size arrivano dal file di cohort selezionato; le commissioni pagate vengono prese dal Balance Report e assegnate al mese di acquisizione della cohort; il P&L ├¿ aggregato per data di first deposit (stessa logica delle cohort).
+                    {t('dashboard.monthlyAggregates.infoText', { cohortMetricLabel })}
                   </div>
                 )}
               </div>
@@ -1847,7 +1873,7 @@ export default function Dashboard() {
                 style={{ padding: '4px 10px', height: 28 }}
                 onClick={() => setShowMonthlyAggregatesBlock((v) => !v)}
               >
-                {showMonthlyAggregatesBlock ? 'Hide' : 'Show'}
+                {showMonthlyAggregatesBlock ? t('common.hide') : t('common.show')}
               </button>
             </div>
 
@@ -1863,7 +1889,7 @@ export default function Dashboard() {
                 }}
               >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>Cohort (mese FD)</span>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('dashboard.monthlyAggregates.cohortLabel')}</span>
                 <select
                   value={selectedCohortMonth ?? ''}
                   onChange={(e) => {
@@ -1888,13 +1914,13 @@ export default function Dashboard() {
                       —
                     </option>
                   )}
-                  <option value="all">Tutte le cohort</option>
-                  <option value="Q1">Q1 (Jan-Mar)</option>
-                  <option value="Q2">Q2 (Apr-Jun)</option>
-                  <option value="Q3">Q3 (Jul-Sep)</option>
-                  <option value="Q4">Q4 (Oct-Dec)</option>
-                  <option value="S1">S1 (Jan-Jun)</option>
-                  <option value="S2">S2 (Jul-Dec)</option>
+                  <option value="all">{t('dashboard.monthlyAggregates.cohort.all')}</option>
+                  <option value="Q1">{t('dashboard.monthlyAggregates.cohort.q1')}</option>
+                  <option value="Q2">{t('dashboard.monthlyAggregates.cohort.q2')}</option>
+                  <option value="Q3">{t('dashboard.monthlyAggregates.cohort.q3')}</option>
+                  <option value="Q4">{t('dashboard.monthlyAggregates.cohort.q4')}</option>
+                  <option value="S1">{t('dashboard.monthlyAggregates.cohort.s1')}</option>
+                  <option value="S2">{t('dashboard.monthlyAggregates.cohort.s2')}</option>
                   {cohortsSummary.map((c) => (
                     <option key={c.monthIndex} value={c.monthIndex}>
                       {months[c.monthIndex]}
@@ -1904,7 +1930,7 @@ export default function Dashboard() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>Affiliate</span>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('dashboard.monthlyAggregates.affiliateLabel')}</span>
                 <select
                   value={selectedAffiliate}
                   onChange={(e) => setSelectedAffiliate(e.target.value)}
@@ -1918,14 +1944,14 @@ export default function Dashboard() {
                     padding: '8px 10px',
                   }}
                 >
-                  <option value="all">Tutti nella cohort</option>
+                  <option value="all">{t('dashboard.monthlyAggregates.affiliate.all')}</option>
                   {affiliateOptionGroups.top.length === 0 && (
                     <option value="" disabled>
-                      Nessun affiliato disponibile
+                      {t('dashboard.monthlyAggregates.affiliate.noneAvailable')}
                     </option>
                   )}
                   {affiliateOptionGroups.top.length > 0 && (
-                    <optgroup label="Top 10">
+                    <optgroup label={t('dashboard.monthlyAggregates.affiliate.top10Label')}>
                       {affiliateOptionGroups.top.map((name) => (
                         <option key={`top-${name}`} value={name}>
                           {name}
@@ -1937,7 +1963,7 @@ export default function Dashboard() {
               </div>
 
               <div style={{ fontSize: 12, color: '#94a3b8', maxWidth: 260 }}>
-                La tabella viene popolata automaticamente con {cohortMetricLabel} e Cohort size della selezione.
+                {t('dashboard.monthlyAggregates.tableAutoFillHint', { cohortMetricLabel })}
               </div>
               </div>
 
@@ -1945,7 +1971,7 @@ export default function Dashboard() {
                 <table className="table w-full">
                 <thead>
                   <tr>
-                    <th>Metric</th>
+                    <th>{t('dashboard.table.metric')}</th>
                     {months.map((m) => (
                       <th
                         key={m}
@@ -1955,7 +1981,7 @@ export default function Dashboard() {
                         {m}
                       </th>
                     ))}
-                    <th style={{ textAlign: 'right' }}>Total</th>
+                    <th style={{ textAlign: 'right' }}>{t('dashboard.table.total')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2090,7 +2116,7 @@ export default function Dashboard() {
 
                   {/* Break-even cumulative: PL cumulato - commissioni paid cumulative */}
                   <tr>
-                    <td>Break even</td>
+                    <td>{t('dashboard.table.breakEven')}</td>
                     {months.map((m, idx) => (
                       <td
                         key={m}
@@ -2105,7 +2131,7 @@ export default function Dashboard() {
                         }}
                       >
                         {breakEvenRow[idx] === null || breakEvenRow[idx] === undefined ? (
-                          <span className="num" style={{ color: '#94a3b8' }}>ÔÇö</span>
+                          <span className="num" style={{ color: '#94a3b8' }}>—</span>
                         ) : (
                           <span title={formatEuroFull(breakEvenRow[idx] || 0)} className="num">
                             {formatEuro(breakEvenRow[idx] || 0)}
@@ -2119,7 +2145,7 @@ export default function Dashboard() {
                         title={lastBreakEvenValue === null ? undefined : formatEuroFull(lastBreakEvenValue || 0)}
                         className="num"
                       >
-                        {lastBreakEvenValue === null ? 'ÔÇö' : formatEuro(lastBreakEvenValue || 0)}
+                        {lastBreakEvenValue === null ? '—' : formatEuro(lastBreakEvenValue || 0)}
                       </span>
                     </td>
                   </tr>
@@ -2135,7 +2161,7 @@ export default function Dashboard() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                 <h3 style={{ margin: 0 }}>Cohort DB (CSV)</h3>
                 <button
-                  aria-label="Info Cohort DB"
+                  aria-label={t('dashboard.cohortDb.infoAria')}
                   className="btn secondary"
                   style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
                   onClick={() => setShowCohortDbInfo((v) => !v)}
@@ -2145,15 +2171,15 @@ export default function Dashboard() {
               </div>
               {showCohortDbInfo && (
                 <p style={{ color: '#94a3b8', fontSize: 13, marginTop: 6, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: 8 }}>
-                  Seleziona un cohort (mese di first deposit) e applicalo ai Net deposits del dashboard (dati da Net deposits Cohort 2025.csv). P&L segue la stessa logica per data di first deposit.
+                  {t('dashboard.cohortDb.infoText')}
                 </p>
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                 <button className="btn secondary" onClick={() => setShowCohortDb((v) => !v)}>
-                  {showCohortDb ? 'Nascondi Cohort DB' : 'Mostra Cohort DB'}
+                  {showCohortDb ? t('dashboard.cohortDb.toggle.hide') : t('dashboard.cohortDb.toggle.show')}
                 </button>
                 <button className="btn secondary" onClick={() => setShowAffiliatesDetail((v) => !v)}>
-                  {showAffiliatesDetail ? 'Nascondi Dettaglio affiliati' : 'Mostra Dettaglio affiliati'}
+                  {showAffiliatesDetail ? t('dashboard.cohortDb.affiliates.toggle.hide') : t('dashboard.cohortDb.affiliates.toggle.show')}
                 </button>
               </div>
 
@@ -2162,11 +2188,11 @@ export default function Dashboard() {
                   <table className="table">
                     <thead>
                       <tr>
-                        <th>Mese FD</th>
-                        <th style={{ textAlign: 'right' }}>Cohort size</th>
-                        <th style={{ textAlign: 'right' }}>Month 0</th>
-                        <th style={{ textAlign: 'right' }}>Month 1</th>
-                        <th style={{ textAlign: 'right' }}>Month 2</th>
+                        <th>{t('dashboard.cohortDb.table.monthFd')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('dashboard.cohortDb.table.cohortSize')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('dashboard.cohortDb.table.month0')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('dashboard.cohortDb.table.month1')}</th>
+                        <th style={{ textAlign: 'right' }}>{t('dashboard.cohortDb.table.month2')}</th>
                         <th></th>
                       </tr>
                     </thead>
@@ -2195,14 +2221,14 @@ export default function Dashboard() {
 
               {showAffiliatesDetail && (
                 <div style={{ marginTop: 10 }}>
-                  <h4 style={{ margin: '8px 0 6px', color: '#cbd5e1' }}>Dettaglio affiliati (primi 15)</h4>
+                  <h4 style={{ margin: '8px 0 6px', color: '#cbd5e1' }}>{t('dashboard.cohortDb.affiliates.title')}</h4>
                   <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                     <table className="table">
                       <thead>
                         <tr>
-                          <th>Affiliate</th>
-                          <th>Mese</th>
-                          <th style={{ textAlign: 'right' }}>Size</th>
+                          <th>{t('dashboard.cohortDb.affiliates.table.affiliate')}</th>
+                          <th>{t('dashboard.cohortDb.affiliates.table.month')}</th>
+                          <th style={{ textAlign: 'right' }}>{t('dashboard.cohortDb.affiliates.table.size')}</th>
                           <th style={{ textAlign: 'right' }}>M0</th>
                           <th style={{ textAlign: 'right' }}>M1</th>
                           <th style={{ textAlign: 'right' }}>M2</th>
@@ -2233,9 +2259,9 @@ export default function Dashboard() {
           <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2 mb-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-medium text-slate-200 m-0">Break-even analysis</h3>
+                <h3 className="text-sm font-medium text-slate-200 m-0">{t('dashboard.breakEven.title')}</h3>
                 <button
-                  aria-label="Info break-even"
+                  aria-label={t('dashboard.breakEven.infoAria')}
                   className="btn secondary"
                   style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
                   onClick={() => setShowBreakEvenInfo((v) => !v)}
@@ -2248,14 +2274,14 @@ export default function Dashboard() {
                 style={{ padding: '4px 10px', height: 28 }}
                 onClick={() => setShowBreakEvenBlock((v) => !v)}
               >
-                {showBreakEvenBlock ? 'Hide' : 'Show'}
+                {showBreakEvenBlock ? t('common.hide') : t('common.show')}
               </button>
             </div>
             {showBreakEvenBlock && (
               <>
                 {showBreakEvenInfo && (
                   <p className="text-xs text-slate-400 mb-2" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 10px' }}>
-                    Formula: cumulative P&amp;L (da "PL Cohort Analysis.csv") meno cumulative Commissions paid (negative). Il break-even month ├¿ il primo indice in cui la curva diventa &gt;= 0.
+                    {t('dashboard.breakEven.infoText')}
                   </p>
                 )}
                 <div className="h-48 w-full flex justify-end">
@@ -2271,13 +2297,13 @@ export default function Dashboard() {
 
           <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-medium text-slate-200 m-0">P&L trend</h3>
+              <h3 className="text-sm font-medium text-slate-200 m-0">{t('dashboard.pnlTrend.title')}</h3>
               <button
                 className="btn secondary"
                 style={{ padding: '4px 10px', height: 28 }}
                 onClick={() => setShowPnLTrendBlock((v) => !v)}
               >
-                {showPnLTrendBlock ? 'Hide' : 'Show'}
+                {showPnLTrendBlock ? t('common.hide') : t('common.show')}
               </button>
             </div>
             {showPnLTrendBlock && (
@@ -2292,13 +2318,13 @@ export default function Dashboard() {
 
           <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
             <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-medium text-slate-200 m-0">Top Performing Affiliates</h3>
+              <h3 className="text-sm font-medium text-slate-200 m-0">{t('dashboard.topAffiliates.title')}</h3>
               <button
                 className="btn secondary"
                 style={{ padding: '4px 10px', height: 28 }}
                 onClick={() => setShowTopAffiliatesBlock((v) => !v)}
               >
-                {showTopAffiliatesBlock ? 'Hide' : 'Show'}
+                {showTopAffiliatesBlock ? t('common.hide') : t('common.show')}
               </button>
             </div>
             {showTopAffiliatesBlock && (
@@ -2306,13 +2332,13 @@ export default function Dashboard() {
                 <table className="table" style={{ minWidth: 380 }}>
                 <thead>
                   <tr>
-                    <th style={{ width: 30 }}>#</th>
-                    <th>Affiliate</th>
-                    <th style={{ textAlign: 'right' }} title="Registrations">R</th>
-                    <th style={{ textAlign: 'right' }} title="% Registrations">%R</th>
-                    <th style={{ textAlign: 'right' }} title="P&amp;L">P</th>
-                    <th style={{ textAlign: 'right' }} title="% P&amp;L">%P</th>
-                    <th style={{ textAlign: 'center' }} title="ROI">ÔùÅ</th>
+                    <th style={{ width: 30 }}>{t('dashboard.topAffiliates.table.rank')}</th>
+                    <th>{t('dashboard.topAffiliates.table.affiliate')}</th>
+                    <th style={{ textAlign: 'right' }} title={t('dashboard.topAffiliates.table.registrationsTitle')}>{t('dashboard.topAffiliates.table.registrationsShort')}</th>
+                    <th style={{ textAlign: 'right' }} title={t('dashboard.topAffiliates.table.registrationsPctTitle')}>{t('dashboard.topAffiliates.table.registrationsPctShort')}</th>
+                    <th style={{ textAlign: 'right' }} title={t('dashboard.topAffiliates.table.plTitle')}>{t('dashboard.topAffiliates.table.plShort')}</th>
+                    <th style={{ textAlign: 'right' }} title={t('dashboard.topAffiliates.table.plPctTitle')}>{t('dashboard.topAffiliates.table.plPctShort')}</th>
+                    <th style={{ textAlign: 'center' }} title={t('dashboard.topAffiliates.table.roiTitle')}>{t('dashboard.topAffiliates.table.roiSymbol')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2321,7 +2347,7 @@ export default function Dashboard() {
                     return (
                       <tr key={`${a.affiliate}-${idx}`}>
                         <td>{idx + 1}</td>
-                        <td style={{ color: '#60a5fa', fontWeight: 600 }}>{a.affiliate || 'ÔÇö'}</td>
+                        <td style={{ color: '#60a5fa', fontWeight: 600 }}>{a.affiliate || '—'}</td>
                         <td style={{ textAlign: 'right' }} title={formatNumberFull(a.cohortSize || 0)} className="num">{formatNumberShort(a.cohortSize || 0)}</td>
                         <td style={{ textAlign: 'right' }} title={formatPercent(a.regPct)} className="num">{formatPercent(a.regPct)}</td>
                         <td style={{ textAlign: 'right' }} title={formatEuroFull(a.total || 0)} className="num">{formatEuro(a.total || 0)}</td>
@@ -2335,7 +2361,7 @@ export default function Dashboard() {
                               borderRadius: '999px',
                               background: roiPositive ? '#22c55e' : '#ef4444',
                             }}
-                            title="ROI"
+                            title={t('dashboard.topAffiliates.table.roiTitle')}
                           ></span>
                         </td>
                       </tr>
@@ -2344,7 +2370,7 @@ export default function Dashboard() {
                   {!topAffiliates.length && (
                     <tr>
                       <td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>
-                        Nessun affiliato disponibile per la selezione corrente.
+                        {t('dashboard.topAffiliates.none')}
                       </td>
                     </tr>
                   )}
@@ -2359,7 +2385,7 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-sm font-medium text-slate-200 m-0">Auto report</h3>
                 <button
-                  aria-label="Info auto report"
+                  aria-label={t('dashboard.autoReport.infoAria')}
                   className="btn secondary"
                   style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
                   onClick={() => setShowAutoReportInfo((v) => !v)}
@@ -2369,24 +2395,24 @@ export default function Dashboard() {
               </div>
               {showAutoReportInfo && (
                 <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 0, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', padding: '8px 10px', borderRadius: 8 }}>
-                  Genera un breve riepilogo ora; in seguito potremo collegare OpenAI per commenti e next steps.
+                  {t('dashboard.autoReport.infoText')}
                 </p>
               )}
               <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                 <button className="btn" onClick={generateLocalReport} disabled={reportLoading}>
-                  {reportLoading ? 'Generazione...' : 'Genera report locale'}
+                  {reportLoading ? t('dashboard.autoReport.generating') : t('dashboard.autoReport.generate')}
                 </button>
                 <button
                   className="btn secondary"
                   onClick={() => setReportText('')}
                 >
-                  Pulisci
+                  {t('dashboard.autoReport.clear')}
                 </button>
               </div>
               <textarea
                 value={reportText}
                 onChange={(e) => setReportText(e.target.value)}
-                placeholder="Report pronto qui..."
+                placeholder={t('dashboard.autoReport.placeholder')}
                 style={{
                   width: '100%',
                   minHeight: 120,

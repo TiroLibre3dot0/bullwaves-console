@@ -7,12 +7,14 @@ import PeriodSelector from './common/PeriodSelector';
 import FullPageLoader from './FullPageLoader';
 import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent, cleanNumber, cleanPercent, normalizeKey } from '../lib/formatters';
 import { monthMetaFromDate, parseCsv, parseMonthFirstDate, parseMonthLabel } from '../lib/csv';
+import { useI18n } from '../i18n/I18nContext';
 
 const formatNumberFull = (value) => formatNumber(value);
 const formatPercentDisplay = (value) => formatPercent(value, 2);
 const selectStyle = { minWidth: 160, background: '#0d1a2c', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px' };
 
 export default function GlobalDashboard() {
+  const { t } = useI18n();
   const [mediaRows, setMediaRows] = useState([]);
   const [payments, setPayments] = useState([]);
   const [selectedYear, setSelectedYear] = useState('all');
@@ -400,7 +402,7 @@ export default function GlobalDashboard() {
     <div className="w-full space-y-3">
       <CardSection
         title="Global view"
-        subtitle="Media Report + Payments Report per panorama unico"
+        subtitle={t('globalDashboard.subtitle.panorama')}
         sticky
         stickyTop={12}
         actions={(
@@ -449,7 +451,7 @@ export default function GlobalDashboard() {
               <div key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         if (loading) {
-          return <FullPageLoader progress={45} subtitle="Loading executive summary…" />
+          return <FullPageLoader progress={45} subtitle={t('globalDashboard.loader.executiveSummary')} />
         }
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ width: 12, height: 12, borderRadius: 4, background: s.color, display: 'inline-block' }} />
