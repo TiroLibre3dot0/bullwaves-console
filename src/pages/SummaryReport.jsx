@@ -15,6 +15,13 @@ export default function SummaryReport() {
         const mediaCandidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
         const paymentsCandidates = ['/Payments Report.csv', '/commissions.csv']
 
+        const pick = (obj, keys) => {
+          for (const key of keys) {
+            if (obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && `${obj[key]}`.trim() !== '') return obj[key]
+          }
+          return undefined
+        }
+
         let mediaText = ''
         for (const path of mediaCandidates) {
           const resp = await fetch(path)
@@ -34,18 +41,18 @@ export default function SummaryReport() {
         }
 
         const parsedMedia = mediaText ? parseCsv(mediaText).map((r) => {
-          const monthMeta = parseMonthLabel(r.Month)
+          const monthMeta = parseMonthLabel(pick(r, ['Month', 'month']))
           return {
             monthKey: monthMeta.key,
             monthIndex: monthMeta.monthIndex,
             monthLabel: monthMeta.label,
-            affiliate: (r.Affiliate || '—').toString().trim(),
-            registrations: cleanNumber(r.Registrations || r.Leads),
-            ftd: cleanNumber(r.FTD),
-            pl: cleanNumber(r.PL),
-            netDeposits: cleanNumber(r['Net Deposits']),
-            withdrawals: cleanNumber(r.Withdrawals || r['Withdrawals']),
-            churnPct: cleanNumber(r['Churn %'] || r.Churn || 0),
+            affiliate: (pick(r, ['Affiliate', 'affiliate']) || '—').toString().trim(),
+            registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
+            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
+            pl: cleanNumber(pick(r, ['PL', 'pl'])),
+            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
+            withdrawals: cleanNumber(pick(r, ['Withdrawals', 'withdrawals'])),
+            churnPct: cleanNumber(pick(r, ['Churn %', 'Churn', 'churn', 'churn_pct']) || 0),
           }
         }) : []
 

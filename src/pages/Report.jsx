@@ -20,6 +20,13 @@ export default function Report() {
         const mediaCandidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
         const paymentsCandidates = ['/Payments Report.csv', '/commissions.csv']
 
+        const pick = (obj, keys) => {
+          for (const key of keys) {
+            if (obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && `${obj[key]}`.trim() !== '') return obj[key]
+          }
+          return undefined
+        }
+
         let mediaText = ''
         for (const path of mediaCandidates) {
           const resp = await fetch(path)
@@ -39,17 +46,17 @@ export default function Report() {
         }
 
         const parsedMedia = mediaText ? parseCsv(mediaText).map((r) => {
-          const monthMeta = parseMonthLabel(r.Month)
+          const monthMeta = parseMonthLabel(pick(r, ['Month', 'month']))
           return {
             monthKey: monthMeta.key,
             monthIndex: monthMeta.monthIndex,
             monthLabel: monthMeta.label,
             year: monthMeta.year,
-            affiliate: (r.Affiliate || '—').toString().trim(),
-            registrations: cleanNumber(r.Registrations || r.Leads),
-            ftd: cleanNumber(r.FTD),
-            pl: cleanNumber(r.PL),
-            netDeposits: cleanNumber(r['Net Deposits']),
+            affiliate: (pick(r, ['Affiliate', 'affiliate']) || '—').toString().trim(),
+            registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
+            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
+            pl: cleanNumber(pick(r, ['PL', 'pl'])),
+            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
           }
         }) : []
 

@@ -20,9 +20,6 @@ export default function SegmentBarChart({ data }) {
   const withdrawals = data.map((d) => d.withdrawals)
   const pl = data.map((d) => d.pl)
 
-  // Scale PL values to be more visible (multiply by 10 for better visibility)
-  const scaledPl = pl.map(p => p * 10)
-
   const chartData = {
     labels,
     datasets: [
@@ -43,8 +40,8 @@ export default function SegmentBarChart({ data }) {
         borderRadius: 8,
       },
       {
-        label: 'PL (Profit/Loss) x10',
-        data: scaledPl,
+        label: 'PL',
+        data: pl,
         type: 'line',
         borderColor: 'rgba(255, 215, 0, 1)',
         backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -67,9 +64,6 @@ export default function SegmentBarChart({ data }) {
       tooltip: {
         callbacks: {
           label: (ctx) => {
-            if (ctx.dataset.label === 'PL (Profit/Loss) x10') {
-              return `${ctx.dataset.label}: ${formatEuro(ctx.parsed.y / 10)}`
-            }
             return `${ctx.dataset.label}: ${formatEuro(ctx.parsed.y)}`
           },
         },
@@ -90,7 +84,7 @@ export default function SegmentBarChart({ data }) {
       y1: {
         type: 'linear',
         display: true,
-        position: 'left',
+        position: 'right',
         ticks: {
           color: '#FFD700',
           callback: (value) => formatEuro(value),
@@ -100,7 +94,7 @@ export default function SegmentBarChart({ data }) {
         },
         title: {
           display: true,
-          text: 'PL (Profit/Loss)',
+          text: 'PL',
           color: '#FFD700',
           font: {
             size: 12,

@@ -8,6 +8,20 @@ export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
   const [error, setError] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
 
+  const withCacheBuster = useCallback((path) => {
+    const raw = path ? String(path) : ''
+    const encodedPath = encodeURI(raw)
+    let v = null
+    try {
+      v = window?.localStorage?.getItem('bw_reports_version')
+    } catch {
+      v = null
+    }
+    if (!v) return encodedPath
+    const sep = encodedPath.includes('?') ? '&' : '?'
+    return `${encodedPath}${sep}v=${encodeURIComponent(String(v))}`
+  }, [])
+
   const load = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -15,7 +29,7 @@ export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
       let text = ''
       let used = null
       for (const path of candidatePaths) {
-        const resp = await fetch(path)
+        const resp = await fetch(withCacheBuster(path), { cache: 'no-store' })
         if (resp.ok) {
           text = await resp.text()
           used = path

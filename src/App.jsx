@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Topbar from './components/Topbar'
+import Sidebar from './components/Sidebar'
 import OrgChart from './pages/OrgChart'
 import SummaryReport from './features/media-payments/pages/SummaryReport'
 import Report from './features/media-payments/pages/Report'
@@ -17,50 +18,11 @@ import { DataStatusProvider } from './context/DataStatusContext'
 import FullPageLoader from './components/FullPageLoader'
 import UploadReportsPage from './pages/UploadReportsPage'
 
-function NavComponent({ onItemClick, view, navigate, goExecutiveSection, goAffiliateSection }) {
-  const handleNavClick = (action) => {
-    action();
-    onItemClick && onItemClick();
-  };
-
-  return (
-    <nav className="subnav">
-      <button className={`tab ${view === 'overview' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('overview'))}>
-        Overview
-      </button>
-      <button className={`tab ${view === 'executive' ? 'active' : ''}`} onClick={() => handleNavClick(() => goExecutiveSection('summary'))}>
-        Executive Suite
-      </button>
-      <button className={`tab ${view === 'affiliate' ? 'active' : ''}`} onClick={() => handleNavClick(() => goAffiliateSection('analysis'))}>
-        Affiliate
-      </button>
-      <button className={`tab ${view === 'fraud' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('fraud'))}>
-        Fraud Monitoring
-      </button>
-      <button className={`tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('roadmap'))}>
-        Mega-Stories
-      </button>
-      {/* Lab removed */}
-      <button
-        className={`tab ${view === 'orgChart' ? 'active' : ''}`}
-        onClick={() => handleNavClick(() => navigate('orgChart'))}
-        style={{ marginLeft: 'auto' }}
-      >
-        Org Chart
-      </button>
-      <button className={`tab ${view === 'supportUserCheck' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('supportUserCheck'))}>
-        Support • User Check
-      </button>
-      <button className={`tab ${view === 'upload' ? 'active' : ''}`} onClick={() => handleNavClick(() => navigate('upload'))}>
-        Upload
-      </button>
-    </nav>
-  );
-}
-
 export default function App(){
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
+  const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
+  const supportAllowedViews = useMemo(() => new Set(['supportUserCheck', 'orgChart', 'upload']), [])
 
    const routes = useMemo(() => ({
      cohort: '/',
@@ -114,14 +76,48 @@ export default function App(){
   useEffect(() => {
     const onPop = () => {
       const nextPath = window.location.pathname
+      if (isSupportUser) {
+        if (nextPath.startsWith('/support/user-check')) {
+          setView('supportUserCheck')
+          return
+        }
+        if (nextPath.startsWith('/org-chart')) {
+          setView('orgChart')
+          return
+        }
+        if (nextPath.startsWith('/upload')) {
+          setView('upload')
+          return
+        }
+
+        window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
+        setView('supportUserCheck')
+        return
+      }
+
       setView(pathToView(nextPath))
       setAffiliateSection(affiliateSectionFromPath(nextPath))
     }
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, []);
+  }, [isSupportUser]);
+
+  useEffect(() => {
+    if (!user) return
+    if (!isSupportUser) return
+    // Support landing page defaults to Support • User Check.
+    const p = window.location.pathname
+    if (!p.startsWith('/support/user-check')) {
+      window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
+    }
+    setView('supportUserCheck')
+  }, [user, isSupportUser])
 
   const goAffiliateSection = (section = 'analysis') => {
+    if (isSupportUser) {
+      navigate('supportUserCheck')
+      return
+    }
     const pathBySection = {
       analysis: '/affiliate-analysis',
       payments: '/marketing-expenses',
@@ -136,6 +132,10 @@ export default function App(){
   }
 
   const goExecutiveSection = (section = 'summary') => {
+    if (isSupportUser) {
+      navigate('supportUserCheck')
+      return
+    }
     const pathBySection = {
       summary: '/executive-summary',
       view: '/executive-view',
@@ -149,6 +149,9 @@ export default function App(){
   }
 
   const navigate = (nextView) => {
+    if (isSupportUser && !supportAllowedViews.has(nextView)) {
+      nextView = 'supportUserCheck'
+    }
     if (window.__bwUploadInProgress && nextView !== 'upload') {
       const ok = window.confirm('Upload in progress. Leave this page?')
       if (!ok) return
@@ -204,34 +207,48 @@ export default function App(){
     <DataStatusProvider>
       <RequireAuth>
         <div className="app-root">
-          <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin}>
-            <NavComponent onItemClick={() => {}} view={view} navigate={navigate} goExecutiveSection={goExecutiveSection} goAffiliateSection={goAffiliateSection} />
-          </Topbar>
-        <main className="app-main">
-          {view === 'overview' && <ProfitAnalysisPage />}
-          {view === 'executive' && (
-            <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
-          )}
-          {view === 'affiliate' && (
-            <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
-          )}
-          {view === 'fraud' && <FraudMonitoringDashboard />}
-          {view === 'report' && <Report />}
-          {view === 'roadmap' && <RoadmapPage />}
-          {view === 'orgChart' && <OrgChart />}
-          {view === 'summary' && <SummaryReport />}
-          {view === 'supportUserCheck' && (
-            <React.Suspense fallback={<FullPageLoader progress={35} subtitle="Loading support page…" />}>
-                <SupportUserCheck />
-            </React.Suspense>
-          )}
-          {view === 'upload' && <UploadReportsPage />}
-          {/* Lab removed */}
- 
-          {view === 'admin' && isAdmin && <AdminPanel />}
-        </main>
-      </div>
-    </RequireAuth>
+          <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin} />
+
+          <div className="dashboard-shell">
+            <aside className="dashboard-sidebar">
+              <Sidebar
+                view={view}
+                executiveSection={executiveSection}
+                affiliateSection={affiliateSection}
+                supportOnly={isSupportUser}
+                navigate={navigate}
+                goExecutiveSection={goExecutiveSection}
+                goAffiliateSection={goAffiliateSection}
+              />
+            </aside>
+
+            <main className="dashboard-content">
+              <div className="dashboard-inner">
+                {view === 'overview' && <ProfitAnalysisPage />}
+                {view === 'executive' && (
+                  <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
+                )}
+                {view === 'affiliate' && (
+                  <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
+                )}
+                {view === 'fraud' && <FraudMonitoringDashboard />}
+                {view === 'report' && <Report />}
+                {view === 'roadmap' && <RoadmapPage />}
+                {view === 'orgChart' && <OrgChart />}
+                {view === 'summary' && <SummaryReport />}
+                {view === 'supportUserCheck' && (
+                  <React.Suspense fallback={<FullPageLoader progress={35} subtitle="Loading support page…" />}>
+                    <SupportUserCheck />
+                  </React.Suspense>
+                )}
+                {view === 'upload' && <UploadReportsPage />}
+                {/* Lab removed */}
+                {view === 'admin' && isAdmin && <AdminPanel />}
+              </div>
+            </main>
+          </div>
+        </div>
+      </RequireAuth>
     </DataStatusProvider>
   )
 }

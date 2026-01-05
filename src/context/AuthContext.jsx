@@ -12,7 +12,8 @@ function buildAllowlist() {
     const d = department.trim().toLowerCase()
     if (sectionId === 'management-team') return true
     if (sectionId === 'finance') return true
-    return d === 'finance' || d === 'reconciliation' || d === 'psp'
+    if (sectionId === 'support-team') return true
+    return d === 'finance' || d === 'reconciliation' || d === 'psp' || d === 'support team' || d === 'support'
   }
 
   sections.forEach((section) => {

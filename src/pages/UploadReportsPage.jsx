@@ -200,6 +200,20 @@ export default function UploadReportsPage() {
         setResultText(xhr.responseText || '')
       }
       setStatus(ok ? 'Done.' : `Failed (HTTP ${xhr.status}).`)
+
+      if (ok) {
+        try {
+          const v = String(Date.now())
+          localStorage.setItem('bw_reports_version', v)
+        } catch {
+          // ignore
+        }
+        try {
+          window.dispatchEvent(new Event('bw-reports-updated'))
+        } catch {
+          // ignore
+        }
+      }
     }
 
     xhr.onerror = () => {

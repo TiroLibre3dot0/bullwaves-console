@@ -8,13 +8,28 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js'
-import { formatNumberShort } from '../../lib/formatters'
+import { formatEuro, formatNumberShort } from '../../lib/formatters'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
-export default function RegistrationBarChart({ data, title }) {
+export function MetricBarChart({
+  data,
+  title,
+  valueKey = 'registrations',
+  valueFormat = 'number',
+  barBackgroundColor = 'rgba(34, 211, 238, 0.6)',
+  barBorderColor = 'rgba(34, 211, 238, 1)',
+  getTooltipLines,
+}) {
   const labels = data.map((d) => d.label)
-  const values = data.map((d) => d.registrations)
+  const values = data.map((d) => Number(d?.[valueKey] ?? 0))
+
+  const formatValue = (v) => {
+    const num = Number(v || 0)
+    if (valueFormat === 'percent') return `${num.toFixed(2)}%`
+    if (valueFormat === 'euro') return formatEuro(num)
+    return formatNumberShort(num)
+  }
 
   const chartData = {
     labels,
@@ -22,8 +37,8 @@ export default function RegistrationBarChart({ data, title }) {
       {
         label: title || 'Registrations',
         data: values,
-        backgroundColor: 'rgba(34, 211, 238, 0.6)',
-        borderColor: 'rgba(34, 211, 238, 1)',
+        backgroundColor: barBackgroundColor,
+        borderColor: barBorderColor,
         borderWidth: 1,
         borderRadius: 6,
       },
@@ -37,7 +52,16 @@ export default function RegistrationBarChart({ data, title }) {
       legend: { display: false },
       tooltip: {
         callbacks: {
-          label: (ctx) => `${formatNumberShort(ctx.parsed.x)}`,
+          label: (ctx) => {
+            const datum = data?.[ctx.dataIndex]
+            const lines = []
+            lines.push(`${ctx.dataset.label}: ${formatValue(ctx.parsed.x)}`)
+            if (typeof getTooltipLines === 'function' && datum) {
+              const extra = getTooltipLines(datum) || []
+              for (const l of extra) lines.push(String(l))
+            }
+            return lines
+          },
         },
       },
     },
@@ -45,7 +69,7 @@ export default function RegistrationBarChart({ data, title }) {
       x: {
         ticks: {
           color: '#cbd5e1',
-          callback: (value) => formatNumberShort(value),
+          callback: (value) => formatValue(value),
         },
         grid: { color: 'rgba(255,255,255,0.08)' },
       },
@@ -57,4 +81,8 @@ export default function RegistrationBarChart({ data, title }) {
   }
 
   return <Bar data={chartData} options={options} height={220} />
+}
+
+export default function RegistrationBarChart({ data, title }) {
+  return <MetricBarChart data={data} title={title} valueKey="registrations" valueFormat="number" />
 }

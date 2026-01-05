@@ -4,7 +4,7 @@ import RegionBarChart from '../components/profit/RegionBarChart'
 import CountryMapChart from '../components/profit/CountryMapChart'
 import SegmentBarChart from '../components/profit/SegmentBarChart'
 import ProfitRatioScatter from '../components/profit/ProfitRatioScatter'
-import RegistrationBarChart from '../components/profit/RegistrationBarChart'
+import RegistrationBarChart, { MetricBarChart } from '../components/profit/RegistrationBarChart'
 import FullPageLoader from '../components/FullPageLoader'
 import { checkDataStatus } from '../utils/dataStatusChecker'
 import { useDataStatus } from '../context/DataStatusContext'
@@ -108,39 +108,70 @@ function regionToSegment(region) {
 
 export default function ProfitAnalysisPage() {
   const [mediaRows, setMediaRows] = useState([])
+  const [paymentsRows, setPaymentsRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState('all')
   const [scatterEntity, setScatterEntity] = useState('affiliate')
+  const [roiMinPl, setRoiMinPl] = useState(2000)
   const { setDataStatus } = useDataStatus()
 
   useEffect(() => {
-    async function loadMedia() {
+    const withCacheBuster = (path) => {
+      const encodedPath = encodeURI(String(path || ''))
+      let v = null
+      try {
+        v = window?.localStorage?.getItem('bw_reports_version')
+      } catch {
+        v = null
+      }
+      if (!v) return encodedPath
+      const sep = encodedPath.includes('?') ? '&' : '?'
+      return `${encodedPath}${sep}v=${encodeURIComponent(String(v))}`
+    }
+
+    async function loadAllReports() {
+      setLoading(true)
       try {
         const candidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
         let text = ''
         for (const path of candidates) {
-          const resp = await fetch(path)
+          const resp = await fetch(withCacheBuster(path), { cache: 'no-store' })
           if (resp.ok) {
             text = await resp.text()
             break
           }
         }
         if (!text) return
+
+        const pick = (row, keys, fallback = '') => {
+          for (const k of keys) {
+            if (!k) continue
+            if (Object.prototype.hasOwnProperty.call(row, k) && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+              return row[k]
+            }
+          }
+          return fallback
+        }
+
         const parsed = parseCsv(text).map((r) => {
-          const monthMeta = parseMonthLabel(r.Month)
-          const country = r.Country || r['Country Code'] || r['Country'] || 'Unknown'
-          const countryCode = iso3FromName(r['Country Code'] || r.CountryCode || country)
+          const rawMonth = pick(r, ['Month', 'month'])
+          const monthMeta = parseMonthLabel(rawMonth)
+          const rawCountry = pick(r, ['Country', 'country', 'Country Code', 'country_code', 'countrycode'])
+          const country = rawCountry || 'Unknown'
+          const countryCode = iso3FromName(pick(r, ['Country Code', 'country_code', 'countrycode', 'Country', 'country'], country))
           return {
             monthKey: monthMeta.key,
             monthLabel: monthMeta.label,
             monthIndex: monthMeta.monthIndex,
             year: monthMeta.year,
-            affiliate: (r.Affiliate || '—').toString().trim(),
-            registrations: cleanNumber(r.Registrations || r.Leads),
-            ftd: cleanNumber(r.FTD),
-            pl: cleanNumber(r.PL),
-            netDeposits: cleanNumber(r['Net Deposits']),
-            withdrawals: cleanNumber(r.Withdrawals || r['Withdrawals']),
+            affiliate: String(pick(r, ['Affiliate', 'affiliate'], '—')).trim(),
+            registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
+            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
+            qftd: cleanNumber(pick(r, ['QFTD', 'qftd'])),
+            pl: cleanNumber(pick(r, ['PL', 'pl', 'Profit/Loss', 'profit_loss', 'profitloss'])),
+            deposits: cleanNumber(pick(r, ['Deposits', 'deposits'])),
+            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
+            withdrawals: cleanNumber(pick(r, ['Withdrawals', 'withdrawals'])),
             country,
             countryCode,
           }
@@ -149,13 +180,50 @@ export default function ProfitAnalysisPage() {
         // Calcola lo stato dei dati
         const status = checkDataStatus(parsed, 'monthLabel', 'Media Report')
         setDataStatus(status)
+
+        // Payments Report (commissions)
+        try {
+          const paymentsResp = await fetch(withCacheBuster('/Payments Report.csv'), { cache: 'no-store' })
+          if (paymentsResp.ok) {
+            const paymentsText = await paymentsResp.text()
+            const paymentsParsed = parseCsv(paymentsText).map((r) => {
+              const rawDate = (r.paymentdate ?? r.payment_date ?? r.PaymentDate ?? r['Payment Date'] ?? '').toString().trim()
+              const parts = rawDate.split('/')
+              const year = parts.length >= 3 ? Number(parts[2]) : NaN
+              return {
+                paymentdate: rawDate,
+                year: Number.isFinite(year) ? year : '—',
+                affiliate: (r.affiliate ?? r.Affiliate ?? '').toString().trim(),
+                payment_amount: cleanNumber(r.payment_amount ?? r.paymentAmount ?? r['Payment Amount'] ?? r.amount ?? r.Amount),
+              }
+            })
+            setPaymentsRows(paymentsParsed)
+          } else {
+            setPaymentsRows([])
+          }
+        } catch (e) {
+          console.warn('Failed to load payments report', e)
+          setPaymentsRows([])
+        }
       } catch (err) {
         console.error('Failed to load media report', err)
       } finally {
         setLoading(false)
       }
     }
-    loadMedia()
+    const onReportsUpdated = () => {
+      loadAllReports()
+    }
+
+    loadAllReports()
+    window.addEventListener('bw-reports-updated', onReportsUpdated)
+    window.addEventListener('storage', (e) => {
+      if (e && e.key === 'bw_reports_version') onReportsUpdated()
+    })
+
+    return () => {
+      window.removeEventListener('bw-reports-updated', onReportsUpdated)
+    }
   }, [])
 
   const yearOptions = useMemo(() => {
@@ -165,15 +233,35 @@ export default function ProfitAnalysisPage() {
 
   const filteredRows = useMemo(() => mediaRows.filter((r) => selectedYear === 'all' ? true : r.year === Number(selectedYear)), [mediaRows, selectedYear])
 
+  const filteredPaymentsRows = useMemo(
+    () => paymentsRows.filter((r) => selectedYear === 'all' ? true : r.year === Number(selectedYear)),
+    [paymentsRows, selectedYear]
+  )
+
+  const commissionsByAffiliate = useMemo(() => {
+    const normalize = (s) => String(s || '').trim().toLowerCase()
+    const map = new Map()
+    filteredPaymentsRows.forEach((r) => {
+      const key = normalize(r.affiliate)
+      if (!key) return
+      map.set(key, (map.get(key) || 0) + (r.payment_amount || 0))
+    })
+    return map
+  }, [filteredPaymentsRows])
+
   const kpis = useMemo(() => {
     const sum = (field) => filteredRows.reduce((acc, r) => acc + (r[field] || 0), 0)
-    const sales = sum('netDeposits')
+    const deposits = sum('deposits')
+    const withdrawals = sum('withdrawals')
+    const netDeposits = sum('netDeposits')
     const profit = sum('pl')
     const ftd = sum('ftd')
+    const qftd = sum('qftd')
     const registrations = sum('registrations')
-    const profitRatio = sales ? (profit / sales) * 100 : 0
-    return { sales, profit, ftd, registrations, profitRatio }
-  }, [filteredRows])
+    const losingRatio = netDeposits ? (profit / netDeposits) * 100 : 0
+    const commissions = filteredPaymentsRows.reduce((acc, r) => acc + (r.payment_amount || 0), 0)
+    return { deposits, withdrawals, netDeposits, profit, ftd, qftd, registrations, losingRatio, commissions }
+  }, [filteredRows, filteredPaymentsRows])
 
   const affiliatesData = useMemo(() => {
     const map = new Map()
@@ -204,10 +292,11 @@ export default function ProfitAnalysisPage() {
   const depositsWithdrawalsByMonth = useMemo(() => {
     const map = new Map()
     filteredRows.forEach((r) => {
-      if (!map.has(r.monthIndex)) map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0 })
+      if (!map.has(r.monthIndex)) map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0, pl: 0 })
       const acc = map.get(r.monthIndex)
-      acc.deposits += r.netDeposits || 0
+      acc.deposits += r.deposits || 0
       acc.withdrawals += r.withdrawals || 0
+      acc.pl += r.pl || 0
     })
     return Array.from(map.entries())
       .sort((a, b) => a[0] - b[0])
@@ -226,6 +315,42 @@ export default function ProfitAnalysisPage() {
     const worst = [...values].sort((a, b) => (a.registrations || 0) - (b.registrations || 0)).slice(0, 10)
     return { best, worst }
   }, [filteredRows])
+
+  const worstAffiliatesByRoi = useMemo(() => {
+    const normalize = (s) => String(s || '').trim().toLowerCase()
+    const map = new Map()
+    filteredRows.forEach((r) => {
+      const key = r.affiliate || '—'
+      if (!map.has(key)) map.set(key, { label: key, profit: 0, netDeposits: 0 })
+      const acc = map.get(key)
+      acc.profit += r.pl || 0
+      acc.netDeposits += r.netDeposits || 0
+    })
+
+    const profitByAffiliateKey = new Map()
+    Array.from(map.values()).forEach((v) => {
+      profitByAffiliateKey.set(normalize(v.label), v.profit || 0)
+    })
+
+    const values = Array.from(map.values())
+      .map((v) => {
+        const commissions = commissionsByAffiliate.get(normalize(v.label)) || 0
+        const roi = commissions ? ((v.profit - commissions) / commissions) * 100 : 0
+        return { label: v.label, roi, commissions, pl: v.profit || 0 }
+      })
+      .filter((v) => {
+        const commissions = Number(v.commissions || 0)
+        // ROI is not meaningful if commissions are missing
+        if (commissions <= 0) return false
+        const pl = profitByAffiliateKey.get(normalize(v.label)) || 0
+        if (Number(pl || 0) === 0) return false
+        return Number(pl || 0) >= Number(roiMinPl || 0)
+      })
+
+    return values
+      .sort((a, b) => (a.roi || 0) - (b.roi || 0))
+      .slice(0, 10)
+  }, [filteredRows, commissionsByAffiliate, roiMinPl])
 
   const scatterData = useMemo(() => {
     if (scatterEntity === 'country') {
@@ -258,7 +383,7 @@ export default function ProfitAnalysisPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div>
           <h2 style={{ margin: 0 }}>Profit analysis</h2>
-          <p style={{ margin: 0, color: '#9fb3c8', fontSize: 12 }}>Media Report only · KPIs, affiliates, map, deposits</p>
+          <p style={{ margin: 0, color: '#9fb3c8', fontSize: 12 }}>Media Report + Payments Report (commissions) · KPIs, affiliates, map, deposits</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label style={{ color: '#94a3b8', fontSize: 12 }}>Year</label>
@@ -272,12 +397,16 @@ export default function ProfitAnalysisPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-        <KpiCard label="Net Deposits" value={formatEuro(kpis.sales)} tone="#22d3ee" />
-        <KpiCard label="PL" value={formatEuro(kpis.profit)} tone="#34d399" />
-        <KpiCard label="FTD" value={formatNumberShort(kpis.ftd)} tone="#fbbf24" />
-        <KpiCard label="Registrations" value={formatNumberShort(kpis.registrations)} tone="#a855f7" />
-        <KpiCard label="PL / Net Deposits" value={formatPercent(kpis.profitRatio)} tone={kpis.profitRatio >= 0 ? '#34d399' : '#f87171'} />
+      <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
+        <KpiCard size="sm" label="Registrations" value={formatNumberShort(kpis.registrations)} tone="#a855f7" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="Deposits" value={formatEuro(kpis.deposits)} tone="#38bdf8" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="Withdrawals" value={formatEuro(kpis.withdrawals)} tone="#fb7185" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="Net Deposits" value={formatEuro(kpis.netDeposits)} tone="#22d3ee" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="PL" value={formatEuro(kpis.profit)} tone="#34d399" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="FTD" value={formatNumberShort(kpis.ftd)} tone="#fbbf24" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="QFTD" value={formatNumberShort(kpis.qftd)} tone="#f97316" style={{ minWidth: 140, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="PL / Net Deposits" value={formatPercent(kpis.losingRatio)} tone={kpis.losingRatio >= 0 ? '#34d399' : '#f87171'} style={{ minWidth: 160, flex: '0 0 auto' }} />
+        <KpiCard size="sm" label="Commissions" value={formatEuro(kpis.commissions)} tone="#60a5fa" style={{ minWidth: 160, flex: '0 0 auto' }} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
@@ -299,7 +428,7 @@ export default function ProfitAnalysisPage() {
         </div>
         <div className="card card-global">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>Net Deposits vs Withdrawals</h3>
+            <h3 style={{ margin: 0 }}>Deposits vs Withdrawals</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>By month</span>
           </div>
           <SegmentBarChart data={depositsWithdrawalsByMonth} />
@@ -316,10 +445,39 @@ export default function ProfitAnalysisPage() {
         </div>
         <div className="card card-global">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <h3 style={{ margin: 0 }}>Worst affiliates by registrations</h3>
+            <h3 style={{ margin: 0 }}>Worst affiliates by ROI</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>Bottom 10</span>
           </div>
-          <RegistrationBarChart data={registrationsByAffiliate.worst} title="Registrations" />
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#94a3b8' }}>Min PL</div>
+            {[2000, 20000, 100000, 500000].map((v) => {
+              const label = v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)
+              const checked = Number(roiMinPl) === v
+              return (
+                <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      if (e.target.checked) setRoiMinPl(v)
+                      else setRoiMinPl(2000)
+                    }}
+                    style={{ width: 12, height: 12, accentColor: '#ef4444' }}
+                  />
+                  {label}
+                </label>
+              )
+            })}
+          </div>
+          <MetricBarChart
+            data={worstAffiliatesByRoi}
+            title="ROI"
+            valueKey="roi"
+            valueFormat="percent"
+            barBackgroundColor="rgba(248, 113, 113, 0.6)"
+            barBorderColor="rgba(248, 113, 113, 1)"
+            getTooltipLines={(d) => [`Commissions: €${Math.round(d.commissions || 0).toLocaleString('en-GB')}`, `PL: €${Math.round(d.pl || 0).toLocaleString('en-GB')}`]}
+          />
         </div>
         <div className="card card-global">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>

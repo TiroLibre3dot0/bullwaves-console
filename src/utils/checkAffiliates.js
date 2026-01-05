@@ -64,7 +64,7 @@ async function checkAffiliateMappings() {
         console.log(`✅ Media Report: ${mediaData.length} righe caricate`)
 
         for (const row of mediaData) {
-          const affiliateId = row['UID'] || row['Affiliate ID'] || row['AffiliateID'] || row['ID']
+          const affiliateId = row.uid || row.affiliate_id || row['UID'] || row['Affiliate ID'] || row['AffiliateID'] || row['ID']
           const affiliateName = row['Affiliate'] || row['Affiliate Name'] || row['Name'] || ''
 
           if (affiliateId) {

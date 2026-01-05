@@ -741,12 +741,19 @@ export default function Dashboard() {
         const text = await resp.text();
         const rows = parseCsv(text);
 
+        const pick = (obj, keys) => {
+          for (const key of keys) {
+            if (obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && `${obj[key]}`.trim() !== '') return obj[key];
+          }
+          return undefined;
+        };
+
         const parsed = rows.map((r) => ({
-          affiliate: (r['Affiliate'] ?? '').toString().trim() || 'ÔÇö',
-          registrations: cleanNumber(r['Registrations'] ?? r['Leads']),
-          pl: cleanNumber(r['PL']),
-          netDeposits: cleanNumber(r['Net Deposits']),
-          commission: cleanNumber(r['Commission']),
+          affiliate: (pick(r, ['Affiliate', 'affiliate']) ?? '').toString().trim() || 'ÔÇö',
+          registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
+          pl: cleanNumber(pick(r, ['PL', 'pl'])),
+          netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
+          commission: cleanNumber(pick(r, ['Commission', 'commission'])),
         }));
         setMediaRows(parsed);
       } catch (err) {

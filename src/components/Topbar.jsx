@@ -30,6 +30,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDataInfoModal, setShowDataInfoModal] = useState(false)
   const hoverTimer = useRef(null)
+  const hasNav = Boolean(children)
 
   const isMobile = () => window.innerWidth <= 768;
 
@@ -99,6 +100,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
   }
 
   const toggleMobileMenu = () => {
+    if (!hasNav) return
     setShowMobileMenu(!showMobileMenu)
   }
 
@@ -147,7 +149,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
       </div>
       <div className="topbar-nav-slot">
         {/* Hamburger Menu Button - Mobile Only (render only when viewport is mobile) */}
-        {typeof window !== 'undefined' && isMobile() && (
+        {hasNav && typeof window !== 'undefined' && isMobile() && (
           <button
             className="hamburger-menu flex flex-col justify-center items-center w-8 h-8 space-y-1 bg-transparent border-none cursor-pointer"
             onClick={toggleMobileMenu}
@@ -160,12 +162,14 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
         )}
 
         {/* Desktop Navigation */}
-        <div className="hidden md:block">
-          {children}
-        </div>
+        {hasNav ? (
+          <div className="hidden md:block">
+            {children}
+          </div>
+        ) : null}
 
         {/* Mobile Navigation Menu */}
-        {showMobileMenu && (
+        {hasNav && showMobileMenu && (
           <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-gradient-to-b from-slate-900/98 to-slate-800/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
             <div className="px-4 py-4 max-h-96 overflow-y-auto">
               {React.cloneElement(children, {

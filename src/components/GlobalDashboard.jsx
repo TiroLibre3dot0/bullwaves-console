@@ -22,6 +22,13 @@ export default function GlobalDashboard() {
   const [loadingPayments, setLoadingPayments] = useState(true);
   const loading = loadingMedia || loadingPayments;
 
+  const pick = (obj, keys) => {
+    for (const key of keys) {
+      if (obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && `${obj[key]}`.trim() !== '') return obj[key];
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     async function loadMedia() {
       try {
@@ -36,40 +43,40 @@ export default function GlobalDashboard() {
         }
         if (!text) return;
         const parsed = parseCsv(text).map((r) => {
-          const monthMeta = parseMonthLabel(r.Month);
+          const monthMeta = parseMonthLabel(pick(r, ['Month', 'month']));
           return {
             raw: r,
             monthKey: monthMeta.key,
             monthLabel: monthMeta.label,
             monthIndex: monthMeta.monthIndex,
             year: monthMeta.year,
-            affiliate: r.Affiliate || '—',
-            uid: (r.uid ?? '').toString().trim(),
-            impressions: cleanNumber(r.Impressions),
-            uniqueImpressions: cleanNumber(r['Unique Impressions']),
-            ctr: cleanPercent(r.CTR),
-            uniqueVisitors: cleanNumber(r['Unique Visitors']),
-            visitors: cleanNumber(r.Visitors),
-            leads: cleanNumber(r.Leads),
-            registrations: cleanNumber(r.Registrations),
-            conversionRate: cleanPercent(r['Conversion Rate']),
-            ftd: cleanNumber(r.FTD),
-            qftd: cleanNumber(r.QFTD),
-            deposits: cleanNumber(r.Deposits),
-            withdrawals: cleanNumber(r.Withdrawals),
-            netDeposits: cleanNumber(r['Net Deposits']),
-            firstDeposits: cleanNumber(r['First Deposits']),
-            spread: cleanNumber(r.Spread),
-            lot: cleanNumber(r.LOT),
-            volume: cleanNumber(r.Volume),
-            pl: cleanNumber(r.PL),
-            roi: cleanNumber(r.ROI),
-            commission: cleanNumber(r.Commission),
-            cpaCommission: cleanNumber(r['CPA Commission']),
-            cplCommission: cleanNumber(r['CPL Commission']),
-            revShareCommission: cleanNumber(r['RevShare Commission']),
-            subCommission: cleanNumber(r['Sub Commission']),
-            otherCommission: cleanNumber(r['Other Commission']),
+            affiliate: (pick(r, ['Affiliate', 'affiliate']) || '—'),
+            uid: (pick(r, ['uid', 'UID', 'Uid']) ?? '').toString().trim(),
+            impressions: cleanNumber(pick(r, ['Impressions', 'impressions'])),
+            uniqueImpressions: cleanNumber(pick(r, ['Unique Impressions', 'unique_impressions', 'uniqueimpressions'])),
+            ctr: cleanPercent(pick(r, ['CTR', 'ctr'])),
+            uniqueVisitors: cleanNumber(pick(r, ['Unique Visitors', 'unique_visitors', 'uniquevisitors'])),
+            visitors: cleanNumber(pick(r, ['Visitors', 'visitors'])),
+            leads: cleanNumber(pick(r, ['Leads', 'leads'])),
+            registrations: cleanNumber(pick(r, ['Registrations', 'registrations'])),
+            conversionRate: cleanPercent(pick(r, ['Conversion Rate', 'conversion_rate', 'conversionrate'])),
+            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
+            qftd: cleanNumber(pick(r, ['QFTD', 'qftd'])),
+            deposits: cleanNumber(pick(r, ['Deposits', 'deposits'])),
+            withdrawals: cleanNumber(pick(r, ['Withdrawals', 'withdrawals'])),
+            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
+            firstDeposits: cleanNumber(pick(r, ['First Deposits', 'first_deposits', 'firstdeposits'])),
+            spread: cleanNumber(pick(r, ['Spread', 'spread'])),
+            lot: cleanNumber(pick(r, ['LOT', 'lot'])),
+            volume: cleanNumber(pick(r, ['Volume', 'volume'])),
+            pl: cleanNumber(pick(r, ['PL', 'pl'])),
+            roi: cleanNumber(pick(r, ['ROI', 'roi'])),
+            commission: cleanNumber(pick(r, ['Commission', 'commission'])),
+            cpaCommission: cleanNumber(pick(r, ['CPA Commission', 'cpa_commission', 'cpaCommission', 'CPA'])),
+            cplCommission: cleanNumber(pick(r, ['CPL Commission', 'cpl_commission', 'cplCommission', 'CPL'])),
+            revShareCommission: cleanNumber(pick(r, ['RevShare Commission', 'revshare_commission', 'revShareCommission', 'Revshare Commission', 'revshare'])),
+            subCommission: cleanNumber(pick(r, ['Sub Commission', 'sub_commission', 'subCommission', 'subaffiliate'])),
+            otherCommission: cleanNumber(pick(r, ['Other Commission', 'other_commission', 'otherCommission', 'other'])),
           };
         });
             setMediaRows(parsed);

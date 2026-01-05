@@ -1536,29 +1536,72 @@ export default function FraudMonitoringDashboard() {
     <div style={{ padding: 16, color: '#dbeafe' }}>
       {/* Top recap cards from Registrations Report (always reserve space to avoid layout shift) */}
       <div style={{ fontWeight: 800, marginBottom: 6 }}>User Behavior</div>
-      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 12 }}>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 12 }}>
+        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 10 }}>
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Unique visitors (Media)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.uniqueVisitors || 0) : '—'}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Unique visitors (Media)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.uniqueVisitors || 0) : '—'}</div>
           </div>
         </div>
-        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.05))', border: '1px solid rgba(59, 130, 246, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+
+        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 10 }}>
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M19 8v6m3-3h-6"></path>
+          </svg>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Registrations (Media)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.registrations || 0) : '—'}</div>
+          </div>
+        </div>
+
+        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 197, 253, 0.05))', border: '1px solid rgba(59, 130, 246, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" style={{ marginRight: 12 }}>
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total registered accounts (app)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap ? displayCsvRecap.totalAccounts : '—'}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total registered accounts (app)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap ? displayCsvRecap.totalAccounts : '—'}</div>
           </div>
         </div>
-        <div onMouseEnter={() => setHoverSource('Losing ratio')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+        {/* Removed: Avg cost / registered user (app) - hidden per spec */}
+        <div onMouseEnter={() => setHoverSource('Registration Gap')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(245, 158, 11, 0.05))', border: '1px solid rgba(139, 69, 19, 0.2)', padding: 12, borderRadius: 12, minWidth: 210, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b4513" strokeWidth="2" style={{ marginRight: 12 }}>
+            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+          </svg>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Registration Gap</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{(mediaLoaded && csvLoaded && displayCsvRecap) ? Math.round((mediaSummary.registrations || 0) - (displayCsvRecap.totalAccounts || 0)) : '—'}</div>
+          </div>
+        </div>
+        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 12, borderRadius: 12, minWidth: 170, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 12 }}>
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 0 1 0 4H8"></path>
+            <path d="M12 18V6"></path>
+          </svg>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>FTD (Media)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.ftd || 0) : '—'}</div>
+          </div>
+        </div>
+        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 12, borderRadius: 12, minWidth: 170, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginRight: 12 }}>
+            <polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"></polygon>
+          </svg>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>QFTD (Media)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.qftd || 0) : '—'}</div>
+          </div>
+        </div>
+        <div onMouseEnter={() => setHoverSource('Losing ratio')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginRight: 10 }}>
             <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z"></path>
             <path d="M9 5a2 2 0 1 2 2 2v2H5V7a2 2 0 0 1 2-2z"></path>
             <path d="M21 5a2 2 0 1 2 2 2v2h-4V7a2 2 0 0 1 2-2z"></path>
@@ -1566,147 +1609,125 @@ export default function FraudMonitoringDashboard() {
             <line x1="12" y1="3" x2="12" y2="21"></line>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Losing ratio %</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap ? displayCsvRecap.losingUsersPercentage.toFixed(1) + '%' : '—'}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Losing ratio %</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap ? displayCsvRecap.losingUsersPercentage.toFixed(1) + '%' : '—'}</div>
           </div>
         </div>
-        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 12 }}>
-            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-            <circle cx="9" cy="7" r="4"></circle>
-            <path d="M19 8v6m3-3h-6"></path>
-          </svg>
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Registrations (Media)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.registrations || 0) : '—'}</div>
-          </div>
-        </div>
-        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 16, borderRadius: 12, minWidth: 180, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 12 }}>
-            <circle cx="12" cy="12" r="10"></circle>
-            <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 0 1 0 4H8"></path>
-            <path d="M12 18V6"></path>
-          </svg>
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>FTD (cum)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.ftd || 0) : '—'}</div>
-          </div>
-        </div>
-        <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 16, borderRadius: 12, minWidth: 180, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginRight: 12 }}>
-            <polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"></polygon>
-          </svg>
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>QFTD (cum)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? Math.round(mediaSummary.qftd || 0) : '—'}</div>
-          </div>
-        </div>
-        {/* Removed: Avg cost / registered user (app) - hidden per spec */}
-        <div onMouseEnter={() => setHoverSource('Registration Gap')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(245, 158, 11, 0.05))', border: '1px solid rgba(139, 69, 19, 0.2)', padding: 16, borderRadius: 12, minWidth: 240, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b4513" strokeWidth="2" style={{ marginRight: 12 }}>
-            <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-          </svg>
-          <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Registration Gap</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{(mediaLoaded && csvLoaded && displayCsvRecap) ? Math.round((mediaSummary.registrations || 0) - (displayCsvRecap.totalAccounts || 0)) : '—'}</div>
-          </div>
-        </div>
-        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 12 }}>
+        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 10 }}>
             <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
             <line x1="2" y1="10" x2="22" y2="10"></line>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total deposits (count)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap && displayCsvRecap.depositStats ? displayCsvRecap.depositStats.total : '—'}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total deposits (count)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap && displayCsvRecap.depositStats ? displayCsvRecap.depositStats.total : '—'}</div>
           </div>
         </div>
-        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 12 }}>
+        <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 10 }}>
             <path d="M3 3v18h18"></path>
             <path d="M18 9l-5 5-3-3-5 5"></path>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Avg deposits (depositors)</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap && displayCsvRecap.depositStats ? formatShort(Number(displayCsvRecap.depositStats.avg || 0)) : '—'}</div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Avg deposits (depositors)</div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{csvLoaded && displayCsvRecap && displayCsvRecap.depositStats ? formatShort(Number(displayCsvRecap.depositStats.avg || 0)) : '—'}</div>
           </div>
         </div>
       </div>
 
       <div style={{ marginTop: 24, marginBottom: 16 }}>
         <div style={{ color: palette.muted, marginBottom: 8 }}>Financial Summary</div>
-        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 12 }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(134, 239, 172, 0.05))', border: '1px solid rgba(34, 197, 94, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" style={{ marginRight: 10 }}>
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12h8m-4-4v8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total Deposits</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.deposits || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total Deposits</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.deposits || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(252, 165, 165, 0.05))', border: '1px solid rgba(239, 68, 68, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginRight: 10 }}>
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12h8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total Withdrawals</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.withdrawals || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total Withdrawals</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.withdrawals || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 10 }}>
               <circle cx="12" cy="12" r="10"></circle>
               <path d="M8 12h8m-4-4v8"></path>
               <path d="M8 12h8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Net Deposits</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.netDeposits || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Net Deposits</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.netDeposits || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 10 }}>
               <path d="M3 3v18h18"></path>
               <path d="M18 9l-5 5-3-3-5 5"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total PL</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.pl || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total PL</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.pl || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('ARPU')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(103, 232, 249, 0.05))', border: '1px solid rgba(6, 182, 212, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('ARPU')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(103, 232, 249, 0.05))', border: '1px solid rgba(6, 182, 212, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" style={{ marginRight: 10 }}>
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
               <path d="M16 11l2 2 4-4"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>ARPU</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.arpu || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>ARPU</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.arpu || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('Registrations Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(253, 230, 138, 0.05))', border: '1px solid rgba(245, 158, 11, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" style={{ marginRight: 10 }}>
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Total Commissions</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{displayRegCommissionsSummary ? `${formatShort(displayRegCommissionsSummary.total || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total Commissions</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{displayRegCommissionsSummary ? `${formatShort(displayRegCommissionsSummary.total || 0)} EUR` : '—'}</div>
             </div>
           </div>
-          <div onMouseEnter={() => setHoverSource('Avg CPA (paying accounts)')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(245, 158, 11, 0.05))', border: '1px solid rgba(139, 69, 19, 0.2)', padding: 16, borderRadius: 12, minWidth: 220, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8b4513" strokeWidth="2" style={{ marginRight: 12 }}>
+          <div onMouseEnter={() => setHoverSource('Media Report.csv')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(196, 181, 253, 0.05))', border: '1px solid rgba(168, 85, 247, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2" style={{ marginRight: 10 }}>
+              <path d="M12 1v22"></path>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total Commissions (Media)</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.commissions || 0)} EUR` : '—'}</div>
+            </div>
+          </div>
+          <div onMouseEnter={() => setHoverSource('Commissions Gap')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(245, 158, 11, 0.05))', border: '1px solid rgba(139, 69, 19, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b4513" strokeWidth="2" style={{ marginRight: 10 }}>
+              <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+            </svg>
+            <div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Commissions Gap</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{(mediaLoaded && displayRegCommissionsSummary) ? `${formatShort((extendedMediaSummary.commissions || 0) - (displayRegCommissionsSummary.total || 0))} EUR` : '—'}</div>
+            </div>
+          </div>
+          <div onMouseEnter={() => setHoverSource('Avg CPA (paying accounts)')} onMouseMove={e => setHoverXY({ x: e.clientX, y: e.clientY })} onMouseLeave={() => { setHoverSource(null); setHoverXY(null) }} style={{ background: 'linear-gradient(135deg, rgba(139, 69, 19, 0.1), rgba(245, 158, 11, 0.05))', border: '1px solid rgba(139, 69, 19, 0.2)', padding: 12, borderRadius: 12, minWidth: 200, display: 'flex', alignItems: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', transition: 'transform 0.2s', cursor: 'pointer' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b4513" strokeWidth="2" style={{ marginRight: 10 }}>
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
               <line x1="16" y1="2" x2="16" y2="6"></line>
               <line x1="8" y1="2" x2="8" y2="6"></line>
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 12, fontWeight: 500 }}>Avg CPA</div>
-              <div style={{ fontSize: 20, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.cpa || 0)} EUR` : '—'}</div>
+              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Avg CPA</div>
+              <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>{mediaLoaded ? `${formatShort(extendedMediaSummary.cpa || 0)} EUR` : '—'}</div>
             </div>
           </div>
         </div>
