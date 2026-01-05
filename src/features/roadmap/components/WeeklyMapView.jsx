@@ -165,10 +165,10 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
   const tasksGroupedByMega = useMemo(() => {
     const map = new Map()
-    tasksFiltered.forEach((t) => {
-      const megaId = t.megaStoryId || 'unknown'
+    tasksFiltered.forEach((task) => {
+      const megaId = task.megaStoryId || 'unknown'
       const list = map.get(megaId) || []
-      list.push(t)
+      list.push(task)
       map.set(megaId, list)
     })
     return map
@@ -387,9 +387,9 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
       <div style={checklistOpen ? { pointerEvents: 'none' } : undefined}>
         {Array.from(tasksGroupedByMega.entries()).map(([megaId, list]) => {
         const byStatus = { planned: [], in_progress: [], blocked: [], done: [] }
-        list.forEach((t) => {
-          const key = byStatus[t.status] ? t.status : 'planned'
-          byStatus[key].push(t)
+        list.forEach((task) => {
+          const key = byStatus[task.status] ? task.status : 'planned'
+          byStatus[key].push(task)
         })
 
         return (
@@ -415,13 +415,13 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                   </div>
 
                   <div className="roadmap-column-body">
-                    {(byStatus[col.id] || []).map((t) => {
-                      const checklistKey = String(t.title || '').trim()
-                      const hasChecklist = t.status === 'planned' && Boolean(TASK_CHECKLISTS[checklistKey])
+                    {(byStatus[col.id] || []).map((task) => {
+                      const checklistKey = String(task.title || '').trim()
+                      const hasChecklist = task.status === 'planned' && Boolean(TASK_CHECKLISTS[checklistKey])
                       const isDraggable = !readOnly && !hasChecklist
                       return (
                       <div
-                        key={t.id}
+                        key={task.id}
                         className="roadmap-card"
                         draggable={isDraggable}
                         onDragStart={(e) => {
@@ -429,18 +429,18 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                             e.preventDefault()
                             return
                           }
-                          onDragStart(e, t.id)
+                          onDragStart(e, task.id)
                         }}
                         onClick={() => {
                           if (!hasChecklist) return
-                          setChecklistTask(t)
+                          setChecklistTask(task)
                         }}
                         style={{ cursor: readOnly ? 'default' : (hasChecklist ? 'pointer' : 'grab') }}
                       >
                         <div className="roadmap-card-header">
                           <div>
-                            <div className="roadmap-area">{t.owner || '—'}</div>
-                            <div className="roadmap-activity">{t.title}</div>
+                            <div className="roadmap-area">{task.owner || '—'}</div>
+                            <div className="roadmap-activity">{task.title}</div>
                           </div>
                           {!readOnly ? (
                             <button
@@ -448,7 +448,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                               className="btn secondary"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                removeTask(t.id)
+                                removeTask(task.id)
                               }}
                               style={{ padding: '6px 8px', fontSize: 12 }}
                             >
@@ -460,21 +460,21 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                           {!filterMegaStoryId ? (
                             <div>
                               <span className="label">{t('weeklyMap.card.mega')}</span>
-                              <span className="value"> {megaLabel(t.megaStoryId || megaId)}</span>
+                              <span className="value"> {megaLabel(task.megaStoryId || megaId)}</span>
                             </div>
                           ) : null}
 
                           <div>
                             <span className="label">{t('weeklyMap.card.dept')}</span>
-                            <span className="value"> {t.department || '—'}</span>
+                            <span className="value"> {task.department || '—'}</span>
                           </div>
                           <div>
                             <span className="label">{t('weeklyMap.card.story')}</span>
-                            <span className="value"> {t.storyId ? storyLabel(t.storyId) : '—'}</span>
+                            <span className="value"> {task.storyId ? storyLabel(task.storyId) : '—'}</span>
                           </div>
                         </div>
                         <div style={{ marginTop: 6, color: '#9fb3c8', fontSize: 12, lineHeight: 1.35 }}>
-                          {t.expectedImpact}
+                          {task.expectedImpact}
                         </div>
                       </div>
                     )})}

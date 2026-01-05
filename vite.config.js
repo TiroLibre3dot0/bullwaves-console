@@ -9,6 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       manifestFilename: 'manifest.webmanifest',
+      devOptions: {
+        enabled: true,
+      },
       manifest: {
         name: 'Bullwaves — Console',
         short_name: 'Bullwaves',
