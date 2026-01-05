@@ -51,6 +51,42 @@ function getTaskChecklists(t) {
         },
       ],
     },
+    'Solitics call + decision summary': {
+      title: t('weeklyMap.checklists.soliticsDecisionSummary.title'),
+      sections: [
+        {
+          title: t('weeklyMap.checklists.common.currentStatus.title'),
+          items: [
+            t('weeklyMap.checklists.soliticsDecisionSummary.status.item1'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.status.item2'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.status.item3'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.strategicAlignment.title'),
+          items: [
+            t('weeklyMap.checklists.soliticsDecisionSummary.alignment.item1'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.alignment.item2'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.ownershipModel.title'),
+          items: [
+            t('weeklyMap.checklists.soliticsDecisionSummary.ownership.item1'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.ownership.item2'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.ownership.item3'),
+          ],
+        },
+        {
+          title: t('weeklyMap.checklists.common.nextSteps.title'),
+          items: [
+            t('weeklyMap.checklists.soliticsDecisionSummary.next.item1'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.next.item2'),
+            t('weeklyMap.checklists.soliticsDecisionSummary.next.item3'),
+          ],
+        },
+      ],
+    },
     'Prepare call with Stamatis': {
       title: t('weeklyMap.checklists.prepareStamatis.title'),
       sections: [
@@ -417,7 +453,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                   <div className="roadmap-column-body">
                     {(byStatus[col.id] || []).map((task) => {
                       const checklistKey = String(task.title || '').trim()
-                      const hasChecklist = task.status === 'planned' && Boolean(TASK_CHECKLISTS[checklistKey])
+                      const hasChecklist = Boolean(TASK_CHECKLISTS[checklistKey])
                       const isDraggable = !readOnly && !hasChecklist
                       return (
                       <div
@@ -435,7 +471,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                           if (!hasChecklist) return
                           setChecklistTask(task)
                         }}
-                        style={{ cursor: readOnly ? 'default' : (hasChecklist ? 'pointer' : 'grab') }}
+                        style={{ cursor: hasChecklist ? 'pointer' : (readOnly ? 'default' : 'grab') }}
                       >
                         <div className="roadmap-card-header">
                           <div>
