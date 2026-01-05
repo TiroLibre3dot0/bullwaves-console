@@ -3,6 +3,9 @@
 
 export const strategicObjectives = [
   { id: 'profitability', label: 'Increase profitability' },
+  { id: 'ops_governance', label: 'Strengthen operational governance' },
+  { id: 'internal_comms', label: 'Improve internal communication & visibility' },
+  { id: 'execution_clarity', label: 'Roadmap execution clarity' },
   { id: 'diversify', label: 'Diversify revenue' },
   { id: 'exit', label: 'Prepare company for Exit' },
 ]

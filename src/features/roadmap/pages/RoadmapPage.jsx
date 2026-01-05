@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ongoingItems from '../../ongoing/data/ongoingItems'
 import { strategicObjectives, projects2026 } from '../data/roadmapData'
+import WeeklyMapView from '../components/WeeklyMapView'
 
 const statusLabel = { active: 'Active', blocked: 'Blocked', done: 'Done' }
 const priorityLabel = { high: 'High', medium: 'Medium', low: 'Low' }
@@ -71,6 +72,20 @@ export default function RoadmapPage() {
   const [fixStory, setFixStory] = useState('')
   const [openStories, setOpenStories] = useState(() => new Set())
   const [selectedStoryId, setSelectedStoryId] = useState(null)
+  const [megaSubView, setMegaSubView] = useState('mega')
+  const [boardSubView, setBoardSubView] = useState('mega')
+
+  const preserveScroll = useCallback((fn) => {
+    if (typeof window === 'undefined') {
+      fn()
+      return
+    }
+    const y = window.scrollY
+    fn()
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: y })
+    })
+  }, [])
 
   const selectedTask = tasks.find((t) => t.id === selectedId) || null
   const selectedValidation = selectedTask ? validateTask(selectedTask) : null
@@ -272,9 +287,13 @@ export default function RoadmapPage() {
   }, [selectedMega, storiesForSelected, tasksByStory])
 
   const selectMega = (id) => {
-    setSelectedMega(id)
-    setMegaFilter(id || 'All')
-    setStoryFilter('All')
+    preserveScroll(() => {
+      setSelectedMega(id)
+      setMegaFilter(id || 'All')
+      setStoryFilter('All')
+      // IMPORTANT: don't reset sub-views.
+      // If the user is in Weekly Map (global or filtered), keep it visible.
+    })
   }
 
   return (
@@ -285,6 +304,10 @@ export default function RoadmapPage() {
           <p className="text-muted">Strategic mega-stories with execution drill-down.</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="ongoing-toggle">
+            <button type="button" className={`chip ${boardSubView === 'mega' ? 'active' : ''}`} onClick={() => setBoardSubView('mega')}>Mega Stories</button>
+            <button type="button" className={`chip ${boardSubView === 'weekly' ? 'active' : ''}`} onClick={() => setBoardSubView('weekly')}>Weekly Map</button>
+          </div>
           <div className="ongoing-counter-pill">
             <span className="pill-dot dot-progress" aria-hidden="true" />
             <span>{totals.active} active</span>
@@ -403,110 +426,131 @@ export default function RoadmapPage() {
         })}
       </div>
 
-      {selectedMega ? (
+      {boardSubView === 'weekly' ? (
+        <div style={{ marginTop: 12 }}>
+          <WeeklyMapView megaMap={megaMap} storyMap={storyMap} />
+        </div>
+      ) : selectedMega ? (
         <div className="ongoing-layout">
-          <div className="card" style={{ padding: 14 }}>
-            <div className="ongoing-feed-header">
-              <div>
-                <p className="ongoing-label">Stories</p>
-                <h3 className="ongoing-feed-title">{megaLabel(selectedMega)}</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="card" style={{ padding: 14 }}>
+              <div className="ongoing-feed-header" style={{ alignItems: 'flex-start' }}>
+                <div>
+                  <p className="ongoing-label">Mega-Story</p>
+                  <h3 className="ongoing-feed-title">{megaLabel(selectedMega)}</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="ongoing-toggle">
+                    <button type="button" className={`chip ${megaSubView === 'mega' ? 'active' : ''}`} onClick={() => setMegaSubView('mega')}>Mega Stories</button>
+                    <button type="button" className={`chip ${megaSubView === 'weekly' ? 'active' : ''}`} onClick={() => setMegaSubView('weekly')}>Weekly Map (filtered)</button>
+                  </div>
+                  <span className="feed-count">{baseFiltered.filter((t) => t.megaStoryId === selectedMega).length} items</span>
+                </div>
               </div>
-              <span className="feed-count">{baseFiltered.filter((t) => t.megaStoryId === selectedMega).length} items</span>
-            </div>
 
-            <div className="ongoing-feed-list">
-              {storiesOrdered.map((story) => {
-                const tasksForStory = tasksByStory.get(story.id) || []
-                if (tasksForStory.length === 0 && storyFilter !== 'All' && storyFilter !== story.id) return null
-                const open = openStories.has(story.id) || tasksForStory.length === 0
-                const storyFocused = focusedStoryId === story.id
-                const storyDimmed = focusedStoryId && focusedStoryId !== story.id
-                return (
-                  <div
-                    key={story.id}
-                    className={`ongoing-card story-card ${storyFocused ? 'focused' : ''} ${storyDimmed ? 'dimmed' : ''}`}
-                    style={{ borderColor: 'rgba(255,255,255,0.06)' }}
-                  >
-                    <button
-                      type="button"
-                      style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'inherit', padding: 0 }}
-                      onClick={() => {
-                        toggleStory(story.id)
-                        setSelectedStoryId(story.id)
-                        if (tasksForStory.length > 0) {
-                          setSelectedId(tasksForStory[0].id)
-                        } else {
-                          setSelectedId(null)
-                        }
-                      }}
-                    >
-                      <div className="ongoing-card-header" style={{ marginBottom: 0 }}>
-                        <div>
-                          <div className="ongoing-card-title">{story.activity}</div>
-                          <div className="ongoing-card-meta">
-                            <span className="ongoing-pill subtle">{story.area || 'Area TBD'}</span>
-                            <span className="ongoing-pill subtle">{story.department || 'Dept TBD'}</span>
-                          </div>
-                        </div>
-                        <div className="ongoing-updated">{tasksForStory.length} tasks</div>
-                      </div>
-                    </button>
-
-                    {open && (
-                      <div className="ongoing-feed-list" style={{ marginTop: 10 }}>
-                        {tasksForStory.map((item) => (
+              {megaSubView === 'mega' ? (
+                <>
+                  <div className="ongoing-feed-list">
+                    {storiesOrdered.map((story) => {
+                      const tasksForStory = tasksByStory.get(story.id) || []
+                      if (tasksForStory.length === 0 && storyFilter !== 'All' && storyFilter !== story.id) return null
+                      const open = openStories.has(story.id) || tasksForStory.length === 0
+                      const storyFocused = focusedStoryId === story.id
+                      const storyDimmed = focusedStoryId && focusedStoryId !== story.id
+                      return (
+                        <div
+                          key={story.id}
+                          className={`ongoing-card story-card ${storyFocused ? 'focused' : ''} ${storyDimmed ? 'dimmed' : ''}`}
+                          style={{ borderColor: 'rgba(255,255,255,0.06)' }}
+                        >
                           <button
                             type="button"
-                            key={item.id}
-                            className={`ongoing-card ${selectedId === item.id ? 'selected' : ''}`}
-                            onClick={() => setSelectedId(item.id)}
+                            style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 'none', color: 'inherit', padding: 0 }}
+                            onClick={() => {
+                              preserveScroll(() => {
+                                toggleStory(story.id)
+                                setSelectedStoryId(story.id)
+                                if (tasksForStory.length > 0) {
+                                  setSelectedId(tasksForStory[0].id)
+                                } else {
+                                  setSelectedId(null)
+                                }
+                              })
+                            }}
                           >
-                            <div className="ongoing-card-header">
+                            <div className="ongoing-card-header" style={{ marginBottom: 0 }}>
                               <div>
-                                <div className="ongoing-card-title">{item.title}</div>
+                                <div className="ongoing-card-title">{story.activity}</div>
                                 <div className="ongoing-card-meta">
-                                  <span className={`ongoing-badge status-${item.status}`}>{statusLabel[item.status]}</span>
-                                  <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
-                                  <span className="ongoing-pill">{item.owner}</span>
+                                  <span className="ongoing-pill subtle">{story.area || 'Area TBD'}</span>
+                                  <span className="ongoing-pill subtle">{story.department || 'Dept TBD'}</span>
                                 </div>
                               </div>
-                              <div className="ongoing-updated">{viewMode === 'done' ? `Completed ${item.completedAt || '-'}` : `Created ${item.createdAt}`}</div>
+                              <div className="ongoing-updated">{tasksForStory.length} tasks</div>
                             </div>
-                            <div className="ongoing-line">
-                              <span className="label">Next step</span>
-                              <span className="value">{item.nextStep}</span>
-                            </div>
-                            {item.status === 'blocked' && item.dependencies?.length > 0 && (
-                              <div className="ongoing-line">
-                                <span className="label">Blocker</span>
-                                <span className="value">{item.dependencies.join(' - ')}</span>
-                              </div>
-                            )}
-                            {viewMode === 'done' && item.impactType && (
-                              <div className="ongoing-line">
-                                <span className="label">Impact</span>
-                                <span className="value">{`${item.impactType} - ${item.impactedDepartment} - ${item.impactedPlatformArea}`}</span>
-                              </div>
-                            )}
                           </button>
-                        ))}
-                        {tasksForStory.length === 0 && (
-                          <div className="ongoing-empty">No tasks for this story under current filters.</div>
-                        )}
-                      </div>
+
+                          {open && (
+                            <div className="ongoing-feed-list" style={{ marginTop: 10 }}>
+                              {tasksForStory.map((item) => (
+                                <button
+                                  type="button"
+                                  key={item.id}
+                                  className={`ongoing-card ${selectedId === item.id ? 'selected' : ''}`}
+                                  onClick={() => setSelectedId(item.id)}
+                                >
+                                  <div className="ongoing-card-header">
+                                    <div>
+                                      <div className="ongoing-card-title">{item.title}</div>
+                                      <div className="ongoing-card-meta">
+                                        <span className={`ongoing-badge status-${item.status}`}>{statusLabel[item.status]}</span>
+                                        <span className={`ongoing-badge priority-${item.priority}`}>{priorityLabel[item.priority]}</span>
+                                        <span className="ongoing-pill">{item.owner}</span>
+                                      </div>
+                                    </div>
+                                    <div className="ongoing-updated">{viewMode === 'done' ? `Completed ${item.completedAt || '-'}` : `Created ${item.createdAt}`}</div>
+                                  </div>
+                                  <div className="ongoing-line">
+                                    <span className="label">Next step</span>
+                                    <span className="value">{item.nextStep}</span>
+                                  </div>
+                                  {item.status === 'blocked' && item.dependencies?.length > 0 && (
+                                    <div className="ongoing-line">
+                                      <span className="label">Blocker</span>
+                                      <span className="value">{item.dependencies.join(' - ')}</span>
+                                    </div>
+                                  )}
+                                  {viewMode === 'done' && item.impactType && (
+                                    <div className="ongoing-line">
+                                      <span className="label">Impact</span>
+                                      <span className="value">{`${item.impactType} - ${item.impactedDepartment} - ${item.impactedPlatformArea}`}</span>
+                                    </div>
+                                  )}
+                                </button>
+                              ))}
+                              {tasksForStory.length === 0 && (
+                                <div className="ongoing-empty">No tasks for this story under current filters.</div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                    {storiesForSelected.length === 0 && (
+                      <div className="ongoing-empty">No stories mapped to this mega-story yet.</div>
                     )}
                   </div>
-                )
-              })}
-              {storiesForSelected.length === 0 && (
-                <div className="ongoing-empty">No stories mapped to this mega-story yet.</div>
+                </>
+              ) : (
+                <WeeklyMapView megaMap={megaMap} storyMap={storyMap} filterMegaStoryId={selectedMega} />
               )}
             </div>
           </div>
 
-          <aside className="ongoing-details card">
-            {selectedTask ? (
-              <div className="ongoing-details-content">
+          {megaSubView === 'mega' ? (
+            <aside className="ongoing-details card">
+              {selectedTask ? (
+                <div className="ongoing-details-content">
                 <div className="ongoing-detail-head">
                   <div>
                     <p className="ongoing-label">Details</p>
@@ -592,14 +636,15 @@ export default function RoadmapPage() {
                     <button type="button" className="btn secondary" onClick={handleMarkDone}>Mark as done</button>
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="ongoing-empty">
-                <p className="ongoing-label">Details panel</p>
-                <h3 className="ongoing-feed-title">Select a task to see details.</h3>
-              </div>
-            )}
-          </aside>
+                </div>
+              ) : (
+                <div className="ongoing-empty">
+                  <p className="ongoing-label">Details panel</p>
+                  <h3 className="ongoing-feed-title">Select a task to see details.</h3>
+                </div>
+              )}
+            </aside>
+          ) : null}
         </div>
       ) : (
         <div className="ongoing-empty">Select a mega-story to drill down.</div>

@@ -638,6 +638,7 @@ body{font-family:"Inter", system-ui, -apple-system, 'Segoe UI', Roboto, Arial;ba
 .roadmap-column-body { display: flex; flex-direction: column; gap: 8px; }
 .roadmap-card { text-align: left; width: 100%; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 10px; cursor: pointer; transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease; }
 .roadmap-card:hover { transform: translateY(-1px); box-shadow: 0 16px 36px rgba(0,0,0,0.35); border-color: rgba(34,211,238,0.4); }
+.roadmap-column.weekly-readonly { opacity: 0.75; }
 .roadmap-card-header { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .roadmap-area { font-weight: 800; color: #e8f1fb; }
 .roadmap-activity { color: var(--text); font-size: 13px; line-height: 1.4; }
