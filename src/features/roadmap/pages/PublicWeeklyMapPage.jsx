@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
+import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import WeeklyMapView from '../components/WeeklyMapView'
-import { loadWeeklyMapStore } from '../utils/weeklyMapStore'
+import { loadWeeklyMapStore, getWeekRange } from '../utils/weeklyMapStore'
 import FullPageLoader from '../../../components/FullPageLoader'
 
 export default function PublicWeeklyMapPage({ token }) {
@@ -15,8 +16,11 @@ export default function PublicWeeklyMapPage({ token }) {
     const validateToken = () => {
       // Get the stored token from current browser's localStorage
       // This allows sharing within the same origin but not cross-origin without auth
-      const storedToken = typeof window !== 'undefined' ? window.localStorage.getItem('bw_weekly_map_share_token') : null
-      
+      const storedToken =
+        typeof window !== 'undefined'
+          ? window.localStorage.getItem('bw_weekly_map_share_token')
+          : null
+
       if (storedToken && token === storedToken) {
         setIsValidToken(true)
       } else if (!storedToken) {
@@ -25,7 +29,7 @@ export default function PublicWeeklyMapPage({ token }) {
         // For now, allow access (tokens are hard to guess but not cryptographically secure)
         setIsValidToken(true)
       }
-      
+
       // Load the weekly map data
       const store = loadWeeklyMapStore()
       setWeeklyMapStore(store)
@@ -34,6 +38,22 @@ export default function PublicWeeklyMapPage({ token }) {
 
     validateToken()
   }, [token])
+
+  // Set Open Graph meta tags for link preview
+  useEffect(() => {
+    const current = getWeekRange(new Date())
+    setOpenGraphMeta({
+      title: 'Weekly Map — Team Execution Contract',
+      description: `Week of ${current.week_start} → ${current.week_end}. Team commitments, mega-stories, and project governance.`,
+      image: '/og-image-weekly-map.svg',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    })
+
+    // Cleanup: reset meta tags when component unmounts
+    return () => {
+      resetOpenGraphMeta()
+    }
+  }, [])
 
   if (loading) {
     return <FullPageLoader progress={40} subtitle={t('common.loading')} />
@@ -52,7 +72,9 @@ export default function PublicWeeklyMapPage({ token }) {
     <div style={{ padding: 20 }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ marginBottom: 20 }}>
-          <h1 style={{ color: 'var(--text)', fontSize: 28, marginBottom: 4 }}>Weekly Map — Project Management</h1>
+          <h1 style={{ color: 'var(--text)', fontSize: 28, marginBottom: 4 }}>
+            Weekly Map — Project Management
+          </h1>
           <p style={{ color: 'var(--muted)', fontSize: 13 }}>
             Read-only view: execution contract, tasks, and team commitments.
           </p>
