@@ -9,6 +9,7 @@ import {
   ensureWeekMap,
   getWeekMap,
   getWeekRange,
+  getShareLink,
   listWeeks,
   loadWeeklyMapStore,
   saveWeeklyMapStore,
@@ -632,14 +633,8 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
   }
 
   const copyBoardReport = async () => {
-    const markdown = buildWeeklyBoardReportMarkdown({
-      bucket: selectedBucket,
-      tasksByMega: tasksGroupedByMega,
-      megaLabel,
-      resolveToolFn: resolveTool,
-    })
-
-    const ok = await copyTextToClipboard(markdown)
+    const shareLink = getShareLink()
+    const ok = await copyTextToClipboard(shareLink)
     if (ok) setReportCopied(true)
   }
 
@@ -759,7 +754,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             <label style={{ fontSize: 11, color: 'transparent' }}>.</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
               <button type="button" className="btn secondary" onClick={copyBoardReport}>
-                {t('weeklyMap.actions.copyBoardReport')}
+                {t('weeklyMap.actions.shareLink')}
               </button>
               {reportCopied ? (
                 <span style={{ fontSize: 12, color: 'var(--muted)' }}>{t('weeklyMap.actions.copied')}</span>

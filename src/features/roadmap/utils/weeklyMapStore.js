@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'bw_weekly_map_v1'
+const SHARE_TOKEN_KEY = 'bw_weekly_map_share_token'
 
 function safeJsonParse(raw, fallback) {
   try {
@@ -6,6 +7,27 @@ function safeJsonParse(raw, fallback) {
   } catch {
     return fallback
   }
+}
+
+function generateShareToken() {
+  return 'share_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+}
+
+function getOrCreateShareToken() {
+  let token = typeof window !== 'undefined' ? window.localStorage.getItem(SHARE_TOKEN_KEY) : null
+  if (!token) {
+    token = generateShareToken()
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(SHARE_TOKEN_KEY, token)
+    }
+  }
+  return token
+}
+
+function getShareLink() {
+  const token = getOrCreateShareToken()
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${origin}/share/weekly-map/${token}`
 }
 
 function toIsoDate(d) {
@@ -356,4 +378,18 @@ export function saveWeeklyMapStore(store) {
   } catch {
     // ignore
   }
+}
+
+export {
+  deleteWeeklyTask,
+  ensureSeededCurrentWeek,
+  ensureWeekMap,
+  getWeekMap,
+  getWeekRange,
+  getOrCreateShareToken,
+  getShareLink,
+  listWeeks,
+  loadWeeklyMapStore,
+  saveWeeklyMapStore,
+  upsertWeeklyTask,
 }

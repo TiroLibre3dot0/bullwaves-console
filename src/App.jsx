@@ -10,6 +10,7 @@ import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
 import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
+import PublicWeeklyMapPage from './features/roadmap/pages/PublicWeeklyMapPage'
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
@@ -213,51 +214,56 @@ export default function App(){
 
   return (
     <DataStatusProvider>
-      <RequireAuth>
-        <div className="app-root">
-          <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin} />
+      {/* Public share link route - no auth required */}
+      {typeof window !== 'undefined' && window.location.pathname.startsWith('/share/weekly-map/') ? (
+        <PublicWeeklyMapPage token={window.location.pathname.split('/').pop()} />
+      ) : (
+        <RequireAuth>
+          <div className="app-root">
+            <Topbar onAdminClick={() => navigate('admin')} showAdmin={isAdmin} />
 
-          <div className="dashboard-shell">
-            <aside className="dashboard-sidebar">
-              <Sidebar
-                view={view}
-                executiveSection={executiveSection}
-                affiliateSection={affiliateSection}
-                supportOnly={isSupportUser}
-                navigate={navigate}
-                goExecutiveSection={goExecutiveSection}
-                goAffiliateSection={goAffiliateSection}
-              />
-            </aside>
+            <div className="dashboard-shell">
+              <aside className="dashboard-sidebar">
+                <Sidebar
+                  view={view}
+                  executiveSection={executiveSection}
+                  affiliateSection={affiliateSection}
+                  supportOnly={isSupportUser}
+                  navigate={navigate}
+                  goExecutiveSection={goExecutiveSection}
+                  goAffiliateSection={goAffiliateSection}
+                />
+              </aside>
 
-            <main className="dashboard-content">
-              <div className="dashboard-inner">
-                {view === 'overview' && <ProfitAnalysisPage />}
-                {view === 'executive' && (
-                  <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
-                )}
-                {view === 'affiliate' && (
-                  <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
-                )}
-                {view === 'fraud' && <FraudMonitoringDashboard />}
-                {view === 'report' && <Report />}
-                {view === 'roadmap' && <RoadmapPage />}
-                {view === 'weeklyMap' && <WeeklyMapPage />}
-                {view === 'orgChart' && <OrgChart />}
-                {view === 'summary' && <SummaryReport />}
-                {view === 'supportUserCheck' && (
-                  <React.Suspense fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}>
-                    <SupportUserCheck />
-                  </React.Suspense>
-                )}
-                {view === 'upload' && <UploadReportsPage />}
-                {/* Lab removed */}
-                {view === 'admin' && isAdmin && <AdminPanel />}
-              </div>
-            </main>
+              <main className="dashboard-content">
+                <div className="dashboard-inner">
+                  {view === 'overview' && <ProfitAnalysisPage />}
+                  {view === 'executive' && (
+                    <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
+                  )}
+                  {view === 'affiliate' && (
+                    <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
+                  )}
+                  {view === 'fraud' && <FraudMonitoringDashboard />}
+                  {view === 'report' && <Report />}
+                  {view === 'roadmap' && <RoadmapPage />}
+                  {view === 'weeklyMap' && <WeeklyMapPage />}
+                  {view === 'orgChart' && <OrgChart />}
+                  {view === 'summary' && <SummaryReport />}
+                  {view === 'supportUserCheck' && (
+                    <React.Suspense fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}>
+                      <SupportUserCheck />
+                    </React.Suspense>
+                  )}
+                  {view === 'upload' && <UploadReportsPage />}
+                  {/* Lab removed */}
+                  {view === 'admin' && isAdmin && <AdminPanel />}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
-      </RequireAuth>
+        </RequireAuth>
+      )}
     </DataStatusProvider>
   )
 }
