@@ -709,7 +709,7 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .mega-impact { display:flex; justify-content:space-between; gap:8px; align-items:center; padding:10px; border-radius:12px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.08); }
 .mega-impact .label { color:#94a3b8; font-size:12px; text-transform:uppercase; letter-spacing:0.05em; }
 .mega-impact .value { color:var(--text); font-size:13px; font-weight:600; text-align:right; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: grid; place-items: center; z-index: 200; padding: 14px; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.78); backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); display: grid; place-items: center; z-index: 200; padding: 14px; }
 .modal-card { background: #0b1424; border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; width: min(520px, 95vw); box-shadow: 0 30px 80px rgba(0,0,0,0.45); }
 .modal-header { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
 .modal-section { margin-bottom: 10px; }
@@ -717,6 +717,12 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .modal-card select,
 .modal-card input,
 .modal-card textarea { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: #0b1424; color: var(--text); }
+
+.tool-icon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.04); color: var(--text); text-decoration: none; white-space: nowrap; }
+.tool-icon-btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.14); }
+
+.tool-icon-btn svg { flex: 0 0 auto; }
+.tool-icon-label { font-size: 12px; font-weight: 700; color: currentColor; opacity: 0.95; }
 
 /* center column specific cards inside support detail layout */
 .support-detail-grid .center-col .card { padding: 18px; margin-top: 6px; border-radius: 12px; }

@@ -9,6 +9,7 @@ import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
+import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
@@ -36,6 +37,7 @@ export default function App(){
      overview: '/overview',
      report: '/report',
      roadmap: '/roadmap',
+     weeklyMap: '/weekly-map',
     // lab removed
     supportUserCheck: '/support/user-check',
     upload: '/upload',
@@ -54,6 +56,7 @@ export default function App(){
      if (pathname.startsWith('/cohort')) return 'affiliate';
      if (pathname.startsWith('/org-chart')) return 'orgChart';
      if (pathname.startsWith('/roadmap')) return 'roadmap';
+     if (pathname.startsWith('/weekly-map')) return 'weeklyMap';
      if (pathname.startsWith('/ongoing')) return 'roadmap';
      if (pathname.startsWith('/summary-report')) return 'summary';
     if (pathname.startsWith('/support')) return 'supportUserCheck';
@@ -194,6 +197,7 @@ export default function App(){
       orgChart: 'org-chart',
       summary: 'summary',
       roadmap: 'mega-stories',
+      weeklyMap: 'weekly-map',
       admin: 'admin-panel',
     }
     const sectionId = viewToSection[view]
@@ -238,6 +242,7 @@ export default function App(){
                 {view === 'fraud' && <FraudMonitoringDashboard />}
                 {view === 'report' && <Report />}
                 {view === 'roadmap' && <RoadmapPage />}
+                {view === 'weeklyMap' && <WeeklyMapPage />}
                 {view === 'orgChart' && <OrgChart />}
                 {view === 'summary' && <SummaryReport />}
                 {view === 'supportUserCheck' && (

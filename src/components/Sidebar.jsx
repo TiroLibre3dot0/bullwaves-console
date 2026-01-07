@@ -4,6 +4,7 @@ import { useI18n } from '../i18n/I18nContext'
 export default function Sidebar({ view, executiveSection, affiliateSection, supportOnly, navigate, goExecutiveSection, goAffiliateSection }) {
   const { t } = useI18n()
   const disabled = (key) => Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
+  const roadmapActive = view === 'roadmap' || view === 'weeklyMap'
 
   return (
     <div className="sidebar">
@@ -77,9 +78,29 @@ export default function Sidebar({ view, executiveSection, affiliateSection, supp
         <button disabled={disabled('fraud')} type="button" className={`sidebar-item sidebar-main tab ${view === 'fraud' ? 'active' : ''}`} onClick={() => navigate('fraud')}>
           {t('sidebar.fraud')}
         </button>
-        <button disabled={disabled('roadmap')} type="button" className={`sidebar-item sidebar-main tab ${view === 'roadmap' ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
+        <button disabled={disabled('roadmap')} type="button" className={`sidebar-item sidebar-main tab ${roadmapActive ? 'active' : ''}`} onClick={() => navigate('roadmap')}>
           {t('sidebar.roadmap')}
         </button>
+        {roadmapActive && (
+          <div className="sidebar-subsection">
+            <button
+              disabled={disabled('roadmap')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'roadmap' ? 'active' : ''}`}
+              onClick={() => navigate('roadmap')}
+            >
+              {t('sidebar.roadmap')}
+            </button>
+            <button
+              disabled={disabled('weeklyMap')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyMap' ? 'active' : ''}`}
+              onClick={() => navigate('weeklyMap')}
+            >
+              {t('sidebar.weeklyMap')}
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="sidebar-section" style={{ marginTop: 10 }}>

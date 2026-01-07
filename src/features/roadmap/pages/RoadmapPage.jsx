@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import ongoingItems from '../../ongoing/data/ongoingItems'
 import { strategicObjectives, projects2026 } from '../data/roadmapData'
-import WeeklyMapView from '../components/WeeklyMapView'
 import { useI18n } from '../../../i18n/I18nContext'
 
 const statusLabel = { active: 'Active', blocked: 'Blocked', done: 'Done' }
@@ -75,8 +74,6 @@ export default function RoadmapPage() {
   const [fixStory, setFixStory] = useState('')
   const [openStories, setOpenStories] = useState(() => new Set())
   const [selectedStoryId, setSelectedStoryId] = useState(null)
-  const [megaSubView, setMegaSubView] = useState('mega')
-  const [boardSubView, setBoardSubView] = useState('mega')
 
   const preserveScroll = useCallback((fn) => {
     if (typeof window === 'undefined') {
@@ -307,8 +304,6 @@ export default function RoadmapPage() {
       setSelectedMega(id)
       setMegaFilter(id || 'All')
       setStoryFilter('All')
-      // IMPORTANT: don't reset sub-views.
-      // If the user is in Weekly Map (global or filtered), keep it visible.
     })
   }
 
@@ -320,10 +315,6 @@ export default function RoadmapPage() {
           <p className="text-muted">{t('roadmap.header.subtitle')}</p>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="ongoing-toggle">
-            <button type="button" className={`chip ${boardSubView === 'mega' ? 'active' : ''}`} onClick={() => setBoardSubView('mega')}>{t('roadmap.subView.megaStories')}</button>
-            <button type="button" className={`chip ${boardSubView === 'weekly' ? 'active' : ''}`} onClick={() => setBoardSubView('weekly')}>{t('roadmap.subView.weeklyMap')}</button>
-          </div>
           <div className="ongoing-counter-pill">
             <span className="pill-dot dot-progress" aria-hidden="true" />
             <span>{t('roadmap.counter.active', { count: totals.active })}</span>
@@ -446,11 +437,7 @@ export default function RoadmapPage() {
         })}
       </div>
 
-      {boardSubView === 'weekly' ? (
-        <div style={{ marginTop: 12 }}>
-          <WeeklyMapView megaMap={megaMap} storyMap={storyMap} />
-        </div>
-      ) : selectedMega ? (
+      {selectedMega ? (
         <div className="ongoing-layout">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="card" style={{ padding: 14 }}>
@@ -460,16 +447,11 @@ export default function RoadmapPage() {
                   <h3 className="ongoing-feed-title">{megaLabel(selectedMega)}</h3>
                 </div>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div className="ongoing-toggle">
-                    <button type="button" className={`chip ${megaSubView === 'mega' ? 'active' : ''}`} onClick={() => setMegaSubView('mega')}>{t('roadmap.subView.megaStories')}</button>
-                    <button type="button" className={`chip ${megaSubView === 'weekly' ? 'active' : ''}`} onClick={() => setMegaSubView('weekly')}>{t('roadmap.subView.weeklyMapFiltered')}</button>
-                  </div>
                   <span className="feed-count">{t('roadmap.feed.items', { count: baseFiltered.filter((t) => t.megaStoryId === selectedMega).length })}</span>
                 </div>
               </div>
 
-              {megaSubView === 'mega' ? (
-                <>
+              <>
                   <div className="ongoing-feed-list">
                     {storiesOrdered.map((story) => {
                       const tasksForStory = tasksByStory.get(story.id) || []
@@ -560,15 +542,11 @@ export default function RoadmapPage() {
                           <div className="ongoing-empty">{t('roadmap.empty.noStoriesForMega')}</div>
                     )}
                   </div>
-                </>
-              ) : (
-                <WeeklyMapView megaMap={megaMap} storyMap={storyMap} filterMegaStoryId={selectedMega} />
-              )}
+              </>
             </div>
           </div>
 
-          {megaSubView === 'mega' ? (
-            <aside className="ongoing-details card">
+          <aside className="ongoing-details card">
               {selectedTask ? (
                 <div className="ongoing-details-content">
                 <div className="ongoing-detail-head">
@@ -663,8 +641,7 @@ export default function RoadmapPage() {
                   <h3 className="ongoing-feed-title">{t('roadmap.details.selectTask')}</h3>
                 </div>
               )}
-            </aside>
-          ) : null}
+          </aside>
         </div>
       ) : (
         <div className="ongoing-empty">{t('roadmap.empty.selectMega')}</div>

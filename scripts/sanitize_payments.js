@@ -276,16 +276,27 @@ uniqueFields.forEach(f => { if (!finalFields.includes(f)) finalFields.push(f) })
 const finalRows = existingRows.concat(toAdd)
 
 // backup existing dest
+let bakPath = null
 if (fs.existsSync(dest)) {
-  const bak = dest + '.' + timestamp + '.bak'
-  fs.copyFileSync(dest, bak)
-  console.log('Backed up existing', dest, '->', bak)
+  bakPath = dest + '.' + timestamp + '.bak'
+  fs.copyFileSync(dest, bakPath)
+  console.log('Backed up existing', dest, '->', bakPath)
 }
 
 // write merged CSV
 const out = Papa.unparse(finalRows, { columns: finalFields })
 fs.writeFileSync(dest, out, 'utf8')
 console.log('Wrote merged CSV to', dest, `(existing=${existingRows.length}, added=${toAdd.length}, duplicates=${duplicates.length})`)
+
+// Cleanup: avoid accumulating .bak files unless explicitly requested.
+if (bakPath && process.env.KEEP_BAK !== '1') {
+  try {
+    fs.unlinkSync(bakPath)
+    console.log('Deleted backup', bakPath)
+  } catch (e) {
+    console.warn('Warning: failed to delete backup', bakPath, e && e.message)
+  }
+}
 
 // exit with code indicating presence of malformed rows
 if (malformed.length) process.exitCode = 3

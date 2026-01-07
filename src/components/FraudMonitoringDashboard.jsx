@@ -892,8 +892,9 @@ export default function FraudMonitoringDashboard() {
     }
 
     // Milestones (uplifts (%) wired to the overlay inputs)
+    // Note: Solitics is postponed to March 2026.
     const milestones = [
-      { key: 'solitics', date: '2026-01', upliftFtd: 0.03, upliftQftd: 0.02 },
+      { key: 'solitics', date: '2026-03', upliftFtd: 0.03, upliftQftd: 0.02 },
       { key: 'ui_rollout_feb', date: '2026-02', upliftFtd: (Number(ftdUpliftFeb) || 0) / 100, upliftQftd: (Number(qftdUpliftFeb) || 0) / 100 },
       { key: 'ui_rollout_mar', date: '2026-03', upliftFtd: (Number(ftdUpliftMar) || 0) / 100, upliftQftd: (Number(qftdUpliftMar) || 0) / 100 },
       { key: 'marketing', date: '2026-04', upliftFtd: 0.05, upliftQftd: 0.03 }
@@ -1224,12 +1225,13 @@ export default function FraudMonitoringDashboard() {
 
     // X labels: show up to 8 ticks evenly spaced
     const maxXlabels = 8
-    const step = Math.max(1, Math.floor(series.length / maxXlabels))
+    const step = Math.max(1, Math.ceil(series.length / maxXlabels))
 
     return (
-      <div style={{ overflowX: 'auto', padding: 6, position: 'relative' }}>
-        <div style={{ display: 'block' }}>
-          <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block' }} role="img" aria-label={t('fraud.chart.aria.platformGrowthCumulative')} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ overflowX: 'auto', padding: 6, position: 'relative', flex: '1 1 760px', minWidth: 320 }}>
+          <div style={{ display: 'block' }}>
+            <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} width={W} height={H} style={{ display: 'block' }} role="img" aria-label={t('fraud.chart.aria.platformGrowthCumulative')} onMouseMove={onMouseMove} onMouseLeave={onMouseLeave}>
           {/* subtle horizontal guides for left axis only */}
           {Array.from({ length: 4 }).map((_, i) => {
             const v = Math.round(i * (topLeft / 3))
@@ -1272,9 +1274,9 @@ export default function FraudMonitoringDashboard() {
           {/* milestone markers */}
           {(() => {
             const milestones = [
-              { month: 1, year: 2026, label: 'Solitics live (Retention tool)', color: '#10b981' },
               { month: 2, year: 2026, label: 'New user portal / UI rollout', color: '#3b82f6' },
-              { month: 3, year: 2026, label: 'Marketing team operational', color: '#f59e0b' }
+              { month: 3, year: 2026, label: 'Solitics live (Retention tool)', color: '#10b981' },
+              { month: 4, year: 2026, label: 'Marketing team operational', color: '#f59e0b' }
             ]
             return milestones.map((m, idx) => {
               const targetDate = new Date(Date.UTC(m.year, m.month - 1, 1))
@@ -1305,7 +1307,7 @@ export default function FraudMonitoringDashboard() {
 
           {/* X axis ticks and labels (cover real + projected months) */}
           {(() => {
-            const stepFull = Math.max(1, Math.floor(fullSeries.length / maxXlabels))
+            const stepFull = Math.max(1, Math.ceil(fullSeries.length / maxXlabels))
             return fullSeries.map((s, i) => {
               if (i % stepFull !== 0 && i !== fullSeries.length - 1) return null
               const x = xFor(i, totalCount)
@@ -1336,37 +1338,6 @@ export default function FraudMonitoringDashboard() {
           {/* Bullwaves logo watermark */}
           <image href="/Logo.png" x={padL + 10} y={padT} width={120} height={120} opacity={0.25} />
           </svg>
-          {/* overlay controls inside chart */}
-          <div style={{ position: 'absolute', right: 18, top: 12, background: palette.card, color: '#fff', padding: 8, borderRadius: 6, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontSize: 12 }}>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>Uplifts (%)</div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#e2e8f0' }}>
-              <input
-                type="checkbox"
-                checked={useMtdScaling}
-                onChange={(e) => setUseMtdScaling(!!e.target.checked)}
-                style={{ width: 16, height: 16 }}
-              />
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>MTD scaling (estendi mese corrente)</span>
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Feb</label>
-                <input type="number" value={ftdUpliftFeb} onChange={e => setFtdUpliftFeb(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: 80, border: '1px solid rgba(255,255,255,0.06)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Mar</label>
-                <input type="number" value={ftdUpliftMar} onChange={e => setFtdUpliftMar(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: 80, border: '1px solid rgba(255,255,255,0.06)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Feb</label>
-                <input type="number" value={qftdUpliftFeb} onChange={e => setQftdUpliftFeb(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: 80, border: '1px solid rgba(255,255,255,0.06)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Mar</label>
-                <input type="number" value={qftdUpliftMar} onChange={e => setQftdUpliftMar(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: 80, border: '1px solid rgba(255,255,255,0.06)' }} />
-              </div>
-            </div>
-          </div>
         </div>
 
         {/* floating tooltip box (HTML) */}
@@ -1382,9 +1353,9 @@ export default function FraudMonitoringDashboard() {
                 <div style={{ fontWeight: 800, marginBottom: 6 }}>{s.date ? s.date.toLocaleString('en-US', { month: 'short', year: 'numeric' }) : ''} {isProj ? '(Projected)' : ''}</div>
               {(() => {
                 const milestones = [
-                  { month: 1, year: 2026, label: 'Solitics live (Retention tool)' },
                   { month: 2, year: 2026, label: 'New user portal / UI rollout' },
-                  { month: 3, year: 2026, label: 'Marketing team operational' }
+                  { month: 3, year: 2026, label: 'Solitics live (Retention tool)' },
+                  { month: 4, year: 2026, label: 'Marketing team operational' }
                 ]
                 const m = milestones.find(mil => mil.month === (s.date ? s.date.getUTCMonth() + 1 : 0) && mil.year === (s.date ? s.date.getUTCFullYear() : 0))
                 return m ? <div style={{ fontSize: 11, color: '#fbbf24', marginBottom: 4 }}>🚀 {m.label}</div> : null
@@ -1420,6 +1391,41 @@ export default function FraudMonitoringDashboard() {
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width:12, height:12, background: colors.regs }} /> Registrations (cumulative)</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width:12, height:12, background: colors.ftd }} /> FTD (cumulative)</div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}><div style={{ width:12, height:12, background: colors.qftd }} /> QFTD (cumulative)</div>
+        </div>
+        </div>
+
+        {/* Controls (kept out of the chart area to avoid overlap) */}
+        <div style={{ flex: '0 0 220px', minWidth: 220, padding: 6 }}>
+          <div style={{ background: palette.card, color: '#fff', padding: 10, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontSize: 12 }}>
+            <div style={{ fontWeight: 700, marginBottom: 6 }}>Uplifts (%)</div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, color: '#e2e8f0' }}>
+              <input
+                type="checkbox"
+                checked={useMtdScaling}
+                onChange={(e) => setUseMtdScaling(!!e.target.checked)}
+                style={{ width: 16, height: 16 }}
+              />
+              <span style={{ fontSize: 12, color: '#94a3b8' }}>MTD scaling (estendi mese corrente)</span>
+            </label>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Feb</label>
+                <input type="number" value={ftdUpliftFeb} onChange={e => setFtdUpliftFeb(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: '100%', border: '1px solid rgba(255,255,255,0.06)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Mar</label>
+                <input type="number" value={ftdUpliftMar} onChange={e => setFtdUpliftMar(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: '100%', border: '1px solid rgba(255,255,255,0.06)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Feb</label>
+                <input type="number" value={qftdUpliftFeb} onChange={e => setQftdUpliftFeb(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: '100%', border: '1px solid rgba(255,255,255,0.06)' }} />
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Mar</label>
+                <input type="number" value={qftdUpliftMar} onChange={e => setQftdUpliftMar(Number(e.target.value))} style={{ background: 'transparent', color: '#fff', padding: '6px 8px', borderRadius: 6, width: '100%', border: '1px solid rgba(255,255,255,0.06)' }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )

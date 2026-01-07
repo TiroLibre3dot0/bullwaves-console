@@ -4,6 +4,8 @@
 export const strategicObjectives = [
   { id: 'profitability', label: 'Increase profitability' },
   { id: 'ops_governance', label: 'Strengthen operational governance' },
+  { id: 'aml_compliance', label: 'AML / Compliance' },
+  { id: 'skale_tickets', label: 'Ticket Skale CRM' },
   { id: 'internal_comms', label: 'Improve internal communication & visibility' },
   { id: 'execution_clarity', label: 'Roadmap execution clarity' },
   { id: 'diversify', label: 'Diversify revenue' },

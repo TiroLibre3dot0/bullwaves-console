@@ -4,7 +4,7 @@ import { buildSupportDecision, buildSupportDecisions, getAffiliateOverview } fro
 import { useI18n } from '../../../i18n/I18nContext'
 
 // Decision Card Component for displaying support decisions
-function DecisionCard({ title, decision, category }) {
+function DecisionCard({ title, decision, category, bonusInputs, onChangeBonusInputs }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const { t } = useI18n()
 
@@ -180,6 +180,88 @@ function DecisionCard({ title, decision, category }) {
                   </div>
                 </div>
               )}
+
+        {category === 'bonus' && bonusInputs && typeof onChangeBonusInputs === 'function' && (
+          <div style={{ marginTop: 16 }}>
+            <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 10, color: 'var(--text-primary)' }}>BONUS DECISION</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Deposit amount</div>
+                <input
+                  type="number"
+                  value={bonusInputs.depositAmount ?? 0}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, depositAmount: Number(e.target.value || 0) }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Requested bonus %</div>
+                <input
+                  type="number"
+                  value={bonusInputs.requestedBonusPercentage ?? 0}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, requestedBonusPercentage: Number(e.target.value || 0) }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Requested bonus amount</div>
+                <input
+                  type="number"
+                  value={bonusInputs.requestedBonusAmount ?? 0}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, requestedBonusAmount: Number(e.target.value || 0) }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Trading history score (0–100)</div>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={bonusInputs.tradingHistoryScore ?? 0}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, tradingHistoryScore: Number(e.target.value || 0) }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Affiliate risk level</div>
+                <select
+                  value={bonusInputs.affiliateRiskLevel || 'medium'}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, affiliateRiskLevel: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                >
+                  <option value="low">low</option>
+                  <option value="medium">medium</option>
+                  <option value="high">high</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Previous bonuses count</div>
+                <input
+                  type="number"
+                  min={0}
+                  value={bonusInputs.previousBonusesCount ?? 0}
+                  onChange={(e) => onChangeBonusInputs((p) => ({ ...p, previousBonusesCount: Number(e.target.value || 0) }))}
+                  style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+            </div>
+
+            {decision?.bonusDecision && (
+              <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: 12, background: 'var(--surface)', marginTop: 6 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+                  <div style={{ fontSize: 12, fontWeight: 800 }}>{decision.bonusDecision.status}</div>
+                  {decision.bonusDecision.status === 'Approved – Dealing approval required' && (
+                    <div style={{ fontSize: 11, fontWeight: 800, color: '#f97316' }}>DEALING APPROVAL REQUIRED</div>
+                  )}
+                </div>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
+                  {decision.bonusDecision.rationale}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
         </div>
       )}
     </div>
@@ -224,6 +306,17 @@ export default function SupportUserDetails({
   const commissions = mapped.affiliateCommissions || mapped.commissions || ''
   const priority = computePriority(mapped.raw)
   const suggested = suggestedReply(mapped, affiliateName, paymentsLoaded, mediaLoaded)
+
+  // BONUS decision inputs (additive only; used by isolated bonus engine)
+  const [bonusInputs, setBonusInputs] = useState(() => ({
+    clientId: accountId,
+    depositAmount: 0,
+    requestedBonusPercentage: 0,
+    requestedBonusAmount: 0,
+    tradingHistoryScore: 0,
+    affiliateRiskLevel: 'medium',
+    previousBonusesCount: 0
+  }))
 
 
   // Normalize helper for comparing affiliate names
@@ -334,6 +427,18 @@ export default function SupportUserDetails({
   const plNum = Number(String((mapped.pl || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
   const roiVal = totalDepositsNum ? `${((plNum / totalDepositsNum) * 100).toFixed(2)}%` : null
 
+  // Keep bonus input defaults aligned to the currently selected user.
+  const firstDepositAmountNum = parseNumberField(firstDepositAmountRaw)
+  React.useEffect(() => {
+    const fallbackDeposit = firstDepositAmountNum > 0 ? firstDepositAmountNum : totalDepositsNum
+    setBonusInputs((p) => ({
+      ...p,
+      clientId: accountId,
+      depositAmount: p.depositAmount ? p.depositAmount : (fallbackDeposit || 0)
+    }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountId])
+
   // Commissions breakdown: sum of affiliate + sub-affiliate + revshare + other
   function parseNumberField(v) {
     if (v == null || v === '') return 0
@@ -366,7 +471,6 @@ export default function SupportUserDetails({
   const commissionsTotal = fmtEuro ? fmtEuro(commissionsTotalNum) : String(commissionsTotalNum)
 
   // First deposit amount formatted
-  const firstDepositAmountNum = parseNumberField(firstDepositAmountRaw)
   const firstDepositAmount = firstDepositAmountNum ? (fmtEuro ? fmtEuro(firstDepositAmountNum) : String(firstDepositAmountNum)) : (firstDepositAmountRaw ? String(firstDepositAmountRaw) : null)
 
   // Reusable metric card style to keep sizing consistent
@@ -382,9 +486,10 @@ export default function SupportUserDetails({
     return buildSupportDecisions({
       ...mapped,
       paymentsLoaded,
-      mediaLoaded
+      mediaLoaded,
+		...bonusInputs
     })
-  }, [mapped, paymentsLoaded, mediaLoaded])
+  }, [mapped, paymentsLoaded, mediaLoaded, bonusInputs])
 
   // Action panel state
   const [replyText, setReplyText] = useState(suggested)
@@ -800,6 +905,8 @@ export default function SupportUserDetails({
                   title={t('support.details.supportDecisions.bonus')}
                   decision={supportDecisions.bonus}
                   category="bonus"
+				  bonusInputs={bonusInputs}
+				  onChangeBonusInputs={setBonusInputs}
                 />
                 <DecisionCard
                   title={t('support.details.supportDecisions.withdrawals')}

@@ -6,7 +6,33 @@ import { useDataStatus } from '../../../context/DataStatusContext'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 
-const card = { background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)', color: '#f1f5f9', border: '1px solid #334155', borderRadius: 12, padding: 18, boxShadow: '0 8px 32px rgba(0,0,0,0.4)', margin: 12 };
+const panel = {
+  background: 'var(--bg-card)',
+  color: 'var(--text-primary)',
+  border: '1px solid var(--border-primary)',
+  borderRadius: 12,
+  padding: 14,
+  boxShadow: 'var(--shadow-card)',
+};
+
+const inputStyle = {
+  width: '100%',
+  padding: 10,
+  borderRadius: 10,
+  border: '1px solid var(--border-primary)',
+  background: 'var(--bg-secondary)',
+  color: 'var(--text-primary)',
+  fontSize: 14,
+};
+
+const labelStyle = { fontSize: 13, color: 'var(--text-secondary)', fontWeight: 700, display: 'block', marginBottom: 6 };
+
+const metricCard = {
+  background: 'var(--bg-secondary)',
+  padding: 12,
+  borderRadius: 10,
+  border: '1px solid var(--border-primary)',
+};
 
 function monthLabel(m) {
   const parts = (m || '').split('-');
@@ -198,10 +224,17 @@ export default function AffiliatePayments2() {
     loadDataStatus()
   }, [])
 
+  // Render the full logo loader on the console background.
+  // NOTE: keep this AFTER all hooks to preserve hook order.
+  const showLoader = !map && !error
+  if (showLoader) {
+    return <FullPageLoader progress={55} subtitle={t('affiliatePayments2.loader.data')} />
+  }
+
   return (
-    <div style={card}>
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0, color: '#f1f5f9', fontSize: 24, fontWeight: 600 }}>Affiliate Payments 2.0</h3>
+    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 14 }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+        <h3 style={{ margin: 0, color: 'var(--text-primary)', fontSize: 22, fontWeight: 800 }}>Affiliate Payments 2.0</h3>
         <div style={{ marginLeft: 'auto' }}>
           <button 
             onClick={reload} 
@@ -209,9 +242,9 @@ export default function AffiliatePayments2() {
             style={{ 
               padding: '8px 16px', 
               borderRadius: 6, 
-              border: 'none', 
-              background: loading ? '#64748b' : '#3b82f6', 
-              color: 'white', 
+              border: '1px solid var(--border-primary)',
+              background: loading ? 'var(--bg-tertiary)' : 'var(--accent-secondary)',
+              color: 'var(--text-primary)',
               cursor: loading ? 'not-allowed' : 'pointer',
               fontWeight: 500
             }}
@@ -220,22 +253,18 @@ export default function AffiliatePayments2() {
           </button>
         </div>
       </div>
-      {error && <div style={{ color: '#ef4444', background: '#fef2f2', padding: 8, borderRadius: 6, marginBottom: 12 }}>Error: {String(error)}</div>}
+      {error && (
+        <div style={{ color: 'var(--text-primary)', background: 'var(--bg-secondary)', border: '1px solid var(--error)', padding: 10, borderRadius: 10 }}>
+          Error: {String(error)}
+        </div>
+      )}
 
-      <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 200px)' }}>
-        <div style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ ...panel, flex: '0 0 320px', minWidth: 280 }}>
           <div>
-            <label style={{ fontSize: 14, color: '#cbd5e1', fontWeight: 600, display: 'block', marginBottom: 6 }}>Affiliate</label>
+            <label style={labelStyle}>Affiliate</label>
             <select 
-              style={{ 
-                width: '100%', 
-                padding: 10, 
-                borderRadius: 8, 
-                border: '1px solid #475569', 
-                background: '#0f172a', 
-                color: '#f1f5f9',
-                fontSize: 14
-              }} 
+              style={inputStyle}
               value={selected || ''} 
               onChange={e => {
                 setSelected(e.target.value || null);
@@ -244,25 +273,19 @@ export default function AffiliatePayments2() {
                 setFilterMonth('');
               }}
             >
-              <option value='' style={{ background: '#0f172a', color: '#f1f5f9' }}>— All affiliates —</option>
+              <option value=''>— All affiliates —</option>
               {affiliates.map(a => (
-                <option key={a.id} value={a.id} style={{ background: '#0f172a', color: '#f1f5f9' }}>{a.name || a.id} — {Number(a.totals?.total||0).toFixed(2)}</option>
+                <option key={a.id} value={a.id}>
+                  {a.name ? `${a.name} (${a.id})` : a.id}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label style={{ fontSize: 14, color: '#cbd5e1', fontWeight: 600, display: 'block', marginBottom: 6 }}>Year</label>
+            <label style={labelStyle}>Year</label>
             <select 
-              style={{ 
-                width: '100%', 
-                padding: 10, 
-                borderRadius: 8, 
-                border: '1px solid #475569', 
-                background: '#0f172a', 
-                color: '#f1f5f9',
-                fontSize: 14
-              }} 
+              style={inputStyle}
               value={filterYear} 
               onChange={e => {
                 setFilterYear(e.target.value);
@@ -270,25 +293,17 @@ export default function AffiliatePayments2() {
                 setExpandedMonth(null);
               }}
             >
-              <option value='' style={{ background: '#0f172a', color: '#f1f5f9' }}>— All years —</option>
+              <option value=''>— All years —</option>
               {availableYears.map(year => (
-                <option key={year} value={year} style={{ background: '#0f172a', color: '#f1f5f9' }}>{year}</option>
+                <option key={year} value={year}>{year}</option>
               ))}
             </select>
           </div>
 
           <div>
-            <label style={{ fontSize: 14, color: '#cbd5e1', fontWeight: 600, display: 'block', marginBottom: 6 }}>Month</label>
+            <label style={labelStyle}>Month</label>
             <select 
-              style={{ 
-                width: '100%', 
-                padding: 10, 
-                borderRadius: 8, 
-                border: '1px solid #475569', 
-                background: '#0f172a', 
-                color: '#f1f5f9',
-                fontSize: 14
-              }} 
+              style={inputStyle}
               value={filterMonth} 
               onChange={e => {
                 setFilterMonth(e.target.value);
@@ -296,11 +311,11 @@ export default function AffiliatePayments2() {
               }}
               disabled={!filterYear && availableMonths.length === 0}
             >
-              <option value='' style={{ background: '#0f172a', color: '#f1f5f9' }}>— All months —</option>
+              <option value=''>— All months —</option>
               {availableMonths.map(mon => {
                 const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
                 return (
-                  <option key={mon} value={mon} style={{ background: '#0f172a', color: '#f1f5f9' }}>
+                  <option key={mon} value={mon}>
                     {monthNames[Number(mon) - 1]} ({mon})
                   </option>
                 );
@@ -309,125 +324,122 @@ export default function AffiliatePayments2() {
           </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <h4 style={{ marginTop: 0, marginBottom: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 500 }}>
+        <div style={{ ...panel, flex: '1 1 680px', minWidth: 320, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <h4 style={{ marginTop: 0, marginBottom: 0, color: 'var(--text-primary)', fontSize: 16, fontWeight: 800 }}>
             {selectedRec ? `Aggregated for ${selectedRec.name || selectedRec.id}` : 'Overall Aggregated Totals'}
           </h4>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 12 }}>
-            <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-              <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={metricCard}>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                 <span>Total {selectedRec ? 'Commissions' : 'Earned'}</span>
               </div>
-              <div style={{ fontSize: 18, color: '#f1f5f9', fontWeight: 700 }}>{formatEuro(aggregatedTotals.total)}</div>
+              <div style={{ fontSize: 18, color: 'var(--text-primary)', fontWeight: 900 }}>{formatEuro(aggregatedTotals.total)}</div>
             </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>Paid</span>
                 </div>
-                <div style={{ fontSize: 18, color: '#f1f5f9', fontWeight: 700 }}>{formatEuro(aggregatedTotals.paid)}</div>
+                <div style={{ fontSize: 18, color: 'var(--text-primary)', fontWeight: 900 }}>{formatEuro(aggregatedTotals.paid)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>Difference{(aggregatedTotals.total - aggregatedTotals.paid) > 0 ? ' (pending)' : ''}</span>
                 </div>
-                <div style={{ fontSize: 18, color: (aggregatedTotals.total - aggregatedTotals.paid) >= 0 ? '#10b981' : '#dc2626', fontWeight: 700 }}>
+                <div style={{ fontSize: 18, color: (aggregatedTotals.total - aggregatedTotals.paid) >= 0 ? 'var(--success)' : 'var(--error)', fontWeight: 900 }}>
                   {formatEuro(aggregatedTotals.total - aggregatedTotals.paid)}
                 </div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>Sub-aff</span>
                 </div>
-                <div style={{ fontSize: 16, color: '#f1f5f9' }}>{formatEuro(aggregatedTotals.subaffiliate)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800 }}>{formatEuro(aggregatedTotals.subaffiliate)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>CPA</span>
                 </div>
-                <div style={{ fontSize: 16, color: '#f1f5f9' }}>{formatEuro(aggregatedTotals.cpa)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800 }}>{formatEuro(aggregatedTotals.cpa)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>CPL</span>
                 </div>
-                <div style={{ fontSize: 16, color: '#f1f5f9' }}>{formatEuro(aggregatedTotals.cpl)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800 }}>{formatEuro(aggregatedTotals.cpl)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>Revshare</span>
                 </div>
-                <div style={{ fontSize: 16, color: '#f1f5f9' }}>{formatEuro(aggregatedTotals.revshare)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800 }}>{formatEuro(aggregatedTotals.revshare)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>Other</span>
                 </div>
-                <div style={{ fontSize: 16, color: '#f1f5f9' }}>{formatEuro(aggregatedTotals.other)}</div>
+                <div style={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800 }}>{formatEuro(aggregatedTotals.other)}</div>
               </div>
-              <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', padding: 12, borderRadius: 8, border: '1px solid #334155', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
-                <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={metricCard}>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>ROI %</span>
                 </div>
-                <div style={{ fontSize: 18, color: '#f1f5f9', fontWeight: 700 }}>{aggregatedTotals.total ? ((aggregatedTotals.netDeposits || 0) / aggregatedTotals.total * 100).toFixed(1) : '0.0'}%</div>
+                <div style={{ fontSize: 18, color: 'var(--text-primary)', fontWeight: 900 }}>{aggregatedTotals.total ? ((aggregatedTotals.netDeposits || 0) / aggregatedTotals.total * 100).toFixed(1) : '0.0'}%</div>
               </div>
             </div>
 
-          <h4 style={{ marginTop: 0, marginBottom: 0, color: '#f1f5f9', fontSize: 18, fontWeight: 500 }}>
+          <h4 style={{ marginTop: 0, marginBottom: 0, color: 'var(--text-primary)', fontSize: 16, fontWeight: 800 }}>
             {selectedRec ? 'Monthly breakdown' : 'Overall Monthly Breakdown'}
           </h4>
-          {!map && (
-            <FullPageLoader minHeight={260} progress={55} subtitle={t('affiliatePayments2.loader.data')} />
-          )}
           {map && Object.keys(filteredMonths).length === 0 && (
-            <div style={{ color: '#64748b' }}>No data available.</div>
+            <div style={{ color: 'var(--text-secondary)' }}>No data available.</div>
           )}
           {map && Object.keys(filteredMonths).length > 0 && (
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ maxHeight: '60vh', overflow: 'auto', border: '1px solid #334155', borderRadius: 8 }}>
+              <div style={{ maxHeight: '60vh', overflow: 'auto', border: '1px solid var(--border-primary)', borderRadius: 10 }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead style={{ position: 'sticky', top: 0, background: '#0f172a', zIndex: 1 }}>
-                    <tr style={{ textAlign: 'left', borderBottom: '2px solid #334155' }}>
-                      <th style={{ padding: 12, color: '#cbd5e1', fontWeight: 600 }}>Month</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Total</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Sub-aff</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>CPA</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>CPL</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Revshare</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Other</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Paid</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Difference</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>ROI %</th>
-                      <th style={{ padding: 12, color: '#cbd5e1', textAlign: 'center', fontWeight: 600 }} title="Verifica di coerenza: ✓ se la somma delle componenti corrisponde al totale, ✗ se c'è discrepanza">OK</th>
+                  <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>
+                    <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-primary)' }}>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', fontWeight: 800 }}>Month</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Total</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Sub-aff</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>CPA</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>CPL</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Revshare</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Other</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Paid</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Difference</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>ROI %</th>
+                      <th style={{ padding: 12, color: 'var(--text-secondary)', textAlign: 'center', fontWeight: 800 }} title="Verifica di coerenza: ✓ se la somma delle componenti corrisponde al totale, ✗ se c'è discrepanza">OK</th>
                     </tr>
                   </thead>
                   <tbody>
                     {Object.keys(filteredMonths).sort().map((month, index) => {
                       const m = filteredMonths[month];
-                      const rowStyle = index % 2 === 0 ? { background: '#1e293b' } : { background: '#0f172a' };
+                      const rowStyle = index % 2 === 0 ? { background: 'var(--bg-secondary)' } : { background: 'var(--bg-tertiary)' };
                       return (
                         <tr 
                           key={month} 
                           style={{ 
                             ...rowStyle, 
                             cursor: m.contributors && m.contributors.length ? 'pointer' : 'default', 
-                            borderBottom: '1px solid #334155',
+                            borderBottom: '1px solid var(--border-primary)',
                             transition: 'background 0.2s ease'
                           }} 
                           onClick={() => setExpandedMonth(expandedMonth === month ? null : month)}
-                          onMouseEnter={(e) => e.target.closest('tr').style.background = '#1e293b'}
+                          onMouseEnter={(e) => e.target.closest('tr').style.background = 'var(--bg-secondary)'}
                           onMouseLeave={(e) => e.target.closest('tr').style.background = rowStyle.background}
                         >
-                          <td style={{ padding: 10, color: '#f1f5f9' }}>{monthLabel(month)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.total||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.subaffiliate||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.cpa||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.cpl||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.revshare||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.other||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(m.paid||0)}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: (m.total||0) - (m.paid||0) >= 0 ? '#10b981' : '#dc2626' }}>{formatEuro((m.total||0) - (m.paid||0))}{(m.total - m.paid) > 0 ? ' (pending)' : ''}</td>
-                          <td style={{ padding: 10, textAlign: 'right', color: '#f1f5f9' }}>{m.total ? ((m.netDeposits || 0) / m.total * 100).toFixed(1) : '0.0'}%</td>
-                          <td style={{ padding: 10, textAlign: 'center', color: Math.abs((m.subaffiliate||0) + (m.cpa||0) + (m.cpl||0) + (m.revshare||0) + (m.other||0) - (m.total||0)) < 0.01 ? '#10b981' : '#ef4444' }}>
+                          <td style={{ padding: 10, color: 'var(--text-primary)', fontWeight: 700 }}>{monthLabel(month)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.total||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.subaffiliate||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.cpa||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.cpl||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.revshare||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.other||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(m.paid||0)}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: (m.total||0) - (m.paid||0) >= 0 ? 'var(--success)' : 'var(--error)', fontWeight: 800 }}>{formatEuro((m.total||0) - (m.paid||0))}{(m.total - m.paid) > 0 ? ' (pending)' : ''}</td>
+                          <td style={{ padding: 10, textAlign: 'right', color: 'var(--text-primary)' }}>{m.total ? ((m.netDeposits || 0) / m.total * 100).toFixed(1) : '0.0'}%</td>
+                          <td style={{ padding: 10, textAlign: 'center', color: Math.abs((m.subaffiliate||0) + (m.cpa||0) + (m.cpl||0) + (m.revshare||0) + (m.other||0) - (m.total||0)) < 0.01 ? 'var(--success)' : 'var(--error)' }}>
                             {Math.abs((m.subaffiliate||0) + (m.cpa||0) + (m.cpl||0) + (m.revshare||0) + (m.other||0) - (m.total||0)) < 0.01 ? '✓' : '✗'}
                           </td>
                         </tr>
@@ -438,37 +450,37 @@ export default function AffiliatePayments2() {
               </div>
 
               {expandedMonth && filteredMonths[expandedMonth] && (
-                <div style={{ border: '1px solid #334155', borderRadius: 8, padding: 12, background: '#0f172a' }}>
-                  <h5 style={{ margin: 0, marginBottom: 12, color: '#f1f5f9', fontSize: 16 }}>
+                <div style={{ border: '1px solid var(--border-primary)', borderRadius: 10, padding: 12, background: 'var(--bg-secondary)' }}>
+                  <h5 style={{ margin: 0, marginBottom: 12, color: 'var(--text-primary)', fontSize: 15, fontWeight: 800 }}>
                     Users for {monthLabel(expandedMonth)} {selectedRec ? `(${selectedRec.name || selectedRec.id})` : '(All Affiliates)'}
                   </h5>
                   <div style={{ maxHeight: 300, overflow: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
-                        <tr style={{ textAlign: 'left', borderBottom: '1px solid #334155' }}>
-                          <th style={{ padding: 8, color: '#cbd5e1', fontWeight: 600 }}>User ID</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', fontWeight: 600 }}>Name</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Total</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>CPA</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Revshare</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>CPL</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Sub-aff</th>
-                          <th style={{ padding: 8, color: '#cbd5e1', textAlign: 'right', fontWeight: 600 }}>Other</th>
+                        <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-primary)' }}>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', fontWeight: 800 }}>User ID</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', fontWeight: 800 }}>Name</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Total</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>CPA</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Revshare</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>CPL</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Sub-aff</th>
+                          <th style={{ padding: 8, color: 'var(--text-secondary)', textAlign: 'right', fontWeight: 800 }}>Other</th>
                         </tr>
                       </thead>
                       <tbody>
                         {filteredMonths[expandedMonth].contributors
                           .sort((a, b) => (b.components?.total || 0) - (a.components?.total || 0))
                           .map((user, idx) => (
-                          <tr key={idx} style={{ borderBottom: '1px solid #334155' }}>
-                            <td style={{ padding: 8, color: '#f1f5f9' }}>{user.id || '—'}</td>
-                            <td style={{ padding: 8, color: '#f1f5f9' }}>{user.name || '—'}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.total||0)}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.cpa||0)}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.revshare||0)}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.cpl||0)}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.subaffiliate||0)}</td>
-                            <td style={{ padding: 8, textAlign: 'right', color: '#f1f5f9' }}>{formatEuro(user.components.other||0)}</td>
+                          <tr key={idx} style={{ borderBottom: '1px solid var(--border-primary)' }}>
+                            <td style={{ padding: 8, color: 'var(--text-primary)', fontWeight: 700 }}>{user.id || '—'}</td>
+                            <td style={{ padding: 8, color: 'var(--text-primary)' }}>{user.name || '—'}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.total||0)}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.cpa||0)}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.revshare||0)}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.cpl||0)}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.subaffiliate||0)}</td>
+                            <td style={{ padding: 8, textAlign: 'right', color: 'var(--text-primary)' }}>{formatEuro(user.components.other||0)}</td>
                           </tr>
                         ))}
                       </tbody>

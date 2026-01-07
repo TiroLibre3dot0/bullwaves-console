@@ -11,7 +11,8 @@ export default function FullPageLoader({
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)))
 
-  const surface = colors?.surface ?? 'var(--bg-primary)'
+  // Match the console background by default (older theme uses --bg; newer uses --bg-primary).
+  const surface = colors?.surface ?? 'var(--bg, var(--bg-primary))'
   const fg = colors?.text ?? 'var(--text-primary)'
   const muted = colors?.muted ?? 'var(--text-secondary)'
   const accent = colors?.accent ?? 'var(--accent-secondary)'

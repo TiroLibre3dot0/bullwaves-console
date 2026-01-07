@@ -393,10 +393,11 @@ if (sortField) {
 }
 
 // backup existing dest
+let bakPath = null
 if (fs.existsSync(dest)) {
-  const bak = dest + '.' + timestamp + '.bak'
-  fs.copyFileSync(dest, bak)
-  console.log('Backed up existing', dest, '->', bak)
+  bakPath = dest + '.' + timestamp + '.bak'
+  fs.copyFileSync(dest, bakPath)
+  console.log('Backed up existing', dest, '->', bakPath)
 }
 
 // write final CSV
@@ -405,6 +406,16 @@ try {
   fs.writeFileSync(dest, out, 'utf8')
   console.log('Wrote cleaned CSV to', dest)
   console.log('Existing rows:', existingRows.length, 'New added:', toAdd.length, 'Unchanged duplicates skipped:', duplicatesUnchanged.length, 'Affiliate updates:', affiliateUpdates.length, 'Total field updates:', updatesLog.length)
+
+  // Cleanup: avoid accumulating .bak files unless explicitly requested.
+  if (bakPath && process.env.KEEP_BAK !== '1') {
+    try {
+      fs.unlinkSync(bakPath)
+      console.log('Deleted backup', bakPath)
+    } catch (e) {
+      console.warn('Warning: failed to delete backup', bakPath, e && e.message)
+    }
+  }
 } catch (e){
   console.error('Failed to write cleaned CSV:', e && e.message)
 }

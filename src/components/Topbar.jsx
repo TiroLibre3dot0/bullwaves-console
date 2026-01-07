@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useDataStatus } from '../context/DataStatusContext'
 import { useMediaPaymentsData } from '../features/media-payments/hooks/useMediaPaymentsData'
 import { useI18n } from '../i18n/I18nContext'
+import { CONSOLE_TOOLS } from '../config/tools'
 import DataInfoModal from './DataInfoModal'
 
 function DataStatusIcon({ dataStatus, onClick }) {
@@ -82,18 +83,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
     setShowDataInfoModal(true)
   };
 
-  const tools = useMemo(
-    () => [
-      { name: 'Creolabs · Qlik Cloud', href: 'https://login.qlik.com/login?state=hKFo2SBsNGtYOEs4eXM0MTQyal9qZlZZd2JxVUxGRTNvOFk4eKFupWxvZ2luo3RpZNkgSTRORnUzNW5iSl9YR2NXVTZmQ0pKV1VkeVVJeXZFMDSjY2lk2SBQRjVZa0Nhem9qUGQ2OGhHVGhXVHhMNk4wcWw3RUVKYQ&client=PF5YkCazojPd68hGThWTxL6N0ql7EEJa&protocol=oauth2&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fqlk6ufzb2vk9dn9.uk.qlikcloud.com%2Flogin%2Fcallback&nonce=cMBZFdQmCwCyxd61Cz3Ios9DY-kDPwRIHfL0PgmmhYU&code_challenge=hHRAyjfogYyP8cEyDbZGNxEG8OiGaRulBWTmBBqH-G0&code_challenge_method=S256' },
-      { name: 'Trading Platform', href: 'https://trading-platform-self-two.vercel.app/trade' },
-      { name: 'CellXpert · Affiliate Hub', href: 'https://partner.trackingaffiliates.com/v2/login/admin-login/' },
-      { name: 'Skale CRM · Console', href: 'https://bul934907.skalecrm.com/index.php' },
-      { name: 'Skale App · Brand Manager', href: 'https://fbom.skaleapps.io/company-management/brands' },
-      { name: 'Brokeree · Social Trading', href: 'http://77.76.9.111:8080/admin/' },
-      { name: 'BullwavesPrime · Prop Admin', href: 'https://bwpadmin.bullwaves.com/login' },
-    ],
-    []
-  )
+  const tools = useMemo(() => CONSOLE_TOOLS, [])
 
   const handleLogoClick = () => {
     if (isMobile()) {
@@ -146,7 +136,7 @@ export default function Topbar({ children, onAdminClick, showAdmin = false }){
             <div className="logo-tools-title">{t('app.tools')}</div>
             <div className="logo-tools-list">
               {tools.map((tool) => (
-                <button key={tool.name} className="logo-tools-item" onClick={() => openTool(tool.href)}>
+                <button key={tool.key || tool.name} className="logo-tools-item" onClick={() => openTool(tool.href)}>
                   {tool.name}
                 </button>
               ))}

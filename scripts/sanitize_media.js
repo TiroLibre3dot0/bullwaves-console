@@ -168,8 +168,10 @@ parsed.data.forEach((r, idx) => {
 console.log('Rows parsed:', cleanedRows.length)
 if (malformed.length) console.warn('Malformed rows (field count mismatch):', malformed.length, malformed.slice(0,5))
 
-// For Media report we will dedupe before appending. Prefer `uid` when available,
-// otherwise fall back to a composite key of several available columns.
+// For Media report we will dedupe before upserting.
+// IMPORTANT: `uid` coming from exports is often NOT stable between runs, so
+// using it as the primary key will cause duplicates (inflated metrics).
+// We instead upsert by a stable business key: (month, affiliate, country).
 let existingRows = []
 let existingFields = null
 if (fs.existsSync(dest)){
@@ -191,31 +193,103 @@ function normalizeVal(v){
   return String(v).trim().toLowerCase()
 }
 
-function makeKey(row){
-  if (row.uid && String(row.uid).trim()) return String(row.uid).trim()
-  const candidates = ['month','affiliate','country','registrations','ftd','qftd','deposits','unique_impressions','visitors','leads']
-  const parts = []
-  for (const k of candidates){
-    if (Object.prototype.hasOwnProperty.call(row, k)) parts.push(normalizeVal(row[k]))
+function normalizeForCompare(v){
+  if (v === undefined || v === null) return ''
+  let s = String(v).trim()
+  // Normalize common numeric formatting differences (e.g. 1,215.00 vs 1215.00)
+  if (/^[\d,.-]+%?$/.test(s)) s = s.replace(/,/g, '')
+  return s.toLowerCase()
+}
+
+function normalizeMonth(v){
+  const s = String(v ?? '').trim()
+  if (!s) return ''
+
+  // Accept: 1/2026, 01/2026, 1-2026
+  let m = s.match(/^\s*(\d{1,2})\s*[\/\-]\s*(\d{4})\s*$/)
+  if (m) {
+    const month = String(Number(m[1])).padStart(2, '0')
+    const year = m[2]
+    return `${year}-${month}`
   }
-  if (parts.length) return parts.join('||')
-  // fallback to JSON string if nothing useful
+
+  // Accept: 2026-01, 2026/1
+  m = s.match(/^\s*(\d{4})\s*[\/\-]\s*(\d{1,2})\s*$/)
+  if (m) {
+    const year = m[1]
+    const month = String(Number(m[2])).padStart(2, '0')
+    return `${year}-${month}`
+  }
+
+  // Fallback: lowercase/trimmed raw value
+  return normalizeVal(s)
+}
+
+function makeKey(row){
+  const monthKey = normalizeMonth(row && row.month)
+  const affiliateKey = normalizeVal(row && row.affiliate)
+  const countryKey = normalizeVal(row && row.country)
+
+  // Primary stable key.
+  if (monthKey || affiliateKey || countryKey) {
+    return `${monthKey}||${affiliateKey}||${countryKey}`
+  }
+
+  // Fallbacks if required.
+  if (row && row.uid && String(row.uid).trim()) return `uid:${String(row.uid).trim()}`
   return JSON.stringify(row)
 }
 
 const originalExistingCount = existingRows.length
 
+// First collapse duplicates already present in the destination file.
+// This prevents metrics inflation from past bad merges.
+let dedupedExisting = 0
 const keyToIndex = new Map()
-existingRows.forEach((r, idx) => keyToIndex.set(makeKey(r), idx))
+const dedupedRows = []
+existingRows.forEach((r) => {
+  const k = makeKey(r)
+  if (keyToIndex.has(k)) {
+    const idx = keyToIndex.get(k)
+    dedupedRows[idx] = Object.assign({}, dedupedRows[idx], r)
+    dedupedExisting++
+  } else {
+    keyToIndex.set(k, dedupedRows.length)
+    dedupedRows.push(r)
+  }
+})
+
+existingRows = dedupedRows
 
 let updatedCount = 0
 let addedCount = 0
+let unchangedCount = 0
 for (const r of cleanedRows) {
   const k = makeKey(r)
   if (keyToIndex.has(k)) {
     const idx = keyToIndex.get(k)
-    existingRows[idx] = Object.assign({}, existingRows[idx], r)
-    updatedCount++
+    const prev = existingRows[idx] || {}
+    let changed = false
+    for (const [field, nextVal] of Object.entries(r)) {
+      // Treat month/affiliate/country equivalence as normalized values (so 1/2026 == 2026-01)
+      if (field === 'month') {
+        if (normalizeMonth(prev.month) !== normalizeMonth(nextVal)) changed = true
+        continue
+      }
+      if (field === 'affiliate' || field === 'country') {
+        if (normalizeVal(prev[field]) !== normalizeVal(nextVal)) changed = true
+        continue
+      }
+
+      if (normalizeForCompare(prev[field]) !== normalizeForCompare(nextVal)) changed = true
+    }
+
+    if (changed) {
+      existingRows[idx] = Object.assign({}, prev, r)
+      updatedCount++
+    } else {
+      unchangedCount++
+    }
   } else {
     existingRows.push(r)
     keyToIndex.set(k, existingRows.length - 1)
@@ -229,17 +303,19 @@ const finalRows = existingRows
 if (dryRun){
   console.log('Dry-run summary:')
   console.log(' Existing rows in dest:', originalExistingCount)
+  if (dedupedExisting) console.log(' Collapsed duplicates in dest:', dedupedExisting)
   console.log(' Parsed incoming rows:', cleanedRows.length)
   console.log(' New added:', addedCount)
   console.log(' Updated:', updatedCount)
+  console.log(' Unchanged:', unchangedCount)
   if (malformed.length) console.warn('Malformed rows detected:', malformed.length)
   process.exit(0)
 }
 
 if (fs.existsSync(dest)) {
-  const bak = dest + '.' + timestamp + '.bak'
-  fs.copyFileSync(dest, bak)
-  console.log('Backed up existing', dest, '->', bak)
+  var bakPath = dest + '.' + timestamp + '.bak'
+  fs.copyFileSync(dest, bakPath)
+  console.log('Backed up existing', dest, '->', bakPath)
 }
 
 // write final CSV atomically: write to temp file then rename
@@ -251,6 +327,18 @@ try {
   fs.renameSync(tmpDest, dest)
   console.log('Wrote cleaned CSV to', dest)
   console.log('Existing rows:', originalExistingCount, 'New added:', addedCount, 'Updated:', updatedCount)
+  console.log('Unchanged duplicates skipped:', unchangedCount)
+  if (dedupedExisting) console.log('Collapsed duplicates in dest:', dedupedExisting)
+
+  // Cleanup: avoid accumulating .bak files unless explicitly requested.
+  if (typeof bakPath === 'string' && bakPath && process.env.KEEP_BAK !== '1') {
+    try {
+      fs.unlinkSync(bakPath)
+      console.log('Deleted backup', bakPath)
+    } catch (e) {
+      console.warn('Warning: failed to delete backup', bakPath, e && e.message)
+    }
+  }
 } catch (e){
   console.error('Failed to write cleaned CSV atomically:', e && e.message)
   try {

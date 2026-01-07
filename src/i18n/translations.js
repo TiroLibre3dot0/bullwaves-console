@@ -33,6 +33,9 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Cohort',
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.roadmap': 'Mega-Stories',
+    'sidebar.weeklyMap': 'Weekly Map',
+    'sidebar.weeklyMap': 'Weekly Map',
+    'sidebar.weeklyMap': 'Weekly Map',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'Support • User Check',
     'sidebar.upload': 'Upload',
@@ -340,6 +343,8 @@ export const translations = {
     'weeklyMap.actions.addCommitmentHint': 'Add a new commitment (current week only)',
     'weeklyMap.actions.hideForm': 'Hide form',
     'weeklyMap.actions.addCommitment': 'Add commitment',
+    'weeklyMap.actions.copyBoardReport': 'Copy board report',
+    'weeklyMap.actions.copied': 'Copied',
 
     'weeklyMap.form.megaStory': 'Mega-Story',
     'weeklyMap.form.title': 'Title',
@@ -1372,6 +1377,8 @@ export const translations = {
     'weeklyMap.actions.addCommitmentHint': 'Aggiungi un nuovo impegno (solo settimana corrente)',
     'weeklyMap.actions.hideForm': 'Nascondi form',
     'weeklyMap.actions.addCommitment': 'Aggiungi impegno',
+    'weeklyMap.actions.copyBoardReport': 'Copia report board',
+    'weeklyMap.actions.copied': 'Copiato',
 
     'weeklyMap.form.megaStory': 'Mega-Story',
     'weeklyMap.form.title': 'Titolo',
@@ -2405,6 +2412,8 @@ export const translations = {
     'weeklyMap.actions.addCommitmentHint': 'Dodaj novu obavezu (samo tekuća nedelja)',
     'weeklyMap.actions.hideForm': 'Sakrij formu',
     'weeklyMap.actions.addCommitment': 'Dodaj obavezu',
+    'weeklyMap.actions.copyBoardReport': 'Kopiraj board izveštaj',
+    'weeklyMap.actions.copied': 'Kopirano',
 
     'weeklyMap.form.megaStory': 'Mega-story',
     'weeklyMap.form.title': 'Naslov',

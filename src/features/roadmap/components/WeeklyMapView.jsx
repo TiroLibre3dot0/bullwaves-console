@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../../../context/AuthContext'
 import { useI18n } from '../../../i18n/I18nContext'
+import { findConsoleToolByToken } from '../../../config/tools'
 import {
   deleteWeeklyTask,
   ensureSeededCurrentWeek,
@@ -120,11 +121,301 @@ function getTaskChecklists(t) {
         },
       ],
     },
+
+    'Call with Stamatis': {
+      title: 'Call with Stamatis — Synthesis (ultra)',
+      sections: [
+        {
+          title: 'SUMMARY',
+          items: [
+            'AML framework is live (questionnaire-based risk scoring).',
+            'High-risk = 60+ points.',
+            'TM escalation: alert (deposit > income) → +30d deposit block → +60d trading disabled → +90d closure + refund.',
+            'BI AML dashboard demo in ~2 weeks (KPIs: alerts, high-risk, blocked/closed).',
+            'AML manual pending approval; Ops alignment to follow.',
+            'Country blocking active: 155 accounts blocked.',
+            'Main dependency: Scale/KYC/BI integration (blocking).',
+          ],
+        },
+      ],
+    },
   }
 }
 
 function makeId() {
   return `w_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`
+}
+
+function megaAccentColor(megaId) {
+  switch (megaId) {
+    case 'aml_compliance':
+      return 'var(--warning)'
+    case 'skale_tickets':
+      return 'var(--accent-secondary)'
+    case 'internal_comms':
+      return 'var(--success)'
+    case 'ops_governance':
+      return 'var(--info)'
+    case 'profitability':
+      return 'var(--accent-primary)'
+    case 'execution_clarity':
+      return 'var(--accent-secondary)'
+    default:
+      return 'var(--border-secondary)'
+  }
+}
+
+function parseToolTokens(raw) {
+  const v = String(raw || '').trim()
+  if (!v) return []
+  return v
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+}
+
+function statusLabelIt(status) {
+  switch (status) {
+    case 'planned':
+      return 'Planned'
+    case 'in_progress':
+      return 'In progress'
+    case 'blocked':
+      return 'Blocked'
+    case 'done':
+      return 'Done'
+    default:
+      return 'Planned'
+  }
+}
+
+function normalizeInline(v) {
+  return String(v || '')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s\s+/g, ' ')
+    .trim()
+}
+
+async function copyTextToClipboard(text) {
+  const v = String(text || '')
+  if (!v) return false
+  try {
+    await navigator.clipboard?.writeText(v)
+    return true
+  } catch {
+    // fallback
+    try {
+      const el = document.createElement('textarea')
+      el.value = v
+      el.setAttribute('readonly', '')
+      el.style.position = 'fixed'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      el.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(el)
+      return Boolean(ok)
+    } catch {
+      return false
+    }
+  }
+}
+
+function buildWeeklyBoardReportMarkdown({ bucket, tasksByMega, megaLabel, resolveToolFn }) {
+  const weekStart = bucket?.week_start || ''
+  const weekEnd = bucket?.week_end || ''
+
+  const tasks = bucket?.tasks
+  const total = Array.isArray(tasks) ? tasks.length : 0
+
+  const header = [
+    `# Weekly Map — ${weekStart} → ${weekEnd}`,
+    '',
+    `Periodo di riferimento: settimana corrente (selezionata in console).`,
+    `Totale task: ${total}.`,
+    '',
+  ]
+
+  const megaEntries = Array.from(tasksByMega.entries())
+    .sort((a, b) => String(megaLabel(a[0])).localeCompare(String(megaLabel(b[0]))))
+
+  const lines = [...header]
+
+  megaEntries.forEach(([megaId, list]) => {
+    lines.push(`## ${megaLabel(megaId)}`)
+
+    const byStatus = { in_progress: [], blocked: [], planned: [], done: [] }
+    list.forEach((task) => {
+      const key = byStatus[task.status] ? task.status : 'planned'
+      byStatus[key].push(task)
+    })
+
+    ;['in_progress', 'blocked', 'planned', 'done'].forEach((status) => {
+      const items = byStatus[status] || []
+      if (!items.length) return
+      lines.push(`### ${statusLabelIt(status)} (${items.length})`)
+
+      items.forEach((task) => {
+        const title = normalizeInline(task.title)
+        const owner = normalizeInline(task.owner)
+        const dept = normalizeInline(task.department)
+        const outcome = normalizeInline(task.expectedImpact)
+
+        const toolTokens = parseToolTokens(task.tool)
+        const tools = toolTokens
+          .map((tok) => resolveToolFn(tok))
+          .filter((x) => x && x.label)
+          .map((x) => (x.url ? `[${x.label}](${x.url})` : x.label))
+
+        const toolPart = tools.length ? ` — Tools: ${tools.join(' · ')}` : ''
+
+        lines.push(`- **${title}** — Owner: ${owner}${dept ? ` (${dept})` : ''} — Outcome: ${outcome}${toolPart}`)
+      })
+
+      lines.push('')
+    })
+
+    lines.push('')
+  })
+
+  return lines.join('\n').trim() + '\n'
+}
+
+function resolveTool(token) {
+  const t = String(token || '').trim()
+  if (!t) return null
+
+  const lower = t.toLowerCase()
+
+  // Resolve to the same tool links exposed in the console (Bullwaves logo menu)
+  const consoleTool = findConsoleToolByToken(lower)
+  if (consoleTool) {
+    const kindByKey = {
+      qlik: 'qlik',
+      trading_platform: 'trading',
+      cellxpert: 'cellxpert',
+      skale_crm: 'crm',
+      skale_brand_manager: 'brand',
+      brokeree: 'link',
+      bullwavesprime: 'link',
+    }
+    return {
+      kind: kindByKey[consoleTool.key] || 'link',
+      label: consoleTool.name,
+      url: consoleTool.href,
+    }
+  }
+
+  if (lower === 'gmail') return { kind: 'gmail', label: 'Gmail', url: 'https://mail.google.com/' }
+  if (lower === 'meet' || lower === 'google meet') return { kind: 'meet', label: 'Google Meet', url: 'https://meet.google.com/' }
+
+  if (/^https?:\/\//i.test(t)) {
+    try {
+      const u = new URL(t)
+      const host = (u.hostname || '').toLowerCase()
+      if (host.includes('monday.com')) return { kind: 'monday', label: 'Monday', url: t }
+      if (host.includes('meet.google.com')) return { kind: 'meet', label: 'Google Meet', url: t }
+      if (host.includes('mail.google.com')) return { kind: 'gmail', label: 'Gmail', url: t }
+      return { kind: 'link', label: 'Open', url: t }
+    } catch {
+      return { kind: 'text', label: t, url: '' }
+    }
+  }
+
+  return { kind: 'text', label: t, url: '' }
+}
+
+function ToolIcon({ kind }) {
+  const common = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' }
+  switch (kind) {
+    case 'meet':
+      return (
+        <svg {...common}>
+          <path d="M4 7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M16 10l4-2v8l-4-2v-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case 'gmail':
+      return (
+        <svg {...common}>
+          <path d="M4 8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8Z" stroke="currentColor" strokeWidth="2" />
+          <path d="m5 8 7 5 7-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    case 'monday':
+      return (
+        <svg {...common}>
+          <path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M7 9h10M7 13h10M7 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case 'cellxpert':
+      return (
+        <svg {...common}>
+          <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M4 20a6 6 0 0 1 16 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case 'trading':
+      return (
+        <svg {...common}>
+          <path d="M4 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M4 19h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M7 14l3-3 3 2 4-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+        </svg>
+      )
+    case 'qlik':
+      return (
+        <svg {...common}>
+          <path d="M6 7h12v10H6V7Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M8 15h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M8 11h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case 'crm':
+      return (
+        <svg {...common}>
+          <path d="M7 4h10v16H7V4Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M10 8h4M10 12h4M10 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+    case 'brand':
+      return (
+        <svg {...common}>
+          <path d="M12 3l3 6 6 1-4.5 4.2 1 6.4L12 17l-5.5 3.8 1-6.4L3 10l6-1 3-6Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        </svg>
+      )
+    default:
+      return (
+        <svg {...common}>
+          <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      )
+  }
+}
+
+function toolColor(kind) {
+  switch (kind) {
+    case 'gmail':
+      return 'var(--warning)'
+    case 'meet':
+      return 'var(--info)'
+    case 'monday':
+      return 'var(--accent-primary)'
+    case 'cellxpert':
+      return 'var(--success)'
+    case 'trading':
+      return 'var(--accent-secondary)'
+    case 'qlik':
+      return 'var(--accent-secondary)'
+    case 'crm':
+      return 'var(--info)'
+    case 'brand':
+      return 'var(--warning)'
+    default:
+      return 'var(--text)' // fallback
+  }
 }
 
 export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) {
@@ -235,10 +526,18 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
     storyId: '',
     department: departments[0],
     owner: currentUserName,
+    tool: '',
     expectedImpact: '',
   })
 
   const [showCreate, setShowCreate] = useState(false)
+  const [reportCopied, setReportCopied] = useState(false)
+
+  useEffect(() => {
+    if (!reportCopied) return
+    const tId = window.setTimeout(() => setReportCopied(false), 1500)
+    return () => window.clearTimeout(tId)
+  }, [reportCopied])
 
   useEffect(() => {
     // Keep a sensible default owner, without clobbering manual edits.
@@ -257,6 +556,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
     const megaStoryId = filterMegaStoryId || String(draft.megaStoryId || '').trim()
     const title = String(draft.title || '').trim()
     const owner = String(draft.owner || '').trim()
+    const tool = String(draft.tool || '').trim()
     const expectedImpact = String(draft.expectedImpact || '').trim()
     if (!megaStoryId || !title || !owner || !expectedImpact) return
 
@@ -268,6 +568,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
       storyId: draft.storyId ? draft.storyId : undefined,
       department: draft.department,
       owner,
+      tool: tool ? tool : undefined,
       expectedImpact,
       status: 'planned',
       week_start: selectedBucket.week_start,
@@ -283,7 +584,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
       return updated
     })
 
-    setDraft((d) => ({ ...d, title: '', expectedImpact: '' }))
+    setDraft((d) => ({ ...d, title: '', tool: '', expectedImpact: '' }))
     setShowCreate(false)
   }
 
@@ -330,6 +631,18 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
     e.preventDefault()
   }
 
+  const copyBoardReport = async () => {
+    const markdown = buildWeeklyBoardReportMarkdown({
+      bucket: selectedBucket,
+      tasksByMega: tasksGroupedByMega,
+      megaLabel,
+      resolveToolFn: resolveTool,
+    })
+
+    const ok = await copyTextToClipboard(markdown)
+    if (ok) setReportCopied(true)
+  }
+
   if (!selectedBucket) return null
 
   const totalTasks = tasksFiltered.length
@@ -354,6 +667,30 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
           <div className="modal-header">
             <div>
               <div style={{ fontWeight: 800 }}>{checklistData.title}</div>
+              {(() => {
+                const toolTokens = parseToolTokens(checklistTask?.tool)
+                const tools = toolTokens.map(resolveTool).filter((x) => x && x.url)
+                if (!tools.length) return null
+                return (
+                  <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {tools.map((tool) => (
+                      <a
+                        key={`${tool.kind}:${tool.url}`}
+                        href={tool.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={tool.label}
+                        aria-label={tool.label}
+                        className="tool-icon-btn"
+                        style={{ color: toolColor(tool.kind) }}
+                      >
+                        <ToolIcon kind={tool.kind} />
+                        <span className="tool-icon-label">{tool.label}</span>
+                      </a>
+                    ))}
+                  </div>
+                )
+              })()}
               <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
                 {t('weeklyMap.modal.readOnlyHint')}
               </div>
@@ -417,6 +754,18 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
               ))}
             </select>
           </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <label style={{ fontSize: 11, color: 'transparent' }}>.</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <button type="button" className="btn secondary" onClick={copyBoardReport}>
+                {t('weeklyMap.actions.copyBoardReport')}
+              </button>
+              {reportCopied ? (
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{t('weeklyMap.actions.copied')}</span>
+              ) : null}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -431,9 +780,33 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
         return (
           <div key={megaId} style={{ marginTop: 14 }}>
             {!filterMegaStoryId ? (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
-                <div style={{ fontWeight: 800 }}>{megaLabel(megaId)}</div>
+              <div style={{ marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800 }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: 999,
+                        background: megaAccentColor(megaId),
+                        flex: '0 0 auto',
+                      }}
+                    />
+                    <span>{megaLabel(megaId)}</span>
+                  </div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>{list.length} tasks</div>
+                </div>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    marginTop: 6,
+                    height: 2,
+                    borderRadius: 999,
+                    background: megaAccentColor(megaId),
+                    opacity: 0.25,
+                  }}
+                />
               </div>
             ) : null}
 
@@ -455,6 +828,8 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                       const checklistKey = String(task.title || '').trim()
                       const hasChecklist = Boolean(TASK_CHECKLISTS[checklistKey])
                       const isDraggable = !readOnly && !hasChecklist
+                      const toolTokens = parseToolTokens(task.tool)
+                      const tools = toolTokens.map(resolveTool).filter(Boolean)
                       return (
                       <div
                         key={task.id}
@@ -478,19 +853,43 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                             <div className="roadmap-area">{task.owner || '—'}</div>
                             <div className="roadmap-activity">{task.title}</div>
                           </div>
-                          {!readOnly ? (
-                            <button
-                              type="button"
-                              className="btn secondary"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                removeTask(task.id)
-                              }}
-                              style={{ padding: '6px 8px', fontSize: 12 }}
-                            >
-                              {t('common.delete')}
-                            </button>
-                          ) : null}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            {tools.length ? (
+                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                {tools.map((tool) => {
+                                  if (!tool.url) return null
+                                  return (
+                                    <a
+                                      key={`${tool.kind}:${tool.url}`}
+                                      href={tool.url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      title={tool.label}
+                                      aria-label={tool.label}
+                                      className="tool-icon-btn"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <ToolIcon kind={tool.kind} />
+                                    </a>
+                                  )
+                                })}
+                              </div>
+                            ) : null}
+
+                            {!readOnly ? (
+                              <button
+                                type="button"
+                                className="btn secondary"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removeTask(task.id)
+                                }}
+                                style={{ padding: '6px 8px', fontSize: 12 }}
+                              >
+                                {t('common.delete')}
+                              </button>
+                            ) : null}
+                          </div>
                         </div>
                         <div className="roadmap-meta">
                           {!filterMegaStoryId ? (
@@ -509,6 +908,14 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                             <span className="value"> {task.storyId ? storyLabel(task.storyId) : '—'}</span>
                           </div>
                         </div>
+
+                        {tools.some((x) => x.kind === 'text') ? (
+                          <div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
+                            <span style={{ fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 11 }}>Tool</span>
+                            <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}> {tools.filter((x) => x.kind === 'text').map((x) => x.label).join(' · ')}</span>
+                          </div>
+                        ) : null}
+
                         <div style={{ marginTop: 6, color: '#9fb3c8', fontSize: 12, lineHeight: 1.35 }}>
                           {task.expectedImpact}
                         </div>
@@ -617,6 +1024,17 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
             </div>
 
             <div style={{ marginTop: 8, display: 'grid', gridTemplateColumns: '1fr', gap: 6 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>Tools (optional)</label>
+                <input
+                  value={draft.tool}
+                  onChange={(e) => setDraft((d) => ({ ...d, tool: e.target.value }))}
+                  placeholder="One per line: gmail, meet, https://..."
+                  disabled={readOnly}
+                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                />
+              </div>
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.expectedImpactMandatory')}</label>
                 <input
