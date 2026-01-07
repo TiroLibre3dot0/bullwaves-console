@@ -10,7 +10,11 @@ function safeJsonParse(raw, fallback) {
 }
 
 function generateShareToken() {
-  return 'share_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  return (
+    'share_' +
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15)
+  )
 }
 
 function getOrCreateShareToken() {
@@ -29,6 +33,8 @@ function getShareLink() {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   return `${origin}/share/weekly-map/${token}`
 }
+
+export { getOrCreateShareToken, getShareLink }
 
 function toIsoDate(d) {
   return new Date(d).toISOString().slice(0, 10)
@@ -50,7 +56,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      expectedImpact: 'Call prep completed: retention/bonus use cases clarified and integration scope kept minimal to avoid low-impact work.',
+      expectedImpact:
+        'Call prep completed: retention/bonus use cases clarified and integration scope kept minimal to avoid low-impact work.',
       status: 'done',
     },
     {
@@ -58,7 +65,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      expectedImpact: 'Post-call decisions captured: replica access confirmed; extra Skale sync still pending. Solitics onboarding/dashboard work is in progress (NOT live yet). Roman is the main interface. Ownership clarified: internal owns data/integration + decision rules; Marketing owns retention loops + campaign execution; Solitics provides automation + dashboards. Next: finalize Skale alignment, share first segments/KPIs, and set weekly cadence with Roman + Marketing.',
+      expectedImpact:
+        'Post-call decisions captured: replica access confirmed; extra Skale sync still pending. Solitics onboarding/dashboard work is in progress (NOT live yet). Roman is the main interface. Ownership clarified: internal owns data/integration + decision rules; Marketing owns retention loops + campaign execution; Solitics provides automation + dashboards. Next: finalize Skale alignment, share first segments/KPIs, and set weekly cadence with Roman + Marketing.',
       status: 'done',
     },
   ],
@@ -69,7 +77,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Operations',
       tool: 'Weekly Map checklist',
-      expectedImpact: 'AML decisions captured in Weekly Map (threshold, TM escalation, BI KPIs/demo, manual approval, Scale/KYC/BI dependency).',
+      expectedImpact:
+        'AML decisions captured in Weekly Map (threshold, TM escalation, BI KPIs/demo, manual approval, Scale/KYC/BI dependency).',
       status: 'done',
     },
   ],
@@ -80,7 +89,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'Compliance manual / risk scoring',
-      expectedImpact: 'High-risk is enforced as 60+ points across scoring, handling, and reporting (single standard, weekly controlled).',
+      expectedImpact:
+        'High-risk is enforced as 60+ points across scoring, handling, and reporting (single standard, weekly controlled).',
       status: 'in_progress',
     },
     {
@@ -88,7 +98,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'TM rules + enforcement',
-      expectedImpact: 'TM escalation is applied consistently: alert (deposit > declared income) → +30d deposit block → +60d trading disabled → +90d closure + refund.',
+      expectedImpact:
+        'TM escalation is applied consistently: alert (deposit > declared income) → +30d deposit block → +60d trading disabled → +90d closure + refund.',
       status: 'in_progress',
     },
     {
@@ -96,7 +107,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Data Platform',
       department: 'Data',
       tool: 'BI / KPIs spec',
-      expectedImpact: 'BI v1 KPIs defined: alerts generated, high-risk clients (60+), blocked/closed accounts (baseline: 155 country blocks).',
+      expectedImpact:
+        'BI v1 KPIs defined: alerts generated, high-risk clients (60+), blocked/closed accounts (baseline: 155 country blocks).',
       status: 'planned',
     },
     {
@@ -104,7 +116,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Data Platform',
       department: 'Data',
       tool: 'BI dashboard demo',
-      expectedImpact: 'Demo delivered with agreed KPI definitions and data sources (weekly checkpoint until shipped).',
+      expectedImpact:
+        'Demo delivered with agreed KPI definitions and data sources (weekly checkpoint until shipped).',
       status: 'planned',
     },
     {
@@ -112,7 +125,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'AML manual',
-      expectedImpact: 'Approved manual received and Ops procedure aligned (no gap vs live scoring + TM enforcement).',
+      expectedImpact:
+        'Approved manual received and Ops procedure aligned (no gap vs live scoring + TM enforcement).',
       status: 'planned',
     },
     {
@@ -120,7 +134,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Product Team',
       department: 'Product',
       tool: 'Scale / KYC / BI integration',
-      expectedImpact: 'Dependency is controlled weekly: questionnaire data, risk scores, and TM flags are integrated end-to-end; Ops included in comms.',
+      expectedImpact:
+        'Dependency is controlled weekly: questionnaire data, risk scores, and TM flags are integrated end-to-end; Ops included in comms.',
       status: 'blocked',
     },
   ],
@@ -131,7 +146,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Compliance/Ops',
       department: 'Compliance / Ops',
       tool: 'skale_crm',
-      expectedImpact: 'Questa settimana: fornire a Skale 1 caso concreto di duplicato (stesso numero di telefono) e ottenere conferma scritta che il blocco automatico sia attivo e come viene tracciato.',
+      expectedImpact:
+        'Questa settimana: fornire a Skale 1 caso concreto di duplicato (stesso numero di telefono) e ottenere conferma scritta che il blocco automatico sia attivo e come viene tracciato.',
       status: 'in_progress',
     },
     {
@@ -139,7 +155,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Compliance/Ops',
       department: 'Compliance / Ops + IT',
       tool: 'skale_crm',
-      expectedImpact: 'Questa settimana: chiarire requisiti con gli ingegneri Skale (Country basato su POI, nuovo campo “POA Country” + filtro) e ottenere timeline/ETA.',
+      expectedImpact:
+        'Questa settimana: chiarire requisiti con gli ingegneri Skale (Country basato su POI, nuovo campo “POA Country” + filtro) e ottenere timeline/ETA.',
       status: 'in_progress',
     },
     {
@@ -147,7 +164,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Ops/Support',
       department: 'Ops / Support',
       tool: 'skale_crm',
-      expectedImpact: 'Questa settimana: verificare che sul batch siano applicati “black list”, “Trading Disabled” e “Account Enabled = NO”; se manca qualcosa, inviare a Skale la lista clienti e ricevere conferma di esecuzione (timestamp/report).',
+      expectedImpact:
+        'Questa settimana: verificare che sul batch siano applicati “black list”, “Trading Disabled” e “Account Enabled = NO”; se manca qualcosa, inviare a Skale la lista clienti e ricevere conferma di esecuzione (timestamp/report).',
       status: 'in_progress',
     },
     {
@@ -155,7 +173,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Ops/IT',
       department: 'Product / IT',
       tool: 'gmail, meet, skale_crm',
-      expectedImpact: 'Questa settimana: inviare email a gilad@skalecrm.com (CC: support@skalecrm.com) per fissare meeting con tech team Skale; ottenere conferma meeting (data/ora) + agenda, e uscire con una decisione sul modello di sync con Scale (API, ownership, ambienti) e sul flusso di sviluppo (repo condiviso vs setup alternativo).',
+      expectedImpact:
+        'Questa settimana: inviare email a gilad@skalecrm.com (CC: support@skalecrm.com) per fissare meeting con tech team Skale; ottenere conferma meeting (data/ora) + agenda, e uscire con una decisione sul modello di sync con Scale (API, ownership, ambienti) e sul flusso di sviluppo (repo condiviso vs setup alternativo).',
       status: 'planned',
     },
   ],
@@ -166,7 +185,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Ops / Product',
       tool: 'gmail',
-      expectedImpact: 'First draft sent (incl. trading platform link) to communicate readiness and reinforce operational credibility.',
+      expectedImpact:
+        'First draft sent (incl. trading platform link) to communicate readiness and reinforce operational credibility.',
       status: 'done',
     },
     {
@@ -205,7 +225,8 @@ export function getWeekRange(date = new Date()) {
 }
 
 function normalizeWeeklyMap(map, weekStart, weekEnd, status) {
-  const resolvedStatus = status || (weekStart === getWeekRange(new Date()).week_start ? 'active' : 'archived')
+  const resolvedStatus =
+    status || (weekStart === getWeekRange(new Date()).week_start ? 'active' : 'archived')
   return {
     ...(map || {}),
     id: map?.id || makeWeeklyMapId(weekStart),
@@ -240,7 +261,8 @@ export function getWeekMap(store, weekStart) {
 export function upsertWeeklyTask(store, weekStart, task) {
   const base = store && typeof store === 'object' ? store : { version: 2, weeks: {} }
   const current = getWeekRange(new Date())
-  const defaultWeekEnd = weekStart === current.week_start ? current.week_end : (base.weeks?.[weekStart]?.week_end || '')
+  const defaultWeekEnd =
+    weekStart === current.week_start ? current.week_end : base.weeks?.[weekStart]?.week_end || ''
   const next = ensureWeekMap(base, weekStart, task.week_end || defaultWeekEnd || current.week_end)
   const bucket = next.weeks[weekStart]
   const weeklyMapId = bucket.id || makeWeeklyMapId(weekStart)
@@ -272,7 +294,13 @@ export function deleteWeeklyTask(store, weekStart, taskId) {
 }
 
 function migrateStoreToV2(store) {
-  if (store && typeof store === 'object' && store.version === 2 && store.weeks && typeof store.weeks === 'object') {
+  if (
+    store &&
+    typeof store === 'object' &&
+    store.version === 2 &&
+    store.weeks &&
+    typeof store.weeks === 'object'
+  ) {
     return { ...store, version: 2, weeks: { ...store.weeks } }
   }
 
@@ -290,7 +318,9 @@ function migrateStoreToV2(store) {
       const bucket = byWeek[weekStart]
       if (!bucket) return
       const weekEnd = bucket.week_end || ''
-      const current = weeks[weekStart] || normalizeWeeklyMap(null, weekStart, weekEnd || getWeekRange(new Date()).week_end)
+      const current =
+        weeks[weekStart] ||
+        normalizeWeeklyMap(null, weekStart, weekEnd || getWeekRange(new Date()).week_end)
       const existingTasks = Array.isArray(current.tasks) ? current.tasks : []
       const incoming = Array.isArray(bucket.tasks) ? bucket.tasks : []
       const normalizedIncoming = incoming
@@ -299,7 +329,7 @@ function migrateStoreToV2(store) {
           megaStoryId: t.megaStoryId || megaStoryId,
           weeklyMapId: makeWeeklyMapId(weekStart),
           week_start: t.week_start || weekStart,
-          week_end: t.week_end || (bucket.week_end || current.week_end),
+          week_end: t.week_end || bucket.week_end || current.week_end,
         }))
         .filter((t) => t && t.id)
 
@@ -378,18 +408,4 @@ export function saveWeeklyMapStore(store) {
   } catch {
     // ignore
   }
-}
-
-export {
-  deleteWeeklyTask,
-  ensureSeededCurrentWeek,
-  ensureWeekMap,
-  getWeekMap,
-  getWeekRange,
-  getOrCreateShareToken,
-  getShareLink,
-  listWeeks,
-  loadWeeklyMapStore,
-  saveWeeklyMapStore,
-  upsertWeeklyTask,
 }
