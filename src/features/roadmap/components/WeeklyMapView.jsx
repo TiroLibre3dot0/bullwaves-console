@@ -460,6 +460,20 @@ function ToolIcon({ kind }) {
   }
 }
 
+function DetailsIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M12 5c5.523 0 10 6 10 7s-4.477 7-10 7S2 13 2 12s4.477-7 10-7Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  )
+}
+
 function toolColor(kind) {
   switch (kind) {
     case 'gmail':
@@ -1097,6 +1111,29 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                                     })}
                                   </div>
                                 ) : null}
+
+                                <button
+                                  type="button"
+                                  className="btn secondary"
+                                  title={t('common.view') || 'View'}
+                                  aria-label={t('common.view') || 'View'}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (hasChecklist) {
+                                      setChecklistTask(task)
+                                    } else {
+                                      setDetailTask(task)
+                                    }
+                                  }}
+                                  style={{
+                                    padding: 6,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                  }}
+                                >
+                                  <DetailsIcon />
+                                </button>
 
                                 {!readOnly ? (
                                   <button
