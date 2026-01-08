@@ -50,24 +50,33 @@ function makeWeeklyTaskId(weekStart, megaStoryId, index) {
 
 // EXACT current-week execution commitments (no extras).
 const INITIAL_EXECUTION_PLAN_BY_MEGA = {
-  profitability: [
+  retention_lifecycle: [
     {
-      title: 'Prepare Solitics call',
+      title: 'Call prep: Retention use cases + Solitics scope',
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
       expectedImpact:
-        'Call prep completed: retention/bonus use cases clarified and integration scope kept minimal to avoid low-impact work.',
+        'Retention strategy foundation established: retention/bonus use cases clarified; integration scope kept minimal and focused on lifecycle measurement; Cohort Analysis identified as primary measurement tool.',
       status: 'done',
     },
     {
-      title: 'Solitics call + decision summary',
+      title: 'Solitics call: Retention automation + ownership clarity',
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
       expectedImpact:
-        'Post-call decisions captured: replica access confirmed; extra Skale sync still pending. Solitics onboarding/dashboard work is in progress (NOT live yet). Roman is the main interface. Ownership clarified: internal owns data/integration + decision rules; Marketing owns retention loops + campaign execution; Solitics provides automation + dashboards. Next: finalize Skale alignment, share first segments/KPIs, and set weekly cadence with Roman + Marketing.',
+        'Retention ownership model locked in: Internal owns lifecycle data/integration + retention decision rules; Marketing owns retention loops + campaign execution; Solitics provides automation + dashboards. Replica access confirmed; integration path clear; weekly cadence set with Roman + Marketing.',
       status: 'done',
+    },
+    {
+      title: 'Kick-off retention strategy with Solitics',
+      owner: 'Paolo, Marketing Lead',
+      department: 'Ops / Analytics / Marketing',
+      tool: 'Solitics platform + Cohort Analysis',
+      expectedImpact:
+        'Retention strategy execution launched: user lifecycle flows mapped; first retention segments defined based on Cohort Analysis; retention KPIs set; Solitics automation + marketing campaigns aligned for Q1 execution.',
+      status: 'in_progress',
     },
   ],
 

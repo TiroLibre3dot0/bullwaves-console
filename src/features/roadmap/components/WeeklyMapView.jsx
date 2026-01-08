@@ -157,7 +157,7 @@ function megaAccentColor(megaId) {
       return 'var(--success)'
     case 'ops_governance':
       return 'var(--info)'
-    case 'profitability':
+    case 'retention_lifecycle':
       return 'var(--accent-primary)'
     case 'execution_clarity':
       return 'var(--accent-secondary)'

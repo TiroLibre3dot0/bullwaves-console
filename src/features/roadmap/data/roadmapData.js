@@ -2,7 +2,7 @@
 // Replace/extend `projects` with rows from public/data/projects-2026.csv (Department, Area, Activities, Targets, Responsible, Due Date, Priority).
 
 export const strategicObjectives = [
-  { id: 'profitability', label: 'Increase profitability' },
+  { id: 'retention_lifecycle', label: 'Improve User Retention & Lifecycle' },
   { id: 'ops_governance', label: 'Strengthen operational governance' },
   { id: 'aml_compliance', label: 'AML / Compliance' },
   { id: 'skale_tickets', label: 'Ticket Skale CRM' },
@@ -67,7 +67,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Francesco Ceccarini',
     dueDate: 'Q2 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mkt-email-sms',
@@ -78,7 +78,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Francesco Ceccarini',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'notifications-econ-calendar',
@@ -89,7 +89,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Product',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mkt-media-buying',
@@ -100,7 +100,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Daniel',
     dueDate: '2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mkt-ugc-agency',
@@ -122,7 +122,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Trading Platform',
     dueDate: 'Completed',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mkt-trading-competition',
@@ -133,7 +133,7 @@ export const projects2026 = [
     priority: 'Low',
     responsibleName: 'Daniel',
     dueDate: '2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'solitics-integration',
@@ -144,7 +144,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Data Platform',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'insights-qlik-proxy',
@@ -155,7 +155,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Data Platform',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mkt-trustpilot',
@@ -199,7 +199,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Francesco Ceccarini',
     dueDate: 'Q2 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
 
   // Sales / Partners / MENA / IB / Affiliates
@@ -212,7 +212,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Imran Hossain',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'sales-voiso-skale',
@@ -223,7 +223,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Jake Morgan',
     dueDate: 'H1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'mena-gcc-office',
@@ -278,7 +278,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Tamara Popovic Yakimov',
     dueDate: 'Q3 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
 
   // Execution setup
@@ -302,7 +302,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Daniel',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'webinars-customers',
@@ -313,7 +313,7 @@ export const projects2026 = [
     priority: 'Medium',
     responsibleName: 'Francesco Ceccarini',
     dueDate: 'Q2 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'email-strategy',
@@ -324,7 +324,7 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Francesco Ceccarini',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'web-trader-integration',
@@ -335,18 +335,19 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Product Team',
     dueDate: 'Completed',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'support-decision-tool',
     department: 'Support',
     area: 'Internal',
     activity: 'Support Decision Tool (internal)',
-    target: 'Internal tool to support the support team in analyzing real user cases in a structured way',
+    target:
+      'Internal tool to support the support team in analyzing real user cases in a structured way',
     priority: 'High',
     responsibleName: 'Support Team',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'live-data-skale-apis',
@@ -357,18 +358,19 @@ export const projects2026 = [
     priority: 'High',
     responsibleName: 'Product Team',
     dueDate: 'Q1 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
   {
     id: 'user-education-adoption',
     department: 'Marketing',
     area: 'Profile',
     activity: 'User education & feature adoption',
-    target: 'Help users understand and adopt existing platform capabilities directly from their profile',
+    target:
+      'Help users understand and adopt existing platform capabilities directly from their profile',
     priority: 'Medium',
     responsibleName: 'Marketing Team',
     dueDate: 'Q2 2026',
-    objectiveId: 'profitability',
+    objectiveId: 'retention_lifecycle',
   },
 ]
 
