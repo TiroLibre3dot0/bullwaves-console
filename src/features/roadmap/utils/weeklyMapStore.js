@@ -70,12 +70,48 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       status: 'done',
     },
     {
-      title: 'Kick-off retention strategy with Solitics',
-      owner: 'Paolo, Marketing Lead',
+      title: 'Solitics onboarding kick-off: retention alignment + timeline',
+      owner: 'Paolo, Marketing Lead, Solitics',
       department: 'Ops / Analytics / Marketing',
       tool: 'Solitics platform + Cohort Analysis',
       expectedImpact:
-        'Retention strategy execution launched: user lifecycle flows mapped; first retention segments defined based on Cohort Analysis; retention KPIs set; Solitics automation + marketing campaigns aligned for Q1 execution.',
+        'Onboarding officially started with clear delivery cadence: up to 45 business days for integration, then 90-day hypercare. Risk focus locked: content readiness (not technical delivery). Core KPIs agreed and will be measured via Affiliate → Cohort Analysis: +15% LTV (post-first deposit), +20% retention, +20% reactivation.',
+      status: 'done',
+    },
+    {
+      title: 'Formalize retention KPIs ↔ Cohort Analysis metrics (v1)',
+      owner: 'Paolo, Michael Roizman, Marketing Lead',
+      department: 'Ops / BI / Marketing',
+      tool: 'Affiliate → Cohort Analysis',
+      expectedImpact:
+        'KPI definitions operational and measurable: LTV (post-first deposit), retention, and reactivation mapped to cohort events + windows; baseline snapshot captured; weekly reporting template locked. Next step: publish a 1-page KPI spec (definitions + cohort query mapping) and validate with Solitics in a 30-min review call.',
+      status: 'in_progress',
+    },
+    {
+      title: 'Content readiness: emails + creatives + lifecycle flows (onboarding/reactivation)',
+      owner: 'Marketing Lead, Solitics',
+      department: 'Marketing',
+      tool: 'Solitics content library / email templates',
+      expectedImpact:
+        'Content pack ready to execute retention loops: onboarding journey, reactivation journey, and trigger-based retention messages defined with copy + creatives + send rules; owners and deadlines assigned. Next step: deliver a first draft pack (2 journeys + 5 triggers) for review and approval, then upload into Solitics for QA.',
+      status: 'in_progress',
+    },
+    {
+      title: 'Assess Scale SDK requirements for advanced engagement features',
+      owner: 'Product Team, Solitics',
+      department: 'Product / Data',
+      tool: 'Scale SDK / Solitics SDK requirements',
+      expectedImpact:
+        'SDK integration scope assessed with a clear go/no-go: required events, SDK capabilities, privacy constraints, and effort estimate documented for advanced engagement (in-app, push, deep links). Next step: confirm SDK requirements + feasibility with Scale tech contact and share ETA with the team.',
+      status: 'planned',
+    },
+    {
+      title: 'Set up shared Solitics execution board (hypercare governance)',
+      owner: 'Paolo, Solitics',
+      department: 'Ops / Analytics',
+      tool: 'Shared execution board (Solitics/Monday/Jira)',
+      expectedImpact:
+        'Single source of truth created for onboarding + hypercare: backlog, owners, weekly milestones, blockers, and KPI progress visible to both teams. Next step: create the board, invite stakeholders, and agree on a weekly update cadence + definition of done for each deliverable.',
       status: 'in_progress',
     },
   ],
