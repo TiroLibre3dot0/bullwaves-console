@@ -237,8 +237,9 @@ function buildWeeklyBoardReportMarkdown({ bucket, tasksByMega, megaLabel, resolv
     '',
   ]
 
-  const megaEntries = Array.from(tasksByMega.entries())
-    .sort((a, b) => String(megaLabel(a[0])).localeCompare(String(megaLabel(b[0]))))
+  const megaEntries = Array.from(tasksByMega.entries()).sort((a, b) =>
+    String(megaLabel(a[0])).localeCompare(String(megaLabel(b[0])))
+  )
 
   const lines = [...header]
 
@@ -250,7 +251,6 @@ function buildWeeklyBoardReportMarkdown({ bucket, tasksByMega, megaLabel, resolv
       const key = byStatus[task.status] ? task.status : 'planned'
       byStatus[key].push(task)
     })
-
     ;['in_progress', 'blocked', 'planned', 'done'].forEach((status) => {
       const items = byStatus[status] || []
       if (!items.length) return
@@ -270,7 +270,9 @@ function buildWeeklyBoardReportMarkdown({ bucket, tasksByMega, megaLabel, resolv
 
         const toolPart = tools.length ? ` — Tools: ${tools.join(' · ')}` : ''
 
-        lines.push(`- **${title}** — Owner: ${owner}${dept ? ` (${dept})` : ''} — Outcome: ${outcome}${toolPart}`)
+        lines.push(
+          `- **${title}** — Owner: ${owner}${dept ? ` (${dept})` : ''} — Outcome: ${outcome}${toolPart}`
+        )
       })
 
       lines.push('')
@@ -308,11 +310,14 @@ function resolveTool(token) {
   }
 
   if (lower === 'gmail') return { kind: 'gmail', label: 'Gmail', url: 'https://mail.google.com/' }
-  if (lower === 'meet' || lower === 'google meet') return { kind: 'meet', label: 'Google Meet', url: 'https://meet.google.com/' }
+  if (lower === 'meet' || lower === 'google meet')
+    return { kind: 'meet', label: 'Google Meet', url: 'https://meet.google.com/' }
 
   if (/^https?:\/\//i.test(t)) {
     try {
-      const u = new URL(t)
+      const U = globalThis && globalThis.URL ? globalThis.URL : null
+      const u = U ? new U(t) : null
+      if (!u) return { kind: 'link', label: 'Open', url: t }
       const host = (u.hostname || '').toLowerCase()
       if (host.includes('monday.com')) return { kind: 'monday', label: 'Monday', url: t }
       if (host.includes('meet.google.com')) return { kind: 'meet', label: 'Google Meet', url: t }
@@ -327,34 +332,67 @@ function resolveTool(token) {
 }
 
 function ToolIcon({ kind }) {
-  const common = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', xmlns: 'http://www.w3.org/2000/svg' }
+  const common = {
+    width: 16,
+    height: 16,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    xmlns: 'http://www.w3.org/2000/svg',
+  }
   switch (kind) {
     case 'meet':
       return (
         <svg {...common}>
-          <path d="M4 7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M16 10l4-2v8l-4-2v-4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          <path
+            d="M4 7a3 3 0 0 1 3-3h6a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7Z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M16 10l4-2v8l-4-2v-4Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
         </svg>
       )
     case 'gmail':
       return (
         <svg {...common}>
-          <path d="M4 8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8Z" stroke="currentColor" strokeWidth="2" />
+          <path
+            d="M4 8a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8Z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
           <path d="m5 8 7 5 7-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
         </svg>
       )
     case 'monday':
       return (
         <svg {...common}>
-          <path d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M7 9h10M7 13h10M7 17h7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M7 9h10M7 13h10M7 17h7"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       )
     case 'cellxpert':
       return (
         <svg {...common}>
           <path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M4 20a6 6 0 0 1 16 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M4 20a6 6 0 0 1 16 0"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       )
     case 'trading':
@@ -362,7 +400,13 @@ function ToolIcon({ kind }) {
         <svg {...common}>
           <path d="M4 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
           <path d="M4 19h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M7 14l3-3 3 2 4-5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+          <path
+            d="M7 14l3-3 3 2 4-5"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
         </svg>
       )
     case 'qlik':
@@ -377,20 +421,40 @@ function ToolIcon({ kind }) {
       return (
         <svg {...common}>
           <path d="M7 4h10v16H7V4Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M10 8h4M10 12h4M10 16h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M10 8h4M10 12h4M10 16h4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       )
     case 'brand':
       return (
         <svg {...common}>
-          <path d="M12 3l3 6 6 1-4.5 4.2 1 6.4L12 17l-5.5 3.8 1-6.4L3 10l6-1 3-6Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+          <path
+            d="M12 3l3 6 6 1-4.5 4.2 1 6.4L12 17l-5.5 3.8 1-6.4L3 10l6-1 3-6Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
         </svg>
       )
     default:
       return (
         <svg {...common}>
-          <path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <path
+            d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
         </svg>
       )
   }
@@ -421,12 +485,15 @@ function toolColor(kind) {
 
 export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) {
   const { t } = useI18n()
-  const weeklyStatusColumns = useMemo(() => [
-    { id: 'planned', label: t('weeklyMap.columns.planned') },
-    { id: 'in_progress', label: t('weeklyMap.columns.inProgress') },
-    { id: 'blocked', label: t('weeklyMap.columns.blocked') },
-    { id: 'done', label: t('weeklyMap.columns.done') },
-  ], [t])
+  const weeklyStatusColumns = useMemo(
+    () => [
+      { id: 'planned', label: t('weeklyMap.columns.planned') },
+      { id: 'in_progress', label: t('weeklyMap.columns.inProgress') },
+      { id: 'blocked', label: t('weeklyMap.columns.blocked') },
+      { id: 'done', label: t('weeklyMap.columns.done') },
+    ],
+    [t]
+  )
   const TASK_CHECKLISTS = useMemo(() => getTaskChecklists(t), [t])
   const currentWeek = useMemo(() => getWeekRange(new Date()), [])
   const { user } = useAuth()
@@ -435,6 +502,7 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
   const [store, setStore] = useState(() => loadWeeklyMapStore())
   const [selectedWeekStart, setSelectedWeekStart] = useState(currentWeek.week_start)
   const [checklistTask, setChecklistTask] = useState(null)
+  const [detailTask, setDetailTask] = useState(null)
 
   useEffect(() => {
     // Ensure the current week map exists and is seeded (never empty by default).
@@ -470,26 +538,30 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
   }, [checklistTask])
 
   const checklistOpen = Boolean(checklistTask && checklistData)
+  const detailOpen = Boolean(detailTask)
 
   useEffect(() => {
     if (typeof document === 'undefined') return
-    if (!checklistOpen) return
+    if (!checklistOpen && !detailOpen) return
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = prevOverflow
     }
-  }, [checklistOpen])
+  }, [checklistOpen, detailOpen])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    if (!checklistOpen) return
+    if (!checklistOpen && !detailOpen) return
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setChecklistTask(null)
+      if (e.key === 'Escape') {
+        setChecklistTask(null)
+        setDetailTask(null)
+      }
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [checklistOpen])
+  }, [checklistOpen, detailOpen])
 
   const tasksGroupedByMega = useMemo(() => {
     const map = new Map()
@@ -514,9 +586,9 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
     const ids = storyMap ? Object.keys(storyMap) : []
     const byMega = filterMegaStoryId
       ? ids.filter((id) => {
-        const s = storyMap[id]
-        return s && s.objectiveId === filterMegaStoryId
-      })
+          const s = storyMap[id]
+          return s && s.objectiveId === filterMegaStoryId
+        })
       : ids
     return byMega.map((id) => ({ id, label: storyLabel(id) }))
   }, [filterMegaStoryId, storyMap])
@@ -642,89 +714,216 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
   const totalTasks = tasksFiltered.length
 
-  const headerTitle = filterMegaStoryId ? t('weeklyMap.header.filteredTitle') : t('weeklyMap.header.allTitle')
+  const headerTitle = filterMegaStoryId
+    ? t('weeklyMap.header.filteredTitle')
+    : t('weeklyMap.header.allTitle')
 
-  const modalNode = checklistOpen && typeof document !== 'undefined'
-    ? createPortal(
-      <div
-        className="modal-backdrop"
-        onMouseDown={(e) => {
-          if (e.target === e.currentTarget) setChecklistTask(null)
-        }}
-        role="dialog"
-        aria-modal="true"
-      >
-        <div
-          className="modal-card"
-          style={{ width: 'min(720px, 96vw)' }}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="modal-header">
-            <div>
-              <div style={{ fontWeight: 800 }}>{checklistData.title}</div>
-              {(() => {
-                const toolTokens = parseToolTokens(checklistTask?.tool)
-                const tools = toolTokens.map(resolveTool).filter((x) => x && x.url)
-                if (!tools.length) return null
-                return (
-                  <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                    {tools.map((tool) => (
-                      <a
-                        key={`${tool.kind}:${tool.url}`}
-                        href={tool.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        title={tool.label}
-                        aria-label={tool.label}
-                        className="tool-icon-btn"
-                        style={{ color: toolColor(tool.kind) }}
-                      >
-                        <ToolIcon kind={tool.kind} />
-                        <span className="tool-icon-label">{tool.label}</span>
-                      </a>
-                    ))}
+  const modalNode =
+    (checklistOpen || detailOpen) && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            className="modal-backdrop"
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                setChecklistTask(null)
+                setDetailTask(null)
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            {checklistOpen ? (
+              <div
+                className="modal-card"
+                style={{ width: 'min(720px, 96vw)' }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <div className="modal-header">
+                  <div>
+                    <div style={{ fontWeight: 800 }}>{checklistData.title}</div>
+                    {(() => {
+                      const toolTokens = parseToolTokens(checklistTask?.tool)
+                      const tools = toolTokens.map(resolveTool).filter((x) => x && x.url)
+                      if (!tools.length) return null
+                      return (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            display: 'flex',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {tools.map((tool) => (
+                            <a
+                              key={`${tool.kind}:${tool.url}`}
+                              href={tool.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={tool.label}
+                              aria-label={tool.label}
+                              className="tool-icon-btn"
+                              style={{ color: toolColor(tool.kind) }}
+                            >
+                              <ToolIcon kind={tool.kind} />
+                              <span className="tool-icon-label">{tool.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                    <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
+                      {t('weeklyMap.modal.readOnlyHint')}
+                    </div>
                   </div>
-                )
-              })()}
-              <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>
-                {t('weeklyMap.modal.readOnlyHint')}
-              </div>
-            </div>
-            <button type="button" className="btn secondary" onClick={() => setChecklistTask(null)}>{t('common.close')}</button>
-          </div>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => setChecklistTask(null)}
+                  >
+                    {t('common.close')}
+                  </button>
+                </div>
 
-          {checklistData.sections.map((section) => (
-            <div key={section.title} className="modal-section">
-              <div className="label">{section.title}</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-                {section.items.map((text) => (
-                  <div key={text} style={{ color: 'var(--text)', fontSize: 13, lineHeight: 1.4 }}>
-                    • {text}
+                {checklistData.sections.map((section) => (
+                  <div key={section.title} className="modal-section">
+                    <div className="label">{section.title}</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+                      {section.items.map((text) => (
+                        <div
+                          key={text}
+                          style={{ color: 'var(--text)', fontSize: 13, lineHeight: 1.4 }}
+                        >
+                          • {text}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>,
-      document.body
-    )
-    : null
+            ) : null}
+
+            {detailOpen ? (
+              <div
+                className="modal-card"
+                style={{ width: 'min(680px, 96vw)' }}
+                onMouseDown={(e) => e.stopPropagation()}
+              >
+                <div className="modal-header">
+                  <div>
+                    <div style={{ fontWeight: 800 }}>{detailTask.title || '—'}</div>
+                    <div style={{ marginTop: 8, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                      <div style={{ fontSize: 12 }}>
+                        <span className="label">{t('weeklyMap.card.mega')}</span>
+                        <span className="value"> {megaLabel(detailTask.megaStoryId)}</span>
+                      </div>
+                      <div style={{ fontSize: 12 }}>
+                        <span className="label">{t('weeklyMap.card.dept')}</span>
+                        <span className="value"> {detailTask.department || '—'}</span>
+                      </div>
+                      <div style={{ fontSize: 12 }}>
+                        <span className="label">{t('weeklyMap.card.story')}</span>
+                        <span className="value">
+                          {' '}
+                          {detailTask.storyId ? storyLabel(detailTask.storyId) : '—'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: 12 }}>
+                        <span className="label">{t('weeklyMap.form.owner')}</span>
+                        <span className="value"> {detailTask.owner || '—'}</span>
+                      </div>
+                    </div>
+                    {(() => {
+                      const toolTokens = parseToolTokens(detailTask?.tool)
+                      const tools = toolTokens.map(resolveTool).filter((x) => x && x.url)
+                      if (!tools.length) return null
+                      return (
+                        <div
+                          style={{
+                            marginTop: 8,
+                            display: 'flex',
+                            gap: 6,
+                            flexWrap: 'wrap',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {tools.map((tool) => (
+                            <a
+                              key={`${tool.kind}:${tool.url}`}
+                              href={tool.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              title={tool.label}
+                              aria-label={tool.label}
+                              className="tool-icon-btn"
+                              style={{ color: toolColor(tool.kind) }}
+                            >
+                              <ToolIcon kind={tool.kind} />
+                              <span className="tool-icon-label">{tool.label}</span>
+                            </a>
+                          ))}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                  <button
+                    type="button"
+                    className="btn secondary"
+                    onClick={() => setDetailTask(null)}
+                  >
+                    {t('common.close')}
+                  </button>
+                </div>
+
+                {detailTask?.expectedImpact ? (
+                  <div className="modal-section">
+                    <div className="label">{t('weeklyMap.form.expectedImpactMandatory')}</div>
+                    <div
+                      style={{ marginTop: 6, color: 'var(--text)', fontSize: 13, lineHeight: 1.5 }}
+                    >
+                      {detailTask.expectedImpact}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>,
+          document.body
+        )
+      : null
 
   return (
     <div className="card" style={{ padding: 14 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 10, flexWrap: 'wrap' }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          gap: 10,
+          flexWrap: 'wrap',
+        }}
+      >
         <div>
           <p className="ongoing-label">{headerTitle}</p>
           {filterMegaStoryId ? (
-            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>{megaLabel(filterMegaStoryId)}</h3>
+            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>
+              {megaLabel(filterMegaStoryId)}
+            </h3>
           ) : (
-            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>{t('weeklyMap.header.executionContract')}</h3>
+            <h3 className="ongoing-feed-title" style={{ marginBottom: 2 }}>
+              {t('weeklyMap.header.executionContract')}
+            </h3>
           )}
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-            {t('weeklyMap.header.weekRange', { start: selectedBucket.week_start, end: selectedBucket.week_end })}
+            {t('weeklyMap.header.weekRange', {
+              start: selectedBucket.week_start,
+              end: selectedBucket.week_end,
+            })}
             {isCurrentWeek ? ` ${t('weeklyMap.header.currentWeekBadge')}` : ''}
-            {selectedBucket.status === 'archived' || !isCurrentWeek ? ` ${t('weeklyMap.header.archivedReadOnlyBadge')}` : ''}
+            {selectedBucket.status === 'archived' || !isCurrentWeek
+              ? ` ${t('weeklyMap.header.archivedReadOnlyBadge')}`
+              : ''}
           </div>
           <div className="ongoing-counter-pill" style={{ marginTop: 8 }}>
             <span className="pill-dot dot-progress" aria-hidden="true" />
@@ -736,15 +935,27 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.filters.week')}</label>
+            <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+              {t('weeklyMap.filters.week')}
+            </label>
             <select
               value={selectedWeekStart}
               onChange={(e) => setSelectedWeekStart(e.target.value)}
-              style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px', minWidth: 200 }}
+              style={{
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                color: 'var(--text)',
+                borderRadius: 10,
+                padding: '8px 10px',
+                minWidth: 200,
+              }}
             >
               {weeks.map((w) => (
                 <option key={w.week_start} value={w.week_start}>
-                  {w.week_start} → {w.week_end}{w.week_start === currentWeek.week_start ? ` ${t('weeklyMap.filters.currentBadge')}` : ''}
+                  {w.week_start} → {w.week_end}
+                  {w.week_start === currentWeek.week_start
+                    ? ` ${t('weeklyMap.filters.currentBadge')}`
+                    : ''}
                 </option>
               ))}
             </select>
@@ -752,12 +963,16 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, color: 'transparent' }}>.</label>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}>
+            <div
+              style={{ display: 'flex', gap: 8, alignItems: 'center', justifyContent: 'flex-end' }}
+            >
               <button type="button" className="btn secondary" onClick={copyBoardReport}>
                 {t('weeklyMap.actions.shareLink')}
               </button>
               {reportCopied ? (
-                <span style={{ fontSize: 12, color: 'var(--muted)' }}>{t('weeklyMap.actions.copied')}</span>
+                <span style={{ fontSize: 12, color: 'var(--muted)' }}>
+                  {t('weeklyMap.actions.copied')}
+                </span>
               ) : null}
             </div>
           </div>
@@ -766,170 +981,166 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
       <div style={checklistOpen ? { pointerEvents: 'none' } : undefined}>
         {Array.from(tasksGroupedByMega.entries()).map(([megaId, list]) => {
-        const byStatus = { planned: [], in_progress: [], blocked: [], done: [] }
-        list.forEach((task) => {
-          const key = byStatus[task.status] ? task.status : 'planned'
-          byStatus[key].push(task)
-        })
+          const byStatus = { planned: [], in_progress: [], blocked: [], done: [] }
+          list.forEach((task) => {
+            const key = byStatus[task.status] ? task.status : 'planned'
+            byStatus[key].push(task)
+          })
 
-        return (
-          <div key={megaId} style={{ marginTop: 14 }}>
-            {!filterMegaStoryId ? (
-              <div style={{ marginBottom: 8 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800 }}>
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: 999,
-                        background: megaAccentColor(megaId),
-                        flex: '0 0 auto',
-                      }}
-                    />
-                    <span>{megaLabel(megaId)}</span>
+          return (
+            <div key={megaId} style={{ marginTop: 14 }}>
+              {!filterMegaStoryId ? (
+                <div style={{ marginBottom: 8 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'baseline',
+                      gap: 10,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800 }}>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: 999,
+                          background: megaAccentColor(megaId),
+                          flex: '0 0 auto',
+                        }}
+                      />
+                      <span>{megaLabel(megaId)}</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)' }}>{list.length} tasks</div>
                   </div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>{list.length} tasks</div>
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      marginTop: 6,
+                      height: 2,
+                      borderRadius: 999,
+                      background: megaAccentColor(megaId),
+                      opacity: 0.25,
+                    }}
+                  />
                 </div>
-                <div
-                  aria-hidden="true"
-                  style={{
-                    marginTop: 6,
-                    height: 2,
-                    borderRadius: 999,
-                    background: megaAccentColor(megaId),
-                    opacity: 0.25,
-                  }}
-                />
-              </div>
-            ) : null}
+              ) : null}
 
-            <div className="roadmap-board">
-              {weeklyStatusColumns.map((col) => (
-                <div
-                  key={col.id}
-                  className={`roadmap-column ${readOnly ? 'weekly-readonly' : ''}`}
-                  onDrop={(e) => onDrop(e, col.id)}
-                  onDragOver={onDragOver}
-                >
-                  <div className="roadmap-column-header">
-                    <div className="roadmap-column-title">{col.label}</div>
-                    <div style={{ color: 'var(--muted)', fontSize: 12 }}>{(byStatus[col.id] || []).length}</div>
-                  </div>
-
-                  <div className="roadmap-column-body">
-                    {(byStatus[col.id] || []).map((task) => {
-                      const checklistKey = String(task.title || '').trim()
-                      const hasChecklist = Boolean(TASK_CHECKLISTS[checklistKey])
-                      const isDraggable = !readOnly && !hasChecklist
-                      const toolTokens = parseToolTokens(task.tool)
-                      const tools = toolTokens.map(resolveTool).filter(Boolean)
-                      return (
-                      <div
-                        key={task.id}
-                        className="roadmap-card"
-                        draggable={isDraggable}
-                        onDragStart={(e) => {
-                          if (!isDraggable) {
-                            e.preventDefault()
-                            return
-                          }
-                          onDragStart(e, task.id)
-                        }}
-                        onClick={() => {
-                          if (!hasChecklist) return
-                          setChecklistTask(task)
-                        }}
-                        style={{ cursor: hasChecklist ? 'pointer' : (readOnly ? 'default' : 'grab') }}
-                      >
-                        <div className="roadmap-card-header">
-                          <div>
-                            <div className="roadmap-area">{task.owner || '—'}</div>
-                            <div className="roadmap-activity">{task.title}</div>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            {tools.length ? (
-                              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                {tools.map((tool) => {
-                                  if (!tool.url) return null
-                                  return (
-                                    <a
-                                      key={`${tool.kind}:${tool.url}`}
-                                      href={tool.url}
-                                      target="_blank"
-                                      rel="noreferrer"
-                                      title={tool.label}
-                                      aria-label={tool.label}
-                                      className="tool-icon-btn"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <ToolIcon kind={tool.kind} />
-                                    </a>
-                                  )
-                                })}
-                              </div>
-                            ) : null}
-
-                            {!readOnly ? (
-                              <button
-                                type="button"
-                                className="btn secondary"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  removeTask(task.id)
-                                }}
-                                style={{ padding: '6px 8px', fontSize: 12 }}
-                              >
-                                {t('common.delete')}
-                              </button>
-                            ) : null}
-                          </div>
-                        </div>
-                        <div className="roadmap-meta">
-                          {!filterMegaStoryId ? (
-                            <div>
-                              <span className="label">{t('weeklyMap.card.mega')}</span>
-                              <span className="value"> {megaLabel(task.megaStoryId || megaId)}</span>
-                            </div>
-                          ) : null}
-
-                          <div>
-                            <span className="label">{t('weeklyMap.card.dept')}</span>
-                            <span className="value"> {task.department || '—'}</span>
-                          </div>
-                          <div>
-                            <span className="label">{t('weeklyMap.card.story')}</span>
-                            <span className="value"> {task.storyId ? storyLabel(task.storyId) : '—'}</span>
-                          </div>
-                        </div>
-
-                        {tools.some((x) => x.kind === 'text') ? (
-                          <div style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
-                            <span style={{ fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', fontSize: 11 }}>Tool</span>
-                            <span style={{ color: 'var(--text-secondary)', fontWeight: 600 }}> {tools.filter((x) => x.kind === 'text').map((x) => x.label).join(' · ')}</span>
-                          </div>
-                        ) : null}
-
-                        <div style={{ marginTop: 6, color: '#9fb3c8', fontSize: 12, lineHeight: 1.35 }}>
-                          {task.expectedImpact}
-                        </div>
+              <div className="roadmap-board">
+                {weeklyStatusColumns.map((col) => (
+                  <div
+                    key={col.id}
+                    className={`roadmap-column ${readOnly ? 'weekly-readonly' : ''}`}
+                    onDrop={(e) => onDrop(e, col.id)}
+                    onDragOver={onDragOver}
+                  >
+                    <div className="roadmap-column-header">
+                      <div className="roadmap-column-title">{col.label}</div>
+                      <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                        {(byStatus[col.id] || []).length}
                       </div>
-                    )})}
-                    {(byStatus[col.id] || []).length === 0 ? (
-                      <div style={{ color: '#64748b', fontSize: 12 }}>{t('weeklyMap.empty.noTasks')}</div>
-                    ) : null}
+                    </div>
+
+                    <div className="roadmap-column-body">
+                      {(byStatus[col.id] || []).map((task) => {
+                        const checklistKey = String(task.title || '').trim()
+                        const hasChecklist = Boolean(TASK_CHECKLISTS[checklistKey])
+                        const isDraggable = !readOnly && !hasChecklist
+                        const toolTokens = parseToolTokens(task.tool)
+                        const tools = toolTokens.map(resolveTool).filter(Boolean)
+                        return (
+                          <div
+                            key={task.id}
+                            className="roadmap-card"
+                            draggable={isDraggable}
+                            onDragStart={(e) => {
+                              if (!isDraggable) {
+                                e.preventDefault()
+                                return
+                              }
+                              onDragStart(e, task.id)
+                            }}
+                            onClick={() => {
+                              if (hasChecklist) {
+                                setChecklistTask(task)
+                              } else {
+                                setDetailTask(task)
+                              }
+                            }}
+                            style={{ cursor: hasChecklist || !readOnly ? 'pointer' : 'default' }}
+                          >
+                            <div className="roadmap-card-header">
+                              <div>
+                                <div className="roadmap-area">{task.owner || '—'}</div>
+                                <div className="roadmap-activity">{task.title}</div>
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                {tools.length ? (
+                                  <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                    {tools.map((tool) => {
+                                      if (!tool.url) return null
+                                      return (
+                                        <a
+                                          key={`${tool.kind}:${tool.url}`}
+                                          href={tool.url}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          title={tool.label}
+                                          aria-label={tool.label}
+                                          className="tool-icon-btn"
+                                          onClick={(e) => e.stopPropagation()}
+                                        >
+                                          <ToolIcon kind={tool.kind} />
+                                        </a>
+                                      )
+                                    })}
+                                  </div>
+                                ) : null}
+
+                                {!readOnly ? (
+                                  <button
+                                    type="button"
+                                    className="btn secondary"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      removeTask(task.id)
+                                    }}
+                                    style={{ padding: '6px 8px', fontSize: 12 }}
+                                  >
+                                    {t('common.delete')}
+                                  </button>
+                                ) : null}
+                              </div>
+                            </div>
+                            {/* concise card: hide meta/impact, moved to modal */}
+                          </div>
+                        )
+                      })}
+                      {(byStatus[col.id] || []).length === 0 ? (
+                        <div style={{ color: '#64748b', fontSize: 12 }}>
+                          {t('weeklyMap.empty.noTasks')}
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        )
+          )
         })}
       </div>
 
       <div style={{ marginTop: 14, opacity: readOnly ? 0.6 : 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 10,
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
             {t('weeklyMap.actions.addCommitmentHint')}
           </div>
@@ -946,74 +1157,135 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
 
         {showCreate ? (
           <div style={{ marginTop: 10 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr 0.9fr', gap: 8, alignItems: 'end' }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1.4fr 1fr 1fr 1fr 0.9fr',
+                gap: 8,
+                alignItems: 'end',
+              }}
+            >
               {!filterMegaStoryId ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.megaStory')}</label>
+                  <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                    {t('weeklyMap.form.megaStory')}
+                  </label>
                   <select
                     value={draft.megaStoryId}
                     onChange={(e) => setDraft((d) => ({ ...d, megaStoryId: e.target.value }))}
                     disabled={readOnly}
-                    style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                    style={{
+                      background: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      color: 'var(--text)',
+                      borderRadius: 10,
+                      padding: '8px 10px',
+                    }}
                   >
                     <option value="">{t('common.selectEllipsis')}</option>
                     {megaOptions.map((m) => (
-                      <option key={m.id} value={m.id}>{m.label}</option>
+                      <option key={m.id} value={m.id}>
+                        {m.label}
+                      </option>
                     ))}
                   </select>
                 </div>
               ) : null}
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.title')}</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {t('weeklyMap.form.title')}
+                </label>
                 <input
                   value={draft.title}
                   onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
                   placeholder={t('weeklyMap.placeholders.weeklyTaskTitle')}
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.storyOptional')}</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {t('weeklyMap.form.storyOptional')}
+                </label>
                 <select
                   value={draft.storyId}
                   onChange={(e) => setDraft((d) => ({ ...d, storyId: e.target.value }))}
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 >
                   <option value="">—</option>
                   {storyOptions.map((s) => (
-                    <option key={s.id} value={s.id}>{s.label}</option>
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.department')}</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {t('weeklyMap.form.department')}
+                </label>
                 <select
                   value={draft.department}
                   onChange={(e) => setDraft((d) => ({ ...d, department: e.target.value }))}
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 >
-                  {departments.map((d) => <option key={d} value={d}>{t(`departments.${d}`)}</option>)}
+                  {departments.map((d) => (
+                    <option key={d} value={d}>
+                      {t(`departments.${d}`)}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.owner')}</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {t('weeklyMap.form.owner')}
+                </label>
                 <input
                   value={draft.owner}
                   onChange={(e) => setDraft((d) => ({ ...d, owner: e.target.value }))}
                   placeholder={t('weeklyMap.placeholders.owner')}
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 />
               </div>
 
-              <button type="button" className="btn" onClick={createTask} disabled={readOnly} style={{ height: 38 }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={createTask}
+                disabled={readOnly}
+                style={{ height: 38 }}
+              >
                 {t('common.save')}
               </button>
             </div>
@@ -1026,18 +1298,32 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                   onChange={(e) => setDraft((d) => ({ ...d, tool: e.target.value }))}
                   placeholder="One per line: gmail, meet, https://..."
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <label style={{ fontSize: 11, color: 'var(--muted)' }}>{t('weeklyMap.form.expectedImpactMandatory')}</label>
+                <label style={{ fontSize: 11, color: 'var(--muted)' }}>
+                  {t('weeklyMap.form.expectedImpactMandatory')}
+                </label>
                 <input
                   value={draft.expectedImpact}
                   onChange={(e) => setDraft((d) => ({ ...d, expectedImpact: e.target.value }))}
                   placeholder={t('weeklyMap.placeholders.expectedImpact')}
                   disabled={readOnly}
-                  style={{ background: 'var(--card)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: 10, padding: '8px 10px' }}
+                  style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text)',
+                    borderRadius: 10,
+                    padding: '8px 10px',
+                  }}
                 />
                 <div style={{ fontSize: 11, color: 'var(--muted)' }}>
                   {t('weeklyMap.validation.expectedImpactRequired')}
