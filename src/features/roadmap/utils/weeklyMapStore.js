@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'bw_weekly_map_v1'
+﻿const STORAGE_KEY = 'bw_weekly_map_v1'
 const SHARE_TOKEN_KEY = 'bw_weekly_map_share_token'
 
 function safeJsonParse(raw, fallback) {
@@ -82,17 +82,26 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
 
   ops_governance: [
     {
-      title: 'Call with Stamatis',
+      title: 'Call with Stamatis: Risk scoring framework + KYC integration',
       owner: 'Paolo',
-      department: 'Operations',
+      department: 'Compliance / Operations',
       tool: 'Weekly Map checklist',
       expectedImpact:
-        'AML decisions captured in Weekly Map (threshold, TM escalation, BI KPIs/demo, manual approval, Scale/KYC/BI dependency).',
+        'Risk scoring framework locked in: enhanced KYC questionnaire; per-answer scoring logic defined; client risk score calculated; enables AML monitoring via behavior vs declared risk comparison. Decisions captured: threshold (60+), TM escalation policy, BI KPIs, manual approval flow, Scale/KYC/BI integration roadmap.',
       status: 'done',
     },
   ],
 
   aml_compliance: [
+    {
+      title: 'Build Risk Score & AML Alerts Dashboard',
+      owner: 'Michael Roizman, Stamatis',
+      department: 'Data / Compliance',
+      tool: 'BI platform / Risk scoring engine',
+      expectedImpact:
+        'AML dashboard live with real-time risk scoring + alerts: clients 60+ flagged instantly; TM escalation triggers visible; deposit/trading behavior anomalies vs KYC risk profile highlighted; alerts routed to Ops for manual review. Next step: confirm BI ETA (data model + queries); Stamatis to validate alert logic; launch by end of week.',
+      status: 'in_progress',
+    },
     {
       title: 'Formalize and apply High Risk threshold (60+ points)',
       owner: 'Stamatis',
@@ -151,40 +160,13 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
 
   skale_tickets: [
     {
-      title: 'Ticket #33541 — blocco duplicati per numero di telefono',
-      owner: 'Compliance/Ops',
-      department: 'Compliance / Ops',
-      tool: 'skale_crm',
+      title: 'Consolidate Skale CRM compliance integration â€” client data integrity',
+      owner: 'Compliance / Ops / Product',
+      department: 'Compliance / Ops / IT',
+      tool: 'Skale CRM / Scale API',
       expectedImpact:
-        'Questa settimana: fornire a Skale 1 caso concreto di duplicato (stesso numero di telefono) e ottenere conferma scritta che il blocco automatico sia attivo e come viene tracciato.',
+        'Three compliance cases consolidated and tracked: (1) Automatic duplicate blocking (phone #) â€” provide Skale test case + confirm active tracking; (2) POI/POA field standardization â€” clarify Country logic and new POA Country field + timeline; (3) Batch client updates â€” verify black list / Trading Disabled / Account Enabled flags applied; confirm execution with timestamp/report. Next: schedule meeting with Skale tech team (gilad@skalecrm.com) to finalize Scale API integration, ownership model, and dev repo setup. Outcome: unified client data compliance layer live + weekly sync cadence established.',
       status: 'in_progress',
-    },
-    {
-      title: 'Ticket #33516 — campi Country/POI/POA',
-      owner: 'Compliance/Ops',
-      department: 'Compliance / Ops + IT',
-      tool: 'skale_crm',
-      expectedImpact:
-        'Questa settimana: chiarire requisiti con gli ingegneri Skale (Country basato su POI, nuovo campo “POA Country” + filtro) e ottenere timeline/ETA.',
-      status: 'in_progress',
-    },
-    {
-      title: 'Batch update clienti — black list / Trading Disabled / Account Enabled',
-      owner: 'Ops/Support',
-      department: 'Ops / Support',
-      tool: 'skale_crm',
-      expectedImpact:
-        'Questa settimana: verificare che sul batch siano applicati “black list”, “Trading Disabled” e “Account Enabled = NO”; se manca qualcosa, inviare a Skale la lista clienti e ricevere conferma di esecuzione (timestamp/report).',
-      status: 'in_progress',
-    },
-    {
-      title: 'Nuovo portale (UI/UX interna) — allineamento integrazione Scale API + flow repo',
-      owner: 'Ops/IT',
-      department: 'Product / IT',
-      tool: 'gmail, meet, skale_crm',
-      expectedImpact:
-        'Questa settimana: inviare email a gilad@skalecrm.com (CC: support@skalecrm.com) per fissare meeting con tech team Skale; ottenere conferma meeting (data/ora) + agenda, e uscire con una decisione sul modello di sync con Scale (API, ownership, ambienti) e sul flusso di sviluppo (repo condiviso vs setup alternativo).',
-      status: 'planned',
     },
   ],
 
