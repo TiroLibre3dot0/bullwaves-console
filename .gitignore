@@ -17,3 +17,6 @@ dist
 # Local CSV artifacts
 tmp_*.csv
 uploads/
+
+# Local server logs
+upload-server.*.log

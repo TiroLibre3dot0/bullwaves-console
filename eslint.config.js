@@ -13,12 +13,27 @@ export default [
         console: 'readonly',
         window: 'readonly',
         document: 'readonly',
+        location: 'readonly',
+        history: 'readonly',
         localStorage: 'readonly',
+        sessionStorage: 'readonly',
         navigator: 'readonly',
         fetch: 'readonly',
         setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         setInterval: 'readonly',
+        clearInterval: 'readonly',
+        requestAnimationFrame: 'readonly',
+        cancelAnimationFrame: 'readonly',
+        confirm: 'readonly',
         Promise: 'readonly',
+
+        // Common browser APIs used in the console
+        FormData: 'readonly',
+        XMLHttpRequest: 'readonly',
+        Blob: 'readonly',
+        URL: 'readonly',
+        Event: 'readonly',
       },
       parserOptions: {
         ecmaFeatures: {
@@ -27,7 +42,10 @@ export default [
       },
     },
     plugins: {
+      // Keep the old key to avoid breaking existing rule prefixes,
+      // but also register the canonical key used by eslint-plugin-react-hooks.
       react: pluginReactHooks,
+      'react-hooks': pluginReactHooks,
       'react-refresh': pluginReactRefresh,
     },
     rules: {
