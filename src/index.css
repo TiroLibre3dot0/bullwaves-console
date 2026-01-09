@@ -380,9 +380,13 @@ select option, select optgroup{background:var(--card);color:var(--text)}
     padding: 0 8px;
     gap: 8px;
   }
-  .topbar .meta {
-    display: none;
-  }
+  /* Keep language switch available on mobile; hide only bulky user info. */
+  .topbar .meta { display: block; }
+  .topbar .user-meta { display: none; }
+  .topbar .admin-btn { display: none; }
+  .topbar .user-chip { padding: 4px 6px; gap: 6px; }
+  .topbar .logout-btn { padding: 4px 8px; font-size: 11px; }
+  .topbar .lang-select { padding: 4px 6px; font-size: 11px; }
   .logo-tools-pop {
     left: -8px;
     right: -8px;
