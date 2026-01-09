@@ -790,6 +790,12 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   margin-bottom:10px;
 }
 
+/* Slightly accent-tint the Support Details header so it reads as a page header. */
+.support-details-mode .support-details-topbar{
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom-color: color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.06));
+}
+
 .support-details-topbar-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .support-details-topbar-affiliate{font-size:11px;color:var(--muted);width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -820,14 +826,16 @@ select option, select optgroup{background:var(--card);color:var(--text)}
     padding-left:12px;
     padding-right:12px;
     padding-bottom:6px;
-    /* Solid, robust header: no fade-to-transparent (prevents seeing content scroll behind). */
+    /* Solid + slightly accent-tinted header (prevents seeing content scroll behind). */
+    background: rgba(5, 13, 29, 1);
     background: linear-gradient(
       180deg,
-      rgba(5, 13, 29, 1) 0%,
+      color-mix(in srgb, var(--accent) 10%, rgba(5, 13, 29, 1)) 0%,
       rgba(5, 13, 29, 1) 100%
     );
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.06);
+    border-bottom-color: color-mix(in srgb, var(--accent) 22%, rgba(255,255,255,0.06));
   }
 
   .support-back-btn{width:34px;height:34px;border-radius:10px}
