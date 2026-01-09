@@ -779,9 +779,10 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   position: sticky;
   top: 0;
   z-index: 35;
-  padding-top: max(10px, env(safe-area-inset-top));
+  /* Avoid artificial gap: only apply safe-area when present. */
+  padding-top: env(safe-area-inset-top);
   padding-bottom: 8px;
-  background: rgba(5, 13, 29, 0.75);
+  background: rgba(5, 13, 29, 0.92);
   backdrop-filter: blur(10px);
 }
 
@@ -801,17 +802,21 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 @media (max-width: 880px) {
   /* Mobile: keep only compact basic info sticky and avoid heavy overlays */
   .support-details-topbar{
-    padding-top:max(6px, env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
     padding-bottom:6px;
+    /* Solid, robust header: no fade-to-transparent (prevents seeing content scroll behind). */
     background: linear-gradient(
       180deg,
-      rgba(5, 13, 29, 0.70) 0%,
-      rgba(5, 13, 29, 0.35) 70%,
-      rgba(5, 13, 29, 0) 100%
+      rgba(5, 13, 29, 1) 0%,
+      rgba(5, 13, 29, 1) 100%
     );
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
+
+  /* Remove the perceived gap under the main navbar (dashboard-content has top padding). */
+  .support-user-details-page{ margin-top: -14px; }
+
   .support-back-btn{width:34px;height:34px;border-radius:10px}
   .support-details-topbar-name{font-size:14px}
 

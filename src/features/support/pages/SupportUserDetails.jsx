@@ -898,6 +898,9 @@ export default function SupportUserDetails({
               {accountId}
               {mt5 ? ` · ${mt5}` : ''}
             </div>
+            <div className="support-details-topbar-meta">
+              {t('support.details.affiliate')}: {affiliateDisplay}
+            </div>
           </div>
         </div>
       </div>
