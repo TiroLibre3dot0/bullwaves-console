@@ -817,6 +817,9 @@ select option, select optgroup{background:var(--card);color:var(--text)}
      so the sticky per-user header sits flush under the main topbar. */
   .support-details-mode .dashboard-content{padding-top:0;padding-left:0;padding-right:0}
 
+  /* After scrolling starts: add a small top offset so a gap appears above the sticky header. */
+  .support-details-mode.support-details-scrolled .support-details-topbar{top:14px}
+
   /* Let the sticky header go full-bleed; keep its inner content padded. */
   .support-user-details-page.w-full.px-6{padding-left:0;padding-right:0}
 

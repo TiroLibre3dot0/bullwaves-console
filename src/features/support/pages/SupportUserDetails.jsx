@@ -809,17 +809,48 @@ export default function SupportUserDetails({
   }, [affiliateId])
 
   React.useEffect(() => {
-    const thresholdPx = 140
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
+
+    const scrolledClass = 'support-details-scrolled'
+    const scrollEl = document.querySelector('.dashboard-content')
+
+    const getScrollTop = () => {
+      if (scrollEl && typeof scrollEl.scrollTop === 'number') return scrollEl.scrollTop
+      return window.scrollY || 0
+    }
+
+    const isMobile = () =>
+      window.matchMedia?.('(max-width: 880px)')?.matches ?? window.innerWidth <= 880
+
     const onScroll = () => {
-      const next = (window.scrollY || 0) > thresholdPx
-      if (isLeftCollapsedRef.current === next) return
-      isLeftCollapsedRef.current = next
-      setIsLeftCollapsed(next)
+      const scrollTop = getScrollTop()
+      const mobile = isMobile()
+
+      // Mobile: collapse as soon as scrolling starts. Desktop: keep the previous threshold.
+      const thresholdPx = mobile ? 1 : 140
+      const nextCollapsed = scrollTop > thresholdPx
+      if (isLeftCollapsedRef.current !== nextCollapsed) {
+        isLeftCollapsedRef.current = nextCollapsed
+        setIsLeftCollapsed(nextCollapsed)
+      }
+
+      if (mobile) {
+        document.body.classList.toggle(scrolledClass, scrollTop > 0)
+      } else {
+        document.body.classList.remove(scrolledClass)
+      }
     }
 
     onScroll()
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+
+    const target = scrollEl || window
+    target.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll, { passive: true })
+    return () => {
+      target.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+      document.body.classList.remove(scrolledClass)
+    }
   }, [])
 
   React.useEffect(() => {
