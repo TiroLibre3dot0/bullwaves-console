@@ -10,7 +10,7 @@ import {
   buildAffiliateKpiMap,
   getAffiliateKpi,
   computePriority,
-  buildSupportDecision
+  buildSupportDecision,
 } from '../services/supportUserCheckService'
 import SupportUserDetails from './SupportUserDetails'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
@@ -20,7 +20,13 @@ import { useDataStatus } from '../../../context/DataStatusContext'
 const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
 const USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
 const MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
-const REGDATE_KEYS = ['registrationdate', 'regdate', 'externaldate', 'registered', 'registration_date']
+const REGDATE_KEYS = [
+  'registrationdate',
+  'regdate',
+  'externaldate',
+  'registered',
+  'registration_date',
+]
 const FIRST_DEPOSIT_KEYS = ['firstdeposit', 'first_deposit', 'first deposit']
 const QUALIFY_KEYS = ['qualificationdate', 'qualification_date', 'qualifydate']
 const DEPOSIT_COUNT_KEYS = ['depositcount', 'deposit_count', 'depositscount', 'deposits_count']
@@ -41,7 +47,11 @@ const SPREAD_KEYS = ['spread']
 const ROI_KEYS = ['roi']
 const COMMISSIONS_KEYS = ['commissions', 'affiliatecommissions', 'affiliate_commissions', 'comm']
 const AFF_COMM_KEYS = ['affiliatecommissions', 'affiliate_commissions']
-const SUB_AFF_COMM_KEYS = ['subaffiliatecommissions', 'sub_affiliate_commissions', 'sub_aff_commissions']
+const SUB_AFF_COMM_KEYS = [
+  'subaffiliatecommissions',
+  'sub_affiliate_commissions',
+  'sub_aff_commissions',
+]
 const CPA_KEYS = ['cpacommission', 'cpa_commission', 'cpa']
 const CPL_KEYS = ['cplcommission', 'cpl_commission', 'cpl']
 const REVSHARE_KEYS = ['revshare', 'revsharecommission', 'revshare_commission']
@@ -86,7 +96,7 @@ function getMapped(row) {
     subAffiliateCommissions: pickField(row, SUB_AFF_COMM_KEYS),
     commission_cpa: pickField(row, CPA_KEYS),
     commission_cpl: pickField(row, CPL_KEYS),
-    revshare: pickField(row, REVSHARE_KEYS)
+    revshare: pickField(row, REVSHARE_KEYS),
   }
 }
 
@@ -151,23 +161,25 @@ export default function SupportUserCheck() {
   const inputRef = useRef(null)
   const lastReqRef = useRef(0)
 
-  useEffect(() => { inputRef.current?.focus() }, [])
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
 
   // Carica dati iniziali per status
   useEffect(() => {
-    console.log('Loading initial data for status');
+    console.log('Loading initial data for status')
     async function loadInitialData() {
       try {
         const resp = await fetch('/Registrations%20Report.csv')
-        console.log('Fetch response', resp.ok);
+        console.log('Fetch response', resp.ok)
         if (!resp.ok) return
         const text = await resp.text()
         // Parse CSV come nel service
-        const lines = text.split(/\r?\n/).filter(line => line.trim())
+        const lines = text.split(/\r?\n/).filter((line) => line.trim())
         if (lines.length < 2) return
-        const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim())
-        const rows = lines.slice(1).map(line => {
-          const cols = line.split(',').map(v => v.replace(/"/g, '').trim())
+        const headers = lines[0].split(',').map((h) => h.replace(/"/g, '').trim())
+        const rows = lines.slice(1).map((line) => {
+          const cols = line.split(',').map((v) => v.replace(/"/g, '').trim())
           const row = {}
           headers.forEach((h, idx) => {
             row[h] = cols[idx] || ''
@@ -175,7 +187,9 @@ export default function SupportUserCheck() {
           return row
         })
         // Trova la colonna data usando REGDATE_KEYS
-        const dateKey = headers.find(h => REGDATE_KEYS.includes(h.toLowerCase().replace(/[^a-z]/g, ''))) || headers[0]
+        const dateKey =
+          headers.find((h) => REGDATE_KEYS.includes(h.toLowerCase().replace(/[^a-z]/g, ''))) ||
+          headers[0]
         const status = checkDataStatus(rows, dateKey, 'Registrations Report')
         setDataStatus(status)
         setGlobalDataStatus(status)
@@ -195,7 +209,8 @@ export default function SupportUserCheck() {
       if (e.key === '/' && document.activeElement !== inputRef.current) {
         // ignore if typing in inputs or editable fields
         const tag = document.activeElement && document.activeElement.tagName
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable)
+          return
         e.preventDefault()
         inputRef.current?.focus()
       }
@@ -205,7 +220,10 @@ export default function SupportUserCheck() {
   }, [])
 
   const selected = useMemo(() => (selectedRaw ? getMapped(selectedRaw) : null), [selectedRaw])
-  const mappedResults = useMemo(() => (results || []).map((r) => ({ raw: r, mapped: getMapped(r) })), [results])
+  const mappedResults = useMemo(
+    () => (results || []).map((r) => ({ raw: r, mapped: getMapped(r) })),
+    [results]
+  )
   const cacheRef = useRef(new Map())
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
@@ -282,24 +300,44 @@ export default function SupportUserCheck() {
     setMediaLoaded(false)
 
     if (!selectedRaw) return
-
     ;(async () => {
+      const mapped = getMapped(selectedRaw)
       let resolvedAffiliate = null
-      try { await loadPaymentsReport(); if (!mounted) return; setPaymentsLoaded(true) } catch (e) { if (!mounted) return; setPaymentsLoaded(true) }
-      try { resolvedAffiliate = await resolveSearchedAffiliate(selectedRaw); if (!mounted) return; setAffiliateName(resolvedAffiliate) } catch (e) { if (!mounted) return; setAffiliateName(null) }
+      try {
+        await loadPaymentsReport()
+        if (!mounted) return
+        setPaymentsLoaded(true)
+      } catch (e) {
+        if (!mounted) return
+        setPaymentsLoaded(true)
+      }
+      try {
+        resolvedAffiliate = await resolveSearchedAffiliate(selectedRaw)
+        if (!mounted) return
+        setAffiliateName(resolvedAffiliate)
+      } catch (e) {
+        if (!mounted) return
+        setAffiliateName(null)
+      }
       // additional fallback: if resolution failed but the raw row contains an affiliate id, try payments mapping
       try {
         if ((!resolvedAffiliate || !resolvedAffiliate.affiliateName) && mapped?.affiliateId) {
           const payInfo = await getPaymentAffiliateById(mapped.affiliateId)
           if (payInfo && payInfo.affiliateName) {
             if (!mounted) return
-            setAffiliateName({ affiliateId: String(mapped.affiliateId).replace(/\D+/g, ''), affiliateName: payInfo.affiliateName })
+            setAffiliateName({
+              affiliateId: String(mapped.affiliateId).replace(/\D+/g, ''),
+              affiliateName: payInfo.affiliateName,
+            })
           }
         }
-      } catch (e) { /* ignore */ }
+      } catch (e) {
+        /* ignore */
+      }
       try {
-        await buildAffiliateKpiMap(); if (!mounted) return; setMediaLoaded(true)
-        const mapped = getMapped(selectedRaw)
+        await buildAffiliateKpiMap()
+        if (!mounted) return
+        setMediaLoaded(true)
         // Prefer KPI lookup by resolved affiliate id (payments canonical), fallback to affiliateName
         let k = null
         if (resolvedAffiliate && resolvedAffiliate.affiliateId) {
@@ -310,30 +348,46 @@ export default function SupportUserCheck() {
           k = await getAffiliateKpi(mapped.affiliateId)
         }
         setAffiliateKpi(k || null)
-      } catch (e) { if (!mounted) return; setMediaLoaded(true); setAffiliateKpi(null) }
+      } catch (e) {
+        if (!mounted) return
+        setMediaLoaded(true)
+        setAffiliateKpi(null)
+      }
     })()
 
-    return () => { mounted = false }
+    return () => {
+      mounted = false
+    }
   }, [selectedRaw])
 
-  function onSelectUser(raw) { setSelectedRaw(raw) }
+  function onSelectUser(raw) {
+    setSelectedRaw(raw)
+  }
 
   // debounce query changes to avoid firing search on every keystroke
   useEffect(() => {
     const trimmed = String(query || '').trim()
-    if (debounceRef.current) clearTimeout(debounceRef.current)
+    if (debounceRef.current) window.clearTimeout(debounceRef.current)
     // immediate search on Enter handled onKeyDown; debounce for typing
     debounceRef.current = setTimeout(() => {
       runSearch(trimmed)
     }, 140)
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current)
+    }
   }, [query])
   // UI-only derived values
   const qTrim = String(query || '').trim()
   const showHero = !searched && qTrim === '' && !selected
 
   function initialsFor(mapped) {
-    const seed = (mapped?.name || mapped?.userId || ' ? ').split(' ').filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase()
+    const seed = (mapped?.name || mapped?.userId || ' ? ')
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((s) => s[0])
+      .join('')
+      .toUpperCase()
     return seed
   }
 
@@ -354,27 +408,29 @@ export default function SupportUserCheck() {
   const topThreshold = useMemo(() => {
     if (!sortedResults || sortedResults.length === 0) return 0
     const idx = Math.min(9, sortedResults.length - 1)
-    return (sortedResults[idx]?.mapped?.depositNum) || 0
+    return sortedResults[idx]?.mapped?.depositNum || 0
   }, [sortedResults])
 
   // selected summary groups
-  const selectedSummary = selected ? {
-    account: {
-      id: selected.userId || '—',
-      mt5: selected.mt5 || '—',
-      country: selected.country || '—'
-    },
-    deposits: {
-      total: fmtEuro(selected.totalDeposits),
-      count: selected.depositCount || '0',
-      net: fmtEuro(selected.netDeposits),
-      withdrawals: fmtEuro(selected.withdrawals)
-    },
-    affiliate: {
-      id: affiliateName?.affiliateId || selected.affiliateId || '—',
-      name: affiliateName?.affiliateName || '—'
-    }
-  } : null
+  const selectedSummary = selected
+    ? {
+        account: {
+          id: selected.userId || '—',
+          mt5: selected.mt5 || '—',
+          country: selected.country || '—',
+        },
+        deposits: {
+          total: fmtEuro(selected.totalDeposits),
+          count: selected.depositCount || '0',
+          net: fmtEuro(selected.netDeposits),
+          withdrawals: fmtEuro(selected.withdrawals),
+        },
+        affiliate: {
+          id: affiliateName?.affiliateId || selected.affiliateId || '—',
+          name: affiliateName?.affiliateName || '—',
+        },
+      }
+    : null
 
   if (initializing) {
     return <FullPageLoader progress={40} subtitle={t('support.loader.tools')} />
@@ -383,7 +439,9 @@ export default function SupportUserCheck() {
   // If a user is selected, render the full-width Support Decision Page in-place
   if (selected) {
     return (
-      <div className="support-user-check-page w-full px-6 2xl:px-10">
+      <div
+        className={`support-user-check-page w-full px-6 2xl:px-10 ${showHero ? 'is-hero' : 'is-results'}`}
+      >
         <SupportUserDetails
           selected={selected}
           affiliateName={affiliateName}
@@ -391,7 +449,9 @@ export default function SupportUserCheck() {
           paymentsLoaded={paymentsLoaded}
           mediaLoaded={mediaLoaded}
           fmtEuro={fmtEuro}
-          suggestedReply={(mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg) => suggestedReply(t, mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg)}
+          suggestedReply={(mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg) =>
+            suggestedReply(t, mapped, affiliateNameArg, paymentsLoadedArg, mediaLoadedArg)
+          }
           copyToClipboard={copyToClipboard}
           computePriority={computePriority}
           onBack={() => setSelectedRaw(null)}
@@ -401,40 +461,146 @@ export default function SupportUserCheck() {
   }
 
   return (
-    <div className="support-user-check-page w-full px-6 2xl:px-10">
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: showHero ? 0 : 12, minHeight: showHero ? '68vh' : undefined, alignItems: showHero ? 'center' : undefined }}>
+    <div
+      className={`support-user-check-page w-full px-6 2xl:px-10 ${showHero ? 'is-hero' : 'is-results'}`}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: showHero ? 0 : 12,
+          minHeight: showHero ? '68vh' : undefined,
+          alignItems: showHero ? 'center' : undefined,
+        }}
+      >
         <div style={{ width: '100%', paddingTop: showHero ? 0 : undefined }}>
-          <header style={{ display: 'flex', flexDirection: 'column', gap: showHero ? 10 : 6, marginBottom: showHero ? 0 : 10, textAlign: showHero ? 'center' : 'left' }}>
+          <header
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: showHero ? 10 : 6,
+              marginBottom: showHero ? 0 : 10,
+              textAlign: showHero ? 'center' : 'left',
+            }}
+          >
             <div>
-              <h1 className="support-hero-title" style={{ margin: 0, fontSize: showHero ? 26 : 20, fontWeight: 900, letterSpacing: '-0.2px' }}>{t('support.userCheck.title')}</h1>
+              <h1
+                className="support-hero-title"
+                style={{
+                  margin: 0,
+                  fontSize: showHero ? 26 : 20,
+                  fontWeight: 900,
+                  letterSpacing: '-0.2px',
+                }}
+              >
+                {t('support.userCheck.title')}
+              </h1>
             </div>
-            <div style={{ color: 'var(--muted)', fontSize: showHero ? 14 : 13, lineHeight: '1.35', opacity: showHero ? 0.55 : 1, marginTop: showHero ? 14 : 4, marginBottom: showHero ? 22 : 8 }}>
+            <div
+              style={{
+                color: 'var(--muted)',
+                fontSize: showHero ? 14 : 13,
+                lineHeight: '1.35',
+                opacity: showHero ? 0.55 : 1,
+                marginTop: showHero ? 14 : 4,
+                marginBottom: showHero ? 22 : 8,
+              }}
+            >
               {t('support.userCheck.subtitle')}
             </div>
 
-            <div className={`search-bar ${showHero ? 'search-priority' : ''}`} style={{ marginTop: showHero ? 18 : 10, display: 'flex', justifyContent: 'center', transform: showHero ? 'translateY(-5vh)' : undefined }}>
+            <div
+              className={`search-bar ${showHero ? 'search-priority' : ''}`}
+              style={{ marginTop: showHero ? 18 : 10, display: 'flex', justifyContent: 'center' }}
+            >
               <div style={{ width: '100%', maxWidth: showHero ? 680 : 820, position: 'relative' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, background: showHero ? 'transparent' : undefined, position: 'relative' }}>
-                  <span className="search-icon" aria-hidden style={ showHero ? { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', zIndex: 4, opacity: 0.55 } : undefined }>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /><circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.6" /></svg>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    background: showHero ? 'transparent' : undefined,
+                    position: 'relative',
+                  }}
+                >
+                  <span
+                    className="search-icon"
+                    aria-hidden
+                    style={
+                      showHero
+                        ? {
+                            position: 'absolute',
+                            left: 12,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            zIndex: 4,
+                            opacity: 0.55,
+                          }
+                        : undefined
+                    }
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M21 21l-4.35-4.35"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.6" />
+                    </svg>
                   </span>
                   <input
                     ref={inputRef}
                     value={query}
-                    onChange={(e) => { setQuery(e.target.value) }}
-                    onKeyDown={(e) => { if (e.key === 'Enter') { if (debounceRef.current) clearTimeout(debounceRef.current); runSearch(query) } }}
+                    onChange={(e) => {
+                      setQuery(e.target.value)
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (debounceRef.current) window.clearTimeout(debounceRef.current)
+                        runSearch(query)
+                      }
+                    }}
                     placeholder={t('support.search.placeholder')}
                     className="search-input search-hero-input"
                     aria-label={t('support.search.ariaLabel')}
-                    style={{ width: '100%', fontSize: 16, padding: showHero ? '16px 18px' : '12px 14px', paddingLeft: showHero ? '44px' : undefined }}
+                    style={{
+                      width: '100%',
+                      fontSize: 16,
+                      padding: showHero ? '16px 18px' : '12px 14px',
+                      paddingLeft: showHero ? '44px' : undefined,
+                    }}
                   />
                 </div>
 
                 {/* helper line under input - subtle and small */}
                 {showHero && (
-                  <div style={{ marginTop: 32, color: 'var(--muted)', fontSize: 11, display: 'flex', justifyContent: 'center', gap: 18, opacity: 0.45 }}>
-                    <div style={{ minWidth: 160, textAlign: 'center' }}>{t('support.userCheck.hint.instant')}</div>
-                    <div style={{ minWidth: 160, textAlign: 'center' }}>{t('support.userCheck.hint.press')} <strong>/</strong> {t('support.userCheck.hint.toFocus')} · <strong>{t('common.keys.enter')}</strong> {t('support.userCheck.hint.toRun')}</div>
+                  <div
+                    style={{
+                      marginTop: 32,
+                      color: 'var(--muted)',
+                      fontSize: 11,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: 18,
+                      opacity: 0.45,
+                    }}
+                  >
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>
+                      {t('support.userCheck.hint.instant')}
+                    </div>
+                    <div style={{ minWidth: 160, textAlign: 'center' }}>
+                      {t('support.userCheck.hint.press')} <strong>/</strong>{' '}
+                      {t('support.userCheck.hint.toFocus')} ·{' '}
+                      <strong>{t('common.keys.enter')}</strong> {t('support.userCheck.hint.toRun')}
+                    </div>
                   </div>
                 )}
 
@@ -448,7 +614,11 @@ export default function SupportUserCheck() {
           {searched && (
             <div style={{ marginTop: 6 }}>
               {loading ? (
-                <FullPageLoader minHeight={220} progress={55} subtitle={t('support.loader.results')} />
+                <FullPageLoader
+                  minHeight={220}
+                  progress={55}
+                  subtitle={t('support.loader.results')}
+                />
               ) : (
                 <div className="support-list">
                   {resultsToShow.map(({ raw, mapped }, idx) => {
@@ -460,35 +630,70 @@ export default function SupportUserCheck() {
                         <div
                           role="button"
                           tabIndex={0}
-                          onKeyDown={(e) => { if (e.key === 'Enter') onSelectUser(raw) }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') onSelectUser(raw)
+                          }}
                           onClick={() => onSelectUser(raw)}
                           onMouseEnter={() => setHoverIndex(idx)}
                           onMouseLeave={() => setHoverIndex(null)}
                           className="support-row"
                           style={{ border: isSel ? '1px solid rgba(99,102,241,0.9)' : undefined }}
                         >
-                                <div style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}>
-                                  <div style={{ width: 48, height: 48, borderRadius: 12, background: 'linear-gradient(135deg,#06b6d4,#7c3aed)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>{initials}</div>
-                                  <div style={{ minWidth: 0 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                      <div className="name">{mapped.name || mapped.userId || '—'}</div>
-                                      {(() => {
-                                        const isTop = mapped?.depositNum && topThreshold > 0 && mapped.depositNum >= topThreshold
-                                        return isTop ? <span className="badge top">{t('support.userCheck.badge.top')}</span> : null
-                                      })()}
-                                    </div>
-                                    <div className="meta">{mapped.userId || ''}{mapped.mt5 ? ` · ${mapped.mt5}` : ''}{mapped.country ? ` · ${mapped.country}` : ''}</div>
-                                  </div>
-                                </div>
+                          <div
+                            style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}
+                          >
+                            <div
+                              style={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 12,
+                                background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
+                                color: '#fff',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontWeight: 800,
+                              }}
+                            >
+                              {initials}
+                            </div>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div className="name">{mapped.name || mapped.userId || '—'}</div>
+                                {(() => {
+                                  const isTop =
+                                    mapped?.depositNum &&
+                                    topThreshold > 0 &&
+                                    mapped.depositNum >= topThreshold
+                                  return isTop ? (
+                                    <span className="badge top">
+                                      {t('support.userCheck.badge.top')}
+                                    </span>
+                                  ) : null
+                                })()}
+                              </div>
+                              <div className="meta">
+                                {mapped.userId || ''}
+                                {mapped.mt5 ? ` · ${mapped.mt5}` : ''}
+                                {mapped.country ? ` · ${mapped.country}` : ''}
+                              </div>
+                            </div>
+                          </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontWeight: 900 }}>{fmtEuro(mapped.totalDeposits)}</div>
-                            <div className="deposits">{t('support.userCheck.deposits', { count: mapped.depositCount || '0' })}</div>
+                            <div className="deposits">
+                              {t('support.userCheck.deposits', {
+                                count: mapped.depositCount || '0',
+                              })}
+                            </div>
                           </div>
                         </div>
                       </div>
                     )
                   })}
-                  {mappedResults.length === 0 && <div className="neutral-card">{t('support.userCheck.noResults')}</div>}
+                  {mappedResults.length === 0 && (
+                    <div className="neutral-card">{t('support.userCheck.noResults')}</div>
+                  )}
                 </div>
               )}
             </div>
@@ -508,8 +713,8 @@ function suggestedReply(t, mapped, affiliateName, paymentsLoaded, mediaLoaded) {
   // Prefer real flags when available; otherwise assume data loaded.
   const decision = buildSupportDecision({
     ...mapped,
-    paymentsLoaded: (typeof paymentsLoaded === 'boolean') ? paymentsLoaded : true,
-    mediaLoaded: (typeof mediaLoaded === 'boolean') ? mediaLoaded : true
+    paymentsLoaded: typeof paymentsLoaded === 'boolean' ? paymentsLoaded : true,
+    mediaLoaded: typeof mediaLoaded === 'boolean' ? mediaLoaded : true,
   })
 
   if (decision?.replyKey) {
@@ -522,6 +727,9 @@ function suggestedReply(t, mapped, affiliateName, paymentsLoaded, mediaLoaded) {
 }
 
 async function copyToClipboard(text) {
-  try { await navigator.clipboard?.writeText(text) } catch (e) { /* ignore */ }
+  try {
+    await navigator.clipboard?.writeText(text)
+  } catch (e) {
+    /* ignore */
+  }
 }
-

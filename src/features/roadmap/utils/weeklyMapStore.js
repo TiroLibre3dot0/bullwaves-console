@@ -52,156 +52,163 @@ function makeWeeklyTaskId(weekStart, megaStoryId, index) {
 const INITIAL_EXECUTION_PLAN_BY_MEGA = {
   retention_lifecycle: [
     {
-      title: 'Call prep: Retention use cases + Solitics scope',
+      title: 'Prep Solitics retention call',
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
       expectedImpact:
-        'Retention strategy foundation established: retention/bonus use cases clarified; integration scope kept minimal and focused on lifecycle measurement; Cohort Analysis identified as primary measurement tool.',
+        'Use cases and scope prepared; focus set on lifecycle measurement in Affiliate → Cohort Analysis.',
       status: 'done',
     },
     {
-      title: 'Solitics call: Retention automation + ownership clarity',
+      title: 'Solitics call: owners + next steps',
       owner: 'Paolo',
       department: 'Ops / Analytics',
       tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      expectedImpact:
-        'Retention ownership model locked in: Internal owns lifecycle data/integration + retention decision rules; Marketing owns retention loops + campaign execution; Solitics provides automation + dashboards. Replica access confirmed; integration path clear; weekly cadence set with Roman + Marketing.',
+      expectedImpact: 'Ownership aligned; onboarding path confirmed; weekly cadence agreed.',
       status: 'done',
     },
     {
-      title: 'Solitics onboarding kick-off: retention alignment + timeline',
+      title: 'Solitics kick-off: onboarding active, content execution',
       owner: 'Paolo, Marketing Lead, Solitics',
       department: 'Ops / Analytics / Marketing',
       tool: 'Solitics platform + Cohort Analysis',
       expectedImpact:
-        'Onboarding officially started with clear delivery cadence: up to 45 business days for integration, then 90-day hypercare. Risk focus locked: content readiness (not technical delivery). Core KPIs agreed and will be measured via Affiliate → Cohort Analysis: +15% LTV (post-first deposit), +20% retention, +20% reactivation.',
+        'Onboarding is active (45 business days). Current phase is marketing execution: define use cases and deliver content (emails/creatives). Main risk is content readiness (not technical setup).',
       status: 'done',
     },
     {
-      title: 'Formalize retention KPIs ↔ Cohort Analysis metrics (v1)',
-      owner: 'Paolo, Michael Roizman, Marketing Lead',
-      department: 'Ops / BI / Marketing',
+      title: 'Define Solitics use cases (v1)',
+      owner: 'Paolo, Solitics',
+      department: 'Ops / Marketing',
       tool: 'Affiliate → Cohort Analysis',
       expectedImpact:
-        'KPI definitions operational and measurable: LTV (post-first deposit), retention, and reactivation mapped to cohort events + windows; baseline snapshot captured; weekly reporting template locked. Next step: publish a 1-page KPI spec (definitions + cohort query mapping) and validate with Solitics in a 30-min review call.',
+        'Use cases + triggers documented (audience, trigger, message, channel). Next step: draft v1 list and review/prioritize with Solitics.',
       status: 'in_progress',
     },
     {
-      title: 'Content readiness: emails + creatives + lifecycle flows (onboarding/reactivation)',
+      title: 'Solitics marketing plan (calendar + assets)',
+      owner: 'Daniel Taddei',
+      department: 'Marketing',
+      tool: 'Solitics + creative/email production',
+      expectedImpact:
+        'Plan ready to execute: calendar + asset list for onboarding/retention/reactivation, with owners and deadlines. Next step: deliver v1 plan for Paolo review and Solitics QA.',
+      status: 'in_progress',
+    },
+    {
+      title: 'Content pack: emails + creatives (v1)',
       owner: 'Marketing Lead, Solitics',
       department: 'Marketing',
       tool: 'Solitics content library / email templates',
       expectedImpact:
-        'Content pack ready to execute retention loops: onboarding journey, reactivation journey, and trigger-based retention messages defined with copy + creatives + send rules; owners and deadlines assigned. Next step: deliver a first draft pack (2 journeys + 5 triggers) for review and approval, then upload into Solitics for QA.',
+        'Draft journeys and triggers with copy/creatives ready for QA. Next step: deliver v1 pack for approval, then upload into Solitics.',
       status: 'in_progress',
     },
     {
-      title: 'Assess Scale SDK requirements for advanced engagement features',
+      title: 'Assess Scale SDK needs (advanced engagement)',
       owner: 'Product Team, Solitics',
       department: 'Product / Data',
       tool: 'Scale SDK / Solitics SDK requirements',
       expectedImpact:
-        'SDK integration scope assessed with a clear go/no-go: required events, SDK capabilities, privacy constraints, and effort estimate documented for advanced engagement (in-app, push, deep links). Next step: confirm SDK requirements + feasibility with Scale tech contact and share ETA with the team.',
+        'SDK scope clarified (events, capabilities, privacy) with a go/no-go and effort estimate. Next step: confirm requirements with Scale and share ETA.',
       status: 'planned',
     },
     {
-      title: 'Set up shared Solitics execution board (hypercare governance)',
+      title: 'Shared execution board (Solitics)',
       owner: 'Paolo, Solitics',
       department: 'Ops / Analytics',
       tool: 'Shared execution board (Solitics/Monday/Jira)',
       expectedImpact:
-        'Single source of truth created for onboarding + hypercare: backlog, owners, weekly milestones, blockers, and KPI progress visible to both teams. Next step: create the board, invite stakeholders, and agree on a weekly update cadence + definition of done for each deliverable.',
+        'One shared board with backlog, owners, milestones, and blockers. Next step: create it, invite stakeholders, set weekly cadence.',
       status: 'in_progress',
     },
   ],
 
   ops_governance: [
     {
-      title: 'Call with Stamatis: Risk scoring framework + KYC integration',
+      title: 'Stamatis call: risk scoring + KYC updates',
       owner: 'Paolo',
       department: 'Compliance / Operations',
       tool: 'Weekly Map checklist',
       expectedImpact:
-        'Risk scoring framework locked in: enhanced KYC questionnaire; per-answer scoring logic defined; client risk score calculated; enables AML monitoring via behavior vs declared risk comparison. Decisions captured: threshold (60+), TM escalation policy, BI KPIs, manual approval flow, Scale/KYC/BI integration roadmap.',
+        'Risk scoring framework defined (questionnaire + scoring); enables AML checks vs declared risk. Next step: align BI + Ops on rollout steps.',
       status: 'done',
     },
   ],
 
   aml_compliance: [
     {
-      title: 'Build Risk Score & AML Alerts Dashboard',
+      title: 'Risk score + AML alerts dashboard',
       owner: 'Michael Roizman, Stamatis',
       department: 'Data / Compliance',
       tool: 'BI platform / Risk scoring engine',
       expectedImpact:
-        'AML dashboard live with real-time risk scoring + alerts: clients 60+ flagged instantly; TM escalation triggers visible; deposit/trading behavior anomalies vs KYC risk profile highlighted; alerts routed to Ops for manual review. Next step: confirm BI ETA (data model + queries); Stamatis to validate alert logic; launch by end of week.',
+        'Dashboard shows risk score, alerts, and escalation triggers; Ops can act fast. Next step: confirm BI ETA and validate alert logic with Stamatis.',
       status: 'in_progress',
     },
     {
-      title: 'Formalize and apply High Risk threshold (60+ points)',
+      title: 'Apply high-risk threshold (60+)',
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'Compliance manual / risk scoring',
       expectedImpact:
-        'High-risk is enforced as 60+ points across scoring, handling, and reporting (single standard, weekly controlled).',
+        'Single standard enforced: 60+ = high risk across scoring, handling, and reporting.',
       status: 'in_progress',
     },
     {
-      title: 'Standardize transaction monitoring escalation (30/60/90)',
+      title: 'TM escalation rules (30/60/90)',
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'TM rules + enforcement',
       expectedImpact:
-        'TM escalation is applied consistently: alert (deposit > declared income) → +30d deposit block → +60d trading disabled → +90d closure + refund.',
+        'Escalation applied consistently: alert → 30d deposit block → 60d trading off → 90d close/refund.',
       status: 'in_progress',
     },
     {
-      title: 'Define minimum AML KPIs for BI (v1)',
+      title: 'AML KPI list for BI (v1)',
       owner: 'Data Platform',
       department: 'Data',
       tool: 'BI / KPIs spec',
       expectedImpact:
-        'BI v1 KPIs defined: alerts generated, high-risk clients (60+), blocked/closed accounts (baseline: 155 country blocks).',
+        'Minimum KPI list agreed (alerts, high risk 60+, blocked/closed). Next step: publish the KPI list and data sources.',
       status: 'planned',
     },
     {
-      title: 'Track BI AML dashboard demo delivery (~2 weeks)',
+      title: 'BI AML dashboard demo (ETA)',
       owner: 'Data Platform',
       department: 'Data',
       tool: 'BI dashboard demo',
       expectedImpact:
-        'Demo delivered with agreed KPI definitions and data sources (weekly checkpoint until shipped).',
+        'Demo delivered with agreed definitions. Next step: confirm ETA and track weekly until shipped.',
       status: 'planned',
     },
     {
-      title: 'Track AML manual approval + Ops alignment',
+      title: 'AML manual approval + Ops alignment',
       owner: 'Stamatis',
       department: 'Compliance',
       tool: 'AML manual',
-      expectedImpact:
-        'Approved manual received and Ops procedure aligned (no gap vs live scoring + TM enforcement).',
+      expectedImpact: 'Manual approved and Ops procedure aligned with live scoring + TM rules.',
       status: 'planned',
     },
     {
-      title: 'Track Scale/KYC/BI integration dependency (blocking)',
+      title: 'Scale/KYC/BI integration dependency',
       owner: 'Product Team',
       department: 'Product',
       tool: 'Scale / KYC / BI integration',
       expectedImpact:
-        'Dependency is controlled weekly: questionnaire data, risk scores, and TM flags are integrated end-to-end; Ops included in comms.',
+        'End-to-end integration tracked weekly (questionnaire, risk score, TM flags) with Ops in the loop.',
       status: 'blocked',
     },
   ],
 
   skale_tickets: [
     {
-      title: 'Consolidate Skale CRM compliance integration â€” client data integrity',
+      title: 'Skale CRM: client data integrity (compliance)',
       owner: 'Compliance / Ops / Product',
       department: 'Compliance / Ops / IT',
       tool: 'Skale CRM / Scale API',
       expectedImpact:
-        'Three compliance cases consolidated and tracked: (1) Automatic duplicate blocking (phone #) â€” provide Skale test case + confirm active tracking; (2) POI/POA field standardization â€” clarify Country logic and new POA Country field + timeline; (3) Batch client updates â€” verify black list / Trading Disabled / Account Enabled flags applied; confirm execution with timestamp/report. Next: schedule meeting with Skale tech team (gilad@skalecrm.com) to finalize Scale API integration, ownership model, and dev repo setup. Outcome: unified client data compliance layer live + weekly sync cadence established.',
+        'Track 3 items: (1) Duplicate account blocking (phone) — provide 1 test case + get written confirmation; (2) POI/POA fields — clarify Country/POA Country logic + timeline; (3) Batch updates — confirm black list / Trading Disabled / Account Enabled flags with timestamp/report. Next step: book Skale tech call and align on Scale API integration + ownership.',
       status: 'in_progress',
     },
   ],
@@ -212,8 +219,7 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Ops / Product',
       tool: 'gmail',
-      expectedImpact:
-        'First draft sent (incl. trading platform link) to communicate readiness and reinforce operational credibility.',
+      expectedImpact: 'Email sent with platform overview and link.',
       status: 'done',
     },
     {
@@ -221,18 +227,19 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       owner: 'Paolo',
       department: 'Finance / Ops',
       tool: 'Invoice',
-      expectedImpact: 'December invoice sent; payment pending (track until settled).',
-      status: 'in_progress',
+      expectedImpact: 'Invoice sent. Next step: confirm payment receipt and close.',
+      status: 'done',
     },
   ],
 
   execution_clarity: [
     {
-      title: 'Validate Weekly Map and close the week',
+      title: 'Close the week (Weekly Map)',
       owner: 'Paolo',
       department: 'Ops',
-      expectedImpact: 'Review execution outcomes and prepare next week’s commitments.',
-      status: 'planned',
+      expectedImpact:
+        'Mark outcomes, capture blockers, and set next week commitments. Next step: finalize statuses and share the board link.',
+      status: 'in_progress',
     },
   ],
 }

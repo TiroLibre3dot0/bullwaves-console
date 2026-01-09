@@ -11,12 +11,13 @@ export default function FullPageLoader({
 }) {
   const pct = Math.max(0, Math.min(100, Math.round(Number(progress) || 0)))
 
-  // Match the console background by default (older theme uses --bg; newer uses --bg-primary).
-  const surface = colors?.surface ?? 'var(--bg, var(--bg-primary))'
-  const fg = colors?.text ?? 'var(--text-primary)'
-  const muted = colors?.muted ?? 'var(--text-secondary)'
-  const accent = colors?.accent ?? 'var(--accent-secondary)'
-  const barBg = colors?.barBg ?? 'rgba(255,255,255,0.08)'
+  // Default to transparent so we inherit the page background (often a gradient).
+  // Use theme vars with safe fallbacks.
+  const surface = colors?.surface ?? 'transparent'
+  const fg = colors?.text ?? 'var(--text, var(--text-primary))'
+  const muted = colors?.muted ?? 'var(--muted, var(--text-secondary))'
+  const accent = colors?.accent ?? 'var(--accent, var(--accent-secondary))'
+  const barBg = colors?.barBg ?? 'var(--border, rgba(255,255,255,0.10))'
 
   return (
     <div

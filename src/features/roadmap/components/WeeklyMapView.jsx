@@ -1015,16 +1015,35 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 800 }}>
                       <span
-                        aria-hidden="true"
                         style={{
-                          width: 8,
-                          height: 8,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          padding: 'clamp(7px, 0.55vw + 4px, 10px) clamp(10px, 0.75vw + 6px, 14px)',
                           borderRadius: 999,
-                          background: megaAccentColor(megaId),
-                          flex: '0 0 auto',
+                          border: `1px solid color-mix(in srgb, ${megaAccentColor(megaId)} 55%, var(--border))`,
+                          background: `color-mix(in srgb, var(--card) 86%, ${megaAccentColor(megaId)} 14%)`,
+                          color: 'var(--text)',
+                          fontSize: 'clamp(12px, 0.35vw + 11px, 14px)',
+                          lineHeight: 'clamp(14px, 0.35vw + 13px, 16px)',
+                          letterSpacing: 0.15,
+                          textTransform: 'none',
+                          userSelect: 'none',
                         }}
-                      />
-                      <span>{megaLabel(megaId)}</span>
+                      >
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            width: 'clamp(8px, 0.25vw + 7px, 10px)',
+                            height: 'clamp(8px, 0.25vw + 7px, 10px)',
+                            borderRadius: 999,
+                            background: megaAccentColor(megaId),
+                            boxShadow: '0 0 0 2px var(--card)',
+                            flex: '0 0 auto',
+                          }}
+                        />
+                        <span style={{ fontWeight: 900 }}>{megaLabel(megaId)}</span>
+                      </span>
                     </div>
                     <div style={{ fontSize: 12, color: 'var(--muted)' }}>{list.length} tasks</div>
                   </div>

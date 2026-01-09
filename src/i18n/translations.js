@@ -34,8 +34,6 @@ export const translations = {
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.roadmap': 'Mega-Stories',
     'sidebar.weeklyMap': 'Weekly Map',
-    'sidebar.weeklyMap': 'Weekly Map',
-    'sidebar.weeklyMap': 'Weekly Map',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'Support • User Check',
     'sidebar.upload': 'Upload',
@@ -46,7 +44,8 @@ export const translations = {
     'login.subtitle': 'Enter your work email to continue. Passwords are not required.',
     'login.workEmail': 'Work email',
     'login.placeholder': 'you@bullwaves.com',
-    'login.hint': 'Only Management, Finance, or Support emails from the org chart will be accepted.',
+    'login.hint':
+      'Only Management, Finance, or Support emails from the org chart will be accepted.',
     'login.continue': 'Continue',
     'login.viewOrgChart': 'View Organization Chart ↗',
     'login.allowlistDepartments': 'Departments that can log in',
@@ -58,7 +57,8 @@ export const translations = {
     'login.error.unable': 'Unable to log in.',
 
     // Auth
-    'auth.emailNotAllowlisted': 'Email not found in the allowlist (Management + Finance + Support).',
+    'auth.emailNotAllowlisted':
+      'Email not found in the allowlist (Management + Finance + Support).',
 
     // Languages
     'lang.label': 'Language',
@@ -124,9 +124,12 @@ export const translations = {
     'report.exportNotes.title': 'Export notes',
     'report.exportNotes.subtitle': 'Layout base ready to add an export button',
     'report.exportNotes.item1': 'Clear layout and table already sorted by profit.',
-    'report.exportNotes.item2': 'Period filter: global (all data), annual (current year), monthly (selected month).',
-    'report.exportNotes.item3': 'Key metrics: CPA, ARPU, profit, volume (reg/FTD), estimated break-even.',
-    'report.exportNotes.item4': 'Ready to connect an export button (PDF/CSV) without redesigning the layout.',
+    'report.exportNotes.item2':
+      'Period filter: global (all data), annual (current year), monthly (selected month).',
+    'report.exportNotes.item3':
+      'Key metrics: CPA, ARPU, profit, volume (reg/FTD), estimated break-even.',
+    'report.exportNotes.item4':
+      'Ready to connect an export button (PDF/CSV) without redesigning the layout.',
 
     // Departments
     'departments.Infrastructure': 'Infrastructure',
@@ -137,7 +140,8 @@ export const translations = {
     'departments.Partners': 'Partners',
 
     // Ongoing (Execution Board)
-    'ongoing.confirm.resetToSeed': 'This will overwrite local changes and reset to seed data. Continue?',
+    'ongoing.confirm.resetToSeed':
+      'This will overwrite local changes and reset to seed data. Continue?',
     'ongoing.placeholder.example': 'e.g., Net deposits, registrations, churn',
 
     'ongoing.header.layerLabel': 'Execution layer',
@@ -239,6 +243,7 @@ export const translations = {
 
     // Topbar
     'topbar.aria.toggleNavMenu': 'Toggle navigation menu',
+    'topbar.aria.toggleSidebar': 'Toggle sidebar',
 
     // Support (page-level)
     'support.loader.page': 'Loading support page…',
@@ -246,7 +251,8 @@ export const translations = {
     // Investments
     'investments.loader.data': 'Loading investments data…',
     'investments.header.title': 'Affiliate Payments – Affiliate Payout Ledger',
-    'investments.header.subtitle': 'End-of-month affiliate costs based on Qualified FTD, CPA and ROI.',
+    'investments.header.subtitle':
+      'End-of-month affiliate costs based on Qualified FTD, CPA and ROI.',
     'investments.filters.month': 'Month',
     'investments.filters.allMonths': 'All months',
     'investments.badge.monthlyRows': '{count} monthly rows',
@@ -300,7 +306,8 @@ export const translations = {
 
     'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission',
     'investments.details.title.commExpected': 'Expected = commission from Media Report',
-    'investments.details.title.commActual': 'Actual uses ROI guardrail: if ROI >= 1.5 use expected, else Net Deposits / 1.5',
+    'investments.details.title.commActual':
+      'Actual uses ROI guardrail: if ROI >= 1.5 use expected, else Net Deposits / 1.5',
     'investments.details.title.commPayable': 'Payable = min(expected, actual)',
     'investments.details.title.commDeferred': 'Deferred = expected − payable',
     'investments.details.empty.noMonthlyRows': 'No monthly rows.',
@@ -353,7 +360,8 @@ export const translations = {
     'weeklyMap.form.owner': 'Owner',
     'weeklyMap.form.expectedImpactMandatory': 'Expected impact (mandatory)',
 
-    'weeklyMap.validation.expectedImpactRequired': "Without Expected impact, the task can’t be saved.",
+    'weeklyMap.validation.expectedImpactRequired':
+      'Without Expected impact, the task can’t be saved.',
 
     'weeklyMap.checklists.prepareSolitics.title': 'Prepare Solitics call — Checklist',
     'weeklyMap.checklists.prepareStamatis.title': 'Prepare call with Stamatis — Checklist',
@@ -372,36 +380,60 @@ export const translations = {
     'weeklyMap.checklists.common.ownershipModel.title': 'OWNERSHIP MODEL',
     'weeklyMap.checklists.common.nextSteps.title': 'NEXT STEPS',
 
-    'weeklyMap.checklists.prepareSolitics.useCases.item1': 'What concrete user behaviors are we trying to detect?',
-    'weeklyMap.checklists.prepareSolitics.useCases.item2': 'Which retention or churn scenarios matter most right now?',
-    'weeklyMap.checklists.prepareSolitics.data.item1': 'What is the minimum dataset needed to generate value?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item1':
+      'What concrete user behaviors are we trying to detect?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item2':
+      'Which retention or churn scenarios matter most right now?',
+    'weeklyMap.checklists.prepareSolitics.data.item1':
+      'What is the minimum dataset needed to generate value?',
     'weeklyMap.checklists.prepareSolitics.data.item2': 'What can be excluded safely?',
-    'weeklyMap.checklists.prepareSolitics.decisions.item1': 'What decisions should Solitics actively support?',
+    'weeklyMap.checklists.prepareSolitics.decisions.item1':
+      'What decisions should Solitics actively support?',
     'weeklyMap.checklists.prepareSolitics.decisions.item2': 'What remains internal decision logic?',
     'weeklyMap.checklists.prepareSolitics.ownership.item1': 'What Solitics should NOT do?',
-    'weeklyMap.checklists.prepareSolitics.ownership.item2': 'How do we measure success after 30 days?',
+    'weeklyMap.checklists.prepareSolitics.ownership.item2':
+      'How do we measure success after 30 days?',
 
-    'weeklyMap.checklists.soliticsDecisionSummary.title': 'Solitics call + decision summary — Notes',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item1': 'Replica access confirmed; extra Skale sync still pending (owner + timeline).',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item2': 'Solitics onboarding/dashboard work in progress — NOT live yet.',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item3': 'Roman is the main interface for execution + follow-ups.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1': 'Primary lever: retention (segments + triggers), not generic “nice-to-have” automation.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2': 'Success = LTV / repeat deposits / trading activity improvements (start with MVP scope).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1': 'Internal: data/integration, governance, and decision/segment rules (source of truth).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2': 'Marketing: campaign execution, offers/bonuses, messaging, and operational loops.',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3': 'Solitics: automation engine + dashboards; no ownership of core business logic.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item1': 'Confirm final Skale alignment and required data fields.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item2': 'Share first segments, KPIs, and reporting expectations with Solitics.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item3': 'Set weekly cadence with Roman + Marketing to close the loop.',
+    'weeklyMap.checklists.soliticsDecisionSummary.title':
+      'Solitics call + decision summary — Notes',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item1':
+      'Replica access confirmed; extra Skale sync still pending (owner + timeline).',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item2':
+      'Solitics onboarding/dashboard work in progress — NOT live yet.',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item3':
+      'Roman is the main interface for execution + follow-ups.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1':
+      'Primary lever: retention (segments + triggers), not generic “nice-to-have” automation.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2':
+      'Success = LTV / repeat deposits / trading activity improvements (start with MVP scope).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1':
+      'Internal: data/integration, governance, and decision/segment rules (source of truth).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2':
+      'Marketing: campaign execution, offers/bonuses, messaging, and operational loops.',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3':
+      'Solitics: automation engine + dashboards; no ownership of core business logic.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item1':
+      'Confirm final Skale alignment and required data fields.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item2':
+      'Share first segments, KPIs, and reporting expectations with Solitics.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item3':
+      'Set weekly cadence with Roman + Marketing to close the loop.',
 
-    'weeklyMap.checklists.prepareStamatis.priorities.item1': 'What is the single top priority for the next 30–60 days?',
-    'weeklyMap.checklists.prepareStamatis.priorities.item2': 'What can explicitly be deprioritized?',
-    'weeklyMap.checklists.prepareStamatis.governance.item1': 'Who decides what enters or exits the roadmap?',
-    'weeklyMap.checklists.prepareStamatis.governance.item2': 'What defines success or failure of an initiative?',
-    'weeklyMap.checklists.prepareStamatis.autonomy.item1': 'Which decisions can be taken autonomously?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item1':
+      'What is the single top priority for the next 30–60 days?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item2':
+      'What can explicitly be deprioritized?',
+    'weeklyMap.checklists.prepareStamatis.governance.item1':
+      'Who decides what enters or exits the roadmap?',
+    'weeklyMap.checklists.prepareStamatis.governance.item2':
+      'What defines success or failure of an initiative?',
+    'weeklyMap.checklists.prepareStamatis.autonomy.item1':
+      'Which decisions can be taken autonomously?',
     'weeklyMap.checklists.prepareStamatis.autonomy.item2': 'When is escalation required?',
-    'weeklyMap.checklists.prepareStamatis.closure.item1': 'What concrete decisions must be taken in this call?',
-    'weeklyMap.checklists.prepareStamatis.closure.item2': 'What follow-up is required after the call?',
+    'weeklyMap.checklists.prepareStamatis.closure.item1':
+      'What concrete decisions must be taken in this call?',
+    'weeklyMap.checklists.prepareStamatis.closure.item2':
+      'What follow-up is required after the call?',
 
     // Affiliate analysis
     'affiliateAnalysis.common.thisAffiliate': 'this affiliate',
@@ -489,19 +521,23 @@ export const translations = {
 
     'affiliateAnalysis.engine.empty.title': 'Analysis Engine — Automated Insights',
     'affiliateAnalysis.engine.empty.subtitle': 'Deterministic insights built from KPIs',
-    'affiliateAnalysis.engine.empty.body': 'Select an affiliate and date window to generate insights.',
+    'affiliateAnalysis.engine.empty.body':
+      'Select an affiliate and date window to generate insights.',
 
     'affiliateAnalysis.engine.sections.riskSignals': '📉 Risk Signals',
     'affiliateAnalysis.engine.sections.upsideOpportunities': '🎯 Upside Opportunities',
     'affiliateAnalysis.engine.sections.currentOutlook': '🧭 Current Outlook',
 
-    'affiliateAnalysis.engine.profitTrend.subtitle': 'Current vs previous month: {current} vs {previous}',
+    'affiliateAnalysis.engine.profitTrend.subtitle':
+      'Current vs previous month: {current} vs {previous}',
 
     'affiliateAnalysis.engine.cohort.notReached': 'Not reached',
     'affiliateAnalysis.engine.cohort.notAvailable': 'Cohort not available',
     'affiliateAnalysis.engine.cohort.monthsValue': '{value} months',
-    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit': 'Average time to reach net profit (Top 10 Cohort PL)',
-    'affiliateAnalysis.engine.cohort.helper.noData': 'Top 10 Cohort PL report has no data for this affiliate',
+    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit':
+      'Average time to reach net profit (Top 10 Cohort PL)',
+    'affiliateAnalysis.engine.cohort.helper.noData':
+      'Top 10 Cohort PL report has no data for this affiliate',
 
     'affiliateAnalysis.engine.title': 'Affiliate Performance Outlook — {affiliate}',
     'affiliateAnalysis.engine.subtitle': 'Signals for {period}',
@@ -521,7 +557,8 @@ export const translations = {
     'affiliatePayments2.loader.data': 'Loading payments data…',
 
     // Investments (legacy)
-    'investmentsLegacy.subtitle.commissionsFilter': 'Commissions from commissions.csv, filterable by month and affiliate.',
+    'investmentsLegacy.subtitle.commissionsFilter':
+      'Commissions from commissions.csv, filterable by month and affiliate.',
 
     // Fraud
     'fraud.loader.commissions': 'Loading commissions…',
@@ -566,12 +603,18 @@ export const translations = {
     'dashboard.cohortHealth.why.r3Low': 'Value fades quickly by Month 3.',
     'dashboard.cohortHealth.why.default': 'Value declines after Month 0.',
     'dashboard.cohortHealth.meaning.noData': 'There is not enough data to assess cohort health.',
-    'dashboard.cohortHealth.meaning.green': 'Recurring activity sustains value across multiple months.',
-    'dashboard.cohortHealth.meaning.orange': 'Some repeat activity exists, but it weakens over time.',
-    'dashboard.cohortHealth.meaning.red': 'Business depends heavily on first-month activity and weak repeat usage.',
-    'dashboard.cohortHealth.nextCheck.noData': 'Wait for more months of activity and re-check M1/M3 retained value.',
-    'dashboard.cohortHealth.nextCheck.default': 'After retention actions, focus on improving M1 and M3 retained value.',
-    'dashboard.cohortHealth.valueConcentration': 'Value concentration: {pct}% of total value generated in Month 0',
+    'dashboard.cohortHealth.meaning.green':
+      'Recurring activity sustains value across multiple months.',
+    'dashboard.cohortHealth.meaning.orange':
+      'Some repeat activity exists, but it weakens over time.',
+    'dashboard.cohortHealth.meaning.red':
+      'Business depends heavily on first-month activity and weak repeat usage.',
+    'dashboard.cohortHealth.nextCheck.noData':
+      'Wait for more months of activity and re-check M1/M3 retained value.',
+    'dashboard.cohortHealth.nextCheck.default':
+      'After retention actions, focus on improving M1 and M3 retained value.',
+    'dashboard.cohortHealth.valueConcentration':
+      'Value concentration: {pct}% of total value generated in Month 0',
     'dashboard.cohortHealth.halfLife.label': 'Economic half-life',
     'dashboard.cohortHealth.halfLife.notReached': 'not reached (retained stays above 50%)',
     'dashboard.cohortHealth.halfLife.reached': '~{months} {unit} (retained value falls below 50%)',
@@ -581,7 +624,8 @@ export const translations = {
 
     'dashboard.monthlyAggregates.title': 'Monthly aggregates',
     'dashboard.monthlyAggregates.infoAria': 'Info about data',
-    'dashboard.monthlyAggregates.infoText': '{cohortMetricLabel} and cohort size come from the selected cohort file; commissions paid are taken from the Balance Report and assigned to the cohort acquisition month; P&L is aggregated by first deposit date (same cohort logic).',
+    'dashboard.monthlyAggregates.infoText':
+      '{cohortMetricLabel} and cohort size come from the selected cohort file; commissions paid are taken from the Balance Report and assigned to the cohort acquisition month; P&L is aggregated by first deposit date (same cohort logic).',
     'dashboard.monthlyAggregates.cohortLabel': 'Cohort (FD month)',
     'dashboard.monthlyAggregates.cohort.all': 'All cohorts',
     'dashboard.monthlyAggregates.cohort.q1': 'Q1 (Jan–Mar)',
@@ -594,11 +638,13 @@ export const translations = {
     'dashboard.monthlyAggregates.affiliate.all': 'All in cohort',
     'dashboard.monthlyAggregates.affiliate.noneAvailable': 'No affiliate available',
     'dashboard.monthlyAggregates.affiliate.top10Label': 'Top 10',
-    'dashboard.monthlyAggregates.tableAutoFillHint': 'The table is auto-filled with {cohortMetricLabel} and Cohort size for the selection.',
+    'dashboard.monthlyAggregates.tableAutoFillHint':
+      'The table is auto-filled with {cohortMetricLabel} and Cohort size for the selection.',
 
     'dashboard.loader.cohort': 'Loading cohort dashboard…',
     'dashboard.pulse.title': 'Cohort financial pulse',
-    'dashboard.pulse.subtitle': '{retainedMetricLabel} (%) shows how much Month 0 {cohortMetric} remains over time.',
+    'dashboard.pulse.subtitle':
+      '{retainedMetricLabel} (%) shows how much Month 0 {cohortMetric} remains over time.',
     'dashboard.pulse.filter.metricLabel': 'Metric',
     'dashboard.pulse.filter.calendarYearLabel': 'Calendar year',
     'dashboard.pulse.filter.affiliateLabel': 'Affiliate',
@@ -610,14 +656,16 @@ export const translations = {
     'dashboard.affiliates.all': 'All affiliates',
     'dashboard.cohortKpis.title': 'Cohort KPIs',
     'dashboard.cohortKpis.infoAria': 'Info about cohort KPIs',
-    'dashboard.cohortKpis.infoText': 'Users = cohort size; Active users = users*(1-churn) cumulative; Marketing & Commissions mapped to acquisition month; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: if < 1.5, commissions are postponed to the affiliate; Break-even = first month with cum. P&L - cum. commissions >= 0.',
+    'dashboard.cohortKpis.infoText':
+      'Users = cohort size; Active users = users*(1-churn) cumulative; Marketing & Commissions mapped to acquisition month; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: if < 1.5, commissions are postponed to the affiliate; Break-even = first month with cum. P&L - cum. commissions >= 0.',
 
     'dashboard.table.metric': 'Metric',
     'dashboard.table.total': 'Total',
     'dashboard.table.breakEven': 'Break even',
 
     'dashboard.cohortDb.infoAria': 'Info about cohort DB',
-    'dashboard.cohortDb.infoText': 'Select a cohort (first deposit month) and apply it to the dashboard Net deposits (from Net deposits Cohort 2025.csv). P&L follows the same logic by first deposit date.',
+    'dashboard.cohortDb.infoText':
+      'Select a cohort (first deposit month) and apply it to the dashboard Net deposits (from Net deposits Cohort 2025.csv). P&L follows the same logic by first deposit date.',
     'dashboard.cohortDb.toggle.show': 'Show Cohort DB',
     'dashboard.cohortDb.toggle.hide': 'Hide Cohort DB',
     'dashboard.cohortDb.affiliates.toggle.show': 'Show affiliate details',
@@ -634,7 +682,8 @@ export const translations = {
 
     'dashboard.breakEven.title': 'Break-even analysis',
     'dashboard.breakEven.infoAria': 'Info about break-even',
-    'dashboard.breakEven.infoText': 'Formula: cumulative P&L (from "PL Cohort Analysis.csv") minus cumulative Commissions paid (negative). The break-even month is the first index where the curve becomes >= 0.',
+    'dashboard.breakEven.infoText':
+      'Formula: cumulative P&L (from "PL Cohort Analysis.csv") minus cumulative Commissions paid (negative). The break-even month is the first index where the curve becomes >= 0.',
 
     'dashboard.pnlTrend.title': 'P&L trend',
 
@@ -654,7 +703,8 @@ export const translations = {
     'dashboard.topAffiliates.table.roiTitle': 'ROI',
 
     'dashboard.autoReport.infoAria': 'Info about auto report',
-    'dashboard.autoReport.infoText': 'Generate a short summary now; later we can connect OpenAI for comments and next steps.',
+    'dashboard.autoReport.infoText':
+      'Generate a short summary now; later we can connect OpenAI for comments and next steps.',
     'dashboard.autoReport.generate': 'Generate local report',
     'dashboard.autoReport.generating': 'Generating…',
     'dashboard.autoReport.clear': 'Clear',
@@ -662,8 +712,10 @@ export const translations = {
 
     // Upload
     'upload.title': 'Upload reports',
-    'upload.description.line1': 'Upload a CSV and the system will sanitize it and update the reports.',
-    'upload.description.line2': 'Choose the report type explicitly to avoid relying on the file name.',
+    'upload.description.line1':
+      'Upload a CSV and the system will sanitize it and update the reports.',
+    'upload.description.line2':
+      'Choose the report type explicitly to avoid relying on the file name.',
     'upload.type.registrations': 'Registrations',
     'upload.type.payments': 'Payments',
     'upload.type.media': 'Media',
@@ -712,15 +764,21 @@ export const translations = {
     'support.userCheck.deposits': '{count} deposits',
     'support.userCheck.noResults': 'No results',
 
-    'support.reply.fallback': 'Thanks {name} — we\'re reviewing and will follow up shortly.',
-    'support.reply.customerFallback': 'Thanks — we\'re reviewing and will follow up shortly.',
-    'support.reply.caseType.DATA_INCOMPLETE': 'Thanks — we\'re checking your account details and will update you shortly.',
-    'support.reply.caseType.WITHDRAWAL_REQUEST': 'Thanks — your withdrawal request is in review. We\'ll confirm once checks are completed.',
-    'support.reply.caseType.POTENTIAL_ABUSE': 'Thanks — we need additional verification before proceeding. Our team will contact you if needed.',
-    'support.reply.caseType.HIGH_VALUE_USER': 'Thanks — we\'ll prioritize your request and confirm next steps shortly.',
-    'support.reply.caseType.NO_DEPOSIT': 'Thanks — your account is active. If you need help funding, we can guide you.',
-    'support.reply.caseType.ACTIVE_USER': 'Thanks — we\'re reviewing your request and will update you shortly.',
-    'support.reply.caseType.UNKNOWN': 'Thanks — we\'re reviewing and will follow up shortly.',
+    'support.reply.fallback': "Thanks {name} — we're reviewing and will follow up shortly.",
+    'support.reply.customerFallback': "Thanks — we're reviewing and will follow up shortly.",
+    'support.reply.caseType.DATA_INCOMPLETE':
+      "Thanks — we're checking your account details and will update you shortly.",
+    'support.reply.caseType.WITHDRAWAL_REQUEST':
+      "Thanks — your withdrawal request is in review. We'll confirm once checks are completed.",
+    'support.reply.caseType.POTENTIAL_ABUSE':
+      'Thanks — we need additional verification before proceeding. Our team will contact you if needed.',
+    'support.reply.caseType.HIGH_VALUE_USER':
+      "Thanks — we'll prioritize your request and confirm next steps shortly.",
+    'support.reply.caseType.NO_DEPOSIT':
+      'Thanks — your account is active. If you need help funding, we can guide you.',
+    'support.reply.caseType.ACTIVE_USER':
+      "Thanks — we're reviewing your request and will update you shortly.",
+    'support.reply.caseType.UNKNOWN': "Thanks — we're reviewing and will follow up shortly.",
 
     'support.decision.status.ELIGIBLE': 'Eligible',
     'support.decision.status.NOT_ELIGIBLE': 'Not eligible',
@@ -736,64 +794,97 @@ export const translations = {
     'support.decision.status.PROFITABLE': 'Profitable',
 
     'support.decision.affiliateSwitch.noAffiliate.why': 'No affiliate assigned on this account.',
-    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm': 'Verify CRM affiliate attribution.',
-    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount': 'If user wants a new affiliate, open a NEW account via affiliate link.',
+    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm':
+      'Verify CRM affiliate attribution.',
+    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount':
+      'If user wants a new affiliate, open a NEW account via affiliate link.',
 
-    'support.decision.affiliateSwitch.hasCommissions.why': 'Account already generated affiliate commissions. Switching would create cost/attribution issues.',
-    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch': 'Do NOT switch the existing account.',
-    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount': 'If user insists, propose opening a NEW account under the requested affiliate link (min deposit may apply).',
-    'support.decision.affiliateSwitch.hasCommissions.action.escalate': 'Escalate to Emanuele for final approval if needed.',
+    'support.decision.affiliateSwitch.hasCommissions.why':
+      'Account already generated affiliate commissions. Switching would create cost/attribution issues.',
+    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch':
+      'Do NOT switch the existing account.',
+    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount':
+      'If user insists, propose opening a NEW account under the requested affiliate link (min deposit may apply).',
+    'support.decision.affiliateSwitch.hasCommissions.action.escalate':
+      'Escalate to Emanuele for final approval if needed.',
 
-    'support.decision.affiliateSwitch.noCommissions.why': 'No affiliate commissions generated on current account. Switch has no attribution cost.',
-    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch': 'Proceed with switch (CRM + Skale).',
-    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated': 'Confirm affiliate updated consistently in both systems.',
+    'support.decision.affiliateSwitch.noCommissions.why':
+      'No affiliate commissions generated on current account. Switch has no attribution cost.',
+    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch':
+      'Proceed with switch (CRM + Skale).',
+    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated':
+      'Confirm affiliate updated consistently in both systems.',
 
-    'support.decision.accountTypeChange.highWithdrawalRatio.why': 'High withdrawal ratio suggests potential abuse; manual review required before account type change.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk': 'Escalate to risk team for manual review.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange': 'Hold account type change until clearance.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.why':
+      'High withdrawal ratio suggests potential abuse; manual review required before account type change.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk':
+      'Escalate to risk team for manual review.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange':
+      'Hold account type change until clearance.',
 
-    'support.decision.accountTypeChange.approvedWithConditions.why': 'Account type change allowed with operational checks.',
-    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp': 'Require KYC/PSP check before changing type',
-    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks': 'Allow account type change with conditions: verify KYC and PSP status.',
+    'support.decision.accountTypeChange.approvedWithConditions.why':
+      'Account type change allowed with operational checks.',
+    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp':
+      'Require KYC/PSP check before changing type',
+    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks':
+      'Allow account type change with conditions: verify KYC and PSP status.',
 
-    'support.decision.bonus.hasCommissionsAndDeposits.why': 'Account has affiliate commissions and deposits — bonus allocation requires verification to avoid double-cost.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership': 'Verify affiliate commission ownership and marketing agreement before granting bonus.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm': 'If approved, record reason in CRM.',
+    'support.decision.bonus.hasCommissionsAndDeposits.why':
+      'Account has affiliate commissions and deposits — bonus allocation requires verification to avoid double-cost.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership':
+      'Verify affiliate commission ownership and marketing agreement before granting bonus.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm':
+      'If approved, record reason in CRM.',
 
-    'support.decision.bonus.noDeposits.why': 'No deposits on account — bonus requires deposit activity.',
-    'support.decision.bonus.noDeposits.action.informFunding': 'Inform user about funding options and minimum deposit requirements.',
+    'support.decision.bonus.noDeposits.why':
+      'No deposits on account — bonus requires deposit activity.',
+    'support.decision.bonus.noDeposits.action.informFunding':
+      'Inform user about funding options and minimum deposit requirements.',
 
     'support.decision.bonus.highValue.why': 'High-value user eligible for bonus, subject to KYC.',
-    'support.decision.bonus.highValue.action.proceedKyc': 'Proceed with bonus offer and initiate KYC if not present.',
+    'support.decision.bonus.highValue.action.proceedKyc':
+      'Proceed with bonus offer and initiate KYC if not present.',
 
     'support.decision.bonus.standard.why': 'User eligible for standard promotional offers.',
-    'support.decision.bonus.standard.action.offerStandard': 'Offer standard bonus per promotions catalogue.',
+    'support.decision.bonus.standard.action.offerStandard':
+      'Offer standard bonus per promotions catalogue.',
 
     'support.decision.withdrawals.highRisk.why': 'High withdrawal ratio vs deposits.',
     'support.decision.withdrawals.highRisk.action.holdInvestigate': 'Hold and investigate.',
-    'support.decision.withdrawals.highRisk.action.checkPspKyc': 'Check PSP/KYC, trading activity, and payment methods.',
+    'support.decision.withdrawals.highRisk.action.checkPspKyc':
+      'Check PSP/KYC, trading activity, and payment methods.',
 
-    'support.decision.withdrawals.needsPspCheck.why': 'Withdrawals detected — verify PSP and KYC before processing.',
+    'support.decision.withdrawals.needsPspCheck.why':
+      'Withdrawals detected — verify PSP and KYC before processing.',
     'support.decision.withdrawals.needsPspCheck.action.verifyPsp': 'Verify PSP status.',
     'support.decision.withdrawals.needsPspCheck.action.confirmKyc': 'Confirm KYC.',
     'support.decision.withdrawals.needsPspCheck.action.processSla': 'Process according to SLA.',
 
-    'support.decision.withdrawals.standardProcess.why': 'No withdrawals; follow standard processing.',
+    'support.decision.withdrawals.standardProcess.why':
+      'No withdrawals; follow standard processing.',
     'support.decision.withdrawals.standardProcess.action.noAction': 'No action required.',
 
-    'support.decision.revenueShare.criticalRisk.why': 'Large negative P/L relative to deposits indicating potential retention/abuse risk.',
-    'support.decision.revenueShare.criticalRisk.action.reviewRetention': 'Review retention strategy and fraud indicators.',
-    'support.decision.revenueShare.criticalRisk.action.considerLimits': 'Consider special handling or limits.',
+    'support.decision.revenueShare.criticalRisk.why':
+      'Large negative P/L relative to deposits indicating potential retention/abuse risk.',
+    'support.decision.revenueShare.criticalRisk.action.reviewRetention':
+      'Review retention strategy and fraud indicators.',
+    'support.decision.revenueShare.criticalRisk.action.considerLimits':
+      'Consider special handling or limits.',
 
-    'support.decision.revenueShare.profitAndWithdrawals.why': 'User shows profit and has withdrawals — monitor for churn/cashout.',
-    'support.decision.revenueShare.profitAndWithdrawals.action.monitor': 'Monitor cashout behavior.',
-    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance': 'Ensure tax/compliance reporting if needed.',
+    'support.decision.revenueShare.profitAndWithdrawals.why':
+      'User shows profit and has withdrawals — monitor for churn/cashout.',
+    'support.decision.revenueShare.profitAndWithdrawals.action.monitor':
+      'Monitor cashout behavior.',
+    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance':
+      'Ensure tax/compliance reporting if needed.',
 
     'support.decision.revenueShare.noDeposits.why': 'No deposits — revenue impact is neutral.',
     'support.decision.revenueShare.noDeposits.action.noAction': 'No revenue actions required.',
 
-    'support.decision.revenueShare.netLoss.why': 'User is net-loss (negative P/L) which may be beneficial for revenue share depending on contract.',
-    'support.decision.revenueShare.netLoss.action.reviewContract': 'Review contract terms and retention options.',
+    'support.decision.revenueShare.netLoss.why':
+      'User is net-loss (negative P/L) which may be beneficial for revenue share depending on contract.',
+    'support.decision.revenueShare.netLoss.action.reviewContract':
+      'Review contract terms and retention options.',
 
     'support.decision.revenueShare.noIndicators.why': 'No significant revenue indicators.',
     'support.decision.revenueShare.noIndicators.action.noAction': 'No action required.',
@@ -939,7 +1030,19 @@ export const translations = {
     'support.details.loader.userDetails': 'Loading user details…',
     'support.details.loader.decisionEngine': 'Loading decision engine…',
     'support.details.backToResults': 'Back to results',
+    'support.details.statusHelp.aria': 'Status: {status}. Tap for explanation.',
+    'support.details.statusHelp.default': 'Status value coming from the source report.',
+    'support.details.statusHelp.duplicate':
+      'Duplicate: the record appears more than once in the source data (same user/account).',
+    'support.details.statusHelp.new':
+      'New: the account is marked as newly registered / recently created in the report.',
+    'support.details.statusHelp.active': 'Active: the account is marked as active in the report.',
+    'support.details.statusHelp.blocked':
+      'Blocked: the account is marked as blocked/disabled in the report.',
+    'support.details.priority.high': 'High',
     'support.details.priority.medium': 'Medium',
+    'support.details.priority.normal': 'Normal',
+    'support.details.priority.unknown': 'Unknown',
     'support.details.statusFallback': 'Status',
     'support.details.account': 'Account',
     'support.details.affiliate': 'Affiliate',
@@ -1001,7 +1104,8 @@ export const translations = {
     // Org Chart
     'orgChart.structure': 'Structure',
     'orgChart.title': 'Company Organizational Chart',
-    'orgChart.description': 'Hierarchy, responsibility layer, and department rosters with job title, division, department, region, and email per person.',
+    'orgChart.description':
+      'Hierarchy, responsibility layer, and department rosters with job title, division, department, region, and email per person.',
     'orgChart.search.placeholder': 'Search by name and press Enter',
     'orgChart.search.submit': 'Go to team',
     'orgChart.toc.ariaLabel': 'Table of contents',
@@ -1079,10 +1183,12 @@ export const translations = {
 
     'login.pill': 'Accesso Management + Finance + Support',
     'login.title': 'Bullwaves Intelligence',
-    'login.subtitle': 'Inserisci la tua email di lavoro per continuare. Nessuna password richiesta.',
+    'login.subtitle':
+      'Inserisci la tua email di lavoro per continuare. Nessuna password richiesta.',
     'login.workEmail': 'Email di lavoro',
     'login.placeholder': 'nome@bullwaves.com',
-    'login.hint': 'Sono accettate solo email di Management, Finance o Support presenti nell’org chart.',
+    'login.hint':
+      'Sono accettate solo email di Management, Finance o Support presenti nell’org chart.',
     'login.continue': 'Continua',
     'login.viewOrgChart': 'Apri Organization Chart ↗',
     'login.allowlistDepartments': 'Dipartimenti abilitati al login',
@@ -1093,7 +1199,8 @@ export const translations = {
     'login.typing.allowlist': 'Allowlist email attiva',
     'login.error.unable': 'Impossibile effettuare il login.',
 
-    'auth.emailNotAllowlisted': 'Email non presente nella allowlist (Management + Finance + Support).',
+    'auth.emailNotAllowlisted':
+      'Email non presente nella allowlist (Management + Finance + Support).',
 
     'lang.label': 'Lingua',
 
@@ -1158,9 +1265,12 @@ export const translations = {
     'report.exportNotes.title': 'Note per export',
     'report.exportNotes.subtitle': 'Base layout pronta per aggiungere pulsante export',
     'report.exportNotes.item1': 'Layout chiaro e tabella già ordinata per profitto.',
-    'report.exportNotes.item2': 'Filtro periodo: globale (tutti i dati), annuale (anno corrente), mensile (mese selezionato).',
-    'report.exportNotes.item3': 'Metriche chiave: CPA, ARPU, profit, volume (reg/FTD), break-even stimato.',
-    'report.exportNotes.item4': 'Pronto a collegare un bottone di export (PDF/CSV) senza stravolgere il layout.',
+    'report.exportNotes.item2':
+      'Filtro periodo: globale (tutti i dati), annuale (anno corrente), mensile (mese selezionato).',
+    'report.exportNotes.item3':
+      'Metriche chiave: CPA, ARPU, profit, volume (reg/FTD), break-even stimato.',
+    'report.exportNotes.item4':
+      'Pronto a collegare un bottone di export (PDF/CSV) senza stravolgere il layout.',
 
     // Departments
     'departments.Infrastructure': 'Infrastructure',
@@ -1171,12 +1281,14 @@ export const translations = {
     'departments.Partners': 'Partners',
 
     // Ongoing (Execution Board)
-    'ongoing.confirm.resetToSeed': 'Questo sovrascriverà le modifiche locali e ripristinerà i dati iniziali. Continuare?',
+    'ongoing.confirm.resetToSeed':
+      'Questo sovrascriverà le modifiche locali e ripristinerà i dati iniziali. Continuare?',
     'ongoing.placeholder.example': 'es. Depositi netti, registrazioni, churn',
 
     'ongoing.header.layerLabel': 'Livello di esecuzione',
     'ongoing.header.title': 'Bacheca di esecuzione',
-    'ongoing.header.subtitle': 'Attività attive collegate alle mega-stories e stories della Roadmap 2026.',
+    'ongoing.header.subtitle':
+      'Attività attive collegate alle mega-stories e stories della Roadmap 2026.',
 
     'ongoing.counters.active': '{count} attive',
     'ongoing.counters.blocked': '{count} bloccate',
@@ -1273,6 +1385,7 @@ export const translations = {
 
     // Topbar
     'topbar.aria.toggleNavMenu': 'Apri/chiudi menu di navigazione',
+    'topbar.aria.toggleSidebar': 'Apri/chiudi sidebar',
 
     // Support (page-level)
     'support.loader.page': 'Caricamento pagina support…',
@@ -1280,7 +1393,8 @@ export const translations = {
     // Investments
     'investments.loader.data': 'Caricamento dati investimenti…',
     'investments.header.title': 'Pagamenti Affiliati – Registro Payout Affiliati',
-    'investments.header.subtitle': 'Costi affiliati a fine mese basati su QFTD qualificati, CPA e ROI.',
+    'investments.header.subtitle':
+      'Costi affiliati a fine mese basati su QFTD qualificati, CPA e ROI.',
     'investments.filters.month': 'Mese',
     'investments.filters.allMonths': 'Tutti i mesi',
     'investments.badge.monthlyRows': '{count} righe mensili',
@@ -1334,7 +1448,8 @@ export const translations = {
 
     'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione',
     'investments.details.title.commExpected': 'Attesa = commissione dal Media Report',
-    'investments.details.title.commActual': 'Reale usa una guardrail ROI: se ROI >= 1.5 usa l’attesa, altrimenti Depositi netti / 1.5',
+    'investments.details.title.commActual':
+      'Reale usa una guardrail ROI: se ROI >= 1.5 usa l’attesa, altrimenti Depositi netti / 1.5',
     'investments.details.title.commPayable': 'Pagabile = min(attesa, reale)',
     'investments.details.title.commDeferred': 'Differita = attesa − pagabile',
     'investments.details.empty.noMonthlyRows': 'Nessuna riga mensile.',
@@ -1366,7 +1481,8 @@ export const translations = {
     'weeklyMap.filters.week': 'Settimana',
     'weeklyMap.filters.currentBadge': '(corrente)',
 
-    'weeklyMap.modal.readOnlyHint': 'Modalità focus in sola lettura — usala per preparare le decisioni.',
+    'weeklyMap.modal.readOnlyHint':
+      'Modalità focus in sola lettura — usala per preparare le decisioni.',
 
     'weeklyMap.card.mega': 'Mega',
     'weeklyMap.card.dept': 'Dept',
@@ -1387,7 +1503,8 @@ export const translations = {
     'weeklyMap.form.owner': 'Owner',
     'weeklyMap.form.expectedImpactMandatory': 'Impatto atteso (obbligatorio)',
 
-    'weeklyMap.validation.expectedImpactRequired': 'Senza Impatto atteso, l’attività non può essere salvata.',
+    'weeklyMap.validation.expectedImpactRequired':
+      'Senza Impatto atteso, l’attività non può essere salvata.',
 
     'weeklyMap.checklists.prepareSolitics.title': 'Prepara call Solitics — Checklist',
     'weeklyMap.checklists.prepareStamatis.title': 'Prepara call con Stamatis — Checklist',
@@ -1406,36 +1523,60 @@ export const translations = {
     'weeklyMap.checklists.common.ownershipModel.title': 'MODELLO DI OWNERSHIP',
     'weeklyMap.checklists.common.nextSteps.title': 'PROSSIMI STEP',
 
-    'weeklyMap.checklists.prepareSolitics.useCases.item1': 'Quali comportamenti concreti degli utenti stiamo cercando di rilevare?',
-    'weeklyMap.checklists.prepareSolitics.useCases.item2': 'Quali scenari di retention o churn contano di più in questo momento?',
-    'weeklyMap.checklists.prepareSolitics.data.item1': 'Qual è il dataset minimo necessario per generare valore?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item1':
+      'Quali comportamenti concreti degli utenti stiamo cercando di rilevare?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item2':
+      'Quali scenari di retention o churn contano di più in questo momento?',
+    'weeklyMap.checklists.prepareSolitics.data.item1':
+      'Qual è il dataset minimo necessario per generare valore?',
     'weeklyMap.checklists.prepareSolitics.data.item2': 'Cosa può essere escluso in sicurezza?',
-    'weeklyMap.checklists.prepareSolitics.decisions.item1': 'Quali decisioni dovrebbe supportare attivamente Solitics?',
-    'weeklyMap.checklists.prepareSolitics.decisions.item2': 'Cosa rimane logica decisionale interna?',
+    'weeklyMap.checklists.prepareSolitics.decisions.item1':
+      'Quali decisioni dovrebbe supportare attivamente Solitics?',
+    'weeklyMap.checklists.prepareSolitics.decisions.item2':
+      'Cosa rimane logica decisionale interna?',
     'weeklyMap.checklists.prepareSolitics.ownership.item1': 'Cosa NON dovrebbe fare Solitics?',
-    'weeklyMap.checklists.prepareSolitics.ownership.item2': 'Come misuriamo il successo dopo 30 giorni?',
+    'weeklyMap.checklists.prepareSolitics.ownership.item2':
+      'Come misuriamo il successo dopo 30 giorni?',
 
     'weeklyMap.checklists.soliticsDecisionSummary.title': 'Call Solitics + decision summary — Note',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item1': 'Accesso alla replica confermato; sincronizzazione Skale aggiuntiva ancora in sospeso (owner + timeline).',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item2': 'Onboarding/dashboard Solitics in corso — NON ancora live.',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item3': 'Roman è l’interfaccia principale per esecuzione e follow-up.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1': 'Leva primaria: retention (segmenti + trigger), non automazioni “nice-to-have”.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2': 'Successo = miglioramento LTV / repeat deposits / attività di trading (partire con scope MVP).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1': 'Interno: dati/integrazione, governance, e regole decisionali/segmentazione (source of truth).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2': 'Marketing: esecuzione campagne, offerte/bonus, messaggistica e loop operativi.',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3': 'Solitics: motore di automazione + dashboard; non owner della business logic core.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item1': 'Confermare l’allineamento finale con Skale e i campi dati necessari.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item2': 'Condividere con Solitics i primi segmenti, KPI e aspettative di reporting.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item3': 'Impostare una cadenza settimanale con Roman + Marketing per chiudere il loop.',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item1':
+      'Accesso alla replica confermato; sincronizzazione Skale aggiuntiva ancora in sospeso (owner + timeline).',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item2':
+      'Onboarding/dashboard Solitics in corso — NON ancora live.',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item3':
+      'Roman è l’interfaccia principale per esecuzione e follow-up.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1':
+      'Leva primaria: retention (segmenti + trigger), non automazioni “nice-to-have”.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2':
+      'Successo = miglioramento LTV / repeat deposits / attività di trading (partire con scope MVP).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1':
+      'Interno: dati/integrazione, governance, e regole decisionali/segmentazione (source of truth).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2':
+      'Marketing: esecuzione campagne, offerte/bonus, messaggistica e loop operativi.',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3':
+      'Solitics: motore di automazione + dashboard; non owner della business logic core.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item1':
+      'Confermare l’allineamento finale con Skale e i campi dati necessari.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item2':
+      'Condividere con Solitics i primi segmenti, KPI e aspettative di reporting.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item3':
+      'Impostare una cadenza settimanale con Roman + Marketing per chiudere il loop.',
 
-    'weeklyMap.checklists.prepareStamatis.priorities.item1': 'Qual è la singola priorità n.1 per i prossimi 30–60 giorni?',
-    'weeklyMap.checklists.prepareStamatis.priorities.item2': 'Cosa possiamo esplicitamente de-prioritizzare?',
-    'weeklyMap.checklists.prepareStamatis.governance.item1': 'Chi decide cosa entra o esce dalla roadmap?',
-    'weeklyMap.checklists.prepareStamatis.governance.item2': 'Cosa definisce successo o fallimento di un’iniziativa?',
-    'weeklyMap.checklists.prepareStamatis.autonomy.item1': 'Quali decisioni possono essere prese in autonomia?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item1':
+      'Qual è la singola priorità n.1 per i prossimi 30–60 giorni?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item2':
+      'Cosa possiamo esplicitamente de-prioritizzare?',
+    'weeklyMap.checklists.prepareStamatis.governance.item1':
+      'Chi decide cosa entra o esce dalla roadmap?',
+    'weeklyMap.checklists.prepareStamatis.governance.item2':
+      'Cosa definisce successo o fallimento di un’iniziativa?',
+    'weeklyMap.checklists.prepareStamatis.autonomy.item1':
+      'Quali decisioni possono essere prese in autonomia?',
     'weeklyMap.checklists.prepareStamatis.autonomy.item2': 'Quando è necessaria un’escalation?',
-    'weeklyMap.checklists.prepareStamatis.closure.item1': 'Quali decisioni concrete devono essere prese in questa call?',
-    'weeklyMap.checklists.prepareStamatis.closure.item2': 'Quale follow-up è richiesto dopo la call?',
+    'weeklyMap.checklists.prepareStamatis.closure.item1':
+      'Quali decisioni concrete devono essere prese in questa call?',
+    'weeklyMap.checklists.prepareStamatis.closure.item2':
+      'Quale follow-up è richiesto dopo la call?',
 
     // Affiliate analysis
     'affiliateAnalysis.common.thisAffiliate': 'questo affiliato',
@@ -1477,8 +1618,10 @@ export const translations = {
 
     'affiliateAnalysis.sections.financialMetrics.title': 'Metriche finanziarie',
     'affiliateAnalysis.sections.financialMetrics.subtitle': 'Snapshot di efficienza',
-    'affiliateAnalysis.sections.allKeyMetrics.title': 'Tutte le metriche chiave per questo affiliato',
-    'affiliateAnalysis.sections.allKeyMetrics.subtitle': 'Snapshot KPI completo per questo affiliato',
+    'affiliateAnalysis.sections.allKeyMetrics.title':
+      'Tutte le metriche chiave per questo affiliato',
+    'affiliateAnalysis.sections.allKeyMetrics.subtitle':
+      'Snapshot KPI completo per questo affiliato',
     'affiliateAnalysis.sections.monthlyTrends.title': 'Trend mensili',
     'affiliateAnalysis.sections.monthlyTrends.subtitle': 'Depositi netti, P/L, Profitto',
 
@@ -1523,19 +1666,23 @@ export const translations = {
 
     'affiliateAnalysis.engine.empty.title': 'Analysis Engine — Insight automatici',
     'affiliateAnalysis.engine.empty.subtitle': 'Insight deterministici costruiti da KPI',
-    'affiliateAnalysis.engine.empty.body': 'Seleziona un affiliato e una finestra temporale per generare gli insight.',
+    'affiliateAnalysis.engine.empty.body':
+      'Seleziona un affiliato e una finestra temporale per generare gli insight.',
 
     'affiliateAnalysis.engine.sections.riskSignals': '📉 Segnali di rischio',
     'affiliateAnalysis.engine.sections.upsideOpportunities': '🎯 Opportunità di crescita',
     'affiliateAnalysis.engine.sections.currentOutlook': '🧭 Outlook attuale',
 
-    'affiliateAnalysis.engine.profitTrend.subtitle': 'Attuale vs mese precedente: {current} vs {previous}',
+    'affiliateAnalysis.engine.profitTrend.subtitle':
+      'Attuale vs mese precedente: {current} vs {previous}',
 
     'affiliateAnalysis.engine.cohort.notReached': 'Non raggiunto',
     'affiliateAnalysis.engine.cohort.notAvailable': 'Cohort non disponibile',
     'affiliateAnalysis.engine.cohort.monthsValue': '{value} mesi',
-    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit': 'Tempo medio per raggiungere profitto netto (Top 10 Cohort PL)',
-    'affiliateAnalysis.engine.cohort.helper.noData': 'Il report Top 10 Cohort PL non ha dati per questo affiliato',
+    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit':
+      'Tempo medio per raggiungere profitto netto (Top 10 Cohort PL)',
+    'affiliateAnalysis.engine.cohort.helper.noData':
+      'Il report Top 10 Cohort PL non ha dati per questo affiliato',
 
     'affiliateAnalysis.engine.title': 'Outlook performance affiliato — {affiliate}',
     'affiliateAnalysis.engine.subtitle': 'Segnali per {period}',
@@ -1555,7 +1702,8 @@ export const translations = {
     'affiliatePayments2.loader.data': 'Caricamento dati pagamenti…',
 
     // Investments (legacy)
-    'investmentsLegacy.subtitle.commissionsFilter': 'Commissioni da commissions.csv filtrabili per mese e affiliato.',
+    'investmentsLegacy.subtitle.commissionsFilter':
+      'Commissioni da commissions.csv filtrabili per mese e affiliato.',
 
     // Fraud
     'fraud.loader.commissions': 'Caricamento commissioni…',
@@ -1599,13 +1747,19 @@ export const translations = {
     'dashboard.cohortHealth.why.r1Low': 'Il valore cala bruscamente dopo il Mese 0.',
     'dashboard.cohortHealth.why.r3Low': 'Il valore si esaurisce rapidamente entro il Mese 3.',
     'dashboard.cohortHealth.why.default': 'Il valore diminuisce dopo il Mese 0.',
-    'dashboard.cohortHealth.meaning.noData': 'Non ci sono abbastanza dati per valutare la salute della cohort.',
-    'dashboard.cohortHealth.meaning.green': 'L’attività ricorrente sostiene il valore per più mesi.',
+    'dashboard.cohortHealth.meaning.noData':
+      'Non ci sono abbastanza dati per valutare la salute della cohort.',
+    'dashboard.cohortHealth.meaning.green':
+      'L’attività ricorrente sostiene il valore per più mesi.',
     'dashboard.cohortHealth.meaning.orange': 'C’è attività ripetuta, ma si indebolisce nel tempo.',
-    'dashboard.cohortHealth.meaning.red': 'Il business dipende molto dal primo mese e da poca attività ripetuta.',
-    'dashboard.cohortHealth.nextCheck.noData': 'Attendi più mesi di attività e ricontrolla il valore retained M1/M3.',
-    'dashboard.cohortHealth.nextCheck.default': 'Dopo azioni di retention, concentrati sul migliorare retained M1 e M3.',
-    'dashboard.cohortHealth.valueConcentration': 'Concentrazione valore: {pct}% del valore totale generato in Mese 0',
+    'dashboard.cohortHealth.meaning.red':
+      'Il business dipende molto dal primo mese e da poca attività ripetuta.',
+    'dashboard.cohortHealth.nextCheck.noData':
+      'Attendi più mesi di attività e ricontrolla il valore retained M1/M3.',
+    'dashboard.cohortHealth.nextCheck.default':
+      'Dopo azioni di retention, concentrati sul migliorare retained M1 e M3.',
+    'dashboard.cohortHealth.valueConcentration':
+      'Concentrazione valore: {pct}% del valore totale generato in Mese 0',
     'dashboard.cohortHealth.halfLife.label': 'Half-life economica',
     'dashboard.cohortHealth.halfLife.notReached': 'non raggiunta (retained resta sopra 50%)',
     'dashboard.cohortHealth.halfLife.reached': '~{months} {unit} (retained scende sotto 50%)',
@@ -1615,7 +1769,8 @@ export const translations = {
 
     'dashboard.monthlyAggregates.title': 'Aggregati mensili',
     'dashboard.monthlyAggregates.infoAria': 'Info sui dati',
-    'dashboard.monthlyAggregates.infoText': '{cohortMetricLabel} e cohort size arrivano dal file di cohort selezionato; le commissioni pagate vengono prese dal Balance Report e assegnate al mese di acquisizione della cohort; il P&L è aggregato per data di first deposit (stessa logica delle cohort).',
+    'dashboard.monthlyAggregates.infoText':
+      '{cohortMetricLabel} e cohort size arrivano dal file di cohort selezionato; le commissioni pagate vengono prese dal Balance Report e assegnate al mese di acquisizione della cohort; il P&L è aggregato per data di first deposit (stessa logica delle cohort).',
     'dashboard.monthlyAggregates.cohortLabel': 'Cohort (mese FD)',
     'dashboard.monthlyAggregates.cohort.all': 'Tutte le cohort',
     'dashboard.monthlyAggregates.cohort.q1': 'Q1 (Gen–Mar)',
@@ -1628,11 +1783,13 @@ export const translations = {
     'dashboard.monthlyAggregates.affiliate.all': 'Tutti nella cohort',
     'dashboard.monthlyAggregates.affiliate.noneAvailable': 'Nessun affiliato disponibile',
     'dashboard.monthlyAggregates.affiliate.top10Label': 'Top 10',
-    'dashboard.monthlyAggregates.tableAutoFillHint': 'La tabella viene popolata automaticamente con {cohortMetricLabel} e Cohort size della selezione.',
+    'dashboard.monthlyAggregates.tableAutoFillHint':
+      'La tabella viene popolata automaticamente con {cohortMetricLabel} e Cohort size della selezione.',
 
     'dashboard.loader.cohort': 'Caricamento dashboard cohort…',
     'dashboard.pulse.title': 'Polso finanziario cohort',
-    'dashboard.pulse.subtitle': '{retainedMetricLabel} (%) mostra quanta parte del {cohortMetric} del Mese 0 resta nel tempo.',
+    'dashboard.pulse.subtitle':
+      '{retainedMetricLabel} (%) mostra quanta parte del {cohortMetric} del Mese 0 resta nel tempo.',
     'dashboard.pulse.filter.metricLabel': 'Metrica',
     'dashboard.pulse.filter.calendarYearLabel': 'Anno calendario',
     'dashboard.pulse.filter.affiliateLabel': 'Affiliate',
@@ -1644,14 +1801,16 @@ export const translations = {
     'dashboard.affiliates.all': 'Tutti gli affiliate',
     'dashboard.cohortKpis.title': 'KPI Cohort',
     'dashboard.cohortKpis.infoAria': 'Info KPI cohort',
-    'dashboard.cohortKpis.infoText': 'Users = cohort size; Active users = users*(1-churn) cumulati; Marketing & Commissions mappati per mese di acquisizione; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: se < 1.5 le commissioni sono posticipate all’affiliato; Break-even = primo mese con cum. P&L - cum. commissions >= 0.',
+    'dashboard.cohortKpis.infoText':
+      'Users = cohort size; Active users = users*(1-churn) cumulati; Marketing & Commissions mappati per mese di acquisizione; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: se < 1.5 le commissioni sono posticipate all’affiliato; Break-even = primo mese con cum. P&L - cum. commissions >= 0.',
 
     'dashboard.table.metric': 'Metrica',
     'dashboard.table.total': 'Totale',
     'dashboard.table.breakEven': 'Break even',
 
     'dashboard.cohortDb.infoAria': 'Info Cohort DB',
-    'dashboard.cohortDb.infoText': 'Seleziona un cohort (mese di first deposit) e applicalo ai Net deposits del dashboard (dati da Net deposits Cohort 2025.csv). P&L segue la stessa logica per data di first deposit.',
+    'dashboard.cohortDb.infoText':
+      'Seleziona un cohort (mese di first deposit) e applicalo ai Net deposits del dashboard (dati da Net deposits Cohort 2025.csv). P&L segue la stessa logica per data di first deposit.',
     'dashboard.cohortDb.toggle.show': 'Mostra Cohort DB',
     'dashboard.cohortDb.toggle.hide': 'Nascondi Cohort DB',
     'dashboard.cohortDb.affiliates.toggle.show': 'Mostra dettaglio affiliati',
@@ -1668,7 +1827,8 @@ export const translations = {
 
     'dashboard.breakEven.title': 'Analisi break-even',
     'dashboard.breakEven.infoAria': 'Info break-even',
-    'dashboard.breakEven.infoText': 'Formula: P&L cumulato (da "PL Cohort Analysis.csv") meno Commissions paid cumulato (negativo). Il break-even month è il primo indice in cui la curva diventa >= 0.',
+    'dashboard.breakEven.infoText':
+      'Formula: P&L cumulato (da "PL Cohort Analysis.csv") meno Commissions paid cumulato (negativo). Il break-even month è il primo indice in cui la curva diventa >= 0.',
 
     'dashboard.pnlTrend.title': 'Trend P&L',
 
@@ -1688,7 +1848,8 @@ export const translations = {
     'dashboard.topAffiliates.table.roiTitle': 'ROI',
 
     'dashboard.autoReport.infoAria': 'Info auto report',
-    'dashboard.autoReport.infoText': 'Genera un breve riepilogo ora; in seguito potremo collegare OpenAI per commenti e next steps.',
+    'dashboard.autoReport.infoText':
+      'Genera un breve riepilogo ora; in seguito potremo collegare OpenAI per commenti e next steps.',
     'dashboard.autoReport.generate': 'Genera report locale',
     'dashboard.autoReport.generating': 'Generazione…',
     'dashboard.autoReport.clear': 'Pulisci',
@@ -1697,7 +1858,8 @@ export const translations = {
     // Upload
     'upload.title': 'Carica report',
     'upload.description.line1': 'Carica un CSV e il sistema lo sanitizzerà e aggiornerà i report.',
-    'upload.description.line2': 'Scegli esplicitamente il tipo di report per non dipendere dal nome del file.',
+    'upload.description.line2':
+      'Scegli esplicitamente il tipo di report per non dipendere dal nome del file.',
     'upload.type.registrations': 'Registrations',
     'upload.type.payments': 'Payments',
     'upload.type.media': 'Media',
@@ -1748,12 +1910,18 @@ export const translations = {
 
     'support.reply.fallback': 'Grazie {name} — stiamo verificando e ti aggiorneremo a breve.',
     'support.reply.customerFallback': 'Grazie — stiamo verificando e ti aggiorneremo a breve.',
-    'support.reply.caseType.DATA_INCOMPLETE': 'Grazie — stiamo verificando i dettagli del tuo account e ti aggiorneremo a breve.',
-    'support.reply.caseType.WITHDRAWAL_REQUEST': 'Grazie — la tua richiesta di prelievo è in revisione. Confermeremo appena i controlli saranno completati.',
-    'support.reply.caseType.POTENTIAL_ABUSE': 'Grazie — serve una verifica aggiuntiva prima di procedere. Il nostro team ti contatterà se necessario.',
-    'support.reply.caseType.HIGH_VALUE_USER': 'Grazie — daremo priorità alla tua richiesta e confermeremo i prossimi passi a breve.',
-    'support.reply.caseType.NO_DEPOSIT': 'Grazie — il tuo account è attivo. Se ti serve aiuto per depositare, possiamo guidarti.',
-    'support.reply.caseType.ACTIVE_USER': 'Grazie — stiamo esaminando la tua richiesta e ti aggiorneremo a breve.',
+    'support.reply.caseType.DATA_INCOMPLETE':
+      'Grazie — stiamo verificando i dettagli del tuo account e ti aggiorneremo a breve.',
+    'support.reply.caseType.WITHDRAWAL_REQUEST':
+      'Grazie — la tua richiesta di prelievo è in revisione. Confermeremo appena i controlli saranno completati.',
+    'support.reply.caseType.POTENTIAL_ABUSE':
+      'Grazie — serve una verifica aggiuntiva prima di procedere. Il nostro team ti contatterà se necessario.',
+    'support.reply.caseType.HIGH_VALUE_USER':
+      'Grazie — daremo priorità alla tua richiesta e confermeremo i prossimi passi a breve.',
+    'support.reply.caseType.NO_DEPOSIT':
+      'Grazie — il tuo account è attivo. Se ti serve aiuto per depositare, possiamo guidarti.',
+    'support.reply.caseType.ACTIVE_USER':
+      'Grazie — stiamo esaminando la tua richiesta e ti aggiorneremo a breve.',
     'support.reply.caseType.UNKNOWN': 'Grazie — stiamo verificando e ti aggiorneremo a breve.',
 
     'support.decision.status.ELIGIBLE': 'Idoneo',
@@ -1769,65 +1937,99 @@ export const translations = {
     'support.decision.status.NEUTRAL': 'Neutro',
     'support.decision.status.PROFITABLE': 'Profittevole',
 
-    'support.decision.affiliateSwitch.noAffiliate.why': 'Nessun affiliato assegnato a questo account.',
-    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm': 'Verifica l’attribuzione dell’affiliato in CRM.',
-    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount': 'Se l’utente vuole un nuovo affiliato, apri un NUOVO account tramite link affiliato.',
+    'support.decision.affiliateSwitch.noAffiliate.why':
+      'Nessun affiliato assegnato a questo account.',
+    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm':
+      'Verifica l’attribuzione dell’affiliato in CRM.',
+    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount':
+      'Se l’utente vuole un nuovo affiliato, apri un NUOVO account tramite link affiliato.',
 
-    'support.decision.affiliateSwitch.hasCommissions.why': 'L’account ha già generato commissioni affiliate. Il cambio creerebbe problemi di costo/attribuzione.',
-    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch': 'NON cambiare l’account esistente.',
-    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount': 'Se l’utente insiste, proponi un NUOVO account sotto il link affiliato richiesto (può applicarsi un deposito minimo).',
-    'support.decision.affiliateSwitch.hasCommissions.action.escalate': 'Se necessario, escalation a Emanuele per approvazione finale.',
+    'support.decision.affiliateSwitch.hasCommissions.why':
+      'L’account ha già generato commissioni affiliate. Il cambio creerebbe problemi di costo/attribuzione.',
+    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch':
+      'NON cambiare l’account esistente.',
+    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount':
+      'Se l’utente insiste, proponi un NUOVO account sotto il link affiliato richiesto (può applicarsi un deposito minimo).',
+    'support.decision.affiliateSwitch.hasCommissions.action.escalate':
+      'Se necessario, escalation a Emanuele per approvazione finale.',
 
-    'support.decision.affiliateSwitch.noCommissions.why': 'Nessuna commissione affiliata generata sull’account corrente. Il cambio non ha costo di attribuzione.',
-    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch': 'Procedi con lo switch (CRM + Skale).',
-    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated': 'Conferma che l’affiliato sia aggiornato in modo coerente in entrambi i sistemi.',
+    'support.decision.affiliateSwitch.noCommissions.why':
+      'Nessuna commissione affiliata generata sull’account corrente. Il cambio non ha costo di attribuzione.',
+    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch':
+      'Procedi con lo switch (CRM + Skale).',
+    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated':
+      'Conferma che l’affiliato sia aggiornato in modo coerente in entrambi i sistemi.',
 
-    'support.decision.accountTypeChange.highWithdrawalRatio.why': 'Un alto rapporto prelievi/depositi suggerisce possibile abuso; serve revisione manuale prima del cambio tipo account.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk': 'Escalation al team risk per revisione manuale.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange': 'Blocca il cambio tipo account finché non c’è clearance.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.why':
+      'Un alto rapporto prelievi/depositi suggerisce possibile abuso; serve revisione manuale prima del cambio tipo account.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk':
+      'Escalation al team risk per revisione manuale.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange':
+      'Blocca il cambio tipo account finché non c’è clearance.',
 
-    'support.decision.accountTypeChange.approvedWithConditions.why': 'Cambio tipo account consentito con controlli operativi.',
-    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp': 'Richiedi controllo KYC/PSP prima di cambiare tipo',
-    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks': 'Consenti il cambio tipo account con condizioni: verifica KYC e stato PSP.',
+    'support.decision.accountTypeChange.approvedWithConditions.why':
+      'Cambio tipo account consentito con controlli operativi.',
+    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp':
+      'Richiedi controllo KYC/PSP prima di cambiare tipo',
+    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks':
+      'Consenti il cambio tipo account con condizioni: verifica KYC e stato PSP.',
 
-    'support.decision.bonus.hasCommissionsAndDeposits.why': 'L’account ha commissioni affiliate e depositi — l’assegnazione bonus richiede verifica per evitare doppio costo.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership': 'Verifica ownership delle commissioni e accordo marketing prima di concedere il bonus.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm': 'Se approvato, registra il motivo in CRM.',
+    'support.decision.bonus.hasCommissionsAndDeposits.why':
+      'L’account ha commissioni affiliate e depositi — l’assegnazione bonus richiede verifica per evitare doppio costo.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership':
+      'Verifica ownership delle commissioni e accordo marketing prima di concedere il bonus.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm':
+      'Se approvato, registra il motivo in CRM.',
 
-    'support.decision.bonus.noDeposits.why': 'Nessun deposito sull’account — il bonus richiede attività di deposito.',
-    'support.decision.bonus.noDeposits.action.informFunding': 'Informa l’utente sulle opzioni di deposito e sui requisiti di deposito minimo.',
+    'support.decision.bonus.noDeposits.why':
+      'Nessun deposito sull’account — il bonus richiede attività di deposito.',
+    'support.decision.bonus.noDeposits.action.informFunding':
+      'Informa l’utente sulle opzioni di deposito e sui requisiti di deposito minimo.',
 
     'support.decision.bonus.highValue.why': 'Utente high-value idoneo al bonus, soggetto a KYC.',
-    'support.decision.bonus.highValue.action.proceedKyc': 'Procedi con l’offerta bonus e avvia KYC se non presente.',
+    'support.decision.bonus.highValue.action.proceedKyc':
+      'Procedi con l’offerta bonus e avvia KYC se non presente.',
 
     'support.decision.bonus.standard.why': 'Utente idoneo alle promozioni standard.',
-    'support.decision.bonus.standard.action.offerStandard': 'Offri bonus standard secondo il catalogo promozioni.',
+    'support.decision.bonus.standard.action.offerStandard':
+      'Offri bonus standard secondo il catalogo promozioni.',
 
     'support.decision.withdrawals.highRisk.why': 'Alto rapporto prelievi rispetto ai depositi.',
     'support.decision.withdrawals.highRisk.action.holdInvestigate': 'Metti in hold e indaga.',
-    'support.decision.withdrawals.highRisk.action.checkPspKyc': 'Controlla PSP/KYC, attività di trading e metodi di pagamento.',
+    'support.decision.withdrawals.highRisk.action.checkPspKyc':
+      'Controlla PSP/KYC, attività di trading e metodi di pagamento.',
 
-    'support.decision.withdrawals.needsPspCheck.why': 'Prelievi rilevati — verifica PSP e KYC prima di processare.',
+    'support.decision.withdrawals.needsPspCheck.why':
+      'Prelievi rilevati — verifica PSP e KYC prima di processare.',
     'support.decision.withdrawals.needsPspCheck.action.verifyPsp': 'Verifica stato PSP.',
     'support.decision.withdrawals.needsPspCheck.action.confirmKyc': 'Conferma KYC.',
     'support.decision.withdrawals.needsPspCheck.action.processSla': 'Processa secondo SLA.',
 
-    'support.decision.withdrawals.standardProcess.why': 'Nessun prelievo; segui il processo standard.',
+    'support.decision.withdrawals.standardProcess.why':
+      'Nessun prelievo; segui il processo standard.',
     'support.decision.withdrawals.standardProcess.action.noAction': 'Nessuna azione richiesta.',
 
-    'support.decision.revenueShare.criticalRisk.why': 'P/L negativo molto elevato rispetto ai depositi: possibile rischio retention/abuso.',
-    'support.decision.revenueShare.criticalRisk.action.reviewRetention': 'Rivedi strategia di retention e indicatori frode.',
-    'support.decision.revenueShare.criticalRisk.action.considerLimits': 'Valuta gestione speciale o limiti.',
+    'support.decision.revenueShare.criticalRisk.why':
+      'P/L negativo molto elevato rispetto ai depositi: possibile rischio retention/abuso.',
+    'support.decision.revenueShare.criticalRisk.action.reviewRetention':
+      'Rivedi strategia di retention e indicatori frode.',
+    'support.decision.revenueShare.criticalRisk.action.considerLimits':
+      'Valuta gestione speciale o limiti.',
 
-    'support.decision.revenueShare.profitAndWithdrawals.why': 'L’utente è in profitto e ha prelievi — monitorare churn/cashout.',
-    'support.decision.revenueShare.profitAndWithdrawals.action.monitor': 'Monitora comportamento di cashout.',
-    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance': 'Assicurati reporting fiscale/compliance se necessario.',
+    'support.decision.revenueShare.profitAndWithdrawals.why':
+      'L’utente è in profitto e ha prelievi — monitorare churn/cashout.',
+    'support.decision.revenueShare.profitAndWithdrawals.action.monitor':
+      'Monitora comportamento di cashout.',
+    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance':
+      'Assicurati reporting fiscale/compliance se necessario.',
 
     'support.decision.revenueShare.noDeposits.why': 'Nessun deposito — impatto revenue neutro.',
     'support.decision.revenueShare.noDeposits.action.noAction': 'Nessuna azione revenue richiesta.',
 
-    'support.decision.revenueShare.netLoss.why': 'Utente net-loss (P/L negativo) potenzialmente positivo per revshare a seconda del contratto.',
-    'support.decision.revenueShare.netLoss.action.reviewContract': 'Rivedi termini contrattuali e opzioni di retention.',
+    'support.decision.revenueShare.netLoss.why':
+      'Utente net-loss (P/L negativo) potenzialmente positivo per revshare a seconda del contratto.',
+    'support.decision.revenueShare.netLoss.action.reviewContract':
+      'Rivedi termini contrattuali e opzioni di retention.',
 
     'support.decision.revenueShare.noIndicators.why': 'Nessun indicatore revenue significativo.',
     'support.decision.revenueShare.noIndicators.action.noAction': 'Nessuna azione richiesta.',
@@ -1860,7 +2062,8 @@ export const translations = {
     'roadmap.counter.done': '{count} completate',
 
     'roadmap.reset.button': 'Ripristina seed',
-    'roadmap.reset.confirm': 'Questo sovrascriverà le modifiche locali e ripristinerà i dati seed. Continuare?',
+    'roadmap.reset.confirm':
+      'Questo sovrascriverà le modifiche locali e ripristinerà i dati seed. Continuare?',
 
     'roadmap.filters.all': 'Tutte',
     'roadmap.filters.megaStory': 'Mega-storia',
@@ -1973,7 +2176,19 @@ export const translations = {
     'support.details.loader.userDetails': 'Caricamento dettagli utente…',
     'support.details.loader.decisionEngine': 'Caricamento decision engine…',
     'support.details.backToResults': 'Torna ai risultati',
+    'support.details.statusHelp.aria': 'Stato: {status}. Tocca per la spiegazione.',
+    'support.details.statusHelp.default': 'Valore di stato proveniente dal report sorgente.',
+    'support.details.statusHelp.duplicate':
+      'Duplicate: la riga appare più di una volta nei dati sorgente (stesso utente/account).',
+    'support.details.statusHelp.new':
+      'New: account segnalato come nuovo / registrato di recente nel report.',
+    'support.details.statusHelp.active': 'Active: account segnalato come attivo nel report.',
+    'support.details.statusHelp.blocked':
+      'Blocked: account segnalato come bloccato/disabilitato nel report.',
+    'support.details.priority.high': 'Alta',
     'support.details.priority.medium': 'Media',
+    'support.details.priority.normal': 'Normale',
+    'support.details.priority.unknown': 'Sconosciuta',
     'support.details.statusFallback': 'Stato',
     'support.details.account': 'Account',
     'support.details.affiliate': 'Affiliate',
@@ -2035,7 +2250,8 @@ export const translations = {
     // Org Chart
     'orgChart.structure': 'Struttura',
     'orgChart.title': 'Organigramma aziendale',
-    'orgChart.description': 'Gerarchia, layer di responsabilità e roster dei reparti con job title, divisione, dipartimento, regione ed email per persona.',
+    'orgChart.description':
+      'Gerarchia, layer di responsabilità e roster dei reparti con job title, divisione, dipartimento, regione ed email per persona.',
     'orgChart.search.placeholder': 'Cerca per nome e premi Invio',
     'orgChart.search.submit': 'Vai al reparto',
     'orgChart.toc.ariaLabel': 'Indice dei contenuti',
@@ -2193,9 +2409,12 @@ export const translations = {
     'report.exportNotes.title': 'Napomene za izvoz',
     'report.exportNotes.subtitle': 'Osnovni raspored spreman za dodavanje dugmeta za izvoz',
     'report.exportNotes.item1': 'Jasan raspored i tabela već sortirana po profitu.',
-    'report.exportNotes.item2': 'Filter perioda: globalno (svi podaci), godišnje (tekuća godina), mesečno (izabrani mesec).',
-    'report.exportNotes.item3': 'Ključne metrike: CPA, ARPU, profit, obim (reg/FTD), procenjeni break-even.',
-    'report.exportNotes.item4': 'Spremno za povezivanje dugmeta za izvoz (PDF/CSV) bez promene rasporeda.',
+    'report.exportNotes.item2':
+      'Filter perioda: globalno (svi podaci), godišnje (tekuća godina), mesečno (izabrani mesec).',
+    'report.exportNotes.item3':
+      'Ključne metrike: CPA, ARPU, profit, obim (reg/FTD), procenjeni break-even.',
+    'report.exportNotes.item4':
+      'Spremno za povezivanje dugmeta za izvoz (PDF/CSV) bez promene rasporeda.',
 
     // Departments
     'departments.Infrastructure': 'Infrastruktura',
@@ -2206,7 +2425,8 @@ export const translations = {
     'departments.Partners': 'Partneri',
 
     // Ongoing (Execution Board)
-    'ongoing.confirm.resetToSeed': 'Ovo će prepisati lokalne izmene i vratiti početne podatke. Nastaviti?',
+    'ongoing.confirm.resetToSeed':
+      'Ovo će prepisati lokalne izmene i vratiti početne podatke. Nastaviti?',
     'ongoing.placeholder.example': 'npr. neto depoziti, registracije, churn',
 
     'ongoing.header.layerLabel': 'Sloj izvršenja',
@@ -2308,6 +2528,7 @@ export const translations = {
 
     // Topbar
     'topbar.aria.toggleNavMenu': 'Uključi/isključi navigacioni meni',
+    'topbar.aria.toggleSidebar': 'Uključi/isključi bočni meni',
 
     // Support (page-level)
     'support.loader.page': 'Učitavanje support stranice…',
@@ -2315,7 +2536,8 @@ export const translations = {
     // Investments
     'investments.loader.data': 'Učitavanje podataka o investicijama…',
     'investments.header.title': 'Isplate afilijata – Ledger isplata',
-    'investments.header.subtitle': 'Troškovi afilijata na kraju meseca na osnovu kvalifikovanih QFTD, CPA i ROI.',
+    'investments.header.subtitle':
+      'Troškovi afilijata na kraju meseca na osnovu kvalifikovanih QFTD, CPA i ROI.',
     'investments.filters.month': 'Mesec',
     'investments.filters.allMonths': 'Svi meseci',
     'investments.badge.monthlyRows': '{count} mesečnih redova',
@@ -2369,7 +2591,8 @@ export const translations = {
 
     'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija',
     'investments.details.title.commExpected': 'Očekivano = provizija iz Media Report-a',
-    'investments.details.title.commActual': 'Stvarno koristi ROI guardrail: ako je ROI >= 1.5 koristi očekivano, inače Neto depoziti / 1.5',
+    'investments.details.title.commActual':
+      'Stvarno koristi ROI guardrail: ako je ROI >= 1.5 koristi očekivano, inače Neto depoziti / 1.5',
     'investments.details.title.commPayable': 'Isplativo = min(očekivano, stvarno)',
     'investments.details.title.commDeferred': 'Odloženo = očekivano − isplativo',
     'investments.details.empty.noMonthlyRows': 'Nema mesečnih redova.',
@@ -2422,7 +2645,8 @@ export const translations = {
     'weeklyMap.form.owner': 'Vlasnik',
     'weeklyMap.form.expectedImpactMandatory': 'Očekivani uticaj (obavezno)',
 
-    'weeklyMap.validation.expectedImpactRequired': 'Bez očekivanog uticaja, zadatak se ne može sačuvati.',
+    'weeklyMap.validation.expectedImpactRequired':
+      'Bez očekivanog uticaja, zadatak se ne može sačuvati.',
 
     'weeklyMap.checklists.prepareSolitics.title': 'Pripremi Solitics poziv — Checklist',
     'weeklyMap.checklists.prepareStamatis.title': 'Pripremi poziv sa Stamatisom — Checklist',
@@ -2441,36 +2665,60 @@ export const translations = {
     'weeklyMap.checklists.common.ownershipModel.title': 'MODEL ODGOVORNOSTI',
     'weeklyMap.checklists.common.nextSteps.title': 'SLEDEĆI KORACI',
 
-    'weeklyMap.checklists.prepareSolitics.useCases.item1': 'Koja konkretna ponašanja korisnika pokušavamo da detektujemo?',
-    'weeklyMap.checklists.prepareSolitics.useCases.item2': 'Koji scenariji zadržavanja ili churn-a su trenutno najvažniji?',
-    'weeklyMap.checklists.prepareSolitics.data.item1': 'Koji je minimalni dataset potreban da se dobije vrednost?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item1':
+      'Koja konkretna ponašanja korisnika pokušavamo da detektujemo?',
+    'weeklyMap.checklists.prepareSolitics.useCases.item2':
+      'Koji scenariji zadržavanja ili churn-a su trenutno najvažniji?',
+    'weeklyMap.checklists.prepareSolitics.data.item1':
+      'Koji je minimalni dataset potreban da se dobije vrednost?',
     'weeklyMap.checklists.prepareSolitics.data.item2': 'Šta se može bezbedno isključiti?',
-    'weeklyMap.checklists.prepareSolitics.decisions.item1': 'Koje odluke bi Solitics trebalo aktivno da podrži?',
-    'weeklyMap.checklists.prepareSolitics.decisions.item2': 'Šta ostaje interna logika odlučivanja?',
+    'weeklyMap.checklists.prepareSolitics.decisions.item1':
+      'Koje odluke bi Solitics trebalo aktivno da podrži?',
+    'weeklyMap.checklists.prepareSolitics.decisions.item2':
+      'Šta ostaje interna logika odlučivanja?',
     'weeklyMap.checklists.prepareSolitics.ownership.item1': 'Šta Solitics NE bi trebalo da radi?',
     'weeklyMap.checklists.prepareSolitics.ownership.item2': 'Kako merimo uspeh nakon 30 dana?',
 
-    'weeklyMap.checklists.soliticsDecisionSummary.title': 'Solitics poziv + decision summary — Beleške',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item1': 'Pristup replici potvrđen; dodatna Skale sinhronizacija još uvek na čekanju (vlasnik + rok).',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item2': 'Solitics onboarding/dashboard u toku — još uvek NIJE live.',
-    'weeklyMap.checklists.soliticsDecisionSummary.status.item3': 'Roman je glavna kontakt tačka za izvršenje i follow-up.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1': 'Glavna poluga: retention (segmenti + okidači), ne generična “nice-to-have” automatizacija.',
-    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2': 'Uspeh = bolji LTV / ponovljeni depoziti / trading aktivnost (krenuti sa MVP scope-om).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1': 'Interno: podaci/integracija, governance, i pravila odlučivanja/segmentacije (source of truth).',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2': 'Marketing: izvršenje kampanja, ponude/bonusi, poruke i operativne petlje.',
-    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3': 'Solitics: motor automatizacije + dashboard-i; bez ownership-a nad core business logikom.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item1': 'Potvrditi finalno usklađivanje sa Skale i potrebna data polja.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item2': 'Podeliti prve segmente, KPI-jeve i očekivanja za reporting sa Solitics-om.',
-    'weeklyMap.checklists.soliticsDecisionSummary.next.item3': 'Postaviti nedeljnu kadencu sa Romanom + Marketingom da se zatvori loop.',
+    'weeklyMap.checklists.soliticsDecisionSummary.title':
+      'Solitics poziv + decision summary — Beleške',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item1':
+      'Pristup replici potvrđen; dodatna Skale sinhronizacija još uvek na čekanju (vlasnik + rok).',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item2':
+      'Solitics onboarding/dashboard u toku — još uvek NIJE live.',
+    'weeklyMap.checklists.soliticsDecisionSummary.status.item3':
+      'Roman je glavna kontakt tačka za izvršenje i follow-up.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item1':
+      'Glavna poluga: retention (segmenti + okidači), ne generična “nice-to-have” automatizacija.',
+    'weeklyMap.checklists.soliticsDecisionSummary.alignment.item2':
+      'Uspeh = bolji LTV / ponovljeni depoziti / trading aktivnost (krenuti sa MVP scope-om).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item1':
+      'Interno: podaci/integracija, governance, i pravila odlučivanja/segmentacije (source of truth).',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item2':
+      'Marketing: izvršenje kampanja, ponude/bonusi, poruke i operativne petlje.',
+    'weeklyMap.checklists.soliticsDecisionSummary.ownership.item3':
+      'Solitics: motor automatizacije + dashboard-i; bez ownership-a nad core business logikom.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item1':
+      'Potvrditi finalno usklađivanje sa Skale i potrebna data polja.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item2':
+      'Podeliti prve segmente, KPI-jeve i očekivanja za reporting sa Solitics-om.',
+    'weeklyMap.checklists.soliticsDecisionSummary.next.item3':
+      'Postaviti nedeljnu kadencu sa Romanom + Marketingom da se zatvori loop.',
 
-    'weeklyMap.checklists.prepareStamatis.priorities.item1': 'Koji je jedini prioritet broj 1 za narednih 30–60 dana?',
-    'weeklyMap.checklists.prepareStamatis.priorities.item2': 'Šta možemo eksplicitno da de-prioritizujemo?',
-    'weeklyMap.checklists.prepareStamatis.governance.item1': 'Ko odlučuje šta ulazi ili izlazi iz roadmap-a?',
-    'weeklyMap.checklists.prepareStamatis.governance.item2': 'Šta definiše uspeh ili neuspeh inicijative?',
-    'weeklyMap.checklists.prepareStamatis.autonomy.item1': 'Koje odluke mogu da se donesu autonomno?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item1':
+      'Koji je jedini prioritet broj 1 za narednih 30–60 dana?',
+    'weeklyMap.checklists.prepareStamatis.priorities.item2':
+      'Šta možemo eksplicitno da de-prioritizujemo?',
+    'weeklyMap.checklists.prepareStamatis.governance.item1':
+      'Ko odlučuje šta ulazi ili izlazi iz roadmap-a?',
+    'weeklyMap.checklists.prepareStamatis.governance.item2':
+      'Šta definiše uspeh ili neuspeh inicijative?',
+    'weeklyMap.checklists.prepareStamatis.autonomy.item1':
+      'Koje odluke mogu da se donesu autonomno?',
     'weeklyMap.checklists.prepareStamatis.autonomy.item2': 'Kada je potrebna eskalacija?',
-    'weeklyMap.checklists.prepareStamatis.closure.item1': 'Koje konkretne odluke moraju biti donete na ovom pozivu?',
-    'weeklyMap.checklists.prepareStamatis.closure.item2': 'Koji follow-up je potreban nakon poziva?',
+    'weeklyMap.checklists.prepareStamatis.closure.item1':
+      'Koje konkretne odluke moraju biti donete na ovom pozivu?',
+    'weeklyMap.checklists.prepareStamatis.closure.item2':
+      'Koji follow-up je potreban nakon poziva?',
 
     // Affiliate analysis
     'affiliateAnalysis.common.thisAffiliate': 'ovaj afilijat',
@@ -2558,19 +2806,23 @@ export const translations = {
 
     'affiliateAnalysis.engine.empty.title': 'Analysis Engine — Automatski uvidi',
     'affiliateAnalysis.engine.empty.subtitle': 'Deterministički uvidi iz KPI-ja',
-    'affiliateAnalysis.engine.empty.body': 'Izaberi afilijata i vremenski prozor da generišeš uvide.',
+    'affiliateAnalysis.engine.empty.body':
+      'Izaberi afilijata i vremenski prozor da generišeš uvide.',
 
     'affiliateAnalysis.engine.sections.riskSignals': '📉 Signali rizika',
     'affiliateAnalysis.engine.sections.upsideOpportunities': '🎯 Prilike za rast',
     'affiliateAnalysis.engine.sections.currentOutlook': '🧭 Trenutni outlook',
 
-    'affiliateAnalysis.engine.profitTrend.subtitle': 'Trenutno vs prethodni mesec: {current} vs {previous}',
+    'affiliateAnalysis.engine.profitTrend.subtitle':
+      'Trenutno vs prethodni mesec: {current} vs {previous}',
 
     'affiliateAnalysis.engine.cohort.notReached': 'Nije dostignuto',
     'affiliateAnalysis.engine.cohort.notAvailable': 'Kohorta nije dostupna',
     'affiliateAnalysis.engine.cohort.monthsValue': '{value} meseci',
-    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit': 'Prosečno vreme do neto profita (Top 10 Cohort PL)',
-    'affiliateAnalysis.engine.cohort.helper.noData': 'Top 10 Cohort PL izveštaj nema podatke za ovog afilijata',
+    'affiliateAnalysis.engine.cohort.helper.avgTimeToNetProfit':
+      'Prosečno vreme do neto profita (Top 10 Cohort PL)',
+    'affiliateAnalysis.engine.cohort.helper.noData':
+      'Top 10 Cohort PL izveštaj nema podatke za ovog afilijata',
 
     'affiliateAnalysis.engine.title': 'Outlook performansi afilijata — {affiliate}',
     'affiliateAnalysis.engine.subtitle': 'Signali za {period}',
@@ -2590,7 +2842,8 @@ export const translations = {
     'affiliatePayments2.loader.data': 'Učitavanje podataka o isplatama…',
 
     // Investments (legacy)
-    'investmentsLegacy.subtitle.commissionsFilter': 'Provizije iz commissions.csv (filtriranje po mesecu i afilijatu).',
+    'investmentsLegacy.subtitle.commissionsFilter':
+      'Provizije iz commissions.csv (filtriranje po mesecu i afilijatu).',
 
     // Fraud
     'fraud.loader.commissions': 'Učitavanje provizija…',
@@ -2635,12 +2888,17 @@ export const translations = {
     'dashboard.cohortHealth.why.r3Low': 'Vrednost brzo opada do Meseca 3.',
     'dashboard.cohortHealth.why.default': 'Vrednost opada nakon Meseca 0.',
     'dashboard.cohortHealth.meaning.noData': 'Nema dovoljno podataka za procenu zdravlja kohorte.',
-    'dashboard.cohortHealth.meaning.green': 'Ponavljajuća aktivnost održava vrednost kroz više meseci.',
+    'dashboard.cohortHealth.meaning.green':
+      'Ponavljajuća aktivnost održava vrednost kroz više meseci.',
     'dashboard.cohortHealth.meaning.orange': 'Postoji ponovljena aktivnost, ali slabi vremenom.',
-    'dashboard.cohortHealth.meaning.red': 'Biznis zavisi od aktivnosti u prvom mesecu i slabog ponavljanja.',
-    'dashboard.cohortHealth.nextCheck.noData': 'Sačekaj još meseci aktivnosti i ponovo proveri zadržano M1/M3.',
-    'dashboard.cohortHealth.nextCheck.default': 'Nakon retention akcija, fokusiraj se na poboljšanje zadržanog M1 i M3.',
-    'dashboard.cohortHealth.valueConcentration': 'Koncentracija vrednosti: {pct}% ukupne vrednosti u Mesecu 0',
+    'dashboard.cohortHealth.meaning.red':
+      'Biznis zavisi od aktivnosti u prvom mesecu i slabog ponavljanja.',
+    'dashboard.cohortHealth.nextCheck.noData':
+      'Sačekaj još meseci aktivnosti i ponovo proveri zadržano M1/M3.',
+    'dashboard.cohortHealth.nextCheck.default':
+      'Nakon retention akcija, fokusiraj se na poboljšanje zadržanog M1 i M3.',
+    'dashboard.cohortHealth.valueConcentration':
+      'Koncentracija vrednosti: {pct}% ukupne vrednosti u Mesecu 0',
     'dashboard.cohortHealth.halfLife.label': 'Ekonomski half-life',
     'dashboard.cohortHealth.halfLife.notReached': 'nije dostignuto (zadržano ostaje iznad 50%)',
     'dashboard.cohortHealth.halfLife.reached': '~{months} {unit} (zadržano pada ispod 50%)',
@@ -2650,7 +2908,8 @@ export const translations = {
 
     'dashboard.monthlyAggregates.title': 'Mesečni agregati',
     'dashboard.monthlyAggregates.infoAria': 'Informacije o podacima',
-    'dashboard.monthlyAggregates.infoText': '{cohortMetricLabel} i veličina kohorte dolaze iz izabranog cohort fajla; plaćene provizije se uzimaju iz Balance Report-a i dodeljuju mesecu akvizicije kohorte; P&L je agregiran po datumu prvog depozita (ista cohort logika).',
+    'dashboard.monthlyAggregates.infoText':
+      '{cohortMetricLabel} i veličina kohorte dolaze iz izabranog cohort fajla; plaćene provizije se uzimaju iz Balance Report-a i dodeljuju mesecu akvizicije kohorte; P&L je agregiran po datumu prvog depozita (ista cohort logika).',
     'dashboard.monthlyAggregates.cohortLabel': 'Kohorta (FD mesec)',
     'dashboard.monthlyAggregates.cohort.all': 'Sve kohorte',
     'dashboard.monthlyAggregates.cohort.q1': 'Q1 (Jan–Mar)',
@@ -2663,11 +2922,13 @@ export const translations = {
     'dashboard.monthlyAggregates.affiliate.all': 'Svi u kohorti',
     'dashboard.monthlyAggregates.affiliate.noneAvailable': 'Nema dostupnih affiliate-a',
     'dashboard.monthlyAggregates.affiliate.top10Label': 'Top 10',
-    'dashboard.monthlyAggregates.tableAutoFillHint': 'Tabela se automatski popunjava sa {cohortMetricLabel} i veličinom kohorte za izbor.',
+    'dashboard.monthlyAggregates.tableAutoFillHint':
+      'Tabela se automatski popunjava sa {cohortMetricLabel} i veličinom kohorte za izbor.',
 
     'dashboard.loader.cohort': 'Učitavanje cohort dashboard-a…',
     'dashboard.pulse.title': 'Finansijski puls kohorte',
-    'dashboard.pulse.subtitle': '{retainedMetricLabel} (%) pokazuje koliko {cohortMetric} iz Meseca 0 ostaje kroz vreme.',
+    'dashboard.pulse.subtitle':
+      '{retainedMetricLabel} (%) pokazuje koliko {cohortMetric} iz Meseca 0 ostaje kroz vreme.',
     'dashboard.pulse.filter.metricLabel': 'Metrika',
     'dashboard.pulse.filter.calendarYearLabel': 'Kalendarska godina',
     'dashboard.pulse.filter.affiliateLabel': 'Affiliate',
@@ -2679,14 +2940,16 @@ export const translations = {
     'dashboard.affiliates.all': 'Svi affiliate-i',
     'dashboard.cohortKpis.title': 'KPI Kohorte',
     'dashboard.cohortKpis.infoAria': 'Info o KPI kohorte',
-    'dashboard.cohortKpis.infoText': 'Users = veličina kohorte; Active users = users*(1-churn) kumulativno; Marketing & Commissions mapirani na mesec akvizicije; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: ako < 1.5, provizije se odlažu affiliate-u; Break-even = prvi mesec sa kum. P&L - kum. commissions >= 0.',
+    'dashboard.cohortKpis.infoText':
+      'Users = veličina kohorte; Active users = users*(1-churn) kumulativno; Marketing & Commissions mapirani na mesec akvizicije; Cohort cost = marketing + commissions; CPA = cost/users; LTV = P&L/users; ROI = (P&L - cost)/cost; Net dep/Commission: ako < 1.5, provizije se odlažu affiliate-u; Break-even = prvi mesec sa kum. P&L - kum. commissions >= 0.',
 
     'dashboard.table.metric': 'Metrika',
     'dashboard.table.total': 'Ukupno',
     'dashboard.table.breakEven': 'Break-even',
 
     'dashboard.cohortDb.infoAria': 'Info o Cohort DB',
-    'dashboard.cohortDb.infoText': 'Izaberite kohortu (mesec prvog depozita) i primenite je na Net deposits na dashboard-u (iz Net deposits Cohort 2025.csv). P&L prati istu logiku po datumu prvog depozita.',
+    'dashboard.cohortDb.infoText':
+      'Izaberite kohortu (mesec prvog depozita) i primenite je na Net deposits na dashboard-u (iz Net deposits Cohort 2025.csv). P&L prati istu logiku po datumu prvog depozita.',
     'dashboard.cohortDb.toggle.show': 'Prikaži Cohort DB',
     'dashboard.cohortDb.toggle.hide': 'Sakrij Cohort DB',
     'dashboard.cohortDb.affiliates.toggle.show': 'Prikaži detalje affiliate-a',
@@ -2703,7 +2966,8 @@ export const translations = {
 
     'dashboard.breakEven.title': 'Break-even analiza',
     'dashboard.breakEven.infoAria': 'Info o break-even',
-    'dashboard.breakEven.infoText': 'Formula: kumulativni P&L (iz "PL Cohort Analysis.csv") minus kumulativno Commissions paid (negativno). Break-even mesec je prvi indeks gde kriva postane >= 0.',
+    'dashboard.breakEven.infoText':
+      'Formula: kumulativni P&L (iz "PL Cohort Analysis.csv") minus kumulativno Commissions paid (negativno). Break-even mesec je prvi indeks gde kriva postane >= 0.',
 
     'dashboard.pnlTrend.title': 'P&L trend',
 
@@ -2723,7 +2987,8 @@ export const translations = {
     'dashboard.topAffiliates.table.roiTitle': 'ROI',
 
     'dashboard.autoReport.infoAria': 'Info o auto izveštaju',
-    'dashboard.autoReport.infoText': 'Generišite kratak sažetak sada; kasnije možemo povezati OpenAI za komentare i sledeće korake.',
+    'dashboard.autoReport.infoText':
+      'Generišite kratak sažetak sada; kasnije možemo povezati OpenAI za komentare i sledeće korake.',
     'dashboard.autoReport.generate': 'Generiši lokalni izveštaj',
     'dashboard.autoReport.generating': 'Generisanje…',
     'dashboard.autoReport.clear': 'Očisti',
@@ -2783,12 +3048,18 @@ export const translations = {
 
     'support.reply.fallback': 'Hvala {name} — proveravamo i javićemo se uskoro.',
     'support.reply.customerFallback': 'Hvala — proveravamo i javićemo se uskoro.',
-    'support.reply.caseType.DATA_INCOMPLETE': 'Hvala — proveravamo detalje naloga i uskoro ćemo vas obavestiti.',
-    'support.reply.caseType.WITHDRAWAL_REQUEST': 'Hvala — vaš zahtev za isplatu je u proveri. Potvrdićemo čim se kontrole završe.',
-    'support.reply.caseType.POTENTIAL_ABUSE': 'Hvala — potrebna je dodatna verifikacija pre nastavka. Naš tim će vas kontaktirati ako bude potrebno.',
-    'support.reply.caseType.HIGH_VALUE_USER': 'Hvala — daćemo prioritet vašem zahtevu i uskoro potvrditi sledeće korake.',
-    'support.reply.caseType.NO_DEPOSIT': 'Hvala — vaš nalog je aktivan. Ako vam treba pomoć oko depozita, možemo vas uputiti.',
-    'support.reply.caseType.ACTIVE_USER': 'Hvala — razmatramo vaš zahtev i uskoro ćemo vas obavestiti.',
+    'support.reply.caseType.DATA_INCOMPLETE':
+      'Hvala — proveravamo detalje naloga i uskoro ćemo vas obavestiti.',
+    'support.reply.caseType.WITHDRAWAL_REQUEST':
+      'Hvala — vaš zahtev za isplatu je u proveri. Potvrdićemo čim se kontrole završe.',
+    'support.reply.caseType.POTENTIAL_ABUSE':
+      'Hvala — potrebna je dodatna verifikacija pre nastavka. Naš tim će vas kontaktirati ako bude potrebno.',
+    'support.reply.caseType.HIGH_VALUE_USER':
+      'Hvala — daćemo prioritet vašem zahtevu i uskoro potvrditi sledeće korake.',
+    'support.reply.caseType.NO_DEPOSIT':
+      'Hvala — vaš nalog je aktivan. Ako vam treba pomoć oko depozita, možemo vas uputiti.',
+    'support.reply.caseType.ACTIVE_USER':
+      'Hvala — razmatramo vaš zahtev i uskoro ćemo vas obavestiti.',
     'support.reply.caseType.UNKNOWN': 'Hvala — proveravamo i javićemo se uskoro.',
 
     'support.decision.status.ELIGIBLE': 'Ispunjava uslove',
@@ -2805,44 +3076,69 @@ export const translations = {
     'support.decision.status.PROFITABLE': 'Profitabilno',
 
     'support.decision.affiliateSwitch.noAffiliate.why': 'Na ovom nalogu nije dodeljen affiliate.',
-    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm': 'Proveri CRM atribuciju affiliate-a.',
-    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount': 'Ako korisnik želi novog affiliate-a, otvori NOV nalog preko affiliate link-a.',
+    'support.decision.affiliateSwitch.noAffiliate.action.verifyCrm':
+      'Proveri CRM atribuciju affiliate-a.',
+    'support.decision.affiliateSwitch.noAffiliate.action.openNewAccount':
+      'Ako korisnik želi novog affiliate-a, otvori NOV nalog preko affiliate link-a.',
 
-    'support.decision.affiliateSwitch.hasCommissions.why': 'Nalog je već generisao affiliate provizije. Promena bi napravila problem troška/atribucije.',
-    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch': 'NE menjaj postojeći nalog.',
-    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount': 'Ako korisnik insistira, predloži NOV nalog pod traženim affiliate link-om (može važiti minimalni depozit).',
-    'support.decision.affiliateSwitch.hasCommissions.action.escalate': 'Po potrebi eskaliraj Emanuele-u za konačno odobrenje.',
+    'support.decision.affiliateSwitch.hasCommissions.why':
+      'Nalog je već generisao affiliate provizije. Promena bi napravila problem troška/atribucije.',
+    'support.decision.affiliateSwitch.hasCommissions.action.doNotSwitch':
+      'NE menjaj postojeći nalog.',
+    'support.decision.affiliateSwitch.hasCommissions.action.openNewAccount':
+      'Ako korisnik insistira, predloži NOV nalog pod traženim affiliate link-om (može važiti minimalni depozit).',
+    'support.decision.affiliateSwitch.hasCommissions.action.escalate':
+      'Po potrebi eskaliraj Emanuele-u za konačno odobrenje.',
 
-    'support.decision.affiliateSwitch.noCommissions.why': 'Nema generisanih affiliate provizija na trenutnom nalogu. Promena nema trošak atribucije.',
-    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch': 'Nastavi sa promenom (CRM + Skale).',
-    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated': 'Potvrdi da je affiliate ažuriran dosledno u oba sistema.',
+    'support.decision.affiliateSwitch.noCommissions.why':
+      'Nema generisanih affiliate provizija na trenutnom nalogu. Promena nema trošak atribucije.',
+    'support.decision.affiliateSwitch.noCommissions.action.proceedSwitch':
+      'Nastavi sa promenom (CRM + Skale).',
+    'support.decision.affiliateSwitch.noCommissions.action.confirmUpdated':
+      'Potvrdi da je affiliate ažuriran dosledno u oba sistema.',
 
-    'support.decision.accountTypeChange.highWithdrawalRatio.why': 'Visok odnos isplata/depozita ukazuje na moguću zloupotrebu; potrebna je ručna provera pre promene tipa naloga.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk': 'Eskaliraj risk timu za ručnu proveru.',
-    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange': 'Zadrži promenu tipa naloga dok se ne dobije odobrenje.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.why':
+      'Visok odnos isplata/depozita ukazuje na moguću zloupotrebu; potrebna je ručna provera pre promene tipa naloga.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.escalateRisk':
+      'Eskaliraj risk timu za ručnu proveru.',
+    'support.decision.accountTypeChange.highWithdrawalRatio.action.holdChange':
+      'Zadrži promenu tipa naloga dok se ne dobije odobrenje.',
 
-    'support.decision.accountTypeChange.approvedWithConditions.why': 'Promena tipa naloga je dozvoljena uz operativne provere.',
-    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp': 'Zahtevaj KYC/PSP proveru pre promene tipa',
-    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks': 'Dozvoli promenu tipa naloga uz uslove: proveri KYC i PSP status.',
+    'support.decision.accountTypeChange.approvedWithConditions.why':
+      'Promena tipa naloga je dozvoljena uz operativne provere.',
+    'support.decision.accountTypeChange.approvedWithConditions.action.requireKycPsp':
+      'Zahtevaj KYC/PSP proveru pre promene tipa',
+    'support.decision.accountTypeChange.approvedWithConditions.action.allowWithChecks':
+      'Dozvoli promenu tipa naloga uz uslove: proveri KYC i PSP status.',
 
-    'support.decision.bonus.hasCommissionsAndDeposits.why': 'Nalog ima affiliate provizije i depozite — dodela bonusa zahteva verifikaciju da se izbegne dupli trošak.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership': 'Proveri vlasništvo provizija i marketing dogovor pre dodele bonusa.',
-    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm': 'Ako je odobreno, zabeleži razlog u CRM-u.',
+    'support.decision.bonus.hasCommissionsAndDeposits.why':
+      'Nalog ima affiliate provizije i depozite — dodela bonusa zahteva verifikaciju da se izbegne dupli trošak.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.verifyOwnership':
+      'Proveri vlasništvo provizija i marketing dogovor pre dodele bonusa.',
+    'support.decision.bonus.hasCommissionsAndDeposits.action.recordCrm':
+      'Ako je odobreno, zabeleži razlog u CRM-u.',
 
-    'support.decision.bonus.noDeposits.why': 'Nema depozita na nalogu — bonus zahteva depozitnu aktivnost.',
-    'support.decision.bonus.noDeposits.action.informFunding': 'Informiši korisnika o opcijama depozita i minimalnim zahtevima.',
+    'support.decision.bonus.noDeposits.why':
+      'Nema depozita na nalogu — bonus zahteva depozitnu aktivnost.',
+    'support.decision.bonus.noDeposits.action.informFunding':
+      'Informiši korisnika o opcijama depozita i minimalnim zahtevima.',
 
-    'support.decision.bonus.highValue.why': 'High-value korisnik ispunjava uslove za bonus, uz KYC.',
-    'support.decision.bonus.highValue.action.proceedKyc': 'Nastavi sa bonus ponudom i pokreni KYC ako nije prisutan.',
+    'support.decision.bonus.highValue.why':
+      'High-value korisnik ispunjava uslove za bonus, uz KYC.',
+    'support.decision.bonus.highValue.action.proceedKyc':
+      'Nastavi sa bonus ponudom i pokreni KYC ako nije prisutan.',
 
     'support.decision.bonus.standard.why': 'Korisnik ispunjava uslove za standardne promocije.',
-    'support.decision.bonus.standard.action.offerStandard': 'Ponudi standardni bonus prema katalogu promocija.',
+    'support.decision.bonus.standard.action.offerStandard':
+      'Ponudi standardni bonus prema katalogu promocija.',
 
     'support.decision.withdrawals.highRisk.why': 'Visok odnos isplata u odnosu na depozite.',
     'support.decision.withdrawals.highRisk.action.holdInvestigate': 'Zadrži i istraži.',
-    'support.decision.withdrawals.highRisk.action.checkPspKyc': 'Proveri PSP/KYC, trading aktivnost i metode plaćanja.',
+    'support.decision.withdrawals.highRisk.action.checkPspKyc':
+      'Proveri PSP/KYC, trading aktivnost i metode plaćanja.',
 
-    'support.decision.withdrawals.needsPspCheck.why': 'Detektovane isplate — proveri PSP i KYC pre obrade.',
+    'support.decision.withdrawals.needsPspCheck.why':
+      'Detektovane isplate — proveri PSP i KYC pre obrade.',
     'support.decision.withdrawals.needsPspCheck.action.verifyPsp': 'Proveri PSP status.',
     'support.decision.withdrawals.needsPspCheck.action.confirmKyc': 'Potvrdi KYC.',
     'support.decision.withdrawals.needsPspCheck.action.processSla': 'Obradi prema SLA.',
@@ -2850,19 +3146,26 @@ export const translations = {
     'support.decision.withdrawals.standardProcess.why': 'Nema isplata; prati standardni proces.',
     'support.decision.withdrawals.standardProcess.action.noAction': 'Nema potrebne akcije.',
 
-    'support.decision.revenueShare.criticalRisk.why': 'Veliki negativan P/L u odnosu na depozite ukazuje na retention/abuse rizik.',
-    'support.decision.revenueShare.criticalRisk.action.reviewRetention': 'Pregledaj retention strategiju i indikatore prevare.',
-    'support.decision.revenueShare.criticalRisk.action.considerLimits': 'Razmotri posebnu obradu ili limite.',
+    'support.decision.revenueShare.criticalRisk.why':
+      'Veliki negativan P/L u odnosu na depozite ukazuje na retention/abuse rizik.',
+    'support.decision.revenueShare.criticalRisk.action.reviewRetention':
+      'Pregledaj retention strategiju i indikatore prevare.',
+    'support.decision.revenueShare.criticalRisk.action.considerLimits':
+      'Razmotri posebnu obradu ili limite.',
 
-    'support.decision.revenueShare.profitAndWithdrawals.why': 'Korisnik je u profitu i ima isplate — prati churn/cashout.',
+    'support.decision.revenueShare.profitAndWithdrawals.why':
+      'Korisnik je u profitu i ima isplate — prati churn/cashout.',
     'support.decision.revenueShare.profitAndWithdrawals.action.monitor': 'Prati cashout ponašanje.',
-    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance': 'Obezbedi poresko/compliance izveštavanje ako je potrebno.',
+    'support.decision.revenueShare.profitAndWithdrawals.action.ensureCompliance':
+      'Obezbedi poresko/compliance izveštavanje ako je potrebno.',
 
     'support.decision.revenueShare.noDeposits.why': 'Nema depozita — revenue uticaj je neutralan.',
     'support.decision.revenueShare.noDeposits.action.noAction': 'Nema revenue akcija.',
 
-    'support.decision.revenueShare.netLoss.why': 'Korisnik je net-loss (negativan P/L), što može biti povoljno za revshare u zavisnosti od ugovora.',
-    'support.decision.revenueShare.netLoss.action.reviewContract': 'Pregledaj uslove ugovora i opcije zadržavanja.',
+    'support.decision.revenueShare.netLoss.why':
+      'Korisnik je net-loss (negativan P/L), što može biti povoljno za revshare u zavisnosti od ugovora.',
+    'support.decision.revenueShare.netLoss.action.reviewContract':
+      'Pregledaj uslove ugovora i opcije zadržavanja.',
 
     'support.decision.revenueShare.noIndicators.why': 'Nema značajnih revenue indikatora.',
     'support.decision.revenueShare.noIndicators.action.noAction': 'Nema potrebne akcije.',
@@ -3008,7 +3311,19 @@ export const translations = {
     'support.details.loader.userDetails': 'Učitavanje detalja korisnika…',
     'support.details.loader.decisionEngine': 'Učitavanje decision engine-a…',
     'support.details.backToResults': 'Nazad na rezultate',
+    'support.details.statusHelp.aria': 'Status: {status}. Dodirni za objašnjenje.',
+    'support.details.statusHelp.default': 'Vrednost statusa dolazi iz izvornog izveštaja.',
+    'support.details.statusHelp.duplicate':
+      'Duplicate: zapis se pojavljuje više puta u izvornim podacima (isti korisnik/nalog).',
+    'support.details.statusHelp.new':
+      'New: nalog je označen kao nov / nedavno kreiran u izveštaju.',
+    'support.details.statusHelp.active': 'Active: nalog je označen kao aktivan u izveštaju.',
+    'support.details.statusHelp.blocked':
+      'Blocked: nalog je označen kao blokiran/onemogućen u izveštaju.',
+    'support.details.priority.high': 'Visok',
     'support.details.priority.medium': 'Srednji',
+    'support.details.priority.normal': 'Normalan',
+    'support.details.priority.unknown': 'Nepoznat',
     'support.details.statusFallback': 'Status',
     'support.details.account': 'Nalog',
     'support.details.affiliate': 'Affiliate',
@@ -3070,7 +3385,8 @@ export const translations = {
     // Org Chart
     'orgChart.structure': 'Struktura',
     'orgChart.title': 'Organizaciona šema kompanije',
-    'orgChart.description': 'Hijerarhija, sloj odgovornosti i rosteri timova sa titulom, divizijom, odeljenjem, regionom i emailom po osobi.',
+    'orgChart.description':
+      'Hijerarhija, sloj odgovornosti i rosteri timova sa titulom, divizijom, odeljenjem, regionom i emailom po osobi.',
     'orgChart.search.placeholder': 'Pretraži po imenu i pritisni Enter',
     'orgChart.search.submit': 'Idi na tim',
     'orgChart.toc.ariaLabel': 'Sadržaj',
