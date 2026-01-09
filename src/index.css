@@ -784,7 +784,14 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   padding-bottom: 8px;
   background: rgba(5, 13, 29, 0.92);
   backdrop-filter: blur(10px);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  margin-bottom:10px;
 }
+
+.support-details-topbar-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.support-details-topbar-affiliate{font-size:11px;color:var(--muted);width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .support-details-topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
 .support-back-btn{width:36px;height:36px;display:inline-grid;place-items:center;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text);cursor:pointer;flex:0 0 auto}
@@ -802,11 +809,16 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 @media (max-width: 880px) {
   /* Support Details: remove the top padding applied by the scroll container (dashboard-content)
      so the sticky per-user header sits flush under the main topbar. */
-  .support-details-mode .dashboard-content{padding-top:0}
+  .support-details-mode .dashboard-content{padding-top:0;padding-left:0;padding-right:0}
+
+  /* Let the sticky header go full-bleed; keep its inner content padded. */
+  .support-user-details-page.w-full.px-6{padding-left:0;padding-right:0}
 
   /* Mobile: keep only compact basic info sticky and avoid heavy overlays */
   .support-details-topbar{
     padding-top: env(safe-area-inset-top);
+    padding-left:12px;
+    padding-right:12px;
     padding-bottom:6px;
     /* Solid, robust header: no fade-to-transparent (prevents seeing content scroll behind). */
     background: linear-gradient(

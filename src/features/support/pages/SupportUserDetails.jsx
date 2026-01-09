@@ -880,36 +880,30 @@ export default function SupportUserDetails({
     <div className="support-user-details-page w-full px-6 2xl:px-10">
       {/* Top per-user timeline removed: keep the compact horizontal timeline below */}
       {/* Top bar */}
-      <div
-        className="support-details-topbar"
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: 12,
-          marginBottom: 10,
-        }}
-      >
-        <div className="support-details-topbar-left">
-          <button
-            type="button"
-            className="support-back-btn"
-            onClick={onBack}
-            aria-label={t('support.details.backToResults')}
-            title={t('support.details.backToResults')}
-          >
-            <span aria-hidden>←</span>
-          </button>
-          <div className="support-details-topbar-basic">
-            <div className="support-details-topbar-name">{displayName}</div>
-            <div className="support-details-topbar-meta">
-              {accountId}
-              {mt5 ? ` · ${mt5}` : ''}
-            </div>
-            <div className="support-details-topbar-meta">
-              {t('support.details.affiliate')}: {affiliateDisplay}
+      <div className="support-details-topbar">
+        <div className="support-details-topbar-row">
+          <div className="support-details-topbar-left">
+            <button
+              type="button"
+              className="support-back-btn"
+              onClick={onBack}
+              aria-label={t('support.details.backToResults')}
+              title={t('support.details.backToResults')}
+            >
+              <span aria-hidden>←</span>
+            </button>
+            <div className="support-details-topbar-basic">
+              <div className="support-details-topbar-name">{displayName}</div>
+              <div className="support-details-topbar-meta">
+                {accountId}
+                {mt5 ? ` · ${mt5}` : ''}
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="support-details-topbar-affiliate">
+          {t('support.details.affiliate')}: {affiliateDisplay}
         </div>
       </div>
 
