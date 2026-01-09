@@ -848,6 +848,14 @@ export default function SupportUserDetails({
     setReplyText(suggested)
   }, [suggested])
 
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.body.classList.add('support-details-mode')
+    return () => {
+      document.body.classList.remove('support-details-mode')
+    }
+  }, [])
+
   // Only decide what to render after all hooks have run (Rules of Hooks).
   const detailsProgress = (paymentsLoaded ? 50 : 0) + (mediaLoaded ? 50 : 0)
   if (!selected) return null

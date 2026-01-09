@@ -800,6 +800,10 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 }
 
 @media (max-width: 880px) {
+  /* Support Details: remove the top padding applied by the scroll container (dashboard-content)
+     so the sticky per-user header sits flush under the main topbar. */
+  .support-details-mode .dashboard-content{padding-top:0}
+
   /* Mobile: keep only compact basic info sticky and avoid heavy overlays */
   .support-details-topbar{
     padding-top: env(safe-area-inset-top);
@@ -813,9 +817,6 @@ select option, select optgroup{background:var(--card);color:var(--text)}
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,0.06);
   }
-
-  /* Remove the perceived gap under the main navbar (dashboard-content has top padding). */
-  .support-user-details-page{ margin-top: -14px; }
 
   .support-back-btn{width:34px;height:34px;border-radius:10px}
   .support-details-topbar-name{font-size:14px}
