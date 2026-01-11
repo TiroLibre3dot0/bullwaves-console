@@ -7,6 +7,10 @@ public/*.bak
 public/*.csv.*.bak
 public/raw/
 
+# Generated comments report output (keep local)
+public/comments.csv
+public/Comments Report.csv
+
 # Local debug scripts
 scripts/roi_debug.js
 node_modules

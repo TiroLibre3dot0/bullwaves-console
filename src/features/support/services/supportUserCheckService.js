@@ -1372,9 +1372,14 @@ function computeTier(positions, positionsPerDay) {
 }
 
 export function computeActivityIntelligence(row, now = new Date()) {
-  const positions = toNum(
-    pickRowValue(row, ['positioncount', 'position_count', 'positions', 'position'])
-  )
+  // Our Registrations Report currently contains trading aggregates like `lots`/`volume` and P/L,
+  // but does not always include an explicit position/trade count column.
+  // Prefer a real position count when present; otherwise, fall back to `lots` so the UI doesn't
+  // show zero activity everywhere.
+  let positions = toNum(pickRowValue(row, ['positioncount', 'positions', 'position']))
+  if (!positions) {
+    positions = toNum(pickRowValue(row, ['lots', 'totallots']))
+  }
   const ageDays = computeAgeDaysFromRow(row, now)
   const safeAge = ageDays || 1
   const positionsPerDay = positions > 0 ? positions / safeAge : 0
