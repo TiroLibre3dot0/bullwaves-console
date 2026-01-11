@@ -1,0 +1,280 @@
+/*
+Comments report sanitizer.
+
+Goal:
+- Read uploaded CSV (often converted from XLSX by upload-server)
+- Keep ONLY rows whose `comment` field contains the word "moved" (case-insensitive)
+- From each matching comment extract:
+  - bullwaves_id
+  - from_affiliate_id
+  - to_affiliate_id
+- Write cleaned CSV to `public/comments.csv`
+- Save raw backup under `public/raw/`
+
+Usage:
+  node scripts/sanitize_comments.js <sourceCsvPath>
+*/
+const fs = require('fs')
+const path = require('path')
+const Papa = require('papaparse')
+
+const src = process.argv[2] || 'tmp_comments.csv'
+const dest = path.join('public', 'comments.csv')
+const rawDir = path.join('public', 'raw')
+
+if (!fs.existsSync(src)) {
+  console.error('Source file not found:', src)
+  process.exit(1)
+}
+if (!fs.existsSync(rawDir)) fs.mkdirSync(rawDir, { recursive: true })
+
+let txt = fs.readFileSync(src, 'utf8')
+if (txt.charCodeAt(0) === 0xFEFF) txt = txt.slice(1)
+
+const timestamp = Date.now()
+const rawBackup = path.join(rawDir, `comments_raw.${timestamp}.csv`)
+fs.writeFileSync(rawBackup, txt, 'utf8')
+console.log('Saved raw backup to', rawBackup)
+
+const normalizedHeader = (h) => String(h || '')
+  .trim()
+  .toLowerCase()
+  .replace(/\s+/g, '_')
+  .replace(/[^a-z0-9_]/g, '')
+
+function tryParse(text, opts = {}) {
+  return Papa.parse(text, Object.assign({
+    header: true,
+    skipEmptyLines: true,
+    quoteChar: '"',
+    transformHeader: normalizedHeader,
+  }, opts))
+}
+
+function preprocessRaw(text) {
+  const lines = text.split(/\r?\n/)
+  return lines.map(l => {
+    if (!l) return l
+    l = l.replace(/;{1,}\s*$/g, '')
+    if (/^".*"$/.test(l) && l.indexOf('""') !== -1) {
+      l = l.slice(1, -1).replace(/""/g, '"')
+    }
+    return l
+  }).join('\n')
+}
+
+function stripLeadingNonDataLines(text) {
+  const lines = String(text || '').split(/\r?\n/)
+  // Some exports include a title line like:
+  // "01/01/2000 to 01/11/2026 comments report,,,,"
+  // followed by the real header row.
+  // We find the first plausible header row containing a Comment column.
+  const idx = lines.findIndex((l) => {
+    const s = String(l || '').trim().toLowerCase()
+    if (!s) return false
+    // Require 'comment' and at least one other typical column name to reduce false matches.
+    return s.includes('comment') && (s.includes('created') || s.includes('admin') || s.includes('affiliate'))
+  })
+  if (idx > 0) return lines.slice(idx).join('\n')
+  return text
+}
+
+function detectDelimiter(sample) {
+  const commaCount = (sample.match(/,/g) || []).length
+  const semiCount = (sample.match(/;/g) || []).length
+  return semiCount > commaCount ? ';' : ','
+}
+
+function balanceQuotesRejoin(text) {
+  const lines = text.split(/\r?\n/)
+  const out = []
+  let buf = ''
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (buf.length) buf += '\n' + line
+    else buf = line
+    const q = (buf.match(/\"/g) || []).length
+    if (q % 2 === 0) {
+      out.push(buf)
+      buf = ''
+    }
+  }
+  if (buf.length) out.push(buf)
+  return out.join('\n')
+}
+
+function extractMove(commentRaw) {
+  const comment = String(commentRaw || '')
+  const lower = comment.toLowerCase()
+  if (!lower.includes('moved')) return null
+
+  let bullwavesId = ''
+  let bullwavesUser = ''
+  let fromAffiliateId = ''
+  let toAffiliateId = ''
+
+  // Bullwaves ID formats seen:
+  // - User bullwaves-851993 was moved...
+  // - used bullwaves id 308186
+  // - Bullwaves ID: 308186
+  let m = comment.match(/\bbullwaves\s*[-_]?\s*(\d{3,})\b/i)
+  if (m) {
+    bullwavesId = m[1]
+    bullwavesUser = `bullwaves-${m[1]}`
+  }
+  if (!bullwavesId) {
+    m = comment.match(/\bbullwaves\s*id\s*[:#-]?\s*(\d{3,})\b/i)
+    if (m) {
+      bullwavesId = m[1]
+      bullwavesUser = `bullwaves-${m[1]}`
+    }
+  }
+  if (!bullwavesId) {
+    m = comment.match(/\bused\s+bullwaves\s*id\s*[:#-]?\s*(\d{3,})\b/i)
+    if (m) {
+      bullwavesId = m[1]
+      bullwavesUser = `bullwaves-${m[1]}`
+    }
+  }
+
+  // Affiliate movement patterns (robust across EN/IT)
+  // Examples:
+  // - moved da Affiliate Id 123 a Affiliate ID 456
+  // - moved from Affiliate Id 123 to Affiliated ID 456
+  // - moved from affiliate 2287 to affiliate 35272
+  // - moved from 123 to 456
+  m = comment.match(/\bmoved\s+(?:from|da)\s+(?:affiliate\s*id|affiliate|affiliated\s*id)?\s*[:#-]?\s*(\d{1,})\s+(?:to|a)\s+(?:affiliate\s*id|affiliate|affiliated\s*id)?\s*[:#-]?\s*(\d{1,})\b/i)
+  if (!m) m = comment.match(/\bmoved\s+from\s+(\d{1,})\s+to\s+(\d{1,})\b/i)
+  if (m) {
+    fromAffiliateId = m[1]
+    toAffiliateId = m[2]
+  }
+
+  return {
+    bullwaves_user: bullwavesUser,
+    bullwaves_id: bullwavesId,
+    from_affiliate_id: fromAffiliateId,
+    to_affiliate_id: toAffiliateId,
+  }
+}
+
+const pre = stripLeadingNonDataLines(preprocessRaw(txt))
+const sampleHeader = pre.split(/\r?\n/)[0] || ''
+const detectedDelimiter = detectDelimiter(sampleHeader)
+console.log('Auto-detected delimiter:', JSON.stringify(detectedDelimiter))
+
+let parsed = tryParse(pre, { delimiter: detectedDelimiter })
+let fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
+
+if (!fields) {
+  const joined = balanceQuotesRejoin(pre)
+  parsed = tryParse(joined, { delimiter: detectedDelimiter })
+  fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
+}
+
+if (!fields) {
+  console.error('Unable to detect header fields after fallback parsing. Aborting.')
+  process.exit(2)
+}
+
+console.log('Detected fields:', fields.join(', '))
+
+// Find the comment field
+const commentField = fields.find(f => f === 'comment' || String(f).includes('comment'))
+if (!commentField) {
+  console.error('Missing expected comment column. Detected fields:', fields.join(', '))
+  process.exit(3)
+}
+
+// Build output fields
+const baseFields = ['bullwaves_user', 'bullwaves_id', 'from_affiliate_id', 'to_affiliate_id', 'comment']
+const extraFields = []
+for (const f of fields) {
+  if (!f) continue
+  if (f === commentField) continue // we will output `comment` normalized
+  if (baseFields.includes(f)) continue
+  extraFields.push(f)
+}
+
+const outputFields = baseFields.concat(extraFields)
+
+const rowsIn = parsed.data || []
+const extractedRows = []
+for (const r of rowsIn) {
+  const commentValue = r ? r[commentField] : ''
+  const move = extractMove(commentValue)
+  if (!move) continue
+  const out = {}
+  out.bullwaves_user = move.bullwaves_user
+  out.bullwaves_id = move.bullwaves_id
+  out.from_affiliate_id = move.from_affiliate_id
+  out.to_affiliate_id = move.to_affiliate_id
+  out.comment = String(commentValue || '')
+
+  for (const f of extraFields) {
+    out[f] = r && Object.prototype.hasOwnProperty.call(r, f) ? r[f] : ''
+  }
+
+  extractedRows.push(out)
+}
+
+console.log('Rows matched (comment contains "moved"):', extractedRows.length)
+
+// Deduplicate against existing dest
+let existingRows = []
+if (fs.existsSync(dest)) {
+  try {
+    const exTxt = fs.readFileSync(dest, 'utf8')
+    const exParsed = Papa.parse(exTxt, {
+      header: true,
+      skipEmptyLines: true,
+      quoteChar: '"',
+      transformHeader: normalizedHeader,
+    })
+    existingRows = exParsed.data || []
+  } catch (e) {
+    console.warn('Warning: failed to parse existing dest for dedupe:', e && e.message)
+    existingRows = []
+  }
+}
+
+const norm = (v) => String(v ?? '').trim()
+const pickDate = (row) => {
+  // best-effort: keep stable keys if the file contains timestamps
+  const keys = ['created_on', 'external_date', 'date', 'created_at', 'created', 'timestamp']
+  for (const k of keys) {
+    const val = row && row[k]
+    if (val) return norm(val)
+  }
+  return ''
+}
+
+const keyOf = (row) => {
+  return [
+    norm(row.bullwaves_id),
+    norm(row.from_affiliate_id),
+    norm(row.to_affiliate_id),
+    pickDate(row),
+    norm(row.comment),
+  ].join('|')
+}
+
+const seen = new Set(existingRows.map(keyOf))
+let added = 0
+let duplicates = 0
+
+for (const row of extractedRows) {
+  const k = keyOf(row)
+  if (seen.has(k)) {
+    duplicates++
+    continue
+  }
+  seen.add(k)
+  existingRows.push(row)
+  added++
+}
+
+const csvOut = Papa.unparse(existingRows, { columns: outputFields })
+fs.writeFileSync(dest, csvOut, 'utf8')
+console.log('Wrote cleaned CSV to', dest)
+console.log(`Existing rows: ${existingRows.length - added} New added: ${added} Unchanged duplicates skipped: ${duplicates} Affiliate updates: 0 Total field updates: 0`)

@@ -1,9 +1,12 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import Papa from 'papaparse'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import {
   searchUsers,
+  loadCsvRows,
+  computeActivityIntelligence,
   loadPaymentsReport,
   resolveSearchedAffiliate,
   getPaymentAffiliateById,
@@ -38,6 +41,9 @@ const STATUS_KEYS = ['status']
 const COUNTRY_KEYS = ['country']
 const FRAUD_KEYS = ['fraud', 'fraudchargeback', 'fraud/chargeback']
 const ACTION_KEYS = ['action']
+
+// Trading activity
+const POSITION_COUNT_KEYS = ['positioncount', 'position_count', 'position count']
 
 // Trading / comms
 const LOTS_KEYS = ['lots', 'total_lots']
@@ -88,6 +94,7 @@ function getMapped(row) {
     action: pickField(row, ACTION_KEYS),
     lots: pickField(row, LOTS_KEYS),
     volume: pickField(row, VOLUME_KEYS),
+    positionCount: pickField(row, POSITION_COUNT_KEYS),
     pl: pickField(row, PL_KEYS),
     spread: pickField(row, SPREAD_KEYS),
     roi: pickField(row, ROI_KEYS),
@@ -110,6 +117,12 @@ function fmtEuro(v) {
   if (v === null || v === undefined || String(v).trim() === '') return '—'
   const n = toNum(v)
   return `€${n.toLocaleString()}`
+}
+
+function fmtEuro2(v) {
+  if (v === null || v === undefined || String(v).trim() === '') return '—'
+  const n = toNum(v)
+  return `€${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function fmtDollar(v) {
@@ -174,22 +187,17 @@ export default function SupportUserCheck() {
         console.log('Fetch response', resp.ok)
         if (!resp.ok) return
         const text = await resp.text()
-        // Parse CSV come nel service
-        const lines = text.split(/\r?\n/).filter((line) => line.trim())
-        if (lines.length < 2) return
-        const headers = lines[0].split(',').map((h) => h.replace(/"/g, '').trim())
-        const rows = lines.slice(1).map((line) => {
-          const cols = line.split(',').map((v) => v.replace(/"/g, '').trim())
-          const row = {}
-          headers.forEach((h, idx) => {
-            row[h] = cols[idx] || ''
-          })
-          return row
-        })
-        // Trova la colonna data usando REGDATE_KEYS
-        const dateKey =
-          headers.find((h) => REGDATE_KEYS.includes(h.toLowerCase().replace(/[^a-z]/g, ''))) ||
-          headers[0]
+        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
+        if (!parsed || (parsed.errors && parsed.errors.length)) return
+        const rows = parsed.data || []
+        const headers = parsed.meta && parsed.meta.fields ? parsed.meta.fields : []
+        if (!rows.length || !headers.length) return
+
+        const norm = (h) =>
+          String(h || '')
+            .toLowerCase()
+            .replace(/[^a-z]/g, '')
+        const dateKey = headers.find((h) => REGDATE_KEYS.includes(norm(h))) || headers[0]
         const status = checkDataStatus(rows, dateKey, 'Registrations Report')
         setDataStatus(status)
         setGlobalDataStatus(status)
@@ -227,6 +235,95 @@ export default function SupportUserCheck() {
   const cacheRef = useRef(new Map())
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
+
+  const [botCandidates, setBotCandidates] = useState([])
+  const [botCandidatesLoading, setBotCandidatesLoading] = useState(false)
+  const [botHoverIndex, setBotHoverIndex] = useState(null)
+
+  // Precompute a default "Potential Bot (EA aggressive)" list for fast triage.
+  useEffect(() => {
+    let mounted = true
+    setBotCandidatesLoading(true)
+    ;(async () => {
+      try {
+        const BOT_LIST_SIZE = 50
+        const rows = await loadCsvRows()
+        const scoredAll = (Array.isArray(rows) ? rows : []).map((raw) => ({
+          raw,
+          intel: computeActivityIntelligence(raw),
+        }))
+
+        const byScoreDesc = (a, b) => (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
+
+        // Prefer true "Potential Bot" accounts first; if there are fewer than 50,
+        // fill the remaining slots with the next-highest botScore accounts.
+        const scoredBots = scoredAll.filter((x) => x?.intel?.isPotentialBot).sort(byScoreDesc)
+        const scoredFill = scoredAll.filter((x) => !x?.intel?.isPotentialBot).sort(byScoreDesc)
+        const scored = scoredBots.concat(scoredFill).slice(0, BOT_LIST_SIZE)
+
+        // Enrich list with affiliate name + registration date (limited size => OK)
+        const enriched = await Promise.all(
+          scored.map(async (x) => {
+            const mapped = getMapped(x.raw)
+            const affiliateId = mapped?.affiliateId
+            let affiliateName = null
+            try {
+              const payInfo = await getPaymentAffiliateById(affiliateId)
+              affiliateName = payInfo?.affiliateName || null
+            } catch (e) {
+              affiliateName = null
+            }
+            return {
+              ...x,
+              affiliateName,
+              regDate: mapped?.regDate || null,
+            }
+          })
+        )
+        if (!mounted) return
+        setBotCandidates(enriched)
+      } catch (e) {
+        if (!mounted) return
+        setBotCandidates([])
+      } finally {
+        if (mounted) setBotCandidatesLoading(false)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [])
+
+  function compactDateLabel(s) {
+    const raw = String(s || '').trim()
+    if (!raw) return '—'
+    // report dates are often like "M/D/YYYY HH:mm:ss"; show just the date part
+    return raw.split(/\s+/, 1)[0] || raw
+  }
+
+  function formatRegDateShort(value) {
+    const raw = String(value || '').trim()
+    if (!raw) return '—'
+    const first = raw.split(/\s+/, 1)[0] || raw
+    const d = first.split('/')
+    if (d.length >= 3) {
+      const a = parseInt(d[0], 10)
+      const b = parseInt(d[1], 10)
+      const yyyy = parseInt(d[2], 10)
+      if (Number.isFinite(a) && Number.isFinite(b) && Number.isFinite(yyyy)) {
+        // heuristic: if first number > 12 => D/M, else M/D
+        let mm = a
+        let dd = b
+        if (a > 12) {
+          dd = a
+          mm = b
+        }
+        const pad = (n) => String(n).padStart(2, '0')
+        return `${pad(dd)}/${pad(mm)}/${yyyy}`
+      }
+    }
+    return first
+  }
 
   async function runSearch(q) {
     const trimmed = String(q || '').trim()
@@ -380,6 +477,8 @@ export default function SupportUserCheck() {
   const qTrim = String(query || '').trim()
   const showHero = !searched && qTrim === '' && !selected
 
+  const ppdTooltip = t('support.activity.tooltip.positionsPerDay')
+
   function initialsFor(mapped) {
     const seed = (mapped?.name || mapped?.userId || ' ? ')
       .split(' ')
@@ -389,6 +488,76 @@ export default function SupportUserCheck() {
       .join('')
       .toUpperCase()
     return seed
+  }
+
+  function tierMeta(tier) {
+    const key = tier ? `support.activity.tier.${tier}` : null
+    const label = key ? t(key) : '—'
+
+    if (tier === 'inactive') {
+      return {
+        label,
+        fg: 'rgba(255,255,255,0.72)',
+        bg: 'rgba(148,163,184,0.12)',
+        border: 'rgba(148,163,184,0.22)',
+      }
+    }
+    if (tier === 'low') {
+      return { label, fg: '#e2e8f0', bg: 'rgba(59,130,246,0.10)', border: 'rgba(59,130,246,0.20)' }
+    }
+    if (tier === 'active') {
+      return { label, fg: '#dbeafe', bg: 'rgba(37,99,235,0.14)', border: 'rgba(37,99,235,0.26)' }
+    }
+    if (tier === 'high') {
+      return { label, fg: '#fff7ed', bg: 'rgba(245,158,11,0.14)', border: 'rgba(245,158,11,0.28)' }
+    }
+    if (tier === 'hyper') {
+      return { label, fg: '#fee2e2', bg: 'rgba(239,68,68,0.16)', border: 'rgba(239,68,68,0.32)' }
+    }
+    return {
+      label,
+      fg: 'rgba(255,255,255,0.72)',
+      bg: 'rgba(148,163,184,0.10)',
+      border: 'rgba(148,163,184,0.18)',
+    }
+  }
+
+  function colorForPpd(ppd, tier) {
+    if (!ppd || ppd <= 0) return 'rgba(255,255,255,0.72)'
+    if (tier === 'hyper') return '#fca5a5'
+    if (tier === 'high') return '#fde68a'
+    if (tier === 'active') return '#93c5fd'
+    return '#e2e8f0'
+  }
+
+  function riskDotMeta(intel) {
+    const score = Number(intel?.botScore || 0)
+    if (intel?.isPotentialBot) {
+      return {
+        level: 'high',
+        color: '#ef4444',
+        shadow: '0 0 0 4px rgba(239,68,68,0.18)',
+      }
+    }
+    if (score >= 90) {
+      return {
+        level: 'medium',
+        color: '#f59e0b',
+        shadow: '0 0 0 4px rgba(245,158,11,0.16)',
+      }
+    }
+    if (score >= 45) {
+      return {
+        level: 'low',
+        color: '#22c55e',
+        shadow: '0 0 0 4px rgba(34,197,94,0.14)',
+      }
+    }
+    return {
+      level: 'veryLow',
+      color: 'rgba(148,163,184,0.55)',
+      shadow: '0 0 0 4px rgba(148,163,184,0.10)',
+    }
   }
 
   // sort mapped results by numeric total deposits (descending) to surface biggest depositors first
@@ -608,6 +777,413 @@ export default function SupportUserCheck() {
                 {/* examples removed as secondary placeholder per request */}
               </div>
             </div>
+
+            {/* Default triage list: potential Bot (EA aggressive) */}
+            {showHero && (
+              <div className="bot-top10-wrap" style={{ margin: '18px auto 0' }}>
+                <div
+                  className="card no-card-hover"
+                  style={{
+                    padding: 12,
+                    borderRadius: 14,
+                    border: '1px solid rgba(239,68,68,0.14)',
+                    background: 'linear-gradient(135deg, rgba(15,23,42,0.70), rgba(2,6,23,0.55))',
+                    boxShadow: '0 16px 38px rgba(2,6,23,0.60)',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 900, fontSize: 13 }}>
+                        {t('support.userCheck.botList.title')}
+                      </div>
+                      <div
+                        style={{ marginTop: 4, color: 'var(--muted)', fontSize: 12, opacity: 0.9 }}
+                      >
+                        {t('support.userCheck.botList.subtitle')}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(255,255,255,0.72)',
+                          padding: '6px 10px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(239,68,68,0.18)',
+                          background: 'rgba(239,68,68,0.08)',
+                          alignSelf: 'flex-start',
+                        }}
+                        title={ppdTooltip}
+                      >
+                        {t('support.userCheck.botList.ppdChip')}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'rgba(255,255,255,0.65)',
+                          padding: '6px 10px',
+                          borderRadius: 999,
+                          border: '1px solid rgba(148,163,184,0.18)',
+                          background: 'rgba(148,163,184,0.08)',
+                        }}
+                        title={t('support.userCheck.botList.shortcuts')}
+                      >
+                        {t('support.userCheck.botList.shortcuts')}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: 12,
+                      borderRadius: 12,
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'rgba(255,255,255,0.02)',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    }}
+                  >
+                    {botCandidatesLoading ? (
+                      <div style={{ padding: 12, color: 'var(--muted)', fontSize: 13 }}>
+                        {t('support.userCheck.botList.loading')}
+                      </div>
+                    ) : botCandidates.length ? (
+                      <>
+                        <div
+                          className="bot-top10-grid bot-top10-header"
+                          style={{
+                            padding: '10px 12px',
+                            fontSize: 11,
+                            fontWeight: 800,
+                            letterSpacing: 0.2,
+                            color: 'rgba(255,255,255,0.55)',
+                            background: 'rgba(255,255,255,0.03)',
+                            borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ width: 26, textAlign: 'center' }}>#</div>
+                            <div aria-hidden style={{ width: 8, height: 8 }} />
+                          </div>
+                          <div
+                            style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}
+                          >
+                            <div aria-hidden style={{ width: 34, height: 34, flex: '0 0 auto' }} />
+                            <div style={{ minWidth: 0 }}>{t('support.details.account')}</div>
+                          </div>
+                          <div className="bot-top10-only-wide">
+                            {t('support.details.affiliate')}
+                          </div>
+                          <div className="bot-top10-only-wide">
+                            {t('support.details.userTimeline.registration')}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            {t('support.activity.metrics.ageDays')}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            {t('support.activity.metrics.positions')}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            {t('support.details.tradingPerformance.pl')}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            {t('support.activity.metrics.positionsPerDay')}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            {t('support.activity.metrics.tier')}
+                          </div>
+                        </div>
+
+                        <div className="hide-scrollbar bot-top10-scroll">
+                          {botCandidates.map(({ raw, intel, affiliateName, regDate }, i) => {
+                            const mapped = getMapped(raw)
+                            const name = mapped?.name || mapped?.userId || '—'
+                            const plRaw = mapped?.pl
+                            const hasPl =
+                              plRaw !== null && plRaw !== undefined && String(plRaw).trim() !== ''
+                            const plNum = hasPl ? toNum(plRaw) : null
+                            const ppd = intel?.positionsPerDay != null ? intel.positionsPerDay : 0
+                            const ageDays = intel?.ageDays
+                            const tier = intel?.tier
+                            const tm = tierMeta(tier)
+                            const isHover = botHoverIndex === i
+                            const regLabel = formatRegDateShort(regDate)
+                            const affLabel = affiliateName || '—'
+                            const dot = riskDotMeta(intel)
+                            const isBot = Boolean(intel?.isPotentialBot)
+
+                            return (
+                              <div
+                                key={i}
+                                role="button"
+                                tabIndex={0}
+                                onMouseEnter={() => setBotHoverIndex(i)}
+                                onMouseLeave={() => setBotHoverIndex(null)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') onSelectUser(raw)
+                                }}
+                                onClick={() => onSelectUser(raw)}
+                                className="bot-top10-grid"
+                                style={{
+                                  padding: '10px 12px',
+                                  cursor: 'pointer',
+                                  background: isHover
+                                    ? 'linear-gradient(135deg, rgba(99,102,241,0.12), rgba(255,255,255,0.02))'
+                                    : 'transparent',
+                                  borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                  transition: 'background 120ms ease, transform 120ms ease',
+                                  transform: isHover ? 'translateY(-1px)' : 'translateY(0)',
+                                }}
+                                title={t('support.userCheck.botList.openHint')}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div
+                                    style={{
+                                      width: 26,
+                                      height: 26,
+                                      borderRadius: 9,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      color: 'rgba(255,255,255,0.8)',
+                                      background: 'rgba(148,163,184,0.10)',
+                                      border: '1px solid rgba(148,163,184,0.16)',
+                                    }}
+                                  >
+                                    {i + 1}
+                                  </div>
+                                  <span
+                                    aria-hidden
+                                    style={{
+                                      width: 8,
+                                      height: 8,
+                                      borderRadius: 999,
+                                      background: dot.color,
+                                      boxShadow: dot.shadow,
+                                    }}
+                                    title={`${t('support.userCheck.botList.riskScore')}: ${Number(intel?.botScore || 0).toFixed(0)}`}
+                                  />
+                                </div>
+
+                                <div
+                                  style={{
+                                    minWidth: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      width: 34,
+                                      height: 34,
+                                      borderRadius: 12,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontWeight: 900,
+                                      fontSize: 12,
+                                      color: '#fff',
+                                      background:
+                                        'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(2,6,23,0.15))',
+                                      border: '1px solid rgba(99,102,241,0.22)',
+                                      flex: '0 0 auto',
+                                    }}
+                                  >
+                                    {initialsFor(mapped)}
+                                  </div>
+                                  <div style={{ minWidth: 0 }}>
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 8,
+                                        minWidth: 0,
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          fontWeight: 950,
+                                          fontSize: 13,
+                                          color: 'rgba(255,255,255,0.92)',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                          minWidth: 0,
+                                        }}
+                                      >
+                                        {name}
+                                      </div>
+                                      <span
+                                        style={{
+                                          fontSize: 10,
+                                          fontWeight: 950,
+                                          padding: '2px 8px',
+                                          borderRadius: 999,
+                                          border: isBot
+                                            ? '1px solid rgba(239,68,68,0.35)'
+                                            : '1px solid rgba(148,163,184,0.24)',
+                                          background: isBot
+                                            ? 'rgba(239,68,68,0.12)'
+                                            : 'rgba(148,163,184,0.10)',
+                                          color: isBot ? '#fecaca' : 'rgba(255,255,255,0.70)',
+                                          flex: '0 0 auto',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: 0.35,
+                                        }}
+                                        title={
+                                          isBot
+                                            ? t('support.userCheck.botList.badge.botHint')
+                                            : t('support.userCheck.botList.badge.fillHint')
+                                        }
+                                      >
+                                        {isBot
+                                          ? t('support.userCheck.botList.badge.bot')
+                                          : t('support.userCheck.botList.badge.fill')}
+                                      </span>
+                                    </div>
+                                    <div
+                                      className="bot-top10-only-compact"
+                                      style={{
+                                        marginTop: 2,
+                                        color: 'rgba(255,255,255,0.55)',
+                                        fontSize: 11,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {affLabel !== '—'
+                                        ? affLabel
+                                        : t('support.details.noAffiliate')}
+                                      {regLabel && regLabel !== '—' ? ` · ${regLabel}` : ''}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="bot-top10-only-wide" style={{ minWidth: 0 }}>
+                                  <div
+                                    style={{
+                                      fontWeight: 800,
+                                      fontSize: 12,
+                                      color: 'rgba(255,255,255,0.78)',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {affLabel}
+                                  </div>
+                                </div>
+                                <div
+                                  className="bot-top10-only-wide"
+                                  style={{
+                                    textAlign: 'right',
+                                    fontSize: 12,
+                                    color: 'rgba(255,255,255,0.70)',
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {regLabel}
+                                </div>
+
+                                <div
+                                  style={{
+                                    textAlign: 'right',
+                                    fontSize: 12,
+                                    color: 'rgba(255,255,255,0.80)',
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {ageDays != null ? ageDays : '—'}
+                                </div>
+                                <div
+                                  style={{
+                                    textAlign: 'right',
+                                    fontSize: 12,
+                                    color: 'rgba(255,255,255,0.80)',
+                                    fontWeight: 800,
+                                  }}
+                                >
+                                  {(intel?.positions ?? 0).toLocaleString()}
+                                </div>
+                                <div
+                                  style={{
+                                    textAlign: 'right',
+                                    fontSize: 12,
+                                    fontWeight: 900,
+                                    color: hasPl ? colorForNumber(plNum) : 'rgba(255,255,255,0.55)',
+                                  }}
+                                  title={t('support.details.tradingPerformance.pl')}
+                                >
+                                  {hasPl ? fmtEuro2(plNum) : '—'}
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div
+                                    style={{
+                                      fontWeight: 950,
+                                      color: colorForPpd(ppd, tier),
+                                      fontSize: 13,
+                                      lineHeight: 1,
+                                    }}
+                                    title={ppdTooltip}
+                                  >
+                                    {ppd.toFixed(1)}
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                  <span
+                                    style={{
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      padding: '5px 10px',
+                                      borderRadius: 999,
+                                      color: tm.fg,
+                                      background: tm.bg,
+                                      border: `1px solid ${tm.border}`,
+                                    }}
+                                  >
+                                    {tm.label}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        {/* subtle fade so scrollability is perceived without a scrollbar */}
+                        <div
+                          aria-hidden
+                          style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: 34,
+                            background:
+                              'linear-gradient(180deg, rgba(2,6,23,0.00), rgba(2,6,23,0.55) 55%, rgba(2,6,23,0.70))',
+                            pointerEvents: 'none',
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <div style={{ padding: 12, color: 'var(--muted)', fontSize: 13 }}>
+                        {t('support.userCheck.botList.empty')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </header>
 
           {/* results area (unchanged logic, compact presentation) */}

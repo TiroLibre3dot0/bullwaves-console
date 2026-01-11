@@ -34,9 +34,22 @@ export const translations = {
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.roadmap': 'Mega-Stories',
     'sidebar.weeklyMap': 'Weekly Map',
+    'sidebar.weeklyExecutionHistory': 'Weekly Execution History',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'Support • User Check',
     'sidebar.upload': 'Upload',
+
+    // Weekly Execution History
+    'weeklyExecutionHistory.header.label': 'Ops memory',
+    'weeklyExecutionHistory.header.title': 'Weekly Execution History',
+    'weeklyExecutionHistory.header.subtitle':
+      'Read-only log of planned vs completed work, week by week.',
+    'weeklyExecutionHistory.header.weekRange': 'Week {start} → {end}',
+    'weeklyExecutionHistory.filters.week': 'Week',
+    'weeklyExecutionHistory.filters.currentBadge': '(current)',
+    'weeklyExecutionHistory.sections.planned': 'Planned',
+    'weeklyExecutionHistory.sections.done': 'Done',
+    'weeklyExecutionHistory.empty': 'No history entries.',
 
     // Login
     'login.pill': 'Management + Finance + Support access',
@@ -713,12 +726,13 @@ export const translations = {
     // Upload
     'upload.title': 'Upload reports',
     'upload.description.line1':
-      'Upload a CSV and the system will sanitize it and update the reports.',
+      'Upload a CSV or XLSX and the system will sanitize it and update the reports.',
     'upload.description.line2':
       'Choose the report type explicitly to avoid relying on the file name.',
     'upload.type.registrations': 'Registrations',
     'upload.type.payments': 'Payments',
     'upload.type.media': 'Media',
+    'upload.type.comments': 'Comments',
     'upload.button.upload': 'Upload',
     'upload.button.uploading': 'Uploading…',
     'upload.label.selected': 'Selected',
@@ -765,6 +779,11 @@ export const translations = {
     'support.userCheck.noResults': 'No results',
 
     'support.reply.fallback': "Thanks {name} — we're reviewing and will follow up shortly.",
+
+    'support.details.affiliateMoves.title': 'Affiliate moves',
+    'support.details.affiliateMoves.loading': 'Loading…',
+    'support.details.affiliateMoves.none': 'No affiliate moves detected.',
+    'support.details.affiliateMoves.more': '+{count} more',
     'support.reply.customerFallback': "Thanks — we're reviewing and will follow up shortly.",
     'support.reply.caseType.DATA_INCOMPLETE':
       "Thanks — we're checking your account details and will update you shortly.",
@@ -1030,6 +1049,11 @@ export const translations = {
     'support.details.loader.userDetails': 'Loading user details…',
     'support.details.loader.decisionEngine': 'Loading decision engine…',
     'support.details.backToResults': 'Back to results',
+    'support.details.focusCenter.enter': 'Focus',
+    'support.details.focusCenter.exit': 'Exit focus',
+    'support.details.focusCenter.hint': 'Toggle focus mode (F) — hide side panels',
+    'support.details.partnerProfile.label': 'Customer profile',
+    'support.details.partnerProfile.hint': 'Open partner customer profile ({customerId})',
     'support.details.statusHelp.aria': 'Status: {status}. Tap for explanation.',
     'support.details.statusHelp.default': 'Status value coming from the source report.',
     'support.details.statusHelp.duplicate':
@@ -1066,14 +1090,75 @@ export const translations = {
     'support.details.financialSummary.totalDeposits': 'Total deposits',
     'support.details.financialSummary.netDeposits': 'Net deposits',
     'support.details.financialSummary.netCashFlow': 'Net cash flow',
+    'support.details.financialSummary.withdrawals': 'Withdrawals',
+    'support.details.financialSummary.withdrawalRatio': 'Withdrawal ratio',
     'support.details.financialSummary.depositsCount': '# Deposits',
     'support.details.financialSummary.firstDeposit': 'First deposit',
     'support.details.tradingPerformance.title': 'Trading Performance',
     'support.details.tradingPerformance.volume': 'Volume',
     'support.details.tradingPerformance.lots': 'Lots',
     'support.details.tradingPerformance.spread': 'Spread',
+    'support.details.tradingPerformance.positionCount': 'Position Count',
     'support.details.tradingPerformance.pl': 'P/L',
     'support.details.tradingPerformance.roi': 'ROI',
+
+    'support.activity.title': 'Activity Intelligence',
+    'support.activity.metrics.ageDays': 'Age (days)',
+    'support.activity.metrics.positions': 'Positions',
+    'support.activity.metrics.positionsPerDay': 'Positions/day',
+    'support.activity.metrics.withdrawals': 'Withdrawals',
+    'support.activity.metrics.withdrawalRatio': 'Withdrawal ratio',
+    'support.activity.metrics.tier': 'Tier',
+    'support.activity.metrics.botFlag': 'Potential Bot (EA)',
+    'support.activity.botFlag.yes': 'YES',
+    'support.activity.botFlag.no': 'NO',
+    'support.activity.tier.inactive': 'Inactive',
+    'support.activity.tier.low': 'Low',
+    'support.activity.tier.active': 'Active',
+    'support.activity.tier.high': 'High',
+    'support.activity.tier.hyper': 'Hyper',
+    'support.activity.tooltip.positionsPerDay':
+      'Tier thresholds (positions/day): Inactive=0, Low<1, Active 1–5, High 5–20, Hyper≥20. Bot alert: Age≤7 and (Positions≥200 or Positions/day≥30).',
+    'support.activity.tooltip.withdrawalRatio':
+      'Withdrawal ratio thresholds: Warn ≥70%, High ≥90%, Critical ≥105% (withdrawals exceed deposits). Use with context (account age, activity, chargebacks).',
+    'support.activity.signals.none': 'No notable activity alerts.',
+    'support.activity.signal.earlyHyper.title': 'Early hyper-activity',
+    'support.activity.signal.earlyHyper.body':
+      'Very high trading frequency early in the lifecycle (age={ageDays}d, positions={positions}, {ppd}/day). Possible EA/bot or high-risk behavior.',
+    'support.activity.signal.fundedNoTrading.title': 'Funded but not trading',
+    'support.activity.signal.fundedNoTrading.body':
+      'Deposits present but Position Count is zero. Churn-risk / needs activation.',
+    'support.activity.signal.activeHeavyLosses.title': 'Active user with heavy losses',
+    'support.activity.signal.activeHeavyLosses.body':
+      'High activity combined with strong negative performance (ROI {roi}). Retention-risk / risk-management needed.',
+    'support.activity.signal.withdrawalHeavyLowTrading.title': 'Withdrawal-heavy with low trading',
+    'support.activity.signal.withdrawalHeavyLowTrading.body':
+      'Withdrawals are high vs deposits ({ratio}) while trading activity is low. Potential abuse pattern; verify PSP/KYC.',
+    'support.activity.signal.withdrawalsWithoutDeposits.title': 'Withdrawals without deposits',
+    'support.activity.signal.withdrawalsWithoutDeposits.body':
+      'Withdrawals detected ({withdrawals}) but total deposits are zero. Potential reporting inconsistency or abuse; verify PSP/KYC and source data.',
+    'support.activity.signal.withdrawalsExceedDeposits.title': 'Withdrawals exceed deposits',
+    'support.activity.signal.withdrawalsExceedDeposits.body':
+      'Withdrawal ratio is {ratio} (withdrawals higher than deposits). High-risk pattern; investigate immediately.',
+    'support.activity.signal.highCashoutActive.title': 'High cash-out while active',
+    'support.activity.signal.highCashoutActive.body':
+      'Withdrawal ratio {ratio} within {ageDays} days while trading is active. Could be fast profit-taking or bonus abuse; review context.',
+    'support.activity.signal.mismatchPositionsNoVolume.title': 'Data mismatch',
+    'support.activity.signal.mismatchPositionsNoVolume.body':
+      'Position Count > 0 but Volume/LOTS are zero. Possible reporting/mapping inconsistency.',
+
+    'support.userCheck.botList.title': 'Potential Bot / EA aggressive — top 50',
+    'support.userCheck.botList.subtitle': 'Fast triage list ranked by intensity vs account age.',
+    'support.userCheck.botList.ppdChip': 'P/day',
+    'support.userCheck.botList.shortcuts': 'Shortcuts: / focus · Enter open',
+    'support.userCheck.botList.loading': 'Computing candidates…',
+    'support.userCheck.botList.empty': 'No strong bot candidates found in the current report.',
+    'support.userCheck.botList.openHint': 'Open trader details',
+    'support.userCheck.botList.riskScore': 'Risk score',
+    'support.userCheck.botList.badge.bot': 'Bot',
+    'support.userCheck.botList.badge.fill': 'Rank',
+    'support.userCheck.botList.badge.botHint': 'Flagged as potential bot (rules + score)',
+    'support.userCheck.botList.badge.fillHint': 'Not flagged as bot: included as high score',
     'support.details.affiliateOverview.title': 'Affiliate Overview',
     'support.details.affiliateOverview.loading': 'Loading affiliate data…',
     'support.details.affiliateOverview.compareLabel': 'Compare with Affiliate ID:',
@@ -1177,9 +1262,23 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Cohort',
     'sidebar.fraud': 'Monitoraggio Frodi',
     'sidebar.roadmap': 'Mega-Stories',
+    'sidebar.weeklyMap': 'Weekly Map',
+    'sidebar.weeklyExecutionHistory': 'Storico esecuzione settimanale',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'Support • User Check',
     'sidebar.upload': 'Upload',
+
+    // Weekly Execution History
+    'weeklyExecutionHistory.header.label': 'Memoria operativa',
+    'weeklyExecutionHistory.header.title': 'Storico esecuzione settimanale',
+    'weeklyExecutionHistory.header.subtitle':
+      'Registro in sola lettura: pianificato vs completato, settimana per settimana.',
+    'weeklyExecutionHistory.header.weekRange': 'Settimana {start} → {end}',
+    'weeklyExecutionHistory.filters.week': 'Settimana',
+    'weeklyExecutionHistory.filters.currentBadge': '(corrente)',
+    'weeklyExecutionHistory.sections.planned': 'Pianificato',
+    'weeklyExecutionHistory.sections.done': 'Completato',
+    'weeklyExecutionHistory.empty': 'Nessuna voce nello storico.',
 
     'login.pill': 'Accesso Management + Finance + Support',
     'login.title': 'Bullwaves Intelligence',
@@ -1857,12 +1956,14 @@ export const translations = {
 
     // Upload
     'upload.title': 'Carica report',
-    'upload.description.line1': 'Carica un CSV e il sistema lo sanitizzerà e aggiornerà i report.',
+    'upload.description.line1':
+      'Carica un CSV o XLSX e il sistema lo sanitizzerà e aggiornerà i report.',
     'upload.description.line2':
       'Scegli esplicitamente il tipo di report per non dipendere dal nome del file.',
     'upload.type.registrations': 'Registrations',
     'upload.type.payments': 'Payments',
     'upload.type.media': 'Media',
+    'upload.type.comments': 'Comments',
     'upload.button.upload': 'Carica',
     'upload.button.uploading': 'Caricamento…',
     'upload.label.selected': 'Selezionato',
@@ -1909,6 +2010,11 @@ export const translations = {
     'support.userCheck.noResults': 'Nessun risultato',
 
     'support.reply.fallback': 'Grazie {name} — stiamo verificando e ti aggiorneremo a breve.',
+
+    'support.details.affiliateMoves.title': 'Spostamenti affiliato',
+    'support.details.affiliateMoves.loading': 'Caricamento…',
+    'support.details.affiliateMoves.none': 'Nessuno spostamento affiliato rilevato.',
+    'support.details.affiliateMoves.more': '+{count} altri',
     'support.reply.customerFallback': 'Grazie — stiamo verificando e ti aggiorneremo a breve.',
     'support.reply.caseType.DATA_INCOMPLETE':
       'Grazie — stiamo verificando i dettagli del tuo account e ti aggiorneremo a breve.',
@@ -2176,6 +2282,11 @@ export const translations = {
     'support.details.loader.userDetails': 'Caricamento dettagli utente…',
     'support.details.loader.decisionEngine': 'Caricamento decision engine…',
     'support.details.backToResults': 'Torna ai risultati',
+    'support.details.focusCenter.enter': 'Focus',
+    'support.details.focusCenter.exit': 'Esci focus',
+    'support.details.focusCenter.hint': 'Modalità focus (F) — nasconde i pannelli laterali',
+    'support.details.partnerProfile.label': 'Customer profile',
+    'support.details.partnerProfile.hint': 'Apri profilo cliente partner ({customerId})',
     'support.details.statusHelp.aria': 'Stato: {status}. Tocca per la spiegazione.',
     'support.details.statusHelp.default': 'Valore di stato proveniente dal report sorgente.',
     'support.details.statusHelp.duplicate':
@@ -2212,14 +2323,76 @@ export const translations = {
     'support.details.financialSummary.totalDeposits': 'Depositi totali',
     'support.details.financialSummary.netDeposits': 'Depositi netti',
     'support.details.financialSummary.netCashFlow': 'Flusso di cassa netto',
+    'support.details.financialSummary.withdrawals': 'Prelievi',
+    'support.details.financialSummary.withdrawalRatio': 'Rapporto prelievi',
     'support.details.financialSummary.depositsCount': '# Depositi',
     'support.details.financialSummary.firstDeposit': 'Primo deposito',
     'support.details.tradingPerformance.title': 'Performance di trading',
     'support.details.tradingPerformance.volume': 'Volume',
     'support.details.tradingPerformance.lots': 'Lotti',
     'support.details.tradingPerformance.spread': 'Spread',
+    'support.details.tradingPerformance.positionCount': 'Numero posizioni',
     'support.details.tradingPerformance.pl': 'P/L',
     'support.details.tradingPerformance.roi': 'ROI',
+
+    'support.activity.title': 'Activity Intelligence',
+    'support.activity.metrics.ageDays': 'Età (giorni)',
+    'support.activity.metrics.positions': 'Posizioni',
+    'support.activity.metrics.positionsPerDay': 'Posizioni/giorno',
+    'support.activity.metrics.withdrawals': 'Prelievi',
+    'support.activity.metrics.withdrawalRatio': 'Rapporto prelievi',
+    'support.activity.metrics.tier': 'Tier',
+    'support.activity.metrics.botFlag': 'Possibile Bot (EA)',
+    'support.activity.botFlag.yes': 'SÌ',
+    'support.activity.botFlag.no': 'NO',
+    'support.activity.tier.inactive': 'Inattivo',
+    'support.activity.tier.low': 'Basso',
+    'support.activity.tier.active': 'Attivo',
+    'support.activity.tier.high': 'Alto',
+    'support.activity.tier.hyper': 'Iper',
+    'support.activity.tooltip.positionsPerDay':
+      'Soglie tier (posizioni/giorno): Inattivo=0, Basso<1, Attivo 1–5, Alto 5–20, Iper≥20. Alert bot: Età≤7 e (Posizioni≥200 o Posizioni/giorno≥30).',
+    'support.activity.tooltip.withdrawalRatio':
+      'Soglie rapporto prelievi: Warn ≥70%, High ≥90%, Critical ≥105% (prelievi > depositi). Usare con contesto (età account, attività, chargeback).',
+    'support.activity.signals.none': 'Nessun alert di attività rilevante.',
+    'support.activity.signal.earlyHyper.title': 'Iper-attività precoce',
+    'support.activity.signal.earlyHyper.body':
+      'Frequenza di trading molto alta a inizio ciclo (età={ageDays}gg, posizioni={positions}, {ppd}/giorno). Possibile EA/bot o comportamento ad alto rischio.',
+    'support.activity.signal.fundedNoTrading.title': 'Depositato ma non tradante',
+    'support.activity.signal.fundedNoTrading.body':
+      'Depositi presenti ma Position Count è zero. Rischio churn / serve attivazione.',
+    'support.activity.signal.activeHeavyLosses.title': 'Molto attivo con perdite elevate',
+    'support.activity.signal.activeHeavyLosses.body':
+      'Attività alta con performance negativa importante (ROI {roi}). Rischio retention / serve gestione rischio.',
+    'support.activity.signal.withdrawalHeavyLowTrading.title': 'Prelievi alti e poco trading',
+    'support.activity.signal.withdrawalHeavyLowTrading.body':
+      'Prelievi alti rispetto ai depositi ({ratio}) con attività bassa. Possibile abuso; verificare PSP/KYC.',
+    'support.activity.signal.withdrawalsWithoutDeposits.title': 'Prelievi senza depositi',
+    'support.activity.signal.withdrawalsWithoutDeposits.body':
+      'Rilevati prelievi ({withdrawals}) ma i depositi totali sono zero. Possibile incoerenza dati o abuso; verificare PSP/KYC e sorgente.',
+    'support.activity.signal.withdrawalsExceedDeposits.title': 'Prelievi superiori ai depositi',
+    'support.activity.signal.withdrawalsExceedDeposits.body':
+      'Il rapporto prelievi è {ratio} (prelievi maggiori dei depositi). Pattern ad alto rischio; investigare subito.',
+    'support.activity.signal.highCashoutActive.title': 'Cash-out alto con attività',
+    'support.activity.signal.highCashoutActive.body':
+      'Rapporto prelievi {ratio} entro {ageDays} giorni con trading attivo. Potrebbe essere profitto rapido o bonus abuse; verificare il contesto.',
+    'support.activity.signal.mismatchPositionsNoVolume.title': 'Incoerenza dati',
+    'support.activity.signal.mismatchPositionsNoVolume.body':
+      'Position Count > 0 ma Volume/LOTS sono zero. Possibile incoerenza report/mapping.',
+
+    'support.userCheck.botList.title': 'Possibile Bot / EA aggressivo — top 50',
+    'support.userCheck.botList.subtitle': 'Lista rapida ordinata per intensità vs età account.',
+    'support.userCheck.botList.ppdChip': 'P/g',
+    'support.userCheck.botList.shortcuts': 'Scorciatoie: / focus · Invio apri',
+    'support.userCheck.botList.loading': 'Calcolo candidati…',
+    'support.userCheck.botList.empty': 'Nessun forte candidato bot nel report corrente.',
+    'support.userCheck.botList.openHint': 'Apri dettagli trader',
+    'support.userCheck.botList.riskScore': 'Risk score',
+    'support.userCheck.botList.badge.bot': 'Bot',
+    'support.userCheck.botList.badge.fill': 'Rank',
+    'support.userCheck.botList.badge.botHint': 'Segnalato come potenziale bot (regole + punteggio)',
+    'support.userCheck.botList.badge.fillHint':
+      'Non segnalato come bot: incluso per punteggio alto',
     'support.details.affiliateOverview.title': 'Panoramica affiliato',
     'support.details.affiliateOverview.loading': 'Caricamento dati affiliato…',
     'support.details.affiliateOverview.compareLabel': 'Confronta con Affiliate ID:',
@@ -2324,9 +2497,23 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Kohorta',
     'sidebar.fraud': 'Nadzor prevara',
     'sidebar.roadmap': 'Mega-storiji',
+    'sidebar.weeklyMap': 'Weekly Map',
+    'sidebar.weeklyExecutionHistory': 'Nedeljna istorija izvršenja',
     'sidebar.orgChart': 'Org chart',
     'sidebar.supportUserCheck': 'Support • Provera korisnika',
     'sidebar.upload': 'Upload',
+
+    // Weekly Execution History
+    'weeklyExecutionHistory.header.label': 'Operativna memorija',
+    'weeklyExecutionHistory.header.title': 'Nedeljna istorija izvršenja',
+    'weeklyExecutionHistory.header.subtitle':
+      'Samo za čitanje: planirano naspram završenog, po nedeljama.',
+    'weeklyExecutionHistory.header.weekRange': 'Nedelja {start} → {end}',
+    'weeklyExecutionHistory.filters.week': 'Nedelja',
+    'weeklyExecutionHistory.filters.currentBadge': '(trenutna)',
+    'weeklyExecutionHistory.sections.planned': 'Planirano',
+    'weeklyExecutionHistory.sections.done': 'Završeno',
+    'weeklyExecutionHistory.empty': 'Nema unosa u istoriji.',
 
     'login.pill': 'Pristup: Management + Finance + Support',
     'login.title': 'Bullwaves Intelligence',
@@ -2996,11 +3183,13 @@ export const translations = {
 
     // Upload
     'upload.title': 'Otpremanje izveštaja',
-    'upload.description.line1': 'Otpremite CSV i sistem će ga očistiti i ažurirati izveštaje.',
+    'upload.description.line1':
+      'Otpremite CSV ili XLSX i sistem će ga očistiti i ažurirati izveštaje.',
     'upload.description.line2': 'Izaberite tip izveštaja da se ne oslanjate na naziv fajla.',
     'upload.type.registrations': 'Registrations',
     'upload.type.payments': 'Payments',
     'upload.type.media': 'Media',
+    'upload.type.comments': 'Comments',
     'upload.button.upload': 'Otpremi',
     'upload.button.uploading': 'Otpremanje…',
     'upload.label.selected': 'Izabrano',
@@ -3047,6 +3236,11 @@ export const translations = {
     'support.userCheck.noResults': 'Nema rezultata',
 
     'support.reply.fallback': 'Hvala {name} — proveravamo i javićemo se uskoro.',
+
+    'support.details.affiliateMoves.title': 'Promene affiliate-a',
+    'support.details.affiliateMoves.loading': 'Učitavanje…',
+    'support.details.affiliateMoves.none': 'Nema detektovanih promena affiliate-a.',
+    'support.details.affiliateMoves.more': '+{count} više',
     'support.reply.customerFallback': 'Hvala — proveravamo i javićemo se uskoro.',
     'support.reply.caseType.DATA_INCOMPLETE':
       'Hvala — proveravamo detalje naloga i uskoro ćemo vas obavestiti.',
@@ -3311,6 +3505,11 @@ export const translations = {
     'support.details.loader.userDetails': 'Učitavanje detalja korisnika…',
     'support.details.loader.decisionEngine': 'Učitavanje decision engine-a…',
     'support.details.backToResults': 'Nazad na rezultate',
+    'support.details.focusCenter.enter': 'Fokus',
+    'support.details.focusCenter.exit': 'Izađi iz fokusa',
+    'support.details.focusCenter.hint': 'Fokus režim (F) — sakriva bočne panele',
+    'support.details.partnerProfile.label': 'Customer profile',
+    'support.details.partnerProfile.hint': 'Otvori partner profil korisnika ({customerId})',
     'support.details.statusHelp.aria': 'Status: {status}. Dodirni za objašnjenje.',
     'support.details.statusHelp.default': 'Vrednost statusa dolazi iz izvornog izveštaja.',
     'support.details.statusHelp.duplicate':
@@ -3347,14 +3546,76 @@ export const translations = {
     'support.details.financialSummary.totalDeposits': 'Ukupni depoziti',
     'support.details.financialSummary.netDeposits': 'Neto depoziti',
     'support.details.financialSummary.netCashFlow': 'Neto tok gotovine',
+    'support.details.financialSummary.withdrawals': 'Povlačenja',
+    'support.details.financialSummary.withdrawalRatio': 'Odnos povlačenja',
     'support.details.financialSummary.depositsCount': 'Broj depozita',
     'support.details.financialSummary.firstDeposit': 'Prvi depozit',
     'support.details.tradingPerformance.title': 'Trading performanse',
     'support.details.tradingPerformance.volume': 'Volume',
     'support.details.tradingPerformance.lots': 'Lotovi',
     'support.details.tradingPerformance.spread': 'Spread',
+    'support.details.tradingPerformance.positionCount': 'Broj pozicija',
     'support.details.tradingPerformance.pl': 'P/L',
     'support.details.tradingPerformance.roi': 'ROI',
+
+    'support.activity.title': 'Activity Intelligence',
+    'support.activity.metrics.ageDays': 'Starost (dani)',
+    'support.activity.metrics.positions': 'Pozicije',
+    'support.activity.metrics.positionsPerDay': 'Pozicija/dan',
+    'support.activity.metrics.withdrawals': 'Povlačenja',
+    'support.activity.metrics.withdrawalRatio': 'Odnos povlačenja',
+    'support.activity.metrics.tier': 'Tier',
+    'support.activity.metrics.botFlag': 'Mogući Bot (EA)',
+    'support.activity.botFlag.yes': 'DA',
+    'support.activity.botFlag.no': 'NE',
+    'support.activity.tier.inactive': 'Neaktivan',
+    'support.activity.tier.low': 'Nizak',
+    'support.activity.tier.active': 'Aktivan',
+    'support.activity.tier.high': 'Visok',
+    'support.activity.tier.hyper': 'Hiper',
+    'support.activity.tooltip.positionsPerDay':
+      'Tier pragovi (pozicija/dan): Inactive=0, Low<1, Active 1–5, High 5–20, Hyper≥20. Bot alert: Age≤7 i (Positions≥200 ili Positions/day≥30).',
+    'support.activity.tooltip.withdrawalRatio':
+      'Pragovi odnosa povlačenja: Warn ≥70%, High ≥90%, Critical ≥105% (povlačenja > depoziti). Koristiti uz kontekst.',
+    'support.activity.signals.none': 'Nema značajnih activity upozorenja.',
+    'support.activity.signal.earlyHyper.title': 'Rana hiper-aktivnost',
+    'support.activity.signal.earlyHyper.body':
+      'Vrlo visoka frekvencija trgovanja rano u životnom ciklusu (age={ageDays}d, positions={positions}, {ppd}/dan). Mogući EA/bot ili rizično ponašanje.',
+    'support.activity.signal.fundedNoTrading.title': 'Uplaćeno bez trgovanja',
+    'support.activity.signal.fundedNoTrading.body':
+      'Depoziti postoje ali Position Count je 0. Rizik od churn-a / potrebna aktivacija.',
+    'support.activity.signal.activeHeavyLosses.title': 'Aktivan korisnik sa velikim gubicima',
+    'support.activity.signal.activeHeavyLosses.body':
+      'Visoka aktivnost uz snažno negativne performanse (ROI {roi}). Retention/risk signal.',
+    'support.activity.signal.withdrawalHeavyLowTrading.title': 'Visoka povlačenja i malo trgovanja',
+    'support.activity.signal.withdrawalHeavyLowTrading.body':
+      'Povlačenja su visoka u odnosu na depozite ({ratio}) uz nisku aktivnost. Mogući abuse; proveriti PSP/KYC.',
+    'support.activity.signal.withdrawalsWithoutDeposits.title': 'Povlačenja bez depozita',
+    'support.activity.signal.withdrawalsWithoutDeposits.body':
+      'Detektovana povlačenja ({withdrawals}) ali ukupni depoziti su 0. Moguća nedoslednost ili abuse; proveriti PSP/KYC i izvor podataka.',
+    'support.activity.signal.withdrawalsExceedDeposits.title': 'Povlačenja veća od depozita',
+    'support.activity.signal.withdrawalsExceedDeposits.body':
+      'Odnos povlačenja je {ratio} (povlačenja veća od depozita). Visok rizik; odmah istražiti.',
+    'support.activity.signal.highCashoutActive.title': 'Visok cash-out uz aktivnost',
+    'support.activity.signal.highCashoutActive.body':
+      'Odnos povlačenja {ratio} u roku od {ageDays} dana uz aktivno trgovanje. Mogući brzi profit ili bonus abuse; proveriti kontekst.',
+    'support.activity.signal.mismatchPositionsNoVolume.title': 'Neslaganje podataka',
+    'support.activity.signal.mismatchPositionsNoVolume.body':
+      'Position Count > 0 ali Volume/LOTS su 0. Moguća nedoslednost izveštaja/mappinga.',
+
+    'support.userCheck.botList.title': 'Potential Bot / EA aggressive — top 50',
+    'support.userCheck.botList.subtitle': 'Brza lista rangirana po intenzitetu vs starost naloga.',
+    'support.userCheck.botList.ppdChip': 'P/dan',
+    'support.userCheck.botList.shortcuts': 'Prečice: / fokus · Enter otvori',
+    'support.userCheck.botList.loading': 'Računam kandidate…',
+    'support.userCheck.botList.empty': 'Nema jakih bot kandidata u trenutnom izveštaju.',
+    'support.userCheck.botList.openHint': 'Otvori detalje trgovca',
+    'support.userCheck.botList.riskScore': 'Risk score',
+    'support.userCheck.botList.badge.bot': 'Bot',
+    'support.userCheck.botList.badge.fill': 'Rank',
+    'support.userCheck.botList.badge.botHint': 'Označeno kao potencijalni bot (pravila + skor)',
+    'support.userCheck.botList.badge.fillHint':
+      'Nije označeno kao bot: uključeno zbog visokog skora',
     'support.details.affiliateOverview.title': 'Pregled affiliate-a',
     'support.details.affiliateOverview.loading': 'Učitavanje affiliate podataka…',
     'support.details.affiliateOverview.compareLabel': 'Uporedi sa Affiliate ID:',

@@ -117,6 +117,87 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Hide scrollbars but keep scrolling (usable for elegant lists) */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge */
+  scrollbar-width: none; /* Firefox */
+  scrollbar-color: transparent transparent; /* Firefox (extra safety) */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* Support: Top-10 bot table responsiveness */
+.bot-top10-wrap {
+  width: 100%;
+  max-width: 820px; /* keep current structure on smaller PCs */
+}
+
+.bot-top10-grid {
+  display: grid;
+  /* Base (<= 1700px): # | Account | Age | Positions | P/L | Positions/day | Tier */
+  grid-template-columns: 44px minmax(220px, 1.55fr) minmax(64px, 0.55fr) minmax(88px, 0.70fr) minmax(108px, 0.85fr) minmax(96px, 0.70fr) minmax(104px, 0.75fr);
+  gap: 8px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Prevent headers from overflowing; keep alignment crisp */
+.bot-top10-header > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Prevent long content from forcing horizontal overflow in CSS grid/flex children */
+.bot-top10-grid > * { min-width: 0; }
+
+/* Top-10 list: internal scroll (page stays fixed) with cross-browser fallbacks */
+.bot-top10-scroll{
+  max-height: 340px;
+  /* modern browsers: adapt to viewport so the whole page doesn't need to scroll */
+  max-height: min(420px, calc(100vh - 360px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.bot-top10-only-wide { display: none; }
+.bot-top10-only-compact { display: block; }
+
+@media (min-width: 1700px) {
+  .bot-top10-wrap {
+    max-width: 1380px; /* 22/27" monitors */
+  }
+
+  .bot-top10-grid {
+    /* add Affiliate + Registration Date columns on large screens */
+    /* # | Account | Affiliate | Registration | Age | Positions | P/L | Positions/day | Tier */
+    grid-template-columns:
+      52px
+      minmax(340px, 1.60fr)
+      minmax(180px, 1.00fr)
+      minmax(120px, 0.65fr)
+      minmax(70px, 0.45fr)
+      minmax(90px, 0.60fr)
+      minmax(110px, 0.75fr)
+      minmax(90px, 0.60fr)
+      minmax(110px, 0.70fr);
+    gap: 12px;
+  }
+
+  .bot-top10-only-wide { display: block; }
+  .bot-top10-only-compact { display: none; }
+}
+
+/* Opt-out of the generic .card hover lift when needed */
+.no-card-hover:hover {
+  transform: none !important;
+  box-shadow: inherit !important;
+}
+
 /* Grid background pattern */
 .grid-pattern {
   background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0);
@@ -511,6 +592,13 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .support-detail-grid--3col.is-left-collapsed {
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(280px, 340px);
 }
+.support-detail-grid--3col.is-focus-center{
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "center";
+}
+.support-detail-grid--3col.is-focus-center .identity-card,
+.support-detail-grid--3col.is-focus-center .decision-engine{display:none}
+.support-detail-grid--3col.is-focus-center .center-col{padding-left:0}
 .support-detail-grid--3col .identity-card { grid-area: identity; position: sticky; top: 12px; }
 .support-detail-grid--3col .center-col { grid-area: center; min-width: 0; }
 .support-detail-grid--3col .decision-engine { grid-area: decision; position: sticky; top: 12px; min-width: 0; }
@@ -794,6 +882,15 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   margin-bottom:10px;
 }
 
+/* Shared width + padding for Support User Details (keeps topbar + grid aligned) */
+.support-details-inner{
+  max-width: 1920px;
+  margin: 0 auto;
+  width: 100%;
+  padding-left: clamp(12px, 1.4vw, 22px);
+  padding-right: clamp(12px, 1.4vw, 22px);
+}
+
 /* Slightly accent-tint the Support Details header so it reads as a page header. */
 .support-details-mode .support-details-topbar{
   border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -804,16 +901,61 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .support-details-topbar-affiliate{font-size:11px;color:var(--muted);width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .support-details-topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.support-details-topbar-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
 .support-back-btn{width:36px;height:36px;display:inline-grid;place-items:center;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text);cursor:pointer;flex:0 0 auto}
 .support-back-btn:hover{background:rgba(255,255,255,0.04)}
+.support-topbar-btn{height:36px;display:inline-flex;align-items:center;gap:8px;padding:0 12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--text);cursor:pointer;font-weight:800;font-size:12px;letter-spacing:0.01em}
+.support-topbar-btn:hover{background:rgba(255,255,255,0.04)}
+.support-topbar-btn.is-active{border-color:rgba(34,211,238,0.65);box-shadow:0 0 0 1px rgba(34,211,238,0.18) inset}
 .support-details-topbar-basic{min-width:0;display:flex;flex-direction:column;gap:2px}
 .support-details-topbar-name{font-size:15px;font-weight:900;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .support-details-topbar-meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* Partner profile pill (more visible + clearly clickable) */
+.support-partner-pill{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0 10px;border-radius:999px;text-decoration:none;cursor:pointer;user-select:none;flex:0 0 auto;
+  color:rgba(255,255,255,0.92);
+  background:linear-gradient(135deg, rgba(34,211,238,0.16), rgba(99,102,241,0.14));
+  border:1px solid rgba(99,102,241,0.28);
+  box-shadow:0 0 0 1px rgba(34,211,238,0.10) inset;
+}
+.support-partner-pill:hover{transform:translateY(-1px);background:linear-gradient(135deg, rgba(34,211,238,0.22), rgba(99,102,241,0.18));border-color:rgba(34,211,238,0.40)}
+.support-partner-pill:active{transform:translateY(0)}
+.support-partner-pill-initials{width:22px;height:22px;border-radius:8px;display:inline-grid;place-items:center;font-weight:950;font-size:11px;
+  background:rgba(2,6,23,0.20);border:1px solid rgba(255,255,255,0.10);
+}
+.support-partner-pill-text{font-size:12px;font-weight:900;letter-spacing:0.01em}
+.support-partner-pill-ext{opacity:0.80;font-weight:900}
+
+/* Requested: the pill is mobile-only (desktop looks cleaner). */
+@media (min-width: 881px) {
+  .support-partner-pill{display:none !important}
+}
+
+/* Requested: the sticky per-user top bar is mobile-only (desktop already shows full identity cards). */
+@media (min-width: 881px) {
+  .support-details-topbar{display:none !important}
+  /* If the global layout adds padding for the sticky header, keep desktop tidy. */
+  .support-details-mode.support-details-scrolled .support-details-topbar{top:0 !important}
+}
+
+/* Desktop: make the avatar block clickable instead (no extra bar). */
+.support-partner-avatar-link{display:inline-flex;flex:0 0 auto;text-decoration:none}
+.support-partner-avatar{position:relative;cursor:pointer}
+.support-partner-avatar-ext{position:absolute;right:6px;top:6px;font-size:12px;font-weight:950;opacity:0;transform:translateY(-2px);transition:opacity 120ms ease, transform 120ms ease;color:rgba(255,255,255,0.92)}
+.support-partner-avatar{box-shadow:0 0 0 1px rgba(255,255,255,0.12) inset;transition:transform 120ms ease, box-shadow 120ms ease}
+.support-partner-avatar-link:hover .support-partner-avatar{transform:translateY(-1px);box-shadow:0 0 0 1px rgba(34,211,238,0.20) inset, 0 10px 30px rgba(2,6,23,0.35)}
+.support-partner-avatar-link:hover .support-partner-avatar-ext{opacity:0.95;transform:translateY(0)}
+
+/* Mobile: hide the avatar-link cue (pill is enough). */
+@media (max-width: 880px) {
+  .support-partner-avatar-link{pointer-events:none}
+  .support-partner-avatar-ext{display:none}
+}
+
 @media (max-width: 520px) {
   /* Reduce excessive outer padding from desktop classes */
   .support-user-check-page .w-full.px-6,
-  .support-user-details-page.w-full.px-6 { padding-left: 12px; padding-right: 12px; }
+  .support-user-details-page { padding-left: 0; padding-right: 0; }
 }
 
 @media (max-width: 880px) {
@@ -825,13 +967,13 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   .support-details-mode.support-details-scrolled .support-details-topbar{top:14px}
 
   /* Let the sticky header go full-bleed; keep its inner content padded. */
-  .support-user-details-page.w-full.px-6{padding-left:0;padding-right:0}
+  .support-user-details-page{padding-left:0;padding-right:0}
 
   /* Mobile: keep only compact basic info sticky and avoid heavy overlays */
   .support-details-topbar{
     padding-top: env(safe-area-inset-top);
-    padding-left:12px;
-    padding-right:12px;
+    padding-left:0;
+    padding-right:0;
     padding-bottom:6px;
     /* Solid + slightly accent-tinted header (prevents seeing content scroll behind). */
     background: rgba(5, 13, 29, 1);
@@ -846,6 +988,7 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   }
 
   .support-back-btn{width:34px;height:34px;border-radius:10px}
+  .support-topbar-btn{height:34px}
   .support-details-topbar-name{font-size:14px}
 
   /* User timeline becomes vertical on mobile */

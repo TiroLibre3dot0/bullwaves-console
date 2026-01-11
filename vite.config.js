@@ -52,6 +52,7 @@ export default defineConfig({
       // Upload sanitizers rewrite these files; in dev we don't want Vite to full-reload the app.
       ignored: [
         '**/public/*Report.csv',
+        '**/public/comments.csv',
         '**/public/raw/**',
         '**/uploads/**',
       ],

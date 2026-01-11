@@ -71,6 +71,22 @@ export default function PublicWeeklyMapPage({ token }) {
   return (
     <div style={{ padding: 20 }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+        {(() => {
+          const origin = typeof window !== 'undefined' ? window.location.origin : ''
+          const mapHref = `${origin}/share/weekly-map/${token}`
+          const histHref = `${origin}/share/weekly-execution-history/${token}`
+          return (
+            <div style={{ marginBottom: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <a className="btn" href={mapHref}>
+                Weekly Map
+              </a>
+              <a className="btn secondary" href={histHref}>
+                Weekly Execution History
+              </a>
+            </div>
+          )
+        })()}
+
         <div style={{ marginBottom: 20 }}>
           <h1 style={{ color: 'var(--text)', fontSize: 28, marginBottom: 4 }}>
             Weekly Map — Project Management

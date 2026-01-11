@@ -44,19 +44,21 @@ export default function UploadReportsPage() {
     } catch {
       // ignore
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     try {
-      sessionStorage.setItem('bw_upload_state_v1', JSON.stringify({
-        reportType,
-        uploadProgress,
-        serverProgress,
-        status,
-        resultText,
-        savedAt: Date.now(),
-      }))
+      sessionStorage.setItem(
+        'bw_upload_state_v1',
+        JSON.stringify({
+          reportType,
+          uploadProgress,
+          serverProgress,
+          status,
+          resultText,
+          savedAt: Date.now(),
+        })
+      )
     } catch {
       // ignore
     }
@@ -79,14 +81,24 @@ export default function UploadReportsPage() {
     if (data.sanitizer) lines.push(`${t('upload.result.sanitizer')}: ${data.sanitizer}`)
 
     const s = data.summary
-    if (s && (typeof s.existing === 'number' || typeof s.added === 'number' || typeof s.duplicates === 'number')) {
+    if (
+      s &&
+      (typeof s.existing === 'number' ||
+        typeof s.added === 'number' ||
+        typeof s.duplicates === 'number')
+    ) {
       lines.push('')
       lines.push(`${t('upload.result.summary')}:`)
-      if (typeof s.existing === 'number') lines.push(`- ${t('upload.result.summary.existing')}: ${s.existing}`)
-      if (typeof s.added === 'number') lines.push(`- ${t('upload.result.summary.added')}: ${s.added}`)
-      if (typeof s.duplicates === 'number') lines.push(`- ${t('upload.result.summary.duplicates')}: ${s.duplicates}`)
-      if (typeof s.affiliateUpdates === 'number') lines.push(`- ${t('upload.result.summary.affiliateUpdates')}: ${s.affiliateUpdates}`)
-      if (typeof s.fieldUpdates === 'number') lines.push(`- ${t('upload.result.summary.fieldUpdates')}: ${s.fieldUpdates}`)
+      if (typeof s.existing === 'number')
+        lines.push(`- ${t('upload.result.summary.existing')}: ${s.existing}`)
+      if (typeof s.added === 'number')
+        lines.push(`- ${t('upload.result.summary.added')}: ${s.added}`)
+      if (typeof s.duplicates === 'number')
+        lines.push(`- ${t('upload.result.summary.duplicates')}: ${s.duplicates}`)
+      if (typeof s.affiliateUpdates === 'number')
+        lines.push(`- ${t('upload.result.summary.affiliateUpdates')}: ${s.affiliateUpdates}`)
+      if (typeof s.fieldUpdates === 'number')
+        lines.push(`- ${t('upload.result.summary.fieldUpdates')}: ${s.fieldUpdates}`)
     }
 
     // Append a short stdout tail for troubleshooting (kept compact)
@@ -123,9 +135,17 @@ export default function UploadReportsPage() {
     fd.append('type', reportType)
     // Keep backward compatibility: current upload server infers the sanitizer from the uploaded filename.
     // Override filename so the selected type is always respected even if the user's file is named differently.
-    const forcedName = reportType === 'registrations'
-      ? 'Registrations Report.csv'
-      : (reportType === 'media' ? 'Media Report.csv' : 'Payments Report.csv')
+    const lower = String(file && file.name ? file.name : '').toLowerCase()
+    const ext = lower.endsWith('.xlsx') ? '.xlsx' : lower.endsWith('.xls') ? '.xls' : '.csv'
+    const forcedBase =
+      reportType === 'registrations'
+        ? 'Registrations Report'
+        : reportType === 'media'
+          ? 'Media Report'
+          : reportType === 'comments'
+            ? 'Comments Report'
+            : 'Payments Report'
+    const forcedName = `${forcedBase}${ext}`
     fd.append('file', file, forcedName)
 
     const xhr = new XMLHttpRequest()
@@ -145,7 +165,9 @@ export default function UploadReportsPage() {
       setUploadProgress(pct)
       const loadedMB = (ev.loaded / (1024 * 1024)).toFixed(1)
       const totalMB = (ev.total / (1024 * 1024)).toFixed(1)
-      setStatus(`${t('upload.status.uploadingPrefix')}: ${pct.toFixed(1)}% (${loadedMB} / ${totalMB} MB)`)
+      setStatus(
+        `${t('upload.status.uploadingPrefix')}: ${pct.toFixed(1)}% (${loadedMB} / ${totalMB} MB)`
+      )
     }
 
     xhr.upload.onload = () => {
@@ -233,9 +255,7 @@ export default function UploadReportsPage() {
         <h2 style={{ marginBottom: 6 }}>{t('upload.title')}</h2>
         <div style={{ color: 'var(--muted)', fontSize: 13, lineHeight: 1.35 }}>
           {t('upload.description.line1')}
-          <div style={{ marginTop: 6 }}>
-            {t('upload.description.line2')}
-          </div>
+          <div style={{ marginTop: 6 }}>{t('upload.description.line2')}</div>
         </div>
       </div>
 
@@ -260,10 +280,11 @@ export default function UploadReportsPage() {
               <option value="registrations">{t('upload.type.registrations')}</option>
               <option value="payments">{t('upload.type.payments')}</option>
               <option value="media">{t('upload.type.media')}</option>
+              <option value="comments">{t('upload.type.comments')}</option>
             </select>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.xlsx,.xls"
               disabled={isUploading}
               onChange={(e) => setFile((e.target.files && e.target.files[0]) || null)}
               style={{
@@ -280,7 +301,7 @@ export default function UploadReportsPage() {
               type="submit"
               className="tab"
               disabled={!file || isUploading}
-              style={{ opacity: (!file || isUploading) ? 0.6 : 1 }}
+              style={{ opacity: !file || isUploading ? 0.6 : 1 }}
             >
               {isUploading ? t('upload.button.uploading') : t('upload.button.upload')}
             </button>
@@ -288,20 +309,51 @@ export default function UploadReportsPage() {
 
           {file && (
             <div style={{ color: 'var(--muted)', fontSize: 12 }}>
-              {t('upload.label.selected')}: <span style={{ color: 'var(--text)' }}>{file.name}</span> ({sizeLabel})
+              {t('upload.label.selected')}:{' '}
+              <span style={{ color: 'var(--text)' }}>{file.name}</span> ({sizeLabel})
             </div>
           )}
 
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ color: 'var(--muted)', fontSize: 12 }}>{status}</div>
-              <div style={{ color: 'var(--muted)', fontSize: 12 }}>{t('upload.progress.upload')} {Math.round(uploadProgress)}% • {t('upload.progress.server')} {Math.round(serverProgress)}%</div>
+              <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                {t('upload.progress.upload')} {Math.round(uploadProgress)}% •{' '}
+                {t('upload.progress.server')} {Math.round(serverProgress)}%
+              </div>
             </div>
-            <div style={{ height: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, uploadProgress))}%`, background: 'rgba(34, 211, 238, 0.75)' }} />
+            <div
+              style={{
+                height: 10,
+                background: 'rgba(255,255,255,0.06)',
+                borderRadius: 999,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${Math.max(0, Math.min(100, uploadProgress))}%`,
+                  background: 'rgba(34, 211, 238, 0.75)',
+                }}
+              />
             </div>
-            <div style={{ height: 8, background: 'rgba(255,255,255,0.04)', borderRadius: 999, overflow: 'hidden', marginTop: 8 }}>
-              <div style={{ height: '100%', width: `${Math.max(0, Math.min(100, serverProgress))}%`, background: 'rgba(34, 211, 238, 0.75)' }} />
+            <div
+              style={{
+                height: 8,
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: 999,
+                overflow: 'hidden',
+                marginTop: 8,
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${Math.max(0, Math.min(100, serverProgress))}%`,
+                  background: 'rgba(34, 211, 238, 0.75)',
+                }}
+              />
             </div>
           </div>
         </form>
@@ -309,17 +361,19 @@ export default function UploadReportsPage() {
 
       <div className="card card-global">
         <h3 style={{ marginBottom: 8 }}>{t('upload.response.title')}</h3>
-        <pre style={{
-          margin: 0,
-          whiteSpace: 'pre-wrap',
-          wordBreak: 'break-word',
-          fontSize: 12,
-          background: 'rgba(255,255,255,0.02)',
-          border: '1px solid rgba(255,255,255,0.06)',
-          borderRadius: 12,
-          padding: 12,
-          minHeight: 90,
-        }}>
+        <pre
+          style={{
+            margin: 0,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+            fontSize: 12,
+            background: 'rgba(255,255,255,0.02)',
+            border: '1px solid rgba(255,255,255,0.06)',
+            borderRadius: 12,
+            padding: 12,
+            minHeight: 90,
+          }}
+        >
           {resultText || t('upload.emptyDash')}
         </pre>
       </div>

@@ -10,7 +10,9 @@ import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
 import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
+import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecutionHistoryPage'
 import PublicWeeklyMapPage from './features/roadmap/pages/PublicWeeklyMapPage'
+import PublicWeeklyExecutionHistoryPage from './features/roadmap/pages/PublicWeeklyExecutionHistoryPage'
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
@@ -43,6 +45,7 @@ export default function App() {
       report: '/report',
       roadmap: '/roadmap',
       weeklyMap: '/weekly-map',
+      weeklyExecutionHistory: '/weekly-execution-history',
       // lab removed
       supportUserCheck: '/support/user-check',
       upload: '/upload',
@@ -71,6 +74,7 @@ export default function App() {
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/roadmap')) return 'roadmap'
     if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
+    if (pathname.startsWith('/weekly-execution-history')) return 'weeklyExecutionHistory'
     if (pathname.startsWith('/ongoing')) return 'roadmap'
     if (pathname.startsWith('/summary-report')) return 'summary'
     if (pathname.startsWith('/support')) return 'supportUserCheck'
@@ -289,6 +293,7 @@ export default function App() {
       summary: 'summary',
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
+      weeklyExecutionHistory: 'weekly-execution-history',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -311,6 +316,9 @@ export default function App() {
       {typeof window !== 'undefined' &&
       window.location.pathname.startsWith('/share/weekly-map/') ? (
         <PublicWeeklyMapPage token={window.location.pathname.split('/').pop()} />
+      ) : typeof window !== 'undefined' &&
+        window.location.pathname.startsWith('/share/weekly-execution-history/') ? (
+        <PublicWeeklyExecutionHistoryPage token={window.location.pathname.split('/').pop()} />
       ) : (
         <RequireAuth>
           <div className="app-root">
@@ -356,6 +364,7 @@ export default function App() {
                   {view === 'report' && <Report />}
                   {view === 'roadmap' && <RoadmapPage />}
                   {view === 'weeklyMap' && <WeeklyMapPage />}
+                  {view === 'weeklyExecutionHistory' && <WeeklyExecutionHistoryPage />}
                   {view === 'orgChart' && <OrgChart />}
                   {view === 'summary' && <SummaryReport />}
                   {view === 'supportUserCheck' && (

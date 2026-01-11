@@ -175,7 +175,8 @@ export default function Sidebar({
   const { t } = useI18n()
   const disabled = (key) =>
     Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
-  const roadmapActive = view === 'roadmap' || view === 'weeklyMap'
+  const roadmapActive =
+    view === 'roadmap' || view === 'weeklyMap' || view === 'weeklyExecutionHistory'
 
   return (
     <div className="sidebar">
@@ -332,6 +333,18 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="calendar" />
                 <span>{t('sidebar.weeklyMap')}</span>
+              </span>
+            </button>
+
+            <button
+              disabled={disabled('weeklyExecutionHistory')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
+              onClick={() => navigate('weeklyExecutionHistory')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="calendar" />
+                <span>{t('sidebar.weeklyExecutionHistory')}</span>
               </span>
             </button>
           </div>

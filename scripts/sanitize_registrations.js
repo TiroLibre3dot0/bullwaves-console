@@ -206,6 +206,7 @@ const OVERWRITE_IF_PRESENT_FIELDS = new Set([
   'total_deposits',
   'pl',
   'net_pl',
+  'position_count',
   'volume',
   'lots',
   'spread',

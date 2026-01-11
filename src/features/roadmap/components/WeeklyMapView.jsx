@@ -10,7 +10,6 @@ import {
   getWeekMap,
   getWeekRange,
   getShareLink,
-  listWeeks,
   loadWeeklyMapStore,
   saveWeeklyMapStore,
   upsertWeeklyTask,
@@ -497,7 +496,12 @@ function toolColor(kind) {
   }
 }
 
-export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) {
+export default function WeeklyMapView({
+  megaMap,
+  storyMap,
+  filterMegaStoryId,
+  readOnly: readOnlyProp,
+}) {
   const { t } = useI18n()
   const weeklyStatusColumns = useMemo(
     () => [
@@ -514,7 +518,8 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
   const currentUserName = user?.name || ''
 
   const [store, setStore] = useState(() => loadWeeklyMapStore())
-  const [selectedWeekStart, setSelectedWeekStart] = useState(currentWeek.week_start)
+  // Weekly Map is an operational execution contract: always pinned to the current week.
+  const selectedWeekStart = currentWeek.week_start
   const [checklistTask, setChecklistTask] = useState(null)
   const [detailTask, setDetailTask] = useState(null)
 
@@ -527,14 +532,12 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
     setStore(next)
   }, [currentWeek.week_end, currentWeek.week_start])
 
-  const weeks = useMemo(() => listWeeks(store), [store])
-
   const selectedBucket = useMemo(() => {
     return getWeekMap(store, selectedWeekStart)
   }, [store, selectedWeekStart])
 
-  const isCurrentWeek = selectedWeekStart === currentWeek.week_start
-  const readOnly = !isCurrentWeek
+  const isCurrentWeek = true
+  const readOnly = typeof readOnlyProp === 'boolean' ? readOnlyProp : false
 
   const tasks = useMemo(() => {
     const list = selectedBucket?.tasks
@@ -948,33 +951,6 @@ export default function WeeklyMapView({ megaMap, storyMap, filterMegaStoryId }) 
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <label style={{ fontSize: 11, color: 'var(--muted)' }}>
-              {t('weeklyMap.filters.week')}
-            </label>
-            <select
-              value={selectedWeekStart}
-              onChange={(e) => setSelectedWeekStart(e.target.value)}
-              style={{
-                background: 'var(--card)',
-                border: '1px solid var(--border)',
-                color: 'var(--text)',
-                borderRadius: 10,
-                padding: '8px 10px',
-                minWidth: 200,
-              }}
-            >
-              {weeks.map((w) => (
-                <option key={w.week_start} value={w.week_start}>
-                  {w.week_start} → {w.week_end}
-                  {w.week_start === currentWeek.week_start
-                    ? ` ${t('weeklyMap.filters.currentBadge')}`
-                    : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <label style={{ fontSize: 11, color: 'transparent' }}>.</label>
             <div

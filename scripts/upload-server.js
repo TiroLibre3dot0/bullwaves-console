@@ -20,15 +20,86 @@ const upload = multer({ storage })
 
 app.use(express.static(path.join(__dirname, '..', 'public')))
 
+function safeBaseName(name) {
+  const base = path.basename(String(name || 'upload'))
+  return base.replace(/[^a-z0-9._-]+/gi, '_')
+}
+
+function isExcelExt(ext) {
+  const e = String(ext || '').toLowerCase()
+  return e === '.xlsx' || e === '.xls'
+}
+
+function pickFirstNonEmptySheet(workbook) {
+  const names = (workbook && workbook.SheetNames) ? workbook.SheetNames : []
+  for (const name of names) {
+    const ws = workbook.Sheets && workbook.Sheets[name]
+    if (!ws) continue
+    try {
+      const rows = require('xlsx').utils.sheet_to_json(ws, { header: 1, blankrows: false })
+      if (rows && rows.length >= 1) return { name, ws }
+    } catch (e) {
+      // ignore and try next
+    }
+  }
+  const first = names[0]
+  return first ? { name: first, ws: workbook.Sheets[first] } : null
+}
+
+function ensureCsvForSanitizer({ uploadedPath, uploadedName }) {
+  const ext = path.extname(String(uploadedName || '')).toLowerCase()
+  if (!isExcelExt(ext)) {
+    return { inputPath: uploadedPath, converted: false, rawExt: ext || '.csv', cleanup: null }
+  }
+
+  let XLSX
+  try {
+    XLSX = require('xlsx')
+  } catch (e) {
+    const err = new Error('Missing dependency: xlsx. Run `npm i` in Bullwaves_new.')
+    err.code = 'missing_xlsx'
+    throw err
+  }
+
+  const buf = fs.readFileSync(uploadedPath)
+  const wb = XLSX.read(buf, { type: 'buffer', cellDates: true })
+  const picked = pickFirstNonEmptySheet(wb)
+  if (!picked || !picked.ws) {
+    const err = new Error('No readable worksheet found in Excel file')
+    err.code = 'xlsx_no_sheet'
+    throw err
+  }
+
+  const csv = XLSX.utils.sheet_to_csv(picked.ws, { blankrows: false })
+  const convertedName = `${Date.now()}-converted-${safeBaseName(uploadedName).replace(/\.(xlsx|xls)$/i, '')}.csv`
+  const convertedPath = path.join(uploadDir, convertedName)
+  fs.writeFileSync(convertedPath, csv, 'utf8')
+
+  return {
+    inputPath: convertedPath,
+    converted: true,
+    convertedFrom: ext,
+    sheetName: picked.name,
+    rawExt: ext,
+    cleanup: () => {
+      try { fs.unlinkSync(convertedPath) } catch (e) { /* ignore */ }
+    },
+  }
+}
+
 function resolveUploadType(req, uploadedName) {
   const forcedTypeRaw = (req.body && req.body.type) ? String(req.body.type).trim().toLowerCase() : ''
-  const forcedType = (forcedTypeRaw === 'registrations' || forcedTypeRaw === 'payments' || forcedTypeRaw === 'media') ? forcedTypeRaw : ''
-  const isRegistrations = forcedType ? forcedType === 'registrations' : /registration/i.test(uploadedName)
-  const isMedia = forcedType ? forcedType === 'media' : /media/i.test(uploadedName)
+  const forcedType = (forcedTypeRaw === 'registrations' || forcedTypeRaw === 'payments' || forcedTypeRaw === 'media' || forcedTypeRaw === 'comments') ? forcedTypeRaw : ''
+
+  const name = String(uploadedName || '')
+  const inferred = forcedType
+    || (/registration/i.test(name) ? 'registrations' : (/comment/i.test(name) ? 'comments' : (/media/i.test(name) ? 'media' : 'payments')))
+
   return {
-    type: forcedType || (isRegistrations ? 'registrations' : (isMedia ? 'media' : 'payments')),
-    isRegistrations,
-    isMedia,
+    type: inferred,
+    isRegistrations: inferred === 'registrations',
+    isComments: inferred === 'comments',
+    isMedia: inferred === 'media',
   }
 }
 
@@ -43,6 +114,7 @@ function writeNdjson(res, obj) {
 function inferDestByType(type) {
   if (type === 'registrations') return path.join('public', 'Registrations Report.csv')
   if (type === 'media') return path.join('public', 'Media Report.csv')
+  if (type === 'comments') return path.join('public', 'comments.csv')
   return path.join('public', 'Payments Report.csv')
 }
 
@@ -95,18 +167,34 @@ function handleUpload(req, res) {
   const uploadedName = req.file.originalname || ''
   const timestamp = Date.now()
 
-  const { type, isRegistrations, isMedia } = resolveUploadType(req, uploadedName)
+  const { type } = resolveUploadType(req, uploadedName)
 
-  const rawPrefix = isRegistrations ? 'registrations_raw' : (isMedia ? 'media_raw' : 'payments_raw')
-  const rawBackup = path.join(rawDir, `${rawPrefix}.${timestamp}.csv`)
+  let normalized
+  try {
+    normalized = ensureCsvForSanitizer({ uploadedPath, uploadedName })
+  } catch (e) {
+    return res.status(500).json({
+      error: 'xlsx_convert_failed',
+      code: e && e.code,
+      message: e && e.message,
+    })
+  }
+
+  const rawPrefix = type === 'registrations'
+    ? 'registrations_raw'
+    : (type === 'media' ? 'media_raw' : (type === 'comments' ? 'comments_raw' : 'payments_raw'))
+  const rawBackup = path.join(rawDir, `${rawPrefix}.${timestamp}${normalized.rawExt || '.csv'}`)
   fs.copyFileSync(uploadedPath, rawBackup)
 
   // choose sanitizer
-  const sanitizer = isRegistrations ? 'sanitize_registrations.js' : (isMedia ? 'sanitize_media.js' : 'sanitize_payments.js')
-  const cmd = `node "${path.join(__dirname, sanitizer)}" "${uploadedPath}"`
+  const sanitizer = type === 'registrations'
+    ? 'sanitize_registrations.js'
+    : (type === 'media' ? 'sanitize_media.js' : (type === 'comments' ? 'sanitize_comments.js' : 'sanitize_payments.js'))
+  const cmd = `node "${path.join(__dirname, sanitizer)}" "${normalized.inputPath}"`
   exec(cmd, { cwd: path.join(__dirname, '..') }, (err, stdout, stderr) => {
     const out = stdout || ''
     const errOut = stderr || ''
+    if (normalized && normalized.cleanup) normalized.cleanup()
     if (err && err.code !== 0) {
       console.error('Upload processing failed for', req.file.originalname, 'sanitizer=', sanitizer, 'code=', err.code)
       console.error('stdout:', out)
@@ -125,7 +213,19 @@ function handleUpload(req, res) {
     console.log('sanitizer stdout preview:\n' + preview)
     if (outLines.length > 10) console.log('... (output truncated, full output returned in response)')
     if (errOut) console.warn('sanitizer stderr:\n', errOut)
-    res.json({ ok: true, type, rawBackup, sanitizer, stdout: out, stderr: errOut })
+    res.json({
+      ok: true,
+      type,
+      rawBackup,
+      sanitizer,
+      normalized: normalized && normalized.converted ? {
+        converted: true,
+        from: normalized.convertedFrom,
+        sheetName: normalized.sheetName,
+      } : { converted: false },
+      stdout: out,
+      stderr: errOut,
+    })
   })
 }
 
@@ -142,12 +242,31 @@ function handleUploadStream(req, res) {
   const uploadedName = req.file.originalname || ''
   const timestamp = Date.now()
 
-  const { type, isRegistrations, isMedia } = resolveUploadType(req, uploadedName)
-  const rawPrefix = isRegistrations ? 'registrations_raw' : (isMedia ? 'media_raw' : 'payments_raw')
-  const rawBackup = path.join(rawDir, `${rawPrefix}.${timestamp}.csv`)
+  const { type } = resolveUploadType(req, uploadedName)
+  const rawPrefix = type === 'registrations'
+    ? 'registrations_raw'
+    : (type === 'media' ? 'media_raw' : (type === 'comments' ? 'comments_raw' : 'payments_raw'))
+  let normalized
   const dest = inferDestByType(type)
 
   writeNdjson(res, { type: 'progress', pct: 5, stage: 'received', message: 'Received file. Preparing…' })
+
+  try {
+    normalized = ensureCsvForSanitizer({ uploadedPath, uploadedName })
+    if (normalized && normalized.converted) {
+      writeNdjson(res, {
+        type: 'progress',
+        pct: 8,
+        stage: 'xlsx_convert',
+        message: `Converted Excel (${normalized.convertedFrom}) sheet “${normalized.sheetName}” to CSV…`,
+      })
+    }
+  } catch (e) {
+    writeNdjson(res, { type: 'error', message: 'xlsx_convert_failed', code: e && e.code, details: e && e.message })
+    return res.end()
+  }
+
+  const rawBackup = path.join(rawDir, `${rawPrefix}.${timestamp}${(normalized && normalized.rawExt) || '.csv'}`)
 
   try {
     fs.copyFileSync(uploadedPath, rawBackup)
@@ -158,8 +277,10 @@ function handleUploadStream(req, res) {
 
   writeNdjson(res, { type: 'progress', pct: 10, stage: 'raw_backup', message: 'Raw backup saved. Starting sanitizer…' })
 
-  const sanitizer = isRegistrations ? 'sanitize_registrations.js' : (isMedia ? 'sanitize_media.js' : 'sanitize_payments.js')
-  const child = spawn('node', [path.join(__dirname, sanitizer), uploadedPath], {
+  const sanitizer = type === 'registrations'
+    ? 'sanitize_registrations.js'
+    : (type === 'media' ? 'sanitize_media.js' : (type === 'comments' ? 'sanitize_comments.js' : 'sanitize_payments.js'))
+  const child = spawn('node', [path.join(__dirname, sanitizer), normalized.inputPath], {
     cwd: path.join(__dirname, '..'),
     windowsHide: true,
   })
@@ -212,6 +333,7 @@ function handleUploadStream(req, res) {
   })
 
   child.on('close', (code) => {
+    if (normalized && normalized.cleanup) normalized.cleanup()
     if (code && code !== 0) {
       writeNdjson(res, { type: 'error', message: 'sanitizer_failed', code, stdout, stderr })
       return res.end()
@@ -226,6 +348,11 @@ function handleUploadStream(req, res) {
         dest,
         rawBackup,
         sanitizer,
+        normalized: normalized && normalized.converted ? {
+          converted: true,
+          from: normalized.convertedFrom,
+          sheetName: normalized.sheetName,
+        } : { converted: false },
         summary,
         stdout,
         stderr,
