@@ -136,21 +136,28 @@ function riskDotMeta(row) {
 
 export default function PublicSupportBotListPage() {
   const { t } = useI18n()
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(null)
+  const [payload, setPayload] = useState(null)
   const [copied, setCopied] = useState(false)
   const [affiliateFilter, setAffiliateFilter] = useState('')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'rank', dir: 'asc' })
 
-  const extractShareDataFromLocation = () => {
+  const extractShareDescriptorFromLocation = () => {
     if (typeof window === 'undefined') return null
     const params = new window.URLSearchParams(window.location.search)
     const qp = params.get('d')
-    if (qp) return qp
+    if (qp) return { kind: 'encoded', value: qp }
     const prefix = '/share/support-botlist/'
     const p = String(window.location.pathname || '')
     if (p.startsWith(prefix)) {
       const rest = p.slice(prefix.length)
-      return rest ? rest : null
+      if (!rest) return null
+      if (/^share_[a-z0-9]{10,}$/i.test(rest) && rest.length <= 96) {
+        return { kind: 'token', value: rest }
+      }
+      return { kind: 'encoded', value: rest }
     }
     return null
   }
@@ -183,9 +190,48 @@ export default function PublicSupportBotListPage() {
     return Array.isArray(p.rows) ? p.rows : []
   }
 
-  const payload = useMemo(() => {
-    const d = extractShareDataFromLocation()
-    return decodeSharePayload(d)
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        setLoading(true)
+        setLoadError(null)
+
+        const desc = extractShareDescriptorFromLocation()
+        if (!desc) {
+          setPayload(null)
+          return
+        }
+
+        if (desc.kind === 'token') {
+          const token = String(desc.value || '').trim()
+          const resp = await fetch(`/api/share/support-botlist/${encodeURIComponent(token)}`)
+          const data = await resp.json().catch(() => null)
+          const p = data?.payload
+          if (!resp.ok || !p) {
+            throw new Error(data?.error || 'Invalid or expired share link')
+          }
+          if (!cancelled) setPayload(p)
+          return
+        }
+
+        const decoded = decodeSharePayload(desc.value)
+        if (!cancelled) setPayload(decoded)
+      } catch (e) {
+        if (!cancelled) {
+          setPayload(null)
+          setLoadError(e?.message || 'Failed to load share')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   useEffect(() => {
@@ -200,6 +246,35 @@ export default function PublicSupportBotListPage() {
   }, [payload])
 
   const rows = useMemo(() => toRowsFromPayload(payload), [payload])
+
+  if (loading) {
+    return (
+      <div style={{ padding: 30 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          <div className="card" style={{ padding: 18 }}>
+            <div style={{ color: 'var(--muted)' }}>{t('common.loading')}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!payload) {
+    return (
+      <div style={{ padding: 30 }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div className="card" style={{ padding: 18 }}>
+            <h2 style={{ color: 'var(--text)', fontSize: 18, marginBottom: 8 }}>
+              {t('common.accessDenied') || 'Access Denied'}
+            </h2>
+            <div style={{ color: 'var(--muted)' }}>
+              {loadError || 'This share link is invalid or expired.'}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const copyLink = async () => {
     try {

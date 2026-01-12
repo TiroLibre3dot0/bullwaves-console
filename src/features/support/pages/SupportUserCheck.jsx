@@ -613,12 +613,31 @@ export default function SupportUserCheck() {
         g: Date.now(),
         r: rows,
       }
-
-      const d = encodeSharePayload(payload)
       const origin = window.location.origin
 
-      // Put payload in the path to remove query-string overhead.
-      const href = `${origin}/share/support-botlist/${d}`
+      // Prefer a short token link (WhatsApp-friendly preview).
+      // Falls back to legacy encoded payload if the share API isn't available.
+      let href = null
+      try {
+        const resp = await fetch('/api/share/support-botlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload }),
+        })
+        const data = await resp.json().catch(() => null)
+        const token = data?.token
+        if (resp.ok && token && String(token).startsWith('share_')) {
+          href = `${origin}/share/support-botlist/${token}`
+        }
+      } catch {
+        // ignore
+      }
+
+      if (!href) {
+        const d = encodeSharePayload(payload)
+        // Legacy: payload in the path.
+        href = `${origin}/share/support-botlist/${d}`
+      }
 
       // best-effort: copy to clipboard + open
       try {
