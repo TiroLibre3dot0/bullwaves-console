@@ -882,6 +882,21 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   margin-bottom:10px;
 }
 
+/* Desktop-only back button (since the sticky topbar is mobile-only) */
+.support-details-desktop-back{display:none}
+@media (min-width: 881px) {
+  .support-details-desktop-back{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding-left: clamp(12px, 1.4vw, 22px);
+    padding-right: clamp(12px, 1.4vw, 22px);
+    margin: 6px auto 10px;
+    max-width: 1920px;
+    width: 100%;
+  }
+}
+
 /* Shared width + padding for Support User Details (keeps topbar + grid aligned) */
 .support-details-inner{
   max-width: 1920px;

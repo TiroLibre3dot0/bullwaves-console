@@ -96,14 +96,26 @@ export async function loadCsvRows(force = false) {
   const versionNow = getReportsVersionSafe()
   if (_cache && !force && _reportsVersion === versionNow) return _cache
   _reportsVersion = versionNow
-  // try canonical filename first, then a fixed/renamed variant
-  let res = await fetch(encodeURI('/Registrations Report.csv'))
-  if (!res.ok) {
-    res = await fetch(encodeURI('/Registrations Report.fixed.csv'))
-    if (!res.ok) {
-      _cache = []
-      return _cache
+  // Try canonical filename first, then common variants.
+  // The export we use going forward may be named like: "01012023 to 01112026 Registrations Report.csv".
+  const candidatePaths = [
+    '/Registrations Report.csv',
+    '/Registrations Report.fixed.csv',
+    '/01012023 to 01112026 Registrations Report.csv',
+  ]
+
+  let res = null
+  for (const p of candidatePaths) {
+    const r = await fetch(encodeURI(p))
+    if (r && r.ok) {
+      res = r
+      break
     }
+  }
+
+  if (!res || !res.ok) {
+    _cache = []
+    return _cache
   }
   const text = await res.text()
   let parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
@@ -1348,6 +1360,64 @@ function pickRowValue(row, candidates) {
   return ''
 }
 
+function pickRowValueByPrefix(row, prefixes) {
+  if (!row) return ''
+  const keys = Object.keys(row)
+  for (const prefix of prefixes) {
+    if (!prefix) continue
+    const direct = row[prefix]
+    if (direct !== undefined && direct !== null && String(direct).trim() !== '') return direct
+    const dupKey = keys.find((k) => k === prefix || k.startsWith(`${prefix}__`))
+    if (dupKey) {
+      const v = row[dupKey]
+      if (v !== undefined && v !== null && String(v).trim() !== '') return v
+    }
+  }
+  return ''
+}
+
+function parseIntLike(value) {
+  if (value === null || value === undefined) return null
+  const raw = String(value).trim()
+  if (!raw) return null
+  // Position count should be an integer (or an integer-looking string)
+  const cleaned = raw.replace(/[^0-9.-]+/g, '')
+  if (!cleaned) return null
+  const n = Number(cleaned)
+  if (!Number.isFinite(n)) return null
+  const rounded = Math.round(n)
+  if (Math.abs(n - rounded) > 1e-6) return null
+  return rounded
+}
+
+function readPositionCount(row) {
+  // Explicit position/trade count column only. Avoid using volume/lots as a proxy.
+  // Keys are already normalized by loadCsvRows() (non-alphanum stripped).
+  const raw = pickRowValueByPrefix(row, [
+    'positioncount',
+    'positioncounts',
+    'positionscount',
+    'tradecount',
+    'tradescount',
+    'totaltrades',
+    'deals',
+    'dealcount',
+  ])
+
+  const n = parseIntLike(raw)
+  if (n == null || n < 0) return null
+
+  // Heuristic guard: if the "position count" column is actually volume (common swap/mapping error),
+  // it tends to match volume very closely and be extremely large.
+  const volume = toNum(pickRowValue(row, ['volume', 'turnover']))
+  if (volume > 0 && n > 1000) {
+    const rel = Math.abs(n - volume) / Math.max(n, volume)
+    if (rel < 0.002) return null
+  }
+
+  return n
+}
+
 function computeAgeDaysFromRow(row, now) {
   const regRaw = pickRowValue(row, [
     'registrationdate',
@@ -1372,17 +1442,12 @@ function computeTier(positions, positionsPerDay) {
 }
 
 export function computeActivityIntelligence(row, now = new Date()) {
-  // Our Registrations Report currently contains trading aggregates like `lots`/`volume` and P/L,
-  // but does not always include an explicit position/trade count column.
-  // Prefer a real position count when present; otherwise, fall back to `lots` so the UI doesn't
-  // show zero activity everywhere.
-  let positions = toNum(pickRowValue(row, ['positioncount', 'positions', 'position']))
-  if (!positions) {
-    positions = toNum(pickRowValue(row, ['lots', 'totallots']))
-  }
+  // IMPORTANT: "positions" must be the true position count (number of positions/trades),
+  // not volume and not lots. If the report doesn't provide it reliably, leave it unknown.
+  const positions = readPositionCount(row)
   const ageDays = computeAgeDaysFromRow(row, now)
   const safeAge = ageDays || 1
-  const positionsPerDay = positions > 0 ? positions / safeAge : 0
+  const positionsPerDay = positions != null && positions > 0 ? positions / safeAge : null
 
   const totalDeposits = toNum(
     pickRowValue(row, ['totaldeposits', 'total_deposits', 'totaldeposit', 'total_deposit'])
@@ -1394,13 +1459,16 @@ export function computeActivityIntelligence(row, now = new Date()) {
   const lots = toNum(pickRowValue(row, ['lots', 'total_lots']))
   const pl = toNum(pickRowValue(row, ['pl', 'netpl', 'net_pl', 'profitloss']))
 
-  const tier = computeTier(positions, positionsPerDay)
+  const tier =
+    positions == null || positionsPerDay == null ? null : computeTier(positions, positionsPerDay)
   const signals = []
   const withdrawalRatio = totalDeposits > 0 ? withdrawals / Math.max(totalDeposits, 1) : null
 
   // 1) Early hyper-activity (bot/EA aggressive)
   const earlyWindow = ageDays != null && ageDays <= ACTIVITY_THRESHOLDS.earlyDays
   const earlyHyper = Boolean(
+    positions != null &&
+    positionsPerDay != null &&
     earlyWindow &&
     (positions >= ACTIVITY_THRESHOLDS.earlyPositions ||
       positionsPerDay >= ACTIVITY_THRESHOLDS.earlyPositionsPerDay)
@@ -1431,7 +1499,7 @@ export function computeActivityIntelligence(row, now = new Date()) {
   }
 
   // 3) High trading + heavy losses
-  if (positionsPerDay >= 5 && totalDeposits > 0) {
+  if (positionsPerDay != null && positionsPerDay >= 5 && totalDeposits > 0) {
     const roi = (pl / Math.max(totalDeposits, 1)) * 100
     if (roi <= -30) {
       signals.push({
@@ -1445,7 +1513,7 @@ export function computeActivityIntelligence(row, now = new Date()) {
   }
 
   // 4) Withdrawal-heavy + low trading
-  if (totalDeposits > 0) {
+  if (positionsPerDay != null && totalDeposits > 0) {
     const wr = withdrawals / Math.max(totalDeposits, 1)
     if (wr >= 0.7 && positionsPerDay < 1) {
       signals.push({
@@ -1484,7 +1552,7 @@ export function computeActivityIntelligence(row, now = new Date()) {
   }
 
   // 4d) High cash-out while active (quick profit-taking / bonus abuse pattern)
-  if (totalDeposits > 0) {
+  if (positionsPerDay != null && totalDeposits > 0) {
     const wr = withdrawals / Math.max(totalDeposits, 1)
     if (wr >= 0.8 && positionsPerDay >= 5 && ageDays != null && ageDays <= 30) {
       signals.push({
@@ -1498,7 +1566,7 @@ export function computeActivityIntelligence(row, now = new Date()) {
   }
 
   // 5) Data mismatch: positions but no volume/lots
-  if (positions > 0 && volume === 0 && lots === 0) {
+  if (positions != null && positions > 0 && volume === 0 && lots === 0) {
     signals.push({
       id: 'mismatch_positions_no_volume',
       severity: 'low',
@@ -1509,16 +1577,21 @@ export function computeActivityIntelligence(row, now = new Date()) {
   }
 
   const isPotentialBot = Boolean(
-    earlyHyper ||
-    (positionsPerDay >= ACTIVITY_THRESHOLDS.veryHighPositionsPerDay && positions >= 100)
+    positions != null &&
+    positionsPerDay != null &&
+    (earlyHyper ||
+      (positionsPerDay >= ACTIVITY_THRESHOLDS.veryHighPositionsPerDay && positions >= 100))
   )
 
   // Simple ranking score for bot list (deterministic)
-  const botScore = positionsPerDay * 2 + positions / 50 + (earlyHyper ? 100 : 0)
+  const botScore =
+    positions != null && positionsPerDay != null
+      ? positionsPerDay * 2 + positions / 50 + (earlyHyper ? 100 : 0)
+      : 0
 
   return {
     ageDays,
-    positions: Math.trunc(positions),
+    positions: positions == null ? null : Math.trunc(positions),
     positionsPerDay,
     withdrawals: Math.trunc(withdrawals),
     withdrawalRatio,

@@ -777,6 +777,7 @@ export const translations = {
     'support.userCheck.badge.top': 'Top',
     'support.userCheck.deposits': '{count} deposits',
     'support.userCheck.noResults': 'No results',
+    'support.userCheck.openInPartner': 'Open in Partner',
 
     'support.reply.fallback': "Thanks {name} — we're reviewing and will follow up shortly.",
 
@@ -1151,8 +1152,16 @@ export const translations = {
     'support.userCheck.botList.subtitle': 'Fast triage list ranked by intensity vs account age.',
     'support.userCheck.botList.ppdChip': 'P/day',
     'support.userCheck.botList.shortcuts': 'Shortcuts: / focus · Enter open',
+    'support.userCheck.botList.positionCountBadge.tooltip':
+      'Anti-regression check: the report must include Position Count',
+    'support.userCheck.botList.positionCountBadge.checking': 'Position Count: checking…',
+    'support.userCheck.botList.positionCountBadge.ok': 'Position Count: OK',
+    'support.userCheck.botList.positionCountBadge.missing': 'Position Count: missing',
     'support.userCheck.botList.loading': 'Computing candidates…',
     'support.userCheck.botList.empty': 'No strong bot candidates found in the current report.',
+    'support.userCheck.botList.missingPositionCount.title': 'Position Count missing in report',
+    'support.userCheck.botList.missingPositionCount.body':
+      'This Registrations Report does not include a reliable Position Count (number of positions). Upload/export a report that includes it to enable the bot/EA intensity list.',
     'support.userCheck.botList.openHint': 'Open trader details',
     'support.userCheck.botList.riskScore': 'Risk score',
     'support.userCheck.botList.badge.bot': 'Bot',
@@ -2008,6 +2017,7 @@ export const translations = {
     'support.userCheck.badge.top': 'Top',
     'support.userCheck.deposits': '{count} depositi',
     'support.userCheck.noResults': 'Nessun risultato',
+    'support.userCheck.openInPartner': 'Apri in Partner',
 
     'support.reply.fallback': 'Grazie {name} — stiamo verificando e ti aggiorneremo a breve.',
 
@@ -2384,8 +2394,16 @@ export const translations = {
     'support.userCheck.botList.subtitle': 'Lista rapida ordinata per intensità vs età account.',
     'support.userCheck.botList.ppdChip': 'P/g',
     'support.userCheck.botList.shortcuts': 'Scorciatoie: / focus · Invio apri',
+    'support.userCheck.botList.positionCountBadge.tooltip':
+      'Anti-regressione: il report deve includere Position Count',
+    'support.userCheck.botList.positionCountBadge.checking': 'Position Count: verifica…',
+    'support.userCheck.botList.positionCountBadge.ok': 'Position Count: OK',
+    'support.userCheck.botList.positionCountBadge.missing': 'Position Count: mancante',
     'support.userCheck.botList.loading': 'Calcolo candidati…',
     'support.userCheck.botList.empty': 'Nessun forte candidato bot nel report corrente.',
+    'support.userCheck.botList.missingPositionCount.title': 'Position Count mancante nel report',
+    'support.userCheck.botList.missingPositionCount.body':
+      'Questo Registrations Report non include un Position Count affidabile (numero posizioni). Esporta/carica un report che lo contenga per abilitare la lista intensità bot/EA.',
     'support.userCheck.botList.openHint': 'Apri dettagli trader',
     'support.userCheck.botList.riskScore': 'Risk score',
     'support.userCheck.botList.badge.bot': 'Bot',
@@ -3607,8 +3625,16 @@ export const translations = {
     'support.userCheck.botList.subtitle': 'Brza lista rangirana po intenzitetu vs starost naloga.',
     'support.userCheck.botList.ppdChip': 'P/dan',
     'support.userCheck.botList.shortcuts': 'Prečice: / fokus · Enter otvori',
+    'support.userCheck.botList.positionCountBadge.tooltip':
+      'Anti-regresija: izveštaj mora sadržati Position Count',
+    'support.userCheck.botList.positionCountBadge.checking': 'Position Count: provera…',
+    'support.userCheck.botList.positionCountBadge.ok': 'Position Count: OK',
+    'support.userCheck.botList.positionCountBadge.missing': 'Position Count: nedostaje',
     'support.userCheck.botList.loading': 'Računam kandidate…',
     'support.userCheck.botList.empty': 'Nema jakih bot kandidata u trenutnom izveštaju.',
+    'support.userCheck.botList.missingPositionCount.title': 'Position Count nedostaje u izveštaju',
+    'support.userCheck.botList.missingPositionCount.body':
+      'Ovaj Registrations Report ne sadrži pouzdan Position Count (broj pozicija). Učitaj/izvezi izveštaj koji ga sadrži da bi se omogućila lista intenziteta bot/EA.',
     'support.userCheck.botList.openHint': 'Otvori detalje trgovca',
     'support.userCheck.botList.riskScore': 'Risk score',
     'support.userCheck.botList.badge.bot': 'Bot',

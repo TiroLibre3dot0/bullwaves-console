@@ -1089,6 +1089,18 @@ export default function SupportUserDetails({
 
   return (
     <div className="support-user-details-page">
+      {/* Desktop back button: topbar is mobile-only */}
+      <div className="support-details-desktop-back">
+        <button
+          type="button"
+          className="support-back-btn"
+          onClick={onBack}
+          aria-label={t('support.details.backToResults')}
+          title={t('support.details.backToResults')}
+        >
+          <span aria-hidden>←</span>
+        </button>
+      </div>
       {/* Top per-user timeline removed: keep the compact horizontal timeline below */}
       {/* Top bar */}
       <div className="support-details-topbar">
@@ -1734,7 +1746,7 @@ export default function SupportUserDetails({
                         style={{ fontWeight: 800, fontSize: 15, marginTop: 6 }}
                         title={ppdTooltip}
                       >
-                        {activityIntel?.ageDays != null
+                        {activityIntel?.ageDays != null && activityIntel?.positionsPerDay != null
                           ? activityIntel.positionsPerDay.toFixed(1)
                           : '—'}
                       </div>

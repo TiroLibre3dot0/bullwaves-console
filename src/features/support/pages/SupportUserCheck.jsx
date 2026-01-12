@@ -148,6 +148,18 @@ function colorForNumber(v) {
   return '#f87171' // red
 }
 
+function toPartnerCustomerIdFromQuery(q) {
+  const s = String(q || '').trim()
+  if (!s) return null
+  const lower = s.toLowerCase()
+  if (lower.startsWith('bullwaves-')) {
+    const digits = s.slice('bullwaves-'.length).replace(/\D+/g, '')
+    return digits ? `bullwaves-${digits}` : null
+  }
+  const digits = s.replace(/\D+/g, '')
+  return digits ? `bullwaves-${digits}` : null
+}
+
 const sectionTitleStyle = { fontSize: 13, fontWeight: 900, color: '#fff', marginBottom: 8 }
 const sectionContentStyle = { color: '#9aa4b2' }
 
@@ -183,10 +195,23 @@ export default function SupportUserCheck() {
     console.log('Loading initial data for status')
     async function loadInitialData() {
       try {
-        const resp = await fetch('/Registrations%20Report.csv')
-        console.log('Fetch response', resp.ok)
-        if (!resp.ok) return
-        const text = await resp.text()
+        const candidates = [
+          '/Registrations%20Report.csv',
+          '/Registrations%20Report.fixed.csv',
+          '/01012023%20to%2001112026%20Registrations%20Report.csv',
+        ]
+
+        let text = null
+        for (const url of candidates) {
+          const resp = await fetch(url)
+          if (resp && resp.ok) {
+            console.log('Fetch response', url, resp.ok)
+
+            text = await resp.text()
+            break
+          }
+        }
+        if (!text) return
         const parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
         if (!parsed || (parsed.errors && parsed.errors.length)) return
         const rows = parsed.data || []
@@ -239,11 +264,13 @@ export default function SupportUserCheck() {
   const [botCandidates, setBotCandidates] = useState([])
   const [botCandidatesLoading, setBotCandidatesLoading] = useState(false)
   const [botHoverIndex, setBotHoverIndex] = useState(null)
+  const [botListMissingPositionCount, setBotListMissingPositionCount] = useState(false)
 
   // Precompute a default "Potential Bot (EA aggressive)" list for fast triage.
   useEffect(() => {
     let mounted = true
     setBotCandidatesLoading(true)
+    setBotListMissingPositionCount(false)
     ;(async () => {
       try {
         const BOT_LIST_SIZE = 50
@@ -252,6 +279,14 @@ export default function SupportUserCheck() {
           raw,
           intel: computeActivityIntelligence(raw),
         }))
+
+        const hasAnyPositionCount = scoredAll.some((x) => x?.intel?.positions != null)
+        if (!hasAnyPositionCount) {
+          if (!mounted) return
+          setBotCandidates([])
+          setBotListMissingPositionCount(true)
+          return
+        }
 
         const byScoreDesc = (a, b) => (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
 
@@ -285,6 +320,7 @@ export default function SupportUserCheck() {
       } catch (e) {
         if (!mounted) return
         setBotCandidates([])
+        setBotListMissingPositionCount(false)
       } finally {
         if (mounted) setBotCandidatesLoading(false)
       }
@@ -623,7 +659,10 @@ export default function SupportUserCheck() {
           }
           copyToClipboard={copyToClipboard}
           computePriority={computePriority}
-          onBack={() => setSelectedRaw(null)}
+          onBack={() => {
+            setSelectedRaw(null)
+            setTimeout(() => inputRef.current?.focus(), 0)
+          }}
         />
       </div>
     )
@@ -813,6 +852,35 @@ export default function SupportUserCheck() {
                       <div
                         style={{
                           fontSize: 11,
+                          color: botCandidatesLoading
+                            ? 'rgba(255,255,255,0.65)'
+                            : botListMissingPositionCount
+                              ? 'rgba(255,255,255,0.72)'
+                              : 'rgba(255,255,255,0.78)',
+                          padding: '6px 10px',
+                          borderRadius: 999,
+                          border: botCandidatesLoading
+                            ? '1px solid rgba(148,163,184,0.18)'
+                            : botListMissingPositionCount
+                              ? '1px solid rgba(239,68,68,0.18)'
+                              : '1px solid rgba(34,197,94,0.18)',
+                          background: botCandidatesLoading
+                            ? 'rgba(148,163,184,0.08)'
+                            : botListMissingPositionCount
+                              ? 'rgba(239,68,68,0.08)'
+                              : 'rgba(34,197,94,0.08)',
+                        }}
+                        title={t('support.userCheck.botList.positionCountBadge.tooltip')}
+                      >
+                        {botCandidatesLoading
+                          ? t('support.userCheck.botList.positionCountBadge.checking')
+                          : botListMissingPositionCount
+                            ? t('support.userCheck.botList.positionCountBadge.missing')
+                            : t('support.userCheck.botList.positionCountBadge.ok')}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 11,
                           color: 'rgba(255,255,255,0.72)',
                           padding: '6px 10px',
                           borderRadius: 999,
@@ -853,6 +921,15 @@ export default function SupportUserCheck() {
                     {botCandidatesLoading ? (
                       <div style={{ padding: 12, color: 'var(--muted)', fontSize: 13 }}>
                         {t('support.userCheck.botList.loading')}
+                      </div>
+                    ) : botListMissingPositionCount ? (
+                      <div style={{ padding: 12, color: 'var(--muted)', fontSize: 13 }}>
+                        <div style={{ fontWeight: 900, color: 'rgba(255,255,255,0.82)' }}>
+                          {t('support.userCheck.botList.missingPositionCount.title')}
+                        </div>
+                        <div style={{ marginTop: 6, lineHeight: 1.35 }}>
+                          {t('support.userCheck.botList.missingPositionCount.body')}
+                        </div>
                       </div>
                     ) : botCandidates.length ? (
                       <>
@@ -909,7 +986,8 @@ export default function SupportUserCheck() {
                             const hasPl =
                               plRaw !== null && plRaw !== undefined && String(plRaw).trim() !== ''
                             const plNum = hasPl ? toNum(plRaw) : null
-                            const ppd = intel?.positionsPerDay != null ? intel.positionsPerDay : 0
+                            const ppd =
+                              intel?.positionsPerDay != null ? intel.positionsPerDay : null
                             const ageDays = intel?.ageDays
                             const tier = intel?.tier
                             const tm = tierMeta(tier)
@@ -1114,7 +1192,9 @@ export default function SupportUserCheck() {
                                     fontWeight: 800,
                                   }}
                                 >
-                                  {(intel?.positions ?? 0).toLocaleString()}
+                                  {intel?.positions == null
+                                    ? '—'
+                                    : intel.positions.toLocaleString()}
                                 </div>
                                 <div
                                   style={{
@@ -1131,13 +1211,13 @@ export default function SupportUserCheck() {
                                   <div
                                     style={{
                                       fontWeight: 950,
-                                      color: colorForPpd(ppd, tier),
+                                      color: colorForPpd(ppd == null ? 0 : ppd, tier),
                                       fontSize: 13,
                                       lineHeight: 1,
                                     }}
                                     title={ppdTooltip}
                                   >
-                                    {ppd.toFixed(1)}
+                                    {ppd == null ? '—' : ppd.toFixed(1)}
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -1267,9 +1347,56 @@ export default function SupportUserCheck() {
                       </div>
                     )
                   })}
-                  {mappedResults.length === 0 && (
-                    <div className="neutral-card">{t('support.userCheck.noResults')}</div>
-                  )}
+                  {resultsToShow.length === 0 &&
+                    (() => {
+                      const partnerId = toPartnerCustomerIdFromQuery(query)
+                      const partnerUrl = partnerId
+                        ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
+                        : null
+
+                      return (
+                        <div
+                          className="neutral-card"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 900 }}>
+                              {t('support.userCheck.noResults')}
+                            </div>
+                            {partnerId ? (
+                              <div style={{ marginTop: 4, opacity: 0.8 }}>{partnerId}</div>
+                            ) : null}
+                          </div>
+                          {partnerUrl ? (
+                            <a
+                              href={partnerUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                padding: '8px 12px',
+                                borderRadius: 999,
+                                border: '1px solid rgba(99,102,241,0.28)',
+                                background: 'rgba(99,102,241,0.14)',
+                                color: 'rgba(255,255,255,0.92)',
+                                fontWeight: 900,
+                                fontSize: 12,
+                                textDecoration: 'none',
+                                whiteSpace: 'nowrap',
+                              }}
+                              title={partnerUrl}
+                            >
+                              {t('support.userCheck.openInPartner')}
+                            </a>
+                          ) : null}
+                        </div>
+                      )
+                    })()}
                 </div>
               )}
             </div>
