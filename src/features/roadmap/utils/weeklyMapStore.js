@@ -52,38 +52,21 @@ function makeWeeklyTaskId(weekStart, megaStoryId, index) {
 const INITIAL_EXECUTION_PLAN_BY_MEGA = {
   retention_lifecycle: [
     {
-      title: 'Prep Solitics retention call',
-      owner: 'Paolo',
-      department: 'Ops / Analytics',
-      tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      expectedImpact:
-        'Use cases and scope prepared; focus set on lifecycle measurement in Affiliate → Cohort Analysis.',
-      status: 'done',
-    },
-    {
-      title: 'Solitics call: owners + next steps',
-      owner: 'Paolo',
-      department: 'Ops / Analytics',
-      tool: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      expectedImpact: 'Ownership aligned; onboarding path confirmed; weekly cadence agreed.',
-      status: 'done',
-    },
-    {
-      title: 'Solitics kick-off: onboarding active, content execution',
-      owner: 'Paolo, Marketing Lead, Solitics',
-      department: 'Ops / Analytics / Marketing',
-      tool: 'Solitics platform + Cohort Analysis',
-      expectedImpact:
-        'Onboarding is active (45 business days). Current phase is marketing execution: define use cases and deliver content (emails/creatives). Main risk is content readiness (not technical setup).',
-      status: 'done',
-    },
-    {
       title: 'Define Solitics use cases (v1)',
       owner: 'Paolo, Solitics',
       department: 'Ops / Marketing',
       tool: 'Affiliate → Cohort Analysis',
       expectedImpact:
         'Use cases + triggers documented (audience, trigger, message, channel). Next step: draft v1 list and review/prioritize with Solitics.',
+      status: 'in_progress',
+    },
+    {
+      title: 'Solitics Product Overview #1 – data flow & segmentation',
+      owner: 'Paolo / Solitics',
+      department: 'Ops / Analytics',
+      tool: 'Solitics onboarding session',
+      expectedImpact:
+        'Attend the session and capture concrete activation + data requirements. Outcome: clear understanding of Solitics data structure and segmentation basics for retention use cases.',
       status: 'in_progress',
     },
     {
@@ -126,17 +109,26 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
 
   ops_governance: [
     {
-      title: 'Stamatis call: risk scoring + KYC updates',
-      owner: 'Paolo',
-      department: 'Compliance / Operations',
-      tool: 'Weekly Map checklist',
+      title: 'Support User Check v2 – rollout review with Emanuele',
+      owner: 'Paolo / Emanuele',
+      department: 'Ops / Support',
+      tool: 'Bullwaves console — Support User Check',
       expectedImpact:
-        'Risk scoring framework defined (questionnaire + scoring); enables AML checks vs declared risk. Next step: align BI + Ops on rollout steps.',
-      status: 'done',
+        'Enhancements completed (Position Count, withdrawals, affiliate moves). Next: demo to Emanuele and decide if/how to share with the Support team (especially Cellxpert-access users).',
+      status: 'in_progress',
     },
   ],
 
   aml_compliance: [
+    {
+      title: 'Analyze high-frequency traders (possible bot activity)',
+      owner: 'Paolo / Ops',
+      department: 'Ops / Compliance',
+      tool: 'Support User Check tool',
+      expectedImpact:
+        'Extract and review high-frequency users (80–130 positions/day) and identify initial behavioral patterns. Outcome: preliminary assessment for further compliance/product decisions.',
+      status: 'in_progress',
+    },
     {
       title: 'Risk score + AML alerts dashboard',
       owner: 'Michael Roizman, Stamatis',
@@ -214,22 +206,7 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
   ],
 
   internal_comms: [
-    {
-      title: 'Send trading platform overview email',
-      owner: 'Paolo',
-      department: 'Ops / Product',
-      tool: 'gmail',
-      expectedImpact: 'Email sent with platform overview and link.',
-      status: 'done',
-    },
-    {
-      title: 'Send first month invoice',
-      owner: 'Paolo',
-      department: 'Finance / Ops',
-      tool: 'Invoice',
-      expectedImpact: 'Invoice sent. Next step: confirm payment receipt and close.',
-      status: 'done',
-    },
+    // (intentionally empty this week)
   ],
 
   execution_clarity: [

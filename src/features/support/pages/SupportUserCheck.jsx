@@ -1,6 +1,7 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Papa from 'papaparse'
+import { encodeSharePayload } from '../../../utils/shareCodec'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import {
@@ -273,6 +274,7 @@ export default function SupportUserCheck() {
   const [botCandidatesLoading, setBotCandidatesLoading] = useState(false)
   const [botHoverIndex, setBotHoverIndex] = useState(null)
   const [botListMissingPositionCount, setBotListMissingPositionCount] = useState(false)
+  const [botShareCopied, setBotShareCopied] = useState(false)
 
   // Precompute a default "Potential Bot (EA aggressive)" list for fast triage.
   useEffect(() => {
@@ -575,6 +577,63 @@ export default function SupportUserCheck() {
   const showHero = !searched && qTrim === '' && !selected
 
   const ppdTooltip = t('support.activity.tooltip.positionsPerDay')
+
+  const onShareBotList = async () => {
+    try {
+      if (typeof window === 'undefined') return
+      if (!Array.isArray(botCandidates) || botCandidates.length === 0) return
+
+      const rows = botCandidates.map(({ raw, intel, affiliateName, regDate }, i) => {
+        const mapped = getMapped(raw)
+        const name = mapped?.name || mapped?.userId || '—'
+        const plRaw = mapped?.pl
+        const pl =
+          plRaw !== null && plRaw !== undefined && String(plRaw).trim() !== '' ? plRaw : null
+        return {
+          rank: i + 1,
+          userId: mapped?.userId || null,
+          account: name,
+          affiliateId: mapped?.affiliateId || null,
+          affiliateName: affiliateName || null,
+          regDate: formatRegDateShort(regDate),
+          ageDays: intel?.ageDays ?? null,
+          positions: intel?.positions ?? null,
+          pl,
+          positionsPerDay: intel?.positionsPerDay ?? null,
+          tier: intel?.tier ?? null,
+          isPotentialBot: Boolean(intel?.isPotentialBot),
+          botScore: intel?.botScore ?? null,
+        }
+      })
+
+      const payload = {
+        v: 1,
+        kind: 'support-botlist-top50',
+        generatedAt: new Date().toISOString(),
+        title: t('support.userCheck.botList.title'),
+        subtitle: t('support.userCheck.botList.subtitle'),
+        rows,
+      }
+
+      const d = encodeSharePayload(payload)
+      const origin = window.location.origin
+      const params = new window.URLSearchParams({ d })
+      const href = `${origin}/share/support-botlist?${params.toString()}`
+
+      // best-effort: copy to clipboard + open
+      try {
+        await navigator.clipboard.writeText(href)
+        setBotShareCopied(true)
+        window.setTimeout(() => setBotShareCopied(false), 1400)
+      } catch {
+        // ignore
+      }
+
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } catch {
+      // ignore
+    }
+  }
 
   function initialsFor(mapped) {
     const seed = (mapped?.name || mapped?.userId || ' ? ')
@@ -966,6 +1025,24 @@ export default function SupportUserCheck() {
                       >
                         {t('support.userCheck.botList.shortcuts')}
                       </div>
+                      <button
+                        type="button"
+                        className="btn secondary"
+                        onClick={onShareBotList}
+                        disabled={botCandidatesLoading || !botCandidates.length}
+                        title={t('support.userCheck.botList.share.hint')}
+                        style={{
+                          padding: '6px 10px',
+                          borderRadius: 999,
+                          fontSize: 12,
+                          lineHeight: 1,
+                          opacity: botCandidatesLoading || !botCandidates.length ? 0.55 : 1,
+                        }}
+                      >
+                        {botShareCopied
+                          ? t('support.userCheck.botList.share.copied')
+                          : t('support.userCheck.botList.share.label')}
+                      </button>
                     </div>
                   </div>
 

@@ -1152,6 +1152,10 @@ export const translations = {
     'support.userCheck.botList.subtitle': 'Fast triage list ranked by intensity vs account age.',
     'support.userCheck.botList.ppdChip': 'P/day',
     'support.userCheck.botList.shortcuts': 'Shortcuts: / focus · Enter open',
+    'support.userCheck.botList.share.label': 'Share',
+    'support.userCheck.botList.share.copied': 'Link copied',
+    'support.userCheck.botList.share.hint':
+      'Create a public link that opens only this table (no dashboard).',
     'support.userCheck.botList.positionCountBadge.tooltip':
       'Anti-regression check: the report must include Position Count',
     'support.userCheck.botList.positionCountBadge.checking': 'Position Count: checking…',
@@ -2394,6 +2398,10 @@ export const translations = {
     'support.userCheck.botList.subtitle': 'Lista rapida ordinata per intensità vs età account.',
     'support.userCheck.botList.ppdChip': 'P/g',
     'support.userCheck.botList.shortcuts': 'Scorciatoie: / focus · Invio apri',
+    'support.userCheck.botList.share.label': 'Condividi',
+    'support.userCheck.botList.share.copied': 'Link copiato',
+    'support.userCheck.botList.share.hint':
+      'Crea un link pubblico che apre solo questa tabella (senza dashboard).',
     'support.userCheck.botList.positionCountBadge.tooltip':
       'Anti-regressione: il report deve includere Position Count',
     'support.userCheck.botList.positionCountBadge.checking': 'Position Count: verifica…',

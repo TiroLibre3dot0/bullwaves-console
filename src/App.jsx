@@ -17,6 +17,7 @@ import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
+import PublicSupportBotListPage from './features/support/pages/PublicSupportBotListPage'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import { DataStatusProvider } from './context/DataStatusContext'
 import FullPageLoader from './components/FullPageLoader'
@@ -314,7 +315,10 @@ export default function App() {
     <DataStatusProvider>
       {/* Public share link route - no auth required */}
       {typeof window !== 'undefined' &&
-      window.location.pathname.startsWith('/share/weekly-map/') ? (
+      window.location.pathname.startsWith('/share/support-botlist') ? (
+        <PublicSupportBotListPage />
+      ) : typeof window !== 'undefined' &&
+        window.location.pathname.startsWith('/share/weekly-map/') ? (
         <PublicWeeklyMapPage token={window.location.pathname.split('/').pop()} />
       ) : typeof window !== 'undefined' &&
         window.location.pathname.startsWith('/share/weekly-execution-history/') ? (
