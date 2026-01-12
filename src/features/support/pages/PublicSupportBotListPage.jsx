@@ -154,8 +154,14 @@ export default function PublicSupportBotListPage() {
     if (p.startsWith(prefix)) {
       const rest = p.slice(prefix.length)
       if (!rest) return null
-      if (/^share_(local_)?[a-z0-9]{10,}$/i.test(rest) && rest.length <= 96) {
-        return { kind: 'token', value: rest }
+      const last = rest
+        .split('/')
+        .map((s) => String(s || '').trim())
+        .filter(Boolean)
+        .at(-1)
+      if (!last) return null
+      if (/^share_(local_)?[a-z0-9]{10,}$/i.test(last) && last.length <= 96) {
+        return { kind: 'token', value: last }
       }
       return { kind: 'encoded', value: rest }
     }
@@ -205,11 +211,11 @@ export default function PublicSupportBotListPage() {
         }
 
         if (desc.kind === 'token') {
-          const token = String(desc.value || '').trim()
+          const shareId = String(desc.value || '').trim()
 
           // Dev-only: local snapshots stored by the share button when Vercel functions are not available.
-          if (/^share_local_/i.test(token)) {
-            const key = `bw_share_support_botlist:${token}`
+          if (/^share_local_/i.test(shareId)) {
+            const key = `bw_share_support_botlist:${shareId}`
             const raw = window.localStorage.getItem(key)
             const parsed = raw ? JSON.parse(raw) : null
             const p = parsed?.payload
@@ -218,12 +224,25 @@ export default function PublicSupportBotListPage() {
             return
           }
 
-          const resp = await fetch(`/api/share/support-botlist/${encodeURIComponent(token)}`)
+          const resp = await fetch('/api/share/support-botlist', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ shareId }),
+          })
+
           const data = await resp.json().catch(() => null)
-          const p = data?.payload
-          if (!resp.ok || !p) {
-            throw new Error(data?.error || 'Invalid or expired share link')
+
+          if (resp.status === 401 || resp.status === 403) {
+            throw new Error(data?.message || 'Invalid or expired share link')
           }
+
+          const p = data?.data
+          if (!resp.ok || !p) {
+            throw new Error(data?.message || data?.error || 'Invalid or expired share link')
+          }
+
           if (!cancelled) setPayload(p)
           return
         }
