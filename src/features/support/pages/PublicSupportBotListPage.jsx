@@ -259,50 +259,6 @@ export default function PublicSupportBotListPage() {
 
   const rows = useMemo(() => toRowsFromPayload(payload), [payload])
 
-  if (loading) {
-    return (
-      <div style={{ padding: 30 }}>
-        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-          <div className="card" style={{ padding: 18 }}>
-            <div style={{ color: 'var(--muted)' }}>{t('common.loading')}</div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (!payload) {
-    return (
-      <div style={{ padding: 30 }}>
-        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
-          <div className="card" style={{ padding: 18 }}>
-            <h2 style={{ color: 'var(--text)', fontSize: 18, marginBottom: 8 }}>
-              {t('common.accessDenied') || 'Access Denied'}
-            </h2>
-            <div style={{ color: 'var(--muted)' }}>
-              {loadError || 'This share link is invalid or expired.'}
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const copyLink = async () => {
-    try {
-      const href = typeof window !== 'undefined' ? window.location.href : ''
-      await navigator.clipboard.writeText(href)
-      setCopied(true)
-      window.setTimeout(() => setCopied(false), 1400)
-    } catch {
-      // ignore
-    }
-  }
-
-  const title = payload?.title || t('support.userCheck.botList.title')
-  const subtitle = payload?.subtitle || t('support.userCheck.botList.subtitle')
-  const generatedAt = payload?.generatedAt ? String(payload.generatedAt) : null
-
   const affiliates = useMemo(() => {
     const set = new Set()
     for (const r of rows) {
@@ -401,6 +357,50 @@ export default function PublicSupportBotListPage() {
 
     return sorted
   }, [normalized, affiliateFilter, query, sort])
+
+  if (loading) {
+    return (
+      <div style={{ padding: 30 }}>
+        <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+          <div className="card" style={{ padding: 18 }}>
+            <div style={{ color: 'var(--muted)' }}>{t('common.loading')}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!payload) {
+    return (
+      <div style={{ padding: 30 }}>
+        <div style={{ maxWidth: 1000, margin: '0 auto' }}>
+          <div className="card" style={{ padding: 18 }}>
+            <h2 style={{ color: 'var(--text)', fontSize: 18, marginBottom: 8 }}>
+              {t('common.accessDenied') || 'Access Denied'}
+            </h2>
+            <div style={{ color: 'var(--muted)' }}>
+              {loadError || 'This share link is invalid or expired.'}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const copyLink = async () => {
+    try {
+      const href = typeof window !== 'undefined' ? window.location.href : ''
+      await navigator.clipboard.writeText(href)
+      setCopied(true)
+      window.setTimeout(() => setCopied(false), 1400)
+    } catch {
+      // ignore
+    }
+  }
+
+  const title = payload?.title || t('support.userCheck.botList.title')
+  const subtitle = payload?.subtitle || t('support.userCheck.botList.subtitle')
+  const generatedAt = payload?.generatedAt ? String(payload.generatedAt) : null
 
   const sortLabel = (key, label) => {
     const is = sort.key === key
