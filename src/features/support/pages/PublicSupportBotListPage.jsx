@@ -154,7 +154,7 @@ export default function PublicSupportBotListPage() {
     if (p.startsWith(prefix)) {
       const rest = p.slice(prefix.length)
       if (!rest) return null
-      if (/^share_[a-z0-9]{10,}$/i.test(rest) && rest.length <= 96) {
+      if (/^share_(local_)?[a-z0-9]{10,}$/i.test(rest) && rest.length <= 96) {
         return { kind: 'token', value: rest }
       }
       return { kind: 'encoded', value: rest }
@@ -206,6 +206,18 @@ export default function PublicSupportBotListPage() {
 
         if (desc.kind === 'token') {
           const token = String(desc.value || '').trim()
+
+          // Dev-only: local snapshots stored by the share button when Vercel functions are not available.
+          if (/^share_local_/i.test(token)) {
+            const key = `bw_share_support_botlist:${token}`
+            const raw = window.localStorage.getItem(key)
+            const parsed = raw ? JSON.parse(raw) : null
+            const p = parsed?.payload
+            if (!p) throw new Error('Missing local share snapshot')
+            if (!cancelled) setPayload(p)
+            return
+          }
+
           const resp = await fetch(`/api/share/support-botlist/${encodeURIComponent(token)}`)
           const data = await resp.json().catch(() => null)
           const p = data?.payload

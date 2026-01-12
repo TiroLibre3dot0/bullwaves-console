@@ -615,6 +615,21 @@ export default function SupportUserCheck() {
       }
       const origin = window.location.origin
 
+      const randomTokenSuffix = (len = 12) => {
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+        let out = ''
+        const arr = new Uint8Array(len)
+        try {
+          window.crypto?.getRandomValues?.(arr)
+          for (let i = 0; i < len; i++) out += alphabet[arr[i] % alphabet.length]
+          return out
+        } catch {
+          // ignore
+        }
+        for (let i = 0; i < len; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)]
+        return out
+      }
+
       // Prefer a short token link (WhatsApp-friendly preview).
       // Falls back to legacy encoded payload if the share API isn't available.
       let href = null
@@ -631,6 +646,19 @@ export default function SupportUserCheck() {
         }
       } catch {
         // ignore
+      }
+
+      // Local dev fallback: Vite dev doesn't run Vercel functions, so allow testing short links
+      // by storing the snapshot in localStorage (works only on the same browser/device).
+      if (!href && /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)) {
+        try {
+          const token = `share_local_${randomTokenSuffix(16)}`
+          const key = `bw_share_support_botlist:${token}`
+          window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
+          href = `${origin}/share/support-botlist/${token}`
+        } catch {
+          // ignore
+        }
       }
 
       if (!href) {
