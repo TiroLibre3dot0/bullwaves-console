@@ -634,7 +634,7 @@ export default function SupportUserCheck() {
       // Falls back to legacy encoded payload if the share API isn't available.
       let href = null
       try {
-        const resp = await fetch('/api/share/support-botlist', {
+        const resp = await fetch('/api/share/create-support-botlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ payload }),

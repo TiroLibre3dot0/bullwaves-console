@@ -234,13 +234,13 @@ export default function PublicSupportBotListPage() {
 
           const data = await resp.json().catch(() => null)
 
-          if (resp.status === 401 || resp.status === 403) {
+          if (resp.status === 403) {
             throw new Error(data?.message || 'Invalid or expired share link')
           }
 
           const p = data?.data
           if (!resp.ok || !p) {
-            throw new Error(data?.message || data?.error || 'Invalid or expired share link')
+            throw new Error(data?.message || data?.error || 'Failed to load share')
           }
 
           if (!cancelled) setPayload(p)
