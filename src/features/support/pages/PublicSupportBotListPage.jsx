@@ -141,10 +141,50 @@ export default function PublicSupportBotListPage() {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'rank', dir: 'asc' })
 
-  const payload = useMemo(() => {
+  const extractShareDataFromLocation = () => {
     if (typeof window === 'undefined') return null
     const params = new window.URLSearchParams(window.location.search)
-    const d = params.get('d')
+    const qp = params.get('d')
+    if (qp) return qp
+    const prefix = '/share/support-botlist/'
+    const p = String(window.location.pathname || '')
+    if (p.startsWith(prefix)) {
+      const rest = p.slice(prefix.length)
+      return rest ? rest : null
+    }
+    return null
+  }
+
+  const toRowsFromPayload = (p) => {
+    if (!p) return []
+    // v2 compact schema: payload.r = [ [userId, account, affiliateId, affiliateName, regDate, ageDays, positions, pl, ppd, tier, isPotentialBot, botScore], ... ]
+    if (p.v === 2 && Array.isArray(p.r)) {
+      return p.r
+        .filter((row) => Array.isArray(row))
+        .map((row, idx) => {
+          return {
+            rank: idx + 1,
+            userId: row[0] ?? null,
+            account: row[1] ?? null,
+            affiliateId: row[2] ?? null,
+            affiliateName: row[3] ?? null,
+            regDate: row[4] ?? null,
+            ageDays: row[5] ?? null,
+            positions: row[6] ?? null,
+            pl: row[7] ?? null,
+            positionsPerDay: row[8] ?? null,
+            tier: row[9] ?? null,
+            isPotentialBot: Boolean(row[10]),
+            botScore: row[11] ?? null,
+          }
+        })
+    }
+    // v1 legacy schema
+    return Array.isArray(p.rows) ? p.rows : []
+  }
+
+  const payload = useMemo(() => {
+    const d = extractShareDataFromLocation()
     return decodeSharePayload(d)
   }, [])
 
@@ -153,13 +193,13 @@ export default function PublicSupportBotListPage() {
     setOpenGraphMeta({
       title,
       description: payload?.subtitle || t('support.userCheck.botList.subtitle'),
-      image: '/og-image.svg',
+      image: '/Logo.png',
       url: typeof window !== 'undefined' ? window.location.href : '',
     })
     return () => resetOpenGraphMeta()
   }, [payload])
 
-  const rows = Array.isArray(payload?.rows) ? payload.rows : []
+  const rows = useMemo(() => toRowsFromPayload(payload), [payload])
 
   const copyLink = async () => {
     try {

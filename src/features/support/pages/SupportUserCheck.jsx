@@ -583,42 +583,42 @@ export default function SupportUserCheck() {
       if (typeof window === 'undefined') return
       if (!Array.isArray(botCandidates) || botCandidates.length === 0) return
 
-      const rows = botCandidates.map(({ raw, intel, affiliateName, regDate }, i) => {
+      // v2 payload: keep it extremely compact (arrays, no verbose keys) to shorten the share URL.
+      // Row schema: [userId, account, affiliateId, affiliateName, regDate, ageDays, positions, pl, ppd, tier, isPotentialBot, botScore]
+      const rows = botCandidates.map(({ raw, intel, affiliateName, regDate }) => {
         const mapped = getMapped(raw)
         const name = mapped?.name || mapped?.userId || '—'
         const plRaw = mapped?.pl
         const pl =
           plRaw !== null && plRaw !== undefined && String(plRaw).trim() !== '' ? plRaw : null
-        return {
-          rank: i + 1,
-          userId: mapped?.userId || null,
-          account: name,
-          affiliateId: mapped?.affiliateId || null,
-          affiliateName: affiliateName || null,
-          regDate: formatRegDateShort(regDate),
-          ageDays: intel?.ageDays ?? null,
-          positions: intel?.positions ?? null,
+        return [
+          mapped?.userId || null,
+          name,
+          mapped?.affiliateId || null,
+          affiliateName || null,
+          formatRegDateShort(regDate),
+          intel?.ageDays ?? null,
+          intel?.positions ?? null,
           pl,
-          positionsPerDay: intel?.positionsPerDay ?? null,
-          tier: intel?.tier ?? null,
-          isPotentialBot: Boolean(intel?.isPotentialBot),
-          botScore: intel?.botScore ?? null,
-        }
+          intel?.positionsPerDay ?? null,
+          intel?.tier ?? null,
+          Boolean(intel?.isPotentialBot),
+          intel?.botScore ?? null,
+        ]
       })
 
       const payload = {
-        v: 1,
-        kind: 'support-botlist-top50',
-        generatedAt: new Date().toISOString(),
-        title: t('support.userCheck.botList.title'),
-        subtitle: t('support.userCheck.botList.subtitle'),
-        rows,
+        v: 2,
+        k: 'sb50',
+        g: Date.now(),
+        r: rows,
       }
 
       const d = encodeSharePayload(payload)
       const origin = window.location.origin
-      const params = new window.URLSearchParams({ d })
-      const href = `${origin}/share/support-botlist?${params.toString()}`
+
+      // Put payload in the path to remove query-string overhead.
+      const href = `${origin}/share/support-botlist/${d}`
 
       // best-effort: copy to clipboard + open
       try {

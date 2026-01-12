@@ -7,7 +7,7 @@ export function setOpenGraphMeta(config) {
   const {
     title = 'Bullwaves — Weekly Map',
     description = 'Weekly execution contract, team commitments and project governance',
-    image = '/og-image-weekly-map.png',
+    image = '/Logo.png',
     url = typeof window !== 'undefined' ? window.location.href : '',
   } = config
 
