@@ -7,7 +7,7 @@ export default [
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2021,
       globals: {
         React: 'readonly',
         console: 'readonly',

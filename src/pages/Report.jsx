@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { formatEuro, formatNumber, formatNumberShort, formatPercent, cleanNumber } from '../lib/formatters'
+import {
+  formatEuro,
+  formatNumber,
+  formatNumberShort,
+  formatPercent,
+  cleanNumber,
+} from '../lib/formatters'
 import AffiliatePayments2 from '../features/affiliate/components/AffiliatePayments2'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
 import FullPageLoader from '../components/FullPageLoader'
@@ -24,7 +30,13 @@ export default function Report() {
 
         const pick = (obj, keys) => {
           for (const key of keys) {
-            if (obj && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] != null && `${obj[key]}`.trim() !== '') return obj[key]
+            if (
+              obj &&
+              Object.prototype.hasOwnProperty.call(obj, key) &&
+              obj[key] != null &&
+              `${obj[key]}`.trim() !== ''
+            )
+              return obj[key]
           }
           return undefined
         }
@@ -47,34 +59,47 @@ export default function Report() {
           }
         }
 
-        const parsedMedia = mediaText ? parseCsv(mediaText).map((r) => {
-          const monthMeta = parseMonthLabel(pick(r, ['Month', 'month']))
-          return {
-            monthKey: monthMeta.key,
-            monthIndex: monthMeta.monthIndex,
-            monthLabel: monthMeta.label,
-            year: monthMeta.year,
-            affiliate: (pick(r, ['Affiliate', 'affiliate']) || '—').toString().trim(),
-            registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
-            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
-            pl: cleanNumber(pick(r, ['PL', 'pl'])),
-            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
-          }
-        }) : []
+        const parsedMedia = mediaText
+          ? parseCsv(mediaText).map((r) => {
+              const monthMeta = parseMonthLabel(pick(r, ['Month', 'month']))
+              return {
+                monthKey: monthMeta.key,
+                monthIndex: monthMeta.monthIndex,
+                monthLabel: monthMeta.label,
+                year: monthMeta.year,
+                affiliate: (pick(r, ['Affiliate', 'affiliate']) || '—').toString().trim(),
+                registrations: cleanNumber(
+                  pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])
+                ),
+                ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
+                pl: cleanNumber(pick(r, ['PL', 'pl'])),
+                netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
+              }
+            })
+          : []
 
-        const parsedPayments = paymentsText ? parseCsv(paymentsText).map((r) => {
-          const date = r.PaymentDate ? parseMonthFirstDate(r.PaymentDate) : r['Commission Date'] ? new Date(r['Commission Date']) : null
-          const monthIndex = date && !Number.isNaN(date.getTime()) ? date.getMonth() : -1
-          const year = date && !Number.isNaN(date.getTime()) ? date.getFullYear() : null
-          const monthKey = date && !Number.isNaN(date.getTime()) ? `${year}-${String(monthIndex).padStart(2, '0')}` : 'unknown'
-          return {
-            monthIndex,
-            monthKey,
-            year,
-            affiliate: (r.Affiliate || r['Affiliate Id'] || '—').toString().trim(),
-            amount: cleanNumber(r['Payment amount'] || r.amount),
-          }
-        }) : []
+        const parsedPayments = paymentsText
+          ? parseCsv(paymentsText).map((r) => {
+              const date = r.PaymentDate
+                ? parseMonthFirstDate(r.PaymentDate)
+                : r['Commission Date']
+                  ? new Date(r['Commission Date'])
+                  : null
+              const monthIndex = date && !Number.isNaN(date.getTime()) ? date.getMonth() : -1
+              const year = date && !Number.isNaN(date.getTime()) ? date.getFullYear() : null
+              const monthKey =
+                date && !Number.isNaN(date.getTime())
+                  ? `${year}-${String(monthIndex).padStart(2, '0')}`
+                  : 'unknown'
+              return {
+                monthIndex,
+                monthKey,
+                year,
+                affiliate: (r.Affiliate || r['Affiliate Id'] || '—').toString().trim(),
+                amount: cleanNumber(r['Payment amount'] || r.amount),
+              }
+            })
+          : []
 
         setMediaRows(parsedMedia)
         setPayments(parsedPayments)
@@ -111,19 +136,27 @@ export default function Report() {
 
   const currentYear = new Date().getFullYear()
 
-  const filteredMedia = useMemo(() => mediaRows.filter((r) => {
-    if (mode === 'global') return true
-    if (mode === 'annual') return r.year === currentYear
-    if (mode === 'monthly') return selectedMonth ? r.monthKey === selectedMonth : false
-    return true
-  }), [mediaRows, mode, currentYear, selectedMonth])
+  const filteredMedia = useMemo(
+    () =>
+      mediaRows.filter((r) => {
+        if (mode === 'global') return true
+        if (mode === 'annual') return r.year === currentYear
+        if (mode === 'monthly') return selectedMonth ? r.monthKey === selectedMonth : false
+        return true
+      }),
+    [mediaRows, mode, currentYear, selectedMonth]
+  )
 
-  const filteredPayments = useMemo(() => payments.filter((r) => {
-    if (mode === 'global') return true
-    if (mode === 'annual') return r.year === currentYear
-    if (mode === 'monthly') return selectedMonth ? r.monthKey === selectedMonth : false
-    return true
-  }), [payments, mode, currentYear, selectedMonth])
+  const filteredPayments = useMemo(
+    () =>
+      payments.filter((r) => {
+        if (mode === 'global') return true
+        if (mode === 'annual') return r.year === currentYear
+        if (mode === 'monthly') return selectedMonth ? r.monthKey === selectedMonth : false
+        return true
+      }),
+    [payments, mode, currentYear, selectedMonth]
+  )
 
   const byAffiliate = useMemo(() => {
     const map = new Map()
@@ -148,7 +181,13 @@ export default function Report() {
       acc.ftd += r.ftd || 0
       acc.pl += r.pl || 0
       if (r.monthKey) {
-        const prev = acc.monthTotals.get(r.monthKey) || { pl: 0, pay: 0, monthKey: r.monthKey, monthIndex: r.monthIndex, year: r.year }
+        const prev = acc.monthTotals.get(r.monthKey) || {
+          pl: 0,
+          pay: 0,
+          monthKey: r.monthKey,
+          monthIndex: r.monthIndex,
+          year: r.year,
+        }
         acc.monthTotals.set(r.monthKey, { ...prev, pl: prev.pl + (r.pl || 0) })
       }
     })
@@ -156,24 +195,32 @@ export default function Report() {
     filteredPayments.forEach((p) => {
       const acc = ensure(p.affiliate)
       if (p.monthKey) {
-        const prev = acc.monthTotals.get(p.monthKey) || { pl: 0, pay: 0, monthKey: p.monthKey, monthIndex: p.monthIndex, year: p.year }
+        const prev = acc.monthTotals.get(p.monthKey) || {
+          pl: 0,
+          pay: 0,
+          monthKey: p.monthKey,
+          monthIndex: p.monthIndex,
+          year: p.year,
+        }
         acc.monthTotals.set(p.monthKey, { ...prev, pay: prev.pay + (p.amount || 0) })
       }
       acc.payments += p.amount || 0
     })
 
     return Array.from(map.values()).map((r) => {
-      const cpa = (r.ftd || 0) ? Math.abs(r.payments || 0) / Math.max(r.ftd, 1) : 0
-      const arpu = (r.registrations || 0) ? (r.pl || 0) / Math.max(r.registrations, 1) : 0
+      const cpa = r.ftd || 0 ? Math.abs(r.payments || 0) / Math.max(r.ftd, 1) : 0
+      const arpu = r.registrations || 0 ? (r.pl || 0) / Math.max(r.registrations, 1) : 0
       const profit = (r.pl || 0) - (r.payments || 0)
-      const monthSeq = Array.from(r.monthTotals.values()).sort((a, b) => (a.year || 0) - (b.year || 0) || (a.monthIndex || 0) - (b.monthIndex || 0))
+      const monthSeq = Array.from(r.monthTotals.values()).sort(
+        (a, b) => (a.year || 0) - (b.year || 0) || (a.monthIndex || 0) - (b.monthIndex || 0)
+      )
       let breakEvenMonth = null
       let accDiff = 0
       for (let i = 0; i < monthSeq.length; i += 1) {
         accDiff += (monthSeq[i].pl || 0) - (monthSeq[i].pay || 0)
         if (breakEvenMonth === null && accDiff >= 0) breakEvenMonth = i
       }
-      const roi = r.payments ? ((profit) / Math.abs(r.payments)) * 100 : 0
+      const roi = r.payments ? (profit / Math.abs(r.payments)) * 100 : 0
       return {
         ...r,
         cpa,
@@ -227,40 +274,80 @@ export default function Report() {
 
   const muted = { color: '#475569' }
 
-  const periodLabel = mode === 'global'
-    ? t('report.period.global')
-    : mode === 'annual'
-      ? t('report.period.annual', { year: currentYear })
-      : selectedMonth
-        ? t('report.period.monthly', { month: availableMonths.find((m) => m.key === selectedMonth)?.label || '' })
-        : t('report.period.monthlyFallback')
+  const periodLabel =
+    mode === 'global'
+      ? t('report.period.global')
+      : mode === 'annual'
+        ? t('report.period.annual', { year: currentYear })
+        : selectedMonth
+          ? t('report.period.monthly', {
+              month: availableMonths.find((m) => m.key === selectedMonth)?.label || '',
+            })
+          : t('report.period.monthlyFallback')
 
   return (
-    <div style={{ width: '100%', padding: '12px 4px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div
+      style={{
+        width: '100%',
+        padding: '12px 4px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+      }}
+    >
       <aside style={{ ...card, background: 'linear-gradient(135deg, #f8fbff, #eef2ff)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div
+          style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}
+        >
           <div>
-            <div style={{ fontSize: 12, letterSpacing: 0.2, color: '#475569', fontWeight: 700 }}>{t('report.header.label')}</div>
+            <div style={{ fontSize: 12, letterSpacing: 0.2, color: '#475569', fontWeight: 700 }}>
+              {t('report.header.label')}
+            </div>
             <h2 style={{ margin: '4px 0', color: '#0f172a' }}>{t('report.header.title')}</h2>
             <p style={{ ...muted, margin: 0 }}>{t('report.header.subtitle')}</p>
           </div>
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-            <button style={pill(mode === 'monthly')} onClick={() => setMode('monthly')}>{t('report.modes.monthly')}</button>
-            <button style={pill(mode === 'annual')} onClick={() => setMode('annual')}>{t('report.modes.annual')}</button>
-            <button style={pill(mode === 'global')} onClick={() => setMode('global')}>{t('report.modes.global')}</button>
+            <button style={pill(mode === 'monthly')} onClick={() => setMode('monthly')}>
+              {t('report.modes.monthly')}
+            </button>
+            <button style={pill(mode === 'annual')} onClick={() => setMode('annual')}>
+              {t('report.modes.annual')}
+            </button>
+            <button style={pill(mode === 'global')} onClick={() => setMode('global')}>
+              {t('report.modes.global')}
+            </button>
           </div>
         </div>
         {mode === 'monthly' && (
-          <div style={{ marginTop: 8, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div
+            style={{
+              marginTop: 8,
+              display: 'flex',
+              gap: 8,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
             <span style={{ ...muted, fontWeight: 700 }}>{t('report.filters.month')}</span>
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              style={{ padding: '6px 9px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff', color: '#0f172a', fontWeight: 700 }}
+              style={{
+                padding: '6px 9px',
+                borderRadius: 8,
+                border: '1px solid #cbd5e1',
+                background: '#fff',
+                color: '#0f172a',
+                fontWeight: 700,
+              }}
             >
-              {availableMonths.length === 0 && <option value="">{t('report.filters.noMonths')}</option>}
+              {availableMonths.length === 0 && (
+                <option value="">{t('report.filters.noMonths')}</option>
+              )}
               {availableMonths.map((m) => (
-                <option key={m.key} value={m.key}>{m.label}</option>
+                <option key={m.key} value={m.key}>
+                  {m.label}
+                </option>
               ))}
             </select>
           </div>
@@ -272,47 +359,95 @@ export default function Report() {
       </div>
 
       <aside style={{ ...card }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-end',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
           <div>
-            <div style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>{t('report.summary.periodLabel')}</div>
+            <div style={{ fontSize: 13, color: '#475569', fontWeight: 600 }}>
+              {t('report.summary.periodLabel')}
+            </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: '#0f172a' }}>{periodLabel}</div>
           </div>
           <div style={{ fontSize: 12, color: '#475569', textAlign: 'right' }}>
-            {t('report.summary.rowsLine', { media: filteredMedia.length, payments: filteredPayments.length })}
+            {t('report.summary.rowsLine', {
+              media: filteredMedia.length,
+              payments: filteredPayments.length,
+            })}
             <div style={{ color: '#94a3b8', fontSize: 11 }}>{t('report.summary.sourceLine')}</div>
           </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 10, marginTop: 12 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+            gap: 10,
+            marginTop: 12,
+          }}
+        >
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>CPA</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0ea5e9' }}>{formatEuro(Math.round(totals.cpa || 0))}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0ea5e9' }}>
+              {formatEuro(Math.round(totals.cpa || 0))}
+            </div>
             <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.cpaHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>ARPU</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>{formatEuro(Math.round(totals.arpu || 0))}</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#10b981' }}>
+              {formatEuro(Math.round(totals.arpu || 0))}
+            </div>
             <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.arpuHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>Profit</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: totals.profit >= 0 ? '#0f172a' : '#dc2626' }}>{formatEuroShort(totals.profit)}</div>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: totals.profit >= 0 ? '#0f172a' : '#dc2626',
+              }}
+            >
+              {formatEuroShort(totals.profit)}
+            </div>
             <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.profitHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>ROI</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: totals.roi >= 0 ? '#0f172a' : '#dc2626' }}>{`${(totals.roi || 0).toFixed(1)}%`}</div>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 700,
+                color: totals.roi >= 0 ? '#0f172a' : '#dc2626',
+              }}
+            >{`${(totals.roi || 0).toFixed(1)}%`}</div>
             <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.roiHint')}</div>
           </div>
           <div style={{ ...card, padding: 12, boxShadow: 'none' }}>
             <div style={{ fontSize: 12, ...muted }}>Volume</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a' }}>{formatter.format(totals.registrations)} reg · {formatter.format(totals.ftd)} FTD</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#0f172a' }}>
+              {formatNumber(totals.registrations)} reg · {formatNumber(totals.ftd)} FTD
+            </div>
             <div style={{ fontSize: 11, ...muted }}>{t('report.kpis.volumeHint')}</div>
           </div>
         </div>
       </aside>
 
       <aside style={{ ...card }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+          }}
+        >
           <h3 style={{ margin: 0, color: '#0f172a' }}>{t('report.topAffiliates.title')}</h3>
           <span style={{ fontSize: 12, ...muted }}>{t('report.topAffiliates.subtitle')}</span>
         </div>
@@ -320,32 +455,62 @@ export default function Report() {
           <table className="table" style={{ minWidth: 720, color: '#0f172a' }}>
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.affiliate')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.reg')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.ftd')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.cpa')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.arpu')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.roi')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.profit')}</th>
-                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>{t('report.table.headers.breakEven')}</th>
+                <th style={{ textAlign: 'left', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.affiliate')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.reg')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.ftd')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.cpa')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.arpu')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.roi')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.profit')}
+                </th>
+                <th style={{ textAlign: 'right', color: '#475569', background: '#eef2ff' }}>
+                  {t('report.table.headers.breakEven')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {topAffiliates.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: 12, color: '#94a3b8' }}>{t('report.table.empty.noDataForPeriod')}</td>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: 12, color: '#94a3b8' }}>
+                    {t('report.table.empty.noDataForPeriod')}
+                  </td>
                 </tr>
               )}
               {topAffiliates.map((r) => (
                 <tr key={`row-${r.affiliate}`} style={{ background: '#ffffff' }}>
                   <td style={{ fontWeight: 700 }}>{r.affiliate}</td>
-                  <td style={{ textAlign: 'right' }}>{formatter.format(r.registrations || 0)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatter.format(r.ftd || 0)}</td>
-                  <td style={{ textAlign: 'right', color: '#0ea5e9' }}>{formatEuro(Math.round(r.cpa || 0))}</td>
-                  <td style={{ textAlign: 'right', color: '#10b981' }}>{formatEuro(Math.round(r.arpu || 0))}</td>
-                  <td style={{ textAlign: 'right', color: r.roi >= 0 ? '#0f172a' : '#dc2626' }}>{`${(r.roi || 0).toFixed(1)}%`}</td>
-                  <td style={{ textAlign: 'right', color: r.profit >= 0 ? '#0f172a' : '#dc2626' }}>{formatEuroShort(r.profit)}</td>
-                  <td style={{ textAlign: 'right', color: '#2563eb' }}>{r.breakEvenMonths !== null ? t('report.table.breakEvenMonths', { count: r.breakEvenMonths }) : t('common.na')}</td>
+                  <td style={{ textAlign: 'right' }}>{formatNumber(r.registrations || 0)}</td>
+                  <td style={{ textAlign: 'right' }}>{formatNumber(r.ftd || 0)}</td>
+                  <td style={{ textAlign: 'right', color: '#0ea5e9' }}>
+                    {formatEuro(Math.round(r.cpa || 0))}
+                  </td>
+                  <td style={{ textAlign: 'right', color: '#10b981' }}>
+                    {formatEuro(Math.round(r.arpu || 0))}
+                  </td>
+                  <td
+                    style={{ textAlign: 'right', color: r.roi >= 0 ? '#0f172a' : '#dc2626' }}
+                  >{`${(r.roi || 0).toFixed(1)}%`}</td>
+                  <td style={{ textAlign: 'right', color: r.profit >= 0 ? '#0f172a' : '#dc2626' }}>
+                    {formatEuroShort(r.profit)}
+                  </td>
+                  <td style={{ textAlign: 'right', color: '#2563eb' }}>
+                    {r.breakEvenMonths !== null
+                      ? t('report.table.breakEvenMonths', { count: r.breakEvenMonths })
+                      : t('common.na')}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -354,7 +519,15 @@ export default function Report() {
       </aside>
 
       <aside style={{ ...card }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 10,
+          }}
+        >
           <h3 style={{ margin: 0, color: '#0f172a' }}>{t('report.exportNotes.title')}</h3>
           <span style={{ fontSize: 12, ...muted }}>{t('report.exportNotes.subtitle')}</span>
         </div>
