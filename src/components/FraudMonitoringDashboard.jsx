@@ -147,7 +147,16 @@ export default function FraudMonitoringDashboard() {
 
   // load registrations CSV and compute platform-wide recap
   useEffect(() => {
-    const url = encodeURI('/Registrations Report.csv')
+    let version = ''
+    try {
+      version = String(localStorage.getItem('bw_reports_version') || '')
+    } catch {
+      version = ''
+    }
+    const rawUrl = version
+      ? `/Registrations Report.csv?v=${encodeURIComponent(version)}`
+      : '/Registrations Report.csv'
+    const url = encodeURI(rawUrl)
     Papa.parse(url, {
       download: true,
       header: true,
@@ -163,8 +172,28 @@ export default function FraudMonitoringDashboard() {
         })
 
         // detect possible keys
-        const acctKeys = ['account_id','accountid','accountnumber','account','id','clientid']
-        const nameKeys = ['fullname','full_name','name','client_name','customername']
+        const acctKeys = [
+          'account_id',
+          'accountid',
+          'accountnumber',
+          'account',
+          'id',
+          'clientid',
+          // Registrations Report canonical columns
+          'user_id',
+          'userid',
+          'mt5_account',
+          'mt5account',
+        ]
+        const nameKeys = [
+          'fullname',
+          'full_name',
+          'name',
+          'client_name',
+          // Registrations Report canonical columns
+          'customername',
+          'customer_name',
+        ]
         const depositCountKeys = ['deposit_count','deposits_count','num_deposits','deposits','depositcount']
         const equityKeys = ['equity','balance','account_balance']
         const profitKeys = ['profit','netprofit','pnl']
@@ -595,8 +624,8 @@ export default function FraudMonitoringDashboard() {
     const n = Number(value) || 0
     const sign = n < 0 ? '-' : ''
     const abs = Math.abs(Math.round(n))
-    if (abs >= 1_000_000) return `${sign}${Math.round(abs / 1_000_000)}M`
-    if (abs >= 1_000) return `${sign}${Math.round(abs / 1_000)}K`
+    if (abs >= 1000000) return `${sign}${Math.round(abs / 1000000)}M`
+    if (abs >= 1000) return `${sign}${Math.round(abs / 1000)}K`
     return `${sign}${abs}`
   }
 

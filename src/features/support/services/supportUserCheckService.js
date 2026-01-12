@@ -92,6 +92,16 @@ function getReportsVersionSafe() {
   }
 }
 
+function papaParseAsync(text, config) {
+  return new Promise((resolve, reject) => {
+    Papa.parse(text, {
+      ...config,
+      complete: (res) => resolve(res),
+      error: (err) => reject(err),
+    })
+  })
+}
+
 export async function loadCsvRows(force = false) {
   const versionNow = getReportsVersionSafe()
   if (_cache && !force && _reportsVersion === versionNow) return _cache
@@ -106,7 +116,8 @@ export async function loadCsvRows(force = false) {
 
   let res = null
   for (const p of candidatePaths) {
-    const r = await fetch(encodeURI(p))
+    const url = versionNow ? `${p}?v=${encodeURIComponent(versionNow)}` : p
+    const r = await fetch(encodeURI(url))
     if (r && r.ok) {
       res = r
       break
@@ -118,7 +129,12 @@ export async function loadCsvRows(force = false) {
     return _cache
   }
   const text = await res.text()
-  let parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
+  let parsed = await papaParseAsync(text, {
+    header: true,
+    skipEmptyLines: true,
+    // Offload parsing when possible; falls back gracefully.
+    worker: true,
+  })
   // If parser produced a single header key (malformed header wrapped in quotes),
   // attempt a lightweight recovery by splitting the first line into real headers
   try {
@@ -141,7 +157,11 @@ export async function loadCsvRows(force = false) {
             // sanitize header parts
             headerParts = headerParts.map((h) => h.replace(/^"+|"+$/g, '').trim())
             const rebuilt = [headerParts.join(','), ...lines].join('\n')
-            const reparsed = Papa.parse(rebuilt, { header: true, skipEmptyLines: true })
+            const reparsed = await papaParseAsync(rebuilt, {
+              header: true,
+              skipEmptyLines: true,
+              worker: true,
+            })
             if (reparsed && reparsed.data && Object.keys(reparsed.data[0] || {}).length > 1) {
               parsed = reparsed
             }
@@ -171,7 +191,23 @@ export async function loadCsvRows(force = false) {
       const v = rawRow[origKey] == null ? '' : String(rawRow[origKey]).trim()
       row[k] = v
     }
-    row.__searchIndex = Object.values(row).join(' ').toLowerCase()
+
+    // Keep the search index small: this is the hot path during typing.
+    // (Building an index over every cell of 80k rows is expensive.)
+    const idx = [
+      row.userid,
+      row.mt5account,
+      row.customername,
+      row.email,
+      row.customeremail,
+      row.affiliateid,
+      row.country,
+      row.status,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+    row.__searchIndex = idx
     return row
   })
 

@@ -195,6 +195,13 @@ export default function SupportUserCheck() {
     console.log('Loading initial data for status')
     async function loadInitialData() {
       try {
+        const version = (() => {
+          try {
+            return String(localStorage.getItem('bw_reports_version') || '')
+          } catch {
+            return ''
+          }
+        })()
         const candidates = [
           '/Registrations%20Report.csv',
           '/Registrations%20Report.fixed.csv',
@@ -203,7 +210,8 @@ export default function SupportUserCheck() {
 
         let text = null
         for (const url of candidates) {
-          const resp = await fetch(url)
+          const withVersion = version ? `${url}?v=${encodeURIComponent(version)}` : url
+          const resp = await fetch(withVersion)
           if (resp && resp.ok) {
             console.log('Fetch response', url, resp.ok)
 
@@ -271,16 +279,29 @@ export default function SupportUserCheck() {
     let mounted = true
     setBotCandidatesLoading(true)
     setBotListMissingPositionCount(false)
-    ;(async () => {
+
+    const schedule =
+      typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback
+        : (cb) => window.setTimeout(() => cb({ timeRemaining: () => 0, didTimeout: true }), 30)
+
+    const cancelSchedule =
+      typeof window !== 'undefined' && typeof window.cancelIdleCallback === 'function'
+        ? window.cancelIdleCallback
+        : (id) => window.clearTimeout(id)
+
+    const jobId = schedule(async () => {
       try {
         const BOT_LIST_SIZE = 50
         const rows = await loadCsvRows()
-        const scoredAll = (Array.isArray(rows) ? rows : []).map((raw) => ({
-          raw,
-          intel: computeActivityIntelligence(raw),
-        }))
+        const safeRows = Array.isArray(rows) ? rows : []
 
-        const hasAnyPositionCount = scoredAll.some((x) => x?.intel?.positions != null)
+        // Quick presence check: if Position Count column isn't there / isn't filled, skip.
+        const hasAnyPositionCount = safeRows.some((raw) => {
+          const s = pickField(raw, POSITION_COUNT_KEYS)
+          return s !== undefined && s !== null && String(s).trim() !== ''
+        })
+
         if (!hasAnyPositionCount) {
           if (!mounted) return
           setBotCandidates([])
@@ -288,13 +309,46 @@ export default function SupportUserCheck() {
           return
         }
 
-        const byScoreDesc = (a, b) => (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
+        // Build top list without sorting the entire dataset.
+        const topBots = []
+        const topFill = []
 
-        // Prefer true "Potential Bot" accounts first; if there are fewer than 50,
-        // fill the remaining slots with the next-highest botScore accounts.
-        const scoredBots = scoredAll.filter((x) => x?.intel?.isPotentialBot).sort(byScoreDesc)
-        const scoredFill = scoredAll.filter((x) => !x?.intel?.isPotentialBot).sort(byScoreDesc)
-        const scored = scoredBots.concat(scoredFill).slice(0, BOT_LIST_SIZE)
+        function pushTop(list, item) {
+          if (list.length < BOT_LIST_SIZE) {
+            list.push(item)
+            return
+          }
+          // Replace the current minimum if better.
+          let minIdx = 0
+          let minScore = list[0]?.intel?.botScore || 0
+          for (let i = 1; i < list.length; i++) {
+            const s = list[i]?.intel?.botScore || 0
+            if (s < minScore) {
+              minScore = s
+              minIdx = i
+            }
+          }
+          const newScore = item?.intel?.botScore || 0
+          if (newScore > minScore) list[minIdx] = item
+        }
+
+        for (const raw of safeRows) {
+          // Skip expensive intelligence calc when Position Count is blank.
+          const posRaw = pickField(raw, POSITION_COUNT_KEYS)
+          if (posRaw == null || String(posRaw).trim() === '') continue
+
+          const intel = computeActivityIntelligence(raw)
+          if (intel?.positions == null) continue
+
+          const item = { raw, intel }
+          if (intel?.isPotentialBot) pushTop(topBots, item)
+          else pushTop(topFill, item)
+        }
+
+        const byScoreDesc = (a, b) => (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
+        topBots.sort(byScoreDesc)
+        topFill.sort(byScoreDesc)
+        const scored = topBots.concat(topFill).slice(0, BOT_LIST_SIZE)
 
         // Enrich list with affiliate name + registration date (limited size => OK)
         const enriched = await Promise.all(
@@ -315,6 +369,7 @@ export default function SupportUserCheck() {
             }
           })
         )
+
         if (!mounted) return
         setBotCandidates(enriched)
       } catch (e) {
@@ -324,9 +379,15 @@ export default function SupportUserCheck() {
       } finally {
         if (mounted) setBotCandidatesLoading(false)
       }
-    })()
+    })
+
     return () => {
       mounted = false
+      try {
+        cancelSchedule(jobId)
+      } catch {
+        // ignore
+      }
     }
   }, [])
 

@@ -3,7 +3,7 @@
 
 function splitCsvLine(line) {
   // split on commas not inside quotes
-  return line.split(/,(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)/).map(s => {
+  return line.split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/).map(s => {
     let v = s.trim();
     if (v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1);
     return v;
@@ -17,7 +17,7 @@ function normalizeHeader(h) {
 function parseNumber(v) {
   if (v == null || v === '') return 0;
   // remove thousands separators and non-numeric chars except dot and -
-  const n = v.toString().replace(/[^0-9.\-]/g, '');
+  const n = v.toString().replace(/[^0-9.-]/g, '');
   const parsed = parseFloat(n);
   return Number.isFinite(parsed) ? parsed : 0;
 }
@@ -141,7 +141,17 @@ export async function buildAffiliatePaymentsMap(opts = {}) {
       // date/month — try to pick a date field present
       const dateStr = pickValue(row, regsH, ['firstdepositdate', 'firstdeposit', 'depositdate', 'registrationdate', 'regdate', 'date']);
       const userId = pickValue(row, regsH, ['userid', 'user id', 'user', 'id', 'account', 'accountid', 'bullwavesid']) || '';
-      const userName = pickValue(row, regsH, ['name', 'clientname', 'client name', 'fullname']) || '';
+      const userName =
+        pickValue(row, regsH, [
+          'name',
+          'clientname',
+          'client name',
+          'fullname',
+          // Registrations Report canonical column
+          'customer name',
+          'customer_name',
+          'customername',
+        ]) || '';
       const month = dateStr ? monthKeyFromDateString(dateStr) : 'unknown';
 
       if (!rec.months[month]) rec.months[month] = { total: 0, cpa: 0, revshare: 0, cpl: 0, subaffiliate: 0, other: 0, netDeposits: 0, contributors: [] };
