@@ -9,9 +9,17 @@ import FullPageLoader from '../components/FullPageLoader'
 import { checkDataStatus } from '../utils/dataStatusChecker'
 import { useDataStatus } from '../context/DataStatusContext'
 import { useI18n } from '../i18n/I18nContext'
+import {
+  fetchCsvRowsCached,
+  fetchFirstOkCsvRowsCached,
+  withReportsVersion,
+} from '../lib/fetchCache'
 
-const formatter = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const formatter = new Intl.NumberFormat('en-GB', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+})
+const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 const formatNumberShort = (value) => {
   const num = Number(value || 0)
@@ -21,7 +29,7 @@ const formatNumberShort = (value) => {
   return formatter.format(Math.round(num))
 }
 const formatEuro = (value) => `${formatNumberShort(value)} €`
-const formatPercent = (value) => `${(Number(value || 0)).toFixed(2)}%`
+const formatPercent = (value) => `${Number(value || 0).toFixed(2)}%`
 
 function cleanNumber(value) {
   if (value === null || value === undefined) return 0
@@ -36,15 +44,48 @@ function parseMonthLabel(raw) {
   const [m, y] = raw.split('/')
   const monthIndex = Math.max(0, (Number(m) || 1) - 1)
   const year = Number(y) || '—'
-  return { label: `${months[monthIndex]} ${year}`, monthIndex, year, key: `${year}-${String(monthIndex).padStart(2, '0')}` }
+  return {
+    label: `${months[monthIndex]} ${year}`,
+    monthIndex,
+    year,
+    key: `${year}-${String(monthIndex).padStart(2, '0')}`,
+  }
 }
 
 const iso3FromName = (name) => {
   const n = (name || '').toLowerCase().trim()
   const map = {
-    italy: 'ITA', spain: 'ESP', france: 'FRA', germany: 'DEU', poland: 'POL', portugal: 'PRT', greece: 'GRC', turkey: 'TUR', romania: 'ROU', russia: 'RUS', ukraine: 'UKR',
-    canada: 'CAN', 'united states': 'USA', 'united states of america': 'USA', usa: 'USA', 'united kingdom': 'GBR', uk: 'GBR', ireland: 'IRL', netherlands: 'NLD', belgium: 'BEL', austria: 'AUT', switzerland: 'CHE',
-    'czech republic': 'CZE', czechia: 'CZE', hungary: 'HUN', 'united arab emirates': 'ARE', 'saudi arabia': 'SAU', sweden: 'SWE', norway: 'NOR', finland: 'FIN', denmark: 'DNK'
+    italy: 'ITA',
+    spain: 'ESP',
+    france: 'FRA',
+    germany: 'DEU',
+    poland: 'POL',
+    portugal: 'PRT',
+    greece: 'GRC',
+    turkey: 'TUR',
+    romania: 'ROU',
+    russia: 'RUS',
+    ukraine: 'UKR',
+    canada: 'CAN',
+    'united states': 'USA',
+    'united states of america': 'USA',
+    usa: 'USA',
+    'united kingdom': 'GBR',
+    uk: 'GBR',
+    ireland: 'IRL',
+    netherlands: 'NLD',
+    belgium: 'BEL',
+    austria: 'AUT',
+    switzerland: 'CHE',
+    'czech republic': 'CZE',
+    czechia: 'CZE',
+    hungary: 'HUN',
+    'united arab emirates': 'ARE',
+    'saudi arabia': 'SAU',
+    sweden: 'SWE',
+    norway: 'NOR',
+    finland: 'FIN',
+    denmark: 'DNK',
   }
   if (map[n]) return map[n]
   return (name || '').toUpperCase().slice(0, 3) || 'UNK'
@@ -88,10 +129,26 @@ function parseCsv(text) {
 
 function countryToRegion(country) {
   const c = (country || '').toUpperCase()
-  const west = ['US','USA','GBR','GB','UK','FRA','FR','ESP','ES','PRT','PT','IRL','IE','CAN','CA']
-  const east = ['POL','PL','CZE','CZ','HUN','HU','ROU','RO','RUS','RU','UKR','UA']
-  const south = ['ITA','IT','GRC','GR','TUR','TR','ARE','AE','SAU','SA']
-  const central = ['DEU','DE','AUT','AT','CHE','CH','NLD','NL','BEL','BE']
+  const west = [
+    'US',
+    'USA',
+    'GBR',
+    'GB',
+    'UK',
+    'FRA',
+    'FR',
+    'ESP',
+    'ES',
+    'PRT',
+    'PT',
+    'IRL',
+    'IE',
+    'CAN',
+    'CA',
+  ]
+  const east = ['POL', 'PL', 'CZE', 'CZ', 'HUN', 'HU', 'ROU', 'RO', 'RUS', 'RU', 'UKR', 'UA']
+  const south = ['ITA', 'IT', 'GRC', 'GR', 'TUR', 'TR', 'ARE', 'AE', 'SAU', 'SA']
+  const central = ['DEU', 'DE', 'AUT', 'AT', 'CHE', 'CH', 'NLD', 'NL', 'BEL', 'BE']
   if (west.includes(c)) return 'West'
   if (east.includes(c)) return 'East'
   if (south.includes(c)) return 'South'
@@ -118,56 +175,51 @@ export default function ProfitAnalysisPage() {
   const { setDataStatus } = useDataStatus()
 
   useEffect(() => {
-    const withCacheBuster = (path) => {
-      const encodedPath = encodeURI(String(path || ''))
-      let v = null
-      try {
-        v = window?.localStorage?.getItem('bw_reports_version')
-      } catch {
-        v = null
-      }
-      if (!v) return encodedPath
-      const sep = encodedPath.includes('?') ? '&' : '?'
-      return `${encodedPath}${sep}v=${encodeURIComponent(String(v))}`
-    }
-
     async function loadAllReports() {
       setLoading(true)
       try {
         const candidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
-        let text = ''
-        for (const path of candidates) {
-          const resp = await fetch(withCacheBuster(path), { cache: 'no-store' })
-          if (resp.ok) {
-            text = await resp.text()
-            break
-          }
-        }
-        if (!text) return
+        const { rows: baseRows } = await fetchFirstOkCsvRowsCached(candidates)
+        if (!baseRows.length) return
 
         const pick = (row, keys, fallback = '') => {
           for (const k of keys) {
             if (!k) continue
-            if (Object.prototype.hasOwnProperty.call(row, k) && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') {
+            if (
+              Object.prototype.hasOwnProperty.call(row, k) &&
+              row[k] !== undefined &&
+              row[k] !== null &&
+              String(row[k]).trim() !== ''
+            ) {
               return row[k]
             }
           }
           return fallback
         }
 
-        const parsed = parseCsv(text).map((r) => {
+        const parsed = baseRows.map((r) => {
           const rawMonth = pick(r, ['Month', 'month'])
           const monthMeta = parseMonthLabel(rawMonth)
-          const rawCountry = pick(r, ['Country', 'country', 'Country Code', 'country_code', 'countrycode'])
+          const rawCountry = pick(r, [
+            'Country',
+            'country',
+            'Country Code',
+            'country_code',
+            'countrycode',
+          ])
           const country = rawCountry || 'Unknown'
-          const countryCode = iso3FromName(pick(r, ['Country Code', 'country_code', 'countrycode', 'Country', 'country'], country))
+          const countryCode = iso3FromName(
+            pick(r, ['Country Code', 'country_code', 'countrycode', 'Country', 'country'], country)
+          )
           return {
             monthKey: monthMeta.key,
             monthLabel: monthMeta.label,
             monthIndex: monthMeta.monthIndex,
             year: monthMeta.year,
             affiliate: String(pick(r, ['Affiliate', 'affiliate'], '—')).trim(),
-            registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
+            registrations: cleanNumber(
+              pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])
+            ),
             ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
             qftd: cleanNumber(pick(r, ['QFTD', 'qftd'])),
             pl: cleanNumber(pick(r, ['PL', 'pl', 'Profit/Loss', 'profit_loss', 'profitloss'])),
@@ -185,24 +237,31 @@ export default function ProfitAnalysisPage() {
 
         // Payments Report (commissions)
         try {
-          const paymentsResp = await fetch(withCacheBuster('/Payments Report.csv'), { cache: 'no-store' })
-          if (paymentsResp.ok) {
-            const paymentsText = await paymentsResp.text()
-            const paymentsParsed = parseCsv(paymentsText).map((r) => {
-              const rawDate = (r.paymentdate ?? r.payment_date ?? r.PaymentDate ?? r['Payment Date'] ?? '').toString().trim()
-              const parts = rawDate.split('/')
-              const year = parts.length >= 3 ? Number(parts[2]) : NaN
-              return {
-                paymentdate: rawDate,
-                year: Number.isFinite(year) ? year : '—',
-                affiliate: (r.affiliate ?? r.Affiliate ?? '').toString().trim(),
-                payment_amount: cleanNumber(r.payment_amount ?? r.paymentAmount ?? r['Payment Amount'] ?? r.amount ?? r.Amount),
-              }
-            })
-            setPaymentsRows(paymentsParsed)
-          } else {
-            setPaymentsRows([])
-          }
+          const paymentsRowsBase = await fetchCsvRowsCached(
+            withReportsVersion('/Payments Report.csv')
+          )
+          const paymentsParsed = (paymentsRowsBase || []).map((r) => {
+            const rawDate = (
+              r.paymentdate ??
+              r.payment_date ??
+              r.PaymentDate ??
+              r['Payment Date'] ??
+              ''
+            )
+              .toString()
+              .trim()
+            const parts = rawDate.split('/')
+            const year = parts.length >= 3 ? Number(parts[2]) : NaN
+            return {
+              paymentdate: rawDate,
+              year: Number.isFinite(year) ? year : '—',
+              affiliate: (r.affiliate ?? r.Affiliate ?? '').toString().trim(),
+              payment_amount: cleanNumber(
+                r.payment_amount ?? r.paymentAmount ?? r['Payment Amount'] ?? r.amount ?? r.Amount
+              ),
+            }
+          })
+          setPaymentsRows(paymentsParsed)
         } catch (e) {
           console.warn('Failed to load payments report', e)
           setPaymentsRows([])
@@ -216,15 +275,17 @@ export default function ProfitAnalysisPage() {
     const onReportsUpdated = () => {
       loadAllReports()
     }
+    const onStorage = (e) => {
+      if (e && e.key === 'bw_reports_version') onReportsUpdated()
+    }
 
     loadAllReports()
     window.addEventListener('bw-reports-updated', onReportsUpdated)
-    window.addEventListener('storage', (e) => {
-      if (e && e.key === 'bw_reports_version') onReportsUpdated()
-    })
+    window.addEventListener('storage', onStorage)
 
     return () => {
       window.removeEventListener('bw-reports-updated', onReportsUpdated)
+      window.removeEventListener('storage', onStorage)
     }
   }, [])
 
@@ -233,15 +294,23 @@ export default function ProfitAnalysisPage() {
     return ['all', ...Array.from(set).sort()]
   }, [mediaRows])
 
-  const filteredRows = useMemo(() => mediaRows.filter((r) => selectedYear === 'all' ? true : r.year === Number(selectedYear)), [mediaRows, selectedYear])
+  const filteredRows = useMemo(
+    () =>
+      mediaRows.filter((r) => (selectedYear === 'all' ? true : r.year === Number(selectedYear))),
+    [mediaRows, selectedYear]
+  )
 
   const filteredPaymentsRows = useMemo(
-    () => paymentsRows.filter((r) => selectedYear === 'all' ? true : r.year === Number(selectedYear)),
+    () =>
+      paymentsRows.filter((r) => (selectedYear === 'all' ? true : r.year === Number(selectedYear))),
     [paymentsRows, selectedYear]
   )
 
   const commissionsByAffiliate = useMemo(() => {
-    const normalize = (s) => String(s || '').trim().toLowerCase()
+    const normalize = (s) =>
+      String(s || '')
+        .trim()
+        .toLowerCase()
     const map = new Map()
     filteredPaymentsRows.forEach((r) => {
       const key = normalize(r.affiliate)
@@ -262,7 +331,17 @@ export default function ProfitAnalysisPage() {
     const registrations = sum('registrations')
     const losingRatio = netDeposits ? (profit / netDeposits) * 100 : 0
     const commissions = filteredPaymentsRows.reduce((acc, r) => acc + (r.payment_amount || 0), 0)
-    return { deposits, withdrawals, netDeposits, profit, ftd, qftd, registrations, losingRatio, commissions }
+    return {
+      deposits,
+      withdrawals,
+      netDeposits,
+      profit,
+      ftd,
+      qftd,
+      registrations,
+      losingRatio,
+      commissions,
+    }
   }, [filteredRows, filteredPaymentsRows])
 
   const affiliatesData = useMemo(() => {
@@ -283,7 +362,8 @@ export default function ProfitAnalysisPage() {
     const map = new Map()
     filteredRows.forEach((r) => {
       const code = iso3FromName(r.country || r.countryCode)
-      if (!map.has(code)) map.set(code, { code, label: r.country || code, value: 0, netDeposits: 0 })
+      if (!map.has(code))
+        map.set(code, { code, label: r.country || code, value: 0, netDeposits: 0 })
       const acc = map.get(code)
       acc.value += r.pl || 0
       acc.netDeposits += r.netDeposits || 0
@@ -294,7 +374,8 @@ export default function ProfitAnalysisPage() {
   const depositsWithdrawalsByMonth = useMemo(() => {
     const map = new Map()
     filteredRows.forEach((r) => {
-      if (!map.has(r.monthIndex)) map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0, pl: 0 })
+      if (!map.has(r.monthIndex))
+        map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0, pl: 0 })
       const acc = map.get(r.monthIndex)
       acc.deposits += r.deposits || 0
       acc.withdrawals += r.withdrawals || 0
@@ -313,13 +394,20 @@ export default function ProfitAnalysisPage() {
       map.get(key).registrations += r.registrations || 0
     })
     const values = Array.from(map.values())
-    const best = [...values].sort((a, b) => (b.registrations || 0) - (a.registrations || 0)).slice(0, 10)
-    const worst = [...values].sort((a, b) => (a.registrations || 0) - (b.registrations || 0)).slice(0, 10)
+    const best = [...values]
+      .sort((a, b) => (b.registrations || 0) - (a.registrations || 0))
+      .slice(0, 10)
+    const worst = [...values]
+      .sort((a, b) => (a.registrations || 0) - (b.registrations || 0))
+      .slice(0, 10)
     return { best, worst }
   }, [filteredRows])
 
   const worstAffiliatesByRoi = useMemo(() => {
-    const normalize = (s) => String(s || '').trim().toLowerCase()
+    const normalize = (s) =>
+      String(s || '')
+        .trim()
+        .toLowerCase()
     const map = new Map()
     filteredRows.forEach((r) => {
       const key = r.affiliate || '—'
@@ -349,9 +437,7 @@ export default function ProfitAnalysisPage() {
         return Number(pl || 0) >= Number(roiMinPl || 0)
       })
 
-    return values
-      .sort((a, b) => (a.roi || 0) - (b.roi || 0))
-      .slice(0, 10)
+    return values.sort((a, b) => (a.roi || 0) - (b.roi || 0)).slice(0, 10)
   }, [filteredRows, commissionsByAffiliate, roiMinPl])
 
   const scatterData = useMemo(() => {
@@ -381,46 +467,150 @@ export default function ProfitAnalysisPage() {
   }
 
   return (
-    <div className="w-full space-y-4" style={{ background: 'radial-gradient(120% 120% at 10% 20%, #0b1c24 0%, #0a0f1e 45%, #0a090f 100%)', padding: 16, borderRadius: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+    <div
+      className="w-full space-y-4"
+      style={{
+        background: 'radial-gradient(120% 120% at 10% 20%, #0b1c24 0%, #0a0f1e 45%, #0a090f 100%)',
+        padding: 16,
+        borderRadius: 16,
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}
+      >
         <div>
           <h2 style={{ margin: 0 }}>Profit analysis</h2>
-          <p style={{ margin: 0, color: '#9fb3c8', fontSize: 12 }}>Media Report + Payments Report (commissions) · KPIs, affiliates, map, deposits</p>
+          <p style={{ margin: 0, color: '#9fb3c8', fontSize: 12 }}>
+            Media Report + Payments Report (commissions) · KPIs, affiliates, map, deposits
+          </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <label style={{ color: '#94a3b8', fontSize: 12 }}>Year</label>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            style={{ background: '#0f172a', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '8px 10px', minWidth: 120 }}
+            style={{
+              background: '#0f172a',
+              color: 'var(--text)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              padding: '8px 10px',
+              minWidth: 120,
+            }}
           >
-            {yearOptions.map((y) => <option key={y} value={y}>{y === 'all' ? 'All' : y}</option>)}
+            {yearOptions.map((y) => (
+              <option key={y} value={y}>
+                {y === 'all' ? 'All' : y}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, overflowX: 'auto', paddingBottom: 2 }}>
-        <KpiCard size="sm" label="Registrations" value={formatNumberShort(kpis.registrations)} tone="#a855f7" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="Deposits" value={formatEuro(kpis.deposits)} tone="#38bdf8" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="Withdrawals" value={formatEuro(kpis.withdrawals)} tone="#fb7185" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="Net Deposits" value={formatEuro(kpis.netDeposits)} tone="#22d3ee" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="PL" value={formatEuro(kpis.profit)} tone="#34d399" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="FTD" value={formatNumberShort(kpis.ftd)} tone="#fbbf24" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="QFTD" value={formatNumberShort(kpis.qftd)} tone="#f97316" style={{ minWidth: 140, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="PL / Net Deposits" value={formatPercent(kpis.losingRatio)} tone={kpis.losingRatio >= 0 ? '#34d399' : '#f87171'} style={{ minWidth: 160, flex: '0 0 auto' }} />
-        <KpiCard size="sm" label="Commissions" value={formatEuro(kpis.commissions)} tone="#60a5fa" style={{ minWidth: 160, flex: '0 0 auto' }} />
+      <div
+        style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, overflowX: 'auto', paddingBottom: 2 }}
+      >
+        <KpiCard
+          size="sm"
+          label="Registrations"
+          value={formatNumberShort(kpis.registrations)}
+          tone="#a855f7"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="Deposits"
+          value={formatEuro(kpis.deposits)}
+          tone="#38bdf8"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="Withdrawals"
+          value={formatEuro(kpis.withdrawals)}
+          tone="#fb7185"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="Net Deposits"
+          value={formatEuro(kpis.netDeposits)}
+          tone="#22d3ee"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="PL"
+          value={formatEuro(kpis.profit)}
+          tone="#34d399"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="FTD"
+          value={formatNumberShort(kpis.ftd)}
+          tone="#fbbf24"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="QFTD"
+          value={formatNumberShort(kpis.qftd)}
+          tone="#f97316"
+          style={{ minWidth: 140, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="PL / Net Deposits"
+          value={formatPercent(kpis.losingRatio)}
+          tone={kpis.losingRatio >= 0 ? '#34d399' : '#f87171'}
+          style={{ minWidth: 160, flex: '0 0 auto' }}
+        />
+        <KpiCard
+          size="sm"
+          label="Commissions"
+          value={formatEuro(kpis.commissions)}
+          tone="#60a5fa"
+          style={{ minWidth: 160, flex: '0 0 auto' }}
+        />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 12 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 12,
+        }}
+      >
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>PL vs Net Deposits by affiliate</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>Top 10 by PL</span>
           </div>
           <RegionBarChart data={affiliatesData} />
         </div>
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Profit by country</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>Hover to inspect</span>
           </div>
@@ -429,7 +619,14 @@ export default function ProfitAnalysisPage() {
           </div>
         </div>
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Deposits vs Withdrawals</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>By month</span>
           </div>
@@ -437,26 +634,65 @@ export default function ProfitAnalysisPage() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 12 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: 12,
+        }}
+      >
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Best affiliates by registrations</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>Top 10</span>
           </div>
           <RegistrationBarChart data={registrationsByAffiliate.best} title="Registrations" />
         </div>
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Worst affiliates by ROI</h3>
             <span style={{ fontSize: 11, color: '#94a3b8' }}>Bottom 10</span>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              marginBottom: 8,
+            }}
+          >
             <div style={{ fontSize: 11, color: '#94a3b8' }}>Min PL</div>
             {[2000, 20000, 100000, 500000].map((v) => {
               const label = v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)
               const checked = Number(roiMinPl) === v
               return (
-                <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#cbd5e1', cursor: 'pointer', userSelect: 'none' }}>
+                <label
+                  key={v}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 11,
+                    color: '#cbd5e1',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                >
                   <input
                     type="checkbox"
                     checked={checked}
@@ -478,26 +714,45 @@ export default function ProfitAnalysisPage() {
             valueFormat="percent"
             barBackgroundColor="rgba(248, 113, 113, 0.6)"
             barBorderColor="rgba(248, 113, 113, 1)"
-            getTooltipLines={(d) => [`Commissions: €${Math.round(d.commissions || 0).toLocaleString('en-GB')}`, `PL: €${Math.round(d.pl || 0).toLocaleString('en-GB')}`]}
+            getTooltipLines={(d) => [
+              `Commissions: €${Math.round(d.commissions || 0).toLocaleString('en-GB')}`,
+              `PL: €${Math.round(d.pl || 0).toLocaleString('en-GB')}`,
+            ]}
           />
         </div>
         <div className="card card-global">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Profit ratio vs sales</h3>
             <select
               value={scatterEntity}
               onChange={(e) => setScatterEntity(e.target.value)}
-              style={{ background: '#0f172a', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '6px 8px', fontSize: 12 }}
+              style={{
+                background: '#0f172a',
+                color: 'var(--text)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 8,
+                padding: '6px 8px',
+                fontSize: 12,
+              }}
             >
               <option value="affiliate">By affiliate</option>
               <option value="country">By country</option>
             </select>
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>Destra = ROI migliore, alto = Net Deposits più alti. I punti verdi rendono di più; rossi = PL negativo.</div>
+          <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>
+            Destra = ROI migliore, alto = Net Deposits più alti. I punti verdi rendono di più; rossi
+            = PL negativo.
+          </div>
           <ProfitRatioScatter data={scatterData} />
         </div>
       </div>
-
     </div>
   )
 }

@@ -13,6 +13,7 @@ import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecution
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
+import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import { DataStatusProvider } from './context/DataStatusContext'
@@ -43,6 +44,7 @@ export default function AuthenticatedApp() {
       roadmap: '/roadmap',
       weeklyMap: '/weekly-map',
       weeklyExecutionHistory: '/weekly-execution-history',
+      analysis: '/analysis',
       // lab removed
       supportUserCheck: '/support/user-check',
       upload: '/upload',
@@ -66,6 +68,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/marketing-expenses')) return 'affiliate'
     if (pathname.startsWith('/investments')) return 'affiliate'
     if (pathname.startsWith('/fraud')) return 'fraud'
+    if (pathname.startsWith('/analysis')) return 'analysis'
     if (pathname.startsWith('/report')) return 'report'
     if (pathname.startsWith('/cohort')) return 'affiliate'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
@@ -291,6 +294,7 @@ export default function AuthenticatedApp() {
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
       weeklyExecutionHistory: 'weekly-execution-history',
+      analysis: 'analysis',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -343,6 +347,7 @@ export default function AuthenticatedApp() {
                 <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
               )}
               {view === 'fraud' && <FraudMonitoringDashboard />}
+              {view === 'analysis' && <CommentsAnalysisPage />}
               {view === 'report' && <Report />}
               {view === 'roadmap' && <RoadmapPage />}
               {view === 'weeklyMap' && <WeeklyMapPage />}

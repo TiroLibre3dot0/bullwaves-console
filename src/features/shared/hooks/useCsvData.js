@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { parseCsv } from '../../../lib/csv'
+import { fetchFirstOkCsvRowsCached } from '../../../lib/fetchCache'
 
 // Generic CSV loader with fallback paths and optional row mapping
 export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
@@ -8,48 +8,24 @@ export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
   const [error, setError] = useState(null)
   const [sourcePath, setSourcePath] = useState(null)
 
-  const withCacheBuster = useCallback((path) => {
-    const raw = path ? String(path) : ''
-    const encodedPath = encodeURI(raw)
-    let v = null
-    try {
-      v = window?.localStorage?.getItem('bw_reports_version')
-    } catch {
-      v = null
-    }
-    if (!v) return encodedPath
-    const sep = encodedPath.includes('?') ? '&' : '?'
-    return `${encodedPath}${sep}v=${encodeURIComponent(String(v))}`
-  }, [])
-
-  const load = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      let text = ''
-      let used = null
-      for (const path of candidatePaths) {
-        const resp = await fetch(withCacheBuster(path), { cache: 'no-store' })
-        if (resp.ok) {
-          text = await resp.text()
-          used = path
-          break
-        }
+  const load = useCallback(
+    async (force = false) => {
+      setLoading(true)
+      setError(null)
+      try {
+        const { rows, sourcePath: used } = await fetchFirstOkCsvRowsCached(candidatePaths, {
+          force,
+        })
+        setData((rows || []).map(mapRow))
+        setSourcePath(used)
+      } catch (err) {
+        setError(err)
+      } finally {
+        setLoading(false)
       }
-      if (!text) {
-        setData([])
-        setSourcePath(null)
-        return
-      }
-      const rows = parseCsv(text).map(mapRow)
-      setData(rows)
-      setSourcePath(used)
-    } catch (err) {
-      setError(err)
-    } finally {
-      setLoading(false)
-    }
-  }, [candidatePaths, mapRow])
+    },
+    [candidatePaths, mapRow]
+  )
 
   useEffect(() => {
     load()

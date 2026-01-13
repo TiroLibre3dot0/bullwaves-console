@@ -11,6 +11,8 @@ export default defineConfig({
       manifestFilename: 'manifest.webmanifest',
       devOptions: {
         enabled: true,
+        // Allow SPA routes like /analysis to fall back to index.html in dev SW
+        navigateFallbackAllowlist: [/^\/(?!api)/],
       },
       manifest: {
         name: 'Bullwaves — Console',
