@@ -263,6 +263,49 @@ export function getPaymentAffiliateById(id) {
   return _paymentsAffiliateMap[key] || _paymentsAffiliateMap[key.toLowerCase()] || null
 }
 
+export async function resolveAffiliateName(userRow, opts = {}) {
+  const force = !!(opts && opts.force)
+  const row = userRow || {}
+
+  // Ensure affiliate maps are loaded (payments is the source of truth).
+  await loadPaymentsReport(force)
+
+  // Normalize keys for robust lookups.
+  const norm = {}
+  for (const k of Object.keys(row)) {
+    norm[normalizeHeaderKey(k)] = row[k]
+  }
+
+  const affiliateIdRaw = norm.affiliateid ?? norm.affiliatid ?? norm.affiliate_id ?? norm.uid ?? null
+  const affiliateId = affiliateIdRaw != null ? String(affiliateIdRaw).replace(/\D+/g, '') : ''
+  const affiliateNameRaw = norm.affiliate ?? norm.affiliatename ?? norm.name ?? ''
+  const affiliateNameKey = affiliateNameRaw ? String(affiliateNameRaw).trim() : ''
+
+  // 1) Payments report lookup by ID.
+  if (affiliateId) {
+    const pay = getPaymentAffiliateById(affiliateId)
+    if (pay && pay.name) return { name: pay.name, affiliateId, source: 'payments' }
+  }
+
+  // 2) Payments report lookup by name.
+  if (affiliateNameKey) {
+    const key = affiliateNameKey.toLowerCase()
+    const byName = _paymentsAffiliateMap && (_paymentsAffiliateMap[key] || _paymentsAffiliateMap[String(key)])
+    if (byName && byName.name) return { name: byName.name, affiliateId: affiliateId || null, source: 'payments_name' }
+  }
+
+  // 3) Fallback to Media report affiliate map if present.
+  try {
+    await loadMediaReport(force)
+    const mediaHit = getAffiliateById(affiliateId || affiliateNameKey)
+    if (mediaHit && mediaHit.name) return { name: mediaHit.name, affiliateId: affiliateId || null, source: 'media' }
+  } catch (e) {
+    // ignore
+  }
+
+  return null
+}
+
 function parseNumberSafe(v) {
   if (v === null || v === undefined || v === '') return null
   if (typeof v === 'number') return v
