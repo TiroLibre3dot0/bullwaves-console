@@ -173,7 +173,8 @@ export default function SupportUserCheck() {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
-  const [initializing, setInitializing] = useState(true)
+  // Avoid blocking initial render with heavy CSV work; show the UI immediately.
+  const [initializing, setInitializing] = useState(false)
 
   const [paymentsLoaded, setPaymentsLoaded] = useState(false)
   const [mediaLoaded, setMediaLoaded] = useState(false)
@@ -221,20 +222,73 @@ export default function SupportUserCheck() {
           }
         }
         if (!text) return
-        const parsed = Papa.parse(text, { header: true, skipEmptyLines: true })
-        if (!parsed || (parsed.errors && parsed.errors.length)) return
-        const rows = parsed.data || []
-        const headers = parsed.meta && parsed.meta.fields ? parsed.meta.fields : []
-        if (!rows.length || !headers.length) return
 
+        // Parse in a web worker and only compute the latest date (avoid building large arrays).
         const norm = (h) =>
           String(h || '')
             .toLowerCase()
             .replace(/[^a-z]/g, '')
-        const dateKey = headers.find((h) => REGDATE_KEYS.includes(norm(h))) || headers[0]
-        const status = checkDataStatus(rows, dateKey, 'Registrations Report')
-        setDataStatus(status)
-        setGlobalDataStatus(status)
+        const regKeySet = new Set((REGDATE_KEYS || []).map(norm))
+
+        let dateKey = null
+        let latestDate = null
+
+        await new Promise((resolve) => {
+          Papa.parse(text, {
+            header: true,
+            skipEmptyLines: true,
+            worker: true,
+            step: (res) => {
+              const row = res && res.data ? res.data : null
+              if (!row) return
+
+              if (!dateKey) {
+                const keys = Object.keys(row || {})
+                dateKey = keys.find((k) => regKeySet.has(norm(k))) || keys[0] || null
+              }
+              if (!dateKey) return
+
+              const dateStr = row[dateKey]
+              if (!dateStr) return
+              const d = new Date(dateStr)
+              if (Number.isNaN(d.getTime())) return
+              if (!latestDate || d > latestDate) latestDate = d
+            },
+            complete: () => resolve(),
+            error: () => resolve(),
+          })
+        })
+
+        if (!latestDate) return
+
+        // Keep the same output shape as checkDataStatus() without scanning all rows.
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const latest = new Date(latestDate)
+        latest.setHours(0, 0, 0, 0)
+        const diffTime = today - latest
+        const daysDiff = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+        const reportName = 'Registrations Report'
+
+        const statusObj =
+          daysDiff <= 1
+            ? {
+                status: 'updated',
+                message: `${reportName} aggiornato fino al ${latestDate.toLocaleDateString('it-IT')}`,
+                latestDate,
+                daysDiff,
+                reportName,
+              }
+            : {
+                status: 'outdated',
+                message: `${reportName} obsoleto: ultimo aggiornamento ${latestDate.toLocaleDateString('it-IT')} (${daysDiff} giorni fa)`,
+                latestDate,
+                daysDiff,
+                reportName,
+              }
+
+        setDataStatus(statusObj)
+        setGlobalDataStatus(statusObj)
         setShowDataStatusPopup(true)
       } catch (err) {
         console.error('Failed to load registrations for status', err)
@@ -311,11 +365,42 @@ export default function SupportUserCheck() {
           return
         }
 
+        // Avoid running computeActivityIntelligence over the whole dataset.
+        // First collect a small pool of candidates by highest Position Count,
+        // then run the heavier intelligence only on that pool.
+        const CANDIDATE_POOL = 400
+        const candidates = []
+
+        function pushTopByPositions(list, item) {
+          if (list.length < CANDIDATE_POOL) {
+            list.push(item)
+            return
+          }
+          let minIdx = 0
+          let minVal = list[0]?.positions || 0
+          for (let i = 1; i < list.length; i++) {
+            const v = list[i]?.positions || 0
+            if (v < minVal) {
+              minVal = v
+              minIdx = i
+            }
+          }
+          if ((item?.positions || 0) > minVal) list[minIdx] = item
+        }
+
+        for (const raw of safeRows) {
+          const posRaw = pickField(raw, POSITION_COUNT_KEYS)
+          if (posRaw == null || String(posRaw).trim() === '') continue
+          const positions = toNum(posRaw)
+          if (!positions) continue
+          pushTopByPositions(candidates, { raw, positions })
+        }
+
         // Build top list without sorting the entire dataset.
         const topBots = []
         const topFill = []
 
-        function pushTop(list, item) {
+        function pushTopByScore(list, item) {
           if (list.length < BOT_LIST_SIZE) {
             list.push(item)
             return
@@ -334,17 +419,14 @@ export default function SupportUserCheck() {
           if (newScore > minScore) list[minIdx] = item
         }
 
-        for (const raw of safeRows) {
-          // Skip expensive intelligence calc when Position Count is blank.
-          const posRaw = pickField(raw, POSITION_COUNT_KEYS)
-          if (posRaw == null || String(posRaw).trim() === '') continue
-
+        for (const c of candidates) {
+          const raw = c.raw
           const intel = computeActivityIntelligence(raw)
           if (intel?.positions == null) continue
 
           const item = { raw, intel }
-          if (intel?.isPotentialBot) pushTop(topBots, item)
-          else pushTop(topFill, item)
+          if (intel?.isPotentialBot) pushTopByScore(topBots, item)
+          else pushTopByScore(topFill, item)
         }
 
         const byScoreDesc = (a, b) => (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
@@ -804,9 +886,7 @@ export default function SupportUserCheck() {
       }
     : null
 
-  if (initializing) {
-    return <FullPageLoader progress={40} subtitle={t('support.loader.tools')} />
-  }
+  // Note: we no longer block the page while parsing large CSVs for initial status.
 
   // If a user is selected, render the full-width Support Decision Page in-place
   if (selected) {
