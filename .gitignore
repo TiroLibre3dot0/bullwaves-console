@@ -24,3 +24,8 @@ uploads/
 
 # Local server logs
 upload-server.*.log
+
+# Generated analytics outputs (keep local)
+reports/
+Analisi_Comments_Report.ipynb
+analyze_comments.py
