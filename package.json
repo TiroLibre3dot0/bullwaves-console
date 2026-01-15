@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "predev": "node scripts/generate_all_indexes.js",
+    "prebuild": "node scripts/generate_all_indexes.js",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.jsx",
@@ -14,10 +16,17 @@
     "cleanup:csv": "node scripts/cleanup_csv_artifacts.js",
     "analyze:comments": "node scripts/analyze_comments.js",
     "report:comments": "node scripts/generate_comments_report.js",
+    "generate:affiliate-index": "node scripts/generate_affiliate_index.js",
+    "generate:support-users-index": "node scripts/generate_support_users_index.js",
+    "generate:reports-meta": "node scripts/generate_reports_meta.js",
+    "generate:all-indexes": "node scripts/generate_all_indexes.js",
+    "generate:fraud-patterns-index": "node scripts/generate_fraud_patterns_index.js",
+    "generate:affiliate-kpi-index": "node scripts/generate_affiliate_kpi_index.js",
     "prepare": "husky"
   },
   "dependencies": {
     "chart.js": "^4.5.1",
+    "csv-parse": "^5.5.6",
     "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",
     "d3-scale-chromatic": "^3.1.0",
@@ -25,7 +34,6 @@
     "lz-string": "^1.5.0",
     "multer": "^1.4.5-lts.1",
     "papaparse": "^5.5.3",
-    "csv-parse": "^5.5.6",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.2.0",
@@ -36,6 +44,9 @@
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tailwindcss/postcss": "^4.1.17",
+    "@types/papaparse": "^5.5.2",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.0.0",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.2",
@@ -43,14 +54,15 @@
     "eslint-plugin-react-refresh": "^0.4.26",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7",
+    "md-to-pdf": "^5.2.4",
     "postcss": "^8.5.6",
     "prettier": "^3.7.4",
+    "puppeteer": "^23.11.1",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3",
     "vite": "^5.0.0",
-    "vite-plugin-pwa": "^1.2.0",
-    "md-to-pdf": "^5.2.4",
-    "puppeteer": "^23.11.1"
+    "vite-plugin-pwa": "^1.2.0"
   },
   "lint-staged": {
     "src/**/*.{js,jsx}": [

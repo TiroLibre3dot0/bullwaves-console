@@ -29,3 +29,10 @@ upload-server.*.log
 reports/
 Analisi_Comments_Report.ipynb
 analyze_comments.py
+
+# Generated frontend indexes (created by scripts/generate_all_indexes.js)
+public/affiliate_index.json
+public/affiliate_kpi_index.json
+public/fraud_patterns_index.json
+public/reports_meta.json
+public/support_users_index.json
