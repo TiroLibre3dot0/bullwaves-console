@@ -2,6 +2,8 @@
 // Coherent implementation of support helpers used by the Support UI.
 import Papa from 'papaparse'
 
+const SUPPORT_USERS_INDEX_URL = '/support_users_index.json'
+
 // Caches and maps
 let _cache = null
 let _parsedCount = 0
@@ -92,6 +94,43 @@ function getReportsVersionSafe() {
   }
 }
 
+function looksLikeHtml(text) {
+  const s = String(text || '').trimStart()
+  return s.startsWith('<!doctype html') || s.startsWith('<html') || s.startsWith('<')
+}
+
+function resolveMapValueToRows(mapValue, rows) {
+  if (mapValue === undefined || mapValue === null) return []
+  if (Array.isArray(mapValue)) {
+    if (mapValue.length && typeof mapValue[0] === 'number') {
+      return mapValue.map((i) => rows[i]).filter(Boolean)
+    }
+    return mapValue
+  }
+  if (typeof mapValue === 'number') return rows[mapValue] ? [rows[mapValue]] : []
+  return []
+}
+
+async function tryLoadSupportUsersIndex(versionNow) {
+  try {
+    const url = versionNow
+      ? `${SUPPORT_USERS_INDEX_URL}?v=${encodeURIComponent(versionNow)}`
+      : SUPPORT_USERS_INDEX_URL
+    const res = await fetch(url)
+    if (!res || !res.ok) return null
+
+    const text = await res.text()
+    if (!text || looksLikeHtml(text)) return null
+
+    const json = JSON.parse(text)
+    if (!json || !Array.isArray(json.rows)) return null
+
+    return json
+  } catch {
+    return null
+  }
+}
+
 function papaParseAsync(text, config) {
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
@@ -106,6 +145,22 @@ export async function loadCsvRows(force = false) {
   const versionNow = getReportsVersionSafe()
   if (_cache && !force && _reportsVersion === versionNow) return _cache
   _reportsVersion = versionNow
+
+  // Prefer precomputed index (fast path) to avoid heavy CSV parsing in the browser.
+  const index = await tryLoadSupportUsersIndex(versionNow)
+  if (index && Array.isArray(index.rows)) {
+    _cache = index.rows
+    _parsedCount = _cache.length
+    _firstRowKeys = Object.keys(_cache[0] || {})
+
+    // These maps store indices (number | number[]) to avoid duplicating row objects.
+    _idMap = index.byUserId || {}
+    _mt5Map = index.byMt5 || {}
+    _emailMap = index.byEmail || {}
+
+    return _cache
+  }
+
   // Try canonical filename first, then common variants.
   // The export we use going forward may be named like: "01012023 to 01112026 Registrations Report.csv".
   const candidatePaths = [
@@ -254,8 +309,8 @@ export async function searchUsers(query) {
 
   if (/^\d+$/.test(qRaw)) {
     const exact = []
-    if (_idMap && _idMap[qRaw]) exact.push(..._idMap[qRaw])
-    if (_mt5Map && _mt5Map[qRaw]) exact.push(..._mt5Map[qRaw])
+    if (_idMap && _idMap[qRaw]) exact.push(...resolveMapValueToRows(_idMap[qRaw], rows))
+    if (_mt5Map && _mt5Map[qRaw]) exact.push(...resolveMapValueToRows(_mt5Map[qRaw], rows))
     if (exact.length) return Array.from(new Set(exact))
 
     return rows.filter((r) => {
@@ -267,7 +322,10 @@ export async function searchUsers(query) {
 
   if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(qRaw)) {
     const key = qRaw.toLowerCase()
-    if (_emailMap && _emailMap[key]) return Array.from(new Set(_emailMap[key]))
+    if (_emailMap && _emailMap[key]) {
+      const matches = resolveMapValueToRows(_emailMap[key], rows)
+      return Array.from(new Set(matches))
+    }
     return rows.filter((r) => {
       const e = String(r.email || r.customeremail || '')
       return e.toLowerCase().includes(key)

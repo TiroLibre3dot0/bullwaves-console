@@ -1084,7 +1084,7 @@ export default function SupportUserDetails({
   }
   function handleEscalate(kind) {
     if (!window.confirm(t('support.details.confirmEscalate', { accountId, kind }))) return
-    console.log('escalate', { userId: accountId, kind, selected: mapped })
+    if (import.meta.env.DEV) console.log('escalate', { userId: accountId, kind, selected: mapped })
   }
 
   return (

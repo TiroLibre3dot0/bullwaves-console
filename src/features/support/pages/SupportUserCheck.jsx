@@ -1,6 +1,5 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import Papa from 'papaparse'
 import { encodeSharePayload } from '../../../utils/shareCodec'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
@@ -17,8 +16,11 @@ import {
   buildSupportDecision,
 } from '../services/supportUserCheckService'
 import SupportUserDetails from './SupportUserDetails'
-import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
+import {
+  loadFraudPatternsIndex,
+  getFraudPatternForUser,
+} from '../../../services/fraudPatternsService'
 
 // Key lists
 const NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
@@ -91,7 +93,6 @@ function getMapped(row) {
     affiliateId: pickField(row, AFF_KEYS),
     status: pickField(row, STATUS_KEYS),
     country: pickField(row, COUNTRY_KEYS),
-    fraud: pickField(row, FRAUD_KEYS),
     action: pickField(row, ACTION_KEYS),
     lots: pickField(row, LOTS_KEYS),
     volume: pickField(row, VOLUME_KEYS),
@@ -180,6 +181,8 @@ export default function SupportUserCheck() {
   const [mediaLoaded, setMediaLoaded] = useState(false)
   const [affiliateName, setAffiliateName] = useState(null)
   const [affiliateKpi, setAffiliateKpi] = useState(null)
+  const [fraudIndex, setFraudIndex] = useState(null)
+  const [fraudPattern, setFraudPattern] = useState(null)
   const [dataStatus, setDataStatus] = useState(null)
   const [showDataStatusPopup, setShowDataStatusPopup] = useState(false)
 
@@ -194,8 +197,9 @@ export default function SupportUserCheck() {
 
   // Carica dati iniziali per status
   useEffect(() => {
-    console.log('Loading initial data for status')
+    if (import.meta.env.DEV) console.log('Loading initial data for status')
     async function loadInitialData() {
+      setInitializing(true)
       try {
         const version = (() => {
           try {
@@ -204,62 +208,25 @@ export default function SupportUserCheck() {
             return ''
           }
         })()
-        const candidates = [
-          '/Registrations%20Report.csv',
-          '/Registrations%20Report.fixed.csv',
-          '/01012023%20to%2001112026%20Registrations%20Report.csv',
-        ]
+        const metaUrl = version
+          ? `/reports_meta.json?v=${encodeURIComponent(version)}`
+          : '/reports_meta.json'
+        const resp = await fetch(metaUrl)
+        if (!resp || !resp.ok) return
+        const text = await resp.text()
+        if (!text || String(text).trimStart().startsWith('<')) return
 
-        let text = null
-        for (const url of candidates) {
-          const withVersion = version ? `${url}?v=${encodeURIComponent(version)}` : url
-          const resp = await fetch(withVersion)
-          if (resp && resp.ok) {
-            console.log('Fetch response', url, resp.ok)
-
-            text = await resp.text()
-            break
-          }
+        let meta = null
+        try {
+          meta = JSON.parse(text)
+        } catch {
+          meta = null
         }
-        if (!text) return
 
-        // Parse in a web worker and only compute the latest date (avoid building large arrays).
-        const norm = (h) =>
-          String(h || '')
-            .toLowerCase()
-            .replace(/[^a-z]/g, '')
-        const regKeySet = new Set((REGDATE_KEYS || []).map(norm))
-
-        let dateKey = null
-        let latestDate = null
-
-        await new Promise((resolve) => {
-          Papa.parse(text, {
-            header: true,
-            skipEmptyLines: true,
-            worker: true,
-            step: (res) => {
-              const row = res && res.data ? res.data : null
-              if (!row) return
-
-              if (!dateKey) {
-                const keys = Object.keys(row || {})
-                dateKey = keys.find((k) => regKeySet.has(norm(k))) || keys[0] || null
-              }
-              if (!dateKey) return
-
-              const dateStr = row[dateKey]
-              if (!dateStr) return
-              const d = new Date(dateStr)
-              if (Number.isNaN(d.getTime())) return
-              if (!latestDate || d > latestDate) latestDate = d
-            },
-            complete: () => resolve(),
-            error: () => resolve(),
-          })
-        })
-
-        if (!latestDate) return
+        const latestIso = meta?.reports?.registrations?.latestDate
+        if (!latestIso) return
+        const latestDate = new Date(latestIso)
+        if (Number.isNaN(latestDate.getTime())) return
 
         // Keep the same output shape as checkDataStatus() without scanning all rows.
         const today = new Date()
@@ -637,6 +604,22 @@ export default function SupportUserCheck() {
       mounted = false
     }
   }, [selectedRaw])
+
+  // Load fraud patterns index on mount
+  useEffect(() => {
+    loadFraudPatternsIndex()
+      .then(setFraudIndex)
+      .catch(() => setFraudIndex(null))
+  }, [])
+
+  // Update fraud pattern for selected user
+  useEffect(() => {
+    if (!selected || !fraudIndex) {
+      setFraudPattern(null)
+      return
+    }
+    setFraudPattern(getFraudPatternForUser(fraudIndex, selected.userId))
+  }, [selected, fraudIndex])
 
   function onSelectUser(raw) {
     setSelectedRaw(raw)
