@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import Papa from 'papaparse'
 import { Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Tooltip, Legend } from 'chart.js'
 import CardSection from '../components/common/CardSection'
 import KpiCard from '../components/common/KpiCard'
 import PeriodSelector from '../components/common/PeriodSelector'
+import FullPageLoader from '../components/FullPageLoader'
 import { formatEuro, formatNumberShort } from '../lib/formatters'
 import { useI18n } from '../i18n/I18nContext'
 
@@ -12,9 +13,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const CPA_EUR = 650
 const DEFAULT_COST_FROM = 2287
-const COMMENTS_URL = '/comments.csv'
-const REGISTRATIONS_URL = '/Registrations Report.csv'
-const PAYMENTS_URL = '/Payments Report.csv'
+const COMMENTS_CANDIDATE_URLS = ['/comments.csv', '/Comments Report.csv']
+const AFFILIATE_INDEX_URL = '/affiliate_index.json'
 
 const toInt = (val) => {
   if (val === null || val === undefined) return null
@@ -132,12 +132,15 @@ function CommentsReportSection({ rows, year, month, affiliateMap }) {
     const users = new Set()
     let transfers = 0
 
-    rows.forEach((row) => {
-      if (!isValidTransfer(row)) return
+    // Optimized: Use for loop instead of forEach for better performance on large datasets
+    const len = rows.length
+    for (let i = 0; i < len; i++) {
+      const row = rows[i]
+      if (!isValidTransfer(row)) continue
       const dt = parseDate(row.created_on)
       const matchesYear = year === 'all' || (dt && dt.getFullYear() === year)
       const matchesMonth = month === 'all' || (dt && dt.getMonth() + 1 === month)
-      if (!matchesYear || !matchesMonth) return
+      if (!matchesYear || !matchesMonth) continue
 
       transfers += 1
       const from = toInt(row.from_affiliate_id)
@@ -149,19 +152,22 @@ function CommentsReportSection({ rows, year, month, affiliateMap }) {
       outbound.set(from, (outbound.get(from) || 0) + 1)
       const key = `${from} → ${to}`
       flows.set(key, (flows.get(key) || 0) + 1)
-    })
+    }
 
     const affiliates = new Set([...inbound.keys(), ...outbound.keys()])
-    const list = [...affiliates].map((id) => {
+    // Optimized: Pre-allocate array and use direct assignment
+    const list = []
+    for (const id of affiliates) {
       const inCnt = inbound.get(id) || 0
       const outCnt = outbound.get(id) || 0
-      return { id, inbound: inCnt, outbound: outCnt, net: inCnt - outCnt }
-    })
+      list.push({ id, inbound: inCnt, outbound: outCnt, net: inCnt - outCnt })
+    }
 
     const byInbound = sortDesc(list, 'inbound')
     const byOutbound = sortDesc(list, 'outbound')
     const byNet = sortDesc(list, 'net')
-    const flowsSorted = [...flows.entries()].sort((a, b) => b[1] - a[1])
+    // Optimized: Single pass sort instead of creating intermediate array
+    const flowsSorted = Array.from(flows.entries()).sort((a, b) => b[1] - a[1])
 
     const movedFromDefault = outbound.get(DEFAULT_COST_FROM) || 0
     const extraCost = movedFromDefault * CPA_EUR
@@ -187,16 +193,35 @@ function CommentsReportSection({ rows, year, month, affiliateMap }) {
     return name ? `${key} — ${name}` : key
   }
 
-  const inboundTop = stats.byInbound.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) }))
-  const outboundTop = stats.byOutbound.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) }))
-  const netTop = stats.byNet.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) }))
-  const flowTop = stats.flows.slice(0, 15).map(([flow, count]) => {
-    const [fromRaw, toRaw] = flow.split(' → ')
-    const from = getAffLabel(fromRaw)
-    const to = getAffLabel(toRaw)
-    return { flow: `${from} → ${to}`, count }
-  })
-  const flowCostTop = flowTop.map((f) => ({ flow: f.flow, cost: f.count * CPA_EUR }))
+  // Optimized: Memoize top results generation to avoid recalculation on every render
+  const inboundTop = useMemo(
+    () => stats.byInbound.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) })),
+    [stats, affiliateMap]
+  )
+  const outboundTop = useMemo(
+    () => stats.byOutbound.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) })),
+    [stats, affiliateMap]
+  )
+  const netTop = useMemo(
+    () => stats.byNet.slice(0, 10).map((r) => ({ ...r, label: getAffLabel(r.id) })),
+    [stats, affiliateMap]
+  )
+  const flowTop = useMemo(() => {
+    const result = []
+    const flowsLen = Math.min(15, stats.flows.length)
+    for (let i = 0; i < flowsLen; i++) {
+      const [flow, count] = stats.flows[i]
+      const [fromRaw, toRaw] = flow.split(' → ')
+      const from = getAffLabel(fromRaw)
+      const to = getAffLabel(toRaw)
+      result.push({ flow: `${from} → ${to}`, count })
+    }
+    return result
+  }, [stats, affiliateMap])
+  const flowCostTop = useMemo(
+    () => flowTop.map((f) => ({ flow: f.flow, cost: f.count * CPA_EUR })),
+    [flowTop]
+  )
 
   return (
     <>
@@ -314,6 +339,7 @@ function BotUsersSection() {
 
 export default function CommentsAnalysisPage() {
   const { t } = useI18n()
+  const tRef = useRef(t)
   const [rows, setRows] = useState([])
   const [affiliateMap, setAffiliateMap] = useState(new Map())
   const [loading, setLoading] = useState(true)
@@ -323,8 +349,13 @@ export default function CommentsAnalysisPage() {
   const [tab, setTab] = useState('comments')
 
   useEffect(() => {
+    tRef.current = t
+  }, [t])
+
+  useEffect(() => {
     let mounted = true
     const map = new Map()
+
     const ingestRow = (row) => {
       const entries = Object.entries(row || {})
       let id = null
@@ -342,46 +373,182 @@ export default function CommentsAnalysisPage() {
       }
     }
 
-    Papa.parse(COMMENTS_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: ({ data, errors }) => {
-        if (!mounted) return
-        if (errors && errors.length) {
-          setError(t('analysis.error.parsing'))
-          setLoading(false)
-          return
+    function looksLikeHtmlText(s) {
+      const head = String(s || '')
+        .trim()
+        .slice(0, 200)
+        .toLowerCase()
+      return head.startsWith('<!doctype') || head.startsWith('<html') || head.includes('<head')
+    }
+
+    async function fetchFirstOkNonHtmlText(urls) {
+      const candidates = Array.isArray(urls) ? urls : []
+      let lastError = null
+
+      for (const rawUrl of candidates) {
+        if (!rawUrl) continue
+        try {
+          const url = encodeURI(String(rawUrl))
+          const res = await fetch(url)
+          if (!res || !res.ok) {
+            lastError = new Error(`HTTP ${res?.status || 'ERR'} for ${url}`)
+            continue
+          }
+          const text = await res.text()
+          if (looksLikeHtmlText(text)) {
+            lastError = new Error(`Received HTML for ${url}`)
+            continue
+          }
+          return { text, sourceUrl: String(rawUrl) }
+        } catch (e) {
+          lastError = e
         }
-        setRows(Array.isArray(data) ? data : [])
+      }
+
+      throw lastError || new Error('No CSV candidates available')
+    }
+
+    async function tryLoadAffiliateIndex() {
+      try {
+        const version = (() => {
+          try {
+            return String(localStorage.getItem('bw_reports_version') || '')
+          } catch {
+            return ''
+          }
+        })()
+
+        const withVersion = version
+          ? `${AFFILIATE_INDEX_URL}?v=${encodeURIComponent(version)}`
+          : AFFILIATE_INDEX_URL
+
+        const res = await fetch(withVersion)
+        if (!res || !res.ok) return null
+        const json = await res.json()
+        const byId = json && typeof json === 'object' ? json.byId : null
+        if (!byId || typeof byId !== 'object') return null
+        return byId
+      } catch {
+        return null
+      }
+    }
+
+    // Parse CSV in chunks, ingesting rows and optionally accumulating them.
+    // NOTE: When using Papa `chunk`, `complete({ data })` is not reliable for full data.
+    const parseCsvChunked = (
+      source,
+      { accumulate = false, download = true, onRows, onDone, onFail }
+    ) => {
+      const all = accumulate ? [] : null
+      let receivedAny = false
+
+      const normalizedSource = (() => {
+        if (!download) return source
+        if (typeof source !== 'string') return source
+
+        // PapaParse with { download: true, worker: true } runs XHR inside a blob worker.
+        // Relative URLs can be invalid there; always provide an absolute URL.
+        try {
+          if (typeof window !== 'undefined' && window.location?.origin) {
+            return new URL(source, window.location.origin).toString()
+          }
+        } catch {
+          // ignore
+        }
+
+        return source
+      })()
+
+      Papa.parse(normalizedSource, {
+        download,
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false,
+        worker: true,
+        encoding: 'UTF-8',
+        chunk: (results) => {
+          if (!mounted) return
+          const data = results?.data
+          if (Array.isArray(data) && data.length) {
+            receivedAny = true
+            if (accumulate) all.push(...data)
+            if (typeof onRows === 'function') onRows(data)
+          }
+        },
+        complete: (results) => {
+          if (!mounted) return
+          const hasErrors = Array.isArray(results?.errors) && results.errors.length > 0
+          if (!receivedAny) {
+            onFail?.(hasErrors ? new Error(results.errors[0]?.message || 'CSV parse error') : null)
+            return
+          }
+          onDone?.(accumulate ? all : null)
+        },
+        error: (err) => {
+          if (!mounted) return
+          onFail?.(err)
+        },
+      })
+    }
+
+    // 1) Load comments report first (accumulate rows for analysis + ingest affiliates)
+    ;(async () => {
+      try {
+        const { text } = await fetchFirstOkNonHtmlText(COMMENTS_CANDIDATE_URLS)
+
+        parseCsvChunked(text, {
+          download: false,
+          accumulate: true,
+          onRows: (chunkRows) => {
+            // Build affiliate map opportunistically from comments
+            chunkRows.forEach(ingestRow)
+          },
+          onDone: (allRows) => {
+            if (!mounted) return
+            if (!Array.isArray(allRows) || allRows.length === 0) {
+              setError(tRef.current('analysis.error.parsing'))
+              setLoading(false)
+              return
+            }
+
+            setRows(allRows)
+
+            // Prefer a precomputed id->name index (fast, low CPU) if available.
+            // Fallback to whatever we found in the comments report.
+            ;(async () => {
+              const byId = await tryLoadAffiliateIndex()
+              if (!mounted) return
+
+              if (byId) {
+                for (const [id, name] of Object.entries(byId)) {
+                  const key = String(id).trim()
+                  const val = String(name ?? '').trim()
+                  if (!key || !val) continue
+                  // Overwrite placeholders where we previously stored the id as the label.
+                  const existing = map.get(key)
+                  const existingTrim = existing != null ? String(existing).trim() : ''
+                  const isPlaceholder = !existingTrim || existingTrim === key
+                  if (!map.has(key) || isPlaceholder) map.set(key, val)
+                }
+              }
+
+              setAffiliateMap(new Map(map))
+              setLoading(false)
+            })()
+          },
+          onFail: (err) => {
+            if (!mounted) return
+            setError(tRef.current('analysis.error.parsing'))
+            setLoading(false)
+          },
+        })
+      } catch (e) {
+        if (!mounted) return
+        setError(tRef.current('analysis.error.loading'))
         setLoading(false)
-      },
-      error: (err) => {
-        if (!mounted) return
-        setError(err?.message || t('analysis.error.loading'))
-        setLoading(false)
-      },
-    })
-    Papa.parse(REGISTRATIONS_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: ({ data }) => {
-        if (!mounted) return
-        data.forEach(ingestRow)
-        setAffiliateMap(new Map(map))
-      },
-    })
-    Papa.parse(PAYMENTS_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: ({ data }) => {
-        if (!mounted) return
-        data.forEach(ingestRow)
-        setAffiliateMap(new Map(map))
-      },
-    })
+      }
+    })()
+
     return () => {
       mounted = false
     }
@@ -410,12 +577,7 @@ export default function CommentsAnalysisPage() {
     return { years, monthsObj }
   }, [rows])
 
-  if (loading)
-    return (
-      <div className="page-shell">
-        <p>{t('analysis.loading')}</p>
-      </div>
-    )
+  if (loading) return <FullPageLoader progress={35} subtitle={t('analysis.loading')} />
   if (error)
     return (
       <div className="page-shell">
