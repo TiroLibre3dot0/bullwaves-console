@@ -13,7 +13,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 
 const CPA_EUR = 650
 const DEFAULT_COST_FROM = 2287
-const COMMENTS_CANDIDATE_URLS = ['/comments.csv', '/Comments Report.csv']
+const DEFAULT_COMMENTS_CANDIDATE_URLS = ['/comments.csv', '/Comments Report.csv']
 const AFFILIATE_INDEX_URL = '/affiliate_index.json'
 
 const toInt = (val) => {
@@ -356,6 +356,40 @@ export default function CommentsAnalysisPage() {
     let mounted = true
     const map = new Map()
 
+    const getReportsVersion = () => {
+      try {
+        return String(localStorage.getItem('bw_reports_version') || '')
+      } catch {
+        return ''
+      }
+    }
+
+    const buildCommentsCandidateUrls = () => {
+      const urls = []
+      const add = (u) => {
+        const s = String(u || '').trim()
+        if (!s) return
+        if (!urls.includes(s)) urls.push(s)
+      }
+
+      // Optional production override (e.g. a signed/static URL on external storage)
+      // Falls back to public assets if not provided.
+      try {
+        add(import.meta?.env?.VITE_COMMENTS_CSV_URL)
+      } catch {
+        // ignore
+      }
+
+      const v = getReportsVersion()
+      for (const u of DEFAULT_COMMENTS_CANDIDATE_URLS) {
+        if (!u) continue
+        if (v) add(`${u}?v=${encodeURIComponent(v)}`)
+        add(u)
+      }
+
+      return urls
+    }
+
     const ingestRow = (row) => {
       const entries = Object.entries(row || {})
       let id = null
@@ -384,6 +418,7 @@ export default function CommentsAnalysisPage() {
     async function fetchFirstOkNonHtmlText(urls) {
       const candidates = Array.isArray(urls) ? urls : []
       let lastError = null
+      let sawOnlyMissingLikeFailures = true
 
       for (const rawUrl of candidates) {
         if (!rawUrl) continue
@@ -391,18 +426,33 @@ export default function CommentsAnalysisPage() {
           const url = encodeURI(String(rawUrl))
           const res = await fetch(url)
           if (!res || !res.ok) {
-            lastError = new Error(`HTTP ${res?.status || 'ERR'} for ${url}`)
+            const status = res?.status || 0
+            lastError = new Error(`HTTP ${status || 'ERR'} for ${url}`)
+            // In production, missing public assets may get rewritten to index.html (HTML) or return 404.
+            // Treat these as a "no data" scenario.
+            if (![0, 404].includes(status)) sawOnlyMissingLikeFailures = false
             continue
           }
           const text = await res.text()
           if (looksLikeHtmlText(text)) {
             lastError = new Error(`Received HTML for ${url}`)
+            // This happens when SPA fallback rewrite serves index.html.
             continue
           }
+          sawOnlyMissingLikeFailures = false
           return { text, sourceUrl: String(rawUrl) }
         } catch (e) {
           lastError = e
+          sawOnlyMissingLikeFailures = false
         }
+      }
+
+      if (sawOnlyMissingLikeFailures) {
+        const err = new Error('Comments report not found')
+        err.kind = 'missing'
+        err.candidates = candidates
+        err.cause = lastError
+        throw err
       }
 
       throw lastError || new Error('No CSV candidates available')
@@ -494,7 +544,7 @@ export default function CommentsAnalysisPage() {
     // 1) Load comments report first (accumulate rows for analysis + ingest affiliates)
     ;(async () => {
       try {
-        const { text } = await fetchFirstOkNonHtmlText(COMMENTS_CANDIDATE_URLS)
+        const { text } = await fetchFirstOkNonHtmlText(buildCommentsCandidateUrls())
 
         parseCsvChunked(text, {
           download: false,
@@ -544,6 +594,17 @@ export default function CommentsAnalysisPage() {
         })
       } catch (e) {
         if (!mounted) return
+        // If the report isn't deployed (common in production when CSVs are kept out of git),
+        // render the page with "no data" instead of a hard error.
+        if (e && e.kind === 'missing') {
+          if (import.meta?.env?.DEV) {
+            console.warn('Comments report missing. Candidates:', e.candidates, e.cause || e)
+          }
+          setRows([])
+          setAffiliateMap(new Map())
+          setLoading(false)
+          return
+        }
         setError(tRef.current('analysis.error.loading'))
         setLoading(false)
       }
