@@ -252,6 +252,17 @@ export default function Sidebar({
             <span>{t('sidebar.analysis')}</span>
           </span>
         </button>
+        <button
+          disabled={disabled('traderPointsSimulator')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'traderPointsSimulator' ? 'active' : ''}`}
+          onClick={() => navigate('traderPointsSimulator')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="layers" />
+            <span>Trader Points</span>
+          </span>
+        </button>
         {view === 'affiliate' && (
           <div className="sidebar-subsection">
             <button

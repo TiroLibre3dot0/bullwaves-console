@@ -111,6 +111,62 @@ function writeNdjson(res, obj) {
   }
 }
 
+function runNodeScript(scriptFile, { cwd } = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn('node', [scriptFile], {
+      cwd: cwd || process.cwd(),
+      windowsHide: true,
+    })
+
+    let stdout = ''
+    let stderr = ''
+    child.stdout.on('data', (d) => (stdout += d.toString('utf8')))
+    child.stderr.on('data', (d) => (stderr += d.toString('utf8')))
+
+    child.on('close', (code) => {
+      if (code && code !== 0) {
+        const err = new Error(`Script failed: ${scriptFile} (code=${code})`)
+        err.code = code
+        err.stdout = stdout
+        err.stderr = stderr
+        reject(err)
+        return
+      }
+      resolve({ script: path.basename(scriptFile), stdout, stderr })
+    })
+  })
+}
+
+async function runPostUploadGenerators(type, emit) {
+  const cwd = path.join(__dirname, '..')
+  const scripts = [
+    path.join(__dirname, 'generate_reports_meta.js'),
+    path.join(__dirname, 'generate_affiliate_index.js'),
+    path.join(__dirname, 'generate_support_users_index.js'),
+    path.join(__dirname, 'generate_fraud_patterns_index.js'),
+    path.join(__dirname, 'generate_affiliate_kpi_index.js'),
+  ]
+
+  const results = []
+  for (let i = 0; i < scripts.length; i += 1) {
+    const scriptFile = scripts[i]
+    if (emit) emit(92 + i * 3, 'post_processing', `Generating ${path.basename(scriptFile)}…`)
+    // eslint-disable-next-line no-await-in-loop
+    const r = await runNodeScript(scriptFile, { cwd })
+    results.push({
+      script: r.script,
+      stdoutPreview: String(r.stdout || '').split(/\r?\n/).slice(0, 6).join('\n'),
+      stderrPreview: String(r.stderr || '').split(/\r?\n/).slice(0, 6).join('\n'),
+    })
+  }
+
+  return {
+    ok: true,
+    scripts: results.map((r) => r.script),
+    results,
+  }
+}
+
 function inferDestByType(type) {
   if (type === 'registrations') return path.join('public', 'Registrations Report.csv')
   if (type === 'media') return path.join('public', 'Media Report.csv')
@@ -191,7 +247,7 @@ function handleUpload(req, res) {
     ? 'sanitize_registrations.js'
     : (type === 'media' ? 'sanitize_media.js' : (type === 'comments' ? 'sanitize_comments.js' : 'sanitize_payments.js'))
   const cmd = `node "${path.join(__dirname, sanitizer)}" "${normalized.inputPath}"`
-  exec(cmd, { cwd: path.join(__dirname, '..') }, (err, stdout, stderr) => {
+  exec(cmd, { cwd: path.join(__dirname, '..') }, async (err, stdout, stderr) => {
     const out = stdout || ''
     const errOut = stderr || ''
     if (normalized && normalized.cleanup) normalized.cleanup()
@@ -213,11 +269,23 @@ function handleUpload(req, res) {
     console.log('sanitizer stdout preview:\n' + preview)
     if (outLines.length > 10) console.log('... (output truncated, full output returned in response)')
     if (errOut) console.warn('sanitizer stderr:\n', errOut)
+    let postProcessing = null
+    try {
+      postProcessing = await runPostUploadGenerators(type)
+    } catch (e) {
+      postProcessing = {
+        ok: false,
+        error: e && e.message,
+        code: e && e.code,
+      }
+    }
+
     res.json({
       ok: true,
       type,
       rawBackup,
       sanitizer,
+      postProcessing,
       normalized: normalized && normalized.converted ? {
         converted: true,
         from: normalized.convertedFrom,
@@ -339,7 +407,15 @@ function handleUploadStream(req, res) {
       return res.end()
     }
 
-    bump(100, 'done', 'Done.')
+    ;(async () => {
+      try {
+        await runPostUploadGenerators(type, (pct, stage, message) => bump(pct, stage, message))
+      } catch (e) {
+        // Do not fail the upload if post-processing fails; surface a warning in the stream.
+        writeNdjson(res, { type: 'warning', message: 'post_processing_failed', details: e && e.message })
+      }
+
+      bump(100, 'done', 'Done.')
     writeNdjson(res, {
       type: 'result',
       data: {
@@ -359,6 +435,7 @@ function handleUploadStream(req, res) {
       },
     })
     res.end()
+    })()
   })
 }
 

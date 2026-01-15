@@ -340,12 +340,14 @@ export default function FraudMonitoringDashboard() {
 
   // diagnostic logging for load sequence (helps track what updates layout)
   useEffect(() => {
-    console.debug('FraudDashboard state:', {
-      mediaLoaded,
-      csvLoaded,
-      mediaSeriesLen: mediaSeries.length,
-      regSeriesLen: regSeries.length,
-    })
+    if (import.meta.env.DEV) {
+      console.debug('FraudDashboard state:', {
+        mediaLoaded,
+        csvLoaded,
+        mediaSeriesLen: mediaSeries.length,
+        regSeriesLen: regSeries.length,
+      })
+    }
   }, [mediaLoaded, csvLoaded, mediaSeries, regSeries])
 
   // compute avg cost per user once both media summary and csvRecap are ready
@@ -2897,10 +2899,12 @@ export default function FraudMonitoringDashboard() {
     setSelectedIds([])
   }
   function exportSelected() {
-    console.log(
-      'Export',
-      (effectiveDisplayedCases || []).filter((c) => selectedIds.includes(c.id))
-    )
+    if (import.meta.env.DEV) {
+      console.log(
+        'Export',
+        (effectiveDisplayedCases || []).filter((c) => selectedIds.includes(c.id))
+      )
+    }
     alert(`Exporting ${selectedIds.length} cases (console).`)
   }
 
