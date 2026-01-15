@@ -66,8 +66,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       department: 'Ops / Analytics',
       tool: 'Solitics onboarding session',
       expectedImpact:
-        'Attend the session and capture concrete activation + data requirements. Outcome: clear understanding of Solitics data structure and segmentation basics for retention use cases.',
-      status: 'in_progress',
+        'Completed Product Overview #1. Outcomes: Solitics data model overview (member profiles, transactions, aggregation table); event-based data flow (member, transactional, frontend events); attributes + event handling for segmentation; segment creation logic and syncing behavior.',
+      status: 'done',
     },
     {
       title: 'Solitics marketing plan (calendar + assets)',
@@ -104,6 +104,15 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       expectedImpact:
         'One shared board with backlog, owners, milestones, and blockers. Next step: create it, invite stakeholders, set weekly cadence.',
       status: 'in_progress',
+    },
+    {
+      title: 'Solitics Product Overview #2 – journeys & activation',
+      owner: 'Paolo / Solitics',
+      department: 'Ops / Marketing',
+      tool: 'Solitics onboarding session',
+      expectedImpact:
+        'Schedule and attend Product Overview #2 to move from data and segmentation fundamentals to journeys, activations, and practical use cases. Outcome: clear understanding of how to activate journeys and campaigns using existing data and segments.',
+      status: 'planned',
     },
   ],
 
