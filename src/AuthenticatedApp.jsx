@@ -12,6 +12,7 @@ import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
 import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecutionHistoryPage'
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
+import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
@@ -45,6 +46,7 @@ export default function AuthenticatedApp() {
       weeklyMap: '/weekly-map',
       weeklyExecutionHistory: '/weekly-execution-history',
       analysis: '/analysis',
+      traderPointsSimulator: '/lab/trader-points-simulator',
       // lab removed
       supportUserCheck: '/support/user-check',
       upload: '/upload',
@@ -75,6 +77,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/roadmap')) return 'roadmap'
     if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
     if (pathname.startsWith('/weekly-execution-history')) return 'weeklyExecutionHistory'
+    if (pathname.startsWith('/lab/trader-points-simulator')) return 'traderPointsSimulator'
     if (pathname.startsWith('/ongoing')) return 'roadmap'
     if (pathname.startsWith('/summary-report')) return 'summary'
     if (pathname.startsWith('/support')) return 'supportUserCheck'
@@ -298,6 +301,7 @@ export default function AuthenticatedApp() {
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
+      traderPointsSimulator: 'trader-points',
       admin: 'admin-panel',
     }
     const sectionId = viewToSection[view]
@@ -362,6 +366,7 @@ export default function AuthenticatedApp() {
                 </React.Suspense>
               )}
               {view === 'upload' && <UploadReportsPage />}
+              {view === 'traderPointsSimulator' && <TraderPointsSimulatorPage />}
               {/* Lab removed */}
               {view === 'admin' && isAdmin && <AdminPanel />}
             </div>
