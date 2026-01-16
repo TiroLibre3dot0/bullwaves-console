@@ -18,7 +18,7 @@ import { simulateScenario } from './engine/simulateScenario';
 import { computeClassicBonusBaseline } from './engine/classicBonusBaseline';
 import { buildFeatures } from './engine/buildFeatures';
 import type { ModelId } from './engine/buildTargets';
-import { getUiLang, t } from './uiCopy';
+import { useI18n } from '../../i18n/I18nContext';
 
 
 const defaultScenario = {
@@ -34,7 +34,7 @@ const defaultScenario = {
 
 
 export default function TraderPointsSimulatorPage() {
-  const lang = getUiLang('it')
+  const { t } = useI18n()
   // Data source: 'console' (default) or 'csv' (debug)
   const [dataSource, setDataSource] = useState<'console' | 'csv'>('console');
   const [parseInfo, setParseInfo] = useState<{parsed: number, skipped: number}>({parsed: 0, skipped: 0});
@@ -72,7 +72,7 @@ export default function TraderPointsSimulatorPage() {
         if (cancelled) return;
         setUsersAll(getUsersData());
         setConsoleSource('mock');
-        setConsoleLoadError(String(e?.message || e || 'Impossibile caricare l’indice utenti di supporto'));
+        setConsoleLoadError(String(e?.message || e || t('traderPoints.console.loadErrorFallback')));
       } finally {
         if (!cancelled) setConsoleLoading(false);
       }
@@ -253,15 +253,15 @@ export default function TraderPointsSimulatorPage() {
   };
 
   const baselineLabel = (() => {
-    if (compareBaseline === 'no_incentive') return 'Nessun incentivo'
-    if (compareBaseline === 'classic_bonus') return 'Bonus classico'
-    return 'Trader Points (predefinito)'
+    if (compareBaseline === 'no_incentive') return t('traderPoints.baseline.noIncentive')
+    if (compareBaseline === 'classic_bonus') return t('traderPoints.baseline.classicBonus')
+    return t('traderPoints.baseline.tpDefault')
   })()
 
   const baselineOneLiner = (() => {
-    if (compareBaseline === 'classic_bonus') return 'Il bonus classico tende a generare un picco di attività di breve periodo con decadimento rapido.'
-    if (compareBaseline === 'no_incentive') return 'Baseline osservata (storico).'
-    return 'Baseline a obiettivo (coinvolgimento progressivo).'
+    if (compareBaseline === 'classic_bonus') return t('traderPoints.baseline.oneLiner.classicBonus')
+    if (compareBaseline === 'no_incentive') return t('traderPoints.baseline.oneLiner.noIncentive')
+    return t('traderPoints.baseline.oneLiner.tpDefault')
   })()
 
   const whyDynamicLine = (() => {
@@ -271,14 +271,20 @@ export default function TraderPointsSimulatorPage() {
     const ba = Number(scenario?.bonus_amount ?? defaultScenario.bonus_amount)
     const guardrail = !!scenario?.risk_guardrail_enabled
 
-    if (guardrail) return 'In questo scenario, gli utenti ad alto rischio sono esclusi dall’idoneità allo sblocco.'
-    if (Number.isFinite(pm) && pm > 1.05) return `In questo scenario, il progresso “sembra” più veloce (×${pm.toFixed(2).replace(/\.00$/, '')}).`
-    if (Number.isFinite(pm) && pm < 0.95) return `In questo scenario, il progresso “sembra” più lento (×${pm.toFixed(2).replace(/\.00$/, '')}).`
-    if (Number.isFinite(rp) && rp < defaultScenario.required_points_to_unlock) return 'In questo scenario, l’obiettivo “sembra” più vicino (gratificazione più rapida).'
-    if (Number.isFinite(rp) && rp > defaultScenario.required_points_to_unlock) return 'In questo scenario, l’obiettivo “sembra” più lontano (percorso più lungo).'
-    if (Number.isFinite(ur) && ur !== defaultScenario.unlock_rate_pct) return `In questo scenario, si assume che ~${Math.round(ur)}% degli utenti sia coinvolto dall’obiettivo.`
-    if (Number.isFinite(ba) && ba !== defaultScenario.bonus_amount) return `In questo scenario, il valore della ricompensa finale è impostato a ${Math.round(ba).toLocaleString()}.`
-    return 'In questo scenario, raggiungibilità del goal e distanza dell’obiettivo sono vicine alla baseline.'
+    if (guardrail) return t('traderPoints.whyDynamic.guardrail')
+    if (Number.isFinite(pm) && pm > 1.05) {
+      const mult = pm.toFixed(2).replace(/\.00$/, '')
+      return t('traderPoints.whyDynamic.faster', { mult })
+    }
+    if (Number.isFinite(pm) && pm < 0.95) {
+      const mult = pm.toFixed(2).replace(/\.00$/, '')
+      return t('traderPoints.whyDynamic.slower', { mult })
+    }
+    if (Number.isFinite(rp) && rp < defaultScenario.required_points_to_unlock) return t('traderPoints.whyDynamic.targetCloser')
+    if (Number.isFinite(rp) && rp > defaultScenario.required_points_to_unlock) return t('traderPoints.whyDynamic.targetFarther')
+    if (Number.isFinite(ur) && ur !== defaultScenario.unlock_rate_pct) return t('traderPoints.whyDynamic.unlockRate', { pct: Math.round(ur) })
+    if (Number.isFinite(ba) && ba !== defaultScenario.bonus_amount) return t('traderPoints.whyDynamic.bonusValue', { amount: Math.round(ba).toLocaleString() })
+    return t('traderPoints.whyDynamic.default')
   })()
 
   const reachabilityChanged = (() => {
@@ -465,20 +471,20 @@ export default function TraderPointsSimulatorPage() {
       <header className="px-4 py-6 border-b border-white/5 bg-slate-900/20 backdrop-blur">
         <div className="w-full flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-6">
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-100">Trader Points — Simulazione e impatto</h1>
-            <div className="text-sm md:text-base text-slate-300 mt-1">Attività · Rischio · Retenzione</div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-100">{t('traderPoints.page.title')}</h1>
+            <div className="text-sm md:text-base text-slate-300 mt-1">{t('traderPoints.page.subtitle')}</div>
           </div>
 
           <div className="md:text-right">
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <label className="text-sm font-semibold text-slate-200">Sorgente dati</label>
+              <label className="text-sm font-semibold text-slate-200">{t('traderPoints.dataSource.label')}</label>
               <select
                 value={dataSource}
                 onChange={(e) => setDataSource(e.target.value as 'console' | 'csv')}
                 className="bg-slate-900/70 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
               >
-                <option value="console">Console</option>
-                <option value="csv">CSV (diagnostica)</option>
+                <option value="console">{t('traderPoints.dataSource.console')}</option>
+                <option value="csv">{t('traderPoints.dataSource.csv')}</option>
               </select>
             </div>
 
@@ -486,16 +492,16 @@ export default function TraderPointsSimulatorPage() {
               <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
                 <span className="text-xs text-slate-400">
                   {consoleLoading
-                    ? 'Caricamento…'
+                    ? t('traderPoints.console.loading')
                     : consoleSource === 'support'
-                      ? `Support (controllo utenti) · ${usersAll.length.toLocaleString()} utenti`
+                      ? t('traderPoints.console.supportSource', { count: usersAll.length.toLocaleString() })
                       : consoleSource === 'mock'
-                        ? `Mock di fallback · ${usersAll.length.toLocaleString()} utenti`
+                        ? t('traderPoints.console.mockSource', { count: usersAll.length.toLocaleString() })
                         : ''}
                 </span>
                 {consoleLoadError && (
                   <span className="text-xs text-amber-200 bg-amber-500/10 border border-amber-400/20 rounded-lg px-2.5 py-1">
-                    Uso dati mock (indice non disponibile)
+                    {t('traderPoints.console.mockBadge')}
                   </span>
                 )}
               </div>
@@ -504,8 +510,8 @@ export default function TraderPointsSimulatorPage() {
         </div>
 
         <div className="w-full mt-3 flex flex-wrap items-center gap-2">
-          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">Spread medio 0.1 pips</span>
-          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">Leva 1:500</span>
+          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.spread')}</span>
+          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.leverage')}</span>
         </div>
 
         {/* Data source moved to top-right */}
@@ -513,99 +519,99 @@ export default function TraderPointsSimulatorPage() {
       <main className="w-full py-5 px-0 flex flex-col gap-4">
         {/* STEP 1–4 — Executive Board View (always visible, no controls) */}
         <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-          <div className="text-sm font-semibold text-slate-200">Executive Summary — Decision View</div>
+          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.exec.title')}</div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
-              <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">RETENTION</div>
+              <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">{t('traderPoints.exec.retention.label')}</div>
               <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">
                 {fmtSignedInt(execRetentionDeltaDaysRounded)}
-                <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">days</span>
+                <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.exec.retention.unitDays')}</span>
               </div>
-              <div className="mt-2 text-sm text-slate-200">Users stay active longer</div>
+              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.retention.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-emerald-400/60" />
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
-              <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">ACTIVITY</div>
-              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">≈ unchanged</div>
-              <div className="mt-2 text-sm text-slate-200">Trading pace remains stable</div>
+              <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">{t('traderPoints.exec.activity.label')}</div>
+              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">{t('traderPoints.exec.activity.value')}</div>
+              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.activity.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-blue-400/60" />
             </div>
 
             <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
-              <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">RISK</div>
-              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">Controlled</div>
-              <div className="mt-2 text-sm text-slate-200">No increase in high-risk behavior</div>
+              <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">{t('traderPoints.exec.risk.label')}</div>
+              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">{t('traderPoints.exec.risk.value')}</div>
+              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.risk.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-amber-400/70" />
             </div>
           </div>
 
           {/* STEP 2 — Single causal statement */}
           <div className="mt-4 text-center text-sm md:text-base font-semibold text-slate-100">
-            <div>The increase in total value comes from users staying active longer,</div>
-            <div className="text-slate-200">not from trading more aggressively.</div>
+            <div>{t('traderPoints.exec.causal.line1')}</div>
+            <div className="text-slate-200">{t('traderPoints.exec.causal.line2')}</div>
           </div>
 
           {/* STEP 3 — Value mechanics */}
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
-              Same daily activity → no pressure on users
+              {t('traderPoints.exec.mechanics.1')}
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
-              Longer journey → more completed goals
+              {t('traderPoints.exec.mechanics.2')}
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
-              Commission-linked rewards → predictable cost
+              {t('traderPoints.exec.mechanics.3')}
             </div>
           </div>
 
           {/* STEP 4 — Executive takeaway */}
           <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4 shadow-sm">
-            <div className="text-sm font-semibold text-cyan-100">{t(lang, 'executiveTakeawayTitle')}</div>
-            <div className="mt-2 text-[12px] text-slate-100">{t(lang, 'executiveTakeawayText')}</div>
+            <div className="text-sm font-semibold text-cyan-100">{t('traderPoints.exec.takeaway.title')}</div>
+            <div className="mt-2 text-[12px] text-slate-100">{t('traderPoints.exec.takeaway.text')}</div>
           </div>
         </section>
 
         {/* STEP 5 — Deep dive (collapsed by default) */}
         <details className="rounded-2xl border border-white/10 bg-slate-900/50 p-3 shadow-sm">
-          <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">Deep dive</summary>
+          <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.deepDive.title')}</summary>
           <div className="mt-4 flex flex-col gap-4">
             {/* Section A — What changes */}
             <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-200">Cosa cambia</div>
-                  <div className="mt-1 text-[11px] text-slate-400">Δ vs {baselineLabel} · {baselineOneLiner}</div>
+                  <div className="text-sm font-semibold text-slate-200">{t('traderPoints.section.whatChanges')}</div>
+                  <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.deltaVs', { baseline: baselineLabel, oneLiner: baselineOneLiner })}</div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-slate-300">Baseline</label>
+                  <label className="text-xs font-semibold text-slate-300">{t('traderPoints.baseline.label')}</label>
                   <select
                     value={compareBaseline}
                     onChange={(e) => setCompareBaseline(e.target.value as any)}
                     className="bg-slate-900/70 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400/50"
                   >
-                    <option value="no_incentive">Nessun incentivo</option>
-                    <option value="classic_bonus">Bonus classico</option>
-                    <option value="trader_points_default">Trader Points (predefinito)</option>
+                    <option value="no_incentive">{t('traderPoints.baseline.noIncentive')}</option>
+                    <option value="classic_bonus">{t('traderPoints.baseline.classicBonus')}</option>
+                    <option value="trader_points_default">{t('traderPoints.baseline.tpDefault')}</option>
                   </select>
                   <InfoTooltip
-                    label="Definizioni baseline"
+                    label={t('traderPoints.baseline.tooltip.label')}
                     content={
                       <div>
-                        <div className="font-semibold text-slate-100">Baseline</div>
+                        <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.title')}</div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">Nessun incentivo</div>
-                          <div className="mt-1">Comportamento osservato (storico).</div>
+                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.noIncentive.title')}</div>
+                          <div className="mt-1">{t('traderPoints.baseline.tooltip.noIncentive.desc')}</div>
                         </div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">Bonus classico</div>
-                          <div className="mt-1">Ipotesi spike+decadimento basate su regole (non derivate da regressioni).</div>
+                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.classicBonus.title')}</div>
+                          <div className="mt-1">{t('traderPoints.baseline.tooltip.classicBonus.desc')}</div>
                         </div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">Trader Points</div>
-                          <div className="mt-1">Baseline a obiettivo con coinvolgimento progressivo.</div>
+                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.tp.title')}</div>
+                          <div className="mt-1">{t('traderPoints.baseline.tooltip.tp.desc')}</div>
                         </div>
                       </div>
                     }
@@ -621,18 +627,18 @@ export default function TraderPointsSimulatorPage() {
               <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-200">{t(lang, 'narrativeBridgeTitle')}</div>
+                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.narrativeBridge.title')}</div>
                   </div>
                 </div>
 
                 <div className="mt-3 text-[12px] leading-relaxed text-slate-300">
-                  <div>{t(lang, 'narrativeBridgeLine1')}</div>
-                  <div>{t(lang, 'narrativeBridgeLine2')}</div>
-                  <div>{t(lang, 'narrativeBridgeLine3')}</div>
+                  <div>{t('traderPoints.narrativeBridge.line1')}</div>
+                  <div>{t('traderPoints.narrativeBridge.line2')}</div>
+                  <div>{t('traderPoints.narrativeBridge.line3')}</div>
                 </div>
 
                 <div className="mt-3 text-[12px] font-semibold text-slate-200">
-                  {t(lang, 'narrativeBridgeFormulaA')} ≈ {t(lang, 'narrativeBridgeFormulaB')} × {t(lang, 'narrativeBridgeFormulaC')}
+                  {t('traderPoints.narrativeBridge.formula.totalPoints')} ≈ {t('traderPoints.narrativeBridge.formula.dailyActivity')} × {t('traderPoints.narrativeBridge.formula.activeDays')}
                 </div>
               </div>
 
@@ -646,8 +652,8 @@ export default function TraderPointsSimulatorPage() {
                 {/* Scenario controls (kept, but visually secondary) */}
                 <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold text-slate-200">Controlli scenario</div>
-                    <div className="text-[11px] text-slate-400">Regola incentivi e guardrail.</div>
+                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.scenarioControls.title')}</div>
+                    <div className="text-[11px] text-slate-400">{t('traderPoints.scenarioControls.subtitle')}</div>
                   </div>
                   <div className="mt-3">
                     {dataSource === 'csv' && <CsvUploader onData={handleCsv} parseInfo={parseInfo} />}
@@ -660,43 +666,43 @@ export default function TraderPointsSimulatorPage() {
                 </div>
 
                 {/* Keep only one distribution chart */}
-                <PpdGaussianChart data={ppdChart} title="Distribuzione posizioni/giorno" />
+                <PpdGaussianChart data={ppdChart} title={t('traderPoints.chart.ppdTitle')} />
               </div>
 
               <div className="lg:col-span-5 flex flex-col gap-4">
                 {/* Business-only sidebar card */}
                 <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-                  <div className="text-sm font-semibold text-slate-200">{t(lang, 'economicLogicTitle')}</div>
+                  <div className="text-sm font-semibold text-slate-200">{t('traderPoints.economicLogic.title')}</div>
                   <ul className="mt-3 space-y-1 text-[12px] text-slate-300">
-                    <li>• {t(lang, 'economicLogicBullet1')}</li>
-                    <li>• {t(lang, 'economicLogicBullet2')}</li>
-                    <li>• {t(lang, 'economicLogicBullet3')}</li>
+                    <li>• {t('traderPoints.economicLogic.bullet1')}</li>
+                    <li>• {t('traderPoints.economicLogic.bullet2')}</li>
+                    <li>• {t('traderPoints.economicLogic.bullet3')}</li>
                   </ul>
                 </section>
 
                 <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold text-slate-200">Perché succede</div>
+                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.why.title')}</div>
                     <InfoTooltip
-                      label="Perché funzionano gli incentivi a obiettivo"
+                      label={t('traderPoints.why.tooltip.label')}
                       content={
                         <div>
-                          <div className="font-semibold text-slate-100">Perché funzionano gli incentivi a obiettivo</div>
-                              <div className="mt-1">Confronta comportamenti e raggiungibilità del goal.</div>
+                          <div className="font-semibold text-slate-100">{t('traderPoints.why.tooltip.title')}</div>
+                          <div className="mt-1">{t('traderPoints.why.tooltip.desc')}</div>
                         </div>
                       }
                     />
                   </div>
 
-                  <div className="mt-2 text-sm font-semibold text-slate-100">Perché funzionano gli incentivi a obiettivo</div>
+                  <div className="mt-2 text-sm font-semibold text-slate-100">{t('traderPoints.why.heading')}</div>
                   <ul className="mt-2 space-y-1 text-[12px] text-slate-300">
-                    <li>• Più utenti entrano nel percorso a obiettivo</li>
-                    <li>• Meno utenti abbandonano prima del completamento</li>
-                    <li>• {t(lang, 'retentionParticipationLine')}</li>
+                    <li>• {t('traderPoints.why.bullet1')}</li>
+                    <li>• {t('traderPoints.why.bullet2')}</li>
+                    <li>• {t('traderPoints.why.bullet3')}</li>
                   </ul>
                   <div className="mt-3 rounded-lg border border-white/10 bg-slate-900/40 p-2.5 text-[12px] text-slate-200">
                     {reachabilityChanged && (
-                      <div className="mb-1 text-[11px] text-slate-400">{t(lang, 'reachabilityMicro')}</div>
+                      <div className="mb-1 text-[11px] text-slate-400">{t('traderPoints.reachability.micro')}</div>
                     )}
                     {whyDynamicLine}
                   </div>
@@ -704,7 +710,7 @@ export default function TraderPointsSimulatorPage() {
 
                 {/* Section C — Model confidence (optional) */}
                 <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
-                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">Affidabilità (opzionale)</summary>
+                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.reliability')}</summary>
                   <div className="mt-3">
                     <RegressionSummary regression={regression} />
                   </div>
@@ -712,7 +718,7 @@ export default function TraderPointsSimulatorPage() {
 
                 {/* Advanced metrics hidden by default */}
                 <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
-                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">Panoramica dataset (opzionale)</summary>
+                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.datasetOverview')}</summary>
                   <div className="mt-3">
                     <WorkingSetCards stats={workingSetStats} />
                   </div>
@@ -721,7 +727,7 @@ export default function TraderPointsSimulatorPage() {
             </div>
 
             <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-sm">
-              <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">Tabelle di approfondimento (opzionale)</summary>
+              <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.tables')}</summary>
               <div className="mt-3">
                 <Tables userAgg={userFeatures} simulation={simulation} />
               </div>
@@ -729,7 +735,7 @@ export default function TraderPointsSimulatorPage() {
 
             <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-sm">
               <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">
-                Esporta (opzionale)
+                {t('traderPoints.optional.export')}
               </summary>
               <div className="mt-3">
                 <ExportSnapshot

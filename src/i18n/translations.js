@@ -33,6 +33,7 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Cohort',
     'sidebar.analysis': 'Report Analysis',
     'sidebar.fraud': 'Fraud Monitoring',
+    'sidebar.traderPoints': 'Trader Points',
 
     // Report Analysis
     'analysis.header.label': 'Analysis',
@@ -112,6 +113,7 @@ export const translations = {
     'common.show': 'Show',
     'common.hide': 'Hide',
     'common.all': 'All',
+    'common.info': 'Info',
     'common.close': 'Close',
     'common.save': 'Save',
     'common.delete': 'Delete',
@@ -122,6 +124,328 @@ export const translations = {
     'common.months': 'months',
     'common.na': 'N/A',
     'common.loading': 'Please wait…',
+
+    // Trader Points
+    'traderPoints.page.title': 'Trader Points — Simulation and impact',
+    'traderPoints.page.subtitle': 'Activity · Risk · Retention',
+    'traderPoints.dataSource.label': 'Data source',
+    'traderPoints.dataSource.console': 'Console',
+    'traderPoints.dataSource.csv': 'CSV (diagnostic)',
+    'traderPoints.console.loading': 'Loading…',
+    'traderPoints.console.supportSource': 'Support (user check) · {count} users',
+    'traderPoints.console.mockSource': 'Fallback mock · {count} users',
+    'traderPoints.console.mockBadge': 'Using mock data (index unavailable)',
+    'traderPoints.console.loadErrorFallback': 'Unable to load support user index',
+    'traderPoints.chips.spread': 'Avg spread 0.1 pips',
+    'traderPoints.chips.leverage': 'Leverage 1:500',
+
+    'traderPoints.exec.title': 'Executive Summary — Decision View',
+    'traderPoints.exec.retention.label': 'RETENTION',
+    'traderPoints.exec.activity.label': 'ACTIVITY',
+    'traderPoints.exec.risk.label': 'RISK',
+    'traderPoints.exec.retention.unitDays': 'days',
+    'traderPoints.exec.retention.caption': 'Users stay active longer',
+    'traderPoints.exec.activity.value': '≈ unchanged',
+    'traderPoints.exec.activity.caption': 'Trading pace remains stable',
+    'traderPoints.exec.risk.value': 'Controlled',
+    'traderPoints.exec.risk.caption': 'No increase in high-risk behavior',
+    'traderPoints.exec.causal.line1':
+      'The increase in total value comes from users staying active longer,',
+    'traderPoints.exec.causal.line2': 'not from trading more aggressively.',
+    'traderPoints.exec.mechanics.1': 'Same daily activity → no pressure on users',
+    'traderPoints.exec.mechanics.2': 'Longer journey → more completed goals',
+    'traderPoints.exec.mechanics.3': 'Commission-linked rewards → predictable cost',
+    'traderPoints.exec.takeaway.title': 'Executive takeaway',
+    'traderPoints.exec.takeaway.text':
+      'At equal cost, goal-based incentives improve retention by increasing participation, not intensity.',
+
+    'traderPoints.deepDive.title': 'Deep dive',
+    'traderPoints.section.whatChanges': 'What changes',
+    'traderPoints.deltaVs': 'Δ vs {baseline} · {oneLiner}',
+    'traderPoints.baseline.label': 'Baseline',
+    'traderPoints.baseline.noIncentive': 'No incentive',
+    'traderPoints.baseline.classicBonus': 'Classic bonus',
+    'traderPoints.baseline.tpDefault': 'Trader Points (default)',
+    'traderPoints.baseline.oneLiner.classicBonus':
+      'The classic bonus tends to create a short-term activity spike with fast decay.',
+    'traderPoints.baseline.oneLiner.noIncentive': 'Observed baseline (historical).',
+    'traderPoints.baseline.oneLiner.tpDefault': 'Goal-based baseline (progressive engagement).',
+    'traderPoints.baseline.tooltip.label': 'Baseline definitions',
+    'traderPoints.baseline.tooltip.title': 'Baseline',
+    'traderPoints.baseline.tooltip.noIncentive.title': 'No incentive',
+    'traderPoints.baseline.tooltip.noIncentive.desc': 'Observed behavior (historical).',
+    'traderPoints.baseline.tooltip.classicBonus.title': 'Classic bonus',
+    'traderPoints.baseline.tooltip.classicBonus.desc':
+      'Rule-based spike+decay assumptions (not derived from regressions).',
+    'traderPoints.baseline.tooltip.tp.title': 'Trader Points',
+    'traderPoints.baseline.tooltip.tp.desc': 'Goal-based baseline with progressive engagement.',
+
+    'traderPoints.narrativeBridge.title': 'Same pace, longer journey',
+    'traderPoints.narrativeBridge.line1': 'Daily activity stays almost unchanged.',
+    'traderPoints.narrativeBridge.line2': 'What changes is how long users remain active.',
+    'traderPoints.narrativeBridge.line3': 'Time × consistency drive total points.',
+    'traderPoints.narrativeBridge.formula.totalPoints': 'Total Points',
+    'traderPoints.narrativeBridge.formula.dailyActivity': 'Daily Activity',
+    'traderPoints.narrativeBridge.formula.activeDays': 'Active Days',
+
+    'traderPoints.scenarioControls.title': 'Scenario controls',
+    'traderPoints.scenarioControls.subtitle': 'Tune incentives and guardrails.',
+    'traderPoints.chart.ppdTitle': 'Positions/day distribution',
+
+    'traderPoints.economicLogic.title': 'Economic logic (constant cost)',
+    'traderPoints.economicLogic.bullet1': 'Bonuses are earned via commissions, not gifted',
+    'traderPoints.economicLogic.bullet2': 'Progress speed changes reachability, not bonus value',
+    'traderPoints.economicLogic.bullet3': 'Retention grows from participation, not pressure',
+
+    'traderPoints.why.title': 'Why it happens',
+    'traderPoints.why.tooltip.label': 'Why goal-based incentives work',
+    'traderPoints.why.tooltip.title': 'Why goal-based incentives work',
+    'traderPoints.why.tooltip.desc': 'Compare behaviors and goal reachability.',
+    'traderPoints.why.heading': 'Why goal-based incentives work',
+    'traderPoints.why.bullet1': 'More users enter the goal-based journey',
+    'traderPoints.why.bullet2': 'Fewer users drop out before completion',
+    'traderPoints.why.bullet3': 'Retention grows from participation, not pressure',
+
+    'traderPoints.reachability.micro': 'Makes the goal feel reachable',
+
+    'traderPoints.whyDynamic.guardrail':
+      'In this scenario, high-risk users are excluded from unlock eligibility.',
+    'traderPoints.whyDynamic.faster': 'In this scenario, progress “feels” faster (×{mult}).',
+    'traderPoints.whyDynamic.slower': 'In this scenario, progress “feels” slower (×{mult}).',
+    'traderPoints.whyDynamic.targetCloser':
+      'In this scenario, the goal “feels” closer (faster gratification).',
+    'traderPoints.whyDynamic.targetFarther':
+      'In this scenario, the goal “feels” farther (longer journey).',
+    'traderPoints.whyDynamic.unlockRate':
+      'In this scenario, ~{pct}% of users are assumed to be targeted by the goal.',
+    'traderPoints.whyDynamic.bonusValue':
+      'In this scenario, the final reward value is set to {amount}.',
+    'traderPoints.whyDynamic.default':
+      'In this scenario, goal reachability and target distance are close to the baseline.',
+
+    'traderPoints.optional.reliability': 'Reliability (optional)',
+    'traderPoints.optional.datasetOverview': 'Dataset overview (optional)',
+    'traderPoints.optional.tables': 'Deep-dive tables (optional)',
+    'traderPoints.optional.export': 'Export (optional)',
+
+    'traderPoints.export.snapshotCsv': 'Export snapshot (CSV)',
+    'traderPoints.export.snapshotJson': 'Export snapshot (JSON)',
+    'traderPoints.export.ppdCsv': 'Export PPD (CSV)',
+
+    // Scenario Controls
+    'traderPoints.controls.preset.title': 'Preset',
+    'traderPoints.controls.preset.micro': 'Logic: goal is commission-linked.',
+    'traderPoints.controls.preset.custom': 'Custom',
+    'traderPoints.controls.preset.commissionOnly': 'Commission-only',
+    'traderPoints.controls.preset.commissionOnly.sub':
+      'Baseline: commission-linked goal (€200) with standard guardrails.',
+    'traderPoints.controls.preset.goal500': 'Goal €500',
+    'traderPoints.controls.preset.goal500.sub':
+      'Higher goal (€500) with moderate reachability boost (×1.5) and wider participation.',
+    'traderPoints.controls.preset.acceleratedPromo': 'Accelerated promo',
+    'traderPoints.controls.preset.acceleratedPromo.sub':
+      'Promotional acceleration (×4) with €500 goal; shows upper-bound reachability effect.',
+    'traderPoints.controls.preset.tooltip.label': 'Preset',
+    'traderPoints.controls.preset.tooltip.title': 'Preset',
+    'traderPoints.controls.preset.tooltip.desc':
+      'These presets change only scenario controls and UI copy.',
+    'traderPoints.controls.preset.whatMeans': 'What it means:',
+
+    'traderPoints.controls.reachability.label': 'Goal reachability',
+    'traderPoints.controls.reachability.tooltip.desc':
+      'It does NOT change how points are earned. It only changes perceived goal reachability.',
+    'traderPoints.controls.reachability.delta.more':
+      'With ×{mult}, about {pct}% more users reach the goal threshold (before unlock rate).',
+    'traderPoints.controls.reachability.delta.less':
+      'With ×{mult}, about {pct}% fewer users reach the goal threshold (before unlock rate).',
+
+    'traderPoints.controls.goal.label': 'Goal (Trader Points)',
+    'traderPoints.controls.goal.tooltip.label': 'Required points',
+    'traderPoints.controls.goal.tooltip.title': 'Goal threshold',
+    'traderPoints.controls.goal.tooltip.line1':
+      'Trader Points represent real commissions generated by the user.',
+    'traderPoints.controls.goal.tooltip.line2': 'Example: €200 bonus → 200 Trader Points goal.',
+    'traderPoints.controls.goal.micro':
+      'The goal is commission-linked (1 TP ≈ €1). Higher goals reduce reachability.',
+    'traderPoints.controls.goal.linkLabel': 'Link goal and bonus cost',
+
+    'traderPoints.controls.bonus.label': 'Bonus amount',
+    'traderPoints.controls.bonus.tooltip.label': 'Bonus amount',
+    'traderPoints.controls.bonus.tooltip.title': 'Bonus amount',
+    'traderPoints.controls.bonus.tooltip.line1': 'The bonus is the economic cost (e.g. €200).',
+    'traderPoints.controls.bonus.tooltip.line2':
+      'In the classic setup, goal points match the bonus (commission-linked).',
+    'traderPoints.controls.bonus.micro':
+      'The bonus is earned by generating equivalent commissions (Trader Points).',
+
+    'traderPoints.controls.unlockRate.label': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.label': 'Unlock rate',
+    'traderPoints.controls.unlockRate.tooltip.title': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.line1': 'Share of users targeted by the goal.',
+    'traderPoints.controls.unlockRate.tooltip.line2':
+      'Used for behavioral simulation, not for real payout.',
+    'traderPoints.controls.unlockRate.helper.base':
+      '{pct}% of users are assumed to be targeted by the goal.',
+    'traderPoints.controls.unlockRate.helper.guardrail':
+      '{base} Guardrail reduces eligibility for high-risk users.',
+    'traderPoints.controls.unlockRate.helper.baseline': '{base} Baseline participation share.',
+    'traderPoints.controls.unlockRate.helper.wider':
+      '{base} Broader participation → larger system-level effect.',
+    'traderPoints.controls.unlockRate.helper.narrower':
+      '{base} Narrower participation → smaller system-level effect.',
+
+    'traderPoints.controls.guardrail.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.title': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.line1': 'Avoids incentivizing high-risk behavior.',
+    'traderPoints.controls.guardrail.tooltip.line2':
+      'High-risk users are excluded from unlock eligibility (internal risk proxy).',
+    'traderPoints.controls.guardrail.badge': 'Scenario filtered by risk',
+    'traderPoints.controls.guardrail.micro.on':
+      'High-risk users are excluded from unlock eligibility.',
+    'traderPoints.controls.guardrail.micro.off': 'All eligible users are considered for unlock.',
+
+    // CSV Uploader
+    'traderPoints.csvUploader.title': '1. Upload positions report',
+    'traderPoints.csvUploader.rowsLoaded': 'Rows loaded: {count}',
+    'traderPoints.csvUploader.rowsSkipped': ' | Rows skipped: {count}',
+
+    // KPI Cards
+    'traderPoints.kpi.activity.label': 'Average activity',
+    'traderPoints.kpi.activity.unit': 'trades/day',
+    'traderPoints.kpi.retention.label': 'Average retention',
+    'traderPoints.kpi.retention.unit': 'days',
+    'traderPoints.kpi.risk.label': 'Average risk',
+    'traderPoints.kpi.risk.unit': 'risk',
+    'traderPoints.kpi.deltaLine': 'Δ vs {baseline} · New {value} {delta}',
+    'traderPoints.kpi.activity.line': 'Users trade more consistently when progress feels real.',
+    'traderPoints.kpi.retention.line': 'Users stay longer when progress toward a goal is visible.',
+    'traderPoints.kpi.risk.line.guardrail': 'Guardrails avoid incentivizing high-risk behavior.',
+    'traderPoints.kpi.risk.line.noGuardrail':
+      'Risk can rise when stronger incentives increase exposure.',
+
+    // Legacy (CSV mode)
+    'traderPoints.legacy.avgTradesPerUser': 'Avg trades/user',
+    'traderPoints.legacy.riskIndicator': 'Risk indicator',
+    'traderPoints.legacy.activeDays': 'Active days',
+
+    // Working set
+    'traderPoints.workingSet.activeSample': 'Active sample',
+    'traderPoints.workingSet.tooltip.rules.label': 'Working set rules',
+    'traderPoints.workingSet.tooltip.rules.title': 'Active users filter',
+    'traderPoints.workingSet.tooltip.rules.deposits': 'deposits > 0',
+    'traderPoints.workingSet.tooltip.rules.positions': 'positions > 0',
+    'traderPoints.workingSet.tooltip.rules.age': 'account age > 1 day',
+    'traderPoints.workingSet.avgPositions': 'Average positions (count)',
+    'traderPoints.workingSet.tooltip.positions.label': 'Positions count info',
+    'traderPoints.workingSet.tooltip.positions.title': 'What are “positions”?',
+    'traderPoints.workingSet.tooltip.positions.desc':
+      'It is the report column with the total historical positions/trades count, not “open positions right now”.',
+    'traderPoints.workingSet.medianLabel': 'Median {value}',
+    'traderPoints.workingSet.ppdMedianZone': 'Positions/day (median zone)',
+    'traderPoints.workingSet.tooltip.ppd.label': 'Positions/day definitions',
+    'traderPoints.workingSet.tooltip.ppd.title': 'Positions/day',
+    'traderPoints.workingSet.tooltip.ppd.formula':
+      'PPD = positions / daysSince(qualification or first deposit)',
+    'traderPoints.workingSet.tooltip.ppd.zone':
+      'The “median zone” keeps values near the median (Gauss-like via MAD σ) to reduce outlier impact.',
+    'traderPoints.workingSet.keptLine': 'Kept {keptPct}% · Median {median}',
+    'traderPoints.workingSet.rawLine': 'Raw mean {rawMean} · Global {globalMean}',
+    'traderPoints.workingSet.lifetime': 'Lifetime (days)',
+    'traderPoints.workingSet.tooltip.lifetime.label': 'Lifetime definitions',
+    'traderPoints.workingSet.tooltip.lifetime.title': 'Definitions',
+    'traderPoints.workingSet.tooltip.lifetime.account':
+      'Account lifetime: days since registration.',
+    'traderPoints.workingSet.tooltip.lifetime.trader':
+      'Trader lifetime: days since qualification/first deposit (if available).',
+    'traderPoints.workingSet.traderLifetimeLine': 'Trader lifetime {days} · {pct}% available',
+
+    // Regression Summary
+    'traderPoints.regression.title': 'Signal reliability (directional)',
+    'traderPoints.regression.tooltip.label': 'Signal reliability',
+    'traderPoints.regression.tooltip.title': 'Signal reliability (directional)',
+    'traderPoints.regression.tooltip.desc':
+      'These estimates are for direction and relative impact, not for point forecasting.',
+    'traderPoints.regression.tooltip.note': 'Decision support — not per-user estimation.',
+    'traderPoints.regression.metric.activity': 'Activity',
+    'traderPoints.regression.metric.risk': 'Risk',
+    'traderPoints.regression.metric.retention': 'Retention',
+    'traderPoints.regression.r2Label.low': 'Low signal — direction only',
+    'traderPoints.regression.r2Label.weak': 'Weak',
+    'traderPoints.regression.r2Label.medium': 'Medium',
+    'traderPoints.regression.r2Label.strong': 'Strong',
+    'traderPoints.regression.avgError': 'Average error (real units): {value}',
+    'traderPoints.regression.maeText.activity': '±{value} trades/day',
+    'traderPoints.regression.maeText.retention': '±{value} days',
+    'traderPoints.regression.maeText.risk': '±{value} risk units',
+
+    // Impact Breakdown
+    'traderPoints.impact.whereRetentionTitle': 'Where retention actually comes from',
+    'traderPoints.impact.micro': 'How average retention changes when goal reachability increases.',
+    'traderPoints.impact.howCalc.label': 'How it is calculated',
+    'traderPoints.impact.howCalc.title': 'How this number is calculated',
+    'traderPoints.impact.howCalc.step1': '1) Some users reach the goal threshold (eligible).',
+    'traderPoints.impact.howCalc.step2':
+      '2) A share of eligible users enters the goal journey (unlock rate).',
+    'traderPoints.impact.howCalc.step3':
+      '3) Average retention grows mainly because more users participate in the goal journey, not because users become more “intense” or take more risk.',
+    'traderPoints.impact.reachability': 'Reachability',
+    'traderPoints.impact.eligibleUsers': 'Eligible users',
+    'traderPoints.impact.eligibleDesc': 'Reach the goal threshold at the current pace.',
+    'traderPoints.impact.unlockedUsers': 'Unlocked users',
+    'traderPoints.impact.unlockedDesc': 'Enter the goal journey.',
+    'traderPoints.impact.definitions':
+      'Definitions: eligible = reach the threshold. unlocked = eligible who enter the goal journey (unlock rate).',
+    'traderPoints.impact.retention': 'Retention',
+    'traderPoints.impact.retentionBaseline': 'Average retention (baseline)',
+    'traderPoints.impact.retentionScenario': 'Average retention (scenario)',
+    'traderPoints.impact.retentionUplift': 'Average retention uplift',
+    'traderPoints.impact.compositionTitle': 'Uplift from unlocked share (composition effect)',
+    'traderPoints.impact.compositionDesc': 'With more speed, more users enter the goal journey.',
+    'traderPoints.impact.perUserTitle': 'Uplift on already-unlocked users (per-user effect)',
+    'traderPoints.impact.perUserDesc':
+      'Users who would have unlocked even at ×1 still feel closer to completion.',
+    'traderPoints.impact.sanity.title': 'Model sanity check (optional)',
+    'traderPoints.impact.sanity.note':
+      'Audit-only: verifies internal consistency of the scenario math.',
+    'traderPoints.impact.sanity.avgPointsBefore': 'Avg points (before)',
+    'traderPoints.impact.sanity.avgPointsAfter': 'Avg points (after)',
+    'traderPoints.impact.sanity.aboveThreshold1x': 'Above threshold (×1)',
+    'traderPoints.impact.sanity.aboveThresholdMx': 'Above threshold (×{mult})',
+    'traderPoints.impact.sanity.footer':
+      'Before/after use the same threshold and unlock rate; only reachability changes.',
+
+    // Tables
+    'traderPoints.tables.unknownUser': 'Unknown',
+    'traderPoints.tables.idPrefix': 'ID',
+    'traderPoints.tables.symbolsTop': 'Top symbols',
+    'traderPoints.tables.symbolsTooltip.label': 'Symbols context',
+    'traderPoints.tables.symbolsTooltip.title': 'How it is calculated',
+    'traderPoints.tables.symbolsTooltip.line1':
+      'In user-centric mode we use a global symbols distribution (weight %).',
+    'traderPoints.tables.symbolsTooltip.line2':
+      '“Estimated points” is a proportional estimate based on the symbol weight.',
+    'traderPoints.tables.col.symbol': 'Symbol',
+    'traderPoints.tables.col.weight': 'Weight',
+    'traderPoints.tables.col.estimatedPoints': 'Estimated points',
+    'traderPoints.tables.usersTop': 'Top users',
+    'traderPoints.tables.topByPositions': 'Top by positions',
+    'traderPoints.tables.usersLow': 'Low users',
+    'traderPoints.tables.col.user': 'User',
+    'traderPoints.tables.col.positions': 'Positions',
+    'traderPoints.tables.col.points': 'Points',
+    'traderPoints.tables.pointsFloored': '(floored to 0)',
+
+    // Chart tooltip/aria
+    'traderPoints.chart.tooltip.label': 'Chart details',
+    'traderPoints.chart.tooltip.title': 'What it shows',
+    'traderPoints.chart.tooltip.line1':
+      'The curve is a smooth reference built from the median and a robust dispersion estimate.',
+    'traderPoints.chart.tooltip.line2':
+      'The X axis is clipped (p1–p99 or around the median) so long tails do not squash the histogram.',
+    'traderPoints.chart.stats': 'N={n} · median≈{mu} · dispersion≈{sigma}',
+    'traderPoints.chart.aria': 'Histogram of positions per day with gaussian curve',
+    'traderPoints.chart.medianLabel': 'median',
 
     'common.keys.enter': 'Enter',
 
@@ -1308,6 +1632,7 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Cohort',
     'sidebar.analysis': 'Analisi Report',
     'sidebar.fraud': 'Monitoraggio Frodi',
+    'sidebar.traderPoints': 'Trader Points',
 
     // Report Analysis
     'analysis.header.label': 'Analisi',
@@ -1385,6 +1710,7 @@ export const translations = {
     'common.show': 'Mostra',
     'common.hide': 'Nascondi',
     'common.all': 'Tutti',
+    'common.info': 'Info',
     'common.close': 'Chiudi',
     'common.save': 'Salva',
     'common.delete': 'Elimina',
@@ -1395,6 +1721,344 @@ export const translations = {
     'common.months': 'mesi',
     'common.na': 'N/D',
     'common.loading': 'Attendi un momento…',
+
+    // Trader Points
+    'traderPoints.page.title': 'Trader Points — simulazione e impatto',
+    'traderPoints.page.subtitle': 'Attività · Rischio · Retention',
+    'traderPoints.dataSource.label': 'Fonte dati',
+    'traderPoints.dataSource.console': 'Console',
+    'traderPoints.dataSource.csv': 'CSV (diagnostico)',
+    'traderPoints.console.loading': 'Caricamento…',
+    'traderPoints.console.supportSource': 'Support (user check) · {count} utenti',
+    'traderPoints.console.mockSource': 'Mock di fallback · {count} utenti',
+    'traderPoints.console.mockBadge': 'Dati mock (indice non disponibile)',
+    'traderPoints.console.loadErrorFallback': 'Impossibile caricare l’indice utenti di supporto',
+    'traderPoints.chips.spread': 'Spread medio 0.1 pips',
+    'traderPoints.chips.leverage': 'Leva 1:500',
+
+    'traderPoints.exec.title': 'Sintesi esecutiva — vista decisionale',
+    'traderPoints.exec.retention.label': 'RITENZIONE',
+    'traderPoints.exec.activity.label': 'ATTIVITÀ',
+    'traderPoints.exec.risk.label': 'RISCHIO',
+    'traderPoints.exec.retention.unitDays': 'giorni',
+    'traderPoints.exec.retention.caption': 'Gli utenti restano attivi più a lungo',
+    'traderPoints.exec.activity.value': '≈ invariata',
+    'traderPoints.exec.activity.caption': 'Il ritmo di trading resta stabile',
+    'traderPoints.exec.risk.value': 'Controllato',
+    'traderPoints.exec.risk.caption': 'Nessun aumento di comportamenti ad alto rischio',
+    'traderPoints.exec.causal.line1':
+      'L’aumento del valore totale deriva dal fatto che gli utenti restano attivi più a lungo,',
+    'traderPoints.exec.causal.line2': 'non dal fatto che facciano trading in modo più aggressivo.',
+    'traderPoints.exec.mechanics.1': 'Stessa attività giornaliera → nessuna pressione sugli utenti',
+    'traderPoints.exec.mechanics.2': 'Percorso più lungo → più obiettivi completati',
+    'traderPoints.exec.mechanics.3': 'Reward legato alle commissioni → costo prevedibile',
+    'traderPoints.exec.takeaway.title': 'Takeaway esecutivo',
+    'traderPoints.exec.takeaway.text':
+      'A parità di costo, gli incentivi a obiettivo migliorano la retention aumentando la partecipazione, non l’intensità.',
+
+    'traderPoints.deepDive.title': 'Approfondimento',
+    'traderPoints.section.whatChanges': 'Cosa cambia',
+    'traderPoints.deltaVs': 'Δ vs {baseline} · {oneLiner}',
+    'traderPoints.baseline.label': 'Baseline',
+    'traderPoints.baseline.noIncentive': 'Nessun incentivo',
+    'traderPoints.baseline.classicBonus': 'Bonus classico',
+    'traderPoints.baseline.tpDefault': 'Trader Points (default)',
+    'traderPoints.baseline.oneLiner.classicBonus':
+      'Il bonus classico tende a creare un picco di attività a breve termine con rapido decadimento.',
+    'traderPoints.baseline.oneLiner.noIncentive': 'Baseline osservata (storico).',
+    'traderPoints.baseline.oneLiner.tpDefault': 'Baseline a obiettivo (engagement progressivo).',
+    'traderPoints.baseline.tooltip.label': 'Definizioni baseline',
+    'traderPoints.baseline.tooltip.title': 'Baseline',
+    'traderPoints.baseline.tooltip.noIncentive.title': 'Nessun incentivo',
+    'traderPoints.baseline.tooltip.noIncentive.desc': 'Comportamento osservato (storico).',
+    'traderPoints.baseline.tooltip.classicBonus.title': 'Bonus classico',
+    'traderPoints.baseline.tooltip.classicBonus.desc':
+      'Assunzioni spike+decay basate su regole (non derivate da regressioni).',
+    'traderPoints.baseline.tooltip.tp.title': 'Trader Points',
+    'traderPoints.baseline.tooltip.tp.desc': 'Baseline a obiettivo con engagement progressivo.',
+
+    'traderPoints.narrativeBridge.title': 'Stesso ritmo, percorso più lungo',
+    'traderPoints.narrativeBridge.line1': 'L’attività giornaliera resta quasi invariata.',
+    'traderPoints.narrativeBridge.line2':
+      'Ciò che cambia è per quanto tempo gli utenti rimangono attivi.',
+    'traderPoints.narrativeBridge.line3': 'Tempo × costanza guidano i punti totali.',
+    'traderPoints.narrativeBridge.formula.totalPoints': 'Punti totali',
+    'traderPoints.narrativeBridge.formula.dailyActivity': 'Attività giornaliera',
+    'traderPoints.narrativeBridge.formula.activeDays': 'Giorni attivi',
+
+    'traderPoints.scenarioControls.title': 'Controlli scenario',
+    'traderPoints.scenarioControls.subtitle': 'Regola incentivi e guardrail.',
+    'traderPoints.chart.ppdTitle': 'Distribuzione posizioni/giorno',
+
+    'traderPoints.economicLogic.title': 'Logica economica (costo costante)',
+    'traderPoints.economicLogic.bullet1':
+      'I bonus si guadagnano tramite commissioni, non vengono regalati',
+    'traderPoints.economicLogic.bullet2':
+      'La velocità di progress cambia la raggiungibilità, non il valore del bonus',
+    'traderPoints.economicLogic.bullet3':
+      'La retention cresce dalla partecipazione, non dalla pressione',
+
+    'traderPoints.why.title': 'Perché succede',
+    'traderPoints.why.tooltip.label': 'Perché gli incentivi a obiettivo funzionano',
+    'traderPoints.why.tooltip.title': 'Perché gli incentivi a obiettivo funzionano',
+    'traderPoints.why.tooltip.desc': 'Confronta comportamenti e raggiungibilità dell’obiettivo.',
+    'traderPoints.why.heading': 'Perché gli incentivi a obiettivo funzionano',
+    'traderPoints.why.bullet1': 'Più utenti entrano nel percorso a obiettivo',
+    'traderPoints.why.bullet2': 'Meno utenti abbandonano prima del completamento',
+    'traderPoints.why.bullet3': 'La retention cresce dalla partecipazione, non dalla pressione',
+
+    'traderPoints.reachability.micro': 'Rende l’obiettivo percepito come raggiungibile',
+
+    'traderPoints.whyDynamic.guardrail':
+      'In questo scenario, gli utenti ad alto rischio sono esclusi dall’eligibilità allo sblocco.',
+    'traderPoints.whyDynamic.faster':
+      'In questo scenario, il progress “sembra” più veloce (×{mult}).',
+    'traderPoints.whyDynamic.slower':
+      'In questo scenario, il progress “sembra” più lento (×{mult}).',
+    'traderPoints.whyDynamic.targetCloser':
+      'In questo scenario, l’obiettivo “sembra” più vicino (gratificazione più rapida).',
+    'traderPoints.whyDynamic.targetFarther':
+      'In questo scenario, l’obiettivo “sembra” più lontano (percorso più lungo).',
+    'traderPoints.whyDynamic.unlockRate':
+      'In questo scenario, ~{pct}% degli utenti si assume sia target dell’obiettivo.',
+    'traderPoints.whyDynamic.bonusValue':
+      'In questo scenario, il valore del reward finale è {amount}.',
+    'traderPoints.whyDynamic.default':
+      'In questo scenario, raggiungibilità e distanza dall’obiettivo sono vicine alla baseline.',
+
+    'traderPoints.optional.reliability': 'Affidabilità (opzionale)',
+    'traderPoints.optional.datasetOverview': 'Panoramica dataset (opzionale)',
+    'traderPoints.optional.tables': 'Tabelle di dettaglio (opzionale)',
+    'traderPoints.optional.export': 'Export (opzionale)',
+
+    'traderPoints.export.snapshotCsv': 'Esporta snapshot (CSV)',
+    'traderPoints.export.snapshotJson': 'Esporta snapshot (JSON)',
+    'traderPoints.export.ppdCsv': 'Esporta PPD (CSV)',
+
+    // Scenario Controls
+    'traderPoints.controls.preset.title': 'Preset',
+    'traderPoints.controls.preset.micro': 'Logica: obiettivo legato alle commissioni.',
+    'traderPoints.controls.preset.custom': 'Personalizzato',
+    'traderPoints.controls.preset.commissionOnly': 'Solo commissioni',
+    'traderPoints.controls.preset.commissionOnly.sub':
+      'Baseline: obiettivo commission-linked (€200) con guardrail standard.',
+    'traderPoints.controls.preset.goal500': 'Obiettivo €500',
+    'traderPoints.controls.preset.goal500.sub':
+      'Obiettivo più alto (€500) con boost moderato di raggiungibilità (×1.5) e partecipazione più ampia.',
+    'traderPoints.controls.preset.acceleratedPromo': 'Promo accelerata',
+    'traderPoints.controls.preset.acceleratedPromo.sub':
+      'Accelerazione promozionale (×4) con obiettivo €500; mostra un upper-bound dell’effetto reachability.',
+    'traderPoints.controls.preset.tooltip.label': 'Preset',
+    'traderPoints.controls.preset.tooltip.title': 'Preset',
+    'traderPoints.controls.preset.tooltip.desc':
+      'Questi preset cambiano solo i controlli scenario e il testo UI.',
+    'traderPoints.controls.preset.whatMeans': 'Cosa significa:',
+
+    'traderPoints.controls.reachability.label': 'Raggiungibilità obiettivo',
+    'traderPoints.controls.reachability.tooltip.desc':
+      'NON cambia come si guadagnano i punti. Cambia solo la raggiungibilità percepita dell’obiettivo.',
+    'traderPoints.controls.reachability.delta.more':
+      'Con ×{mult}, circa {pct}% di utenti in più raggiunge la soglia (prima dell’unlock rate).',
+    'traderPoints.controls.reachability.delta.less':
+      'Con ×{mult}, circa {pct}% di utenti in meno raggiunge la soglia (prima dell’unlock rate).',
+
+    'traderPoints.controls.goal.label': 'Obiettivo (Trader Points)',
+    'traderPoints.controls.goal.tooltip.label': 'Punti richiesti',
+    'traderPoints.controls.goal.tooltip.title': 'Soglia obiettivo',
+    'traderPoints.controls.goal.tooltip.line1':
+      'I Trader Points rappresentano commissioni reali generate dall’utente.',
+    'traderPoints.controls.goal.tooltip.line2':
+      'Esempio: bonus €200 → obiettivo 200 Trader Points.',
+    'traderPoints.controls.goal.micro':
+      'L’obiettivo è legato alle commissioni (1 TP ≈ €1). Obiettivi più alti riducono la raggiungibilità.',
+    'traderPoints.controls.goal.linkLabel': 'Collega obiettivo e costo bonus',
+
+    'traderPoints.controls.bonus.label': 'Importo bonus',
+    'traderPoints.controls.bonus.tooltip.label': 'Importo bonus',
+    'traderPoints.controls.bonus.tooltip.title': 'Importo bonus',
+    'traderPoints.controls.bonus.tooltip.line1': 'Il bonus è il costo economico (es. €200).',
+    'traderPoints.controls.bonus.tooltip.line2':
+      'Nel setup classico, i punti obiettivo corrispondono al bonus (commission-linked).',
+    'traderPoints.controls.bonus.micro':
+      'Il bonus si guadagna generando commissioni equivalenti (Trader Points).',
+
+    'traderPoints.controls.unlockRate.label': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.label': 'Unlock rate',
+    'traderPoints.controls.unlockRate.tooltip.title': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.line1': 'Quota di utenti target dell’obiettivo.',
+    'traderPoints.controls.unlockRate.tooltip.line2':
+      'Usato per la simulazione, non per payout reali.',
+    'traderPoints.controls.unlockRate.helper.base':
+      '{pct}% degli utenti si assume sia target dell’obiettivo.',
+    'traderPoints.controls.unlockRate.helper.guardrail':
+      '{base} Il guardrail riduce l’eligibilità degli utenti ad alto rischio.',
+    'traderPoints.controls.unlockRate.helper.baseline': '{base} Quota partecipazione baseline.',
+    'traderPoints.controls.unlockRate.helper.wider':
+      '{base} Partecipazione più ampia → effetto di sistema maggiore.',
+    'traderPoints.controls.unlockRate.helper.narrower':
+      '{base} Partecipazione più stretta → effetto di sistema minore.',
+
+    'traderPoints.controls.guardrail.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.title': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.line1':
+      'Evita di incentivare comportamenti ad alto rischio.',
+    'traderPoints.controls.guardrail.tooltip.line2':
+      'Gli utenti ad alto rischio sono esclusi dall’eligibilità allo sblocco (proxy rischio interno).',
+    'traderPoints.controls.guardrail.badge': 'Scenario filtrato per rischio',
+    'traderPoints.controls.guardrail.micro.on':
+      'Gli utenti ad alto rischio sono esclusi dall’eligibilità allo sblocco.',
+    'traderPoints.controls.guardrail.micro.off':
+      'Tutti gli utenti idonei sono considerati per lo sblocco.',
+
+    // CSV Uploader
+    'traderPoints.csvUploader.title': '1. Carica report posizioni',
+    'traderPoints.csvUploader.rowsLoaded': 'Righe caricate: {count}',
+    'traderPoints.csvUploader.rowsSkipped': ' | Righe scartate: {count}',
+
+    // KPI Cards
+    'traderPoints.kpi.activity.label': 'Attività media',
+    'traderPoints.kpi.activity.unit': 'trades/giorno',
+    'traderPoints.kpi.retention.label': 'Retention media',
+    'traderPoints.kpi.retention.unit': 'giorni',
+    'traderPoints.kpi.risk.label': 'Rischio medio',
+    'traderPoints.kpi.risk.unit': 'rischio',
+    'traderPoints.kpi.deltaLine': 'Δ vs {baseline} · Nuovo {value} {delta}',
+    'traderPoints.kpi.activity.line':
+      'Gli utenti fanno trading in modo più costante quando il progress è percepito reale.',
+    'traderPoints.kpi.retention.line':
+      'Gli utenti restano più a lungo quando l’avanzamento verso un obiettivo è visibile.',
+    'traderPoints.kpi.risk.line.guardrail':
+      'I guardrail evitano di incentivare comportamenti ad alto rischio.',
+    'traderPoints.kpi.risk.line.noGuardrail':
+      'Il rischio può aumentare quando incentivi più forti aumentano l’esposizione.',
+
+    // Legacy (modalità CSV)
+    'traderPoints.legacy.avgTradesPerUser': 'Trade medi/utente',
+    'traderPoints.legacy.riskIndicator': 'Indicatore rischio',
+    'traderPoints.legacy.activeDays': 'Giorni attivi',
+
+    // Working set
+    'traderPoints.workingSet.activeSample': 'Campione attivo',
+    'traderPoints.workingSet.tooltip.rules.label': 'Regole working set',
+    'traderPoints.workingSet.tooltip.rules.title': 'Filtro utenti attivi',
+    'traderPoints.workingSet.tooltip.rules.deposits': 'depositi > 0',
+    'traderPoints.workingSet.tooltip.rules.positions': 'posizioni > 0',
+    'traderPoints.workingSet.tooltip.rules.age': 'età account > 1 giorno',
+    'traderPoints.workingSet.avgPositions': 'Posizioni medie (conteggio)',
+    'traderPoints.workingSet.tooltip.positions.label': 'Info conteggio posizioni',
+    'traderPoints.workingSet.tooltip.positions.title': 'Cosa sono le “posizioni”?',
+    'traderPoints.workingSet.tooltip.positions.desc':
+      'È la colonna del report con il totale storico di posizioni/trade, non le “posizioni aperte ora”.',
+    'traderPoints.workingSet.medianLabel': 'Mediana {value}',
+    'traderPoints.workingSet.ppdMedianZone': 'Posizioni/giorno (zona mediana)',
+    'traderPoints.workingSet.tooltip.ppd.label': 'Definizioni posizioni/giorno',
+    'traderPoints.workingSet.tooltip.ppd.title': 'Posizioni/giorno',
+    'traderPoints.workingSet.tooltip.ppd.formula':
+      'PPD = posizioni / giorniDa(qualifica o primo deposito)',
+    'traderPoints.workingSet.tooltip.ppd.zone':
+      'La “zona mediana” mantiene i valori vicini alla mediana (Gauss-like via MAD σ) per ridurre l’impatto degli outlier.',
+    'traderPoints.workingSet.keptLine': 'Tenuti {keptPct}% · Mediana {median}',
+    'traderPoints.workingSet.rawLine': 'Media grezza {rawMean} · Globale {globalMean}',
+    'traderPoints.workingSet.lifetime': 'Lifetime (giorni)',
+    'traderPoints.workingSet.tooltip.lifetime.label': 'Definizioni lifetime',
+    'traderPoints.workingSet.tooltip.lifetime.title': 'Definizioni',
+    'traderPoints.workingSet.tooltip.lifetime.account':
+      'Lifetime account: giorni dalla registrazione.',
+    'traderPoints.workingSet.tooltip.lifetime.trader':
+      'Lifetime trader: giorni dalla qualifica/primo deposito (se disponibile).',
+    'traderPoints.workingSet.traderLifetimeLine': 'Lifetime trader {days} · {pct}% disponibile',
+
+    // Regression Summary
+    'traderPoints.regression.title': 'Affidabilità del segnale (direzionale)',
+    'traderPoints.regression.tooltip.label': 'Affidabilità segnale',
+    'traderPoints.regression.tooltip.title': 'Affidabilità del segnale (direzionale)',
+    'traderPoints.regression.tooltip.desc':
+      'Queste stime servono per direzione e impatto relativo, non per fare previsioni puntuali.',
+    'traderPoints.regression.tooltip.note': 'Supporto decisionale — non stima per singolo utente.',
+    'traderPoints.regression.metric.activity': 'Attività',
+    'traderPoints.regression.metric.risk': 'Rischio',
+    'traderPoints.regression.metric.retention': 'Retention',
+    'traderPoints.regression.r2Label.low': 'Segnale basso — solo direzione',
+    'traderPoints.regression.r2Label.weak': 'Debole',
+    'traderPoints.regression.r2Label.medium': 'Medio',
+    'traderPoints.regression.r2Label.strong': 'Forte',
+    'traderPoints.regression.avgError': 'Errore medio (unità reali): {value}',
+    'traderPoints.regression.maeText.activity': '±{value} trades/giorno',
+    'traderPoints.regression.maeText.retention': '±{value} giorni',
+    'traderPoints.regression.maeText.risk': '±{value} unità rischio',
+
+    // Impact Breakdown
+    'traderPoints.impact.whereRetentionTitle': 'Da dove viene davvero la retention',
+    'traderPoints.impact.micro':
+      'Come cambia la retention media quando aumenta la raggiungibilità.',
+    'traderPoints.impact.howCalc.label': 'Come si calcola',
+    'traderPoints.impact.howCalc.title': 'Come si calcola questo numero',
+    'traderPoints.impact.howCalc.step1': '1) Alcuni utenti raggiungono la soglia (eligibili).',
+    'traderPoints.impact.howCalc.step2':
+      '2) Una quota degli eligibili entra nel percorso obiettivo (unlock rate).',
+    'traderPoints.impact.howCalc.step3':
+      '3) La retention media cresce soprattutto perché più utenti partecipano al percorso obiettivo, non perché diventano più “intensi” o aumentano il rischio.',
+    'traderPoints.impact.reachability': 'Raggiungibilità',
+    'traderPoints.impact.eligibleUsers': 'Utenti eligibili',
+    'traderPoints.impact.eligibleDesc': 'Raggiungono la soglia al ritmo attuale.',
+    'traderPoints.impact.unlockedUsers': 'Utenti sbloccati',
+    'traderPoints.impact.unlockedDesc': 'Entrano nel percorso obiettivo.',
+    'traderPoints.impact.definitions':
+      'Definizioni: eligibile = raggiunge la soglia. sbloccato = eligibile che entra nel percorso (unlock rate).',
+    'traderPoints.impact.retention': 'Retention',
+    'traderPoints.impact.retentionBaseline': 'Retention media (baseline)',
+    'traderPoints.impact.retentionScenario': 'Retention media (scenario)',
+    'traderPoints.impact.retentionUplift': 'Incremento retention media',
+    'traderPoints.impact.compositionTitle':
+      'Incremento dalla quota sbloccata (effetto composizione)',
+    'traderPoints.impact.compositionDesc':
+      'Con più velocità, più utenti entrano nel percorso obiettivo.',
+    'traderPoints.impact.perUserTitle':
+      'Incremento sugli utenti già sbloccati (effetto per-utente)',
+    'traderPoints.impact.perUserDesc':
+      'Gli utenti che avrebbero sbloccato anche a ×1 si sentono più vicini al completamento.',
+    'traderPoints.impact.sanity.title': 'Sanity check del modello (opzionale)',
+    'traderPoints.impact.sanity.note':
+      'Solo audit: verifica la consistenza interna dei calcoli scenario.',
+    'traderPoints.impact.sanity.avgPointsBefore': 'Punti medi (prima)',
+    'traderPoints.impact.sanity.avgPointsAfter': 'Punti medi (dopo)',
+    'traderPoints.impact.sanity.aboveThreshold1x': 'Sopra soglia (×1)',
+    'traderPoints.impact.sanity.aboveThresholdMx': 'Sopra soglia (×{mult})',
+    'traderPoints.impact.sanity.footer':
+      'Prima/dopo usano la stessa soglia e unlock rate; cambia solo la raggiungibilità.',
+
+    // Tables
+    'traderPoints.tables.unknownUser': 'Sconosciuto',
+    'traderPoints.tables.idPrefix': 'ID',
+    'traderPoints.tables.symbolsTop': 'Top simboli',
+    'traderPoints.tables.symbolsTooltip.label': 'Contesto simboli',
+    'traderPoints.tables.symbolsTooltip.title': 'Come si calcola',
+    'traderPoints.tables.symbolsTooltip.line1':
+      'In modalità user-centric usiamo una distribuzione globale dei simboli (peso %).',
+    'traderPoints.tables.symbolsTooltip.line2':
+      '“Punti stimati” è una stima proporzionale basata sul peso del simbolo.',
+    'traderPoints.tables.col.symbol': 'Simbolo',
+    'traderPoints.tables.col.weight': 'Peso',
+    'traderPoints.tables.col.estimatedPoints': 'Punti stimati',
+    'traderPoints.tables.usersTop': 'Top utenti',
+    'traderPoints.tables.topByPositions': 'Top per posizioni',
+    'traderPoints.tables.usersLow': 'Utenti bassi',
+    'traderPoints.tables.col.user': 'Utente',
+    'traderPoints.tables.col.positions': 'Posizioni',
+    'traderPoints.tables.col.points': 'Punti',
+    'traderPoints.tables.pointsFloored': '(troncati a 0)',
+
+    // Chart tooltip/aria
+    'traderPoints.chart.tooltip.label': 'Dettagli grafico',
+    'traderPoints.chart.tooltip.title': 'Cosa mostra',
+    'traderPoints.chart.tooltip.line1':
+      'La curva è un riferimento “smooth” costruito da mediana e una stima robusta della dispersione.',
+    'traderPoints.chart.tooltip.line2':
+      'L’asse X è “clippato” (p1–p99 o intorno alla mediana) così le code lunghe non schiacciano l’istogramma.',
+    'traderPoints.chart.stats': 'N={n} · mediana≈{mu} · dispersione≈{sigma}',
+    'traderPoints.chart.aria': 'Istogramma posizioni per giorno con curva gaussiana',
+    'traderPoints.chart.medianLabel': 'mediana',
 
     'common.keys.enter': 'Invio',
 
@@ -2589,6 +3253,7 @@ export const translations = {
     'sidebar.affiliate.cohort': 'Kohorta',
     'sidebar.analysis': 'Analiza Izveštaja',
     'sidebar.fraud': 'Nadzor prevara',
+    'sidebar.traderPoints': 'Trader Points',
 
     // Report Analysis
     'analysis.header.label': 'Analiza',
@@ -2663,6 +3328,7 @@ export const translations = {
     'common.show': 'Prikaži',
     'common.hide': 'Sakrij',
     'common.all': 'Svi',
+    'common.info': 'Info',
     'common.close': 'Zatvori',
     'common.save': 'Sačuvaj',
     'common.delete': 'Obriši',
@@ -2673,6 +3339,329 @@ export const translations = {
     'common.months': 'meseci',
     'common.na': 'N/A',
     'common.loading': 'Molimo sačekajte…',
+
+    // Trader Points
+    'traderPoints.page.title': 'Trader Points — simulacija i uticaj',
+    'traderPoints.page.subtitle': 'Aktivnost · Rizik · Retencija',
+    'traderPoints.dataSource.label': 'Izvor podataka',
+    'traderPoints.dataSource.console': 'Konzola',
+    'traderPoints.dataSource.csv': 'CSV (dijagnostika)',
+    'traderPoints.console.loading': 'Učitavanje…',
+    'traderPoints.console.supportSource': 'Support (provera korisnika) · {count} korisnika',
+    'traderPoints.console.mockSource': 'Rezervni mock · {count} korisnika',
+    'traderPoints.console.mockBadge': 'Koriste se mock podaci (indeks nije dostupan)',
+    'traderPoints.console.loadErrorFallback': 'Nije moguće učitati indeks korisnika za support',
+    'traderPoints.chips.spread': 'Prosečan spread 0.1 pips',
+    'traderPoints.chips.leverage': 'Poluga 1:500',
+
+    'traderPoints.exec.title': 'Izvršni rezime — prikaz za odluke',
+    'traderPoints.exec.retention.label': 'RETENCIJA',
+    'traderPoints.exec.activity.label': 'AKTIVNOST',
+    'traderPoints.exec.risk.label': 'RIZIK',
+    'traderPoints.exec.retention.unitDays': 'dana',
+    'traderPoints.exec.retention.caption': 'Korisnici ostaju aktivni duže',
+    'traderPoints.exec.activity.value': '≈ nepromenjeno',
+    'traderPoints.exec.activity.caption': 'Tempo trgovanja ostaje stabilan',
+    'traderPoints.exec.risk.value': 'Kontrolisano',
+    'traderPoints.exec.risk.caption': 'Bez rasta visokorizičnog ponašanja',
+    'traderPoints.exec.causal.line1':
+      'Rast ukupne vrednosti dolazi od toga što korisnici ostaju aktivni duže,',
+    'traderPoints.exec.causal.line2': 'ne od toga da trguju agresivnije.',
+    'traderPoints.exec.mechanics.1': 'Ista dnevna aktivnost → bez pritiska na korisnike',
+    'traderPoints.exec.mechanics.2': 'Duže putovanje → više završenih ciljeva',
+    'traderPoints.exec.mechanics.3': 'Nagrada vezana za provizije → predvidiv trošak',
+    'traderPoints.exec.takeaway.title': 'Izvršni zaključak',
+    'traderPoints.exec.takeaway.text':
+      'Uz isti trošak, incentivi zasnovani na cilju povećavaju retenciju kroz veću participaciju, ne kroz veći intenzitet.',
+
+    'traderPoints.deepDive.title': 'Detaljna analiza',
+    'traderPoints.section.whatChanges': 'Šta se menja',
+    'traderPoints.deltaVs': 'Δ u odnosu na {baseline} · {oneLiner}',
+    'traderPoints.baseline.label': 'Bazna linija',
+    'traderPoints.baseline.noIncentive': 'Bez incentiva',
+    'traderPoints.baseline.classicBonus': 'Klasični bonus',
+    'traderPoints.baseline.tpDefault': 'Trader Points (podrazumevano)',
+    'traderPoints.baseline.oneLiner.classicBonus':
+      'Klasični bonus često pravi kratkotrajan skok aktivnosti sa brzim opadanjem.',
+    'traderPoints.baseline.oneLiner.noIncentive': 'Posmatrana bazna linija (istorijski).',
+    'traderPoints.baseline.oneLiner.tpDefault': 'Bazna linija sa ciljem (progresivni engagement).',
+    'traderPoints.baseline.tooltip.label': 'Definicije bazne linije',
+    'traderPoints.baseline.tooltip.title': 'Bazna linija',
+    'traderPoints.baseline.tooltip.noIncentive.title': 'Bez incentiva',
+    'traderPoints.baseline.tooltip.noIncentive.desc': 'Posmatrano ponašanje (istorijski).',
+    'traderPoints.baseline.tooltip.classicBonus.title': 'Klasični bonus',
+    'traderPoints.baseline.tooltip.classicBonus.desc':
+      'Pretpostavke spike+decay po pravilima (nije iz regresija).',
+    'traderPoints.baseline.tooltip.tp.title': 'Trader Points',
+    'traderPoints.baseline.tooltip.tp.desc': 'Bazna linija sa ciljem i progresivnim engagementom.',
+
+    'traderPoints.narrativeBridge.title': 'Isti tempo, duže putovanje',
+    'traderPoints.narrativeBridge.line1': 'Dnevna aktivnost ostaje skoro nepromenjena.',
+    'traderPoints.narrativeBridge.line2': 'Menja se koliko dugo korisnici ostaju aktivni.',
+    'traderPoints.narrativeBridge.line3': 'Vreme × doslednost pokreću ukupne poene.',
+    'traderPoints.narrativeBridge.formula.totalPoints': 'Ukupno poena',
+    'traderPoints.narrativeBridge.formula.dailyActivity': 'Dnevna aktivnost',
+    'traderPoints.narrativeBridge.formula.activeDays': 'Aktivni dani',
+
+    'traderPoints.scenarioControls.title': 'Kontrole scenarija',
+    'traderPoints.scenarioControls.subtitle': 'Podešavanje incentiva i guardrail-a.',
+    'traderPoints.chart.ppdTitle': 'Distribucija pozicija/dan',
+
+    'traderPoints.economicLogic.title': 'Ekonomska logika (konstantan trošak)',
+    'traderPoints.economicLogic.bullet1': 'Bonusi se zarađuju kroz provizije, ne poklanjaju se',
+    'traderPoints.economicLogic.bullet2': 'Brzina progresa menja dostižnost, ne vrednost bonusa',
+    'traderPoints.economicLogic.bullet3': 'Retencija raste kroz participaciju, ne kroz pritisak',
+
+    'traderPoints.why.title': 'Zašto se dešava',
+    'traderPoints.why.tooltip.label': 'Zašto incentivi zasnovani na cilju funkcionišu',
+    'traderPoints.why.tooltip.title': 'Zašto incentivi zasnovani na cilju funkcionišu',
+    'traderPoints.why.tooltip.desc': 'Uporedite ponašanja i dostižnost cilja.',
+    'traderPoints.why.heading': 'Zašto incentivi zasnovani na cilju funkcionišu',
+    'traderPoints.why.bullet1': 'Više korisnika ulazi u putanju sa ciljem',
+    'traderPoints.why.bullet2': 'Manje korisnika odustaje pre završetka',
+    'traderPoints.why.bullet3': 'Retencija raste kroz participaciju, ne kroz pritisak',
+
+    'traderPoints.reachability.micro': 'Cilj deluje dostižno',
+
+    'traderPoints.whyDynamic.guardrail':
+      'U ovom scenariju, visokorizični korisnici su isključeni iz uslova za otključavanje.',
+    'traderPoints.whyDynamic.faster': 'U ovom scenariju, progres “deluje” brže (×{mult}).',
+    'traderPoints.whyDynamic.slower': 'U ovom scenariju, progres “deluje” sporije (×{mult}).',
+    'traderPoints.whyDynamic.targetCloser':
+      'U ovom scenariju, cilj “deluje” bliže (brža gratifikacija).',
+    'traderPoints.whyDynamic.targetFarther':
+      'U ovom scenariju, cilj “deluje” dalje (duže putovanje).',
+    'traderPoints.whyDynamic.unlockRate':
+      'U ovom scenariju, pretpostavlja se da je ~{pct}% korisnika targetirano ciljem.',
+    'traderPoints.whyDynamic.bonusValue': 'U ovom scenariju, vrednost finalne nagrade je {amount}.',
+    'traderPoints.whyDynamic.default':
+      'U ovom scenariju, dostižnost i udaljenost cilja su blizu bazne linije.',
+
+    'traderPoints.optional.reliability': 'Pouzdanost (opciono)',
+    'traderPoints.optional.datasetOverview': 'Pregled skupa podataka (opciono)',
+    'traderPoints.optional.tables': 'Detaljne tabele (opciono)',
+    'traderPoints.optional.export': 'Izvoz (opciono)',
+
+    'traderPoints.export.snapshotCsv': 'Izvezi snapshot (CSV)',
+    'traderPoints.export.snapshotJson': 'Izvezi snapshot (JSON)',
+    'traderPoints.export.ppdCsv': 'Izvezi PPD (CSV)',
+
+    // Scenario Controls
+    'traderPoints.controls.preset.title': 'Preset',
+    'traderPoints.controls.preset.micro': 'Logika: cilj je vezan za provizije.',
+    'traderPoints.controls.preset.custom': 'Prilagođeno',
+    'traderPoints.controls.preset.commissionOnly': 'Samo provizije',
+    'traderPoints.controls.preset.commissionOnly.sub':
+      'Bazna linija: cilj vezan za provizije (€200) uz standardne guardrail-e.',
+    'traderPoints.controls.preset.goal500': 'Cilj €500',
+    'traderPoints.controls.preset.goal500.sub':
+      'Viši cilj (€500) uz umereno povećanje dostižnosti (×1.5) i šire učešće.',
+    'traderPoints.controls.preset.acceleratedPromo': 'Ubrzana promo',
+    'traderPoints.controls.preset.acceleratedPromo.sub':
+      'Promotivno ubrzanje (×4) sa ciljem €500; prikazuje gornju granicu efekta dostižnosti.',
+    'traderPoints.controls.preset.tooltip.label': 'Preset',
+    'traderPoints.controls.preset.tooltip.title': 'Preset',
+    'traderPoints.controls.preset.tooltip.desc':
+      'Ovi preset-i menjaju samo kontrole scenarija i UI tekst.',
+    'traderPoints.controls.preset.whatMeans': 'Šta znači:',
+
+    'traderPoints.controls.reachability.label': 'Dostižnost cilja',
+    'traderPoints.controls.reachability.tooltip.desc':
+      'NE menja način zarađivanja poena. Menja samo percepciju dostižnosti cilja.',
+    'traderPoints.controls.reachability.delta.more':
+      'Sa ×{mult}, oko {pct}% više korisnika dostiže prag cilja (pre unlock rate-a).',
+    'traderPoints.controls.reachability.delta.less':
+      'Sa ×{mult}, oko {pct}% manje korisnika dostiže prag cilja (pre unlock rate-a).',
+
+    'traderPoints.controls.goal.label': 'Cilj (Trader Points)',
+    'traderPoints.controls.goal.tooltip.label': 'Potrebni poeni',
+    'traderPoints.controls.goal.tooltip.title': 'Prag cilja',
+    'traderPoints.controls.goal.tooltip.line1':
+      'Trader Points predstavljaju realne provizije koje generiše korisnik.',
+    'traderPoints.controls.goal.tooltip.line2': 'Primer: bonus €200 → cilj 200 Trader Points.',
+    'traderPoints.controls.goal.micro':
+      'Cilj je vezan za provizije (1 TP ≈ €1). Veći ciljevi smanjuju dostižnost.',
+    'traderPoints.controls.goal.linkLabel': 'Poveži cilj i trošak bonusa',
+
+    'traderPoints.controls.bonus.label': 'Iznos bonusa',
+    'traderPoints.controls.bonus.tooltip.label': 'Iznos bonusa',
+    'traderPoints.controls.bonus.tooltip.title': 'Iznos bonusa',
+    'traderPoints.controls.bonus.tooltip.line1': 'Bonus je ekonomski trošak (npr. €200).',
+    'traderPoints.controls.bonus.tooltip.line2':
+      'U klasičnom setapu, poeni cilja odgovaraju bonusu (vezano za provizije).',
+    'traderPoints.controls.bonus.micro':
+      'Bonus se zarađuje generisanjem ekvivalentnih provizija (Trader Points).',
+
+    'traderPoints.controls.unlockRate.label': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.label': 'Unlock rate',
+    'traderPoints.controls.unlockRate.tooltip.title': 'Unlock rate (%)',
+    'traderPoints.controls.unlockRate.tooltip.line1': 'Udeo korisnika koji su targetirani ciljem.',
+    'traderPoints.controls.unlockRate.tooltip.line2':
+      'Koristi se za simulaciju, ne za realnu isplatu.',
+    'traderPoints.controls.unlockRate.helper.base':
+      'Pretpostavlja se da je {pct}% korisnika targetirano ciljem.',
+    'traderPoints.controls.unlockRate.helper.guardrail':
+      '{base} Guardrail smanjuje uslovnost za visokorizične korisnike.',
+    'traderPoints.controls.unlockRate.helper.baseline': '{base} Bazni udeo participacije.',
+    'traderPoints.controls.unlockRate.helper.wider':
+      '{base} Šira participacija → veći sistemski efekat.',
+    'traderPoints.controls.unlockRate.helper.narrower':
+      '{base} Uža participacija → manji sistemski efekat.',
+
+    'traderPoints.controls.guardrail.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.label': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.title': 'Guardrail',
+    'traderPoints.controls.guardrail.tooltip.line1':
+      'Sprečava podsticanje visokorizičnog ponašanja.',
+    'traderPoints.controls.guardrail.tooltip.line2':
+      'Visokorizični korisnici su isključeni iz uslova za otključavanje (interni risk proxy).',
+    'traderPoints.controls.guardrail.badge': 'Scenario filtriran po riziku',
+    'traderPoints.controls.guardrail.micro.on':
+      'Visokorizični korisnici su isključeni iz uslova za otključavanje.',
+    'traderPoints.controls.guardrail.micro.off':
+      'Svi podobni korisnici se razmatraju za otključavanje.',
+
+    // CSV Uploader
+    'traderPoints.csvUploader.title': '1. Upload izveštaja o pozicijama',
+    'traderPoints.csvUploader.rowsLoaded': 'Učitano redova: {count}',
+    'traderPoints.csvUploader.rowsSkipped': ' | Preskočeno redova: {count}',
+
+    // KPI Cards
+    'traderPoints.kpi.activity.label': 'Prosečna aktivnost',
+    'traderPoints.kpi.activity.unit': 'trgovanja/dan',
+    'traderPoints.kpi.retention.label': 'Prosečna retencija',
+    'traderPoints.kpi.retention.unit': 'dana',
+    'traderPoints.kpi.risk.label': 'Prosečan rizik',
+    'traderPoints.kpi.risk.unit': 'rizik',
+    'traderPoints.kpi.deltaLine': 'Δ u odnosu na {baseline} · Novo {value} {delta}',
+    'traderPoints.kpi.activity.line': 'Korisnici trguju konzistentnije kada progres deluje realno.',
+    'traderPoints.kpi.retention.line': 'Korisnici ostaju duže kada je napredak ka cilju vidljiv.',
+    'traderPoints.kpi.risk.line.guardrail':
+      'Guardrail-i sprečavaju podsticanje visokorizičnog ponašanja.',
+    'traderPoints.kpi.risk.line.noGuardrail':
+      'Rizik može porasti kada jači incentivi povećaju izloženost.',
+
+    // Legacy (CSV mod)
+    'traderPoints.legacy.avgTradesPerUser': 'Prosečno trgovanja/korisnik',
+    'traderPoints.legacy.riskIndicator': 'Indikator rizika',
+    'traderPoints.legacy.activeDays': 'Aktivni dani',
+
+    // Working set
+    'traderPoints.workingSet.activeSample': 'Aktivni uzorak',
+    'traderPoints.workingSet.tooltip.rules.label': 'Pravila working seta',
+    'traderPoints.workingSet.tooltip.rules.title': 'Filter aktivnih korisnika',
+    'traderPoints.workingSet.tooltip.rules.deposits': 'depoziti > 0',
+    'traderPoints.workingSet.tooltip.rules.positions': 'pozicije > 0',
+    'traderPoints.workingSet.tooltip.rules.age': 'starost naloga > 1 dan',
+    'traderPoints.workingSet.avgPositions': 'Prosečan broj pozicija (count)',
+    'traderPoints.workingSet.tooltip.positions.label': 'Info o broju pozicija',
+    'traderPoints.workingSet.tooltip.positions.title': 'Šta su “pozicije”?',
+    'traderPoints.workingSet.tooltip.positions.desc':
+      'To je kolona iz izveštaja sa ukupnim istorijskim brojem pozicija/trade-ova, ne “otvorene pozicije sada”.',
+    'traderPoints.workingSet.medianLabel': 'Medijana {value}',
+    'traderPoints.workingSet.ppdMedianZone': 'Pozicije/dan (zona medijane)',
+    'traderPoints.workingSet.tooltip.ppd.label': 'Definicije pozicije/dan',
+    'traderPoints.workingSet.tooltip.ppd.title': 'Pozicije/dan',
+    'traderPoints.workingSet.tooltip.ppd.formula':
+      'PPD = pozicije / daniOd(kvalifikacije ili prvog depozita)',
+    'traderPoints.workingSet.tooltip.ppd.zone':
+      '“Zona medijane” zadržava vrednosti blizu medijane (Gauss-like preko MAD σ) da smanji uticaj outlier-a.',
+    'traderPoints.workingSet.keptLine': 'Zadržano {keptPct}% · Medijana {median}',
+    'traderPoints.workingSet.rawLine': 'Sirovi prosek {rawMean} · Globalno {globalMean}',
+    'traderPoints.workingSet.lifetime': 'Lifetime (dani)',
+    'traderPoints.workingSet.tooltip.lifetime.label': 'Definicije lifetime-a',
+    'traderPoints.workingSet.tooltip.lifetime.title': 'Definicije',
+    'traderPoints.workingSet.tooltip.lifetime.account': 'Lifetime naloga: dani od registracije.',
+    'traderPoints.workingSet.tooltip.lifetime.trader':
+      'Lifetime trgovca: dani od kvalifikacije/prvog depozita (ako je dostupno).',
+    'traderPoints.workingSet.traderLifetimeLine': 'Lifetime trgovca {days} · dostupno {pct}%',
+
+    // Regression Summary
+    'traderPoints.regression.title': 'Pouzdanost signala (direkcioni)',
+    'traderPoints.regression.tooltip.label': 'Pouzdanost signala',
+    'traderPoints.regression.tooltip.title': 'Pouzdanost signala (direkcioni)',
+    'traderPoints.regression.tooltip.desc':
+      'Ove procene služe za smer i relativni uticaj, ne za precizno prognoziranje.',
+    'traderPoints.regression.tooltip.note': 'Podrška odlučivanju — ne procena po korisniku.',
+    'traderPoints.regression.metric.activity': 'Aktivnost',
+    'traderPoints.regression.metric.risk': 'Rizik',
+    'traderPoints.regression.metric.retention': 'Retencija',
+    'traderPoints.regression.r2Label.low': 'Slab signal — samo smer',
+    'traderPoints.regression.r2Label.weak': 'Slabo',
+    'traderPoints.regression.r2Label.medium': 'Srednje',
+    'traderPoints.regression.r2Label.strong': 'Jako',
+    'traderPoints.regression.avgError': 'Prosečna greška (realne jedinice): {value}',
+    'traderPoints.regression.maeText.activity': '±{value} trgovanja/dan',
+    'traderPoints.regression.maeText.retention': '±{value} dana',
+    'traderPoints.regression.maeText.risk': '±{value} jedinica rizika',
+
+    // Impact Breakdown
+    'traderPoints.impact.whereRetentionTitle': 'Odakle zaista dolazi retencija',
+    'traderPoints.impact.micro': 'Kako se prosečna retencija menja kada dostižnost poraste.',
+    'traderPoints.impact.howCalc.label': 'Kako se računa',
+    'traderPoints.impact.howCalc.title': 'Kako se ovaj broj računa',
+    'traderPoints.impact.howCalc.step1': '1) Neki korisnici dostižu prag cilja (podobni).',
+    'traderPoints.impact.howCalc.step2': '2) Deo podobnih ulazi u putanju cilja (unlock rate).',
+    'traderPoints.impact.howCalc.step3':
+      '3) Prosečna retencija raste uglavnom zato što više korisnika učestvuje, ne zato što postaju “intenzivniji” ili preuzimaju veći rizik.',
+    'traderPoints.impact.reachability': 'Dostižnost',
+    'traderPoints.impact.eligibleUsers': 'Podobni korisnici',
+    'traderPoints.impact.eligibleDesc': 'Dostižu prag cilja uz trenutni tempo.',
+    'traderPoints.impact.unlockedUsers': 'Otključani korisnici',
+    'traderPoints.impact.unlockedDesc': 'Ulaze u putanju cilja.',
+    'traderPoints.impact.definitions':
+      'Definicije: podobni = dostižu prag. otključani = podobni koji ulaze u putanju (unlock rate).',
+    'traderPoints.impact.retention': 'Retencija',
+    'traderPoints.impact.retentionBaseline': 'Prosečna retencija (bazna linija)',
+    'traderPoints.impact.retentionScenario': 'Prosečna retencija (scenario)',
+    'traderPoints.impact.retentionUplift': 'Povećanje prosečne retencije',
+    'traderPoints.impact.compositionTitle': 'Povećanje zbog učešća (efekat kompozicije)',
+    'traderPoints.impact.compositionDesc':
+      'Sa većom brzinom, više korisnika ulazi u putanju cilja.',
+    'traderPoints.impact.perUserTitle': 'Povećanje kod već otključanih (efekat po korisniku)',
+    'traderPoints.impact.perUserDesc':
+      'Korisnici koji bi otključali i na ×1 deluju bliže završetku.',
+    'traderPoints.impact.sanity.title': 'Provera modela (opciono)',
+    'traderPoints.impact.sanity.note':
+      'Samo audit: proverava internu konzistentnost računice scenarija.',
+    'traderPoints.impact.sanity.avgPointsBefore': 'Prosek poena (pre)',
+    'traderPoints.impact.sanity.avgPointsAfter': 'Prosek poena (posle)',
+    'traderPoints.impact.sanity.aboveThreshold1x': 'Iznad praga (×1)',
+    'traderPoints.impact.sanity.aboveThresholdMx': 'Iznad praga (×{mult})',
+    'traderPoints.impact.sanity.footer':
+      'Pre/posle koriste isti prag i unlock rate; menja se samo dostižnost.',
+
+    // Tables
+    'traderPoints.tables.unknownUser': 'Nepoznato',
+    'traderPoints.tables.idPrefix': 'ID',
+    'traderPoints.tables.symbolsTop': 'Top simboli',
+    'traderPoints.tables.symbolsTooltip.label': 'Kontekst simbola',
+    'traderPoints.tables.symbolsTooltip.title': 'Kako se računa',
+    'traderPoints.tables.symbolsTooltip.line1':
+      'U user-centric modu koristimo globalnu distribuciju simbola (težina %).',
+    'traderPoints.tables.symbolsTooltip.line2':
+      '“Procenjeni poeni” je proporcionalna procena na osnovu težine simbola.',
+    'traderPoints.tables.col.symbol': 'Simbol',
+    'traderPoints.tables.col.weight': 'Težina',
+    'traderPoints.tables.col.estimatedPoints': 'Procenjeni poeni',
+    'traderPoints.tables.usersTop': 'Top korisnici',
+    'traderPoints.tables.topByPositions': 'Top po pozicijama',
+    'traderPoints.tables.usersLow': 'Niski korisnici',
+    'traderPoints.tables.col.user': 'Korisnik',
+    'traderPoints.tables.col.positions': 'Pozicije',
+    'traderPoints.tables.col.points': 'Poeni',
+    'traderPoints.tables.pointsFloored': '(zaokruženo na 0)',
+
+    // Chart tooltip/aria
+    'traderPoints.chart.tooltip.label': 'Detalji grafikona',
+    'traderPoints.chart.tooltip.title': 'Šta prikazuje',
+    'traderPoints.chart.tooltip.line1':
+      'Kriva je glatka referenca izgrađena iz medijane i robustne procene disperzije.',
+    'traderPoints.chart.tooltip.line2':
+      'X osa je “odsečena” (p1–p99 ili oko medijane) da dugi repovi ne spljošte histogram.',
+    'traderPoints.chart.stats': 'N={n} · medijana≈{mu} · disperzija≈{sigma}',
+    'traderPoints.chart.aria': 'Histogram pozicija po danu sa gausovom krivom',
+    'traderPoints.chart.medianLabel': 'medijana',
 
     'common.keys.enter': 'Enter',
 

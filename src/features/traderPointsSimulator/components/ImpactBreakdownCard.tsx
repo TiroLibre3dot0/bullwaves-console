@@ -1,5 +1,5 @@
 import InfoTooltip from './InfoTooltip'
-import { getUiLang, t } from '../uiCopy'
+import { useI18n } from '../../../i18n/I18nContext'
 
 function clampNum(v: any, fallback: number) {
   const n = Number(v)
@@ -50,7 +50,7 @@ export default function ImpactBreakdownCard({
 }) {
   if (!users?.length || !simulation?.baseline || !simulation?.sim) return null
 
-  const lang = getUiLang('it')
+  const { t } = useI18n()
 
   const totalUsers = users.length
 
@@ -107,17 +107,17 @@ export default function ImpactBreakdownCard({
     <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-slate-200">{t(lang, 'impactWhereRetentionTitle')}</div>
-          <div className="mt-1 text-[11px] text-slate-400">Come cambia la retention media quando aumenta la raggiungibilità del goal.</div>
+          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.impact.whereRetentionTitle')}</div>
+          <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.impact.micro')}</div>
         </div>
         <InfoTooltip
-          label="Come si calcola"
+          label={t('traderPoints.impact.howCalc.label')}
           content={
             <div>
-              <div className="font-semibold text-slate-100">Come si calcola questo numero</div>
-              <div className="mt-2">1) Alcuni utenti raggiungono la soglia obiettivo (idonei).</div>
-              <div className="mt-1">2) Una quota degli idonei entra nel percorso a obiettivo (tasso di sblocco).</div>
-              <div className="mt-1">3) La retention media cresce soprattutto perché più utenti partecipano al percorso a obiettivo, non perché gli utenti diventano più “intensi” o assumono più rischio.</div>
+              <div className="font-semibold text-slate-100">{t('traderPoints.impact.howCalc.title')}</div>
+              <div className="mt-2">{t('traderPoints.impact.howCalc.step1')}</div>
+              <div className="mt-1">{t('traderPoints.impact.howCalc.step2')}</div>
+              <div className="mt-1">{t('traderPoints.impact.howCalc.step3')}</div>
             </div>
           }
         />
@@ -125,92 +125,106 @@ export default function ImpactBreakdownCard({
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">Raggiungibilità</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.reachability')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Utenti idonei</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.eligibleUsers')}</div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">
                 {fmtInt(after.eligibleCount)} <span className="text-slate-400 font-semibold">({fmtPct(after.eligiblePct)})</span>
               </div>
-              <div className="mt-0.5 text-[11px] text-slate-500">Raggiungono la soglia obiettivo alla velocità attuale.</div>
+              <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.eligibleDesc')}</div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Utenti sbloccati</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.unlockedUsers')}</div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">
                 {fmtInt(after.unlockedCount)} <span className="text-slate-400 font-semibold">({fmtPct(after.unlockedPct)})</span>
               </div>
-              <div className="mt-0.5 text-[11px] text-slate-500">Entrano nel percorso a obiettivo.</div>
+              <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.unlockedDesc')}</div>
             </div>
           </div>
 
           <div className="mt-2 text-[11px] text-slate-400">
-            Definizioni: idonei = raggiungono la soglia. sbloccati = idonei che entrano nel percorso a obiettivo (tasso di sblocco).
+            {t('traderPoints.impact.definitions')}
           </div>
         </div>
 
         <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">Retenzione</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.retention')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Retention media (baseline)</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtDays(baseRetention)} giorni</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionBaseline')}</div>
+              <div className="mt-0.5 text-sm font-bold text-slate-100">
+                {fmtDays(baseRetention)} {t('traderPoints.kpi.retention.unit')}
+              </div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Retention media (scenario)</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtDays(scRetention)} giorni</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionScenario')}</div>
+              <div className="mt-0.5 text-sm font-bold text-slate-100">
+                {fmtDays(scRetention)} {t('traderPoints.kpi.retention.unit')}
+              </div>
             </div>
           </div>
 
           <div className="mt-2 rounded-lg border border-white/10 bg-slate-900/30 p-2">
-            <div className="text-[11px] text-slate-400">Aumento retention media</div>
-            <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtSignedDays(uplift)} giorni</div>
+            <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionUplift')}</div>
+            <div className="mt-0.5 text-sm font-bold text-slate-100">
+              {fmtSignedDays(uplift)} {t('traderPoints.kpi.retention.unit')}
+            </div>
           </div>
         </div>
       </div>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
         <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t(lang, 'impactWhereRetentionTitle')}</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.whereRetentionTitle')}</div>
           <div className="mt-2 grid grid-cols-1 gap-2">
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Aumento da quota sbloccati (effetto composizione)</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtSignedDays(compositionEffect)} giorni</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">Con più velocità, più utenti entrano nel percorso a obiettivo.</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.compositionTitle')}</div>
+              <div className="mt-0.5 text-sm font-bold text-slate-100">
+                {fmtSignedDays(compositionEffect)} {t('traderPoints.kpi.retention.unit')}
+              </div>
+              <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.compositionDesc')}</div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Aumento sugli utenti già sbloccati (effetto per-utente)</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtSignedDays(perUserEffect)} giorni</div>
-              <div className="mt-0.5 text-[11px] text-slate-500">Gli utenti che avrebbero sbloccato anche a ×1 si sentono comunque più vicini al completamento.</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.perUserTitle')}</div>
+              <div className="mt-0.5 text-sm font-bold text-slate-100">
+                {fmtSignedDays(perUserEffect)} {t('traderPoints.kpi.retention.unit')}
+              </div>
+              <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.perUserDesc')}</div>
             </div>
           </div>
         </div>
 
         <details className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
           <summary className="cursor-pointer select-none text-xs font-extrabold tracking-wide uppercase text-slate-300">
-            {t(lang, 'impactSanityTitle')}
+            {t('traderPoints.impact.sanity.title')}
           </summary>
-          <div className="mt-2 text-[11px] text-slate-400">{t(lang, 'impactSanityNote')}</div>
+          <div className="mt-2 text-[11px] text-slate-400">{t('traderPoints.impact.sanity.note')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Punti medi (prima)</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.avgPointsBefore')}</div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtInt(avgPoints)}</div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Punti medi (dopo)</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.avgPointsAfter')}</div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtInt(avgPointsSim)}</div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Sopra soglia (×1)</div>
+              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.aboveThreshold1x')}</div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtPct(before.eligiblePct)}</div>
             </div>
             <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">Sopra soglia (×{pointsMultiplier.toFixed(2).replace(/\.00$/, '')})</div>
+              <div className="text-[11px] text-slate-400">
+                {t('traderPoints.impact.sanity.aboveThresholdMx', {
+                  mult: pointsMultiplier.toFixed(2).replace(/\.00$/, ''),
+                })}
+              </div>
               <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtPct(after.eligiblePct)}</div>
             </div>
           </div>
 
           <div className="mt-2 text-[11px] text-slate-400">
-            Prima/dopo usano la stessa soglia e lo stesso tasso di sblocco; cambia solo la raggiungibilità del goal.
+            {t('traderPoints.impact.sanity.footer')}
           </div>
         </details>
       </div>

@@ -1,3 +1,5 @@
+import { useI18n } from '../../../i18n/I18nContext'
+
 function toCsv(rows: any[], columns: string[]) {
   const header = columns.join(',');
   const body = rows.map(r => columns.map(c => JSON.stringify(r[c] ?? '')).join(','));
@@ -5,6 +7,8 @@ function toCsv(rows: any[], columns: string[]) {
 }
 
 export default function ExportSnapshot({ userAgg, simulation, regression, scenario, baselineMode, baselineLabel }: any) {
+  const { t } = useI18n()
+
   const handleExport = (type: 'csv' | 'json' | 'ppd_csv') => {
     let data = '';
     let filename = '';
@@ -146,9 +150,9 @@ export default function ExportSnapshot({ userAgg, simulation, regression, scenar
   };
   return (
     <div className="mt-4 flex flex-wrap items-center justify-end gap-2">
-      <button onClick={() => handleExport('csv')} className="tab">Esporta snapshot (CSV)</button>
-      <button onClick={() => handleExport('json')} className="tab">Esporta snapshot (JSON)</button>
-      <button onClick={() => handleExport('ppd_csv')} className="tab">Esporta PPD (CSV)</button>
+      <button onClick={() => handleExport('csv')} className="tab">{t('traderPoints.export.snapshotCsv')}</button>
+      <button onClick={() => handleExport('json')} className="tab">{t('traderPoints.export.snapshotJson')}</button>
+      <button onClick={() => handleExport('ppd_csv')} className="tab">{t('traderPoints.export.ppdCsv')}</button>
     </div>
   );
 }

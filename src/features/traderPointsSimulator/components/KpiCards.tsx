@@ -1,9 +1,9 @@
-import { getUiLang, t } from '../uiCopy'
+import { useI18n } from '../../../i18n/I18nContext'
 
 export default function KpiCards({ userAgg, simulation }: any) {
   if (!userAgg?.length) return null;
 
-  const lang = getUiLang('it')
+  const { t } = useI18n()
 
   // New user-centric simulation returns a summary object:
   // { baseline: {activity,risk,retention}, sim: {...}, delta: {...}, filteredOutPct }
@@ -11,7 +11,7 @@ export default function KpiCards({ userAgg, simulation }: any) {
     const base = simulation.baseline;
     const sim = simulation.sim;
     const del = simulation.delta;
-    const baselineLabel = simulation?.baselineLabel || (lang === 'it' ? 'base' : 'baseline')
+    const baselineLabel = simulation?.baselineLabel || t('traderPoints.baseline.label')
 
     const deltaNum = (v: any) => {
       const n = Number(v)
@@ -31,11 +31,11 @@ export default function KpiCards({ userAgg, simulation }: any) {
     const riskDelta = deltaNum(del.risk)
     const retentionDelta = deltaNum(del.retention)
 
-    const activityLine = 'Gli utenti tradano in modo più costante quando il progresso è percepito come reale.'
-    const retentionLine = 'Gli utenti restano più a lungo quando il progresso verso un obiettivo è visibile.'
+    const activityLine = t('traderPoints.kpi.activity.line')
+    const retentionLine = t('traderPoints.kpi.retention.line')
     const riskLine = guardrailOn
-      ? 'I guardrail evitano di incentivare comportamenti ad alto rischio.'
-      : 'Il rischio può salire quando incentivi più forti aumentano l’esposizione.'
+      ? t('traderPoints.kpi.risk.line.guardrail')
+      : t('traderPoints.kpi.risk.line.noGuardrail')
 
     const deltaView = (s: number, b: number) => {
       const d = Number(s) - Number(b)
@@ -53,36 +53,57 @@ export default function KpiCards({ userAgg, simulation }: any) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">Attività media</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">{t('traderPoints.kpi.activity.label')}</div>
           <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
             {fmtSigned(activityDelta, 2)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">trade/giorno</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.activity.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">Δ vs {baselineLabel} · Nuovo {Number(sim.activity).toFixed(1)} {deltaView(sim.activity, base.activity)}</div>
+          <div className="mt-1 text-[12px] text-slate-400">
+            {t('traderPoints.kpi.deltaLine', {
+              baseline: baselineLabel,
+              value: Number(sim.activity).toFixed(1),
+              delta: '',
+            })}{' '}
+            {deltaView(sim.activity, base.activity)}
+          </div>
           <div className="mt-2 text-sm text-slate-200 line-clamp-1">{activityLine}</div>
-          <div className="mt-1 text-[12px] text-slate-400">{t(lang, 'retentionParticipationLine')}</div>
+          <div className="mt-1 text-[12px] text-slate-400">{t('traderPoints.why.bullet3')}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-blue-400/60" />
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">Retenzione media</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">{t('traderPoints.kpi.retention.label')}</div>
           <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
             {fmtSigned(retentionDelta, 1)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">giorni</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.retention.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">Δ vs {baselineLabel} · Nuovo {Number(sim.retention).toFixed(1)} {deltaView(sim.retention, base.retention)}</div>
+          <div className="mt-1 text-[12px] text-slate-400">
+            {t('traderPoints.kpi.deltaLine', {
+              baseline: baselineLabel,
+              value: Number(sim.retention).toFixed(1),
+              delta: '',
+            })}{' '}
+            {deltaView(sim.retention, base.retention)}
+          </div>
           <div className="mt-2 text-sm text-slate-200 line-clamp-1">{retentionLine}</div>
-          <div className="mt-1 text-[12px] text-slate-400">{t(lang, 'retentionParticipationLine')}</div>
+          <div className="mt-1 text-[12px] text-slate-400">{t('traderPoints.why.bullet3')}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-emerald-400/60" />
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">Rischio medio</div>
+          <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">{t('traderPoints.kpi.risk.label')}</div>
           <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
             {fmtSigned(riskDelta, 2)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">rischio</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.risk.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">Δ vs {baselineLabel} · Nuovo {Number(sim.risk).toFixed(2)} {deltaView(sim.risk, base.risk)}</div>
+          <div className="mt-1 text-[12px] text-slate-400">
+            {t('traderPoints.kpi.deltaLine', {
+              baseline: baselineLabel,
+              value: Number(sim.risk).toFixed(2),
+              delta: '',
+            })}{' '}
+            {deltaView(sim.risk, base.risk)}
+          </div>
           <div className="mt-2 text-sm text-slate-200 line-clamp-1">{riskLine}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-amber-400/70" />
         </div>
@@ -106,19 +127,19 @@ export default function KpiCards({ userAgg, simulation }: any) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">Trade medi/utente</div>
+        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.avgTradesPerUser')}</div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
           {avgTradesSim.toFixed(1)} <span className="text-sm text-slate-400">({delta(avgTradesSim, avgTrades)})</span>
         </div>
       </div>
       <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">Indicatore rischio</div>
+        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.riskIndicator')}</div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
           {riskSim.toFixed(2)} <span className="text-sm text-slate-400">({delta(riskSim, risk)})</span>
         </div>
       </div>
       <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">Giorni attivi</div>
+        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.activeDays')}</div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
           {daysSim.toFixed(1)} <span className="text-sm text-slate-400">({delta(daysSim, days)})</span>
         </div>

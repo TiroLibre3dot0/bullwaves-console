@@ -260,7 +260,7 @@ export default function Sidebar({
         >
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <Icon name="layers" />
-            <span>Trader Points</span>
+            <span>{t('sidebar.traderPoints')}</span>
           </span>
         </button>
         {view === 'affiliate' && (

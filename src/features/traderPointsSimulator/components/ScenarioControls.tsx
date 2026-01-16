@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import InfoTooltip from './InfoTooltip'
-import { getUiLang, t } from '../uiCopy'
+import { useI18n } from '../../../i18n/I18nContext'
 
 interface ScenarioControlsProps {
   scenario: any;
@@ -20,13 +20,13 @@ function clampNum(v: any, fallback: number) {
   return Number.isFinite(n) ? n : fallback
 }
 
-function helperUnlockRate(v: number, guardrailOn: boolean) {
+function helperUnlockRate(t: (key: string, params?: Record<string, any>) => string, v: number, guardrailOn: boolean) {
   const base = DEFAULTS.unlock_rate_pct
-  const s = `${Math.round(v)}% di utenti ipotizzati come coinvolti dall’obiettivo.`
-  if (guardrailOn) return `${s} Il guardrail riduce l’idoneità per gli utenti ad alto rischio.`
-  if (Math.abs(v - base) < 0.5) return `${s} Quota di coinvolgimento baseline.`
-  if (v > base) return `${s} Coinvolgimento più ampio → effetto più grande a livello sistema.`
-  return `${s} Coinvolgimento più stretto → effetto più piccolo a livello sistema.`
+  const s = t('traderPoints.controls.unlockRate.helper.base', { pct: Math.round(v) })
+  if (guardrailOn) return t('traderPoints.controls.unlockRate.helper.guardrail', { base: s })
+  if (Math.abs(v - base) < 0.5) return t('traderPoints.controls.unlockRate.helper.baseline', { base: s })
+  if (v > base) return t('traderPoints.controls.unlockRate.helper.wider', { base: s })
+  return t('traderPoints.controls.unlockRate.helper.narrower', { base: s })
 }
 
 export default function ScenarioControls({ scenario, onChange, pointsMultiplierReachabilityDeltaPct }: ScenarioControlsProps) {
@@ -38,23 +38,23 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
   >('custom')
   const [linkBonusToGoal, setLinkBonusToGoal] = useState(true)
 
-  const lang = getUiLang('it')
+  const { t } = useI18n()
 
   const pointsMultiplier = clampNum(scenario?.points_multiplier, DEFAULTS.points_multiplier)
   const unlockRate = clampNum(scenario?.unlock_rate_pct, DEFAULTS.unlock_rate_pct)
   const guardrailOn = !!scenario?.risk_guardrail_enabled
 
   const presetLabel = useMemo(() => {
-    if (preset === 'commission_only') return t(lang, 'presetCommissionOnly')
-    if (preset === 'goal_500') return t(lang, 'presetGoalBased500')
-    if (preset === 'accelerated_promo') return t(lang, 'presetAcceleratedPromo')
+    if (preset === 'commission_only') return t('traderPoints.controls.preset.commissionOnly')
+    if (preset === 'goal_500') return t('traderPoints.controls.preset.goal500')
+    if (preset === 'accelerated_promo') return t('traderPoints.controls.preset.acceleratedPromo')
     return null
   }, [preset])
 
   const presetSub = useMemo(() => {
-    if (preset === 'commission_only') return t(lang, 'presetCommissionOnlySub')
-    if (preset === 'goal_500') return t(lang, 'presetGoalBased500Sub')
-    if (preset === 'accelerated_promo') return t(lang, 'presetAcceleratedPromoSub')
+    if (preset === 'commission_only') return t('traderPoints.controls.preset.commissionOnly.sub')
+    if (preset === 'goal_500') return t('traderPoints.controls.preset.goal500.sub')
+    if (preset === 'accelerated_promo') return t('traderPoints.controls.preset.acceleratedPromo.sub')
     return null
   }, [preset])
 
@@ -105,8 +105,8 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
       <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-200">Preset</div>
-            <div className="mt-1 text-[11px] text-slate-400">Logica: goal commission-linked.</div>
+            <div className="text-sm font-semibold text-slate-200">{t('traderPoints.controls.preset.title')}</div>
+            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.preset.micro')}</div>
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -121,17 +121,17 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
               }}
               className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
             >
-              <option value="custom">Personalizzato</option>
-              <option value="commission_only">{t(lang, 'presetCommissionOnly')}</option>
-              <option value="goal_500">{t(lang, 'presetGoalBased500')}</option>
-              <option value="accelerated_promo">{t(lang, 'presetAcceleratedPromo')}</option>
+              <option value="custom">{t('traderPoints.controls.preset.custom')}</option>
+              <option value="commission_only">{t('traderPoints.controls.preset.commissionOnly')}</option>
+              <option value="goal_500">{t('traderPoints.controls.preset.goal500')}</option>
+              <option value="accelerated_promo">{t('traderPoints.controls.preset.acceleratedPromo')}</option>
             </select>
             <InfoTooltip
-              label="Preset"
+              label={t('traderPoints.controls.preset.tooltip.label')}
               content={
                 <div>
-                  <div className="font-semibold text-slate-100">Preset</div>
-                  <div className="mt-1">Questi preset cambiano solo i controlli scenario e il copy UI.</div>
+                  <div className="font-semibold text-slate-100">{t('traderPoints.controls.preset.tooltip.title')}</div>
+                  <div className="mt-1">{t('traderPoints.controls.preset.tooltip.desc')}</div>
                 </div>
               }
             />
@@ -139,7 +139,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         </div>
         {presetLabel && presetSub && (
           <div className="mt-2">
-            <div className="text-[11px] text-slate-300 font-semibold">{t(lang, 'presetWhatMeansPrefix')} {presetLabel}</div>
+            <div className="text-[11px] text-slate-300 font-semibold">{t('traderPoints.controls.preset.whatMeans')} {presetLabel}</div>
             <div className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">{presetSub}</div>
           </div>
         )}
@@ -150,26 +150,32 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
-              {t(lang, 'reachabilityLabel')}
+              {t('traderPoints.controls.reachability.label')}
               <InfoTooltip
-                label={t(lang, 'reachabilityLabel')}
+                label={t('traderPoints.controls.reachability.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">{t(lang, 'reachabilityLabel')}</div>
-                    <div className="mt-1">NON cambia come si guadagnano i punti. Cambia solo la raggiungibilità percepita del goal.</div>
+                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.reachability.label')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.reachability.tooltip.desc')}</div>
                   </div>
                 }
               />
             </div>
             <div className="mt-1 text-[11px] text-slate-400">
-              {t(lang, 'reachabilityMicro')}
+              {t('traderPoints.reachability.micro')}
             </div>
 
             {typeof pointsMultiplierReachabilityDeltaPct === 'number' && Number.isFinite(pointsMultiplierReachabilityDeltaPct) && (
               <div className="mt-2 text-[11px] text-slate-300">
-                Con ×{pointsMultiplier.toFixed(2).replace(/\.00$/, '')}, circa {Math.abs(pointsMultiplierReachabilityDeltaPct).toFixed(0)}%
-                {' '}
-                {pointsMultiplierReachabilityDeltaPct >= 0 ? 'in più' : 'in meno'} raggiungono la soglia obiettivo (prima del tasso di sblocco).
+                {pointsMultiplierReachabilityDeltaPct >= 0
+                  ? t('traderPoints.controls.reachability.delta.more', {
+                      mult: pointsMultiplier.toFixed(2).replace(/\.00$/, ''),
+                      pct: Math.abs(pointsMultiplierReachabilityDeltaPct).toFixed(0),
+                    })
+                  : t('traderPoints.controls.reachability.delta.less', {
+                      mult: pointsMultiplier.toFixed(2).replace(/\.00$/, ''),
+                      pct: Math.abs(pointsMultiplierReachabilityDeltaPct).toFixed(0),
+                    })}
               </div>
             )}
           </div>
@@ -192,19 +198,19 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
-              Obiettivo (Trader Points)
+              {t('traderPoints.controls.goal.label')}
               <InfoTooltip
-                label="Punti richiesti"
+                label={t('traderPoints.controls.goal.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">Soglia obiettivo</div>
-                    <div className="mt-1">I Trader Points rappresentano commissioni reali generate dall’utente.</div>
-                    <div className="mt-1">Esempio: bonus 200€ → obiettivo 200 Trader Points.</div>
+                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.goal.tooltip.title')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.goal.tooltip.line1')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.goal.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">Il goal è commission-linked (1 TP ≈ 1€). Obiettivi più alti riducono la raggiungibilità.</div>
+            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.goal.micro')}</div>
           </div>
           <input
             type="number"
@@ -222,7 +228,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
           />
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="text-[11px] text-slate-500">Collega goal e costo bonus</div>
+          <div className="text-[11px] text-slate-500">{t('traderPoints.controls.goal.linkLabel')}</div>
           <input
             type="checkbox"
             checked={linkBonusToGoal}
@@ -243,19 +249,19 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
-              Importo bonus
+              {t('traderPoints.controls.bonus.label')}
               <InfoTooltip
-                label="Importo bonus"
+                label={t('traderPoints.controls.bonus.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">Importo bonus</div>
-                    <div className="mt-1">Il bonus è il costo economico (es. 200€).</div>
-                    <div className="mt-1">Nel setup classico, i punti obiettivo corrispondono al bonus (commission-linked).</div>
+                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.bonus.tooltip.title')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.bonus.tooltip.line1')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.bonus.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">Il bonus si guadagna generando commissioni equivalenti (Trader Points).</div>
+            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.bonus.micro')}</div>
           </div>
           <input
             type="number"
@@ -278,19 +284,19 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
-              Tasso di sblocco (%)
+              {t('traderPoints.controls.unlockRate.label')}
               <InfoTooltip
-                label="Tasso di sblocco"
+                label={t('traderPoints.controls.unlockRate.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">Tasso di sblocco (%)</div>
-                    <div className="mt-1">Quota di utenti coinvolti dall’obiettivo.</div>
-                    <div className="mt-1">Usato per la simulazione comportamentale, non per il payout reale.</div>
+                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.unlockRate.tooltip.title')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.unlockRate.tooltip.line1')}</div>
+                    <div className="mt-1">{t('traderPoints.controls.unlockRate.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">{helperUnlockRate(unlockRate, guardrailOn)}</div>
+            <div className="mt-1 text-[11px] text-slate-400">{helperUnlockRate(t, unlockRate, guardrailOn)}</div>
           </div>
           <input
             type="number"
@@ -312,28 +318,28 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
-                Guardrail
+                {t('traderPoints.controls.guardrail.label')}
                 <InfoTooltip
-                  label="Guardrail"
+                  label={t('traderPoints.controls.guardrail.tooltip.label')}
                   content={
                     <div>
-                      <div className="font-semibold text-slate-100">Guardrail</div>
-                      <div className="mt-1">Evita di incentivare comportamenti ad alto rischio.</div>
-                      <div className="mt-1">Gli utenti ad alto rischio sono esclusi dall’idoneità allo sblocco (proxy rischio interno).</div>
+                      <div className="font-semibold text-slate-100">{t('traderPoints.controls.guardrail.tooltip.title')}</div>
+                      <div className="mt-1">{t('traderPoints.controls.guardrail.tooltip.line1')}</div>
+                      <div className="mt-1">{t('traderPoints.controls.guardrail.tooltip.line2')}</div>
                     </div>
                   }
                 />
               </span>
               {guardrailOn && (
                 <span className="inline-flex items-center rounded-full border border-amber-400/20 bg-amber-500/10 px-2 py-0.5 text-[11px] font-semibold text-amber-200">
-                  Scenario filtrato per rischio
+                  {t('traderPoints.controls.guardrail.badge')}
                 </span>
               )}
             </div>
             <div className="mt-1 text-[11px] text-slate-400">
               {guardrailOn
-                ? 'Gli utenti ad alto rischio sono esclusi dall’idoneità allo sblocco.'
-                : 'Tutti gli utenti idonei sono considerati per lo sblocco.'}
+                ? t('traderPoints.controls.guardrail.micro.on')
+                : t('traderPoints.controls.guardrail.micro.off')}
             </div>
           </div>
 

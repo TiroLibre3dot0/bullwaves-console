@@ -1,3 +1,6 @@
+import InfoTooltip from './InfoTooltip'
+import { useI18n } from '../../../i18n/I18nContext'
+
 export interface WorkingSetStats {
   totalUsers: number;
   activeUsers: number;
@@ -13,10 +16,10 @@ export interface WorkingSetStats {
   traderLifetimeAvailablePct: number;
 }
 
-import InfoTooltip from './InfoTooltip'
-
 export function WorkingSetCards({ stats }: { stats: WorkingSetStats | null }) {
   if (!stats) return null;
+
+  const { t } = useI18n()
 
   const pct = stats.totalUsers ? (stats.activeUsers / stats.totalUsers) * 100 : 0;
 
@@ -24,15 +27,15 @@ export function WorkingSetCards({ stats }: { stats: WorkingSetStats | null }) {
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-          <span>Campione attivo</span>
+          <span>{t('traderPoints.workingSet.activeSample')}</span>
           <InfoTooltip
-            label="Regole working set"
+            label={t('traderPoints.workingSet.tooltip.rules.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Filtro utenti attivi</div>
-                <div className="mt-1">depositi &gt; 0</div>
-                <div>posizioni &gt; 0</div>
-                <div>età account &gt; 1 giorno</div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.workingSet.tooltip.rules.title')}</div>
+                <div className="mt-1">{t('traderPoints.workingSet.tooltip.rules.deposits')}</div>
+                <div>{t('traderPoints.workingSet.tooltip.rules.positions')}</div>
+                <div>{t('traderPoints.workingSet.tooltip.rules.age')}</div>
               </div>
             }
           />
@@ -45,61 +48,72 @@ export function WorkingSetCards({ stats }: { stats: WorkingSetStats | null }) {
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-          <span>Posizioni medie (conteggio)</span>
+          <span>{t('traderPoints.workingSet.avgPositions')}</span>
           <InfoTooltip
-            label="Info conteggio posizioni"
+            label={t('traderPoints.workingSet.tooltip.positions.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Cosa sono le “posizioni”?</div>
-                <div className="mt-1">
-                  È la colonna del report con il conteggio posizioni/trade (totale storico), non le “posizioni aperte in questo momento”.
-                </div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.workingSet.tooltip.positions.title')}</div>
+                <div className="mt-1">{t('traderPoints.workingSet.tooltip.positions.desc')}</div>
               </div>
             }
           />
         </div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">{stats.avgPositionsCount.toFixed(0)}</div>
-        <div className="text-xs text-slate-400 mt-1">Mediana {stats.medianPositionsCount.toFixed(0)}</div>
+        <div className="text-xs text-slate-400 mt-1">
+          {t('traderPoints.workingSet.medianLabel', { value: stats.medianPositionsCount.toFixed(0) })}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-          <span>Posizioni/giorno (zona mediana)</span>
+          <span>{t('traderPoints.workingSet.ppdMedianZone')}</span>
           <InfoTooltip
-            label="Definizioni posizioni/giorno"
+            label={t('traderPoints.workingSet.tooltip.ppd.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Posizioni/giorno</div>
-                <div className="mt-1">PPD = posizioni / giorniDa(qualifica o primo deposito)</div>
-                <div className="mt-2">
-                  La “zona mediana” mantiene i valori vicini alla mediana (stile Gauss via MAD σ) per ridurre l’impatto degli outlier.
-                </div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.workingSet.tooltip.ppd.title')}</div>
+                <div className="mt-1">{t('traderPoints.workingSet.tooltip.ppd.formula')}</div>
+                <div className="mt-2">{t('traderPoints.workingSet.tooltip.ppd.zone')}</div>
               </div>
             }
           />
         </div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">{stats.positionsPerDayMedianZoneMean.toFixed(2)}</div>
-        <div className="text-xs text-slate-400 mt-1">Tenuti {stats.positionsPerDayMedianZoneKeptPct.toFixed(0)}% · Mediana {stats.positionsPerDayMedian.toFixed(2)}</div>
-        <div className="text-xs text-slate-400">Media grezza {stats.avgPositionsPerDayUserMean.toFixed(2)} · Globale {stats.positionsPerDayGlobal.toFixed(2)}</div>
+        <div className="text-xs text-slate-400 mt-1">
+          {t('traderPoints.workingSet.keptLine', {
+            keptPct: stats.positionsPerDayMedianZoneKeptPct.toFixed(0),
+            median: stats.positionsPerDayMedian.toFixed(2),
+          })}
+        </div>
+        <div className="text-xs text-slate-400">
+          {t('traderPoints.workingSet.rawLine', {
+            rawMean: stats.avgPositionsPerDayUserMean.toFixed(2),
+            globalMean: stats.positionsPerDayGlobal.toFixed(2),
+          })}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2 text-xs text-slate-400">
-          <span>Lifetime (giorni)</span>
+          <span>{t('traderPoints.workingSet.lifetime')}</span>
           <InfoTooltip
-            label="Definizioni lifetime"
+            label={t('traderPoints.workingSet.tooltip.lifetime.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Definizioni</div>
-                <div className="mt-1">Account lifetime: giorni dalla registrazione.</div>
-                <div className="mt-1">Trader lifetime: giorni da qualifica/primo deposito (se disponibile).</div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.workingSet.tooltip.lifetime.title')}</div>
+                <div className="mt-1">{t('traderPoints.workingSet.tooltip.lifetime.account')}</div>
+                <div className="mt-1">{t('traderPoints.workingSet.tooltip.lifetime.trader')}</div>
               </div>
             }
           />
         </div>
         <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">{stats.avgAccountAgeDays.toFixed(0)}</div>
         <div className="text-xs text-slate-400 mt-1">
-          Trader lifetime {stats.avgTraderLifetimeDays.toFixed(0)} · {stats.traderLifetimeAvailablePct.toFixed(0)}% disponibile
+          {t('traderPoints.workingSet.traderLifetimeLine', {
+            days: stats.avgTraderLifetimeDays.toFixed(0),
+            pct: stats.traderLifetimeAvailablePct.toFixed(0),
+          })}
         </div>
       </div>
     </div>

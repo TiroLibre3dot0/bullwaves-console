@@ -1,20 +1,24 @@
 import type { ReactNode } from 'react'
+import { useI18n } from '../../../i18n/I18nContext'
 
 export default function InfoTooltip({
   content,
-  label = 'Info',
+  label,
   className = '',
 }: {
   content: ReactNode
   label?: string
   className?: string
 }) {
+  const { t } = useI18n()
+  const ariaLabel = label ?? t('common.info')
+
   return (
     <span className={`relative inline-flex items-center ${className}`}>
       <span className="group relative inline-flex">
         <span
           role="img"
-          aria-label={label}
+          aria-label={ariaLabel}
           tabIndex={0}
           className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-slate-900/60 text-[11px] font-extrabold leading-none text-slate-200 shadow-sm transition hover:border-cyan-400/40 hover:text-white focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
         >

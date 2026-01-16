@@ -1,4 +1,5 @@
 import InfoTooltip from './InfoTooltip'
+import { useI18n } from '../../../i18n/I18nContext'
 
 function pointsValue(u: any): number {
   const v = u?.trader_points ?? u?.points_earned ?? u?.traderPoints ?? u?.points ?? 0
@@ -6,23 +7,23 @@ function pointsValue(u: any): number {
   return Number.isFinite(n) ? n : 0
 }
 
-function userLabel(u: any): string {
+function userLabel(u: any, unknownLabel: string): string {
   const id = u?.customer_name || u?.customername || u?.customerName || u?.name || u?.full_name || u?.fullName || u?.email
   if (typeof id === 'string' && id.trim()) return id
   const first = typeof u?.first_name === 'string' ? u.first_name.trim() : ''
   const last = typeof u?.last_name === 'string' ? u.last_name.trim() : ''
   const full = `${first} ${last}`.trim()
   if (full) return full
-  return 'Sconosciuto'
+  return unknownLabel
 }
 
 function userId(u: any): string {
   return String(u?.user_id || u?.userId || u?.userid || u?.account_id || '').trim()
 }
 
-function userMeta(u: any): string {
+function userMeta(u: any, idPrefix: string): string {
   const id = userId(u)
-  return id ? `ID ${id}` : ''
+  return id ? `${idPrefix} ${id}` : ''
 }
 
 function symbolBadge(symbol: string) {
@@ -36,6 +37,8 @@ function symbolBadge(symbol: string) {
 }
 
 export default function Tables({ userAgg }: any) {
+  const { t } = useI18n()
+
   if (!userAgg?.length) return null;
 
   // Requirement: show only users with at least 1 trade.
@@ -118,22 +121,21 @@ export default function Tables({ userAgg }: any) {
 
   const totalPoints = usersWithTrades.reduce((a: number, u: any) => a + pointsValue(u), 0) || 0
 
+  const unknownUser = t('traderPoints.tables.unknownUser')
+  const idPrefix = t('traderPoints.tables.idPrefix')
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-sm font-semibold text-slate-200">Simboli top</div>
+          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.symbolsTop')}</div>
           <InfoTooltip
-            label="Contesto simboli"
+            label={t('traderPoints.tables.symbolsTooltip.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Come si calcola</div>
-                <div className="mt-1">
-                  In modalità user-centric usiamo una distribuzione globale dei simboli (peso %).
-                </div>
-                <div className="mt-2">
-                  “Punti stimati” è una stima proporzionale basata sul peso del simbolo.
-                </div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.tables.symbolsTooltip.title')}</div>
+                <div className="mt-1">{t('traderPoints.tables.symbolsTooltip.line1')}</div>
+                <div className="mt-2">{t('traderPoints.tables.symbolsTooltip.line2')}</div>
               </div>
             }
           />
@@ -142,9 +144,9 @@ export default function Tables({ userAgg }: any) {
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-400">
-              <th className="py-2 text-left font-semibold">Simbolo</th>
-              <th className="py-2 text-right font-semibold">Peso</th>
-              <th className="py-2 text-right font-semibold">Punti stimati</th>
+              <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.symbol')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.weight')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.estimatedPoints')}</th>
             </tr>
           </thead>
           <tbody>
@@ -165,21 +167,21 @@ export default function Tables({ userAgg }: any) {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">Utenti top</div>
+        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.usersTop')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-400">
-              <th className="py-2 text-left font-semibold">Utente</th>
-              <th className="py-2 text-right font-semibold">Posizioni</th>
-              <th className="py-2 text-right font-semibold">Punti</th>
+              <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
             </tr>
           </thead>
           <tbody>
             {topUsers.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
                 <td className="py-1.5 text-right tabular-nums text-slate-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
                 <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">{Math.round(pointsValue(u)).toLocaleString()}</td>
@@ -190,21 +192,21 @@ export default function Tables({ userAgg }: any) {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">Top per posizioni</div>
+        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.topByPositions')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-400">
-              <th className="py-2 text-left font-semibold">Utente</th>
-              <th className="py-2 text-right font-semibold">Posizioni</th>
-              <th className="py-2 text-right font-semibold">Punti</th>
+              <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
             </tr>
           </thead>
           <tbody>
             {topTrades.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
                 <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">{Number(u?.position_count ?? 0).toLocaleString()}</td>
                 <td className="py-1.5 text-right tabular-nums text-slate-200">{Math.round(pointsValue(u)).toLocaleString()}</td>
@@ -215,27 +217,27 @@ export default function Tables({ userAgg }: any) {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">Utenti low</div>
+        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.usersLow')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
             <tr className="text-xs text-slate-400">
-              <th className="py-2 text-left font-semibold">Utente</th>
-              <th className="py-2 text-right font-semibold">Posizioni</th>
-              <th className="py-2 text-right font-semibold">Punti</th>
+              <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
+              <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
             </tr>
           </thead>
           <tbody>
             {lowUsers.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
                 <td className="py-1.5 text-right tabular-nums text-slate-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
                 <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">
                   {Math.round(pointsValue(u)).toLocaleString()}
                   {pointsValue(u) <= 0 && (
-                    <span className="ml-1 text-[10px] text-slate-400">(portato a 0)</span>
+                    <span className="ml-1 text-[10px] text-slate-400">{t('traderPoints.tables.pointsFloored')}</span>
                   )}
                 </td>
               </tr>

@@ -1,3 +1,6 @@
+import InfoTooltip from './InfoTooltip'
+import { useI18n } from '../../../i18n/I18nContext'
+
 export type PpdGaussianChartData = {
   rangeMin: number;
   rangeMax: number;
@@ -9,20 +12,21 @@ export type PpdGaussianChartData = {
   n: number;
 };
 
-import InfoTooltip from './InfoTooltip'
-
 function clamp(x: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, x));
 }
 
 export default function PpdGaussianChart({
   data,
-  title = 'Distribuzione posizioni/giorno',
+  title,
 }: {
   data: PpdGaussianChartData | null;
   title?: string;
 }) {
   if (!data || !data.binCenters.length) return null;
+
+  const { t } = useI18n()
+  const titleText = title ?? t('traderPoints.chart.ppdTitle')
 
   const {
     rangeMin,
@@ -89,24 +93,24 @@ export default function PpdGaussianChart({
     <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-200">{title}</div>
+          <div className="text-sm font-semibold text-slate-200">{titleText}</div>
           <InfoTooltip
-            label="Dettagli grafico"
+            label={t('traderPoints.chart.tooltip.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">Cosa mostra</div>
-                <div className="mt-1">
-                  La curva è un riferimento “liscio” costruito da mediana e una stima robusta della dispersione.
-                </div>
-                <div className="mt-2">
-                  L’asse X è tagliato (p1–p99 o intorno alla mediana) così le code lunghe non schiacciano l’istogramma.
-                </div>
+                <div className="font-semibold text-slate-100">{t('traderPoints.chart.tooltip.title')}</div>
+                <div className="mt-1">{t('traderPoints.chart.tooltip.line1')}</div>
+                <div className="mt-2">{t('traderPoints.chart.tooltip.line2')}</div>
               </div>
             }
           />
         </div>
         <div className="text-xs text-slate-400 whitespace-nowrap">
-          N={n.toLocaleString()} · mediana≈{mu.toFixed(2)} · dispersione≈{sigma.toFixed(2)}
+          {t('traderPoints.chart.stats', {
+            n: n.toLocaleString(),
+            mu: mu.toFixed(2),
+            sigma: sigma.toFixed(2),
+          })}
         </div>
       </div>
 
@@ -115,7 +119,7 @@ export default function PpdGaussianChart({
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-[220px]"
           role="img"
-          aria-label="Istogramma delle posizioni al giorno con curva gaussiana"
+          aria-label={t('traderPoints.chart.aria')}
         >
           {/* grid + axes */}
           <rect x={padL} y={padT} width={plotW} height={plotH} fill="#0b1220" opacity={0.55} />
@@ -212,7 +216,7 @@ export default function PpdGaussianChart({
             fill="#e2e8f0"
             textAnchor="middle"
           >
-            mediana
+            {t('traderPoints.chart.medianLabel')}
           </text>
         </svg>
       </div>
