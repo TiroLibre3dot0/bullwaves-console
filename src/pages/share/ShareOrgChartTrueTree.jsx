@@ -6,7 +6,7 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
     <div
       className={
         `relative bg-slate-900/35 border border-slate-800/80 ring-1 ring-slate-800/30 rounded-2xl shadow-sm backdrop-blur-md ` +
-        (isSm ? 'px-4 py-3' : 'px-5 py-4')
+        (isSm ? 'px-4 py-3 min-h-[60px]' : 'px-5 py-4 min-h-[84px]')
       }
     >
       <span
@@ -76,19 +76,20 @@ function SubCard({ title, lines = [], borderClass = 'border-slate-800/70' }) {
 const ACCENTS = {
   root: 'bg-slate-400/60',
   governance: 'bg-slate-400/60',
-  operations: 'bg-cyan-400/60',
-  revenue: 'bg-fuchsia-400/60',
-  trading: 'bg-amber-400/60',
-  corporate: 'bg-sky-400/60',
+  operations: 'bg-slate-300/50',
+  revenue: 'bg-indigo-300/45',
+  trading: 'bg-amber-300/40',
+  corporate: 'bg-emerald-300/40',
 }
 
 const BORDERS = {
-  operations: 'border-cyan-400/18',
-  revenue: 'border-fuchsia-400/18',
-  trading: 'border-amber-400/18',
-  corporate: 'border-sky-400/18',
+  operations: 'border-slate-300/20',
+  revenue: 'border-indigo-300/20',
+  trading: 'border-amber-300/18',
+  corporate: 'border-emerald-300/18',
 }
 
+// Structure-only view. HR-owned role assignment.
 // HR can insert names at data level without changing layout.
 const ORG_TREE = {
   id: 'bullwaves-group',
@@ -114,8 +115,7 @@ const ORG_TREE = {
           id: 'operations',
           label: 'Operations',
           type: 'macro',
-          central: true,
-          supports: ['Revenue', 'Trading & Risk', 'Corporate'],
+          icon: 'operations',
           children: [
             { id: 'business-ops', label: 'Business Operations', type: 'function' },
             { id: 'marketing-ops', label: 'Marketing Operations', type: 'function' },
@@ -130,7 +130,7 @@ const ORG_TREE = {
           id: 'revenue',
           label: 'Revenue',
           type: 'macro',
-          supportedBy: 'Operations',
+          icon: 'revenue',
           children: [
             { id: 'sales', label: 'Sales', type: 'function' },
             { id: 'retention', label: 'Retention', type: 'function' },
@@ -144,7 +144,7 @@ const ORG_TREE = {
           id: 'trading-risk',
           label: 'Trading & Risk',
           type: 'macro',
-          supportedBy: 'Operations',
+          icon: 'trading',
           children: [
             { id: 'dealing', label: 'Dealing', type: 'function' },
             { id: 'prop', label: 'Prop Trading', type: 'function' },
@@ -156,12 +156,11 @@ const ORG_TREE = {
           id: 'corporate',
           label: 'Corporate',
           type: 'macro',
-          supportedBy: 'Operations',
+          icon: 'corporate',
           children: [
             { id: 'accounting', label: 'Accounting', type: 'function' },
             { id: 'compliance-legal', label: 'Compliance & Legal', type: 'function' },
-            { id: 'hr', label: 'HR', type: 'function' },
-            { id: 'recruiting', label: 'Recruiting', type: 'function' },
+            { id: 'hr-recruiting', label: 'HR & Recruiting', type: 'function' },
           ],
         },
       ],
@@ -274,30 +273,36 @@ export default function ShareOrgChartTrueTree() {
                   ))}
                 </div>
 
-                {/* desktop layout (Operations wider) */}
-                <div
-                  className="hidden lg:grid gap-6"
-                  style={{
-                    gridTemplateColumns: '1.35fr 1fr 1fr 1fr',
-                    alignItems: 'start',
-                  }}
-                >
-                  <MacroAreaColumn area={ops} />
-                  <MacroAreaColumn area={revenue} />
-                  <MacroAreaColumn area={trading} />
-                  <MacroAreaColumn area={corporate} />
-                </div>
-              </div>
+                {/* desktop layout */}
+                <div className="hidden lg:block">
+                  <HLine className="w-full" />
+                  <div className="grid grid-cols-4 gap-6">
+                    {macroAreas.map((a) => (
+                      <div key={`macro-stub-${a.id}`} className="flex justify-center">
+                        <VLine h={18} />
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Visual relationships (NOT reporting): Operations supports other areas */}
-              <div className="mt-6 flex flex-col items-center">
-                <div className="text-[11px] uppercase tracking-wide text-slate-500">
-                  Support (non-reporting)
-                </div>
-                <div className="mt-2 flex flex-wrap justify-center gap-2">
-                  <SupportPill from="Operations" to="Revenue" />
-                  <SupportPill from="Operations" to="Trading & Risk" />
-                  <SupportPill from="Operations" to="Corporate" />
+                  <div className="grid grid-cols-4 gap-6 mt-3" style={{ alignItems: 'start' }}>
+                    <MacroAreaColumn area={ops} />
+                    <MacroAreaColumn area={revenue} />
+                    <MacroAreaColumn area={trading} />
+                    <MacroAreaColumn area={corporate} />
+                  </div>
+
+                  {/* Operations as Servant Organization (Agile Model) — enablement line (NOT reporting) */}
+                  <div className="mt-8 grid grid-cols-4 gap-6 items-center">
+                    <div />
+                    <div className="col-span-3">
+                      <div className="relative w-full">
+                        <div className="border-t border-dashed border-slate-500/35" />
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
+                          Operations as a Servant Organization (Agile Model)
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -314,23 +319,72 @@ export default function ShareOrgChartTrueTree() {
   )
 }
 
-function SupportPill({ from, to }) {
+function MacroIcon({ kind, className = '' }) {
+  // Monochrome, outline/stroke-based icons (enterprise SaaS style)
+  const common = {
+    className: `h-4 w-4 ${className}`,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  }
+
+  if (kind === 'operations') {
+    return (
+      <svg {...common}>
+        <path d="M12 2v4" />
+        <path d="M12 18v4" />
+        <path d="M4.93 4.93l2.83 2.83" />
+        <path d="M16.24 16.24l2.83 2.83" />
+        <path d="M2 12h4" />
+        <path d="M18 12h4" />
+        <path d="M4.93 19.07l2.83-2.83" />
+        <path d="M16.24 7.76l2.83-2.83" />
+        <circle cx="12" cy="12" r="3" />
+      </svg>
+    )
+  }
+
+  if (kind === 'revenue') {
+    return (
+      <svg {...common}>
+        <path d="M4 19V5" />
+        <path d="M4 19h16" />
+        <path d="M8 15l4-4 3 3 5-6" />
+        <path d="M20 8v6h-6" />
+      </svg>
+    )
+  }
+
+  if (kind === 'trading') {
+    return (
+      <svg {...common}>
+        <path d="M7 20V10" />
+        <path d="M12 20V4" />
+        <path d="M17 20v-7" />
+        <path d="M5 10h4" />
+        <path d="M10 4h4" />
+        <path d="M15 13h4" />
+      </svg>
+    )
+  }
+
+  // corporate
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-slate-500/30 bg-slate-900/25 px-3 py-1 text-[11px] text-slate-200">
-      <span className="h-1.5 w-1.5 rounded-full bg-slate-300/60" aria-hidden="true" />
-      <span
-        className="leading-none"
-        style={{ borderBottom: '1px dotted rgba(148, 163, 184, 0.6)' }}
-      >
-        {from} supports {to}
-      </span>
-    </div>
+    <svg {...common}>
+      <path d="M3 21h18" />
+      <path d="M5 21V8l7-4 7 4v13" />
+      <path d="M9 21v-8h6v8" />
+      <path d="M9 10h.01" />
+      <path d="M15 10h.01" />
+    </svg>
   )
 }
 
 function MacroAreaColumn({ area }) {
   if (!area) return null
-  const isOps = area.id === 'operations'
   const accent =
     area.id === 'operations'
       ? ACCENTS.operations
@@ -349,25 +403,29 @@ function MacroAreaColumn({ area }) {
           ? BORDERS.trading
           : BORDERS.corporate
 
-  const supportLine = !isOps && area.supportedBy ? `Supported by ${area.supportedBy}` : null
-
-  const extra = supportLine ? (
-    <div className="text-[11px] text-slate-300">
-      <span className="inline-flex items-center gap-2 rounded-full border border-slate-500/30 bg-slate-900/20 px-3 py-1">
-        <span className="h-1.5 w-1.5 rounded-full bg-slate-300/50" aria-hidden="true" />
-        <span style={{ borderBottom: '1px dotted rgba(148, 163, 184, 0.6)' }}>{supportLine}</span>
-      </span>
-    </div>
-  ) : null
+  const iconTone =
+    area.id === 'operations'
+      ? 'text-slate-200/70'
+      : area.id === 'revenue'
+        ? 'text-indigo-200/70'
+        : area.id === 'trading-risk'
+          ? 'text-amber-200/70'
+          : 'text-emerald-200/70'
 
   return (
     <div className="flex flex-col min-w-0">
       <Card
-        title={area.label}
+        title={
+          <div className="flex items-center gap-2">
+            <span className={iconTone} aria-hidden="true">
+              <MacroIcon kind={area.icon} />
+            </span>
+            <span>{area.label}</span>
+          </div>
+        }
         lines={getNodeLines(area)}
         accentDotClass={accent}
         size="md"
-        extra={extra}
       />
 
       <div className="mt-4 flex justify-center">
