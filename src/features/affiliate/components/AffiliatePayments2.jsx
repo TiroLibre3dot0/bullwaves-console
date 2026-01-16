@@ -1,6 +1,6 @@
 ﻿import React, { useState, useMemo, useCallback, useEffect } from 'react'
 import useAffiliatePayments from '../hooks/useAffiliatePayments'
-import { formatEuro } from '../../../lib/formatters'
+import { formatEuro, formatEuroFull } from '../../../lib/formatters'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import FullPageLoader from '../../../components/FullPageLoader'
@@ -1077,7 +1077,7 @@ export default function AffiliatePayments2() {
                               title={
                                 ok
                                   ? ''
-                                  : `Δ components-total: ${formatEuro(uiDelta)} (components ${formatEuro(componentSum)} vs total ${formatEuro(total)})`
+                                  : `Δ components-total: ${formatEuroFull(uiDelta)} (components ${formatEuroFull(componentSum)} vs total ${formatEuroFull(total)})`
                               }
                             >
                               {ok ? '✓' : '✗'}
@@ -1226,7 +1226,7 @@ export default function AffiliatePayments2() {
                               title={
                                 ok
                                   ? ''
-                                  : `Δ components-total: ${formatEuro(okUiDelta)} (components ${formatEuro(okComponentSum)} vs total ${formatEuro(m.total || 0)})`
+                                  : `Δ components-total: ${formatEuroFull(okUiDelta)} (components ${formatEuroFull(okComponentSum)} vs total ${formatEuroFull(m.total || 0)})`
                               }
                             >
                               {ok ? '✓' : '✗'}
