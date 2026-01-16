@@ -289,7 +289,16 @@ function mapInternalRoleToPublicNode(sectionId, role) {
 
   // Manual, explicit placements requested (do not change structure)
   if (name === 'emanuele braha') {
-    return { kind: 'governance' }
+    // Requested: do not show on the board; keep in Operations only
+    return { kind: 'node', nodeId: 'business-ops' }
+  }
+  if (name === 'ivana jelic' || name === 'nevena milosavljevic' || name === 'nevena planic') {
+    // Requested: Technology-side support (systems/users) — place under Tech Operations
+    return { kind: 'node', nodeId: 'tech-ops' }
+  }
+  if (name === 'renato pezzi') {
+    // Requested: Prop Trading
+    return { kind: 'node', nodeId: 'prop' }
   }
   if (name === 'paolo vullo') {
     return { kind: 'node', nodeIds: ['business-ops', 'reporting', 'platforms-tools'] }
@@ -407,9 +416,13 @@ export default function ShareOrgChartTrueTree() {
         if (!isInternalRoleEligible(sectionId, role)) continue
 
         const name = String(role.name || '').trim()
-        const roleTitle = String(role.title || '').trim()
+        let roleTitle = String(role.title || '').trim()
+        const nk = normalizeKey(name)
+        if (nk === 'ivana jelic') roleTitle = 'Tech Operations (Systems)'
+        if (nk === 'nevena milosavljevic' || nk === 'nevena planic')
+          roleTitle = 'Tech Operations (User Provisioning)'
 
-        const dedupeKey = normalizeKey(name)
+        const dedupeKey = nk
         if (seenByName.has(dedupeKey)) continue
         seenByName.add(dedupeKey)
 
