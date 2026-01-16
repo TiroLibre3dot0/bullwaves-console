@@ -11,6 +11,7 @@ const PublicWeeklyMapPage = React.lazy(() => import('./features/roadmap/pages/Pu
 const PublicWeeklyExecutionHistoryPage = React.lazy(
   () => import('./features/roadmap/pages/PublicWeeklyExecutionHistoryPage')
 )
+const ShareOrgChartPage = React.lazy(() => import('./pages/share/ShareOrgChartTrueTree'))
 
 export default function App() {
   const { t } = useI18n()
@@ -18,11 +19,20 @@ export default function App() {
   const shareRoute = useMemo(() => {
     if (typeof window === 'undefined') return null
     const p = window.location.pathname
+    if (p.startsWith('/share/org-chart')) return 'org-chart'
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
     return null
   }, [])
+
+  if (shareRoute === 'org-chart') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <ShareOrgChartPage />
+      </React.Suspense>
+    )
+  }
 
   if (shareRoute === 'support-botlist') {
     return (
