@@ -177,6 +177,9 @@ function main() {
         'registration_date',
       ]),
       firstdeposit: pickFieldNormalized(r, ['firstdeposit', 'first_deposit']),
+      // Needed by SupportUserDetails timeline to display "Data deposito".
+      // Source CSV header is typically `first_deposit_date` which normalizes to `firstdepositdate`.
+      firstdepositdate: pickFieldNormalized(r, ['firstdepositdate', 'firstdepositat']),
       qualificationdate: pickFieldNormalized(r, ['qualificationdate', 'qualification_date', 'qualifydate']),
       depositcount: pickFieldNormalized(r, ['depositcount', 'deposit_count', 'depositscount', 'deposits_count']),
       totaldeposits: pickFieldNormalized(r, ['totaldeposits', 'total_deposits', 'totaldeposit', 'total_deposit']),

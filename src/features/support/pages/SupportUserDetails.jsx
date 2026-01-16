@@ -573,6 +573,13 @@ export default function SupportUserDetails({
     return d2
   }
 
+  function isPlausibleBusinessDate(v) {
+    const d = parseDate(v)
+    if (!d) return false
+    const y = d.getFullYear()
+    return y >= 2000 && y <= 2100
+  }
+
   function fmtDate(v) {
     const d = parseDate(v)
     if (!d) return null
@@ -631,14 +638,34 @@ export default function SupportUserDetails({
     'firstDepositAmount',
     'first_deposit_amount',
   ]
-  const firstDepositAmountRaw =
+  const firstDepositAmountValue =
     mapped.firstDeposit ||
     pickRawField(raw, firstDepositAmountCandidates) ||
     mapped.firstdeposit ||
     null
+  const firstDepositAmountRaw = isPlausibleBusinessDate(firstDepositAmountValue)
+    ? null
+    : firstDepositAmountValue
+
+  const firstDepositDateFromRaw = pickRawField(raw, [
+    'firstdepositdate',
+    'first_deposit_date',
+    'firstDepositDate',
+    'firstdeposit_at',
+    'firstDepositAt',
+  ])
+  const firstDepositFromRaw = pickRawField(raw, [
+    'firstdeposit',
+    'first_deposit',
+    'first deposit',
+    'firstDeposit',
+  ])
   const firstDepositAt =
-    pickRawField(raw, ['firstdepositdate', 'first_deposit_date', 'firstDepositDate']) ||
+    firstDepositDateFromRaw ||
     mapped.firstDepositDate ||
+    mapped.firstDepositAt ||
+    (isPlausibleBusinessDate(mapped.firstDeposit) ? mapped.firstDeposit : null) ||
+    (isPlausibleBusinessDate(firstDepositFromRaw) ? firstDepositFromRaw : null) ||
     null
   const ftdAt = mapped.ftd || pickRawField(raw, ftdCandidates) || null
   const qftdAt = mapped.qualificationDate || pickRawField(raw, qftdCandidates) || null
