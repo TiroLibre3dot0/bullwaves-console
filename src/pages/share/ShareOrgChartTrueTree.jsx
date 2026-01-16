@@ -292,7 +292,7 @@ function mapInternalRoleToPublicNode(sectionId, role) {
     // Requested: do not show on the board; keep in Operations only
     return { kind: 'node', nodeId: 'business-ops' }
   }
-  if (name === 'ivana jelic' || name === 'nevena milosavljevic' || name === 'nevena planic') {
+  if (name === 'ivana jelic' || name === 'nevena planic') {
     // Requested: Technology-side support (systems/users) — place under Tech Operations
     return { kind: 'node', nodeId: 'tech-ops' }
   }
@@ -419,8 +419,7 @@ export default function ShareOrgChartTrueTree() {
         let roleTitle = String(role.title || '').trim()
         const nk = normalizeKey(name)
         if (nk === 'ivana jelic') roleTitle = 'Tech Operations (Systems)'
-        if (nk === 'nevena milosavljevic' || nk === 'nevena planic')
-          roleTitle = 'Tech Operations (User Provisioning)'
+        if (nk === 'nevena planic') roleTitle = 'Tech Operations (User Provisioning)'
 
         const dedupeKey = nk
         if (seenByName.has(dedupeKey)) continue
