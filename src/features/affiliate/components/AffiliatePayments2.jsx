@@ -56,7 +56,6 @@ export default function AffiliatePayments2() {
   const [expandedMonth, setExpandedMonth] = useState(null)
   const [filterYear, setFilterYear] = useState('')
   const [filterMonth, setFilterMonth] = useState('')
-  const [exportFormat, setExportFormat] = useState('csv')
   const { setDataStatus } = useDataStatus()
 
   const affiliates = useMemo(() => {
@@ -278,6 +277,7 @@ export default function AffiliatePayments2() {
       const componentsSum =
         (m.subaffiliate || 0) + (m.cpa || 0) + (m.cpl || 0) + (m.revshare || 0) + (m.other || 0)
       const okDelta = componentsSum - total
+      const okDeltaExport = Math.abs(okDelta) < 1 ? 0 : okDelta
       const difference = total - paid
       const roiPct = total ? ((m.netDeposits || 0) / total) * 100 : 0
 
@@ -292,7 +292,7 @@ export default function AffiliatePayments2() {
         paid,
         difference,
         roi_pct: roiPct,
-        ok_delta: okDelta,
+        ok_delta: okDeltaExport,
       }
     })
 
@@ -325,42 +325,7 @@ export default function AffiliatePayments2() {
       URL.revokeObjectURL(url)
     }
 
-    if (exportFormat === 'xls') {
-      const htmlEscape = (v) =>
-        String(v ?? '')
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-
-      const table = [
-        '<table>',
-        '<thead><tr>' + header.map((h) => `<th>${htmlEscape(h)}</th>`).join('') + '</tr></thead>',
-        '<tbody>',
-        ...rows.map(
-          (r) =>
-            '<tr>' +
-            header
-              .map((h) => {
-                const v = r[h]
-                if (h === 'month') return `<td>${htmlEscape(v)}</td>`
-                if (h === 'roi_pct') return `<td>${htmlEscape(num(v, 1))}</td>`
-                return `<td>${htmlEscape(num(v, 2))}</td>`
-              })
-              .join('') +
-            '</tr>'
-        ),
-        '</tbody>',
-        '</table>',
-      ].join('')
-
-      const blob = new Blob([table], { type: 'application/vnd.ms-excel;charset=utf-8' })
-      const filename = `${parts.join('_')}.xls`
-      downloadBlob(blob, filename)
-      return
-    }
-
-    // CSV default
+    // CSV export (aligned to filters)
     const esc = (v) => {
       const s = String(v ?? '')
       const needsQuotes = /[\",\n\r]/.test(s)
@@ -378,10 +343,11 @@ export default function AffiliatePayments2() {
           .join(',')
       )
     )
-    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' })
+    const csv = `\ufeff${lines.join('\n')}`
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
     const filename = `${parts.join('_')}.csv`
     downloadBlob(blob, filename)
-  }, [filteredMonths, selectedRec, filterYear, filterMonth, exportFormat])
+  }, [filteredMonths, selectedRec, filterYear, filterMonth])
 
   const aggregatedTotals = useMemo(() => {
     if (!map)
@@ -488,23 +454,6 @@ export default function AffiliatePayments2() {
           Affiliate Payments 2.0
         </h3>
         <div style={{ marginLeft: 'auto' }}>
-          <select
-            value={exportFormat}
-            onChange={(e) => setExportFormat(e.target.value)}
-            style={{
-              padding: '8px 10px',
-              borderRadius: 6,
-              border: '1px solid var(--border-primary)',
-              background: 'var(--bg-secondary)',
-              color: 'var(--text-primary)',
-              fontWeight: 700,
-              marginRight: 10,
-            }}
-            title="Export format"
-          >
-            <option value="csv">CSV</option>
-            <option value="xls">XLS</option>
-          </select>
           <button
             onClick={exportData}
             disabled={!map || Object.keys(filteredMonths || {}).length === 0}
@@ -522,9 +471,9 @@ export default function AffiliatePayments2() {
               fontWeight: 700,
               marginRight: 10,
             }}
-            title="Export current table (aligned to filters). OK column will contain numeric delta."
+            title="Export current table as CSV (aligned to filters). OK column will contain numeric delta (|delta| < 1 exported as 0)."
           >
-            Export
+            Export CSV
           </button>
           <button
             onClick={reload}
