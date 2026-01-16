@@ -1,23 +1,29 @@
-import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { useI18n } from '../i18n/I18nContext';
-import { departmentColors, divisionColors, getFlagData, sections } from './orgChartData';
+import React, { useMemo, useRef, useState, useEffect } from 'react'
+import { useI18n } from '../i18n/I18nContext'
+import { departmentColors, divisionColors, getFlagData, sections } from './orgChartData'
 
 function SectionCard({ title, roles = [], bullets = [], t }) {
-  const hasGrid = roles && roles.length > 0;
+  const hasGrid = roles && roles.length > 0
   return (
-    <section className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm" aria-labelledby={title.replace(/\s+/g, '-').toLowerCase()}>
+    <section
+      className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm"
+      aria-labelledby={title.replace(/\s+/g, '-').toLowerCase()}
+    >
       <h3 className="text-lg font-semibold text-slate-100 mb-3">{title}</h3>
       {hasGrid ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {roles.map((r) => (
-            <div key={`${r.name}-${r.focus}`} className="bg-slate-800/60 border border-slate-700 rounded-lg p-3">
+            <div
+              key={`${r.name}-${r.focus}`}
+              className="bg-slate-800/60 border border-slate-700 rounded-lg p-3"
+            >
               <div className="flex items-center justify-between gap-2">
                 <div>
                   <div className="text-base font-bold text-white leading-tight">{r.name}</div>
                   {r.title && <div className="text-xs text-slate-200">{r.title}</div>}
                 </div>
                 {(() => {
-                  const flag = r.region ? getFlagData(r.region) : null;
+                  const flag = r.region ? getFlagData(r.region) : null
                   if (flag && (flag.emoji || flag.iso)) {
                     return (
                       <div className="min-w-[24px] flex justify-end" title={r.region}>
@@ -32,9 +38,9 @@ function SectionCard({ title, roles = [], bullets = [], t }) {
                           />
                         ) : null}
                       </div>
-                    );
+                    )
                   }
-                  return null;
+                  return null
                 })()}
               </div>
               <div className="text-[11px] text-slate-300">{r.focus}</div>
@@ -58,10 +64,28 @@ function SectionCard({ title, roles = [], bullets = [], t }) {
               </div>
               <p className="text-xs text-slate-400 mt-1 leading-relaxed">{r.duties}</p>
               <div className="mt-2 grid grid-cols-2 gap-1 text-[11px] text-slate-400">
-                {r.division && <span><span className="text-slate-500">{t('orgChart.role.division')}:</span> {r.division}</span>}
-                {r.department && <span><span className="text-slate-500">{t('orgChart.role.dept')}:</span> {r.department}</span>}
-                {r.region && <span><span className="text-slate-500">{t('orgChart.role.region')}:</span> {r.region}</span>}
-                {r.email && <span className="col-span-2 break-all"><span className="text-slate-500">{t('orgChart.role.email')}:</span> {r.email}</span>}
+                {r.division && (
+                  <span>
+                    <span className="text-slate-500">{t('orgChart.role.division')}:</span>{' '}
+                    {r.division}
+                  </span>
+                )}
+                {r.department && (
+                  <span>
+                    <span className="text-slate-500">{t('orgChart.role.dept')}:</span>{' '}
+                    {r.department}
+                  </span>
+                )}
+                {r.region && (
+                  <span>
+                    <span className="text-slate-500">{t('orgChart.role.region')}:</span> {r.region}
+                  </span>
+                )}
+                {r.email && (
+                  <span className="col-span-2 break-all">
+                    <span className="text-slate-500">{t('orgChart.role.email')}:</span> {r.email}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -69,12 +93,14 @@ function SectionCard({ title, roles = [], bullets = [], t }) {
       ) : (
         <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3 text-sm text-slate-200 list-disc list-inside">
           {bullets.map((b, idx) => (
-            <li key={idx} className="text-slate-300 leading-relaxed">{b}</li>
+            <li key={idx} className="text-slate-300 leading-relaxed">
+              {b}
+            </li>
           ))}
         </ul>
       )}
     </section>
-  );
+  )
 }
 
 function HierarchyBlock({ selected, t }) {
@@ -90,7 +116,7 @@ function HierarchyBlock({ selected, t }) {
     finance: t('orgChart.hierarchyItem.financePayments'),
     payments: t('orgChart.hierarchyItem.financePayments'),
     compliance: t('orgChart.hierarchyItem.compliance'),
-  };
+  }
 
   const fullItems = [
     t('orgChart.hierarchyItem.ceo'),
@@ -104,14 +130,19 @@ function HierarchyBlock({ selected, t }) {
     t('orgChart.hierarchyItem.marketing'),
     t('orgChart.hierarchyItem.financePayments'),
     t('orgChart.hierarchyItem.compliance'),
-  ];
+  ]
 
-  const selectedLabel = labelMap[selected];
-  const items = selected === 'all'
-    ? fullItems
-    : selected === 'management-team'
-      ? [t('orgChart.hierarchyItem.ceo'), t('orgChart.hierarchyItem.management')]
-      : [t('orgChart.hierarchyItem.ceo'), t('orgChart.hierarchyItem.management'), selectedLabel || ''];
+  const selectedLabel = labelMap[selected]
+  const items =
+    selected === 'all'
+      ? fullItems
+      : selected === 'management-team'
+        ? [t('orgChart.hierarchyItem.ceo'), t('orgChart.hierarchyItem.management')]
+        : [
+            t('orgChart.hierarchyItem.ceo'),
+            t('orgChart.hierarchyItem.management'),
+            selectedLabel || '',
+          ]
 
   return (
     <div className="flex flex-col items-center gap-2 py-6">
@@ -120,13 +151,11 @@ function HierarchyBlock({ selected, t }) {
           <div className="px-4 py-2 rounded-full border border-slate-700 bg-slate-900/60 text-slate-100 text-sm font-semibold shadow-sm">
             {label}
           </div>
-          {idx < arr.length - 1 && (
-            <div className="w-px h-5 bg-slate-700" aria-hidden="true"></div>
-          )}
+          {idx < arr.length - 1 && <div className="w-px h-5 bg-slate-700" aria-hidden="true"></div>}
         </div>
       ))}
     </div>
-  );
+  )
 }
 
 function TableOfContents({ selected, onSelect, t }) {
@@ -142,9 +171,12 @@ function TableOfContents({ selected, onSelect, t }) {
     { id: 'payments', label: t('orgChart.toc.payments') },
     { id: 'compliance', label: t('orgChart.toc.compliance') },
     { id: 'dealing', label: t('orgChart.toc.dealing') },
-  ];
+  ]
   return (
-    <nav className="flex flex-wrap gap-2 items-center text-sm mb-4" aria-label={t('orgChart.toc.ariaLabel')}>
+    <nav
+      className="flex flex-wrap gap-2 items-center text-sm mb-4"
+      aria-label={t('orgChart.toc.ariaLabel')}
+    >
       <button
         type="button"
         onClick={() => onSelect('all')}
@@ -163,20 +195,20 @@ function TableOfContents({ selected, onSelect, t }) {
         </button>
       ))}
     </nav>
-  );
+  )
 }
 
 export default function OrgChart() {
-  const { t } = useI18n();
-  const [selected, setSelected] = useState('management-team');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [pendingScrollId, setPendingScrollId] = useState(null);
-  const sectionRefs = useRef({});
+  const { t } = useI18n()
+  const [selected, setSelected] = useState('management-team')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [pendingScrollId, setPendingScrollId] = useState(null)
+  const sectionRefs = useRef({})
 
   const visibleSections = useMemo(() => {
-    if (selected === 'all') return sections;
-    return sections.filter((s) => s.id === selected);
-  }, [selected]);
+    if (selected === 'all') return sections
+    return sections.filter((s) => s.id === selected)
+  }, [selected])
 
   const allRolesIndex = useMemo(
     () =>
@@ -187,34 +219,36 @@ export default function OrgChart() {
         }))
       ),
     []
-  );
+  )
 
   function handleSearchSubmit(e) {
-    e.preventDefault();
-    const query = searchTerm.trim().toLowerCase();
-    if (!query) return;
-    const found = allRolesIndex.find((r) => r.name.toLowerCase().includes(query));
+    e.preventDefault()
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return
+    const found = allRolesIndex.find((r) => r.name.toLowerCase().includes(query))
     if (found) {
-      setSelected(found.sectionId);
-      setPendingScrollId(found.sectionId);
+      setSelected(found.sectionId)
+      setPendingScrollId(found.sectionId)
     }
   }
 
   useEffect(() => {
     if (pendingScrollId) {
-      const el = sectionRefs.current[pendingScrollId];
+      const el = sectionRefs.current[pendingScrollId]
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }
-      setPendingScrollId(null);
+      setPendingScrollId(null)
     }
-  }, [pendingScrollId, selected]);
+  }, [pendingScrollId, selected])
 
   return (
     <div className="w-full px-6 2xl:px-10">
       <div className="w-full space-y-6">
         <header className="space-y-2">
-          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">{t('orgChart.structure')}</p>
+          <p className="text-xs uppercase tracking-[0.2em] text-cyan-300">
+            {t('orgChart.structure')}
+          </p>
           <h1 className="text-2xl md:text-3xl font-bold text-white">{t('orgChart.title')}</h1>
           <p className="text-sm text-slate-300 max-w-3xl">{t('orgChart.description')}</p>
           <form onSubmit={handleSearchSubmit} className="flex flex-wrap gap-3 items-center mt-3">
@@ -232,13 +266,27 @@ export default function OrgChart() {
             >
               {t('orgChart.search.submit')}
             </button>
+            <a
+              href="/share/org-chart"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 bg-slate-900/70 hover:border-cyan-400 hover:text-white text-sm"
+              title="Open public org chart"
+            >
+              {t('support.userCheck.botList.share.label')} ↗
+            </a>
           </form>
         </header>
 
         <TableOfContents selected={selected} onSelect={setSelected} t={t} />
 
-        <section aria-label={t('orgChart.hierarchy.ariaLabel')} className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-100 mb-2">{t('orgChart.hierarchy.title')}</h2>
+        <section
+          aria-label={t('orgChart.hierarchy.ariaLabel')}
+          className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 shadow-sm"
+        >
+          <h2 className="text-lg font-semibold text-slate-100 mb-2">
+            {t('orgChart.hierarchy.title')}
+          </h2>
           <p className="text-sm text-slate-300">{t('orgChart.hierarchy.subtitle')}</p>
           <HierarchyBlock selected={selected} t={t} />
         </section>
@@ -250,14 +298,19 @@ export default function OrgChart() {
               id={section.id}
               className="scroll-mt-20"
               ref={(el) => {
-                sectionRefs.current[section.id] = el;
+                sectionRefs.current[section.id] = el
               }}
             >
-              <SectionCard title={t(`orgChart.sectionTitle.${section.id}`) || section.title} roles={section.roles} bullets={section.bullets} t={t} />
+              <SectionCard
+                title={t(`orgChart.sectionTitle.${section.id}`) || section.title}
+                roles={section.roles}
+                bullets={section.bullets}
+                t={t}
+              />
             </div>
           ))}
         </div>
       </div>
     </div>
-  );
+  )
 }
