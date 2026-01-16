@@ -297,8 +297,8 @@ function mapInternalRoleToPublicNode(sectionId, role) {
     return { kind: 'node', nodeId: 'tech-ops' }
   }
   if (name === 'renato pezzi') {
-    // Requested: Prop Trading
-    return { kind: 'node', nodeId: 'prop' }
+    // Requested: keep on Board, and also show in Prop Trading (explicit duplication allowed)
+    return { kind: 'node', nodeId: 'prop', alsoGovernance: true }
   }
   if (name === 'paolo vullo') {
     return { kind: 'node', nodeIds: ['business-ops', 'reporting', 'platforms-tools'] }
@@ -428,6 +428,13 @@ export default function ShareOrgChartTrueTree() {
 
         const mapped = mapInternalRoleToPublicNode(sectionId, role)
         const person = { name, title: roleTitle }
+
+        if (mapped?.alsoGovernance) {
+          const nkGov = normalizeKey(person.name)
+          if (nkGov !== 'filippo' && nkGov !== 'filippo de rosa') {
+            governancePeople.push(person)
+          }
+        }
 
         if (mapped.kind === 'governance') {
           // Requested: remove specific people from founders list
