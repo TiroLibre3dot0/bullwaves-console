@@ -1,0 +1,396 @@
+{
+  "generatedAt": "2026-01-16T10:59:32.915Z",
+  "source": "src/pages/orgChartData.js",
+  "sections": [
+    {
+      "id": "management-team",
+      "title": "Management Team",
+      "roles": [
+        {
+          "name": "Emanuele Braha",
+          "title": "COO",
+          "division": "Operations",
+          "department": "Operations"
+        },
+        {
+          "name": "Francesco Ceccarini",
+          "title": "Shareholder",
+          "division": "Operations",
+          "department": "Operations"
+        },
+        {
+          "name": "Filippo",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder"
+        },
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder"
+        },
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder"
+        },
+        {
+          "name": "Filippo De Rosa",
+          "title": "Non Executive Director",
+          "division": "Shareholder",
+          "department": "Shareholder"
+        },
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations"
+        }
+      ]
+    },
+    {
+      "id": "area-responsibility",
+      "title": "Area Responsibility Layer",
+      "roles": [
+        {
+          "name": "Operations (Area)",
+          "title": "Responsible: Francesco",
+          "division": "Operations",
+          "department": "Operations"
+        },
+        {
+          "name": "Support (Area)",
+          "title": "Responsible: Emanuele + Tamara + Sonja + Nevena",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Dealing & Risk (Area)",
+          "title": "Responsible: Renato",
+          "division": "Dealing",
+          "department": "Dealing"
+        },
+        {
+          "name": "Affiliation (Area)",
+          "title": "Responsible: Stefan",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Payments / PSP (Area)",
+          "title": "Responsible: Tamara",
+          "division": "Finance",
+          "department": "PSP"
+        },
+        {
+          "name": "Compliance (Area)",
+          "title": "Responsible: Terina",
+          "division": "Compliance",
+          "department": "Compliance"
+        },
+        {
+          "name": "Business Development (Area)",
+          "title": "Responsible: Imran / Straninja",
+          "division": "Acquisition",
+          "department": "Sales"
+        },
+        {
+          "name": "Marketing (Area)",
+          "title": "Responsible: Daniel",
+          "division": "Acquisition",
+          "department": "Marketing"
+        },
+        {
+          "name": "Finance (Area)",
+          "title": "Responsible: (Unassigned)",
+          "division": "Finance",
+          "department": "Finance"
+        }
+      ]
+    },
+    {
+      "id": "support-team",
+      "title": "Support Team",
+      "roles": [
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Nevena Milosavljevic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Sonja Djuric",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Natalija Stefanovic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Violeta Lukovic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Jelena Milovanovic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Nikola Eric",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Milica Stricevic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Tamara Aramovic",
+          "title": "Support Team",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Ivana Jelic",
+          "title": "Hybrid - operation & support",
+          "division": "Technology",
+          "department": "Support Team"
+        },
+        {
+          "name": "DEFI Creators",
+          "title": "24/7 Livechat (Slack)",
+          "division": "Support",
+          "department": "Support Team"
+        },
+        {
+          "name": "Support Backfills",
+          "title": "Incoming hires",
+          "division": "Operations",
+          "department": "Support Team"
+        }
+      ]
+    },
+    {
+      "id": "operations",
+      "title": "Operations",
+      "roles": [
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations"
+        },
+        {
+          "name": "Marina Christoforou",
+          "title": "HR Manager",
+          "division": "Operations",
+          "department": "HR"
+        },
+        {
+          "name": "Operations Scope",
+          "title": "Scope (Area Layer)",
+          "division": "Operations",
+          "department": "Operations"
+        }
+      ]
+    },
+    {
+      "id": "business-development",
+      "title": "Business Development / Sales",
+      "roles": [
+        {
+          "name": "Roberta Jovanovic",
+          "title": "Business Development Coordinator",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Jake Morgan",
+          "title": "Sales Manager",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Imran Hossain",
+          "title": "Business Development Manager",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Orlin Simovonyan",
+          "title": "Business Development Coordinator",
+          "division": "Acquisition",
+          "department": "Sales - Retention"
+        },
+        {
+          "name": "Gabriela Yordanova",
+          "title": "Business Development Coordinator",
+          "division": "Acquisition",
+          "department": "Sales - Retention"
+        },
+        {
+          "name": "Ghassan Zaghdoud",
+          "title": "Head of MENA",
+          "division": "Acquisition",
+          "department": "Sales - Dubai"
+        }
+      ]
+    },
+    {
+      "id": "affiliation",
+      "title": "Affiliation / Partner Management",
+      "roles": [
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder / Affiliation Lead",
+          "division": "Shareholder",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Saad Shahzad",
+          "title": "Affiliate Marketing Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Oscar Agyemang",
+          "title": "Marketing Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Davide Levy",
+          "title": "Affiliate Marketing Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        }
+      ]
+    },
+    {
+      "id": "marketing",
+      "title": "Marketing",
+      "roles": [
+        {
+          "name": "Daniel Taddei",
+          "title": "Marketing Lead",
+          "division": "Acquisition",
+          "department": "Marketing"
+        },
+        {
+          "name": "DEFI Creators",
+          "title": "Creators",
+          "division": "Support",
+          "department": "Support Team"
+        }
+      ]
+    },
+    {
+      "id": "finance",
+      "title": "Finance",
+      "roles": [
+        {
+          "name": "Rodoula Xenofontos",
+          "title": "Senior Controller",
+          "division": "Finance",
+          "department": "Finance"
+        },
+        {
+          "name": "Georgia Kleovoulou",
+          "title": "Finance Officer",
+          "division": "Finance",
+          "department": "Reconciliation"
+        },
+        {
+          "name": "Finance Scope",
+          "title": "Scope (Area Layer)",
+          "division": "Finance",
+          "department": "Finance"
+        }
+      ]
+    },
+    {
+      "id": "payments",
+      "title": "Payments / PSP",
+      "roles": [
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support / PSP Oversight",
+          "division": "Operations",
+          "department": "PSP"
+        },
+        {
+          "name": "Konstantina Zafeiropoulou",
+          "title": "PSP Specialist",
+          "division": "Finance",
+          "department": "PSP"
+        }
+      ]
+    },
+    {
+      "id": "compliance",
+      "title": "Compliance",
+      "roles": [
+        {
+          "name": "Stamatis Daravanis",
+          "title": "Back Office & Compliance Specialist",
+          "division": "Compliance",
+          "department": "Compliance"
+        },
+        {
+          "name": "Terina",
+          "title": "Compliance Officer",
+          "division": "Compliance",
+          "department": "Compliance"
+        }
+      ]
+    },
+    {
+      "id": "dealing",
+      "title": "Dealing Desk / PSP / Risk",
+      "roles": [
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder (Dealing & PSPs)",
+          "division": "Shareholder",
+          "department": "Dealing"
+        },
+        {
+          "name": "Chris Psomas",
+          "title": "Head of Operations (Trading & Dealing)",
+          "division": "Trading & Dealing",
+          "department": "Dealing"
+        },
+        {
+          "name": "Dealing Operations / Truviam",
+          "title": "Operations",
+          "division": "Dealing",
+          "department": "Dealing"
+        }
+      ]
+    }
+  ]
+}

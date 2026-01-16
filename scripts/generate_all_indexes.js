@@ -30,3 +30,5 @@ run('generate_support_users_index.js')
 
 run('generate_fraud_patterns_index.js')
 run('generate_affiliate_kpi_index.js')
+
+run('generate_share_org_people_index.mjs')

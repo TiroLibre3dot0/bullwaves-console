@@ -1,5 +1,4 @@
-import React, { useMemo, useState } from 'react'
-import { sections as INTERNAL_SECTIONS } from '../orgChartData'
+import React, { useEffect, useMemo, useState } from 'react'
 
 function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
@@ -158,7 +157,7 @@ const ORG_TREE = {
             { id: 'customer-support', label: 'Customer Support', type: 'function' },
             { id: 'payments', label: 'Payments', type: 'function' },
             { id: 'reporting', label: 'Reporting', type: 'function' },
-            { id: 'platforms-tools', label: 'Platforms & Tools', type: 'function' },
+            { id: 'platforms-tools', label: 'CRM & Tools', type: 'function' },
           ],
         },
         {
@@ -230,9 +229,21 @@ function isInternalRoleEligible(sectionId, role) {
 }
 
 function mapInternalRoleToPublicNode(sectionId, role) {
+  const name = normalizeKey(role?.name)
   const department = normalizeKey(role?.department)
   const division = normalizeKey(role?.division)
   const title = normalizeKey(role?.title)
+
+  // Manual, explicit placements requested (do not change structure)
+  if (name === 'emanuele braha') {
+    return { kind: 'governance' }
+  }
+  if (name === 'paolo vullo') {
+    return { kind: 'node', nodeIds: ['business-ops', 'reporting', 'platforms-tools'] }
+  }
+  if (name === 'daniel taddei') {
+    return { kind: 'node', nodeId: 'marketing-ops' }
+  }
 
   // Governance / Founders (kept at top of public chart)
   if (
@@ -295,17 +306,46 @@ function getNodeLines(node) {
 
 export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
+  const [peoplePayload, setPeoplePayload] = useState(null)
+  const [peopleLoadError, setPeopleLoadError] = useState(null)
 
   const governance = ORG_TREE.children.find((c) => c.id === 'governance')
   const macroGroup = ORG_TREE.children.find((c) => c.id === 'macro-areas')
   const macroAreas = (macroGroup?.children || []).slice(0, 4)
 
+  useEffect(() => {
+    if (mode !== VIEW_MODES.people) return
+    if (peoplePayload) return
+
+    let cancelled = false
+    setPeopleLoadError(null)
+
+    async function loadPeople() {
+      try {
+        const res = await fetch('/share/org-chart-people.json', { cache: 'no-store' })
+        if (!res.ok) {
+          throw new Error(`Failed to load people data (${res.status})`)
+        }
+        const json = await res.json()
+        if (!cancelled) setPeoplePayload(json)
+      } catch (e) {
+        if (!cancelled) setPeopleLoadError(e)
+      }
+    }
+
+    loadPeople()
+    return () => {
+      cancelled = true
+    }
+  }, [mode, peoplePayload])
+
   const peopleIndex = useMemo(() => {
     const byNode = {}
+    const byArea = {}
     const governancePeople = []
     const seenByName = new Set()
 
-    for (const section of INTERNAL_SECTIONS || []) {
+    for (const section of peoplePayload?.sections || []) {
       const sectionId = section?.id
       for (const role of section?.roles || []) {
         if (!isInternalRoleEligible(sectionId, role)) continue
@@ -321,11 +361,35 @@ export default function ShareOrgChartTrueTree() {
         const person = { name, title: roleTitle }
 
         if (mapped.kind === 'governance') {
-          governancePeople.push(person)
+          // Requested: remove specific people from founders list
+          const nk = normalizeKey(person.name)
+          if (nk !== 'filippo' && nk !== 'filippo de rosa') {
+            governancePeople.push(person)
+          }
+          continue
+        }
+
+        if (mapped.kind === 'area') {
+          const areaId = mapped.areaId
+          if (areaId) {
+            if (!byArea[areaId]) byArea[areaId] = []
+            byArea[areaId].push(person)
+          }
           continue
         }
 
         const nodeId = mapped.nodeId
+        const nodeIds = Array.isArray(mapped.nodeIds) ? mapped.nodeIds : null
+
+        if (nodeIds && nodeIds.length) {
+          for (const id of nodeIds) {
+            if (!id) continue
+            if (!byNode[id]) byNode[id] = []
+            byNode[id].push(person)
+          }
+          continue
+        }
+
         if (!nodeId) continue
         if (!byNode[nodeId]) byNode[nodeId] = []
         byNode[nodeId].push(person)
@@ -335,12 +399,17 @@ export default function ShareOrgChartTrueTree() {
     // Stable ordering
     const sortFn = (a, b) => a.name.localeCompare(b.name)
     for (const k of Object.keys(byNode)) byNode[k].sort(sortFn)
+    for (const k of Object.keys(byArea)) byArea[k].sort(sortFn)
     governancePeople.sort(sortFn)
 
-    return { byNode, governancePeople }
-  }, [])
+    return { byNode, byArea, governancePeople }
+  }, [peoplePayload])
 
   const showPeople = mode === VIEW_MODES.people
+  const isPeopleLoading = showPeople && !peoplePayload && !peopleLoadError
+  const isPeopleError = showPeople && Boolean(peopleLoadError)
+  const governanceSeatsCount = (governance?.children || []).length || 4
+  const governancePeopleToShow = (peopleIndex.governancePeople || []).slice(0, governanceSeatsCount)
 
   // Inject people into the SAME structure (no node changes).
   const macroAreasPopulated = useMemo(() => {
@@ -348,6 +417,8 @@ export default function ShareOrgChartTrueTree() {
       if (!area) return area
       return {
         ...area,
+        people: peopleIndex.byArea?.[area.id] || [],
+        showPeople,
         children: (area.children || []).map((fn) => ({
           ...fn,
           people: peopleIndex.byNode?.[fn.id] || [],
@@ -408,7 +479,13 @@ export default function ShareOrgChartTrueTree() {
           </div>
 
           {showPeople ? (
-            <p className="mt-2 text-xs text-slate-500">Names + role titles only · No emails</p>
+            <p className="mt-2 text-xs text-slate-500">
+              {isPeopleLoading
+                ? 'Loading people…'
+                : isPeopleError
+                  ? 'People unavailable (public view stays private)'
+                  : 'Names + role titles only · No emails'}
+            </p>
           ) : (
             <p className="mt-2 text-xs text-slate-500">No people · Structure only</p>
           )}
@@ -447,50 +524,45 @@ export default function ShareOrgChartTrueTree() {
                     {governance?.label || 'Founders'}
                   </div>
                 </div>
-                <div className="grid grid-cols-4 gap-6">
-                  {(governance?.children || []).map((seat) => (
-                    <div key={`seat-stub-${seat.id}`} className="flex justify-center">
-                      <VLine h={18} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-3">
-                {(governance?.children || []).map((seat) => (
-                  <div key={seat.id} className="min-w-0">
-                    <Card
-                      title={seat.label}
-                      lines={getNodeLines(seat)}
-                      accentDotClass={ACCENTS.governance}
-                      size="md"
-                    />
-                  </div>
-                ))}
-              </div>
-
-              {/* Governance people list (secondary) */}
-              <div
-                className={
-                  'transition-all duration-300 ease-out overflow-hidden ' +
-                  (showPeople ? 'max-h-[520px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0')
-                }
-              >
-                {showPeople ? (
-                  <div className="mt-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                    {(peopleIndex.governancePeople || []).map((p) => (
-                      <div
-                        key={`gov-${p.name}-${p.title}`}
-                        className="rounded-xl border border-slate-800/60 bg-slate-950/30 px-3 py-2"
-                      >
-                        <div className="text-[11px] font-semibold text-slate-100 leading-snug">
-                          {p.name}
-                        </div>
-                        <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+                {!showPeople ? (
+                  <div className="grid grid-cols-4 gap-6">
+                    {(governance?.children || []).map((seat) => (
+                      <div key={`seat-stub-${seat.id}`} className="flex justify-center">
+                        <VLine h={18} />
                       </div>
                     ))}
                   </div>
                 ) : null}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-3">
+                {showPeople
+                  ? (isPeopleLoading
+                      ? Array.from({ length: governanceSeatsCount }, (_, idx) => ({
+                          name: 'Loading…',
+                          title: idx === 0 ? 'Fetching people data' : '',
+                        }))
+                      : governancePeopleToShow
+                    ).map((p, idx) => (
+                      <div key={`gov-card-${idx}-${p.name}-${p.title}`} className="min-w-0">
+                        <Card
+                          title={p.name}
+                          lines={p.title ? [p.title] : []}
+                          accentDotClass={ACCENTS.governance}
+                          size="md"
+                        />
+                      </div>
+                    ))
+                  : (governance?.children || []).map((seat) => (
+                      <div key={seat.id} className="min-w-0">
+                        <Card
+                          title={seat.label}
+                          lines={getNodeLines(seat)}
+                          accentDotClass={ACCENTS.governance}
+                          size="md"
+                        />
+                      </div>
+                    ))}
               </div>
             </div>
 
@@ -627,6 +699,7 @@ function MacroIcon({ kind, className = '' }) {
 
 function MacroAreaColumn({ area }) {
   if (!area) return null
+  const safeAreaPeople = (area.people || []).filter((p) => p && p.name && p.title)
   const accent =
     area.id === 'operations'
       ? ACCENTS.operations
@@ -668,6 +741,32 @@ function MacroAreaColumn({ area }) {
         lines={getNodeLines(area)}
         accentDotClass={accent}
         size="md"
+        extra={
+          area.showPeople ? (
+            <div
+              className={
+                'transition-all duration-300 ease-out overflow-hidden ' +
+                (area.showPeople ? 'max-h-[280px] opacity-100' : 'max-h-0 opacity-0')
+              }
+            >
+              {safeAreaPeople.length ? (
+                <div className="mt-2 space-y-1">
+                  {safeAreaPeople.map((p) => (
+                    <div
+                      key={`${area.id}-${p.name}-${p.title}`}
+                      className="rounded-xl border border-slate-800/60 bg-slate-950/30 px-3 py-2"
+                    >
+                      <div className="text-[11px] font-semibold text-slate-100 leading-snug">
+                        {p.name}
+                      </div>
+                      <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null
+        }
       />
 
       <div className="mt-4 flex justify-center">
