@@ -57,6 +57,7 @@ function SubCard({
   title,
   lines = [],
   borderClass = 'border-slate-800/70',
+  headBadgeClass = 'border-slate-300/25 text-slate-200/80 bg-slate-950/20',
   people = [],
   showPeople = false,
 }) {
@@ -81,7 +82,7 @@ function SubCard({
       <div
         className={
           'transition-all duration-300 ease-out overflow-hidden ' +
-          (showPeople ? 'max-h-[520px] opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0')
+          (showPeople ? 'max-h-[1400px] opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0')
         }
         aria-hidden={!showPeople}
       >
@@ -90,12 +91,34 @@ function SubCard({
             {safePeople.map((p) => (
               <div
                 key={`${title}-${p.name}-${p.title}`}
-                className="rounded-lg border border-slate-700/40 bg-slate-950/30 px-2.5 py-2"
+                className={
+                  'rounded-lg border px-2.5 py-2 ' +
+                  (p.isHead
+                    ? 'border-slate-600/55 bg-slate-950/45'
+                    : 'border-slate-700/40 bg-slate-950/30')
+                }
               >
-                <div className="text-[11px] font-semibold text-slate-100 leading-snug">
+                <div
+                  className={
+                    'text-[11px] leading-snug ' +
+                    (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
+                  }
+                >
                   {p.name}
                 </div>
-                <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+                <div className="text-[10px] text-slate-400 leading-snug flex items-center gap-1.5">
+                  <span>{p.title}</span>
+                  {p.isHead ? (
+                    <span
+                      className={
+                        'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
+                        headBadgeClass
+                      }
+                    >
+                      Head
+                    </span>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
@@ -213,6 +236,36 @@ function normalizeKey(s) {
     .toLowerCase()
 }
 
+const EXPLICIT_HEADS_BY_NODE = {
+  // Confirmed department heads
+  sales: ['roberta jovanovic'],
+  accounting: ['rodoula xenofontos'],
+
+  // Area/sub-area heads
+  'customer-support': ['tamara popovic yakimov'],
+  risk: ['chris psomas'],
+  mt5: ['chris psomas'],
+}
+
+function isHeadTitle(title) {
+  const t = normalizeKey(title)
+  return t.startsWith('head of') || t.includes(' head of ')
+}
+
+function isHeadForNode(nodeId, person) {
+  const nk = normalizeKey(person?.name)
+  const explicit = EXPLICIT_HEADS_BY_NODE[nodeId] || []
+  if (explicit.includes(nk)) return true
+  return isHeadTitle(person?.title)
+}
+
+function sortPeople(a, b) {
+  const ah = a?.isHead ? 1 : 0
+  const bh = b?.isHead ? 1 : 0
+  if (ah !== bh) return bh - ah
+  return String(a?.name || '').localeCompare(String(b?.name || ''))
+}
+
 function isInternalRoleEligible(sectionId, role) {
   // Do not infer or reinterpret. Skip non-person placeholders / area-layer summaries.
   if (!role) return false
@@ -240,6 +293,9 @@ function mapInternalRoleToPublicNode(sectionId, role) {
   }
   if (name === 'paolo vullo') {
     return { kind: 'node', nodeIds: ['business-ops', 'reporting', 'platforms-tools'] }
+  }
+  if (name === 'chris psomas') {
+    return { kind: 'node', nodeIds: ['mt5', 'risk'] }
   }
   if (name === 'daniel taddei') {
     return { kind: 'node', nodeId: 'marketing-ops' }
@@ -373,7 +429,7 @@ export default function ShareOrgChartTrueTree() {
           const areaId = mapped.areaId
           if (areaId) {
             if (!byArea[areaId]) byArea[areaId] = []
-            byArea[areaId].push(person)
+            byArea[areaId].push({ ...person, isHead: isHeadForNode(areaId, person) })
           }
           continue
         }
@@ -385,22 +441,21 @@ export default function ShareOrgChartTrueTree() {
           for (const id of nodeIds) {
             if (!id) continue
             if (!byNode[id]) byNode[id] = []
-            byNode[id].push(person)
+            byNode[id].push({ ...person, isHead: isHeadForNode(id, person) })
           }
           continue
         }
 
         if (!nodeId) continue
         if (!byNode[nodeId]) byNode[nodeId] = []
-        byNode[nodeId].push(person)
+        byNode[nodeId].push({ ...person, isHead: isHeadForNode(nodeId, person) })
       }
     }
 
     // Stable ordering
-    const sortFn = (a, b) => a.name.localeCompare(b.name)
-    for (const k of Object.keys(byNode)) byNode[k].sort(sortFn)
-    for (const k of Object.keys(byArea)) byArea[k].sort(sortFn)
-    governancePeople.sort(sortFn)
+    for (const k of Object.keys(byNode)) byNode[k].sort(sortPeople)
+    for (const k of Object.keys(byArea)) byArea[k].sort(sortPeople)
+    governancePeople.sort((a, b) => a.name.localeCompare(b.name))
 
     return { byNode, byArea, governancePeople }
   }, [peoplePayload])
@@ -727,6 +782,15 @@ function MacroAreaColumn({ area }) {
           ? 'text-amber-200/70'
           : 'text-emerald-200/70'
 
+  const headBadgeClass =
+    area.id === 'operations'
+      ? 'border-slate-300/25 text-slate-200/80 bg-slate-950/20'
+      : area.id === 'revenue'
+        ? 'border-indigo-300/25 text-indigo-200/80 bg-indigo-950/20'
+        : area.id === 'trading-risk'
+          ? 'border-amber-300/25 text-amber-200/80 bg-amber-950/20'
+          : 'border-emerald-300/25 text-emerald-200/80 bg-emerald-950/20'
+
   return (
     <div className="flex flex-col min-w-0">
       <Card
@@ -746,7 +810,7 @@ function MacroAreaColumn({ area }) {
             <div
               className={
                 'transition-all duration-300 ease-out overflow-hidden ' +
-                (area.showPeople ? 'max-h-[280px] opacity-100' : 'max-h-0 opacity-0')
+                (area.showPeople ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0')
               }
             >
               {safeAreaPeople.length ? (
@@ -754,12 +818,34 @@ function MacroAreaColumn({ area }) {
                   {safeAreaPeople.map((p) => (
                     <div
                       key={`${area.id}-${p.name}-${p.title}`}
-                      className="rounded-xl border border-slate-800/60 bg-slate-950/30 px-3 py-2"
+                      className={
+                        'rounded-xl border px-3 py-2 ' +
+                        (p.isHead
+                          ? 'border-slate-700/70 bg-slate-950/45'
+                          : 'border-slate-800/60 bg-slate-950/30')
+                      }
                     >
-                      <div className="text-[11px] font-semibold text-slate-100 leading-snug">
+                      <div
+                        className={
+                          'text-[11px] leading-snug ' +
+                          (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
+                        }
+                      >
                         {p.name}
                       </div>
-                      <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+                      <div className="text-[10px] text-slate-400 leading-snug flex items-center gap-1.5">
+                        <span>{p.title}</span>
+                        {p.isHead ? (
+                          <span
+                            className={
+                              'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
+                              headBadgeClass
+                            }
+                          >
+                            Head
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -789,6 +875,7 @@ function MacroAreaColumn({ area }) {
                 title={fn.label}
                 lines={getNodeLines(fn)}
                 borderClass={border}
+                headBadgeClass={headBadgeClass}
                 people={fn.people || []}
                 showPeople={Boolean(fn.showPeople)}
               />
