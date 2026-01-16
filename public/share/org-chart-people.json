@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-16T10:59:32.915Z",
+  "generatedAt": "2026-01-16T15:11:29.193Z",
   "source": "src/pages/orgChartData.js",
   "sections": [
     {
@@ -176,6 +176,12 @@
         },
         {
           "name": "Ivana Jelic",
+          "title": "Hybrid - operation & support",
+          "division": "Technology",
+          "department": "Support Team"
+        },
+        {
+          "name": "Nevena Planic",
           "title": "Hybrid - operation & support",
           "division": "Technology",
           "department": "Support Team"
