@@ -203,8 +203,13 @@ export default function ShareOrgChartTrueTree() {
         <main className="mt-12" aria-label="Organizational tree">
           <div className="flex flex-col items-center">
             {/* ROOT */}
-            <div className="w-full max-w-md">
-              <Card title={ORG_TREE.label} lines={[]} accentDotClass={ACCENTS.root} size="md" />
+            <div className="flex flex-col items-center">
+              <div
+                className="rounded-2xl border border-slate-800/80 bg-slate-950/40 px-6 py-4 backdrop-blur-md"
+                aria-label={ORG_TREE.label}
+              >
+                <img src="/Logo.png" alt={ORG_TREE.label} className="h-10 w-auto opacity-95" />
+              </div>
             </div>
 
             <div className="flex justify-center">
