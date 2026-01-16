@@ -147,6 +147,12 @@ async function runPostUploadGenerators(type, emit) {
     path.join(__dirname, 'generate_affiliate_kpi_index.js'),
   ]
 
+  // Fraud Monitoring dashboard also relies on these precomputed artifacts.
+  // Regenerate them when the underlying source reports change.
+  if (type === 'registrations' || type === 'media') {
+    scripts.push(path.join(__dirname, 'fraud_monitor.js'))
+  }
+
   const results = []
   for (let i = 0; i < scripts.length; i += 1) {
     const scriptFile = scripts[i]
