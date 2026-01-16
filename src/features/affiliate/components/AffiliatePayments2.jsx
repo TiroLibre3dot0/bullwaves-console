@@ -48,6 +48,12 @@ function monthLabel(m) {
   return `${names[idx] || m} ${parts[0]}`
 }
 
+function normalizeDelta(delta, threshold = 1) {
+  const d = Number(delta || 0)
+  if (!Number.isFinite(d)) return 0
+  return Math.abs(d) < threshold ? 0 : d
+}
+
 export default function AffiliatePayments2() {
   const { t } = useI18n()
   const { loading, error, map, reload, getAffiliate } = useAffiliatePayments()
@@ -1058,7 +1064,8 @@ export default function AffiliatePayments2() {
                             (filteredTotals.other || 0)
                           const total = filteredTotals.total || 0
                           const delta = componentSum - total
-                          const ok = Math.abs(delta) < 0.01
+                          const uiDelta = normalizeDelta(delta, 1)
+                          const ok = uiDelta === 0
                           return (
                             <th
                               style={{
@@ -1070,7 +1077,7 @@ export default function AffiliatePayments2() {
                               title={
                                 ok
                                   ? ''
-                                  : `Δ components-total: ${formatEuro(delta)} (components ${formatEuro(componentSum)} vs total ${formatEuro(total)})`
+                                  : `Δ components-total: ${formatEuro(uiDelta)} (components ${formatEuro(componentSum)} vs total ${formatEuro(total)})`
                               }
                             >
                               {ok ? '✓' : '✗'}
@@ -1092,7 +1099,8 @@ export default function AffiliatePayments2() {
                           (m.revshare || 0) +
                           (m.other || 0)
                         const okDelta = okComponentSum - (m.total || 0)
-                        const ok = Math.abs(okDelta) < 0.01
+                        const okUiDelta = normalizeDelta(okDelta, 1)
+                        const ok = okUiDelta === 0
                         const rowStyle =
                           index % 2 === 0
                             ? { background: 'var(--bg-secondary)' }
@@ -1218,7 +1226,7 @@ export default function AffiliatePayments2() {
                               title={
                                 ok
                                   ? ''
-                                  : `Δ components-total: ${formatEuro(okDelta)} (components ${formatEuro(okComponentSum)} vs total ${formatEuro(m.total || 0)})`
+                                  : `Δ components-total: ${formatEuro(okUiDelta)} (components ${formatEuro(okComponentSum)} vs total ${formatEuro(m.total || 0)})`
                               }
                             >
                               {ok ? '✓' : '✗'}
