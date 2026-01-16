@@ -213,24 +213,21 @@ export default function ShareOrgChartTrueTree() {
 
             {/* LEVEL 1 — GOVERNANCE */}
             <div className="w-full max-w-6xl">
-              <div className="flex justify-center">
-                <div className="w-full max-w-md">
-                  <Card
-                    title={governance?.label || 'Governance'}
-                    lines={[]}
-                    accentDotClass={ACCENTS.governance}
-                    size="sm"
-                  />
+              {/* Founders line label (indicator only) */}
+              <div className="flex justify-center md:hidden">
+                <div className="px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
+                  {governance?.label || 'Founders'}
                 </div>
               </div>
 
-              <div className="flex justify-center">
-                <VLine h={18} className="bg-slate-500/35" />
-              </div>
-
-              {/* Horizontal spine (desktop+) */}
+              {/* Horizontal spine (desktop+) with inline label */}
               <div className="hidden md:block">
-                <HLine className="w-full" />
+                <div className="relative w-full">
+                  <HLine className="w-full" />
+                  <div className="absolute left-0 -top-3 px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
+                    {governance?.label || 'Founders'}
+                  </div>
+                </div>
                 <div className="grid grid-cols-4 gap-6">
                   {(governance?.children || []).map((seat) => (
                     <div key={`seat-stub-${seat.id}`} className="flex justify-center">
