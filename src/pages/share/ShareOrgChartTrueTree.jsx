@@ -154,7 +154,7 @@ const ORG_TREE = {
   children: [
     {
       id: 'governance',
-      label: 'Founders (4 seats)',
+      label: 'Founders',
       type: 'governance',
       children: [
         { id: 'founder-1', label: 'Founder', type: 'seat' },
@@ -483,8 +483,12 @@ export default function ShareOrgChartTrueTree() {
   const showPeople = mode === VIEW_MODES.people
   const isPeopleLoading = showPeople && !peoplePayload && !peopleLoadError
   const isPeopleError = showPeople && Boolean(peopleLoadError)
-  const governanceSeatsCount = (governance?.children || []).length || 4
-  const governancePeopleToShow = (peopleIndex.governancePeople || []).slice(0, governanceSeatsCount)
+  const governanceDisplayCount = 3
+  const governanceSeatsToShow = (governance?.children || []).slice(0, governanceDisplayCount)
+  const governancePeopleToShow = (peopleIndex.governancePeople || []).slice(
+    0,
+    governanceDisplayCount
+  )
 
   // Inject people into the SAME structure (no node changes).
   const macroAreasPopulated = useMemo(() => {
@@ -600,8 +604,8 @@ export default function ShareOrgChartTrueTree() {
                   </div>
                 </div>
                 {!showPeople ? (
-                  <div className="grid grid-cols-4 gap-6">
-                    {(governance?.children || []).map((seat) => (
+                  <div className="grid grid-cols-3 gap-6">
+                    {governanceSeatsToShow.map((seat) => (
                       <div key={`seat-stub-${seat.id}`} className="flex justify-center">
                         <VLine h={18} />
                       </div>
@@ -610,10 +614,10 @@ export default function ShareOrgChartTrueTree() {
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-3">
                 {showPeople
                   ? (isPeopleLoading
-                      ? Array.from({ length: governanceSeatsCount }, (_, idx) => ({
+                      ? Array.from({ length: governanceDisplayCount }, (_, idx) => ({
                           name: 'Loading…',
                           title: idx === 0 ? 'Fetching people data' : '',
                         }))
@@ -628,7 +632,7 @@ export default function ShareOrgChartTrueTree() {
                         />
                       </div>
                     ))
-                  : (governance?.children || []).map((seat) => (
+                  : governanceSeatsToShow.map((seat) => (
                       <div key={seat.id} className="min-w-0">
                         <Card
                           title={seat.label}
