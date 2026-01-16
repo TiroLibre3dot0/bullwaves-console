@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useMemo, useState } from 'react'
+import { sections as INTERNAL_SECTIONS } from '../orgChartData'
 
 function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
@@ -53,8 +54,15 @@ function HLine({ className = '' }) {
   return <div className={`h-px bg-slate-500/35 ${className}`} aria-hidden="true" />
 }
 
-function SubCard({ title, lines = [], borderClass = 'border-slate-800/70' }) {
+function SubCard({
+  title,
+  lines = [],
+  borderClass = 'border-slate-800/70',
+  people = [],
+  showPeople = false,
+}) {
   const filtered = (lines || []).filter(Boolean)
+  const safePeople = (people || []).filter((p) => p && p.name && p.title)
   return (
     <div
       className={`bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal break-words`}
@@ -69,6 +77,33 @@ function SubCard({ title, lines = [], borderClass = 'border-slate-800/70' }) {
           ))}
         </div>
       ) : null}
+
+      {/* People (secondary, injected into the SAME structure) */}
+      <div
+        className={
+          'transition-all duration-300 ease-out overflow-hidden ' +
+          (showPeople ? 'max-h-[520px] opacity-100 mt-2' : 'max-h-0 opacity-0 mt-0')
+        }
+        aria-hidden={!showPeople}
+      >
+        {safePeople.length ? (
+          <div className="space-y-1">
+            {safePeople.map((p) => (
+              <div
+                key={`${title}-${p.name}-${p.title}`}
+                className="rounded-lg border border-slate-700/40 bg-slate-950/30 px-2.5 py-2"
+              >
+                <div className="text-[11px] font-semibold text-slate-100 leading-snug">
+                  {p.name}
+                </div>
+                <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-[10px] text-slate-500">No people mapped</div>
+        )}
+      </div>
     </div>
   )
 }
@@ -168,6 +203,89 @@ const ORG_TREE = {
   ],
 }
 
+const VIEW_MODES = {
+  structure: 'structure',
+  people: 'people',
+}
+
+function normalizeKey(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+}
+
+function isInternalRoleEligible(sectionId, role) {
+  // Do not infer or reinterpret. Skip non-person placeholders / area-layer summaries.
+  if (!role) return false
+  const name = String(role.name || '')
+  const title = String(role.title || '')
+
+  if (sectionId === 'area-responsibility') return false
+
+  if (name.includes('(Area)')) return false
+  if (normalizeKey(name).includes(' scope')) return false
+  if (normalizeKey(title).includes('scope')) return false
+
+  return Boolean(name.trim())
+}
+
+function mapInternalRoleToPublicNode(sectionId, role) {
+  const department = normalizeKey(role?.department)
+  const division = normalizeKey(role?.division)
+  const title = normalizeKey(role?.title)
+
+  // Governance / Founders (kept at top of public chart)
+  if (
+    department === 'shareholder' ||
+    title.includes('shareholder') ||
+    title.includes('non executive director')
+  ) {
+    return { kind: 'governance' }
+  }
+
+  // Fixed mapping: people are mapped to the existing public structure.
+  // If a role touches multiple areas, assign to primary operational area by deterministic rules.
+  if (sectionId === 'support-team') return { kind: 'node', nodeId: 'customer-support' }
+  if (sectionId === 'payments') return { kind: 'node', nodeId: 'payments' }
+  if (sectionId === 'compliance') return { kind: 'node', nodeId: 'compliance-legal' }
+  if (sectionId === 'dealing') return { kind: 'node', nodeId: 'dealing' }
+
+  if (sectionId === 'business-development') {
+    if (department.includes('retention')) return { kind: 'node', nodeId: 'retention' }
+    if (department.includes('dubai')) return { kind: 'node', nodeId: 'mena' }
+    return { kind: 'node', nodeId: 'sales' }
+  }
+
+  if (sectionId === 'affiliation') {
+    // Keep under Affiliates & IB (do not duplicate across areas).
+    return { kind: 'node', nodeId: 'affiliates-ib' }
+  }
+
+  if (sectionId === 'marketing') {
+    // Marketing in internal chart is acquisition/performance.
+    if (department === 'support team') return { kind: 'node', nodeId: 'customer-support' }
+    return { kind: 'node', nodeId: 'performance' }
+  }
+
+  if (sectionId === 'finance') {
+    return { kind: 'node', nodeId: 'accounting' }
+  }
+
+  if (sectionId === 'operations' || sectionId === 'management-team') {
+    if (department === 'hr') return { kind: 'node', nodeId: 'hr-recruiting' }
+    if (department === 'support team') return { kind: 'node', nodeId: 'customer-support' }
+    if (department === 'psp') return { kind: 'node', nodeId: 'payments' }
+    if (department === 'dealing') return { kind: 'node', nodeId: 'dealing' }
+    if (department === 'affiliate manager') return { kind: 'node', nodeId: 'affiliates-ib' }
+    if (division === 'technology' || department === 'technology')
+      return { kind: 'node', nodeId: 'tech-ops' }
+    return { kind: 'node', nodeId: 'business-ops' }
+  }
+
+  // Safe fallback: Operations/Business Operations (primary operational area)
+  return { kind: 'node', nodeId: 'business-ops' }
+}
+
 function getNodeLines(node) {
   const lines = []
   if (node?.head) lines.push(`Area head: ${node.head}`)
@@ -176,14 +294,74 @@ function getNodeLines(node) {
 }
 
 export default function ShareOrgChartTrueTree() {
+  const [mode, setMode] = useState(VIEW_MODES.structure)
+
   const governance = ORG_TREE.children.find((c) => c.id === 'governance')
   const macroGroup = ORG_TREE.children.find((c) => c.id === 'macro-areas')
   const macroAreas = (macroGroup?.children || []).slice(0, 4)
 
-  const ops = macroAreas.find((a) => a.id === 'operations')
-  const revenue = macroAreas.find((a) => a.id === 'revenue')
-  const trading = macroAreas.find((a) => a.id === 'trading-risk')
-  const corporate = macroAreas.find((a) => a.id === 'corporate')
+  const peopleIndex = useMemo(() => {
+    const byNode = {}
+    const governancePeople = []
+    const seenByName = new Set()
+
+    for (const section of INTERNAL_SECTIONS || []) {
+      const sectionId = section?.id
+      for (const role of section?.roles || []) {
+        if (!isInternalRoleEligible(sectionId, role)) continue
+
+        const name = String(role.name || '').trim()
+        const roleTitle = String(role.title || '').trim()
+
+        const dedupeKey = normalizeKey(name)
+        if (seenByName.has(dedupeKey)) continue
+        seenByName.add(dedupeKey)
+
+        const mapped = mapInternalRoleToPublicNode(sectionId, role)
+        const person = { name, title: roleTitle }
+
+        if (mapped.kind === 'governance') {
+          governancePeople.push(person)
+          continue
+        }
+
+        const nodeId = mapped.nodeId
+        if (!nodeId) continue
+        if (!byNode[nodeId]) byNode[nodeId] = []
+        byNode[nodeId].push(person)
+      }
+    }
+
+    // Stable ordering
+    const sortFn = (a, b) => a.name.localeCompare(b.name)
+    for (const k of Object.keys(byNode)) byNode[k].sort(sortFn)
+    governancePeople.sort(sortFn)
+
+    return { byNode, governancePeople }
+  }, [])
+
+  const showPeople = mode === VIEW_MODES.people
+
+  // Inject people into the SAME structure (no node changes).
+  const macroAreasPopulated = useMemo(() => {
+    const attach = (area) => {
+      if (!area) return area
+      return {
+        ...area,
+        children: (area.children || []).map((fn) => ({
+          ...fn,
+          people: peopleIndex.byNode?.[fn.id] || [],
+          showPeople,
+        })),
+      }
+    }
+    return (macroAreas || []).map(attach)
+  }, [macroAreas, peopleIndex, showPeople])
+
+  const ops = macroAreasPopulated.find((a) => a?.id === 'operations')
+  const revenue = macroAreasPopulated.find((a) => a?.id === 'revenue')
+  const trading = macroAreasPopulated.find((a) => a?.id === 'trading-risk')
+  const corporate = macroAreasPopulated.find((a) => a?.id === 'corporate')
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
@@ -197,7 +375,43 @@ export default function ShareOrgChartTrueTree() {
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
           </h1>
-          <p className="mt-2 text-sm text-slate-400">Structure-only (board-level)</p>
+          <p className="mt-2 text-sm text-slate-400">Board-level view</p>
+
+          {/* Mode toggle (structure ↔ people) */}
+          <div className="mt-5 inline-flex rounded-full border border-slate-700/50 bg-slate-950/40 p-1">
+            <button
+              type="button"
+              onClick={() => setMode(VIEW_MODES.structure)}
+              className={
+                'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
+                (mode === VIEW_MODES.structure
+                  ? 'bg-slate-100 text-slate-900'
+                  : 'text-slate-300 hover:text-white')
+              }
+              aria-pressed={mode === VIEW_MODES.structure}
+            >
+              Structure only
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode(VIEW_MODES.people)}
+              className={
+                'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
+                (mode === VIEW_MODES.people
+                  ? 'bg-slate-100 text-slate-900'
+                  : 'text-slate-300 hover:text-white')
+              }
+              aria-pressed={mode === VIEW_MODES.people}
+            >
+              People
+            </button>
+          </div>
+
+          {showPeople ? (
+            <p className="mt-2 text-xs text-slate-500">Names + role titles only · No emails</p>
+          ) : (
+            <p className="mt-2 text-xs text-slate-500">No people · Structure only</p>
+          )}
         </header>
 
         <main className="mt-12" aria-label="Organizational tree">
@@ -254,6 +468,30 @@ export default function ShareOrgChartTrueTree() {
                   </div>
                 ))}
               </div>
+
+              {/* Governance people list (secondary) */}
+              <div
+                className={
+                  'transition-all duration-300 ease-out overflow-hidden ' +
+                  (showPeople ? 'max-h-[520px] opacity-100 mt-4' : 'max-h-0 opacity-0 mt-0')
+                }
+              >
+                {showPeople ? (
+                  <div className="mt-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {(peopleIndex.governancePeople || []).map((p) => (
+                      <div
+                        key={`gov-${p.name}-${p.title}`}
+                        className="rounded-xl border border-slate-800/60 bg-slate-950/30 px-3 py-2"
+                      >
+                        <div className="text-[11px] font-semibold text-slate-100 leading-snug">
+                          {p.name}
+                        </div>
+                        <div className="text-[10px] text-slate-400 leading-snug">{p.title}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="flex justify-center">
@@ -270,7 +508,7 @@ export default function ShareOrgChartTrueTree() {
               >
                 {/* mobile layout */}
                 <div className="grid grid-cols-1 gap-6 lg:hidden">
-                  {macroAreas.map((area) => (
+                  {macroAreasPopulated.map((area) => (
                     <MacroAreaColumn key={area.id} area={area} />
                   ))}
                 </div>
@@ -279,7 +517,7 @@ export default function ShareOrgChartTrueTree() {
                 <div className="hidden lg:block">
                   <HLine className="w-full" />
                   <div className="grid grid-cols-4 gap-6">
-                    {macroAreas.map((a) => (
+                    {macroAreasPopulated.map((a) => (
                       <div key={`macro-stub-${a.id}`} className="flex justify-center">
                         <VLine h={18} />
                       </div>
@@ -313,7 +551,9 @@ export default function ShareOrgChartTrueTree() {
 
         <footer className="mt-12 flex justify-center">
           <div className="text-xs text-slate-400 border border-slate-800/80 bg-slate-900/35 rounded-full px-4 py-2">
-            Public view: structure only · No people / no personal roles
+            {showPeople
+              ? 'Public view: people + roles · No emails / no personal metadata'
+              : 'Public view: structure only · No people'}
           </div>
         </footer>
       </div>
@@ -446,7 +686,13 @@ function MacroAreaColumn({ area }) {
                 className="hidden lg:block absolute -left-4 top-3 w-4 h-px bg-slate-500/25"
                 aria-hidden="true"
               />
-              <SubCard title={fn.label} lines={getNodeLines(fn)} borderClass={border} />
+              <SubCard
+                title={fn.label}
+                lines={getNodeLines(fn)}
+                borderClass={border}
+                people={fn.people || []}
+                showPeople={Boolean(fn.showPeople)}
+              />
             </div>
           ))}
         </div>
