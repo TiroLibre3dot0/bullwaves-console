@@ -1,5 +1,5 @@
 import InfoTooltip from './InfoTooltip'
-import { useI18n } from '../../../i18n/I18nContext'
+import { useI18n } from '../../../i18n/I18nContext.ts'
 
 export type PpdGaussianChartData = {
   rangeMin: number;

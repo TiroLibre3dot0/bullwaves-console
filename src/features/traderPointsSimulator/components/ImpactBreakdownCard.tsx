@@ -1,5 +1,5 @@
 import InfoTooltip from './InfoTooltip'
-import { useI18n } from '../../../i18n/I18nContext'
+import { useI18n } from '../../../i18n/I18nContext.ts'
 
 function clampNum(v: any, fallback: number) {
   const n = Number(v)

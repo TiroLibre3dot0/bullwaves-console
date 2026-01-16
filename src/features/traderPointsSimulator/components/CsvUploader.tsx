@@ -1,6 +1,6 @@
 import React from 'react';
 import Papa from 'papaparse';
-import { useI18n } from '../../../i18n/I18nContext'
+import { useI18n } from '../../../i18n/I18nContext.ts'
 
 interface CsvUploaderProps {
   onData: (rows: any[], info: {parsed: number, skipped: number}) => void;

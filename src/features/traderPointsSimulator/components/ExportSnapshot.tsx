@@ -1,4 +1,4 @@
-import { useI18n } from '../../../i18n/I18nContext'
+import { useI18n } from '../../../i18n/I18nContext.ts'
 
 function toCsv(rows: any[], columns: string[]) {
   const header = columns.join(',');

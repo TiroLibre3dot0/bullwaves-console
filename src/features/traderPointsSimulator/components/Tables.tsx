@@ -1,5 +1,5 @@
 import InfoTooltip from './InfoTooltip'
-import { useI18n } from '../../../i18n/I18nContext'
+import { useI18n } from '../../../i18n/I18nContext.ts'
 
 function pointsValue(u: any): number {
   const v = u?.trader_points ?? u?.points_earned ?? u?.traderPoints ?? u?.points ?? 0

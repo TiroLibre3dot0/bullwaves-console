@@ -18,7 +18,7 @@ import { simulateScenario } from './engine/simulateScenario';
 import { computeClassicBonusBaseline } from './engine/classicBonusBaseline';
 import { buildFeatures } from './engine/buildFeatures';
 import type { ModelId } from './engine/buildTargets';
-import { useI18n } from '../../i18n/I18nContext';
+import { useI18n } from '../../i18n/I18nContext.ts';
 
 
 const defaultScenario = {
