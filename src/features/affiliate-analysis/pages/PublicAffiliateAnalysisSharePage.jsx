@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+﻿import React, { useEffect, useMemo, useState } from 'react'
 import Papa from 'papaparse'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
@@ -19,6 +19,7 @@ import {
 } from '../utils/shareAuth'
 import CohortDecayView from '../../../components/CohortDecayView'
 import { useCohortNetDepositsCalendar } from '../hooks/useCohortNetDepositsCalendar'
+import { buildAffiliateInsights } from '../insights/affiliateInsightEngine'
 
 const REGISTRATIONS_CANDIDATES = [
   '/Registrations Report.csv',
@@ -305,7 +306,6 @@ function useRegistrationsDepositsAgg(enabled = false) {
             clearTimeout(timeout)
             if (!alive) return
             if (settled) return
-
             if (!sawAny) {
               const err = new Error('Registrations CSV empty or missing')
               err.kind = 'missing'
@@ -1242,8 +1242,15 @@ function AffiliateExecutiveCumulativeChart({
 
 function PublicAffiliateReportsEntryView({ t, locale, setLocale, affiliates, shareBase }) {
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: 20 }}>
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        padding: 'clamp(12px, 3vw, 20px)',
+      }}
+    >
+      <div style={{ maxWidth: 1680, margin: '0 auto' }}>
         <div
           style={{
             display: 'flex',
@@ -1265,7 +1272,13 @@ function PublicAffiliateReportsEntryView({ t, locale, setLocale, affiliates, sha
             >
               {t('shareAffiliateReports.header.subtitle') || 'Read-only executive summary'}
             </div>
-            <h1 style={{ color: 'var(--text)', fontSize: 28, margin: '6px 0 4px' }}>
+            <h1
+              style={{
+                color: 'var(--text)',
+                fontSize: 'clamp(22px, 2.2vw, 30px)',
+                margin: '6px 0 4px',
+              }}
+            >
               {t('shareAffiliateReports.header.title') || 'Affiliate Performance — Board View'}
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
@@ -1365,6 +1378,7 @@ function PublicAffiliateReportsDetailView({
   companyRegistrations,
   report,
   kpiContext,
+  insightContext,
   cumulativeSeries,
 }) {
   const current = report?.currentKpis || null
@@ -1373,7 +1387,9 @@ function PublicAffiliateReportsDetailView({
   const [affiliatePickerOpen, setAffiliatePickerOpen] = useState(false)
   const affiliatePickerWrapRef = React.useRef(null)
 
-  const registrationsDepositsAgg = useRegistrationsDepositsAgg(Boolean(selectedAffiliateId))
+  const registrationsDepositsAgg = useRegistrationsDepositsAgg(
+    Boolean(selectedAffiliateId || selectedAffiliateName)
+  )
 
   useEffect(() => {
     if (!affiliatePickerOpen) return
@@ -1415,16 +1431,26 @@ function PublicAffiliateReportsDetailView({
   const qftd = current ? current.qftd : null
 
   const depositsCountByMonth = useMemo(() => {
-    if (!selectedAffiliateId) return null
+    if (!selectedAffiliateId && !selectedAffiliateName) return null
     if (registrationsDepositsAgg.loading) return null
     const byAff = registrationsDepositsAgg.byAffiliateMonth
     if (!byAff) return null
-    const map = byAff.get(String(selectedAffiliateId))
-    return map || new Map()
+
+    const candidates = [selectedAffiliateId, selectedAffiliateName]
+      .map((v) => String(v || '').trim())
+      .filter(Boolean)
+
+    for (const key of candidates) {
+      const map = byAff.get(key)
+      if (map) return map
+    }
+
+    return new Map()
   }, [
     registrationsDepositsAgg.loading,
     registrationsDepositsAgg.byAffiliateMonth,
     selectedAffiliateId,
+    selectedAffiliateName,
   ])
 
   const depositsCount = useMemo(() => {
@@ -1460,12 +1486,20 @@ function PublicAffiliateReportsDetailView({
     highlightEndId,
   ])
 
-  const loginRatio = useMemo(() => {
+  const loSignRatio = useMemo(() => {
     const regs = Number(current?.registrations || 0)
     const visitors = Number(current?.visitors || 0)
     if (!visitors) return null
     return (regs / Math.max(visitors, 1)) * 100
   }, [current])
+
+  const losingRatioPct = useMemo(() => {
+    const nd = Number(netDeposits || 0)
+    const pnl = Number(pl || 0)
+    if (!Number.isFinite(nd) || nd === 0) return null
+    if (!Number.isFinite(pnl)) return null
+    return (pnl / Math.max(Math.abs(nd), 1)) * 100
+  }, [netDeposits, pl])
 
   const avgDepositsCountPerFtdUser = useMemo(() => {
     const f = Number(ftd || 0)
@@ -1476,6 +1510,33 @@ function PublicAffiliateReportsDetailView({
   }, [depositsCount, ftd])
 
   const status = statusFromProfit(t, Number(profit || 0))
+
+  const Kw = ({ children, tone = 'var(--text)' }) => (
+    <span style={{ fontWeight: 950, color: tone }}>{children}</span>
+  )
+
+  const renderParts = useMemo(() => {
+    const toneMap = {
+      risk: '#ef4444',
+      warn: '#f59e0b',
+    }
+    return (parts) => (
+      <>
+        {(parts || []).map((p, idx) => {
+          const text = String(p?.text ?? '')
+          if (!text) return null
+          if (p?.emph) {
+            return (
+              <Kw key={idx} tone={toneMap[p?.tone] || 'var(--text)'}>
+                {text}
+              </Kw>
+            )
+          }
+          return <React.Fragment key={idx}>{text}</React.Fragment>
+        })}
+      </>
+    )
+  }, [])
 
   const affiliateOptions = useMemo(() => {
     const list = (affiliates || [])
@@ -1503,8 +1564,8 @@ function PublicAffiliateReportsDetailView({
     return (ftd / Math.max(regs, 1)) * 100
   }, [current])
 
-  const kpiFeedback = useMemo(() => {
-    const hasPrev = Boolean(report?.hasPrevious && previous)
+  const insightDeltas = useMemo(() => {
+    const hasPrev = Boolean(report?.hasPrevious && previous && periodType !== 'since-ever')
     const ndNow = Number(current?.totalNetDeposits || 0)
     const plNow = Number(current?.totalPL || 0)
     const roiNow = Number(current?.roi || 0)
@@ -1512,61 +1573,13 @@ function PublicAffiliateReportsDetailView({
     const plPrev = Number(previous?.totalPL || 0)
     const roiPrev = Number(previous?.roi || 0)
 
-    const ndDir = hasPrev ? directionFromDelta(ndNow - ndPrev) : 'flat'
-    const plDir = hasPrev ? directionFromDelta(plNow - plPrev) : 'flat'
-    const roiDir = hasPrev ? directionFromDelta(roiNow - roiPrev, 0.0005) : 'flat'
-    const softening = hasPrev && (ndDir === 'down' || plDir === 'down' || roiDir === 'down')
-
-    let meaningKey = 'positiveStable'
-    let nextKey = 'scaleCarefully'
-
-    if (ndNow < 0 && plNow < 0) {
-      meaningKey = 'negativeBoth'
-      nextKey = 'stopScaling'
-    } else if (ndNow >= 0 && plNow < 0) {
-      meaningKey = 'positiveDepositsNegativePl'
-      nextKey = 'holdCutCosts'
-    } else if (ndNow < 0 && plNow >= 0) {
-      meaningKey = 'positivePlNegativeDeposits'
-      nextKey = 'checkQuality'
-    } else if (roiNow < 0) {
-      meaningKey = 'positiveButRoiNegative'
-      nextKey = 'fixRoi'
-    } else if (softening) {
-      meaningKey = 'positiveSoftening'
-      nextKey = 'monitorBeforeScale'
+    return {
+      netDepositsDir: hasPrev ? directionFromDelta(ndNow - ndPrev) : 'flat',
+      plDir: hasPrev ? directionFromDelta(plNow - plPrev) : 'flat',
+      roiDir: hasPrev ? directionFromDelta(roiNow - roiPrev, 0.0005) : 'flat',
+      withdrawalsDir: 'flat',
     }
-
-    const meaning =
-      t(`shareAffiliateReports.kpiFeedback.meaning.${meaningKey}`) ||
-      (meaningKey === 'negativeBoth'
-        ? 'Net deposits and P&L are negative.'
-        : meaningKey === 'positiveDepositsNegativePl'
-          ? 'Net deposits are positive but P&L is negative.'
-          : meaningKey === 'positivePlNegativeDeposits'
-            ? 'P&L is positive but net deposits are negative.'
-            : meaningKey === 'positiveButRoiNegative'
-              ? 'Net deposits and P&L are positive but ROI is negative.'
-              : meaningKey === 'positiveSoftening'
-                ? 'Results are positive but trends are weakening.'
-                : 'Results are positive and stable.')
-
-    const nextStep =
-      t(`shareAffiliateReports.kpiFeedback.next.${nextKey}`) ||
-      (nextKey === 'stopScaling'
-        ? 'Stop scaling and review sources and costs.'
-        : nextKey === 'holdCutCosts'
-          ? 'Hold spend and reduce costs.'
-          : nextKey === 'checkQuality'
-            ? 'Check deposit quality and monitor withdrawals.'
-            : nextKey === 'fixRoi'
-              ? 'Keep spend flat and fix ROI before scaling.'
-              : nextKey === 'monitorBeforeScale'
-                ? 'Maintain exposure and monitor the next period.'
-                : 'Maintain exposure and scale carefully.')
-
-    return { meaning, nextStep }
-  }, [current, previous, report?.hasPrevious, t])
+  }, [current, previous, report?.hasPrevious, periodType])
 
   const weightFeedback = useMemo(() => {
     const w = Number(kpiContext?.weights?.netDepositsPct)
@@ -1576,101 +1589,181 @@ function PublicAffiliateReportsDetailView({
         impact:
           t('shareAffiliateReports.weightFeedback.impact.high') ||
           'This affiliate drives a large share of total net deposits.',
-        nextStep:
+        next:
           t('shareAffiliateReports.weightFeedback.next.protectChannel') ||
           'Protect this channel and review quality regularly.',
       }
     }
-    if (w <= 3) {
-      return {
-        impact:
-          t('shareAffiliateReports.weightFeedback.impact.low') ||
-          'This affiliate has a small share of total net deposits.',
-        nextStep:
-          t('shareAffiliateReports.weightFeedback.next.keepLean') ||
-          'Keep spend lean and scale only after results improve.',
-      }
-    }
-    return null
-  }, [kpiContext, t])
-
-  const finalDecisionSummary = useMemo(() => {
-    const hasPrev = Boolean(report?.hasPrevious && previous)
-    const ndNow = Number(current?.totalNetDeposits || 0)
-    const plNow = Number(current?.totalPL || 0)
-    const roiNow = Number(current?.roi || 0)
-    const ndPrev = Number(previous?.totalNetDeposits || 0)
-    const plPrev = Number(previous?.totalPL || 0)
-    const roiPrev = Number(previous?.roi || 0)
-
-    const ndDir = hasPrev ? directionFromDelta(ndNow - ndPrev) : 'flat'
-    const plDir = hasPrev ? directionFromDelta(plNow - plPrev) : 'flat'
-    const roiDir = hasPrev ? directionFromDelta(roiNow - roiPrev, 0.0005) : 'flat'
-
-    const depositsNow = Number(kpiContext?.values?.deposits || 0)
-    const withdrawalsNow = Number(kpiContext?.values?.withdrawals || 0)
-    const withdrawalPressureDetected = depositsNow > 0 ? withdrawalsNow / depositsNow >= 0.7 : false
-
-    const softening = hasPrev && (ndDir === 'down' || plDir === 'down' || roiDir === 'down')
-    const negative = ndNow < 0 || plNow < 0 || roiNow < 0
-
-    let overallKey = 'healthy'
-    if (ndNow < 0 || plNow < 0) overallKey = 'needsAction'
-    else if (roiNow < 0) overallKey = 'mixed'
-    else if (softening) overallKey = 'softening'
-
-    let strengthKey = 'stableProfit'
-    if (ndNow > 0 && ndDir === 'up') strengthKey = 'scaleGrowing'
-    else if (roiNow >= 0 && roiDir === 'up') strengthKey = 'efficiencyImproving'
-
-    let riskKey = 'none'
-    if (plNow < 0) riskKey = 'plNegative'
-    else if (roiNow < 0) riskKey = 'roiNegative'
-    else if (withdrawalPressureDetected) riskKey = 'withdrawalPressure'
-
-    let actionKey = 'maintainScale'
-    if (overallKey === 'needsAction') actionKey = 'pauseFix'
-    else if (overallKey === 'mixed') actionKey = 'holdImprove'
-    else if (overallKey === 'softening') actionKey = 'monitor'
-    else if (negative) actionKey = 'holdImprove'
 
     return {
-      overall:
-        t(`shareAffiliateReports.finalSummary.value.${overallKey}`) ||
-        (overallKey === 'needsAction'
-          ? 'Performance needs action.'
-          : overallKey === 'mixed'
-            ? 'Performance is mixed.'
-            : overallKey === 'softening'
-              ? 'Performance is stable but softening.'
-              : 'Performance is healthy.'),
-      strength:
-        t(`shareAffiliateReports.finalSummary.strength.${strengthKey}`) ||
-        (strengthKey === 'scaleGrowing'
-          ? 'Net deposits are growing.'
-          : strengthKey === 'efficiencyImproving'
-            ? 'ROI is improving.'
-            : 'P&L is stable.'),
-      risk:
-        t(`shareAffiliateReports.finalSummary.risk.${riskKey}`) ||
-        (riskKey === 'plNegative'
-          ? 'P&L is negative.'
-          : riskKey === 'roiNegative'
-            ? 'ROI is negative.'
-            : riskKey === 'withdrawalPressure'
-              ? 'Withdrawals are high versus deposits.'
-              : 'No material risk detected.'),
-      action:
-        t(`shareAffiliateReports.finalSummary.action.${actionKey}`) ||
-        (actionKey === 'pauseFix'
-          ? 'Pause scaling and fix efficiency.'
-          : actionKey === 'holdImprove'
-            ? 'Keep spend flat and improve conversion.'
-            : actionKey === 'monitor'
-              ? 'Maintain exposure and monitor closely.'
-              : 'Maintain exposure and scale carefully.'),
+      impact:
+        t('shareAffiliateReports.weightFeedback.impact.low') ||
+        'This affiliate has a small share of total net deposits.',
+      next:
+        t('shareAffiliateReports.weightFeedback.next.keepLean') ||
+        'Keep spend lean and scale only after results improve.',
     }
-  }, [current, previous, report?.hasPrevious, kpiContext, t])
+  }, [kpiContext, t])
+
+  const insights = useMemo(() => {
+    const metrics = {
+      netDeposits: Number(current?.totalNetDeposits || 0),
+      pl: Number(current?.totalPL || 0),
+      roi: Number(current?.roi || 0),
+      cpa: Number(kpiContext?.values?.cpa),
+      arpu: Number(kpiContext?.values?.arpu),
+      losingRatioPct,
+    }
+
+    const ranks = {
+      total: Number(insightContext?.total || 20),
+      affiliateRank: insightContext?.affiliateRank || null,
+      crRank: insightContext?.crRank || null,
+      withdrawalsRank: insightContext?.withdrawalsRank || null,
+    }
+
+    const shares = kpiContext?.weights || null
+
+    const cohortInput = {
+      flag: cohort?.overview?.flag?.flag || null,
+    }
+
+    return buildAffiliateInsights({
+      metrics,
+      ranks,
+      deltas: insightDeltas,
+      shares,
+      periodMeta: { periodType },
+      locale,
+      cohort: cohortInput,
+    })
+  }, [
+    current,
+    kpiContext,
+    insightContext,
+    insightDeltas,
+    periodType,
+    locale,
+    cohort?.overview,
+    losingRatioPct,
+  ])
+
+  const narrative = useMemo(() => {
+    const lines = insights?.executive?.lines || []
+    const l1 = lines[0] ? renderParts(lines[0]) : null
+    const l2 = lines[1] ? renderParts(lines[1]) : null
+    const l3 = lines[2] ? renderParts(lines[2]) : null
+    return {
+      p1: (
+        <>
+          {l1}
+          {l2 ? (
+            <>
+              <br />
+              {l2}
+            </>
+          ) : null}
+        </>
+      ),
+      p2: <>{l3}</>,
+    }
+  }, [insights, renderParts])
+
+  const kpiNextStep = useMemo(
+    () => renderParts(insights?.executive?.nextStep || []),
+    [insights, renderParts]
+  )
+
+  const kpiInterpretation = useMemo(() => {
+    const lines = insights?.kpi?.lines || []
+    return (
+      <>
+        {lines.map((ln, idx) => (
+          <React.Fragment key={idx}>
+            {renderParts(ln)}
+            {idx < lines.length - 1 ? ' ' : null}
+          </React.Fragment>
+        ))}
+      </>
+    )
+  }, [insights, renderParts])
+
+  const insightCardBody = useMemo(() => {
+    const isIt = String(locale || '')
+      .toLowerCase()
+      .startsWith('it')
+    const execLines = insights?.executive?.lines || []
+
+    // Avoid repeating the KPI read: keep the intro high-level (what + weight), and let KPI lines carry the details.
+    const introLines = [execLines[0], execLines[2]].filter(Boolean)
+    const execJoined = (
+      <>
+        {introLines.map((ln, idx) => (
+          <React.Fragment key={idx}>
+            {renderParts(ln)}
+            {idx < introLines.length - 1 ? ' ' : null}
+          </React.Fragment>
+        ))}
+      </>
+    )
+
+    return {
+      title: t('shareAffiliateReports.section.insight') || (isIt ? 'Sintesi' : 'Insight'),
+      intro: (
+        <>
+          {isIt ? 'In sintesi: ' : 'In brief: '}
+          {execJoined}
+        </>
+      ),
+      kpiLead: isIt ? 'Lettura KPI: ' : 'KPI read: ',
+    }
+  }, [insights, renderParts, t, locale])
+
+  const finalDecisionSummary = useMemo(() => {
+    const isIt = String(locale || '')
+      .toLowerCase()
+      .startsWith('it')
+    const strengths = (insights?.final?.strengths || []).slice(0, 2)
+
+    const strengthNode = strengths.length ? (
+      <>
+        {strengths.map((s, idx) => (
+          <React.Fragment key={idx}>
+            {renderParts(s)}
+            {idx < strengths.length - 1 ? <span style={{ opacity: 0.6 }}> · </span> : null}
+          </React.Fragment>
+        ))}
+      </>
+    ) : isIt ? (
+      <>
+        <Kw>Punto di forza</Kw>: nessun segnale dominante.
+      </>
+    ) : (
+      <>
+        <Kw>Strength</Kw>: no dominant signal.
+      </>
+    )
+
+    const riskParts = insights?.final?.risk
+    const riskNode = riskParts ? (
+      renderParts(riskParts)
+    ) : isIt ? (
+      <>
+        <Kw>Rischio</Kw>: nessun segnale materiale.
+      </>
+    ) : (
+      <>
+        <Kw>Risk</Kw>: no material signal.
+      </>
+    )
+
+    return {
+      overall: renderParts(insights?.final?.verdict || []),
+      strength: strengthNode,
+      risk: riskNode,
+      action: renderParts(insights?.final?.action || []),
+    }
+  }, [insights, renderParts, locale])
 
   const RankBadge = ({ item }) => {
     if (!item?.showRank || !item?.rank) return null
@@ -1773,70 +1866,7 @@ function PublicAffiliateReportsDetailView({
     }
   }, [current, previous, report?.hasPrevious, periodType])
 
-  const narrative = useMemo(() => {
-    const pieces = []
-    const hasRegs = affiliateRegistrations !== null && affiliateRegistrations !== undefined
-    const hasFtd = ftd !== null && ftd !== undefined
-    const hasND = netDeposits !== null && netDeposits !== undefined
-    const hasPL = pl !== null && pl !== undefined
-    const hasROI = roi !== null && roi !== undefined
-
-    const head = `${selectedAffiliateName}`
-    const periodLabel = selectedPeriodLabel ? ` (${selectedPeriodLabel})` : ''
-
-    const p1Parts = []
-    if (hasRegs)
-      p1Parts.push(
-        `${formatNumberShort(affiliateRegistrations)} ${t('shareAffiliateAnalysis.metric.registrations') || 'Registrations'}`
-      )
-    if (hasFtd)
-      p1Parts.push(`${formatNumberShort(ftd)} ${t('shareAffiliateAnalysis.metric.ftd') || 'FTD'}`)
-    if (hasND)
-      p1Parts.push(
-        `${t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'} ${formatEuro(netDeposits)}`
-      )
-    if (hasPL) p1Parts.push(`${t('shareAffiliateAnalysis.metric.pl') || 'P&L'} ${formatEuro(pl)}`)
-    if (hasROI)
-      p1Parts.push(`${t('shareAffiliateAnalysis.metric.roi') || 'ROI'} ${formatPercent(roi, 1)}`)
-    const p1 = p1Parts.length
-      ? `${head}${periodLabel}: ${p1Parts.join(' · ')}.`
-      : `${head}${periodLabel}.`
-
-    let p2 = kpiFeedback?.meaning || ''
-
-    if (periodTrends) {
-      const ndWord = trendWord(t, periodTrends.nd).toLowerCase()
-      const plWord = trendWord(t, periodTrends.pl).toLowerCase()
-      const roiWord = trendWord(t, periodTrends.roi).toLowerCase()
-      p2 =
-        `${p2} ${t('shareAffiliateReports.rank.vsPrevious') || 'Vs previous period'}: ${t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'} ${ndWord}, ${t('shareAffiliateAnalysis.metric.pl') || 'P&L'} ${plWord}, ${t('shareAffiliateAnalysis.metric.roi') || 'ROI'} ${roiWord}.`.trim()
-    }
-
-    if (weightFeedback?.impact) {
-      p2 = `${p2} ${weightFeedback.impact}`.trim()
-    } else {
-      const w = Number(kpiContext?.weights?.netDepositsPct)
-      if (Number.isFinite(w)) {
-        p2 =
-          `${p2} ${t('shareAffiliateReports.section.weightOnTotal') || 'Weight on total'}: ${formatPercent(w, 1)} ${t('shareAffiliateReports.rank.ofTop20') || 'of Top 20 net deposits'}.`.trim()
-      }
-    }
-
-    return { p1, p2 }
-  }, [
-    affiliateRegistrations,
-    ftd,
-    netDeposits,
-    pl,
-    roi,
-    selectedAffiliateName,
-    selectedPeriodLabel,
-    kpiFeedback,
-    periodTrends,
-    weightFeedback,
-    kpiContext,
-    t,
-  ])
+  // narrative / kpiInterpretation / finalDecisionSummary now come from the deterministic insight engine.
 
   const [showCohortDetails, setShowCohortDetails] = useState(false)
 
@@ -1851,6 +1881,15 @@ function PublicAffiliateReportsDetailView({
   })()
 
   const [headerLayout, setHeaderLayout] = useState(initialHeaderLayout)
+
+  const pageUi = useMemo(() => {
+    const tier = headerLayout === 'wide' ? 'xl' : headerLayout === 'compact' ? 'lg' : headerLayout
+    return {
+      shellMaxWidth: tier === 'xl' ? 1680 : 1480,
+      contentMaxWidth: tier === 'xl' ? 1400 : 1200,
+      pagePadding: tier === 'stack-narrow' ? 12 : tier === 'stack' ? 14 : 18,
+    }
+  }, [headerLayout])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -1933,6 +1972,21 @@ function PublicAffiliateReportsDetailView({
       metricMax: 820,
       metricGap: 10,
     }
+  }, [headerLayout])
+
+  const headerGrid = useMemo(() => {
+    const stacked = headerLayout === 'stack' || headerLayout === 'stack-narrow'
+    return stacked
+      ? {
+          gridTemplateColumns: '1fr',
+          gridTemplateAreas: `"logo" "center" "lang"`,
+          justifyItems: 'center',
+        }
+      : {
+          gridTemplateColumns: 'auto 1fr auto',
+          gridTemplateAreas: `"logo center lang"`,
+          justifyItems: 'stretch',
+        }
   }, [headerLayout])
 
   const CompactMetric = ({ label, value, tone, meta }) => (
@@ -2061,6 +2115,11 @@ function PublicAffiliateReportsDetailView({
       return t('dashboard.health.noData')
     })()
 
+    const cohortPulseCopy = {
+      meaning: renderParts(insights?.cohort?.meaning || []),
+      nextCheck: renderParts(insights?.cohort?.nextCheck || []),
+    }
+
     return (
       <div style={{ marginTop: 26 }}>
         <div
@@ -2155,7 +2214,7 @@ function PublicAffiliateReportsDetailView({
                   >
                     {t('dashboard.cohortHealth.title')}: {cohortHealthLabel}
                   </span>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', fontWeight: 900 }}>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.70)', fontWeight: 750 }}>
                     {cohort?.overview?.econ?.whyKey
                       ? t(cohort.overview.econ.whyKey)
                       : t('dashboard.cohortHealth.noData')}
@@ -2196,20 +2255,16 @@ function PublicAffiliateReportsDetailView({
                   <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 900 }}>
                     {t('dashboard.cohortHealth.meaningLabel')}:
                   </span>{' '}
-                  <span style={{ color: 'var(--text)', fontWeight: 900 }}>
-                    {cohort?.overview?.econ?.meaningKey
-                      ? t(cohort.overview.econ.meaningKey)
-                      : t('dashboard.cohortHealth.interpretationUnavailable')}
+                  <span style={{ color: 'var(--text)', fontWeight: 750 }}>
+                    {cohortPulseCopy.meaning}
                   </span>
                 </div>
                 <div>
                   <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 900 }}>
                     {t('dashboard.cohortHealth.nextCheckLabel')}:
                   </span>{' '}
-                  <span style={{ color: 'var(--text)', fontWeight: 900 }}>
-                    {cohort?.overview?.econ?.nextCheckKey
-                      ? t(cohort.overview.econ.nextCheckKey)
-                      : t('dashboard.cohortHealth.recheckFallback')}
+                  <span style={{ color: 'var(--text)', fontWeight: 750 }}>
+                    {cohortPulseCopy.nextCheck}
                   </span>
                 </div>
               </div>
@@ -2254,14 +2309,23 @@ function PublicAffiliateReportsDetailView({
     t,
     locale,
     showCohortDetails,
+    insights,
+    renderParts,
   ])
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', padding: 18 }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        color: 'var(--text)',
+        padding: pageUi.pagePadding,
+      }}
+    >
       <div
         style={{
           width: '100%',
-          maxWidth: 1480,
+          maxWidth: pageUi.shellMaxWidth,
           margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
@@ -2272,7 +2336,7 @@ function PublicAffiliateReportsDetailView({
           ref={headerRef}
           style={{
             display: 'grid',
-            gridTemplateColumns: 'auto 1fr auto',
+            ...headerGrid,
             alignItems: 'center',
             gap: headerUi.gap,
             paddingBottom: 10,
@@ -2282,11 +2346,19 @@ function PublicAffiliateReportsDetailView({
           <img
             src="/Logo.png"
             alt="Bullwaves"
-            style={{ height: 38, width: 'auto', display: 'block' }}
+            style={{
+              height: 38,
+              width: 'auto',
+              display: 'block',
+              gridArea: 'logo',
+              justifySelf:
+                headerLayout === 'stack' || headerLayout === 'stack-narrow' ? 'center' : 'start',
+            }}
           />
 
           <div
             style={{
+              gridArea: 'center',
               display: 'grid',
               gridTemplateColumns:
                 headerLayout === 'stack-narrow'
@@ -2601,7 +2673,14 @@ function PublicAffiliateReportsDetailView({
             />
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <div
+            style={{
+              gridArea: 'lang',
+              display: 'flex',
+              justifyContent:
+                headerLayout === 'stack' || headerLayout === 'stack-narrow' ? 'center' : 'flex-end',
+            }}
+          >
             <LanguageToggle locale={locale} setLocale={setLocale} />
           </div>
         </div>
@@ -2609,7 +2688,7 @@ function PublicAffiliateReportsDetailView({
         <div
           style={{
             width: '100%',
-            maxWidth: 1200,
+            maxWidth: pageUi.contentMaxWidth,
             margin: '0 auto',
             display: 'flex',
             flexDirection: 'column',
@@ -2773,39 +2852,17 @@ function PublicAffiliateReportsDetailView({
             />
           </div>
 
-          <div style={{ display: 'grid', gap: 10, textAlign: 'center', maxWidth: 980 }}>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                color: 'rgba(255,255,255,0.82)',
-                fontWeight: 850,
-                lineHeight: 1.55,
-              }}
-            >
-              {narrative.p1}
-            </p>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 12,
-                color: 'rgba(255,255,255,0.70)',
-                fontWeight: 850,
-                lineHeight: 1.55,
-              }}
-            >
-              {narrative.p2}
-            </p>
-          </div>
-
           <div
             style={{
-              padding: '12px 14px',
-              borderRadius: 14,
-              border: '1px solid rgba(34,211,238,0.22)',
-              background: 'rgba(34,211,238,0.06)',
-              borderLeft: '4px solid rgba(34,211,238,0.75)',
               width: '100%',
+              maxWidth: 980,
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.02)',
+              padding: '14px 14px',
+              display: 'grid',
+              gap: 10,
+              textAlign: 'center',
             }}
           >
             <div
@@ -2817,18 +2874,74 @@ function PublicAffiliateReportsDetailView({
                 fontWeight: 950,
               }}
             >
-              {t('shareAffiliateReports.feedback.nextStep') || 'Next step'}
+              {insightCardBody.title}
             </div>
             <div
               style={{
-                marginTop: 6,
-                fontSize: 14,
-                color: 'rgba(255,255,255,0.92)',
-                fontWeight: 1000,
-                lineHeight: 1.35,
+                margin: 0,
+                fontSize: 13,
+                color: 'rgba(255,255,255,0.82)',
+                fontWeight: 750,
+                lineHeight: 1.55,
               }}
             >
-              {kpiFeedback.nextStep}
+              {insightCardBody.intro}
+            </div>
+
+            <div
+              aria-hidden="true"
+              style={{
+                height: 1,
+                background: 'rgba(255,255,255,0.06)',
+                margin: '2px 0',
+              }}
+            />
+
+            <div
+              style={{
+                fontSize: 12,
+                color: 'rgba(255,255,255,0.70)',
+                fontWeight: 750,
+                lineHeight: 1.45,
+              }}
+            >
+              <span style={{ color: 'rgba(255,255,255,0.72)', fontWeight: 800 }}>
+                {insightCardBody.kpiLead}
+              </span>
+              {kpiInterpretation}
+            </div>
+
+            <div
+              aria-hidden="true"
+              style={{
+                height: 1,
+                background: 'rgba(34,211,238,0.12)',
+                margin: '2px 0',
+              }}
+            />
+
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: 'rgba(255,255,255,0.55)',
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.35,
+                  fontWeight: 950,
+                }}
+              >
+                {t('shareAffiliateReports.feedback.nextStep') || 'Next step'}
+              </div>
+              <div
+                style={{
+                  fontSize: 14,
+                  color: 'rgba(255,255,255,0.92)',
+                  fontWeight: 800,
+                  lineHeight: 1.35,
+                }}
+              >
+                {kpiNextStep}
+              </div>
             </div>
           </div>
 
@@ -2851,8 +2964,12 @@ function PublicAffiliateReportsDetailView({
                 value={conversionRate === null ? '—' : formatPercent(conversionRate, 1)}
               />
               <Badge
-                label={t('shareAffiliateReports.metric.loginRatio') || 'Login ratio%'}
-                value={loginRatio === null ? '—' : formatPercent(loginRatio, 1)}
+                label={t('shareAffiliateReports.metric.loginRatio') || 'LoSign ratio%'}
+                value={loSignRatio === null ? '—' : formatPercent(loSignRatio, 1)}
+              />
+              <Badge
+                label={t('shareAffiliateReports.metric.losingRatio') || 'Losing ratio% (P&L/ND)'}
+                value={losingRatioPct === null ? '—' : formatPercent(losingRatioPct, 2)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.arpu') || 'ARPU'}
@@ -2960,48 +3077,12 @@ function PublicAffiliateReportsDetailView({
                 style={{
                   fontSize: 14,
                   color: 'rgba(255,255,255,0.88)',
-                  fontWeight: 950,
+                  fontWeight: 800,
                   lineHeight: 1.45,
                 }}
               >
                 {finalDecisionSummary.overall}
               </div>
-              {cohort?.overview?.econ ? (
-                <div
-                  style={{
-                    fontSize: 13,
-                    color: 'rgba(255,255,255,0.74)',
-                    fontWeight: 850,
-                    lineHeight: 1.45,
-                  }}
-                >
-                  <span style={{ color: 'rgba(255,255,255,0.55)', fontWeight: 950 }}>
-                    {t('dashboard.cohortHealth.title')} (
-                    {t('shareAffiliateAnalysis.metric.netDeposits')}):
-                  </span>{' '}
-                  M3{' '}
-                  {cohort.overview.econ.retainedM3 === null ||
-                  cohort.overview.econ.retainedM3 === undefined
-                    ? '—'
-                    : `${cohort.overview.econ.retainedM3.toFixed(1)}%`}
-                  {', '}M6{' '}
-                  {cohort.overview.econ.retainedM6 === null ||
-                  cohort.overview.econ.retainedM6 === undefined
-                    ? '—'
-                    : `${cohort.overview.econ.retainedM6.toFixed(1)}%`}
-                  {', '}half-life{' '}
-                  {(() => {
-                    const v = cohort.overview.econ.halfLife
-                    if (v === null || v === undefined)
-                      return t('dashboard.cohortHealth.halfLife.notReached')
-                    const m = Math.max(1, Math.round(v))
-                    return t('dashboard.cohortHealth.halfLife.reached', {
-                      months: m,
-                      unit: m === 1 ? t('common.month') : t('common.months'),
-                    })
-                  })()}
-                </div>
-              ) : null}
               <div
                 style={{
                   fontSize: 13,
@@ -3032,7 +3113,7 @@ function PublicAffiliateReportsDetailView({
                 style={{
                   fontSize: 13,
                   color: 'rgba(255,255,255,0.80)',
-                  fontWeight: 950,
+                  fontWeight: 850,
                   lineHeight: 1.45,
                 }}
               >
@@ -3524,6 +3605,102 @@ export default function PublicAffiliateAnalysisSharePage({
     periodContext,
   ])
 
+  const insightContext = useMemo(() => {
+    if (!selectedAffiliateName) return null
+
+    const top = (top20Affiliates || []).map((a) => a.affiliate).filter(Boolean)
+    if (!top.length) return null
+
+    const hasWindow =
+      effectivePeriodType !== 'since-ever' &&
+      periodContext.startId !== null &&
+      periodContext.endId !== null
+    const curWindow = hasWindow
+      ? { startId: periodContext.startId, endId: periodContext.endId }
+      : null
+
+    const inRange = (row, startId, endId) => {
+      const id = monthIdForRow(row)
+      if (id === null) return false
+      return id >= startId && id <= endId
+    }
+
+    const applyWindow = (rows, window) => {
+      if (!window) return rows
+      return (rows || []).filter((r) => inRange(r, window.startId, window.endId))
+    }
+
+    const sum = (rows, field) => (rows || []).reduce((acc, r) => acc + (Number(r?.[field]) || 0), 0)
+
+    const selKey = normalizeKey(selectedAffiliateName)
+    const rows = []
+
+    for (const affiliate of top) {
+      const aKey = normalizeKey(affiliate)
+      const mediaAll = mediaByAffiliateKey.get(aKey) || []
+      const payAll = paymentsByAffiliateKey.get(aKey) || []
+      const media = applyWindow(mediaAll, curWindow)
+      const pay = applyWindow(payAll, curWindow)
+
+      const kpis = deriveAffiliateKpis({ mediaRows: media, paymentsRows: pay })
+      const regs = Number(kpis.registrations || 0)
+      const ftd = Number(kpis.ftd || 0)
+      const cr = regs ? (ftd / Math.max(regs, 1)) * 100 : null
+      const withdrawals = sum(media, 'withdrawals')
+
+      rows.push({ id: aKey, cr, withdrawals })
+    }
+
+    const rankHighBetter = (field) => {
+      const list = rows
+        .map((r) => ({ id: r.id, v: Number(r[field]) }))
+        .filter((r) => r.id && Number.isFinite(r.v))
+        .sort((a, b) => b.v - a.v)
+      const map = new Map()
+      list.forEach((r, idx) => map.set(r.id, idx + 1))
+      return map
+    }
+
+    const rankLowBetter = (field) => {
+      const list = rows
+        .map((r) => ({ id: r.id, v: Number(r[field]) }))
+        .filter((r) => r.id && Number.isFinite(r.v))
+        .sort((a, b) => a.v - b.v)
+      const map = new Map()
+      list.forEach((r, idx) => map.set(r.id, idx + 1))
+      return map
+    }
+
+    const crRankMap = rankHighBetter('cr')
+    // IMPORTANT business rule: withdrawals ranking is inverse (lower is better)
+    const withdrawalsRankMap = rankLowBetter('withdrawals')
+
+    const affiliateRank = (() => {
+      const list = top20Affiliates || []
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i]
+        if (normalizeKey(a?.affiliate) !== selKey) continue
+        const r = typeof a?.rank === 'number' ? a.rank : i + 1
+        return Number.isFinite(r) ? r : i + 1
+      }
+      return null
+    })()
+
+    return {
+      total: top.length,
+      affiliateRank,
+      crRank: crRankMap.get(selKey) || null,
+      withdrawalsRank: withdrawalsRankMap.get(selKey) || null,
+    }
+  }, [
+    selectedAffiliateName,
+    top20Affiliates,
+    mediaByAffiliateKey,
+    paymentsByAffiliateKey,
+    effectivePeriodType,
+    periodContext,
+  ])
+
   const shareBase = useMemo(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     if (boardMode) return `${origin}/share/affiliate-reports`
@@ -3609,6 +3786,7 @@ export default function PublicAffiliateAnalysisSharePage({
       companyRegistrations={companyRegistrations}
       report={report}
       kpiContext={kpiContext}
+      insightContext={insightContext}
       cumulativeSeries={affiliateCumulativeSeries}
     />
   )

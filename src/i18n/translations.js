@@ -173,14 +173,15 @@ export const translations = {
     'shareAffiliateReports.metric.ftdClients': 'FTD clients',
     'shareAffiliateReports.metric.qftdClients': 'QFTD clients',
     'shareAffiliateReports.metric.depositsCount': 'Deposits count',
-    'shareAffiliateReports.metric.loginRatio': 'Login ratio%',
+    'shareAffiliateReports.metric.loginRatio': 'LoSign ratio%',
+    'shareAffiliateReports.metric.losingRatio': 'Losing ratio% (P&L/ND)',
     'shareAffiliateReports.metric.avgDepositsCountPerFtdUser': 'Avg deposits count / FTD user',
     'shareAffiliateReports.metric.positionsCount': 'Positions count',
     'shareAffiliateReports.section.cohortPulse': 'Cohort financial pulse',
     'shareAffiliateReports.section.cohortPulse.note':
       'Net Deposits (absolute) — same dataset as /cohort.',
     'shareAffiliateReports.section.cohortPulse.scope':
-      'This cohort view is global (all users) and not specific to this affiliate.',
+      'Market-level pulse (not affiliate-specific).',
     'shareAffiliateReports.section.cohortPulse.error': 'Unable to load cohort data',
     'shareAffiliateReports.compare.label': 'Compare with',
     'shareAffiliateReports.compare.placeholder': 'Type affiliate name…',
@@ -305,6 +306,8 @@ export const translations = {
       'Monitor for a plateau and decide on scaling.',
     'shareAffiliateReports.chartFeedback.next.checkData':
       'Check the data upload and monitor the next period.',
+
+    'shareAffiliateReports.section.insight': 'Insight',
 
     'shareAffiliateReports.finalSummary.overallAssessment': 'Overall assessment:',
     'shareAffiliateReports.finalSummary.keyStrength': 'Key strength:',
@@ -2142,7 +2145,8 @@ export const translations = {
     'shareAffiliateReports.metric.ftdClients': 'Clienti FTD',
     'shareAffiliateReports.metric.qftdClients': 'Clienti QFTD',
     'shareAffiliateReports.metric.depositsCount': 'Numero depositi',
-    'shareAffiliateReports.metric.loginRatio': 'Login ratio%',
+    'shareAffiliateReports.metric.loginRatio': 'LoSign ratio%',
+    'shareAffiliateReports.metric.losingRatio': 'Losing ratio% (P&L/Depositi netti)',
     'shareAffiliateReports.metric.avgDepositsCountPerFtdUser':
       'Media depositi (count) / utente FTD',
     'shareAffiliateReports.metric.positionsCount': 'Numero posizioni',
@@ -2150,7 +2154,7 @@ export const translations = {
     'shareAffiliateReports.section.cohortPulse.note':
       'Net Deposits (valori assoluti) — stesso dataset di /cohort.',
     'shareAffiliateReports.section.cohortPulse.scope':
-      'Questa vista cohort è globale (tutti gli utenti) e non è specifica di questo affiliato.',
+      "Indicatore di mercato (non specifico dell'affiliate).",
     'shareAffiliateReports.section.cohortPulse.error': 'Impossibile caricare i dati cohort',
     'shareAffiliateReports.compare.label': 'Confronta con',
     'shareAffiliateReports.compare.placeholder': 'Scrivi il nome affiliate…',
@@ -2280,6 +2284,8 @@ export const translations = {
       'Monitorare un possibile plateau e decidere sullo scale.',
     'shareAffiliateReports.chartFeedback.next.checkData':
       'Verificare il caricamento dati e monitorare il prossimo periodo.',
+
+    'shareAffiliateReports.section.insight': 'Sintesi',
 
     'shareAffiliateReports.finalSummary.overallAssessment': 'Valutazione complessiva:',
     'shareAffiliateReports.finalSummary.keyStrength': 'Punto di forza:',
