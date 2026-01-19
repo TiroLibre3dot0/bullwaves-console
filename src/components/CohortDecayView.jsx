@@ -58,6 +58,11 @@ export default function CohortDecayView({
 
   const affiliateKey = normalizeKey(selectedAffiliate)
 
+  const yearFilter =
+    selectedYear === 'all' || selectedYear === null || selectedYear === undefined
+      ? null
+      : Number(selectedYear)
+
   const availableYears = useMemo(() => {
     const set = new Set()
     rows.forEach((r) => {
@@ -68,12 +73,26 @@ export default function CohortDecayView({
 
   const filteredRows = useMemo(() => {
     return rows
-      .filter((r) => (selectedYear === 'all' ? true : r.cohortYear === selectedYear))
+      .filter((r) => (yearFilter === null ? true : Number(r.cohortYear) === yearFilter))
       .filter((r) =>
         affiliateKey === 'all' ? true : normalizeKey(r.affiliate || '') === affiliateKey
       )
       .sort((a, b) => a.baseAbs - b.baseAbs)
   }, [rows, selectedYear, affiliateKey])
+
+  const effectiveCalendarEntries = useMemo(() => {
+    const list = Array.isArray(calendarEntries) ? calendarEntries : []
+    if (!list.length) return []
+    if (yearFilter === null || !Number.isFinite(yearFilter)) return list
+
+    // Keep the time axis constrained to the selected calendar year.
+    // abs is built as year * 12 + monthIndex in cohort generators.
+    return list.filter((e) => {
+      const abs = Number(e?.abs)
+      if (!Number.isFinite(abs)) return false
+      return Math.floor(abs / 12) === yearFilter
+    })
+  }, [calendarEntries, yearFilter])
 
   const aggregatedRows = useMemo(() => {
     const byCohort = new Map()
@@ -129,8 +148,8 @@ export default function CohortDecayView({
   }, [aggregatedRows])
 
   const averageSeries = useMemo(() => {
-    if (!aggregatedRows.length || !calendarEntries.length) return []
-    return calendarEntries.map((entry) => {
+    if (!aggregatedRows.length || !effectiveCalendarEntries.length) return []
+    return effectiveCalendarEntries.map((entry) => {
       const vals = aggregatedRows
         .map((row) => {
           const offset = entry.abs - row.baseAbs
@@ -142,7 +161,7 @@ export default function CohortDecayView({
       if (!vals.length) return null
       return vals.reduce((s, v) => s + v, 0) / vals.length
     })
-  }, [aggregatedRows, calendarEntries, valueMode])
+  }, [aggregatedRows, effectiveCalendarEntries, valueMode])
 
   const displayedRows = useMemo(() => {
     if (selectedRows.length) {
@@ -184,7 +203,7 @@ export default function CohortDecayView({
       const color = palette[idx % palette.length]
 
       if (valueMode === 'absolute') {
-        const barData = calendarEntries.map((entry) => {
+        const barData = effectiveCalendarEntries.map((entry) => {
           const offset = entry.abs - row.baseAbs
           return offset === 0 ? Number(row.cohortSize || 0) : null
         })
@@ -200,7 +219,7 @@ export default function CohortDecayView({
         })
       }
 
-      const lineData = calendarEntries.map((entry) => {
+      const lineData = effectiveCalendarEntries.map((entry) => {
         const offset = entry.abs - row.baseAbs
         if (offset < 0 || offset >= row.values.length) return null
         const source = valueMode === 'percent' ? row.normalized : row.values
@@ -225,13 +244,13 @@ export default function CohortDecayView({
     })
 
     return {
-      labels: calendarEntries.map((e) => e.label),
+      labels: effectiveCalendarEntries.map((e) => e.label),
       datasets,
     }
-  }, [calendarEntries, displayedRows, valueMode, showAverageLine, averageSeries])
+  }, [effectiveCalendarEntries, displayedRows, valueMode, showAverageLine, averageSeries])
 
   const trendOptions = useMemo(() => {
-    const showAllMonthTicks = selectedYear !== 'all' && calendarEntries.length <= 12
+    const showAllMonthTicks = selectedYear !== 'all' && effectiveCalendarEntries.length <= 12
     return {
       responsive: true,
       maintainAspectRatio: false,
@@ -250,7 +269,7 @@ export default function CohortDecayView({
               const rowId = ctx.dataset?._rowId
               if (rowId) {
                 const row = rowById.get(rowId)
-                const entry = calendarEntries[ctx.dataIndex]
+                const entry = effectiveCalendarEntries[ctx.dataIndex]
                 const offset = row && entry ? entry.abs - row.baseAbs : null
                 const absVal =
                   row && offset !== null && offset >= 0 && offset < (row.values || []).length
@@ -302,14 +321,14 @@ export default function CohortDecayView({
         },
       },
     }
-  }, [valueMode, selectedYear, calendarEntries, rowById])
+  }, [valueMode, selectedYear, effectiveCalendarEntries, rowById])
 
   const computeCurveFlags = useMemo(() => {
     // Precompute flag anchors in data-space (x index + y value).
-    if (!displayedRows.length || !calendarEntries.length) return []
+    if (!displayedRows.length || !effectiveCalendarEntries.length) return []
     return displayedRows
       .map((row, idx) => {
-        const startIndex = calendarEntries.findIndex((e) => e.abs === row.baseAbs)
+        const startIndex = effectiveCalendarEntries.findIndex((e) => e.abs === row.baseAbs)
         if (startIndex < 0) return null
         const size = Number(row.cohortSize || 0)
         const yVal = valueMode === 'percent' ? 100 : Number(row.values?.[0] || 0) || 0
@@ -322,7 +341,7 @@ export default function CohortDecayView({
         }
       })
       .filter(Boolean)
-  }, [displayedRows, calendarEntries, valueMode])
+  }, [displayedRows, effectiveCalendarEntries, valueMode])
 
   useEffect(() => {
     const update = () => {
@@ -518,7 +537,7 @@ export default function CohortDecayView({
                   <tr>
                     <th className="text-left">Cohort date</th>
                     <th className="text-right">Initial cohort size</th>
-                    {calendarEntries.map((entry) => (
+                    {effectiveCalendarEntries.map((entry) => (
                       <th key={entry.label} className="text-center text-xs text-slate-400">
                         {entry.label}
                       </th>
@@ -544,7 +563,7 @@ export default function CohortDecayView({
                       >
                         {formatNumberShort(row.cohortSize || 0)}
                       </td>
-                      {calendarEntries.map((entry) => {
+                      {effectiveCalendarEntries.map((entry) => {
                         const offset = entry.abs - row.baseAbs
                         const source = valueMode === 'percent' ? row.normalized : row.values
                         const value = offset < 0 || offset >= source.length ? null : source[offset]
@@ -588,7 +607,7 @@ export default function CohortDecayView({
                   {!aggregatedRows.length && (
                     <tr>
                       <td
-                        colSpan={calendarEntries.length + 2}
+                        colSpan={effectiveCalendarEntries.length + 2}
                         className="text-center text-slate-500 text-sm py-4"
                       >
                         No cohorts match the selected filters.

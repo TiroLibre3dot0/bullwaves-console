@@ -46,6 +46,11 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // Ensure new deployments take effect without users being stuck on an older SW + cached HTML.
+        // This makes share-report UX updates visible immediately (or after a single refresh at most).
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
       },
     }),
   ],

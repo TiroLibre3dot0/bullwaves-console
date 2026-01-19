@@ -179,6 +179,8 @@ export const translations = {
     'shareAffiliateReports.section.cohortPulse': 'Cohort financial pulse',
     'shareAffiliateReports.section.cohortPulse.note':
       'Net Deposits (absolute) — same dataset as /cohort.',
+    'shareAffiliateReports.section.cohortPulse.scope':
+      'This cohort view is global (all users) and not specific to this affiliate.',
     'shareAffiliateReports.section.cohortPulse.error': 'Unable to load cohort data',
     'shareAffiliateReports.compare.label': 'Compare with',
     'shareAffiliateReports.compare.placeholder': 'Type affiliate name…',
@@ -2147,6 +2149,8 @@ export const translations = {
     'shareAffiliateReports.section.cohortPulse': 'Polso finanziario cohort',
     'shareAffiliateReports.section.cohortPulse.note':
       'Net Deposits (valori assoluti) — stesso dataset di /cohort.',
+    'shareAffiliateReports.section.cohortPulse.scope':
+      'Questa vista cohort è globale (tutti gli utenti) e non è specifica di questo affiliato.',
     'shareAffiliateReports.section.cohortPulse.error': 'Impossibile caricare i dati cohort',
     'shareAffiliateReports.compare.label': 'Confronta con',
     'shareAffiliateReports.compare.placeholder': 'Scrivi il nome affiliate…',

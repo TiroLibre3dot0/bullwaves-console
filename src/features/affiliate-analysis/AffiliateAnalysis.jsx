@@ -86,7 +86,7 @@ export default function AffiliateAnalysis() {
       const data = await resp.json().catch(() => null)
       const token = data?.token
       if (resp.ok && token && String(token).startsWith('share_')) {
-        href = `${origin}/share/login?token=${encodeURIComponent(token)}&next=${encodeURIComponent('/share/affiliate-reports')}`
+        href = `${origin}/share/affiliate-reports/${encodeURIComponent(token)}`
       }
     } catch {
       // ignore
@@ -98,7 +98,7 @@ export default function AffiliateAnalysis() {
         const token = `share_local_${randomTokenSuffix(16)}`
         const key = `bw_share_affrep:${token}`
         window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
-        href = `${origin}/share/login?token=${encodeURIComponent(token)}&next=${encodeURIComponent('/share/affiliate-reports')}`
+        href = `${origin}/share/affiliate-reports/${encodeURIComponent(token)}`
       } catch {
         // ignore
       }

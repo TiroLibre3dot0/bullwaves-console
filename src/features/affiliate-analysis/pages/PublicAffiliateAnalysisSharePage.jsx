@@ -2040,6 +2040,10 @@ function PublicAffiliateReportsDetailView({
           <div style={{ fontSize: 11, color: 'var(--muted)' }}>
             {t('shareAffiliateReports.section.cohortPulse.note')}
           </div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.60)' }}>
+            {t('shareAffiliateReports.section.cohortPulse.scope') ||
+              'This cohort view is global (all users), not specific to this affiliate.'}
+          </div>
         </div>
 
         {cohort?.loading ? (
@@ -2174,19 +2178,22 @@ function PublicAffiliateReportsDetailView({
                   padding: 10,
                 }}
               >
-                <CohortDecayView
-                  rows={cohort?.calendarView?.rows || []}
-                  calendarEntries={cohort?.calendarView?.entries || []}
-                  startAbs={cohort?.calendarView?.startAbs || 0}
-                  selectedAffiliate="all"
-                  selectedYear="all"
-                  onYearChange={() => {}}
-                  metricLabel={t('shareAffiliateAnalysis.metric.netDeposits')}
-                  layout="split"
-                  showAverageLine
-                  hideControls
-                  defaultValueMode="absolute"
-                />
+                <style>{`@keyframes bwFadeUp { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+                <div style={{ animation: 'bwFadeUp 180ms ease-out' }}>
+                  <CohortDecayView
+                    rows={cohort?.calendarView?.rows || []}
+                    calendarEntries={cohort?.calendarView?.entries || []}
+                    startAbs={cohort?.calendarView?.startAbs || 0}
+                    selectedAffiliate="all"
+                    selectedYear={2025}
+                    onYearChange={() => {}}
+                    metricLabel={t('shareAffiliateAnalysis.metric.netDeposits')}
+                    layout="split"
+                    showAverageLine
+                    hideControls
+                    defaultValueMode="absolute"
+                  />
+                </div>
               </div>
             ) : null}
           </>
