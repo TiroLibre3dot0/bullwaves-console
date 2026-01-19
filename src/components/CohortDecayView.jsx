@@ -35,12 +35,26 @@ export default function CohortDecayView({
   layout = 'toggle', // 'toggle' (legacy) | 'split' (chart + table side by side)
   showAverageLine = true,
   metricLabel = 'Net deposits',
+  hideControls = false,
+  defaultValueMode = 'percent', // 'percent' | 'absolute'
 }) {
   const [viewMode, setViewMode] = useState('heatmap')
-  const [valueMode, setValueMode] = useState('percent')
+  const [valueMode, setValueMode] = useState(() =>
+    defaultValueMode === 'absolute' ? 'absolute' : 'percent'
+  )
   const [selectedRows, setSelectedRows] = useState([])
   const chartRef = useRef(null)
   const [curveFlags, setCurveFlags] = useState([])
+
+  const subtitle = useMemo(() => {
+    const base = `${metricLabel} per cohort month (Month 0 onward).`
+    if (hideControls) {
+      return valueMode === 'percent'
+        ? `${base} View: retained %.`
+        : `${base} View: absolute values.`
+    }
+    return `${base} Toggle for retained % vs absolute.`
+  }, [metricLabel, hideControls, valueMode])
 
   const affiliateKey = normalizeKey(selectedAffiliate)
 
@@ -55,7 +69,9 @@ export default function CohortDecayView({
   const filteredRows = useMemo(() => {
     return rows
       .filter((r) => (selectedYear === 'all' ? true : r.cohortYear === selectedYear))
-      .filter((r) => (affiliateKey === 'all' ? true : normalizeKey(r.affiliate || '') === affiliateKey))
+      .filter((r) =>
+        affiliateKey === 'all' ? true : normalizeKey(r.affiliate || '') === affiliateKey
+      )
       .sort((a, b) => a.baseAbs - b.baseAbs)
   }, [rows, selectedYear, affiliateKey])
 
@@ -68,10 +84,14 @@ export default function CohortDecayView({
         values: Array.from({ length: row.values?.length || 12 }).fill(0),
         cohortSize: 0,
       }
-      const values = Array.from({ length: Math.max(existing.values.length, row.values?.length || 0) }).map(
-        (_, idx) => (existing.values[idx] || 0) + ((row.values || [])[idx] || 0)
-      )
-      byCohort.set(key, { ...existing, values, cohortSize: (existing.cohortSize || 0) + (row.cohortSize || 0) })
+      const values = Array.from({
+        length: Math.max(existing.values.length, row.values?.length || 0),
+      }).map((_, idx) => (existing.values[idx] || 0) + ((row.values || [])[idx] || 0))
+      byCohort.set(key, {
+        ...existing,
+        values,
+        cohortSize: (existing.cohortSize || 0) + (row.cohortSize || 0),
+      })
     })
 
     return Array.from(byCohort.values())
@@ -99,7 +119,8 @@ export default function CohortDecayView({
   }, [aggregatedRows])
 
   const churn = useMemo(() => {
-    const grab = (idx) => avg(aggregatedRows.map((r) => r.normalized[idx]).filter((v) => v !== null && v !== undefined))
+    const grab = (idx) =>
+      avg(aggregatedRows.map((r) => r.normalized[idx]).filter((v) => v !== null && v !== undefined))
     return {
       m1: grab(1),
       m3: grab(3),
@@ -110,12 +131,14 @@ export default function CohortDecayView({
   const averageSeries = useMemo(() => {
     if (!aggregatedRows.length || !calendarEntries.length) return []
     return calendarEntries.map((entry) => {
-      const vals = aggregatedRows.map((row) => {
-        const offset = entry.abs - row.baseAbs
-        if (offset < 0 || offset >= row.normalized.length) return null
-        const source = valueMode === 'percent' ? row.normalized : row.values
-        return source[offset]
-      }).filter((v) => v !== null && v !== undefined)
+      const vals = aggregatedRows
+        .map((row) => {
+          const offset = entry.abs - row.baseAbs
+          if (offset < 0 || offset >= row.normalized.length) return null
+          const source = valueMode === 'percent' ? row.normalized : row.values
+          return source[offset]
+        })
+        .filter((v) => v !== null && v !== undefined)
       if (!vals.length) return null
       return vals.reduce((s, v) => s + v, 0) / vals.length
     })
@@ -209,86 +232,96 @@ export default function CohortDecayView({
 
   const trendOptions = useMemo(() => {
     const showAllMonthTicks = selectedYear !== 'all' && calendarEntries.length <= 12
-    return ({
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: true, labels: { color: '#cbd5e1' } },
-      tooltip: {
-        callbacks: {
-          label: (ctx) => {
-            const val = ctx.parsed.y
-            if (val === null || val === undefined) return ''
-            if (valueMode !== 'percent') {
-              return `${ctx.dataset.label}: ${formatNumberShort(val)}`
-            }
-
-            let suffix = ''
-            const rowId = ctx.dataset?._rowId
-            if (rowId) {
-              const row = rowById.get(rowId)
-              const entry = calendarEntries[ctx.dataIndex]
-              const offset = row && entry ? entry.abs - row.baseAbs : null
-              const absVal = row && offset !== null && offset >= 0 && offset < (row.values || []).length ? row.values[offset] : null
-              if (absVal !== null && absVal !== undefined && Number.isFinite(absVal) && absVal < 0) {
-                // Percent view: negative absolute value is clamped to 0%.
-                suffix = ' (net outflow)'
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: true, labels: { color: '#cbd5e1' } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const val = ctx.parsed.y
+              if (val === null || val === undefined) return ''
+              if (valueMode !== 'percent') {
+                return `${ctx.dataset.label}: ${formatNumberShort(val)}`
               }
-            }
 
-            return `${ctx.dataset.label}: ${formatPercent(val, 0)}${suffix}`
+              let suffix = ''
+              const rowId = ctx.dataset?._rowId
+              if (rowId) {
+                const row = rowById.get(rowId)
+                const entry = calendarEntries[ctx.dataIndex]
+                const offset = row && entry ? entry.abs - row.baseAbs : null
+                const absVal =
+                  row && offset !== null && offset >= 0 && offset < (row.values || []).length
+                    ? row.values[offset]
+                    : null
+                if (
+                  absVal !== null &&
+                  absVal !== undefined &&
+                  Number.isFinite(absVal) &&
+                  absVal < 0
+                ) {
+                  // Percent view: negative absolute value is clamped to 0%.
+                  suffix = ' (net outflow)'
+                }
+              }
+
+              return `${ctx.dataset.label}: ${formatPercent(val, 0)}${suffix}`
+            },
+            footer: (items) => {
+              if (!items?.length) return ''
+              if (valueMode !== 'percent') return ''
+              const v = items[0]?.parsed?.y
+              if (!Number.isFinite(v)) return ''
+              if (v <= 100) return ''
+              return 'Values above 100% indicate additional deposits after acquisition and do not imply recovery of long-term retention.'
+            },
           },
-          footer: (items) => {
-            if (!items?.length) return ''
-            if (valueMode !== 'percent') return ''
-            const v = items[0]?.parsed?.y
-            if (!Number.isFinite(v)) return ''
-            if (v <= 100) return ''
-            return 'Values above 100% indicate additional deposits after acquisition and do not imply recovery of long-term retention.'
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: '#cbd5e1',
+            maxRotation: 0,
+            minRotation: 0,
+            autoSkip: !showAllMonthTicks,
           },
+          grid: { display: false },
+        },
+        y: {
+          grace: valueMode === 'percent' ? '12%' : '18%',
+          suggestedMax: valueMode === 'percent' ? 110 : undefined,
+          suggestedMin: valueMode === 'percent' ? 0 : undefined,
+          ticks: {
+            color: '#cbd5e1',
+            callback: (v) => (valueMode === 'percent' ? `${v}%` : formatNumberShort(v)),
+          },
+          grid: { color: 'rgba(148,163,184,0.2)' },
         },
       },
-    },
-    scales: {
-      x: {
-        ticks: {
-          color: '#cbd5e1',
-          maxRotation: 0,
-          minRotation: 0,
-          autoSkip: !showAllMonthTicks,
-        },
-        grid: { display: false },
-      },
-      y: {
-        grace: valueMode === 'percent' ? '12%' : '18%',
-        suggestedMax: valueMode === 'percent' ? 110 : undefined,
-        suggestedMin: valueMode === 'percent' ? 0 : undefined,
-        ticks: {
-          color: '#cbd5e1',
-          callback: (v) => (valueMode === 'percent' ? `${v}%` : formatNumberShort(v)),
-        },
-        grid: { color: 'rgba(148,163,184,0.2)' },
-      },
-    },
-    })
+    }
   }, [valueMode, selectedYear, calendarEntries, rowById])
 
   const computeCurveFlags = useMemo(() => {
     // Precompute flag anchors in data-space (x index + y value).
     if (!displayedRows.length || !calendarEntries.length) return []
-    return displayedRows.map((row, idx) => {
-      const startIndex = calendarEntries.findIndex((e) => e.abs === row.baseAbs)
-      if (startIndex < 0) return null
-      const size = Number(row.cohortSize || 0)
-      const yVal = valueMode === 'percent' ? 100 : (Number(row.values?.[0] || 0) || 0)
-      return {
-        id: row.id,
-        startIndex,
-        yVal,
-        size,
-        color: palette[idx % palette.length],
-      }
-    }).filter(Boolean)
+    return displayedRows
+      .map((row, idx) => {
+        const startIndex = calendarEntries.findIndex((e) => e.abs === row.baseAbs)
+        if (startIndex < 0) return null
+        const size = Number(row.cohortSize || 0)
+        const yVal = valueMode === 'percent' ? 100 : Number(row.values?.[0] || 0) || 0
+        return {
+          id: row.id,
+          startIndex,
+          yVal,
+          size,
+          color: palette[idx % palette.length],
+        }
+      })
+      .filter(Boolean)
   }, [displayedRows, calendarEntries, valueMode])
 
   useEffect(() => {
@@ -321,9 +354,9 @@ export default function CohortDecayView({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-sm font-semibold text-slate-200 m-0">Time-based cohort decay</h3>
-          <p className="text-xs text-slate-400 m-0">{metricLabel} per cohort month (Month 0 onward). Toggle for retained %.</p>
+          <p className="text-xs text-slate-400 m-0">{subtitle}</p>
         </div>
-        {layout === 'toggle' && (
+        {!hideControls && layout === 'toggle' && (
           <div className="flex items-center gap-2 text-xs text-slate-300">
             <div className="flex items-center gap-1">
               <button
@@ -345,51 +378,65 @@ export default function CohortDecayView({
         )}
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 mt-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-slate-400">Year</label>
-          <select
-            value={selectedYear}
-            onChange={(e) => onYearChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-            className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2"
-          >
-            <option value="all">All years</option>
-            {availableYears.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-        <div className="text-xs text-slate-400 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900/60">
-          Affiliate filter: {selectedAffiliate === 'all' ? 'All affiliates' : selectedAffiliate}
-        </div>
-        {(layout === 'toggle' ? viewMode === 'trend' : true) && (
-          <div className="flex items-center gap-2 text-xs text-slate-300">
-            <span>Y scale:</span>
-            <button
-              className={`btn secondary ${valueMode === 'percent' ? 'active' : ''}`}
-              onClick={() => setValueMode('percent')}
-              style={{ padding: '4px 8px', height: 26 }}
+      {!hideControls && (
+        <div className="flex flex-wrap items-end gap-3 mt-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs text-slate-400">Year</label>
+            <select
+              value={selectedYear}
+              onChange={(e) =>
+                onYearChange(e.target.value === 'all' ? 'all' : Number(e.target.value))
+              }
+              className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2"
             >
-              % retained
-            </button>
-            <button
-              className={`btn secondary ${valueMode === 'absolute' ? 'active' : ''}`}
-              onClick={() => setValueMode('absolute')}
-              style={{ padding: '4px 8px', height: 26 }}
-            >
-              Absolute
-            </button>
+              <option value="all">All years</option>
+              {availableYears.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
           </div>
-        )}
-      </div>
+          <div className="text-xs text-slate-400 px-3 py-2 rounded-lg border border-slate-700 bg-slate-900/60">
+            Affiliate filter: {selectedAffiliate === 'all' ? 'All affiliates' : selectedAffiliate}
+          </div>
+          {(layout === 'toggle' ? viewMode === 'trend' : true) && (
+            <div className="flex items-center gap-2 text-xs text-slate-300">
+              <span>Y scale:</span>
+              <button
+                className={`btn secondary ${valueMode === 'percent' ? 'active' : ''}`}
+                onClick={() => setValueMode('percent')}
+                style={{ padding: '4px 8px', height: 26 }}
+              >
+                % retained
+              </button>
+              <button
+                className={`btn secondary ${valueMode === 'absolute' ? 'active' : ''}`}
+                onClick={() => setValueMode('absolute')}
+                style={{ padding: '4px 8px', height: 26 }}
+              >
+                Absolute
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
-        {[{ key: 'm1', label: 'Month 1' }, { key: 'm3', label: 'Month 3' }, { key: 'm6', label: 'Month 6' }].map((c, idx) => {
+        {[
+          { key: 'm1', label: 'Month 1' },
+          { key: 'm3', label: 'Month 3' },
+          { key: 'm6', label: 'Month 6' },
+        ].map((c, idx) => {
           const value = churn[c.key]
           return (
             <div key={c.key} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
-              <div className="text-xs text-slate-400">Average retained value across selected cohorts</div>
-              <div className="text-[11px] text-slate-500">{c.label} ({metricLabel})</div>
+              <div className="text-xs text-slate-400">
+                Average retained value across selected cohorts
+              </div>
+              <div className="text-[11px] text-slate-500">
+                {c.label} ({metricLabel})
+              </div>
               <div className="text-lg font-semibold" style={{ color: heatText(value ?? 0) }}>
                 {value === null ? '—' : formatPercent(value, 0)}
               </div>
@@ -400,17 +447,28 @@ export default function CohortDecayView({
 
       <div className={`mt-5 ${layout === 'split' ? 'grid grid-cols-2 gap-4' : ''}`}>
         {(layout === 'toggle' ? viewMode === 'trend' : true) && (
-          <div className={`${layout === 'split' ? 'col-span-1' : ''}`} style={{ height: layout === 'split' ? 360 : 320 }}>
+          <div
+            className={`${layout === 'split' ? 'col-span-1' : ''}`}
+            style={{ height: layout === 'split' ? 360 : 320 }}
+          >
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="text-xs font-semibold text-slate-300 m-0">Sample cohorts + average</h4>
-                <p className="text-[11px] text-slate-500 m-0">Not all cohorts are shown. Average line includes all filtered cohorts (same calendar-aligned dataset as the table).</p>
+                <h4 className="text-xs font-semibold text-slate-300 m-0">
+                  Sample cohorts + average
+                </h4>
+                <p className="text-[11px] text-slate-500 m-0">
+                  Not all cohorts are shown. Average line includes all filtered cohorts (same
+                  calendar-aligned dataset as the table).
+                </p>
               </div>
-              <div className="text-xs text-slate-400">{displayedRows.length} sample cohort(s) plotted</div>
+              <div className="text-xs text-slate-400">
+                {displayedRows.length} sample cohort(s) plotted
+              </div>
             </div>
             {valueMode === 'percent' && (
               <div className="text-[11px] text-slate-500 mb-2">
-                Values above 100% indicate additional deposits after acquisition and do not imply recovery of long-term retention. Months with net outflow are shown as 0%.
+                Values above 100% indicate additional deposits after acquisition and do not imply
+                recovery of long-term retention. Months with net outflow are shown as 0%.
               </div>
             )}
             <div className="h-full w-full relative">
@@ -440,13 +498,18 @@ export default function CohortDecayView({
           <div className={`${layout === 'split' ? 'col-span-1' : ''}`}>
             <div className="flex items-center justify-between mb-2">
               <div>
-                <h4 className="text-xs font-semibold text-slate-300 m-0">Time-based cohort decay</h4>
-                <p className="text-[11px] text-slate-500 m-0">One row per cohort: cohort date, size, and Month 0→n {metricLabel.toLowerCase()}.</p>
+                <h4 className="text-xs font-semibold text-slate-300 m-0">
+                  Time-based cohort decay
+                </h4>
+                <p className="text-[11px] text-slate-500 m-0">
+                  One row per cohort: cohort date, size, and Month 0→n {metricLabel.toLowerCase()}.
+                </p>
               </div>
             </div>
             {valueMode === 'percent' && (
               <div className="text-[11px] text-slate-500 mb-2">
-                Values above 100% indicate additional deposits after acquisition and do not imply recovery of long-term retention. Months with net outflow are shown as 0%.
+                Values above 100% indicate additional deposits after acquisition and do not imply
+                recovery of long-term retention. Months with net outflow are shown as 0%.
               </div>
             )}
             <div className="overflow-x-auto">
@@ -456,31 +519,54 @@ export default function CohortDecayView({
                     <th className="text-left">Cohort date</th>
                     <th className="text-right">Initial cohort size</th>
                     {calendarEntries.map((entry) => (
-                      <th key={entry.label} className="text-center text-xs text-slate-400">{entry.label}</th>
+                      <th key={entry.label} className="text-center text-xs text-slate-400">
+                        {entry.label}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {aggregatedRows.map((row) => (
-                    <tr key={row.id} onClick={() => toggleRow(row.id)} style={{ cursor: 'pointer' }}>
+                    <tr
+                      key={row.id}
+                      onClick={() => toggleRow(row.id)}
+                      style={{ cursor: 'pointer' }}
+                    >
                       <td className="text-sm text-slate-200">
                         <span title={row.cohortDateRaw || undefined}>{row.cohortLabel}</span>
-                        {selectedRows.includes(row.id) && <span className="ml-2 text-[11px] text-slate-400">(selected)</span>}
+                        {selectedRows.includes(row.id) && (
+                          <span className="ml-2 text-[11px] text-slate-400">(selected)</span>
+                        )}
                       </td>
-                      <td className="text-right text-xs text-slate-300" title={formatNumberShort(row.cohortSize || 0)}>
+                      <td
+                        className="text-right text-xs text-slate-300"
+                        title={formatNumberShort(row.cohortSize || 0)}
+                      >
                         {formatNumberShort(row.cohortSize || 0)}
                       </td>
                       {calendarEntries.map((entry) => {
                         const offset = entry.abs - row.baseAbs
                         const source = valueMode === 'percent' ? row.normalized : row.values
                         const value = offset < 0 || offset >= source.length ? null : source[offset]
-                        const absVal = offset < 0 || offset >= (row.values || []).length ? null : row.values[offset]
-                        const isNetOutflow = valueMode === 'percent' && absVal !== null && absVal !== undefined && Number.isFinite(absVal) && absVal < 0
+                        const absVal =
+                          offset < 0 || offset >= (row.values || []).length
+                            ? null
+                            : row.values[offset]
+                        const isNetOutflow =
+                          valueMode === 'percent' &&
+                          absVal !== null &&
+                          absVal !== undefined &&
+                          Number.isFinite(absVal) &&
+                          absVal < 0
                         return (
                           <td
                             key={`${row.id}-${entry.abs}`}
                             className="text-center text-xs"
-                            style={{ background: valueMode === 'percent' ? heatColor(value) : 'transparent', color: valueMode === 'percent' ? heatText(value) : '#e2e8f0' }}
+                            style={{
+                              background:
+                                valueMode === 'percent' ? heatColor(value) : 'transparent',
+                              color: valueMode === 'percent' ? heatText(value) : '#e2e8f0',
+                            }}
                             title={
                               value === null
                                 ? undefined
@@ -495,13 +581,16 @@ export default function CohortDecayView({
                                 ? `${Math.round(value)}%${isNetOutflow ? '' : ''}`
                                 : formatNumberShort(value)}
                           </td>
-                        )}
-                      )}
+                        )
+                      })}
                     </tr>
                   ))}
                   {!aggregatedRows.length && (
                     <tr>
-                      <td colSpan={calendarEntries.length + 2} className="text-center text-slate-500 text-sm py-4">
+                      <td
+                        colSpan={calendarEntries.length + 2}
+                        className="text-center text-slate-500 text-sm py-4"
+                      >
                         No cohorts match the selected filters.
                       </td>
                     </tr>

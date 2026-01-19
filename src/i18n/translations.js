@@ -26,6 +26,7 @@ export const translations = {
     'sidebar.executiveSuite': 'Executive Suite',
     'sidebar.executive.summary': 'Summary',
     'sidebar.executive.view': 'View',
+    'sidebar.marketingPlan': 'Marketing Execution',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analysis',
     'sidebar.affiliate.payments': 'Payments',
@@ -34,6 +35,364 @@ export const translations = {
     'sidebar.analysis': 'Report Analysis',
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.traderPoints': 'Trader Points',
+
+    // Share — Affiliate Analysis (board report)
+    'shareAffiliateAnalysis.header.eyebrow': 'Board report',
+    'shareAffiliateAnalysis.header.title': 'Affiliate Performance — Board View',
+    'shareAffiliateAnalysis.header.subtitle':
+      'Select an affiliate to open the final performance report.',
+    'shareAffiliateAnalysis.period.monthly': 'Monthly',
+    'shareAffiliateAnalysis.period.quarterly': 'Quarterly',
+    'shareAffiliateAnalysis.period.semiAnnual': 'Semi-annual',
+    'shareAffiliateAnalysis.period.annual': 'Annual',
+    'shareAffiliateAnalysis.entry.selectedPeriod': 'Period: {period}',
+    'shareAffiliateAnalysis.entry.noPeriod': 'Period: —',
+    'shareAffiliateAnalysis.card.reference': 'Ref. period',
+    'shareAffiliateAnalysis.card.profit': 'Profit',
+    'shareAffiliateAnalysis.card.netDeposits': 'Net Deposits',
+    'shareAffiliateAnalysis.card.roi': 'ROI',
+    'shareAffiliateAnalysis.footer.note':
+      'Read-only share link. Values reflect the latest available uploaded reports.',
+    'shareAffiliateAnalysis.back': '← Back to affiliates',
+    'shareAffiliateAnalysis.status.performing': 'Performing',
+    'shareAffiliateAnalysis.status.stable': 'Stable',
+    'shareAffiliateAnalysis.status.underperforming': 'Underperforming',
+    'shareAffiliateAnalysis.accessDenied.title': 'Access denied',
+    'shareAffiliateAnalysis.accessDenied.subtitle': 'This share link is invalid or has expired.',
+    'shareAffiliateAnalysis.error.title': 'Unable to load data',
+    'shareAffiliateAnalysis.report.eyebrow': 'Final report',
+    'shareAffiliateAnalysis.report.title': 'Affiliate Performance Report — {affiliate}',
+    'shareAffiliateAnalysis.report.subtitle': 'Board-level summary. Read-only.',
+    'shareAffiliateAnalysis.report.executiveSnapshot': 'Executive snapshot',
+    'shareAffiliateAnalysis.report.performanceOverview': 'Performance overview',
+    'shareAffiliateAnalysis.report.trendReading': 'Trend & reading',
+    'shareAffiliateAnalysis.report.periodComparison': 'Period comparison',
+    'shareAffiliateAnalysis.report.boardInterpretation': 'Board interpretation',
+    'shareAffiliateAnalysis.report.decisionLayer': 'Decision layer',
+    'shareAffiliateAnalysis.report.periodLabel': 'All available data',
+    'shareAffiliateAnalysis.report.disclaimer':
+      'This report uses the same underlying analysis as the internal console, presented in board-level format.',
+    'shareAffiliateAnalysis.metric.referencePeriod': 'Reference period',
+    'shareAffiliateAnalysis.metric.periodType': 'Period type',
+    'shareAffiliateAnalysis.metric.status': 'Status',
+    'shareAffiliateAnalysis.metric.profit': 'Profit',
+    'shareAffiliateAnalysis.metric.roi': 'ROI',
+    'shareAffiliateAnalysis.metric.registrations': 'Registrations',
+    'shareAffiliateAnalysis.metric.ftd': 'FTD',
+    'shareAffiliateAnalysis.metric.qftd': 'Qualified FTD',
+    'shareAffiliateAnalysis.metric.netDeposits': 'Net Deposits',
+    'shareAffiliateAnalysis.metric.pl': 'P&L',
+    'shareAffiliateAnalysis.metric.payments': 'Payments',
+    'shareAffiliateAnalysis.trend.notEnoughData':
+      'Not enough history to calculate month-over-month changes.',
+    'shareAffiliateAnalysis.trend.profit': 'Profit',
+    'shareAffiliateAnalysis.trend.netDeposits': 'Net deposits',
+    'shareAffiliateAnalysis.trend.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.profit': 'Profit',
+    'shareAffiliateAnalysis.comparison.netDeposits': 'Net deposits',
+    'shareAffiliateAnalysis.comparison.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.up': 'Up',
+    'shareAffiliateAnalysis.comparison.down': 'Down',
+    'shareAffiliateAnalysis.comparison.flat': 'Flat',
+    'shareAffiliateAnalysis.comparison.vsLabel': 'Compared to: {prev}',
+    'shareAffiliateAnalysis.interpretation.positive':
+      'Overall performance is healthy: contribution is positive and deposits are present.',
+    'shareAffiliateAnalysis.interpretation.negative':
+      'Performance needs attention: contribution is negative for the selected period.',
+    'shareAffiliateAnalysis.interpretation.neutral':
+      'Performance is stable: monitor for persistence of results over time.',
+    'shareAffiliateAnalysis.interpretation.profitUp':
+      'Compared to the previous period, profitability improved.',
+    'shareAffiliateAnalysis.interpretation.profitDown':
+      'Compared to the previous period, profitability weakened.',
+    'shareAffiliateAnalysis.interpretation.profitFlat':
+      'Compared to the previous period, profitability is broadly unchanged.',
+    'shareAffiliateAnalysis.decision.whatThisMeans': 'What this means: {status} for {ref}.',
+    'shareAffiliateAnalysis.decision.option.scale':
+      'Scale selectively: increase volume while keeping payout efficiency.',
+    'shareAffiliateAnalysis.decision.option.maintainQuality':
+      'Maintain quality: protect traffic quality and conversion.',
+    'shareAffiliateAnalysis.decision.option.monitor':
+      'Monitor monthly: confirm that profit and deposits remain stable.',
+    'shareAffiliateAnalysis.decision.option.improveLeadQuality':
+      'Improve lead quality: prioritize sources with stronger conversion and value.',
+    'shareAffiliateAnalysis.decision.option.focusRetention':
+      'Focus on retention: improve post-registration activation to lift net deposits.',
+
+    // Share — Board login
+    'shareBoardLogin.eyebrow': 'Board access',
+    'shareBoardLogin.title': 'Open shared report',
+    'shareBoardLogin.subtitle':
+      'Enter the access code to view the shared board report in read-only mode.',
+    'shareBoardLogin.badge.readOnly': 'Read-only',
+    'shareBoardLogin.field.accessCode': 'Access code',
+    'shareBoardLogin.field.placeholder': 'Paste the access code (e.g. share_...)',
+    'shareBoardLogin.helper': 'Tip: access codes usually start with “share_” or “share_local_”.',
+    'shareBoardLogin.cta': 'Continue',
+    'shareBoardLogin.clear': 'Clear saved code',
+    'shareBoardLogin.note':
+      'This access code grants read-only access to the shared report area. It does not grant access to internal dashboards.',
+    'shareBoardLogin.error.missing': 'Please enter an access code.',
+    'shareBoardLogin.error.invalid': 'Invalid or expired access code.',
+    'shareBoardLogin.error.network': 'Network error. Please try again.',
+
+    // Share — Affiliate Reports (board view, v2)
+    'shareAffiliateReports.header.title': 'Affiliate Performance — Board View',
+    'shareAffiliateReports.header.subtitle': 'Read-only executive summary',
+    'shareAffiliateReports.header.note':
+      'Top affiliates by commissions. Click an affiliate to open the full report.',
+    'shareAffiliateReports.header.changeAffiliate': 'Change affiliate',
+    'shareAffiliateReports.header.selectAffiliate': 'Select an affiliate to open another report',
+    'shareAffiliateReports.card.netDeposits': 'Net Deposits',
+    'shareAffiliateReports.card.pl': 'P&L',
+    'shareAffiliateReports.card.weight': 'Weight',
+    'shareAffiliateReports.footer.note':
+      'Board view is read-only. Data source: internal Affiliate → Analysis.',
+    'shareAffiliateReports.period.sinceEver': 'Since Ever',
+    'shareAffiliateReports.period.ytd': 'Year to date',
+    'shareAffiliateReports.period.label': 'Period',
+    'shareAffiliateReports.report.eyebrow': 'Affiliate report',
+    'shareAffiliateReports.section.execSnapshot': 'Executive snapshot',
+    'shareAffiliateReports.exec.selectedPeriod': 'Selected period',
+    'shareAffiliateReports.section.kpiPerformance': 'KPI performance',
+    'shareAffiliateReports.kpi.rank': 'Rank',
+    'shareAffiliateReports.metric.cr': 'CR%',
+    'shareAffiliateReports.section.aggregates': 'Aggregates',
+    'shareAffiliateReports.section.kpis': 'KPIs',
+    'shareAffiliateReports.metric.ftd': 'FTD',
+    'shareAffiliateReports.metric.qftd': 'QFTD',
+    'shareAffiliateReports.metric.deposits': 'Deposits',
+    'shareAffiliateReports.metric.withdrawals': 'Withdrawals',
+    'shareAffiliateReports.metric.profit': 'Profit',
+    'shareAffiliateReports.metric.arpu': 'ARPU',
+    'shareAffiliateReports.metric.cpa': 'CPA',
+    'shareAffiliateReports.metric.avgDepositsPerUser': 'Avg deposits / FTD user',
+    'shareAffiliateReports.metric.affiliateRegistrations': 'Affiliate registrations',
+    'shareAffiliateReports.metric.companyRegistrations': 'Company registrations',
+    'shareAffiliateReports.metric.companyRegistrations.hint': 'Comparable scale indicator',
+    'shareAffiliateReports.metric.ftdClients': 'FTD clients',
+    'shareAffiliateReports.metric.qftdClients': 'QFTD clients',
+    'shareAffiliateReports.metric.depositsCount': 'Deposits count',
+    'shareAffiliateReports.metric.loginRatio': 'Login ratio%',
+    'shareAffiliateReports.metric.avgDepositsCountPerFtdUser': 'Avg deposits count / FTD user',
+    'shareAffiliateReports.metric.positionsCount': 'Positions count',
+    'shareAffiliateReports.section.cohortPulse': 'Cohort financial pulse',
+    'shareAffiliateReports.section.cohortPulse.note':
+      'Net Deposits (absolute) — same dataset as /cohort.',
+    'shareAffiliateReports.section.cohortPulse.error': 'Unable to load cohort data',
+    'shareAffiliateReports.compare.label': 'Compare with',
+    'shareAffiliateReports.compare.placeholder': 'Type affiliate name…',
+    'shareAffiliateReports.compare.clear': 'Clear',
+    'shareAffiliateReports.compare.notFound': 'Affiliate not found',
+    'shareAffiliateReports.compare.same': 'Same affiliate selected',
+    'shareAffiliateReports.compare.delta': 'Δ',
+    'shareAffiliateReports.chart.title': 'Platform growth (cumulative)',
+    'shareAffiliateReports.chart.noData': 'No data for chart',
+    'shareAffiliateReports.chart.aria.cumulative': 'Affiliate growth cumulative chart',
+    'shareAffiliateReports.chart.legend.ftd': 'FTD (cum.)',
+    'shareAffiliateReports.chart.legend.regs': 'Regs (cum.)',
+    'shareAffiliateReports.chart.legend.qftd': 'QFTD (cum.)',
+    'shareAffiliateReports.chart.tooltip.regs': 'Regs',
+    'shareAffiliateReports.chart.tooltip.ftd': 'FTD',
+    'shareAffiliateReports.chart.tooltip.qftd': 'QFTD',
+    'shareAffiliateReports.section.weightOnTotal': 'Weight on total',
+    'shareAffiliateReports.rank.ofTop20': 'of Top 20 net deposits',
+    'shareAffiliateReports.weight.payments': 'Commissions weight (Top 20)',
+    'shareAffiliateReports.weight.netDeposits': 'Net Deposits weight (Top 20)',
+    'shareAffiliateReports.weight.pl': 'P&L weight (Top 20)',
+    'shareAffiliateReports.section.periodComparison': 'Period comparison',
+    'shareAffiliateReports.interpretation.positive':
+      'Strong value creation with meaningful contribution.',
+    'shareAffiliateReports.interpretation.actionablePositive':
+      'Maintain exposure and scale selectively if consistency persists.',
+    'shareAffiliateReports.interpretation.negative':
+      'Value creation is negative in the selected period.',
+    'shareAffiliateReports.interpretation.actionableNegative':
+      'Constrain exposure until efficiency improves.',
+    'shareAffiliateReports.interpretation.mixed':
+      'Contribution is mixed; prioritize quality and monitor closely.',
+    'shareAffiliateReports.section.weightRanking': 'Weight & ranking',
+    'shareAffiliateReports.rank.roi': 'ROI',
+    'shareAffiliateReports.rank.deposits': 'Deposits',
+    'shareAffiliateReports.rank.pl': 'P&L',
+    'shareAffiliateReports.rank.payments': 'Payments',
+    'shareAffiliateReports.rank.ofTotal': 'of total',
+    'shareAffiliateReports.rank.vsPrevious': 'vs previous period',
+    'shareAffiliateReports.rank.noData': 'Ranking is not available for the selected period.',
+    'shareAffiliateReports.section.trend': 'Trend & period comparison',
+    'shareAffiliateReports.trend.sinceEver': 'Since Ever view has no previous equivalent period.',
+    'shareAffiliateReports.trend.profit': 'Profit',
+    'shareAffiliateReports.trend.netDeposits': 'Net Deposits',
+    'shareAffiliateReports.trend.ftd': 'FTD',
+    'shareAffiliateReports.trend.vsPrevious': 'vs previous period',
+    'shareAffiliateReports.section.decision': 'Board-level implications',
+    'shareAffiliateReports.section.scale': 'Scale',
+    'shareAffiliateReports.section.efficiency': 'Efficiency',
+    'shareAffiliateReports.weight.shareOfTop20': 'Share of Top 20 affiliates',
+    'shareAffiliateReports.periodHint.volumeDriven': ' (volume-driven)',
+    'shareAffiliateReports.periodHint.marginDriven': ' (margin-driven)',
+    'shareAffiliateReports.periodHint.efficiencyImproved': ' (efficiency improved)',
+    'shareAffiliateReports.periodHint.efficiencyWorsened': ' (efficiency weakened)',
+    'shareAffiliateReports.board.block.status': 'Status',
+    'shareAffiliateReports.board.block.attention': 'Attention / risk',
+    'shareAffiliateReports.board.block.actionBias': 'Action bias',
+    'shareAffiliateReports.board.status.healthy': 'Healthy',
+    'shareAffiliateReports.board.status.negative': 'Value negative',
+    'shareAffiliateReports.board.status.neutral': 'Mixed',
+    'shareAffiliateReports.board.attention.profitNegative': 'Profit negative',
+    'shareAffiliateReports.board.attention.roiNegative': 'ROI negative',
+    'shareAffiliateReports.board.attention.netDepositsNegative': 'Net deposits negative',
+    'shareAffiliateReports.board.attention.monitor': 'Monitor',
+    'shareAffiliateReports.board.action.scaleSelectively': 'Scale',
+    'shareAffiliateReports.board.action.optimizeBeforeScaling': 'Optimize',
+    'shareAffiliateReports.board.action.reduceExposure': 'Reduce',
+    'shareAffiliateReports.board.action.monitorNoIntervention': 'Monitor',
+    'shareAffiliateReports.chart.guided': 'Guided trajectory (cumulative)',
+
+    // Share — Affiliate Reports (text feedback)
+    'shareAffiliateReports.feedback.whatItMeans': 'What it means:',
+    'shareAffiliateReports.feedback.nextStep': 'Next step:',
+    'shareAffiliateReports.feedback.impact': 'Impact:',
+    'shareAffiliateReports.feedback.trendReading': 'Trend reading:',
+
+    'shareAffiliateReports.kpiFeedback.meaning.negativeBoth': 'Net deposits and P&L are negative.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveDepositsNegativePl':
+      'Net deposits are positive but P&L is negative.',
+    'shareAffiliateReports.kpiFeedback.meaning.positivePlNegativeDeposits':
+      'P&L is positive but net deposits are negative.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveButRoiNegative':
+      'Net deposits and P&L are positive but ROI is negative.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveSoftening':
+      'Results are positive but trends are weakening.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveStable': 'Results are positive and stable.',
+
+    'shareAffiliateReports.kpiFeedback.next.stopScaling':
+      'Stop scaling and review sources and costs.',
+    'shareAffiliateReports.kpiFeedback.next.holdCutCosts': 'Hold spend and reduce costs.',
+    'shareAffiliateReports.kpiFeedback.next.checkQuality':
+      'Check deposit quality and monitor withdrawals.',
+    'shareAffiliateReports.kpiFeedback.next.fixRoi': 'Keep spend flat and fix ROI before scaling.',
+    'shareAffiliateReports.kpiFeedback.next.monitorBeforeScale':
+      'Maintain exposure and monitor the next period.',
+    'shareAffiliateReports.kpiFeedback.next.scaleCarefully':
+      'Maintain exposure and scale carefully.',
+
+    'shareAffiliateReports.weightFeedback.impact.high':
+      'This affiliate drives a large share of total net deposits.',
+    'shareAffiliateReports.weightFeedback.impact.low':
+      'This affiliate has a small share of total net deposits.',
+    'shareAffiliateReports.weightFeedback.next.protectChannel':
+      'Protect this channel and review quality regularly.',
+    'shareAffiliateReports.weightFeedback.next.keepLean':
+      'Keep spend lean and scale only after results improve.',
+
+    'shareAffiliateReports.chartFeedback.trend.risingAll': 'Registrations and FTD keep rising.',
+    'shareAffiliateReports.chartFeedback.trend.risingRegsFlatFtd':
+      'Registrations rise but FTD is flat.',
+    'shareAffiliateReports.chartFeedback.trend.risingFtdFlatRegs':
+      'FTD rises while registrations are flat.',
+    'shareAffiliateReports.chartFeedback.trend.flat': 'The curve is flat.',
+    'shareAffiliateReports.chartFeedback.trend.limited': 'The curve has limited history.',
+    'shareAffiliateReports.chartFeedback.trend.noData': 'The chart is not available.',
+
+    'shareAffiliateReports.chartFeedback.next.watchConversion':
+      'Watch conversion and costs and confirm stability.',
+    'shareAffiliateReports.chartFeedback.next.checkLeadQuality':
+      'Check lead quality and adjust sources.',
+    'shareAffiliateReports.chartFeedback.next.monitorPlateau':
+      'Monitor for a plateau and decide on scaling.',
+    'shareAffiliateReports.chartFeedback.next.checkData':
+      'Check the data upload and monitor the next period.',
+
+    'shareAffiliateReports.finalSummary.overallAssessment': 'Overall assessment:',
+    'shareAffiliateReports.finalSummary.keyStrength': 'Key strength:',
+    'shareAffiliateReports.finalSummary.keyRisk': 'Key risk:',
+    'shareAffiliateReports.finalSummary.recommendedAction': 'Recommended action:',
+
+    'shareAffiliateReports.finalSummary.value.healthy': 'Performance is healthy.',
+    'shareAffiliateReports.finalSummary.value.mixed': 'Performance is mixed.',
+    'shareAffiliateReports.finalSummary.value.needsAction': 'Performance needs action.',
+    'shareAffiliateReports.finalSummary.value.softening': 'Performance is stable but softening.',
+
+    'shareAffiliateReports.finalSummary.strength.scaleGrowing': 'Net deposits are growing.',
+    'shareAffiliateReports.finalSummary.strength.efficiencyImproving': 'ROI is improving.',
+    'shareAffiliateReports.finalSummary.strength.stableProfit': 'P&L is stable.',
+
+    'shareAffiliateReports.finalSummary.risk.plNegative': 'P&L is negative.',
+    'shareAffiliateReports.finalSummary.risk.roiNegative': 'ROI is negative.',
+    'shareAffiliateReports.finalSummary.risk.withdrawalPressure':
+      'Withdrawals are high versus deposits.',
+    'shareAffiliateReports.finalSummary.risk.none': 'No material risk detected.',
+
+    'shareAffiliateReports.finalSummary.action.pauseFix': 'Pause scaling and fix efficiency.',
+    'shareAffiliateReports.finalSummary.action.holdImprove':
+      'Keep spend flat and improve conversion.',
+    'shareAffiliateReports.finalSummary.action.monitor': 'Maintain exposure and monitor closely.',
+    'shareAffiliateReports.finalSummary.action.maintainScale':
+      'Maintain exposure and scale carefully.',
+    'shareAffiliateReports.decisionOverview.title': 'Decision overview',
+    'shareAffiliateReports.decisionOverview.trajectory': 'Trajectory',
+    'shareAffiliateReports.decisionOverview.growthQuality': 'Growth quality',
+    'shareAffiliateReports.decisionOverview.riskSignal': 'Risk signal',
+    'shareAffiliateReports.decisionOverview.positioning': 'Positioning',
+    'shareAffiliateReports.decisionOverview.nextReview': 'Next review',
+    'shareAffiliateReports.decisionOverview.value.improving': 'Improving',
+    'shareAffiliateReports.decisionOverview.value.stable': 'Stable',
+    'shareAffiliateReports.decisionOverview.value.deteriorating': 'Deteriorating',
+    'shareAffiliateReports.decisionOverview.value.volumeDriven': 'Volume-driven',
+    'shareAffiliateReports.decisionOverview.value.efficiencyDriven': 'Efficiency-driven',
+    'shareAffiliateReports.decisionOverview.value.mixed': 'Mixed',
+    'shareAffiliateReports.decisionOverview.value.noMaterialRisk': 'No material risk detected',
+    'shareAffiliateReports.decisionOverview.value.conversionPressure':
+      'Conversion pressure detected',
+    'shareAffiliateReports.decisionOverview.value.withdrawalPressure':
+      'Withdrawal pressure detected',
+    'shareAffiliateReports.decisionOverview.value.profitabilityPressure':
+      'Profitability pressure detected',
+    'shareAffiliateReports.decisionOverview.value.aboveAvg': 'Above Top 20 average',
+    'shareAffiliateReports.decisionOverview.value.inlineAvg': 'In line with Top 20 average',
+    'shareAffiliateReports.decisionOverview.value.belowAvg': 'Below Top 20 average',
+    'shareAffiliateReports.decisionOverview.value.review30': 'Review in 30 days',
+    'shareAffiliateReports.decisionOverview.value.review60': 'Review in 60 days',
+    'shareAffiliateReports.decisionOverview.value.review90': 'Review in 90 days',
+    'shareAffiliateReports.decisionNotes.verdictLabel': 'Executive verdict',
+    'shareAffiliateReports.decisionNotes.driversLabel': 'Performance drivers',
+    'shareAffiliateReports.decisionNotes.risksLabel': 'Risks & conditions',
+    'shareAffiliateReports.decisionNotes.actionLabel': 'Action guidance',
+    'shareAffiliateReports.decisionNotes.verdict.template':
+      '{impact} contributor with {efficiency} and {profitability}.',
+    'shareAffiliateReports.decisionNotes.verdict.templateMonitor':
+      '{impact} contributor with {efficiency} under monitoring.',
+    'shareAffiliateReports.decisionNotes.fragment.impact.highImpact': 'High-impact',
+    'shareAffiliateReports.decisionNotes.fragment.impact.solid': 'Solid',
+    'shareAffiliateReports.decisionNotes.fragment.impact.moderate': 'Moderate',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.strong': 'strong efficiency',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.mixed': 'mixed efficiency',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.weak': 'weak efficiency',
+    'shareAffiliateReports.decisionNotes.fragment.profitability.stable': 'stable profitability',
+    'shareAffiliateReports.decisionNotes.fragment.profitability.underPressure':
+      'profitability under pressure',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsHigh': 'High net deposits share',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsMeaningful':
+      'Meaningful net deposits share',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsModerate': 'Moderate net deposits share',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyAbove': 'Efficiency above peer average',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyInline':
+      'Efficiency in line with peer average',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyBelow': 'Efficiency below peer average',
+    'shareAffiliateReports.decisionNotes.driver.trajectory': 'Trajectory {value}',
+    'shareAffiliateReports.decisionNotes.risk.rankSoftening': 'Rank softening',
+    'shareAffiliateReports.decisionNotes.action.scaleSelectively':
+      'Scale selectively while maintaining traffic quality',
+    'shareAffiliateReports.decisionNotes.action.maintainMonitor':
+      'Maintain exposure and monitor efficiency',
+    'shareAffiliateReports.decisionNotes.action.delayConversion':
+      'Delay scaling pending conversion improvement',
+    'shareAffiliateReports.decisionNotes.action.holdProfitability':
+      'Hold scaling pending profitability stabilization',
+    'shareAffiliateReports.decisionNotes.action.monitorWithdrawals':
+      'Maintain exposure and monitor withdrawal pressure',
+    'shareAffiliateReports.decisionNotes.action.holdMonitor': 'Hold scaling and monitor closely',
 
     // Report Analysis
     'analysis.header.label': 'Analysis',
@@ -111,6 +470,7 @@ export const translations = {
 
     // Common
     'common.show': 'Show',
+    'common.viewDetails': 'View details',
     'common.hide': 'Hide',
     'common.all': 'All',
     'common.info': 'Info',
@@ -823,6 +1183,12 @@ export const translations = {
     'affiliateAnalysis.topAffiliates.cohortNo': 'No Cohort',
 
     'affiliateAnalysis.button.backToTopAffiliates': '← Back to Top Affiliates',
+
+    'affiliateAnalysis.share.button': 'Share report',
+    'affiliateAnalysis.share.creating': 'Creating…',
+    'affiliateAnalysis.share.copied': 'Copied',
+    'affiliateAnalysis.share.hint': 'Creates a public, read-only board report link',
+    'affiliateAnalysis.share.error': 'Unable to create share link',
 
     'affiliateAnalysis.header.title': 'Affiliate Analysis – {affiliate}',
     'affiliateAnalysis.header.subtitle': 'Performance overview · Period: {period}',
@@ -1625,6 +1991,7 @@ export const translations = {
     'sidebar.executiveSuite': 'Executive Suite',
     'sidebar.executive.summary': 'Summary',
     'sidebar.executive.view': 'View',
+    'sidebar.marketingPlan': 'Esecuzione Marketing',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analysis',
     'sidebar.affiliate.payments': 'Pagamenti',
@@ -1633,6 +2000,376 @@ export const translations = {
     'sidebar.analysis': 'Analisi Report',
     'sidebar.fraud': 'Monitoraggio Frodi',
     'sidebar.traderPoints': 'Trader Points',
+
+    // Share — Affiliate Analysis (board report)
+    'shareAffiliateAnalysis.header.eyebrow': 'Report board',
+    'shareAffiliateAnalysis.header.title': 'Performance Affiliati — Vista Board',
+    'shareAffiliateAnalysis.header.subtitle':
+      'Seleziona un affiliato per aprire il report finale di performance.',
+    'shareAffiliateAnalysis.period.monthly': 'Mensile',
+    'shareAffiliateAnalysis.period.quarterly': 'Trimestrale',
+    'shareAffiliateAnalysis.period.semiAnnual': 'Semestrale',
+    'shareAffiliateAnalysis.period.annual': 'Annuale',
+    'shareAffiliateAnalysis.entry.selectedPeriod': 'Periodo: {period}',
+    'shareAffiliateAnalysis.entry.noPeriod': 'Periodo: —',
+    'shareAffiliateAnalysis.card.reference': 'Periodo rif.',
+    'shareAffiliateAnalysis.card.profit': 'Profitto',
+    'shareAffiliateAnalysis.card.netDeposits': 'Depositi netti',
+    'shareAffiliateAnalysis.card.roi': 'ROI',
+    'shareAffiliateAnalysis.footer.note':
+      'Link condiviso in sola lettura. I valori riflettono gli ultimi report caricati.',
+    'shareAffiliateAnalysis.back': '← Torna agli affiliati',
+    'shareAffiliateAnalysis.status.performing': 'Performante',
+    'shareAffiliateAnalysis.status.stable': 'Stabile',
+    'shareAffiliateAnalysis.status.underperforming': 'Sottoperformante',
+    'shareAffiliateAnalysis.accessDenied.title': 'Accesso negato',
+    'shareAffiliateAnalysis.accessDenied.subtitle': 'Questo link non è valido o è scaduto.',
+    'shareAffiliateAnalysis.error.title': 'Impossibile caricare i dati',
+    'shareAffiliateAnalysis.report.eyebrow': 'Report finale',
+    'shareAffiliateAnalysis.report.title': 'Report Performance Affiliato — {affiliate}',
+    'shareAffiliateAnalysis.report.subtitle': 'Sintesi per il board. Sola lettura.',
+    'shareAffiliateAnalysis.report.executiveSnapshot': 'Executive snapshot',
+    'shareAffiliateAnalysis.report.performanceOverview': 'Panoramica performance',
+    'shareAffiliateAnalysis.report.trendReading': 'Trend & lettura',
+    'shareAffiliateAnalysis.report.periodComparison': 'Confronto periodo',
+    'shareAffiliateAnalysis.report.boardInterpretation': 'Interpretazione board',
+    'shareAffiliateAnalysis.report.decisionLayer': 'Decisioni',
+    'shareAffiliateAnalysis.report.periodLabel': 'Tutti i dati disponibili',
+    'shareAffiliateAnalysis.report.disclaimer':
+      'Questo report usa la stessa analisi della console interna, presentata in formato board-level.',
+    'shareAffiliateAnalysis.metric.referencePeriod': 'Periodo di riferimento',
+    'shareAffiliateAnalysis.metric.periodType': 'Tipo periodo',
+    'shareAffiliateAnalysis.metric.status': 'Stato',
+    'shareAffiliateAnalysis.metric.profit': 'Profitto',
+    'shareAffiliateAnalysis.metric.roi': 'ROI',
+    'shareAffiliateAnalysis.metric.registrations': 'Registrazioni',
+    'shareAffiliateAnalysis.metric.ftd': 'FTD',
+    'shareAffiliateAnalysis.metric.qftd': 'FTD qualificati',
+    'shareAffiliateAnalysis.metric.netDeposits': 'Net Deposits',
+    'shareAffiliateAnalysis.metric.pl': 'P&L',
+    'shareAffiliateAnalysis.metric.payments': 'Pagamenti',
+    'shareAffiliateAnalysis.trend.notEnoughData':
+      'Storico insufficiente per calcolare il mese su mese.',
+    'shareAffiliateAnalysis.trend.profit': 'Profitto',
+    'shareAffiliateAnalysis.trend.netDeposits': 'Depositi netti',
+    'shareAffiliateAnalysis.trend.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.profit': 'Profitto',
+    'shareAffiliateAnalysis.comparison.netDeposits': 'Depositi netti',
+    'shareAffiliateAnalysis.comparison.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.up': 'Su',
+    'shareAffiliateAnalysis.comparison.down': 'Giù',
+    'shareAffiliateAnalysis.comparison.flat': 'Stabile',
+    'shareAffiliateAnalysis.comparison.vsLabel': 'Confronto con: {prev}',
+    'shareAffiliateAnalysis.interpretation.positive':
+      'Performance complessiva sana: contributo positivo e depositi presenti.',
+    'shareAffiliateAnalysis.interpretation.negative':
+      'Performance da attenzionare: contributo negativo nel periodo selezionato.',
+    'shareAffiliateAnalysis.interpretation.neutral':
+      'Performance stabile: monitorare la continuità dei risultati nel tempo.',
+    'shareAffiliateAnalysis.interpretation.profitUp':
+      'Rispetto al periodo precedente, la profittabilità è migliorata.',
+    'shareAffiliateAnalysis.interpretation.profitDown':
+      'Rispetto al periodo precedente, la profittabilità è peggiorata.',
+    'shareAffiliateAnalysis.interpretation.profitFlat':
+      'Rispetto al periodo precedente, la profittabilità è sostanzialmente invariata.',
+    'shareAffiliateAnalysis.decision.whatThisMeans': 'Cosa significa: {status} per {ref}.',
+    'shareAffiliateAnalysis.decision.option.scale':
+      'Scalare con criterio: aumentare il volume mantenendo l’efficienza delle commissioni.',
+    'shareAffiliateAnalysis.decision.option.maintainQuality':
+      'Mantenere qualità: proteggere qualità del traffico e conversione.',
+    'shareAffiliateAnalysis.decision.option.monitor':
+      'Monitorare mensilmente: verificare stabilità di profitto e depositi.',
+    'shareAffiliateAnalysis.decision.option.improveLeadQuality':
+      'Migliorare la qualità dei lead: privilegiare fonti con conversione e valore migliori.',
+    'shareAffiliateAnalysis.decision.option.focusRetention':
+      'Focus sulla retention: migliorare l’attivazione post-registrazione per aumentare i depositi netti.',
+
+    // Share — Board login
+    'shareBoardLogin.eyebrow': 'Accesso board',
+    'shareBoardLogin.title': 'Apri report condiviso',
+    'shareBoardLogin.subtitle':
+      'Inserisci il codice di accesso per visualizzare il report board in sola lettura.',
+    'shareBoardLogin.badge.readOnly': 'Sola lettura',
+    'shareBoardLogin.field.accessCode': 'Codice di accesso',
+    'shareBoardLogin.field.placeholder': 'Incolla il codice (es. share_...)',
+    'shareBoardLogin.helper':
+      'Suggerimento: i codici iniziano spesso con “share_” o “share_local_”.',
+    'shareBoardLogin.cta': 'Continua',
+    'shareBoardLogin.clear': 'Rimuovi codice salvato',
+    'shareBoardLogin.note':
+      'Questo codice abilita l’accesso in sola lettura all’area report condivisi. Non abilita l’accesso alle dashboard interne.',
+    'shareBoardLogin.error.missing': 'Inserisci un codice di accesso.',
+    'shareBoardLogin.error.invalid': 'Codice non valido o scaduto.',
+    'shareBoardLogin.error.network': 'Errore di rete. Riprova.',
+
+    // Share — Affiliate Reports (board view, v2)
+    'shareAffiliateReports.header.title': 'Performance Affiliate — Vista Board',
+    'shareAffiliateReports.header.subtitle': 'Sintesi esecutiva in sola lettura',
+    'shareAffiliateReports.header.note':
+      'Top affiliate per commissioni. Clicca un affiliate per aprire il report completo.',
+    'shareAffiliateReports.header.changeAffiliate': 'Cambia affiliate',
+    'shareAffiliateReports.header.selectAffiliate':
+      'Seleziona un affiliate per aprire un altro report',
+    'shareAffiliateReports.card.netDeposits': 'Net Deposits',
+    'shareAffiliateReports.card.pl': 'P&L',
+    'shareAffiliateReports.card.weight': 'Peso',
+    'shareAffiliateReports.footer.note':
+      'La vista Board è in sola lettura. Fonte dati: Affiliate → Analysis interno.',
+    'shareAffiliateReports.period.sinceEver': 'Da sempre',
+    'shareAffiliateReports.period.ytd': 'Da inizio anno',
+    'shareAffiliateReports.period.label': 'Periodo',
+    'shareAffiliateReports.report.eyebrow': 'Report finale',
+    'shareAffiliateReports.section.execSnapshot': 'Sintesi esecutiva',
+    'shareAffiliateReports.exec.selectedPeriod': 'Periodo selezionato',
+    'shareAffiliateReports.section.kpiPerformance': 'Performance KPI',
+    'shareAffiliateReports.kpi.rank': 'Posizione',
+    'shareAffiliateReports.metric.cr': 'CR%',
+    'shareAffiliateReports.section.aggregates': 'Aggregati',
+    'shareAffiliateReports.section.kpis': 'KPI',
+    'shareAffiliateReports.metric.ftd': 'FTD',
+    'shareAffiliateReports.metric.qftd': 'QFTD',
+    'shareAffiliateReports.metric.deposits': 'Depositi',
+    'shareAffiliateReports.metric.withdrawals': 'Prelievi',
+    'shareAffiliateReports.metric.profit': 'Profitto',
+    'shareAffiliateReports.metric.arpu': 'ARPU',
+    'shareAffiliateReports.metric.cpa': 'CPA',
+    'shareAffiliateReports.metric.avgDepositsPerUser': 'Depositi medi / utente FTD',
+    'shareAffiliateReports.metric.affiliateRegistrations': 'Registrazioni affiliate',
+    'shareAffiliateReports.metric.companyRegistrations': 'Registrazioni azienda',
+    'shareAffiliateReports.metric.companyRegistrations.hint': 'Indicatore su scala comparabile',
+    'shareAffiliateReports.metric.ftdClients': 'Clienti FTD',
+    'shareAffiliateReports.metric.qftdClients': 'Clienti QFTD',
+    'shareAffiliateReports.metric.depositsCount': 'Numero depositi',
+    'shareAffiliateReports.metric.loginRatio': 'Login ratio%',
+    'shareAffiliateReports.metric.avgDepositsCountPerFtdUser':
+      'Media depositi (count) / utente FTD',
+    'shareAffiliateReports.metric.positionsCount': 'Numero posizioni',
+    'shareAffiliateReports.section.cohortPulse': 'Polso finanziario cohort',
+    'shareAffiliateReports.section.cohortPulse.note':
+      'Net Deposits (valori assoluti) — stesso dataset di /cohort.',
+    'shareAffiliateReports.section.cohortPulse.error': 'Impossibile caricare i dati cohort',
+    'shareAffiliateReports.compare.label': 'Confronta con',
+    'shareAffiliateReports.compare.placeholder': 'Scrivi il nome affiliate…',
+    'shareAffiliateReports.compare.clear': 'Pulisci',
+    'shareAffiliateReports.compare.notFound': 'Affiliate non trovato',
+    'shareAffiliateReports.compare.same': 'Hai selezionato lo stesso affiliate',
+    'shareAffiliateReports.compare.delta': 'Δ',
+    'shareAffiliateReports.chart.title': 'Crescita (cumulata)',
+    'shareAffiliateReports.chart.noData': 'Nessun dato per il grafico',
+    'shareAffiliateReports.chart.aria.cumulative': 'Grafico crescita cumulata dell’affiliate',
+    'shareAffiliateReports.chart.legend.ftd': 'FTD (cum.)',
+    'shareAffiliateReports.chart.legend.regs': 'Registrazioni (cum.)',
+    'shareAffiliateReports.chart.legend.qftd': 'QFTD (cum.)',
+    'shareAffiliateReports.chart.tooltip.regs': 'Registrazioni',
+    'shareAffiliateReports.chart.tooltip.ftd': 'FTD',
+    'shareAffiliateReports.chart.tooltip.qftd': 'QFTD',
+    'shareAffiliateReports.section.weightOnTotal': 'Peso sul totale',
+    'shareAffiliateReports.weight.payments': 'Peso commissioni (Top 20)',
+    'shareAffiliateReports.weight.netDeposits': 'Peso Depositi netti (Top 20)',
+    'shareAffiliateReports.weight.pl': 'Peso P&L (Top 20)',
+    'shareAffiliateReports.section.periodComparison': 'Confronto periodo',
+    'shareAffiliateReports.interpretation.positive':
+      'Forte creazione di valore con contributo significativo.',
+    'shareAffiliateReports.interpretation.actionablePositive':
+      'Mantenere esposizione e scalare selettivamente se la consistenza continua.',
+    'shareAffiliateReports.interpretation.negative':
+      'Creazione di valore negativa nel periodo selezionato.',
+    'shareAffiliateReports.interpretation.actionableNegative':
+      'Ridurre l’esposizione finché l’efficienza non migliora.',
+    'shareAffiliateReports.interpretation.mixed':
+      'Contributo misto; privilegiare la qualità e monitorare da vicino.',
+    'shareAffiliateReports.section.weightRanking': 'Peso e ranking',
+    'shareAffiliateReports.rank.roi': 'ROI',
+    'shareAffiliateReports.rank.deposits': 'Depositi',
+    'shareAffiliateReports.rank.pl': 'P&L',
+    'shareAffiliateReports.rank.payments': 'Pagamenti',
+    'shareAffiliateReports.rank.ofTotal': 'del totale',
+    'shareAffiliateReports.rank.ofTop20': 'dei Top 20 net deposits',
+    'shareAffiliateReports.rank.vsPrevious': 'vs periodo precedente',
+    'shareAffiliateReports.rank.noData': 'Il ranking non è disponibile per il periodo selezionato.',
+    'shareAffiliateReports.section.trend': 'Trend e confronto periodo',
+    'shareAffiliateReports.trend.sinceEver':
+      'La vista “Da sempre” non ha un periodo precedente equivalente.',
+    'shareAffiliateReports.trend.profit': 'Profitto',
+    'shareAffiliateReports.trend.netDeposits': 'Net Deposits',
+    'shareAffiliateReports.trend.ftd': 'FTD',
+    'shareAffiliateReports.trend.vsPrevious': 'vs periodo precedente',
+    'shareAffiliateReports.section.decision': 'Implicazioni per il Board',
+    'shareAffiliateReports.section.scale': 'Scala',
+    'shareAffiliateReports.section.efficiency': 'Efficienza',
+    'shareAffiliateReports.weight.shareOfTop20': 'Quota sui Top 20 affiliati',
+    'shareAffiliateReports.periodHint.volumeDriven': ' (guidato dal volume)',
+    'shareAffiliateReports.periodHint.marginDriven': ' (guidato dal margine)',
+    'shareAffiliateReports.periodHint.efficiencyImproved': ' (efficienza in aumento)',
+    'shareAffiliateReports.periodHint.efficiencyWorsened': ' (efficienza in calo)',
+    'shareAffiliateReports.board.block.status': 'Stato',
+    'shareAffiliateReports.board.block.attention': 'Attenzione / rischio',
+    'shareAffiliateReports.board.block.actionBias': 'Orientamento azione',
+    'shareAffiliateReports.board.status.healthy': 'Sano',
+    'shareAffiliateReports.board.status.negative': 'Valore negativo',
+    'shareAffiliateReports.board.status.neutral': 'Misto',
+    'shareAffiliateReports.board.attention.profitNegative': 'Profitto negativo',
+    'shareAffiliateReports.board.attention.roiNegative': 'ROI negativo',
+    'shareAffiliateReports.board.attention.netDepositsNegative': 'Net deposits negativi',
+    'shareAffiliateReports.board.attention.monitor': 'Monitorare',
+    'shareAffiliateReports.board.action.scaleSelectively': 'Scalare',
+    'shareAffiliateReports.board.action.optimizeBeforeScaling': 'Ottimizzare',
+    'shareAffiliateReports.board.action.reduceExposure': 'Ridurre',
+    'shareAffiliateReports.board.action.monitorNoIntervention': 'Monitorare',
+    'shareAffiliateReports.chart.guided': 'Traiettoria guidata (cumulata)',
+
+    // Share — Affiliate Reports (feedback testuale)
+    'shareAffiliateReports.feedback.whatItMeans': 'Cosa significa:',
+    'shareAffiliateReports.feedback.nextStep': 'Prossimo passo:',
+    'shareAffiliateReports.feedback.impact': 'Impatto:',
+    'shareAffiliateReports.feedback.trendReading': 'Lettura trend:',
+
+    'shareAffiliateReports.kpiFeedback.meaning.negativeBoth': 'Net deposits e P&L sono negativi.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveDepositsNegativePl':
+      'Net deposits sono positivi ma il P&L è negativo.',
+    'shareAffiliateReports.kpiFeedback.meaning.positivePlNegativeDeposits':
+      'Il P&L è positivo ma i net deposits sono negativi.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveButRoiNegative':
+      'Net deposits e P&L sono positivi ma il ROI è negativo.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveSoftening':
+      'I risultati sono positivi ma stanno peggiorando.',
+    'shareAffiliateReports.kpiFeedback.meaning.positiveStable':
+      'I risultati sono positivi e stabili.',
+
+    'shareAffiliateReports.kpiFeedback.next.stopScaling':
+      'Fermare lo scale e rivedere fonti e costi.',
+    'shareAffiliateReports.kpiFeedback.next.holdCutCosts':
+      'Tenere la spesa ferma e ridurre i costi.',
+    'shareAffiliateReports.kpiFeedback.next.checkQuality':
+      'Verificare la qualità dei depositi e monitorare i prelievi.',
+    'shareAffiliateReports.kpiFeedback.next.fixRoi':
+      'Tenere la spesa ferma e sistemare il ROI prima di scalare.',
+    'shareAffiliateReports.kpiFeedback.next.monitorBeforeScale':
+      'Mantenere l’esposizione e monitorare il prossimo periodo.',
+    'shareAffiliateReports.kpiFeedback.next.scaleCarefully':
+      'Mantenere l’esposizione e scalare con cautela.',
+
+    'shareAffiliateReports.weightFeedback.impact.high':
+      'Questo affiliate pesa molto sui net deposits totali.',
+    'shareAffiliateReports.weightFeedback.impact.low':
+      'Questo affiliate pesa poco sui net deposits totali.',
+    'shareAffiliateReports.weightFeedback.next.protectChannel':
+      'Proteggere questo canale e rivedere la qualità regolarmente.',
+    'shareAffiliateReports.weightFeedback.next.keepLean':
+      'Tenere la spesa leggera e scalare solo dopo un miglioramento.',
+
+    'shareAffiliateReports.chartFeedback.trend.risingAll':
+      'Registrazioni e FTD continuano a crescere.',
+    'shareAffiliateReports.chartFeedback.trend.risingRegsFlatFtd':
+      'Le registrazioni crescono ma gli FTD sono fermi.',
+    'shareAffiliateReports.chartFeedback.trend.risingFtdFlatRegs':
+      'Gli FTD crescono mentre le registrazioni sono ferme.',
+    'shareAffiliateReports.chartFeedback.trend.flat': 'La curva è piatta.',
+    'shareAffiliateReports.chartFeedback.trend.limited': 'La curva ha poca storia.',
+    'shareAffiliateReports.chartFeedback.trend.noData': 'Il grafico non è disponibile.',
+
+    'shareAffiliateReports.chartFeedback.next.watchConversion':
+      'Monitorare conversione e costi e confermare la stabilità.',
+    'shareAffiliateReports.chartFeedback.next.checkLeadQuality':
+      'Verificare la qualità dei lead e correggere le fonti.',
+    'shareAffiliateReports.chartFeedback.next.monitorPlateau':
+      'Monitorare un possibile plateau e decidere sullo scale.',
+    'shareAffiliateReports.chartFeedback.next.checkData':
+      'Verificare il caricamento dati e monitorare il prossimo periodo.',
+
+    'shareAffiliateReports.finalSummary.overallAssessment': 'Valutazione complessiva:',
+    'shareAffiliateReports.finalSummary.keyStrength': 'Punto di forza:',
+    'shareAffiliateReports.finalSummary.keyRisk': 'Rischio chiave:',
+    'shareAffiliateReports.finalSummary.recommendedAction': 'Azione consigliata:',
+
+    'shareAffiliateReports.finalSummary.value.healthy': 'La performance è sana.',
+    'shareAffiliateReports.finalSummary.value.mixed': 'La performance è mista.',
+    'shareAffiliateReports.finalSummary.value.needsAction': 'La performance richiede azione.',
+    'shareAffiliateReports.finalSummary.value.softening':
+      'La performance è stabile ma si sta indebolendo.',
+
+    'shareAffiliateReports.finalSummary.strength.scaleGrowing': 'I net deposits stanno crescendo.',
+    'shareAffiliateReports.finalSummary.strength.efficiencyImproving': 'Il ROI sta migliorando.',
+    'shareAffiliateReports.finalSummary.strength.stableProfit': 'Il P&L è stabile.',
+
+    'shareAffiliateReports.finalSummary.risk.plNegative': 'Il P&L è negativo.',
+    'shareAffiliateReports.finalSummary.risk.roiNegative': 'Il ROI è negativo.',
+    'shareAffiliateReports.finalSummary.risk.withdrawalPressure':
+      'I prelievi sono alti rispetto ai depositi.',
+    'shareAffiliateReports.finalSummary.risk.none': 'Nessun rischio materiale rilevato.',
+
+    'shareAffiliateReports.finalSummary.action.pauseFix':
+      'Mettere in pausa lo scale e correggere l’efficienza.',
+    'shareAffiliateReports.finalSummary.action.holdImprove':
+      'Tenere la spesa ferma e migliorare la conversione.',
+    'shareAffiliateReports.finalSummary.action.monitor':
+      'Mantenere l’esposizione e monitorare da vicino.',
+    'shareAffiliateReports.finalSummary.action.maintainScale':
+      'Mantenere l’esposizione e scalare con cautela.',
+    'shareAffiliateReports.decisionOverview.title': 'Decision overview',
+    'shareAffiliateReports.decisionOverview.trajectory': 'Traiettoria',
+    'shareAffiliateReports.decisionOverview.growthQuality': 'Qualità crescita',
+    'shareAffiliateReports.decisionOverview.riskSignal': 'Segnale rischio',
+    'shareAffiliateReports.decisionOverview.positioning': 'Posizionamento',
+    'shareAffiliateReports.decisionOverview.nextReview': 'Prossima review',
+    'shareAffiliateReports.decisionOverview.value.improving': 'In miglioramento',
+    'shareAffiliateReports.decisionOverview.value.stable': 'Stabile',
+    'shareAffiliateReports.decisionOverview.value.deteriorating': 'In peggioramento',
+    'shareAffiliateReports.decisionOverview.value.volumeDriven': 'Guidata dal volume',
+    'shareAffiliateReports.decisionOverview.value.efficiencyDriven': 'Guidata dall’efficienza',
+    'shareAffiliateReports.decisionOverview.value.mixed': 'Mista',
+    'shareAffiliateReports.decisionOverview.value.noMaterialRisk': 'Nessun rischio materiale',
+    'shareAffiliateReports.decisionOverview.value.conversionPressure': 'Pressione conversione',
+    'shareAffiliateReports.decisionOverview.value.withdrawalPressure': 'Pressione prelievi',
+    'shareAffiliateReports.decisionOverview.value.profitabilityPressure':
+      'Pressione profittabilità',
+    'shareAffiliateReports.decisionOverview.value.aboveAvg': 'Sopra la media Top 20',
+    'shareAffiliateReports.decisionOverview.value.inlineAvg': 'In linea con la media Top 20',
+    'shareAffiliateReports.decisionOverview.value.belowAvg': 'Sotto la media Top 20',
+    'shareAffiliateReports.decisionOverview.value.review30': 'Review in 30 giorni',
+    'shareAffiliateReports.decisionOverview.value.review60': 'Review in 60 giorni',
+    'shareAffiliateReports.decisionOverview.value.review90': 'Review in 90 giorni',
+    'shareAffiliateReports.decisionNotes.verdictLabel': 'Verdetto esecutivo',
+    'shareAffiliateReports.decisionNotes.driversLabel': 'Driver performance',
+    'shareAffiliateReports.decisionNotes.risksLabel': 'Rischi e condizioni',
+    'shareAffiliateReports.decisionNotes.actionLabel': 'Guida azione',
+    'shareAffiliateReports.decisionNotes.verdict.template':
+      '{impact} contributor con {efficiency} e {profitability}.',
+    'shareAffiliateReports.decisionNotes.verdict.templateMonitor':
+      '{impact} contributor con {efficiency} in monitoraggio.',
+    'shareAffiliateReports.decisionNotes.fragment.impact.highImpact': 'Ad alto impatto',
+    'shareAffiliateReports.decisionNotes.fragment.impact.solid': 'Solido',
+    'shareAffiliateReports.decisionNotes.fragment.impact.moderate': 'Moderato',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.strong': 'efficienza forte',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.mixed': 'efficienza mista',
+    'shareAffiliateReports.decisionNotes.fragment.efficiency.weak': 'efficienza debole',
+    'shareAffiliateReports.decisionNotes.fragment.profitability.stable': 'profittabilità stabile',
+    'shareAffiliateReports.decisionNotes.fragment.profitability.underPressure':
+      'profittabilità sotto pressione',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsHigh': 'Quota net deposits alta',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsMeaningful':
+      'Quota net deposits rilevante',
+    'shareAffiliateReports.decisionNotes.driver.netDepositsModerate': 'Quota net deposits moderata',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyAbove':
+      'Efficienza sopra la media dei pari',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyInline':
+      'Efficienza in linea con la media dei pari',
+    'shareAffiliateReports.decisionNotes.driver.efficiencyBelow':
+      'Efficienza sotto la media dei pari',
+    'shareAffiliateReports.decisionNotes.driver.trajectory': 'Traiettoria {value}',
+    'shareAffiliateReports.decisionNotes.risk.rankSoftening': 'Posizionamento in calo',
+    'shareAffiliateReports.decisionNotes.action.scaleSelectively':
+      'Scalare selettivamente mantenendo qualità del traffico',
+    'shareAffiliateReports.decisionNotes.action.maintainMonitor':
+      'Mantenere esposizione e monitorare efficienza',
+    'shareAffiliateReports.decisionNotes.action.delayConversion':
+      'Rinviare lo scale finché la conversione non migliora',
+    'shareAffiliateReports.decisionNotes.action.holdProfitability':
+      'Sospendere lo scale finché la profittabilità non si stabilizza',
+    'shareAffiliateReports.decisionNotes.action.monitorWithdrawals':
+      'Mantenere esposizione e monitorare pressione prelievi',
+    'shareAffiliateReports.decisionNotes.action.holdMonitor':
+      'Sospendere lo scale e monitorare da vicino',
 
     // Report Analysis
     'analysis.header.label': 'Analisi',
@@ -1708,6 +2445,7 @@ export const translations = {
 
     // Common
     'common.show': 'Mostra',
+    'common.viewDetails': 'Vedi dettagli',
     'common.hide': 'Nascondi',
     'common.all': 'Tutti',
     'common.info': 'Info',
@@ -2438,6 +3176,12 @@ export const translations = {
     'affiliateAnalysis.topAffiliates.cohortNo': 'Nessuna cohort',
 
     'affiliateAnalysis.button.backToTopAffiliates': '← Torna alla Top Affiliati',
+
+    'affiliateAnalysis.share.button': 'Condividi report',
+    'affiliateAnalysis.share.creating': 'Creazione…',
+    'affiliateAnalysis.share.copied': 'Copiato',
+    'affiliateAnalysis.share.hint': 'Crea un link pubblico in sola lettura per il board',
+    'affiliateAnalysis.share.error': 'Impossibile creare il link di condivisione',
 
     'affiliateAnalysis.header.title': 'Analisi affiliato – {affiliate}',
     'affiliateAnalysis.header.subtitle': 'Panoramica performance · Periodo: {period}',
@@ -3246,6 +3990,7 @@ export const translations = {
     'sidebar.executiveSuite': 'Executive Suite',
     'sidebar.executive.summary': 'Sažetak',
     'sidebar.executive.view': 'Prikaz',
+    'sidebar.marketingPlan': 'Marketing Execution',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analiza',
     'sidebar.affiliate.payments': 'Uplate',
@@ -3254,6 +3999,105 @@ export const translations = {
     'sidebar.analysis': 'Analiza Izveštaja',
     'sidebar.fraud': 'Nadzor prevara',
     'sidebar.traderPoints': 'Trader Points',
+
+    // Share — Affiliate Analysis (board report)
+    'shareAffiliateAnalysis.header.eyebrow': 'Board izveštaj',
+    'shareAffiliateAnalysis.header.title': 'Učinak Afiliata — Board prikaz',
+    'shareAffiliateAnalysis.header.subtitle':
+      'Izaberite afiliata da otvorite završni izveštaj učinka.',
+    'shareAffiliateAnalysis.period.monthly': 'Mesečno',
+    'shareAffiliateAnalysis.period.quarterly': 'Kvartalno',
+    'shareAffiliateAnalysis.period.semiAnnual': 'Polugodišnje',
+    'shareAffiliateAnalysis.period.annual': 'Godišnje',
+    'shareAffiliateAnalysis.entry.selectedPeriod': 'Period: {period}',
+    'shareAffiliateAnalysis.entry.noPeriod': 'Period: —',
+    'shareAffiliateAnalysis.card.reference': 'Referentni period',
+    'shareAffiliateAnalysis.card.profit': 'Profit',
+    'shareAffiliateAnalysis.card.netDeposits': 'Net depoziti',
+    'shareAffiliateAnalysis.card.roi': 'ROI',
+    'shareAffiliateAnalysis.footer.note':
+      'Read-only link. Vrednosti odražavaju poslednje učitane izveštaje.',
+    'shareAffiliateAnalysis.back': '← Nazad na afiliate',
+    'shareAffiliateAnalysis.status.performing': 'Dobar učinak',
+    'shareAffiliateAnalysis.status.stable': 'Stabilno',
+    'shareAffiliateAnalysis.status.underperforming': 'Slab učinak',
+    'shareAffiliateAnalysis.accessDenied.title': 'Pristup odbijen',
+    'shareAffiliateAnalysis.accessDenied.subtitle': 'Ovaj link nije validan ili je istekao.',
+    'shareAffiliateAnalysis.error.title': 'Ne mogu da učitam podatke',
+    'shareAffiliateAnalysis.report.eyebrow': 'Završni izveštaj',
+    'shareAffiliateAnalysis.report.title': 'Izveštaj učinka afiliata — {affiliate}',
+    'shareAffiliateAnalysis.report.subtitle': 'Sažetak za board. Read-only.',
+    'shareAffiliateAnalysis.report.executiveSnapshot': 'Executive snapshot',
+    'shareAffiliateAnalysis.report.performanceOverview': 'Pregled učinka',
+    'shareAffiliateAnalysis.report.trendReading': 'Trend i tumačenje',
+    'shareAffiliateAnalysis.report.periodComparison': 'Poređenje perioda',
+    'shareAffiliateAnalysis.report.boardInterpretation': 'Tumačenje za board',
+    'shareAffiliateAnalysis.report.decisionLayer': 'Sloj odluke',
+    'shareAffiliateAnalysis.report.periodLabel': 'Svi dostupni podaci',
+    'shareAffiliateAnalysis.report.disclaimer':
+      'Ovaj izveštaj koristi istu analizu kao interna konzola, u board formatu.',
+    'shareAffiliateAnalysis.metric.referencePeriod': 'Referentni period',
+    'shareAffiliateAnalysis.metric.periodType': 'Tip perioda',
+    'shareAffiliateAnalysis.metric.status': 'Status',
+    'shareAffiliateAnalysis.metric.profit': 'Profit',
+    'shareAffiliateAnalysis.metric.roi': 'ROI',
+    'shareAffiliateAnalysis.metric.registrations': 'Registracije',
+    'shareAffiliateAnalysis.metric.ftd': 'FTD',
+    'shareAffiliateAnalysis.metric.qftd': 'Kvalifikovani FTD',
+    'shareAffiliateAnalysis.metric.netDeposits': 'Net depoziti',
+    'shareAffiliateAnalysis.metric.pl': 'P&L',
+    'shareAffiliateAnalysis.metric.payments': 'Isplate',
+    'shareAffiliateAnalysis.trend.notEnoughData': 'Nema dovoljno istorije za mesečno poređenje.',
+    'shareAffiliateAnalysis.trend.profit': 'Profit',
+    'shareAffiliateAnalysis.trend.netDeposits': 'Net depoziti',
+    'shareAffiliateAnalysis.trend.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.profit': 'Profit',
+    'shareAffiliateAnalysis.comparison.netDeposits': 'Net depoziti',
+    'shareAffiliateAnalysis.comparison.ftd': 'FTD',
+    'shareAffiliateAnalysis.comparison.up': 'Gore',
+    'shareAffiliateAnalysis.comparison.down': 'Dole',
+    'shareAffiliateAnalysis.comparison.flat': 'Stabilno',
+    'shareAffiliateAnalysis.comparison.vsLabel': 'U poređenju sa: {prev}',
+    'shareAffiliateAnalysis.interpretation.positive':
+      'Ukupan učinak je dobar: doprinos je pozitivan i depoziti postoje.',
+    'shareAffiliateAnalysis.interpretation.negative':
+      'Potrebna pažnja: doprinos je negativan u izabranom periodu.',
+    'shareAffiliateAnalysis.interpretation.neutral':
+      'Učinak je stabilan: pratiti kontinuitet rezultata kroz vreme.',
+    'shareAffiliateAnalysis.interpretation.profitUp':
+      'U odnosu na prethodni period, profitabilnost je bolja.',
+    'shareAffiliateAnalysis.interpretation.profitDown':
+      'U odnosu na prethodni period, profitabilnost je slabija.',
+    'shareAffiliateAnalysis.interpretation.profitFlat':
+      'U odnosu na prethodni period, profitabilnost je približno ista.',
+    'shareAffiliateAnalysis.decision.whatThisMeans': 'Šta to znači: {status} za {ref}.',
+    'shareAffiliateAnalysis.decision.option.scale':
+      'Selektivno skalirati: povećati obim uz zadržavanje efikasnosti isplata.',
+    'shareAffiliateAnalysis.decision.option.maintainQuality':
+      'Održati kvalitet: zaštititi kvalitet saobraćaja i konverziju.',
+    'shareAffiliateAnalysis.decision.option.monitor':
+      'Pratiti mesečno: potvrditi stabilnost profita i depozita.',
+    'shareAffiliateAnalysis.decision.option.improveLeadQuality':
+      'Poboljšati kvalitet leadova: fokus na izvore sa boljom konverzijom i vrednošću.',
+    'shareAffiliateAnalysis.decision.option.focusRetention':
+      'Fokus na zadržavanje: poboljšati aktivaciju nakon registracije radi većih net depozita.',
+
+    // Share — Board login
+    'shareBoardLogin.eyebrow': 'Board pristup',
+    'shareBoardLogin.title': 'Otvori deljeni izveštaj',
+    'shareBoardLogin.subtitle':
+      'Unesite pristupni kod da biste videli deljeni board izveštaj (samo za čitanje).',
+    'shareBoardLogin.badge.readOnly': 'Samo za čitanje',
+    'shareBoardLogin.field.accessCode': 'Pristupni kod',
+    'shareBoardLogin.field.placeholder': 'Nalepite pristupni kod (npr. share_...)',
+    'shareBoardLogin.helper': 'Savet: kodovi obično počinju sa “share_” ili “share_local_”.',
+    'shareBoardLogin.cta': 'Nastavi',
+    'shareBoardLogin.clear': 'Ukloni sačuvani kod',
+    'shareBoardLogin.note':
+      'Ovaj kod daje samo read-only pristup deljenoj zoni izveštaja. Ne daje pristup internim dashboard-ovima.',
+    'shareBoardLogin.error.missing': 'Unesite pristupni kod.',
+    'shareBoardLogin.error.invalid': 'Nevažeći ili istekao pristupni kod.',
+    'shareBoardLogin.error.network': 'Greška mreže. Pokušajte ponovo.',
 
     // Report Analysis
     'analysis.header.label': 'Analiza',
@@ -4039,6 +4883,12 @@ export const translations = {
     'affiliateAnalysis.topAffiliates.cohortNo': 'Nema kohorte',
 
     'affiliateAnalysis.button.backToTopAffiliates': '← Nazad na Top Afilijate',
+
+    'affiliateAnalysis.share.button': 'Podeli izveštaj',
+    'affiliateAnalysis.share.creating': 'Kreiranje…',
+    'affiliateAnalysis.share.copied': 'Kopirano',
+    'affiliateAnalysis.share.hint': 'Pravi javni (read-only) board link',
+    'affiliateAnalysis.share.error': 'Ne mogu da napravim share link',
 
     'affiliateAnalysis.header.title': 'Analiza afilijata – {affiliate}',
     'affiliateAnalysis.header.subtitle': 'Pregled performansi · Period: {period}',

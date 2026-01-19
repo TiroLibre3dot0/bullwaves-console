@@ -204,6 +204,18 @@ export default function Sidebar({
             <span>{t('sidebar.executiveSuite')}</span>
           </span>
         </button>
+
+        <button
+          disabled={disabled('marketingPlan')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
+          onClick={() => navigate('marketingPlan')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="layout" />
+            <span>{t('sidebar.marketingPlan')}</span>
+          </span>
+        </button>
         {view === 'executive' && (
           <div className="sidebar-subsection">
             <button

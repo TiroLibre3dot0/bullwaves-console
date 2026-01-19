@@ -14,9 +14,6 @@ function detectDefaultLocale() {
   if (typeof window === 'undefined') return 'en'
   const saved = window.localStorage.getItem(STORAGE_KEY)
   if (saved && ['en', 'it', 'sr'].includes(saved)) return saved
-  const nav = (navigator.language || 'en').toLowerCase()
-  if (nav.startsWith('it')) return 'it'
-  if (nav.startsWith('sr')) return 'sr'
   return 'en'
 }
 
@@ -35,10 +32,7 @@ export function I18nProvider({ children }) {
 
   const t = useMemo(() => (key, params) => translate(locale, key, params), [locale])
 
-  const value = useMemo(
-    () => ({ locale, setLocale, t, locales: SUPPORTED_LOCALES }),
-    [locale, t]
-  )
+  const value = useMemo(() => ({ locale, setLocale, t, locales: SUPPORTED_LOCALES }), [locale, t])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }

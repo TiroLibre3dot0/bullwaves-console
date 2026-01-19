@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
-import { decodeSharePayload } from '../../../utils/shareCodec'
+import { decodeSharePayload } from '../../../utils/shareCodec.js'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 
 function fmtEuro2(n) {

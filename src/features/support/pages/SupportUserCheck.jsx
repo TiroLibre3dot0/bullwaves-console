@@ -1,6 +1,6 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { encodeSharePayload } from '../../../utils/shareCodec'
+import { encodeSharePayload } from '../../../utils/shareCodec.js'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import {

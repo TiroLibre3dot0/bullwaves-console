@@ -22,6 +22,7 @@ import FullPageLoader from './components/FullPageLoader'
 import UploadReportsPage from './pages/UploadReportsPage'
 import { translate } from './i18n/translations'
 import { useI18n } from './i18n/I18nContext'
+import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
 
 export default function AuthenticatedApp() {
   const { t } = useI18n()
@@ -39,6 +40,7 @@ export default function AuthenticatedApp() {
       executive: '/executive',
       affiliate: '/affiliate',
       fraud: '/fraud-monitoring',
+      marketingPlan: '/marketing-plan',
       orgChart: '/org-chart',
       overview: '/overview',
       report: '/report',
@@ -73,6 +75,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/analysis')) return 'analysis'
     if (pathname.startsWith('/report')) return 'report'
     if (pathname.startsWith('/cohort')) return 'affiliate'
+    if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/roadmap')) return 'roadmap'
     if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
@@ -293,6 +296,7 @@ export default function AuthenticatedApp() {
       affiliate: 'affiliate',
       executive: 'executive',
       fraud: 'fraud-monitoring',
+      marketingPlan: 'marketing-plan',
       summary: 'summary',
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
@@ -356,6 +360,7 @@ export default function AuthenticatedApp() {
               {view === 'roadmap' && <RoadmapPage />}
               {view === 'weeklyMap' && <WeeklyMapPage />}
               {view === 'weeklyExecutionHistory' && <WeeklyExecutionHistoryPage />}
+              {view === 'marketingPlan' && <MarketingPlanExecutionPage />}
               {view === 'orgChart' && <OrgChart />}
               {view === 'summary' && <SummaryReport />}
               {view === 'supportUserCheck' && (

@@ -12,6 +12,13 @@ const PublicWeeklyExecutionHistoryPage = React.lazy(
   () => import('./features/roadmap/pages/PublicWeeklyExecutionHistoryPage')
 )
 const ShareOrgChartPage = React.lazy(() => import('./pages/share/ShareOrgChartTrueTree'))
+const BoardLoginPage = React.lazy(() => import('./pages/share/BoardLoginPage'))
+const PublicMarketingPlanSharePage = React.lazy(
+  () => import('./features/marketing-plan/pages/PublicMarketingPlanSharePage')
+)
+const PublicAffiliateAnalysisSharePage = React.lazy(
+  () => import('./features/affiliate-analysis/pages/PublicAffiliateAnalysisSharePage')
+)
 
 export default function App() {
   const { t } = useI18n()
@@ -19,12 +26,25 @@ export default function App() {
   const shareRoute = useMemo(() => {
     if (typeof window === 'undefined') return null
     const p = window.location.pathname
+    if (p === '/share/login' || p.startsWith('/share/login/')) return 'board-login'
     if (p.startsWith('/share/org-chart')) return 'org-chart'
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
+    if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
+    if (p === '/share/affiliate-reports' || p.startsWith('/share/affiliate-reports/'))
+      return 'affiliate-reports'
+    if (p.startsWith('/share/affiliate-analysis/')) return 'affiliate-analysis'
     return null
   }, [])
+
+  if (shareRoute === 'board-login') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <BoardLoginPage />
+      </React.Suspense>
+    )
+  }
 
   if (shareRoute === 'org-chart') {
     return (
@@ -56,6 +76,58 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicWeeklyExecutionHistoryPage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'marketing-plan') {
+    const token = window.location.pathname.split('/').pop()
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicMarketingPlanSharePage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'affiliate-reports') {
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    // Patterns supported:
+    // - /share/affiliate-reports                      (board overview, requires board login)
+    // - /share/affiliate-reports/:affiliateId          (board affiliate report, requires board login)
+    // - /share/affiliate-reports/:token               (legacy public share link)
+    // - /share/affiliate-reports/:token/:affiliateId  (legacy public share link)
+    const seg1 = parts[2] || ''
+    const seg2 = parts[3] || ''
+    const seg3 = parts[4] || ''
+
+    const looksLikeToken = seg1.startsWith('share_') || seg1.startsWith('share_local_')
+    const token = looksLikeToken ? seg1 : ''
+    const affiliateId = looksLikeToken ? seg2 : seg1
+    const period = looksLikeToken ? seg3 : ''
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicAffiliateAnalysisSharePage
+          token={token}
+          affiliateId={affiliateId}
+          period={period}
+          boardMode={!looksLikeToken}
+        />
+      </React.Suspense>
+    )
+  }
+
+  // Backward-compatible alias (older link format)
+  if (shareRoute === 'affiliate-analysis') {
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    const token = parts[2] || ''
+    const affiliateId = parts[3] || ''
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicAffiliateAnalysisSharePage
+          token={token}
+          affiliateId={affiliateId}
+          period={'monthly'}
+        />
       </React.Suspense>
     )
   }
