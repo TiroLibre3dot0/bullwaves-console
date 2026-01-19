@@ -194,14 +194,34 @@ function useRegistrationsDepositsAgg(enabled = false) {
 
     const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
 
-    const parseFromUrl = (url) =>
+    const parseFromUrl = (url, { worker } = { worker: true }) =>
       new Promise((resolve, reject) => {
         const perAffiliateMonth = new Map()
         const perAffiliateTotal = new Map()
         let sawAny = false
+        let validRows = 0
         let affiliateKey = null
         let depositKey = null
         let dateKey = null
+        let settled = false
+
+        const settleReject = (err) => {
+          if (settled) return
+          settled = true
+          reject(err)
+        }
+        const settleResolve = (payload) => {
+          if (settled) return
+          settled = true
+          resolve(payload)
+        }
+
+        const timeoutMs = 25000
+        const timeout = setTimeout(() => {
+          const err = new Error('Registrations CSV parse timeout')
+          err.kind = 'timeout'
+          settleReject(err)
+        }, timeoutMs)
 
         const ensure = (affiliateId) => {
           const k = String(affiliateId || '').trim()
@@ -253,6 +273,8 @@ function useRegistrationsDepositsAgg(enabled = false) {
           const monthId = monthIdFromParts(dt.getFullYear(), dt.getMonth())
           if (typeof monthId !== 'number') return
 
+          validRows += 1
+
           const depositCount = depositKey ? parseNum(r[depositKey]) : 0
 
           const monthMap = ensure(affiliateId)
@@ -266,12 +288,13 @@ function useRegistrationsDepositsAgg(enabled = false) {
 
         Papa.parse(url, {
           download: true,
-          worker: true,
+          worker: Boolean(worker),
           header: true,
           skipEmptyLines: true,
           dynamicTyping: false,
           chunk: (results) => {
             if (!alive) return
+            if (settled) return
             const data = results?.data
             if (Array.isArray(data) && data.length) {
               sawAny = true
@@ -279,17 +302,33 @@ function useRegistrationsDepositsAgg(enabled = false) {
             }
           },
           complete: () => {
+            clearTimeout(timeout)
             if (!alive) return
+            if (settled) return
+
             if (!sawAny) {
               const err = new Error('Registrations CSV empty or missing')
               err.kind = 'missing'
-              reject(err)
+              settleReject(err)
               return
             }
-            resolve({ byAffiliateMonth: perAffiliateMonth, totalsByAffiliate: perAffiliateTotal })
+
+            // If we saw rows but none were usable, we likely fetched an HTML fallback (SPA) or a wrong file.
+            if (!validRows) {
+              const err = new Error('Registrations CSV has no usable rows')
+              err.kind = 'novalid'
+              settleReject(err)
+              return
+            }
+
+            settleResolve({
+              byAffiliateMonth: perAffiliateMonth,
+              totalsByAffiliate: perAffiliateTotal,
+            })
           },
           error: (err) => {
-            reject(err)
+            clearTimeout(timeout)
+            settleReject(err)
           },
         })
       })
@@ -299,7 +338,14 @@ function useRegistrationsDepositsAgg(enabled = false) {
         let lastErr = null
         for (const url of urlCandidates) {
           try {
-            const parsed = await parseFromUrl(url)
+            let parsed = null
+            try {
+              parsed = await parseFromUrl(url, { worker: true })
+            } catch (e) {
+              // Some environments can block blob workers or make XHR-in-worker flaky.
+              // Retry without worker once before moving to next candidate.
+              parsed = await parseFromUrl(url, { worker: false })
+            }
             if (!alive) return
             __bwShareRegistrationsDepositAggCache = { key: cacheKey, ...parsed }
             setByAffiliateMonth(parsed.byAffiliateMonth)
@@ -2694,7 +2740,9 @@ function PublicAffiliateReportsDetailView({
               label={t('shareAffiliateReports.metric.depositsCount') || 'Deposits count'}
               value={
                 depositsCount === null || depositsCount === undefined
-                  ? '—'
+                  ? registrationsDepositsAgg.error
+                    ? 'N/A'
+                    : '—'
                   : formatNumberShort(depositsCount)
               }
               tone={'rgba(148,163,184,0.95)'}
