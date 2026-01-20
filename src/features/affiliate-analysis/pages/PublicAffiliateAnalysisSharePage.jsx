@@ -1244,39 +1244,58 @@ function AffiliateExecutiveCumulativeChart({
 
                 {(() => {
                   const midY = (conversionMarker.top + conversionMarker.bottom) / 2
-                  const labelW = 172
-                  const labelH = 22
-                  const labelX = conversionMarker.x + 6
-                  const labelY = midY - labelH / 2
+                  const labelW = 128
+                  const labelH = 18
+                  const gap = 6
+
+                  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} · Never dep.`
+
+                  const maxX = W - padR - 6
+                  const minX = padL + 6
+
+                  const candidateRightX = conversionMarker.x + gap
+                  const candidateLeftX = conversionMarker.x - gap - labelW
+                  const placeRight = candidateRightX + labelW <= maxX
+                  const labelX = clamp(
+                    placeRight ? candidateRightX : candidateLeftX,
+                    minX,
+                    maxX - labelW
+                  )
+
+                  const unclampedY = midY - labelH / 2
+                  const labelY = clamp(unclampedY, padT + 4, H - padB - 4 - labelH)
+
+                  const connectorX2 = placeRight ? labelX : labelX + labelW
                   return (
                     <>
                       <line
                         x1={conversionMarker.x}
-                        x2={labelX}
+                        x2={connectorX2}
                         y1={midY}
                         y2={midY}
-                        stroke="rgba(255,255,255,0.35)"
-                        strokeWidth={1.5}
+                        stroke="rgba(255,255,255,0.22)"
+                        strokeWidth={1.2}
                       />
                       <rect
                         x={labelX}
                         y={labelY}
                         width={labelW}
                         height={labelH}
-                        rx={8}
-                        fill="rgba(255,255,255,0.94)"
-                        stroke="rgba(15,23,42,0.14)"
-                        strokeWidth={0.9}
+                        rx={7}
+                        fill="rgba(255,255,255,0.92)"
+                        stroke="rgba(15,23,42,0.10)"
+                        strokeWidth={0.75}
                       />
                       <text
                         x={labelX + labelW / 2}
-                        y={labelY + 15}
+                        y={labelY + 12.5}
                         textAnchor="middle"
-                        fontSize={10}
-                        fill="rgba(15,23,42,0.92)"
-                        style={{ fontWeight: 950 }}
+                        fontSize={9}
+                        fill="rgba(15,23,42,0.78)"
+                        style={{ fontWeight: 850 }}
                       >
-                        {formatPercent(conversionMarker.noDepositPct, 1)} · Never deposited
+                        {labelText}
                       </text>
                     </>
                   )
