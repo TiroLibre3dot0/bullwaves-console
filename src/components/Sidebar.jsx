@@ -253,28 +253,6 @@ export default function Sidebar({
             <span>{t('sidebar.affiliate')}</span>
           </span>
         </button>
-        <button
-          disabled={disabled('analysis')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'analysis' ? 'active' : ''}`}
-          onClick={() => navigate('analysis')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="chart" />
-            <span>{t('sidebar.analysis')}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('traderPointsSimulator')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'traderPointsSimulator' ? 'active' : ''}`}
-          onClick={() => navigate('traderPointsSimulator')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="layers" />
-            <span>{t('sidebar.traderPoints')}</span>
-          </span>
-        </button>
         {view === 'affiliate' && (
           <div className="sidebar-subsection">
             <button
@@ -323,6 +301,28 @@ export default function Sidebar({
             </button>
           </div>
         )}
+        <button
+          disabled={disabled('analysis')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'analysis' ? 'active' : ''}`}
+          onClick={() => navigate('analysis')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="chart" />
+            <span>{t('sidebar.analysis')}</span>
+          </span>
+        </button>
+        <button
+          disabled={disabled('traderPointsSimulator')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'traderPointsSimulator' ? 'active' : ''}`}
+          onClick={() => navigate('traderPointsSimulator')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="layers" />
+            <span>{t('sidebar.traderPoints')}</span>
+          </span>
+        </button>
         <button
           disabled={disabled('fraud')}
           type="button"
