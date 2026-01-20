@@ -845,7 +845,7 @@ function AffiliateExecutiveCumulativeChart({
 }) {
   if (!data || data.length === 0) return null
 
-  const colors = { regs: '#60a5fa', ftd: '#10b981', qftd: '#f59e0b' }
+  const colors = { regs: '#60a5fa', ftd: '#10b981', qftd: '#f59e0b', pl: '#a78bfa' }
 
   const computeSizing = () => {
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1400
@@ -880,6 +880,7 @@ function AffiliateExecutiveCumulativeChart({
       regsCum: Number(d.cumRegs || 0),
       ftdCum: Number(d.cumFTD || 0),
       qftdCum: Number(d.cumQFTD || 0),
+      pl: Number(d.pl || 0),
     }))
     .filter((s) => s.date && !Number.isNaN(s._ts))
     .sort((a, b) => a._ts - b._ts)
@@ -903,6 +904,7 @@ function AffiliateExecutiveCumulativeChart({
 
   const maxRegs = Math.max(...series.map((s) => s.regsCum), 1)
   const maxRight = Math.max(...series.map((s) => Math.max(s.ftdCum, s.qftdCum)), 1)
+  const maxAbsPl = Math.max(...series.map((s) => Math.abs(Number(s.pl || 0))), 0)
 
   const nice = (v) => {
     const exp = Math.pow(10, Math.floor(Math.log10(v)))
@@ -921,8 +923,21 @@ function AffiliateExecutiveCumulativeChart({
   const padT = 40
   const padB = 68
 
-  const yLeft = (v) => padT + (H - padT - padB) * (1 - v / topLeft)
-  const yRight = (v) => padT + (H - padT - padB) * (1 - v / topRight)
+  const plotTop = padT
+  const plotBottom = H - padB
+  const splitY = plotTop + (plotBottom - plotTop) * 0.72
+
+  const yLeft = (v) => plotTop + (splitY - plotTop) * (1 - v / topLeft)
+  const yRight = (v) => plotTop + (splitY - plotTop) * (1 - v / topRight)
+
+  const plAreaTop = Math.min(plotBottom - 10, splitY + 14)
+  const plAreaBottom = plotBottom
+  const plZeroY = plAreaTop + (plAreaBottom - plAreaTop) / 2
+  const yPl = (v) => {
+    if (!maxAbsPl) return plZeroY
+    const half = (plAreaBottom - plAreaTop) / 2
+    return plZeroY - (Number(v || 0) / maxAbsPl) * Math.max(1, half)
+  }
   const xFor = (i) => {
     const denom = Math.max(1, series.length - 1)
     return padL + (i * (W - padL - padR)) / denom
@@ -959,6 +974,13 @@ function AffiliateExecutiveCumulativeChart({
   const ftdPts = series.map((s, i) => ({ x: xFor(i), y: yRight(s.ftdCum) }))
   const qftdPts = series.map((s, i) => ({ x: xFor(i), y: yRight(s.qftdCum) }))
 
+  const barWidthFor = (i) => {
+    const next = i + 1 < series.length ? xFor(i + 1) : xFor(i)
+    const prev = i - 1 >= 0 ? xFor(i - 1) : xFor(i)
+    const dx = Math.max(1, Math.min(Math.abs(next - xFor(i)), Math.abs(xFor(i) - prev)) || 1)
+    return Math.max(6, Math.min(18, dx * 0.55))
+  }
+
   const maxXlabels = 8
   const step = Math.max(1, Math.ceil(series.length / maxXlabels))
 
@@ -984,6 +1006,7 @@ function AffiliateExecutiveCumulativeChart({
       regsCum: s.regsCum,
       ftdCum: s.ftdCum,
       qftdCum: s.qftdCum,
+      pl: s.pl,
     })
   }
   const onMouseLeave = () => {
@@ -1025,6 +1048,43 @@ function AffiliateExecutiveCumulativeChart({
                 strokeWidth="1"
                 rx="6"
               />
+            ) : null}
+
+            <line x1={padL} x2={W - padR} y1={splitY} y2={splitY} stroke="rgba(255,255,255,0.06)" />
+
+            {maxAbsPl ? (
+              <>
+                <line
+                  x1={padL}
+                  x2={W - padR}
+                  y1={plZeroY}
+                  y2={plZeroY}
+                  stroke="rgba(255,255,255,0.08)"
+                  strokeDasharray="4 6"
+                />
+                {series.map((s, i) => {
+                  const v = Number(s.pl || 0)
+                  const x = xFor(i)
+                  const w = barWidthFor(i)
+                  const y = yPl(v)
+                  const top = Math.min(y, plZeroY)
+                  const h = Math.max(1, Math.abs(y - plZeroY))
+                  const fill = v >= 0 ? 'rgba(34,197,94,0.55)' : 'rgba(239,68,68,0.55)'
+                  return (
+                    <rect
+                      key={`plbar-${i}`}
+                      x={x - w / 2}
+                      y={top}
+                      width={w}
+                      height={h}
+                      fill={fill}
+                      stroke="rgba(255,255,255,0.10)"
+                      strokeWidth={0.5}
+                      rx={2}
+                    />
+                  )
+                })}
+              </>
             ) : null}
             {Array.from({ length: 4 }).map((_, i) => {
               const v = Math.round(i * (topLeft / 3))
@@ -1197,6 +1257,21 @@ function AffiliateExecutiveCumulativeChart({
             />
             {t('shareAffiliateReports.chart.legend.qftd') || 'QFTD (cum.)'}
           </span>
+          {maxAbsPl ? (
+            <span style={{ opacity: 0.7 }}>
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 8,
+                  height: 8,
+                  background: colors.pl,
+                  marginRight: 6,
+                  borderRadius: 2,
+                }}
+              />
+              {t('shareAffiliateReports.chart.legend.pl') || 'P&L (monthly)'}
+            </span>
+          ) : null}
         </div>
       </div>
 
@@ -1234,6 +1309,14 @@ function AffiliateExecutiveCumulativeChart({
             </span>
             <span>{formatNumberShort(hover.qftdCum)}</span>
           </div>
+          {maxAbsPl ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+              <span style={{ color: colors.pl }}>
+                {t('shareAffiliateReports.chart.tooltip.pl') || 'P&L'}
+              </span>
+              <span>{formatEuro(hover.pl || 0)}</span>
+            </div>
+          ) : null}
         </div>
       )}
     </div>
@@ -2964,10 +3047,6 @@ function PublicAffiliateReportsDetailView({
                 value={conversionRate === null ? '—' : formatPercent(conversionRate, 1)}
               />
               <Badge
-                label={t('shareAffiliateReports.metric.loginRatio') || 'LoSign ratio%'}
-                value={loSignRatio === null ? '—' : formatPercent(loSignRatio, 1)}
-              />
-              <Badge
                 label={t('shareAffiliateReports.metric.losingRatio') || 'Losing ratio% (P&L/ND)'}
                 value={losingRatioPct === null ? '—' : formatPercent(losingRatioPct, 2)}
               />
@@ -3460,11 +3539,17 @@ export default function PublicAffiliateAnalysisSharePage({
 
     const aKey = normalizeKey(selectedAffiliateName)
 
+    const mediaByMonthId = new Map()
+    const paymentsByMonthId = new Map()
+
     const byId = new Map()
     ;(mediaRows || []).forEach((r) => {
       if (normalizeKey(r?.affiliate) !== aKey) return
       const id = monthIdForRow(r)
       if (id === null) return
+
+      if (!mediaByMonthId.has(id)) mediaByMonthId.set(id, [])
+      mediaByMonthId.get(id).push(r)
 
       const year = Number(r?.year)
       const monthIndex = Number(r?.monthIndex)
@@ -3479,6 +3564,7 @@ export default function PublicAffiliateAnalysisSharePage({
         regs: 0,
         ftd: 0,
         qftd: 0,
+        pl: 0,
         hasData: false,
       }
 
@@ -3488,6 +3574,13 @@ export default function PublicAffiliateAnalysisSharePage({
       existing.hasData = true
       byId.set(id, existing)
     })
+    ;(payments || []).forEach((p) => {
+      if (normalizeKey(p?.affiliate) !== aKey) return
+      const id = monthIdForRow(p)
+      if (id === null) return
+      if (!paymentsByMonthId.has(id)) paymentsByMonthId.set(id, [])
+      paymentsByMonthId.get(id).push(p)
+    })
 
     const months = Array.from(byId.entries())
       .sort((a, b) => a[0] - b[0])
@@ -3496,18 +3589,30 @@ export default function PublicAffiliateAnalysisSharePage({
     let runRegs = 0
     let runFtd = 0
     let runQftd = 0
+    let runPl = 0
     return months.map((m) => {
+      const monthMediaRows = mediaByMonthId.get(m.monthId) || []
+      const monthPaymentsRows = paymentsByMonthId.get(m.monthId) || []
+      const monthKpis = deriveAffiliateKpis({
+        mediaRows: monthMediaRows,
+        paymentsRows: monthPaymentsRows,
+      })
+      const monthPl = Number(monthKpis?.totalPL || 0)
+
       runRegs += Number(m.regs || 0)
       runFtd += Number(m.ftd || 0)
       runQftd += Number(m.qftd || 0)
+      runPl += monthPl
       return {
         ...m,
         cumRegs: runRegs,
         cumFTD: runFtd,
         cumQFTD: runQftd,
+        pl: monthPl,
+        cumPL: runPl,
       }
     })
-  }, [selectedAffiliateName, mediaRows])
+  }, [selectedAffiliateName, mediaRows, payments])
 
   const kpiContext = useMemo(() => {
     if (!selectedAffiliateName) return null
