@@ -31,6 +31,25 @@ export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
     load()
   }, [load])
 
+  // When uploads complete, `UploadReportsPage` bumps bw_reports_version and emits an event.
+  // Refresh CSV-backed data automatically so dashboards reflect the new reports without manual reload.
+  useEffect(() => {
+    const onReportsUpdated = () => {
+      load(true)
+    }
+
+    const onStorage = (e) => {
+      if (!e || e.key === 'bw_reports_version') onReportsUpdated()
+    }
+
+    window.addEventListener('bw-reports-updated', onReportsUpdated)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('bw-reports-updated', onReportsUpdated)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [load])
+
   return { data, loading, error, sourcePath, reload: load }
 }
 

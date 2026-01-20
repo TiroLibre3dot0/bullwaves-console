@@ -191,7 +191,10 @@ export default function UploadReportsPage() {
         try {
           const msg = JSON.parse(s)
           if (msg.type === 'progress') {
-            if (typeof msg.pct === 'number') setServerProgress(msg.pct)
+            if (typeof msg.pct === 'number') {
+              const pct = Math.max(0, Math.min(100, msg.pct))
+              setServerProgress(pct)
+            }
             if (msg.message) setStatus(msg.message)
           } else if (msg.type === 'result') {
             sawTerminalMessage = true

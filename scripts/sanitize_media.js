@@ -188,6 +188,25 @@ if (fs.existsSync(dest)){
 
 const finalFields = existingFields && existingFields.length ? existingFields : uniqueFields
 
+const allowDecreases = process.env.MEDIA_ALLOW_DECREASE === '1'
+
+// Metrics that, for the same (month, affiliate, country), are expected to be cumulative.
+// If a later export is partial or inconsistent, we prefer not to overwrite higher historic
+// values with lower ones unless explicitly allowed via MEDIA_ALLOW_DECREASE=1.
+const monotonicFields = new Set([
+  'impressions',
+  'unique_impressions',
+  'unique_visitors',
+  'visitors',
+  'leads',
+  'registrations',
+  'ftd',
+  'qftd',
+  'deposits',
+  'first_deposits',
+  'chargeback_count',
+])
+
 function normalizeVal(v){
   if (v === undefined || v === null) return ''
   return String(v).trim().toLowerCase()
@@ -199,6 +218,16 @@ function normalizeForCompare(v){
   // Normalize common numeric formatting differences (e.g. 1,215.00 vs 1215.00)
   if (/^[\d,.-]+%?$/.test(s)) s = s.replace(/,/g, '')
   return s.toLowerCase()
+}
+
+function toNumberOrNull(v) {
+  if (v === undefined || v === null) return null
+  const s = String(v).trim()
+  if (!s) return null
+  const cleaned = s.replace(/%/g, '').replace(/,/g, '')
+  if (!/^[+-]?(\d+\.?\d*|\d*\.?\d+)$/.test(cleaned)) return null
+  const n = Number(cleaned)
+  return Number.isFinite(n) ? n : null
 }
 
 function normalizeMonth(v){
@@ -269,23 +298,43 @@ for (const r of cleanedRows) {
   if (keyToIndex.has(k)) {
     const idx = keyToIndex.get(k)
     const prev = existingRows[idx] || {}
+    const merged = Object.assign({}, prev)
+
+    for (const [field, nextValRaw] of Object.entries(r)) {
+      // Keep the raw values for identifying fields.
+      if (field === 'month' || field === 'affiliate' || field === 'country') {
+        merged[field] = nextValRaw
+        continue
+      }
+
+      if (!allowDecreases && monotonicFields.has(field)) {
+        const prevNum = toNumberOrNull(prev[field])
+        const nextNum = toNumberOrNull(nextValRaw)
+        if (prevNum != null && nextNum != null && nextNum < prevNum) {
+          // Keep the higher historic value.
+          merged[field] = prev[field]
+          continue
+        }
+      }
+
+      merged[field] = nextValRaw
+    }
+
     let changed = false
-    for (const [field, nextVal] of Object.entries(r)) {
-      // Treat month/affiliate/country equivalence as normalized values (so 1/2026 == 2026-01)
+    for (const [field, mergedVal] of Object.entries(merged)) {
       if (field === 'month') {
-        if (normalizeMonth(prev.month) !== normalizeMonth(nextVal)) changed = true
+        if (normalizeMonth(prev.month) !== normalizeMonth(mergedVal)) { changed = true; break }
         continue
       }
       if (field === 'affiliate' || field === 'country') {
-        if (normalizeVal(prev[field]) !== normalizeVal(nextVal)) changed = true
+        if (normalizeVal(prev[field]) !== normalizeVal(mergedVal)) { changed = true; break }
         continue
       }
-
-      if (normalizeForCompare(prev[field]) !== normalizeForCompare(nextVal)) changed = true
+      if (normalizeForCompare(prev[field]) !== normalizeForCompare(mergedVal)) { changed = true; break }
     }
 
     if (changed) {
-      existingRows[idx] = Object.assign({}, prev, r)
+      existingRows[idx] = merged
       updatedCount++
     } else {
       unchangedCount++

@@ -156,7 +156,7 @@ async function runPostUploadGenerators(type, emit) {
   const results = []
   for (let i = 0; i < scripts.length; i += 1) {
     const scriptFile = scripts[i]
-    if (emit) emit(92 + i * 3, 'post_processing', `Generating ${path.basename(scriptFile)}…`)
+    if (emit) emit(Math.min(99, 92 + i * 3), 'post_processing', `Generating ${path.basename(scriptFile)}…`)
     // eslint-disable-next-line no-await-in-loop
     const r = await runNodeScript(scriptFile, { cwd })
     results.push({

@@ -60,6 +60,11 @@ export default defineConfig({
       ignored: [
         '**/public/*Report.csv',
         '**/public/comments.csv',
+        '**/public/reports_meta.json',
+        '**/public/*_index.json',
+        '**/public/share/org-chart-people.json',
+        '**/public/fraud_monitor_*.json',
+        '**/public/fraud_monitor_*.csv',
         '**/public/raw/**',
         '**/uploads/**',
       ],
