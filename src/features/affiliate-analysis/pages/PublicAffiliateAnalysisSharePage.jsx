@@ -845,7 +845,13 @@ function AffiliateExecutiveCumulativeChart({
 }) {
   if (!data || data.length === 0) return null
 
-  const colors = { regs: '#60a5fa', ftd: '#10b981', qftd: '#f59e0b', pl: '#a78bfa' }
+  const colors = {
+    regs: '#ffffff',
+    ftd: '#f97316',
+    qftd: '#facc15',
+    plPos: '#00e676',
+    plNeg: '#ff1744',
+  }
 
   const computeSizing = () => {
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1400
@@ -913,8 +919,23 @@ function AffiliateExecutiveCumulativeChart({
     return cap * exp
   }
 
-  const topLeft = Math.min(nice(Math.ceil(maxRegs * 1.08)), 250000)
-  const topRight = nice(Math.ceil(maxRight * 1.08))
+  const topLeft = Math.min(nice(Math.ceil(Math.max(maxRegs, maxRight) * 1.08)), 25_000)
+
+  const plValues = series.map((s) => Number(s.pl || 0)).filter((v) => Number.isFinite(v))
+  const plMinRaw = plValues.length ? Math.min(...plValues) : 0
+  const plMaxRaw = plValues.length ? Math.max(...plValues) : 0
+  const plMin = maxAbsPl ? plMinRaw : 0
+  const plMax = maxAbsPl ? plMaxRaw : 0
+
+  const plMinorStep = 50_000
+
+  const plAxisMinRaw = plMin < 0 ? plMin : 0
+  const plAxisMaxRaw = plMax > 0 ? plMax : 0
+
+  const plAxisMin =
+    maxAbsPl && plAxisMinRaw < 0 ? Math.floor(plAxisMinRaw / plMinorStep) * plMinorStep : 0
+  const plAxisMax =
+    maxAbsPl && plAxisMaxRaw > 0 ? Math.ceil(plAxisMaxRaw / plMinorStep) * plMinorStep : 0
 
   const W = 1200
   const H = chartSizing.responsiveHeight
@@ -925,19 +946,17 @@ function AffiliateExecutiveCumulativeChart({
 
   const plotTop = padT
   const plotBottom = H - padB
-  const splitY = plotTop + (plotBottom - plotTop) * 0.72
+  const yLeft = (v) => plotTop + (plotBottom - plotTop) * (1 - v / topLeft)
 
-  const yLeft = (v) => plotTop + (splitY - plotTop) * (1 - v / topLeft)
-  const yRight = (v) => plotTop + (splitY - plotTop) * (1 - v / topRight)
-
-  const plAreaTop = Math.min(plotBottom - 10, splitY + 14)
+  const plAreaTop = plotTop
   const plAreaBottom = plotBottom
-  const plZeroY = plAreaTop + (plAreaBottom - plAreaTop) / 2
+  const plRange = Math.max(1, plAxisMax - plAxisMin)
   const yPl = (v) => {
-    if (!maxAbsPl) return plZeroY
-    const half = (plAreaBottom - plAreaTop) / 2
-    return plZeroY - (Number(v || 0) / maxAbsPl) * Math.max(1, half)
+    if (!maxAbsPl) return plAreaBottom
+    const clamped = Math.max(plAxisMin, Math.min(plAxisMax, Number(v || 0)))
+    return plAreaTop + (plAreaBottom - plAreaTop) * (1 - (clamped - plAxisMin) / plRange)
   }
+  const plZeroY = yPl(0)
   const xFor = (i) => {
     const denom = Math.max(1, series.length - 1)
     return padL + (i * (W - padL - padR)) / denom
@@ -971,8 +990,8 @@ function AffiliateExecutiveCumulativeChart({
   }
 
   const regsPts = series.map((s, i) => ({ x: xFor(i), y: yLeft(s.regsCum) }))
-  const ftdPts = series.map((s, i) => ({ x: xFor(i), y: yRight(s.ftdCum) }))
-  const qftdPts = series.map((s, i) => ({ x: xFor(i), y: yRight(s.qftdCum) }))
+  const ftdPts = series.map((s, i) => ({ x: xFor(i), y: yLeft(s.ftdCum) }))
+  const qftdPts = series.map((s, i) => ({ x: xFor(i), y: yLeft(s.qftdCum) }))
 
   const barWidthFor = (i) => {
     const next = i + 1 < series.length ? xFor(i + 1) : xFor(i)
@@ -983,6 +1002,53 @@ function AffiliateExecutiveCumulativeChart({
 
   const maxXlabels = 8
   const step = Math.max(1, Math.ceil(series.length / maxXlabels))
+
+  const formatEuroShort = (v) => {
+    const n = Number(v || 0)
+    const sign = n < 0 ? '-' : ''
+    return `${sign}€${formatNumberShort(Math.abs(n))}`
+  }
+
+  const conversionMarker = (() => {
+    if (!series.length) return null
+    const last = series[series.length - 1]
+    const regs = Number(last.regsCum || 0)
+    const ftd = Number(last.ftdCum || 0)
+    if (!Number.isFinite(regs) || !Number.isFinite(ftd) || regs <= 0) return null
+
+    // % users not deposited yet: (1 - ftd / registrations) * 100
+    // Note: formatPercent() expects a 0-100 value (it appends '%').
+    const noDepositPct = Math.max(0, Math.min(100, (1 - ftd / regs) * 100))
+
+    // Keep it away from right-axis tick labels
+    const x = W - padR - 170
+    const yRegs = yLeft(regs)
+    const yFtd = yLeft(ftd)
+    const top = Math.min(yRegs, yFtd)
+    const bottom = Math.max(yRegs, yFtd)
+    return { x, yRegs, yFtd, top, bottom, regs, ftd, noDepositPct }
+  })()
+
+  const plTicks = (() => {
+    if (!maxAbsPl) return []
+    const start = Math.floor(plAxisMin / plMinorStep) * plMinorStep
+    const end = Math.ceil(plAxisMax / plMinorStep) * plMinorStep
+    const out = []
+    for (let v = start; v <= end; v += plMinorStep) out.push(v)
+    if (!out.includes(0)) out.push(0)
+    out.sort((a, b) => a - b)
+    return out
+  })()
+
+  const plMajorStep = (() => {
+    if (!maxAbsPl) return plMinorStep
+    const r = plAxisMax - plAxisMin
+    if (r <= 300_000) return 50_000
+    if (r <= 600_000) return 100_000
+    if (r <= 1_200_000) return 200_000
+    if (r <= 2_400_000) return 400_000
+    return 500_000
+  })()
 
   const onMouseMove = (e) => {
     if (!svgRef.current) return
@@ -1050,18 +1116,46 @@ function AffiliateExecutiveCumulativeChart({
               />
             ) : null}
 
-            <line x1={padL} x2={W - padR} y1={splitY} y2={splitY} stroke="rgba(255,255,255,0.06)" />
-
             {maxAbsPl ? (
               <>
+                {/* Right-axis (P&L) zero baseline */}
                 <line
                   x1={padL}
                   x2={W - padR}
                   y1={plZeroY}
                   y2={plZeroY}
-                  stroke="rgba(255,255,255,0.08)"
+                  stroke="rgba(255,255,255,0.12)"
                   strokeDasharray="4 6"
                 />
+
+                {/* Minor ticks every 50k on right axis; major gridlines sparsely */}
+                {plTicks.map((v) => {
+                  const y = yPl(v)
+                  const isZero = Math.abs(v) < 0.00001
+                  const isMajor = v % plMajorStep === 0
+                  return (
+                    <g key={`pl-tick-${v}`}>
+                      {isMajor && !isZero ? (
+                        <line
+                          x1={padL}
+                          x2={W - padR}
+                          y1={y}
+                          y2={y}
+                          stroke="rgba(255,255,255,0.025)"
+                        />
+                      ) : null}
+                      <line
+                        x1={W - padR}
+                        x2={W - padR + 6}
+                        y1={y}
+                        y2={y}
+                        stroke={isZero ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.08)'}
+                      />
+                    </g>
+                  )
+                })}
+
+                {/* Histogram bars (drawn behind the lines, can overlap them) */}
                 {series.map((s, i) => {
                   const v = Number(s.pl || 0)
                   const x = xFor(i)
@@ -1069,7 +1163,7 @@ function AffiliateExecutiveCumulativeChart({
                   const y = yPl(v)
                   const top = Math.min(y, plZeroY)
                   const h = Math.max(1, Math.abs(y - plZeroY))
-                  const fill = v >= 0 ? 'rgba(34,197,94,0.55)' : 'rgba(239,68,68,0.55)'
+                  const fill = v >= 0 ? 'rgba(0,230,118,0.42)' : 'rgba(255,23,68,0.14)'
                   return (
                     <rect
                       key={`plbar-${i}`}
@@ -1078,8 +1172,6 @@ function AffiliateExecutiveCumulativeChart({
                       width={w}
                       height={h}
                       fill={fill}
-                      stroke="rgba(255,255,255,0.10)"
-                      strokeWidth={0.5}
                       rx={2}
                     />
                   )
@@ -1105,23 +1197,92 @@ function AffiliateExecutiveCumulativeChart({
               d={buildPath(regsPts)}
               fill="none"
               stroke={colors.regs}
-              strokeWidth={2}
-              opacity={0.22}
+              strokeWidth={2.5}
+              opacity={0.62}
             />
             <path
               d={buildPath(ftdPts)}
               fill="none"
               stroke={colors.ftd}
-              strokeWidth={3.5}
+              strokeWidth={2.5}
               opacity={0.95}
             />
             <path
               d={buildPath(qftdPts)}
               fill="none"
               stroke={colors.qftd}
-              strokeWidth={2}
-              opacity={0.18}
+              strokeWidth={2.5}
+              opacity={0.7}
             />
+
+            {conversionMarker ? (
+              <>
+                <line
+                  x1={conversionMarker.x}
+                  x2={conversionMarker.x}
+                  y1={conversionMarker.yRegs}
+                  y2={conversionMarker.yFtd}
+                  stroke="rgba(255,255,255,0.35)"
+                  strokeWidth={2}
+                />
+                <circle
+                  cx={conversionMarker.x}
+                  cy={conversionMarker.yRegs}
+                  r={3.5}
+                  fill={colors.regs}
+                  stroke="rgba(15,23,42,0.65)"
+                  strokeWidth={1}
+                />
+                <circle
+                  cx={conversionMarker.x}
+                  cy={conversionMarker.yFtd}
+                  r={3.5}
+                  fill={colors.ftd}
+                  stroke="rgba(15,23,42,0.65)"
+                  strokeWidth={1}
+                />
+
+                {(() => {
+                  const midY = (conversionMarker.top + conversionMarker.bottom) / 2
+                  const labelW = 172
+                  const labelH = 22
+                  const labelX = conversionMarker.x + 6
+                  const labelY = midY - labelH / 2
+                  return (
+                    <>
+                      <line
+                        x1={conversionMarker.x}
+                        x2={labelX}
+                        y1={midY}
+                        y2={midY}
+                        stroke="rgba(255,255,255,0.35)"
+                        strokeWidth={1.5}
+                      />
+                      <rect
+                        x={labelX}
+                        y={labelY}
+                        width={labelW}
+                        height={labelH}
+                        rx={8}
+                        fill="rgba(255,255,255,0.94)"
+                        stroke="rgba(15,23,42,0.14)"
+                        strokeWidth={0.9}
+                      />
+                      <text
+                        x={labelX + labelW / 2}
+                        y={labelY + 15}
+                        textAnchor="middle"
+                        fontSize={10}
+                        fill="rgba(15,23,42,0.92)"
+                        style={{ fontWeight: 950 }}
+                      >
+                        {formatPercent(conversionMarker.noDepositPct, 1)} · Never deposited
+                      </text>
+                    </>
+                  )
+                })()}
+              </>
+            ) : null}
 
             <line x1={padL} x2={padL} y1={padT} y2={H - padB} stroke="rgba(255,255,255,0.10)" />
             <line
@@ -1156,22 +1317,29 @@ function AffiliateExecutiveCumulativeChart({
               )
             })}
 
-            {Array.from({ length: 4 }).map((_, i) => {
-              const v = Math.round(i * (topRight / 3))
-              const y = yRight(v)
-              return (
-                <text
-                  key={`yr-${i}`}
-                  x={W - padR + 10}
-                  y={y + 4}
-                  textAnchor="start"
-                  fontSize="12"
-                  fill="rgba(255,255,255,0.40)"
-                >
-                  {formatNumberShort(v)}
-                </text>
-              )
-            })}
+            {maxAbsPl
+              ? plTicks
+                  .filter((v) => v % plMajorStep === 0 || Math.abs(v) < 0.00001)
+                  .map((v) => {
+                    const y = yPl(v)
+                    return (
+                      <text
+                        key={`yr-${v}`}
+                        x={W - padR + 10}
+                        y={y + 4}
+                        textAnchor="start"
+                        fontSize="12"
+                        fill={
+                          Math.abs(v) < 0.00001
+                            ? 'rgba(255,255,255,0.52)'
+                            : 'rgba(255,255,255,0.38)'
+                        }
+                      >
+                        {formatEuroShort(v)}
+                      </text>
+                    )
+                  })
+              : null}
 
             {series.map((s, i) => {
               if (i % step !== 0 && i !== series.length - 1) return null
@@ -1264,7 +1432,7 @@ function AffiliateExecutiveCumulativeChart({
                   display: 'inline-block',
                   width: 8,
                   height: 8,
-                  background: colors.pl,
+                  background: `linear-gradient(90deg, ${colors.plNeg}, ${colors.plPos})`,
                   marginRight: 6,
                   borderRadius: 2,
                 }}
@@ -1311,7 +1479,7 @@ function AffiliateExecutiveCumulativeChart({
           </div>
           {maxAbsPl ? (
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-              <span style={{ color: colors.pl }}>
+              <span style={{ color: Number(hover.pl || 0) >= 0 ? colors.plPos : colors.plNeg }}>
                 {t('shareAffiliateReports.chart.tooltip.pl') || 'P&L'}
               </span>
               <span>{formatEuro(hover.pl || 0)}</span>
@@ -1455,6 +1623,8 @@ function PublicAffiliateReportsDetailView({
   selectedAffiliateName,
   periodType,
   setPeriodType,
+  onSelectAffiliate,
+  onSelectPeriod,
   selectedPeriodLabel,
   highlightStartId,
   highlightEndId,
@@ -1468,7 +1638,13 @@ function PublicAffiliateReportsDetailView({
   const previous = report?.previousKpis || null
 
   const [affiliatePickerOpen, setAffiliatePickerOpen] = useState(false)
+  const [switchingAffiliate, setSwitchingAffiliate] = useState(false)
   const affiliatePickerWrapRef = React.useRef(null)
+  const prevSelectedAffiliateRef = React.useRef({
+    id: selectedAffiliateId,
+    name: selectedAffiliateName,
+    periodType,
+  })
 
   const registrationsDepositsAgg = useRegistrationsDepositsAgg(
     Boolean(selectedAffiliateId || selectedAffiliateName)
@@ -1484,6 +1660,23 @@ function PublicAffiliateReportsDetailView({
   }, [affiliatePickerOpen])
 
   useEffect(() => {
+    const prev = prevSelectedAffiliateRef.current
+    const changed =
+      prev?.id !== selectedAffiliateId ||
+      prev?.name !== selectedAffiliateName ||
+      prev?.periodType !== periodType
+
+    if (changed) {
+      prevSelectedAffiliateRef.current = {
+        id: selectedAffiliateId,
+        name: selectedAffiliateName,
+        periodType,
+      }
+      setSwitchingAffiliate(false)
+    }
+  }, [selectedAffiliateId, selectedAffiliateName, periodType])
+
+  useEffect(() => {
     if (!affiliatePickerOpen) return
     const onPointerDown = (e) => {
       const wrap = affiliatePickerWrapRef.current
@@ -1496,10 +1689,19 @@ function PublicAffiliateReportsDetailView({
   }, [affiliatePickerOpen])
 
   const openAffiliateHref = (name) => {
+    if (typeof onSelectAffiliate === 'function') {
+      onSelectAffiliate(name)
+      return
+    }
+
     const encoded = encodeAffiliateId(name)
     const p = String(periodType || '').trim()
     const next = p ? `${shareBase}/${encoded}/${p}` : `${shareBase}/${encoded}`
     if (typeof window !== 'undefined') window.location.href = next
+  }
+
+  if (switchingAffiliate) {
+    return <FullPageLoader progress={45} subtitle={t('common.loading')} />
   }
 
   const cohort = useCohortNetDepositsCalendar({ enabled: true })
@@ -2618,7 +2820,12 @@ function PublicAffiliateReportsDetailView({
                         type="button"
                         role="option"
                         onClick={() => {
+                          if (normalizeKey(name) === normalizeKey(selectedAffiliateName)) {
+                            setAffiliatePickerOpen(false)
+                            return
+                          }
                           setAffiliatePickerOpen(false)
+                          setSwitchingAffiliate(true)
                           openAffiliateHref(name)
                         }}
                         style={{
@@ -2825,7 +3032,15 @@ function PublicAffiliateReportsDetailView({
             </div>
             <select
               value={periodType}
-              onChange={(e) => setPeriodType(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value
+                setSwitchingAffiliate(true)
+                if (typeof onSelectPeriod === 'function') {
+                  onSelectPeriod(next)
+                  return
+                }
+                setPeriodType(next)
+              }}
               style={{
                 padding: '7px 10px',
                 borderRadius: 12,
@@ -3234,6 +3449,32 @@ export default function PublicAffiliateAnalysisSharePage({
   const [isValidToken, setIsValidToken] = useState(false)
   const [periodType, setPeriodType] = useState('since-ever')
 
+  const [activeAffiliateId, setActiveAffiliateId] = useState(() => String(affiliateId || ''))
+  useEffect(() => {
+    setActiveAffiliateId(String(affiliateId || ''))
+  }, [affiliateId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const syncFromPath = () => {
+      const segs = String(window.location.pathname || '')
+        .split('/')
+        .filter(Boolean)
+      if (segs[0] !== 'share' || segs[1] !== 'affiliate-reports') return
+
+      const baseIndex = boardMode ? 2 : 3
+      const pathAffiliate = segs[baseIndex] || ''
+      const pathPeriod = segs[baseIndex + 1] || ''
+
+      setActiveAffiliateId(String(pathAffiliate || ''))
+      setPeriodType(normalizePeriodType(pathPeriod) || 'since-ever')
+    }
+
+    window.addEventListener('popstate', syncFromPath)
+    return () => window.removeEventListener('popstate', syncFromPath)
+  }, [boardMode])
+
   const { mediaRows, payments, loading, error } = useMediaPaymentsData()
 
   const mediaByAffiliateKey = useMemo(() => {
@@ -3315,11 +3556,11 @@ export default function PublicAffiliateAnalysisSharePage({
   }, [mediaRows, payments])
 
   const selectedAffiliateName = useMemo(() => {
-    if (!affiliateId) return ''
-    const decoded = decodeAffiliateId(affiliateId)
+    if (!activeAffiliateId) return ''
+    const decoded = decodeAffiliateId(activeAffiliateId)
     const sel = normalizeKey(decoded)
     return affiliateNameIndex.get(sel) || decoded
-  }, [affiliateId, affiliateNameIndex])
+  }, [activeAffiliateId, affiliateNameIndex])
 
   const affiliateIdIndex = useMemo(() => {
     const map = new Map()
@@ -3351,7 +3592,7 @@ export default function PublicAffiliateAnalysisSharePage({
 
   const selectedAffiliateNumericId = useMemo(() => {
     // If route param is already a numeric affiliate id, accept it.
-    const decoded = decodeAffiliateId(affiliateId)
+    const decoded = decodeAffiliateId(activeAffiliateId)
     if (/^\d+$/.test(String(decoded || '').trim())) return String(decoded).trim()
 
     const k = normalizeKey(selectedAffiliateName)
@@ -3366,7 +3607,7 @@ export default function PublicAffiliateAnalysisSharePage({
       null
     )
   }, [
-    affiliateId,
+    activeAffiliateId,
     selectedAffiliateName,
     affiliateIdIndex,
     affiliateIdIndexStrict,
@@ -3812,6 +4053,43 @@ export default function PublicAffiliateAnalysisSharePage({
     return `${origin}/share/affiliate-reports/${token}`
   }, [token, boardMode])
 
+  const onSelectAffiliate = useMemo(() => {
+    return (name) => {
+      const encoded = encodeAffiliateId(name)
+      setActiveAffiliateId(encoded)
+
+      if (typeof window === 'undefined') return
+      const p = String(periodType || '').trim()
+      const nextAbs = p ? `${shareBase}/${encoded}/${p}` : `${shareBase}/${encoded}`
+      try {
+        const u = new URL(nextAbs)
+        window.history.pushState({}, '', `${u.pathname}${u.search}${u.hash}`)
+      } catch {
+        // ignore
+      }
+    }
+  }, [periodType, shareBase])
+
+  const onSelectPeriod = useMemo(() => {
+    return (nextPeriodType) => {
+      const normalized = normalizePeriodType(nextPeriodType) || 'since-ever'
+      setPeriodType(normalized)
+
+      if (typeof window === 'undefined') return
+      const affiliateSeg = String(activeAffiliateId || '').trim()
+      const nextAbs = affiliateSeg
+        ? `${shareBase}/${affiliateSeg}/${normalized}`
+        : `${shareBase}/${normalized}`
+
+      try {
+        const u = new URL(nextAbs)
+        window.history.replaceState({}, '', `${u.pathname}${u.search}${u.hash}`)
+      } catch {
+        // ignore
+      }
+    }
+  }, [activeAffiliateId, shareBase])
+
   if (validating || loading) {
     return <FullPageLoader progress={35} subtitle={t('common.loading')} />
   }
@@ -3885,6 +4163,8 @@ export default function PublicAffiliateAnalysisSharePage({
       selectedAffiliateName={selectedAffiliateName}
       periodType={effectivePeriodType}
       setPeriodType={setPeriodType}
+      onSelectAffiliate={onSelectAffiliate}
+      onSelectPeriod={onSelectPeriod}
       selectedPeriodLabel={periodContext?.label || '—'}
       highlightStartId={effectivePeriodType !== 'since-ever' ? periodContext?.startId : null}
       highlightEndId={effectivePeriodType !== 'since-ever' ? periodContext?.endId : null}
