@@ -1011,20 +1011,38 @@ function AffiliateExecutiveCumulativeChart({
 
   const conversionMarker = (() => {
     if (!series.length) return null
-    const lastIdx = series.length - 1
-    const last = series[series.length - 1]
-    const regs = Number(last.regsCum || 0)
-    const ftd = Number(last.ftdCum || 0)
+
+    // Place marker around Nov 2025 for visibility (fallback to last point).
+    const desiredTs = Date.parse('2025-11-15')
+    const targetIdx = (() => {
+      if (!Number.isFinite(desiredTs)) return series.length - 1
+      let best = series.length - 1
+      let bestDist = Infinity
+      for (let i = 0; i < series.length; i++) {
+        const ts = Number(series[i]?._ts || 0)
+        if (!Number.isFinite(ts)) continue
+        const d = Math.abs(ts - desiredTs)
+        if (d < bestDist) {
+          bestDist = d
+          best = i
+        }
+      }
+      return best
+    })()
+
+    const point = series[targetIdx] || series[series.length - 1]
+    const regs = Number(point.regsCum || 0)
+    const ftd = Number(point.ftdCum || 0)
     if (!Number.isFinite(regs) || !Number.isFinite(ftd) || regs <= 0) return null
 
     // % users not deposited yet: (1 - ftd / registrations) * 100
     // Note: formatPercent() expects a 0-100 value (it appends '%').
     const noDepositPct = Math.max(0, Math.min(100, (1 - ftd / regs) * 100))
 
-    // Anchor to the actual last points of the white/orange lines.
-    const x = regsPts[lastIdx]?.x ?? xFor(lastIdx)
-    const yRegs = regsPts[lastIdx]?.y ?? yLeft(regs)
-    const yFtd = ftdPts[lastIdx]?.y ?? yLeft(ftd)
+    // Anchor to the actual points of the white/orange lines.
+    const x = regsPts[targetIdx]?.x ?? xFor(targetIdx)
+    const yRegs = regsPts[targetIdx]?.y ?? yLeft(regs)
+    const yFtd = ftdPts[targetIdx]?.y ?? yLeft(ftd)
     const top = Math.min(yRegs, yFtd)
     const bottom = Math.max(yRegs, yFtd)
     return { x, yRegs, yFtd, top, bottom, regs, ftd, noDepositPct }
