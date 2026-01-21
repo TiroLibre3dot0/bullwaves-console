@@ -1011,6 +1011,7 @@ function AffiliateExecutiveCumulativeChart({
 
   const conversionMarker = (() => {
     if (!series.length) return null
+    const lastIdx = series.length - 1
     const last = series[series.length - 1]
     const regs = Number(last.regsCum || 0)
     const ftd = Number(last.ftdCum || 0)
@@ -1020,10 +1021,10 @@ function AffiliateExecutiveCumulativeChart({
     // Note: formatPercent() expects a 0-100 value (it appends '%').
     const noDepositPct = Math.max(0, Math.min(100, (1 - ftd / regs) * 100))
 
-    // Keep it away from right-axis tick labels
-    const x = W - padR - 170
-    const yRegs = yLeft(regs)
-    const yFtd = yLeft(ftd)
+    // Anchor to the actual last points of the white/orange lines.
+    const x = regsPts[lastIdx]?.x ?? xFor(lastIdx)
+    const yRegs = regsPts[lastIdx]?.y ?? yLeft(regs)
+    const yFtd = ftdPts[lastIdx]?.y ?? yLeft(ftd)
     const top = Math.min(yRegs, yFtd)
     const bottom = Math.max(yRegs, yFtd)
     return { x, yRegs, yFtd, top, bottom, regs, ftd, noDepositPct }
