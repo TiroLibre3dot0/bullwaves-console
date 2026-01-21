@@ -870,6 +870,7 @@ function AffiliateExecutiveCumulativeChart({
   const svgRef = React.useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
   const [hover, setHover] = useState(null)
+  const [markerCursorX, setMarkerCursorX] = useState(null)
 
   useEffect(() => {
     const onResize = () => setChartSizing(computeSizing())
@@ -1011,38 +1012,56 @@ function AffiliateExecutiveCumulativeChart({
 
   const conversionMarker = (() => {
     if (!series.length) return null
+    if (series.length < 2) return null
 
-    // Place marker around Nov 2025 for visibility (fallback to last point).
-    const desiredTs = Date.parse('2025-11-15')
-    const targetIdx = (() => {
-      if (!Number.isFinite(desiredTs)) return series.length - 1
-      let best = series.length - 1
-      let bestDist = Infinity
-      for (let i = 0; i < series.length; i++) {
-        const ts = Number(series[i]?._ts || 0)
-        if (!Number.isFinite(ts)) continue
-        const d = Math.abs(ts - desiredTs)
-        if (d < bestDist) {
-          bestDist = d
-          best = i
-        }
-      }
-      return best
-    })()
+    // When not hovering, show a stable default marker at the midpoint of the chart.
+    const defaultLeft = Math.max(
+      0,
+      Math.min(series.length - 2, Math.floor((series.length - 1) / 2))
+    )
+    const defaultX0 = xFor(defaultLeft)
+    const defaultX1 = xFor(defaultLeft + 1)
+    const plotCenterX = (padL + (W - padR)) / 2
+    const defaultMidXRaw = (defaultX0 + defaultX1) / 2
+    const defaultMidX = Number.isFinite(defaultMidXRaw) ? defaultMidXRaw : plotCenterX
 
-    const point = series[targetIdx] || series[series.length - 1]
-    const regs = Number(point.regsCum || 0)
-    const ftd = Number(point.ftdCum || 0)
+    const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+    const cursorXRaw = Number.isFinite(Number(markerCursorX)) ? Number(markerCursorX) : defaultMidX
+    const cursorX = clamp(cursorXRaw, padL, W - padR)
+
+    // X is uniformly spaced, so convert cursorX -> fractional index and snap to nearest midpoint (i + 0.5).
+    const denom = Math.max(1, series.length - 1)
+    const dx = (W - padL - padR) / denom
+    const frac = dx > 0 ? (cursorX - padL) / dx : defaultLeft
+    const bestLeft = clamp(Math.round(frac - 0.5), 0, series.length - 2)
+
+    const leftIdx = bestLeft
+    const rightIdx = bestLeft + 1
+    const x0 = regsPts[leftIdx]?.x ?? xFor(leftIdx)
+    const x1 = regsPts[rightIdx]?.x ?? xFor(rightIdx)
+    const x = (x0 + x1) / 2
+    const t = 0.5
+    const lerp = (a, b) => a + (b - a) * t
+
+    const regs0 = Number(series[leftIdx]?.regsCum || 0)
+    const regs1 = Number(series[rightIdx]?.regsCum || 0)
+    const ftd0 = Number(series[leftIdx]?.ftdCum || 0)
+    const ftd1 = Number(series[rightIdx]?.ftdCum || 0)
+
+    const regs = lerp(regs0, regs1)
+    const ftd = lerp(ftd0, ftd1)
     if (!Number.isFinite(regs) || !Number.isFinite(ftd) || regs <= 0) return null
 
     // % users not deposited yet: (1 - ftd / registrations) * 100
     // Note: formatPercent() expects a 0-100 value (it appends '%').
     const noDepositPct = Math.max(0, Math.min(100, (1 - ftd / regs) * 100))
 
-    // Anchor to the actual points of the white/orange lines.
-    const x = regsPts[targetIdx]?.x ?? xFor(targetIdx)
-    const yRegs = regsPts[targetIdx]?.y ?? yLeft(regs)
-    const yFtd = ftdPts[targetIdx]?.y ?? yLeft(ftd)
+    const yRegs0 = regsPts[leftIdx]?.y ?? yLeft(regs0)
+    const yRegs1 = regsPts[rightIdx]?.y ?? yLeft(regs1)
+    const yFtd0 = ftdPts[leftIdx]?.y ?? yLeft(ftd0)
+    const yFtd1 = ftdPts[rightIdx]?.y ?? yLeft(ftd1)
+    const yRegs = lerp(yRegs0, yRegs1)
+    const yFtd = lerp(yFtd0, yFtd1)
     const top = Math.min(yRegs, yFtd)
     const bottom = Math.max(yRegs, yFtd)
     return { x, yRegs, yFtd, top, bottom, regs, ftd, noDepositPct }
@@ -1072,8 +1091,11 @@ function AffiliateExecutiveCumulativeChart({
   const onMouseMove = (e) => {
     if (!svgRef.current) return
     const rect = svgRef.current.getBoundingClientRect()
+    if (!rect.width || rect.width <= 0) return
     const xRel = e.clientX - rect.left
     const xInView = (xRel / rect.width) * W
+    const clampedX = Math.max(padL, Math.min(W - padR, xInView))
+    if (Number.isFinite(clampedX)) setMarkerCursorX(clampedX)
     let best = 0
     let bestDist = Infinity
     series.forEach((s, i) => {
@@ -1097,6 +1119,7 @@ function AffiliateExecutiveCumulativeChart({
   const onMouseLeave = () => {
     setHoverIndex(null)
     setHover(null)
+    setMarkerCursorX(null)
   }
 
   return (
@@ -1243,6 +1266,7 @@ function AffiliateExecutiveCumulativeChart({
                   y2={conversionMarker.yFtd}
                   stroke="rgba(255,255,255,0.35)"
                   strokeWidth={2}
+                  style={{ pointerEvents: 'none' }}
                 />
                 <circle
                   cx={conversionMarker.x}
@@ -1251,6 +1275,7 @@ function AffiliateExecutiveCumulativeChart({
                   fill={colors.regs}
                   stroke="rgba(15,23,42,0.65)"
                   strokeWidth={1}
+                  style={{ pointerEvents: 'none' }}
                 />
                 <circle
                   cx={conversionMarker.x}
@@ -1259,6 +1284,7 @@ function AffiliateExecutiveCumulativeChart({
                   fill={colors.ftd}
                   stroke="rgba(15,23,42,0.65)"
                   strokeWidth={1}
+                  style={{ pointerEvents: 'none' }}
                 />
 
                 {(() => {
@@ -1268,7 +1294,7 @@ function AffiliateExecutiveCumulativeChart({
                   const gap = 6
 
                   const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
-                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} · Never dep.`
+                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} · Never dep. (Avg)`
 
                   const maxX = W - padR - 6
                   const minX = padL + 6
@@ -1295,6 +1321,7 @@ function AffiliateExecutiveCumulativeChart({
                         y2={midY}
                         stroke="rgba(255,255,255,0.22)"
                         strokeWidth={1.2}
+                        style={{ pointerEvents: 'none' }}
                       />
                       <rect
                         x={labelX}
@@ -1305,6 +1332,7 @@ function AffiliateExecutiveCumulativeChart({
                         fill="rgba(255,255,255,0.92)"
                         stroke="rgba(15,23,42,0.10)"
                         strokeWidth={0.75}
+                        style={{ pointerEvents: 'none' }}
                       />
                       <text
                         x={labelX + labelW / 2}
@@ -1312,7 +1340,7 @@ function AffiliateExecutiveCumulativeChart({
                         textAnchor="middle"
                         fontSize={9}
                         fill="rgba(15,23,42,0.78)"
-                        style={{ fontWeight: 850 }}
+                        style={{ fontWeight: 850, pointerEvents: 'none' }}
                       >
                         {labelText}
                       </text>
@@ -1738,11 +1766,7 @@ function PublicAffiliateReportsDetailView({
     if (typeof window !== 'undefined') window.location.href = next
   }
 
-  if (switchingAffiliate) {
-    return <FullPageLoader progress={45} subtitle={t('common.loading')} />
-  }
-
-  const cohort = useCohortNetDepositsCalendar({ enabled: true })
+  const cohort = useCohortNetDepositsCalendar({ enabled: !switchingAffiliate })
 
   const profit = current ? current.totalProfit : null
   const roi = current ? current.roi : null
@@ -2636,7 +2660,9 @@ function PublicAffiliateReportsDetailView({
     renderParts,
   ])
 
-  return (
+  return switchingAffiliate ? (
+    <FullPageLoader progress={45} subtitle={t('common.loading')} />
+  ) : (
     <div
       style={{
         minHeight: '100vh',
@@ -4102,6 +4128,18 @@ export default function PublicAffiliateAnalysisSharePage({
       try {
         const u = new URL(nextAbs)
         window.history.pushState({}, '', `${u.pathname}${u.search}${u.hash}`)
+        try {
+          const PopStateEventCtor = window.PopStateEvent
+          if (typeof PopStateEventCtor === 'function') {
+            window.dispatchEvent(new PopStateEventCtor('popstate'))
+          } else {
+            const EventCtor = window.Event
+            if (typeof EventCtor === 'function') window.dispatchEvent(new EventCtor('popstate'))
+          }
+        } catch {
+          const EventCtor = window.Event
+          if (typeof EventCtor === 'function') window.dispatchEvent(new EventCtor('popstate'))
+        }
       } catch {
         // ignore
       }
@@ -4122,6 +4160,18 @@ export default function PublicAffiliateAnalysisSharePage({
       try {
         const u = new URL(nextAbs)
         window.history.replaceState({}, '', `${u.pathname}${u.search}${u.hash}`)
+        try {
+          const PopStateEventCtor = window.PopStateEvent
+          if (typeof PopStateEventCtor === 'function') {
+            window.dispatchEvent(new PopStateEventCtor('popstate'))
+          } else {
+            const EventCtor = window.Event
+            if (typeof EventCtor === 'function') window.dispatchEvent(new EventCtor('popstate'))
+          }
+        } catch {
+          const EventCtor = window.Event
+          if (typeof EventCtor === 'function') window.dispatchEvent(new EventCtor('popstate'))
+        }
       } catch {
         // ignore
       }
