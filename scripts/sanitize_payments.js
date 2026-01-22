@@ -253,27 +253,89 @@ const makeKey = (r) => {
   return `c:${d}|${a}|${rr}|${amt}`
 }
 
-const existingKeys = new Set(existingRows.map(makeKey))
-const toAdd = []
-const duplicates = []
-cleanedRows.forEach(r => {
-  const k = makeKey(r)
-  if (existingKeys.has(k)) duplicates.push(r)
-  else { toAdd.push(r); existingKeys.add(k) }
-})
-
-if (duplicates.length) {
-  const dupPath = path.join(rawDir, `payments_duplicates.${timestamp}.csv`)
-  try {
-    fs.writeFileSync(dupPath, Papa.unparse(duplicates, { columns: uniqueFields }), 'utf8')
-    console.log('Wrote duplicates to', dupPath)
-  } catch (e){ console.warn('Failed to write duplicates file:', e && e.message) }
+function normalizeForCompare(v){
+  if (v === undefined || v === null) return ''
+  let s = String(v).trim()
+  // Normalize common numeric formatting differences (e.g. 1,215.00 vs 1215.00)
+  if (/^[\d,.-]+%?$/.test(s)) s = s.replace(/,/g, '')
+  return s.toLowerCase()
 }
 
-// final rows: existing + toAdd
+function isEmpty(v){
+  return v === undefined || v === null || String(v).trim() === ''
+}
+
+// Upsert against existing `dest` (update existing records, append new ones).
+// This prevents situations where a corrected export (same ID/key) fails to update the report.
+const originalExistingCount = existingRows.length
+
+// Collapse duplicates already present in destination.
+let dedupedExisting = 0
+const keyToIndex = new Map()
+const dedupedRows = []
+existingRows.forEach((r) => {
+  const k = makeKey(r)
+  if (keyToIndex.has(k)) {
+    const idx = keyToIndex.get(k)
+    // Prefer non-empty values when collapsing.
+    const prev = dedupedRows[idx] || {}
+    const merged = Object.assign({}, prev)
+    for (const [field, val] of Object.entries(r || {})) {
+      if (isEmpty(val) && !isEmpty(prev[field])) continue
+      merged[field] = val
+    }
+    dedupedRows[idx] = merged
+    dedupedExisting++
+  } else {
+    keyToIndex.set(k, dedupedRows.length)
+    dedupedRows.push(r)
+  }
+})
+existingRows = dedupedRows
+
+let updatedCount = 0
+let addedCount = 0
+let unchangedCount = 0
+let totalFieldUpdates = 0
+for (const r of cleanedRows) {
+  const k = makeKey(r)
+  if (keyToIndex.has(k)) {
+    const idx = keyToIndex.get(k)
+    const prev = existingRows[idx] || {}
+    const merged = Object.assign({}, prev)
+
+    for (const [field, nextValRaw] of Object.entries(r || {})) {
+      // Avoid wiping existing values when the incoming export has blanks.
+      if (isEmpty(nextValRaw) && !isEmpty(prev[field])) continue
+      if (normalizeForCompare(prev[field]) !== normalizeForCompare(nextValRaw)) totalFieldUpdates++
+      merged[field] = nextValRaw
+    }
+
+    let changed = false
+    for (const [field, mergedVal] of Object.entries(merged)) {
+      if (normalizeForCompare(prev[field]) !== normalizeForCompare(mergedVal)) {
+        changed = true
+        break
+      }
+    }
+
+    if (changed) {
+      existingRows[idx] = merged
+      updatedCount++
+    } else {
+      unchangedCount++
+    }
+  } else {
+    existingRows.push(r)
+    keyToIndex.set(k, existingRows.length - 1)
+    addedCount++
+  }
+}
+
+// final rows: existing (after upserts)
 const finalFields = (existingFields && existingFields.length ? existingFields.slice() : uniqueFields.slice())
 uniqueFields.forEach(f => { if (!finalFields.includes(f)) finalFields.push(f) })
-const finalRows = existingRows.concat(toAdd)
+const finalRows = existingRows
 
 // backup existing dest
 let bakPath = null
@@ -286,7 +348,7 @@ if (fs.existsSync(dest)) {
 // write merged CSV
 const out = Papa.unparse(finalRows, { columns: finalFields })
 fs.writeFileSync(dest, out, 'utf8')
-console.log('Wrote merged CSV to', dest, `(existing=${existingRows.length}, added=${toAdd.length}, duplicates=${duplicates.length})`)
+console.log('Wrote merged CSV to', dest, `(existing=${originalExistingCount}, added=${addedCount}, updated=${updatedCount}, unchanged=${unchangedCount}${dedupedExisting ? `, collapsedDestDuplicates=${dedupedExisting}` : ''}, fieldUpdates=${totalFieldUpdates})`)
 
 // Cleanup: avoid accumulating .bak files unless explicitly requested.
 if (bakPath && process.env.KEEP_BAK !== '1') {

@@ -181,6 +181,51 @@ if (fs.existsSync(dest)){
 let keyField = uniqueFields.find(f=>f==='user_id' || f.includes('user_id')) || uniqueFields.find(f=>f.includes('mt5')) || uniqueFields[0]
 const norm = v => String(v ?? '').trim()
 
+function parseDateMs(text) {
+  const t = String(text || '').trim()
+  if (!t) return 0
+
+  // ISO
+  if (/\d{4}-\d{2}-\d{2}T/.test(t)) {
+    const ms = Date.parse(t)
+    return Number.isFinite(ms) ? ms : 0
+  }
+
+  // M/D/YYYY or D/M/YYYY with optional time
+  const parts = t.split(/\s+/, 2)
+  const d = (parts[0] || '').split('/')
+  if (d.length >= 3) {
+    let a = parseInt(d[0], 10)
+    let b = parseInt(d[1], 10)
+    const yyyy = parseInt(d[2], 10)
+    if (a && b && yyyy) {
+      // Heuristic: if first number > 12, treat as D/M/YYYY, else M/D/YYYY
+      let mm = a
+      let dd = b
+      if (a > 12) {
+        dd = a
+        mm = b
+      }
+
+      let hh = 0
+      let mi = 0
+      let ss = 0
+      if (parts[1]) {
+        const tp = parts[1].split(':')
+        hh = parseInt(tp[0] || '0', 10)
+        mi = parseInt(tp[1] || '0', 10)
+        ss = parseInt(tp[2] || '0', 10)
+      }
+
+      const ms = Date.UTC(yyyy, mm - 1, dd, hh, mi, ss)
+      return Number.isFinite(ms) ? ms : 0
+    }
+  }
+
+  const ms = Date.parse(t)
+  return Number.isFinite(ms) ? ms : 0
+}
+
 // Fields that can legitimately change over time for the same user.
 // Rule of thumb:
 // - overwrite-if-present for metrics/status/dates
@@ -192,6 +237,10 @@ const OVERWRITE_IF_PRESENT_FIELDS = new Set([
   'revshare_enabled',
   'fraudchargeback',
   'action',
+
+  // base dates (these are often refreshed in new exports)
+  'external_date',
+  'registration_date',
 
   // deposits & dates
   'first_deposit',
@@ -220,6 +269,16 @@ const OVERWRITE_IF_PRESENT_FIELDS = new Set([
   'other_commissions',
 ])
 
+// For date-like fields we should keep the latest value (avoid regressions
+// when an upload contains older rows for the same account).
+const DATE_MAX_FIELDS = new Set([
+  'external_date',
+  'registration_date',
+  'first_deposit_date',
+  'external_ftd_date',
+  'qualification_date',
+])
+
 const existingIndexByKey = new Map()
 existingRows.forEach((row, idx) => {
   const k = norm(row && row[keyField])
@@ -246,6 +305,11 @@ function mergeIncomingIntoTarget(targetRow, incomingRow, keyValueForLog) {
     const existingVal = norm(targetRow[f])
     const shouldOverwrite = OVERWRITE_IF_PRESENT_FIELDS.has(f)
     if (shouldOverwrite) {
+      if (existingVal && DATE_MAX_FIELDS.has(f)) {
+        const existingMs = parseDateMs(existingVal)
+        const incomingMs = parseDateMs(incomingVal)
+        if (existingMs && incomingMs && incomingMs <= existingMs) return
+      }
       if (incomingVal !== existingVal) {
         targetRow[f] = incomingVal
         changed = true
