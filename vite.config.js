@@ -47,12 +47,29 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+        // IMPORTANT: do not precache HTML. Precaching index.html can pin users
+        // to an older UI after deploy if the SW doesn't refresh immediately.
+        // Hashed JS/CSS assets are still cached safely.
+        globPatterns: ['**/*.{js,css,ico,png,svg,webmanifest}'],
         // Ensure new deployments take effect without users being stuck on an older SW + cached HTML.
         // This makes share-report UX updates visible immediately (or after a single refresh at most).
         clientsClaim: true,
         skipWaiting: true,
         cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-pages',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60,
+              },
+            },
+          },
+        ],
       },
     }),
   ],
