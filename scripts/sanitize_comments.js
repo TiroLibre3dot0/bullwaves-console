@@ -20,6 +20,7 @@ const Papa = require('papaparse')
 
 const src = process.argv[2] || 'tmp_comments.csv'
 const dest = path.join('public', 'comments.csv')
+const destLegacy = path.join('public', 'Comments Report.csv')
 const rawDir = path.join('public', 'raw')
 
 if (!fs.existsSync(src)) {
@@ -277,4 +278,10 @@ for (const row of extractedRows) {
 const csvOut = Papa.unparse(existingRows, { columns: outputFields })
 fs.writeFileSync(dest, csvOut, 'utf8')
 console.log('Wrote cleaned CSV to', dest)
+try {
+  fs.writeFileSync(destLegacy, csvOut, 'utf8')
+  console.log('Wrote cleaned CSV to', destLegacy)
+} catch (e) {
+  console.warn('Warning: failed to write legacy comments report:', e && e.message)
+}
 console.log(`Existing rows: ${existingRows.length - added} New added: ${added} Unchanged duplicates skipped: ${duplicates} Affiliate updates: 0 Total field updates: 0`)

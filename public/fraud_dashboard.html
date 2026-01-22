@@ -1,12 +1,10 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Fraud Monitor Dashboard</title>
-<link rel="icon" href="/favicon.png">
-</head><body>
+<html><head><meta charset="utf-8"><title>Fraud Monitor Dashboard</title></head><body>
 <h1>Fraud Monitor Summary</h1>
 <div id="summary"></div>
 <h2>Top multi name+country groups (first 50)</h2>
 <table id="groups" border="1" cellpadding="4"></table>
-<!-- CSV downloads removed to display data inline in the page -->
+<p><a href="/fraud_monitor_user_flags.csv">Download per-user CSV</a> | <a href="/fraud_monitor_name_groups.csv">Download groups CSV</a></p>
 <script>
 async function load(){
   const s = await fetch('/fraud_monitor_summary.json').then(r=>r.json())

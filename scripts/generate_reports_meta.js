@@ -46,7 +46,9 @@ const REPORTS = [
   {
     key: 'comments',
     label: 'Comments Report',
-    path: path.join(PUBLIC_DIR, 'Comments Report.csv'),
+    // The comments pipeline writes to `public/comments.csv`.
+    // Keep meta aligned so `generatedAt` updates when comments change.
+    path: path.join(PUBLIC_DIR, 'comments.csv'),
     dateCandidates: ['created_on', 'createdon', 'created', 'date'],
   },
 ]

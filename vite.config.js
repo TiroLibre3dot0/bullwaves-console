@@ -10,7 +10,9 @@ export default defineConfig({
       injectRegister: 'auto',
       manifestFilename: 'manifest.webmanifest',
       devOptions: {
-        enabled: true,
+        // Keep SW disabled in dev to avoid "blank screen" issues caused by stale caches.
+        // Enable explicitly if you want to debug the PWA locally: `VITE_PWA_DEV=true npm run dev`
+        enabled: process.env.VITE_PWA_DEV === 'true',
         // Allow SPA routes like /analysis to fall back to index.html in dev SW
         navigateFallbackAllowlist: [/^\/(?!api)/],
       },
@@ -55,6 +57,8 @@ export default defineConfig({
     }),
   ],
   server: {
+    port: 5173,
+    strictPort: true,
     watch: {
       // Upload sanitizers rewrite these files; in dev we don't want Vite to full-reload the app.
       ignored: [

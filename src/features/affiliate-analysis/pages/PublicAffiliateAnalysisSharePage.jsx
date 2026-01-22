@@ -65,7 +65,11 @@ const parseLooseUsDate = (raw) => {
 
 function getReportsVersion() {
   try {
-    return String(localStorage.getItem('bw_reports_version') || '')
+    return String(
+      localStorage.getItem('bw_reports_version') ||
+        localStorage.getItem('bw_reports_meta_generatedAt') ||
+        ''
+    )
   } catch {
     return ''
   }

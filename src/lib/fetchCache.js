@@ -7,7 +7,9 @@ export function withReportsVersion(path) {
   const encodedPath = encodeURI(String(path || ''))
   let v = null
   try {
-    v = window?.localStorage?.getItem('bw_reports_version')
+    v =
+      window?.localStorage?.getItem('bw_reports_version') ||
+      window?.localStorage?.getItem('bw_reports_meta_generatedAt')
   } catch {
     v = null
   }
