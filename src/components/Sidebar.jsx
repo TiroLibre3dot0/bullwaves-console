@@ -194,6 +194,17 @@ export default function Sidebar({
           </span>
         </button>
         <button
+          disabled={disabled('flows')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'flows' ? 'active' : ''}`}
+          onClick={() => navigate('flows')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="chart" />
+            <span>{t('sidebar.flows') || 'Flows'}</span>
+          </span>
+        </button>
+        <button
           disabled={disabled('executive')}
           type="button"
           className={`sidebar-item sidebar-main tab ${view === 'executive' ? 'active' : ''}`}

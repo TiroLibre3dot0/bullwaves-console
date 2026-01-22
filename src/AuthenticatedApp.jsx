@@ -24,6 +24,8 @@ import { translate } from './i18n/translations'
 import { useI18n } from './i18n/I18nContext'
 import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
 
+const FlowsPage = React.lazy(() => import('./features/flows/FlowsPage'))
+
 export default function AuthenticatedApp() {
   const { t } = useI18n()
   const { user } = useAuth()
@@ -40,6 +42,7 @@ export default function AuthenticatedApp() {
       executive: '/executive',
       affiliate: '/affiliate',
       fraud: '/fraud-monitoring',
+      flows: '/flows',
       marketingPlan: '/marketing-plan',
       orgChart: '/org-chart',
       overview: '/overview',
@@ -60,6 +63,7 @@ export default function AuthenticatedApp() {
     if (!pathname || pathname === '/') return 'overview'
     if (pathname.startsWith('/overview')) return 'overview'
     if (pathname.startsWith('/profit-analysis')) return 'overview'
+    if (pathname.startsWith('/flows')) return 'flows'
     if (
       pathname.startsWith('/executive') ||
       pathname.startsWith('/executive-summary') ||
@@ -372,7 +376,13 @@ export default function AuthenticatedApp() {
               )}
               {view === 'upload' && <UploadReportsPage />}
               {view === 'traderPointsSimulator' && <TraderPointsSimulatorPage />}
-              {/* Lab removed */}
+              {view === 'flows' && (
+                <React.Suspense
+                  fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
+                >
+                  <FlowsPage />
+                </React.Suspense>
+              )}
               {view === 'admin' && isAdmin && <AdminPanel />}
             </div>
           </main>

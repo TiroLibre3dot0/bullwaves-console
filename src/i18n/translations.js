@@ -35,6 +35,7 @@ export const translations = {
     'sidebar.analysis': 'Report Analysis',
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.traderPoints': 'Trader Points',
+    'sidebar.flows': 'Flows',
 
     // Share — Affiliate Analysis (board report)
     'shareAffiliateAnalysis.header.eyebrow': 'Board report',
