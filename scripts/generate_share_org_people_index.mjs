@@ -110,6 +110,7 @@ function main() {
   const inputPath = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
   const outputPath = path.join(ROOT, 'public', 'share', 'org-chart-people.json')
 
+  const srcStat = fs.statSync(inputPath)
   const sourceText = fs.readFileSync(inputPath, 'utf8')
   const arrayLiteralText = findSectionsArrayLiteral(sourceText)
   const sections = evaluateSections(arrayLiteralText)
@@ -118,7 +119,9 @@ function main() {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true })
 
   const payload = {
-    generatedAt: new Date().toISOString(),
+    // Keep this deterministic so builds don't constantly dirty git just because
+    // of a timestamp bump. We use the source file mtime as the generation time.
+    generatedAt: new Date(srcStat.mtimeMs).toISOString(),
     source: 'src/pages/orgChartData.js',
     sections: sanitized,
   }

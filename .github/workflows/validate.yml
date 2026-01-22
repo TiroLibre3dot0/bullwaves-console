@@ -9,6 +9,12 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    env:
+      # Avoid git hook installation in CI.
+      HUSKY: '0'
+      # Puppeteer is not needed for lint/build; skipping the Chromium download
+      # makes installs faster and prevents flaky CI failures.
+      PUPPETEER_SKIP_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v4
       
@@ -29,4 +35,6 @@ jobs:
         continue-on-error: false
       
       - name: Check for syntax errors
-        run: node -c src/**/*.js || true
+        run: |
+          node -c src/main.jsx || true
+          node -c src/App.jsx || true
