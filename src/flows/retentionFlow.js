@@ -50,8 +50,11 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.reg },
     data: {
-      label: 'Registrations',
-      subLabel: 'Registrazione completata • Apri flusso completo ↗',
+      label: { en: 'Registrations', it: 'Registrazioni' },
+      subLabel: {
+        en: 'Registration completed • Open full flow ↗',
+        it: 'Registrazione completata • Apri flusso completo ↗',
+      },
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -62,7 +65,7 @@ const nodes = [
     id: 'N1',
     type: 'state',
     position: { x: xCenter(stateW), y: y.kyc },
-    data: { label: 'KYC approvato', kind: 'primary' },
+    data: { label: { en: 'KYC approved', it: 'KYC approvato' }, kind: 'primary' },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -70,7 +73,11 @@ const nodes = [
     id: 'N2',
     type: 'state',
     position: { x: xCenter(stateW), y: y.ndep },
-    data: { label: 'Deposits', subLabel: '0 (nessun deposito)', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: '0 (no deposits)', it: '0 (nessun deposito)' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -78,7 +85,11 @@ const nodes = [
     id: 'N3',
     type: 'state',
     position: { x: xCenter(stateW), y: y.am },
-    data: { label: 'Contatto AM', subLabel: 'Call / WhatsApp', kind: 'primary' },
+    data: {
+      label: { en: 'AM contact', it: 'Contatto AM' },
+      subLabel: { en: 'Call / WhatsApp', it: 'Call / WhatsApp' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -87,8 +98,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.mail },
     data: {
-      label: 'Touchpoint email',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'Email touchpoint', it: 'Touchpoint email' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'primary',
       linkToFlow: 'mail',
     },
@@ -100,7 +111,11 @@ const nodes = [
     id: 'N5',
     type: 'state',
     position: { x: xCenter(stateW), y: y.dep },
-    data: { label: 'Deposits', subLabel: 'FTD (First Time Deposit)', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: 'FTD (First Time Deposit)', it: 'FTD (First Time Deposit)' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -108,7 +123,11 @@ const nodes = [
     id: 'N6',
     type: 'state',
     position: { x: xCenter(stateW), y: y.trade },
-    data: { label: 'Trading / attività', subLabel: 'Dopo FTD', kind: 'primary' },
+    data: {
+      label: { en: 'Trading / activity', it: 'Trading / attività' },
+      subLabel: { en: 'After FTD', it: 'Dopo FTD' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -116,7 +135,11 @@ const nodes = [
     id: 'N7',
     type: 'state',
     position: { x: xCenter(stateW), y: y.pl },
-    data: { label: 'P&L', subLabel: 'Profit & Loss', kind: 'primary' },
+    data: {
+      label: { en: 'P&L', it: 'P&L' },
+      subLabel: { en: 'Profit & Loss', it: 'Profit & Loss' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -124,7 +147,11 @@ const nodes = [
     id: 'D1',
     type: 'decision',
     position: { x: xCenter(decisionW), y: y.d0 },
-    data: { label: 'P&L positivo?', subLabel: 'Profit vs Loss', kind: 'primary' },
+    data: {
+      label: { en: 'P&L positive?', it: 'P&L positivo?' },
+      subLabel: { en: 'Profit vs Loss', it: 'Profit vs Loss' },
+      kind: 'primary',
+    },
     style: { width: decisionW, height: decisionW, zIndex: 10 },
   },
   {
@@ -132,7 +159,11 @@ const nodes = [
     id: 'N8',
     type: 'state',
     position: { x: 520, y: y.wd },
-    data: { label: 'Withdrawals', subLabel: 'Se profit', kind: 'primary' },
+    data: {
+      label: { en: 'Withdrawals', it: 'Prelievi' },
+      subLabel: { en: 'If profit', it: 'Se profitto' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -140,7 +171,11 @@ const nodes = [
     id: 'N9',
     type: 'state',
     position: { x: 860, y: y.dep2 },
-    data: { label: 'Deposits', subLabel: 'Nuovo deposito se loss', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: 'New deposit if loss', it: 'Nuovo deposito se perdita' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -149,8 +184,11 @@ const nodes = [
     type: 'decision',
     position: { x: xCenter(decisionW), y: y.d1 },
     data: {
-      label: 'QFTD raggiunto?',
-      subLabel: 'Soglia posizioni aperte o ammontare Deposits',
+      label: { en: 'QFTD reached?', it: 'QFTD raggiunto?' },
+      subLabel: {
+        en: 'Threshold: opened positions or deposit amount',
+        it: 'Soglia: posizioni aperte o ammontare deposito',
+      },
       kind: 'primary',
     },
     style: { width: decisionW, height: decisionW, zIndex: 10 },
@@ -163,8 +201,8 @@ const nodes = [
     type: 'communication',
     position: { x: influences.leftX, y: influences.top + 70 },
     data: {
-      label: 'Aspettative da affiliate',
-      subLabel: 'Preparato vs non preparato',
+      label: { en: 'Affiliate expectations', it: 'Aspettative da affiliate' },
+      subLabel: { en: 'Prepared vs unprepared', it: 'Preparato vs non preparato' },
       kind: 'influence',
     },
     style: { width: influenceW + 60, zIndex: 10 },
@@ -176,7 +214,7 @@ const nodes = [
     id: 'C1',
     type: 'communication',
     position: { x: influences.rightX, y: influences.top + 50 },
-    data: { label: 'Copy sito / app', kind: 'influence' },
+    data: { label: { en: 'Website / app copy', it: 'Copy sito / app' }, kind: 'influence' },
     style: { width: influenceW, zIndex: 10 },
   },
   {
@@ -185,8 +223,8 @@ const nodes = [
     type: 'communication',
     position: { x: influences.rightX + 210, y: influences.top + 50 },
     data: {
-      label: 'UX navigazione',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'Navigation UX', it: 'UX navigazione' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'influence',
       linkToFlow: 'navigation',
     },
@@ -199,7 +237,7 @@ const nodes = [
     id: 'O1',
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
-    data: { label: 'QFTD', kind: 'positive' },
+    data: { label: { en: 'QFTD', it: 'QFTD' }, kind: 'positive' },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -207,7 +245,7 @@ const nodes = [
     id: 'O2',
     type: 'outcome',
     position: { x: 860, y: y.outcomes },
-    data: { label: 'Non QFTD (ancora)', kind: 'neutral' },
+    data: { label: { en: 'Not QFTD (yet)', it: 'Non QFTD (ancora)' }, kind: 'neutral' },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -215,7 +253,11 @@ const nodes = [
     id: 'C0',
     type: 'state',
     position: { x: 520, y: y.follow },
-    data: { label: 'Commission all’affiliato', subLabel: 'Dopo QFTD', kind: 'primary' },
+    data: {
+      label: { en: 'Affiliate commission', it: "Commissione all'affiliato" },
+      subLabel: { en: 'After QFTD', it: 'Dopo QFTD' },
+      kind: 'primary',
+    },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -223,7 +265,7 @@ const nodes = [
     id: 'O3',
     type: 'outcome',
     position: { x: 860, y: y.follow },
-    data: { label: 'Utente perso', kind: 'negative' },
+    data: { label: { en: 'User lost', it: 'Utente perso' }, kind: 'negative' },
     style: { width: outcomeW, zIndex: 10 },
   },
 ]
@@ -320,7 +362,7 @@ const edges = [
     target: 'N8',
     sourceHandle: 'out-left',
     targetHandle: 'in',
-    label: 'Profit',
+    label: { en: 'Profit', it: 'Profitto' },
     ...decisionLabel,
   },
   {
@@ -330,7 +372,7 @@ const edges = [
     target: 'N9',
     sourceHandle: 'out-right',
     targetHandle: 'in',
-    label: 'Loss',
+    label: { en: 'Loss', it: 'Perdita' },
     ...decisionLabel,
   },
   {
@@ -358,7 +400,7 @@ const edges = [
     target: 'O1',
     sourceHandle: 'out-left',
     targetHandle: 'in',
-    label: 'SI',
+    label: { en: 'YES', it: 'SÌ' },
     ...decisionLabel,
   },
   {
@@ -368,7 +410,7 @@ const edges = [
     target: 'O2',
     sourceHandle: 'out-right',
     targetHandle: 'in',
-    label: 'NO',
+    label: { en: 'NO', it: 'NO' },
     ...decisionLabel,
   },
   {
@@ -421,9 +463,11 @@ const edges = [
 
 export const meta = {
   id: 'retention',
-  title: 'Flusso Retention (FTD → QFTD)',
-  description:
-    'Percorso di conversione e Retention: Deposits (FTD), attività (P&L / Withdrawals), e qualificazione a QFTD. Commission all’affiliato dopo QFTD. Rimandi ad altri flussi (↗).',
+  title: { en: 'Retention flow (FTD → QFTD)', it: 'Flusso Retention (FTD → QFTD)' },
+  description: {
+    en: 'Conversion & retention path: Deposits (FTD), activity (P&L / Withdrawals), and qualification to QFTD. Affiliate commission after QFTD. Cross-flow links (↗).',
+    it: 'Percorso di conversione e Retention: Deposits (FTD), attività (P&L / Withdrawals), e qualificazione a QFTD. Commission all’affiliato dopo QFTD. Rimandi ad altri flussi (↗).',
+  },
   canvasWidth: CANVAS_WIDTH,
   canvasHeight: 1900,
 }

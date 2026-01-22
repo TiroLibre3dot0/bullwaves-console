@@ -38,8 +38,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n0 },
     data: {
-      label: 'Registrations',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'Registrations', it: 'Registrazioni' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -50,7 +50,11 @@ const nodes = [
     id: 'N1',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n1 },
-    data: { label: 'Primo accesso / landing', subLabel: 'Ingresso portale o app', kind: 'primary' },
+    data: {
+      label: { en: 'First access / landing', it: 'Primo accesso / landing' },
+      subLabel: { en: 'Portal or app entry', it: 'Ingresso portale o app' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -58,7 +62,13 @@ const nodes = [
     id: 'N2',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n2 },
-    data: { label: 'Onboarding / schermate chiave visitate', kind: 'primary' },
+    data: {
+      label: {
+        en: 'Onboarding / key screens visited',
+        it: 'Onboarding / schermate chiave visitate',
+      },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -66,7 +76,10 @@ const nodes = [
     id: 'N3',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n3 },
-    data: { label: 'Pagina deposito raggiunta', kind: 'primary' },
+    data: {
+      label: { en: 'Deposit page reached', it: 'Pagina deposito raggiunta' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -74,7 +87,11 @@ const nodes = [
     type: 'state',
     id: 'N4',
     position: { x: xCenter(stateW), y: y.n4 },
-    data: { label: 'Deposits', subLabel: 'Metodo + importo + conferma', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: 'Method + amount + confirm', it: 'Metodo + importo + conferma' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -82,7 +99,11 @@ const nodes = [
     id: 'N5',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n5 },
-    data: { label: 'Deposits', subLabel: 'Richiesta inviata / in processing', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: 'Request sent / processing', it: 'Richiesta inviata / in processing' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -90,7 +111,11 @@ const nodes = [
     id: 'D1',
     type: 'decision',
     position: { x: xCenter(decisionW), y: y.d1 },
-    data: { label: 'FTD completato?', subLabel: 'First Time Deposit', kind: 'primary' },
+    data: {
+      label: { en: 'FTD completed?', it: 'FTD completato?' },
+      subLabel: { en: 'First Time Deposit', it: 'First Time Deposit' },
+      kind: 'primary',
+    },
     style: { width: decisionW, height: decisionW, zIndex: 10 },
   },
 
@@ -100,7 +125,7 @@ const nodes = [
     id: 'O1',
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
-    data: { label: 'FTD', kind: 'positive' },
+    data: { label: { en: 'FTD', it: 'FTD' }, kind: 'positive' },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -109,7 +134,7 @@ const nodes = [
     type: 'outcome',
     position: { x: 860, y: y.outcomes },
     data: {
-      label: 'No FTD / serve ricontatto',
+      label: { en: 'No FTD / needs follow-up', it: 'No FTD / serve ricontatto' },
       kind: 'neutral',
       linkToFlow: 'retention',
     },
@@ -122,7 +147,11 @@ const nodes = [
     id: 'N6',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n6 },
-    data: { label: 'Trading / attività', subLabel: 'Dopo FTD', kind: 'primary' },
+    data: {
+      label: { en: 'Trading / activity', it: 'Trading / attività' },
+      subLabel: { en: 'After FTD', it: 'Dopo FTD' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -130,7 +159,11 @@ const nodes = [
     id: 'N7',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n7 },
-    data: { label: 'P&L', subLabel: 'Profit & Loss', kind: 'primary' },
+    data: {
+      label: { en: 'P&L', it: 'P&L' },
+      subLabel: { en: 'Profit & Loss', it: 'Profit & Loss' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -138,7 +171,11 @@ const nodes = [
     id: 'D2',
     type: 'decision',
     position: { x: xCenter(decisionW), y: y.d2 },
-    data: { label: 'P&L positivo?', subLabel: 'Profit vs Loss', kind: 'primary' },
+    data: {
+      label: { en: 'P&L positive?', it: 'P&L positivo?' },
+      subLabel: { en: 'Profit vs Loss', it: 'Profit vs Loss' },
+      kind: 'primary',
+    },
     style: { width: decisionW, height: decisionW, zIndex: 10 },
   },
   {
@@ -146,7 +183,11 @@ const nodes = [
     id: 'N8',
     type: 'state',
     position: { x: 520, y: y.n8 },
-    data: { label: 'Withdrawals', subLabel: 'Se profit', kind: 'primary' },
+    data: {
+      label: { en: 'Withdrawals', it: 'Prelievi' },
+      subLabel: { en: 'If profit', it: 'Se profitto' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -154,7 +195,11 @@ const nodes = [
     id: 'N9',
     type: 'state',
     position: { x: 860, y: y.n9 },
-    data: { label: 'Deposits', subLabel: 'Nuovo deposito se loss', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits', it: 'Depositi' },
+      subLabel: { en: 'New deposit if loss', it: 'Nuovo deposito se perdita' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
 ]
@@ -218,7 +263,7 @@ const edges = [
     target: 'O1',
     sourceHandle: 'out-left',
     targetHandle: 'in',
-    label: 'SI',
+    label: { en: 'YES', it: 'SÌ' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -230,7 +275,7 @@ const edges = [
     target: 'O2',
     sourceHandle: 'out-right',
     targetHandle: 'in',
-    label: 'NO',
+    label: { en: 'NO', it: 'NO' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -266,7 +311,7 @@ const edges = [
     target: 'N8',
     sourceHandle: 'out-left',
     targetHandle: 'in',
-    label: 'Profit',
+    label: { en: 'Profit', it: 'Profitto' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -278,7 +323,7 @@ const edges = [
     target: 'N9',
     sourceHandle: 'out-right',
     targetHandle: 'in',
-    label: 'Loss',
+    label: { en: 'Loss', it: 'Perdita' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -287,9 +332,11 @@ const edges = [
 
 export const meta = {
   id: 'navigation',
-  title: 'Flusso di navigazione',
-  description:
-    'Dopo il login: pagine chiave, percorso Deposits fino a FTD, e poi P&L / Withdrawals. Se non arriva a FTD, passa a Retention (↗).',
+  title: { en: 'Navigation flow', it: 'Flusso di navigazione' },
+  description: {
+    en: 'After login: key pages, the Deposits path up to FTD, then P&L / Withdrawals. If no FTD, hand off to Retention (↗).',
+    it: 'Dopo il login: pagine chiave, percorso Deposits fino a FTD, e poi P&L / Withdrawals. Se non arriva a FTD, passa a Retention (↗).',
+  },
 }
 
 export { nodes, edges }

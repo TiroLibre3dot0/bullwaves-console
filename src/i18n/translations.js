@@ -37,6 +37,30 @@ export const translations = {
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
 
+    // Flows
+    'flows.tab.registration': 'Registration',
+    'flows.tab.navigation': 'Navigation',
+    'flows.tab.retention': 'Retention',
+    'flows.tab.mail': 'Email marketing',
+    'flows.legend.stepArrow': 'Step (arrow)',
+    'flows.legend.influenceArrow': 'Influence (dashed arrow)',
+    'flows.legend.clickable': 'Clickable (↗)',
+    'flows.legend.state': 'State',
+    'flows.legend.decision': 'Decision',
+    'flows.legend.outcome': 'Outcome',
+    'flows.share.cta': 'Share (public link)',
+    'flows.share.creating': 'Creating link…',
+    'flows.share.copied': 'Link copied',
+    'flows.share.publicLink': 'Public link (read-only):',
+    'flows.share.open': 'open',
+    'flows.share.error': 'Unable to create link',
+    'flows.public.ogTitle': 'Flows',
+    'flows.public.ogDescription':
+      'Public read-only view of Flows (Registration, Navigation, Retention, Email marketing).',
+    'flows.public.invalidLink': 'Invalid link',
+    'flows.public.expiredLink': 'Expired or invalid link',
+    'flows.public.loadError': 'Unable to load',
+
     // Share — Affiliate Analysis (board report)
     'shareAffiliateAnalysis.header.eyebrow': 'Board report',
     'shareAffiliateAnalysis.header.title': 'Affiliate Performance — Board View',
@@ -2008,6 +2032,31 @@ export const translations = {
     'sidebar.analysis': 'Analisi Report',
     'sidebar.fraud': 'Monitoraggio Frodi',
     'sidebar.traderPoints': 'Trader Points',
+    'sidebar.flows': 'Flows',
+
+    // Flows
+    'flows.tab.registration': 'Registrazione',
+    'flows.tab.navigation': 'Navigazione',
+    'flows.tab.retention': 'Retention',
+    'flows.tab.mail': 'Email marketing',
+    'flows.legend.stepArrow': 'Step (freccia)',
+    'flows.legend.influenceArrow': 'Influenza (freccia tratteggiata)',
+    'flows.legend.clickable': 'Cliccabile (↗)',
+    'flows.legend.state': 'Stato',
+    'flows.legend.decision': 'Decisione',
+    'flows.legend.outcome': 'Esito',
+    'flows.share.cta': 'Condividi (link pubblico)',
+    'flows.share.creating': 'Creo link…',
+    'flows.share.copied': 'Link copiato',
+    'flows.share.publicLink': 'Link pubblico (read-only):',
+    'flows.share.open': 'apri',
+    'flows.share.error': 'Errore durante la creazione del link',
+    'flows.public.ogTitle': 'Flows',
+    'flows.public.ogDescription':
+      'Vista pubblica read-only dei Flows (Registrazione, Navigazione, Retention, Email marketing).',
+    'flows.public.invalidLink': 'Link non valido',
+    'flows.public.expiredLink': 'Link scaduto o non valido',
+    'flows.public.loadError': 'Errore durante il caricamento',
 
     // Share — Affiliate Analysis (board report)
     'shareAffiliateAnalysis.header.eyebrow': 'Report board',

@@ -34,8 +34,8 @@ const nodes = [
     type: 'state',
     position: { x: 160, y: y.t1 },
     data: {
-      label: 'Registrations',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'Registrations', it: 'Registrazioni' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -47,8 +47,8 @@ const nodes = [
     type: 'state',
     position: { x: 1160, y: y.t1 },
     data: {
-      label: 'Nessun deposito',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'No deposits', it: 'Nessun deposito' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'primary',
       linkToFlow: 'retention',
     },
@@ -61,8 +61,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n1 },
     data: {
-      label: 'Automazione email avviata',
-      subLabel: 'Logica campagna applicata',
+      label: { en: 'Email automation started', it: 'Automazione email avviata' },
+      subLabel: { en: 'Campaign logic applied', it: 'Logica campagna applicata' },
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -73,8 +73,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n2 },
     data: {
-      label: 'Email di benvenuto',
-      subLabel: 'Subito dopo la registrazione',
+      label: { en: 'Welcome email', it: 'Email di benvenuto' },
+      subLabel: { en: 'Right after registration', it: 'Subito dopo la registrazione' },
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -84,7 +84,11 @@ const nodes = [
     id: 'M3',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n3 },
-    data: { label: 'Email education / prodotto', subLabel: 'Giorno 1–3', kind: 'primary' },
+    data: {
+      label: { en: 'Education / product email', it: 'Email education / prodotto' },
+      subLabel: { en: 'Day 1–3', it: 'Giorno 1–3' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -92,7 +96,11 @@ const nodes = [
     id: 'M4',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n4 },
-    data: { label: 'Deposits reminder', subLabel: 'Se non ha ancora fatto FTD', kind: 'primary' },
+    data: {
+      label: { en: 'Deposits reminder', it: 'Promemoria Depositi' },
+      subLabel: { en: 'If FTD is not done yet', it: 'Se non ha ancora fatto FTD' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -100,7 +108,11 @@ const nodes = [
     id: 'M5',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n5 },
-    data: { label: 'Re-engagement', subLabel: 'Se inattività continua', kind: 'primary' },
+    data: {
+      label: { en: 'Re-engagement', it: 'Re-engagement' },
+      subLabel: { en: 'If inactivity continues', it: 'Se inattività continua' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
 
@@ -109,7 +121,11 @@ const nodes = [
     id: 'M6',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n6 },
-    data: { label: 'FTD follow-up', subLabel: 'Dopo First Time Deposit', kind: 'primary' },
+    data: {
+      label: { en: 'FTD follow-up', it: 'Follow-up FTD' },
+      subLabel: { en: 'After First Time Deposit', it: 'Dopo First Time Deposit' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -118,8 +134,11 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n7 },
     data: {
-      label: 'QFTD milestone',
-      subLabel: 'Soglia posizioni aperte o ammontare Deposits',
+      label: { en: 'QFTD milestone', it: 'Milestone QFTD' },
+      subLabel: {
+        en: 'Threshold: opened positions or deposit amount',
+        it: 'Soglia: posizioni aperte o ammontare deposito',
+      },
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -129,7 +148,11 @@ const nodes = [
     id: 'M8',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n8 },
-    data: { label: 'Withdrawals / P&L', subLabel: 'Info e guida post-FTD', kind: 'primary' },
+    data: {
+      label: { en: 'Withdrawals / P&L', it: 'Prelievi / P&L' },
+      subLabel: { en: 'Post-FTD info and guidance', it: 'Info e guida post-FTD' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
 
@@ -139,7 +162,10 @@ const nodes = [
     id: 'MO1',
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
-    data: { label: 'Deposits / attività avviata', kind: 'positive' },
+    data: {
+      label: { en: 'Deposits / activity started', it: 'Depositi / attività avviata' },
+      kind: 'positive',
+    },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -147,7 +173,7 @@ const nodes = [
     id: 'MO2',
     type: 'outcome',
     position: { x: 860, y: y.outcomes },
-    data: { label: 'Serve contatto umano', kind: 'neutral' },
+    data: { label: { en: 'Needs human contact', it: 'Serve contatto umano' }, kind: 'neutral' },
     style: { width: outcomeW, zIndex: 10 },
   },
 ]
@@ -248,9 +274,11 @@ const edges = [
 
 export const meta = {
   id: 'mail',
-  title: 'Flusso email marketing',
-  description:
-    'Touchpoint email come step espliciti con terminologia piattaforma (Deposits, FTD, QFTD, Withdrawals, P&L). I trigger cross-flow sono cliccabili (↗).',
+  title: { en: 'Email marketing flow', it: 'Flusso email marketing' },
+  description: {
+    en: 'Email touchpoints as explicit steps using platform terminology (Deposits, FTD, QFTD, Withdrawals, P&L). Cross-flow triggers are clickable (↗).',
+    it: 'Touchpoint email come step espliciti con terminologia piattaforma (Deposits, FTD, QFTD, Withdrawals, P&L). I trigger cross-flow sono cliccabili (↗).',
+  },
 }
 
 export { nodes, edges }

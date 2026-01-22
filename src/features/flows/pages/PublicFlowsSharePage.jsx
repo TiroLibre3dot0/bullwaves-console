@@ -19,12 +19,11 @@ export default function PublicFlowsSharePage({ token }) {
 
   useEffect(() => {
     setOpenGraphMeta({
-      title: 'Flows',
-      description:
-        'Vista pubblica read-only dei flussi (Registrazione, Navigazione, Retention, Email marketing).',
+      title: t('flows.public.ogTitle'),
+      description: t('flows.public.ogDescription'),
     })
     return () => resetOpenGraphMeta()
-  }, [])
+  }, [t])
 
   useEffect(() => {
     let cancelled = false
@@ -36,7 +35,7 @@ export default function PublicFlowsSharePage({ token }) {
         setPayload(null)
 
         if (!cleanToken || !isShareToken(cleanToken)) {
-          throw new Error('Link non valido')
+          throw new Error(t('flows.public.invalidLink'))
         }
 
         // Dev-only local snapshot
@@ -45,7 +44,7 @@ export default function PublicFlowsSharePage({ token }) {
           const raw = window.localStorage.getItem(key)
           const parsed = raw ? JSON.parse(raw) : null
           const p = parsed?.payload
-          if (!p) throw new Error('Link scaduto o non valido')
+          if (!p) throw new Error(t('flows.public.expiredLink'))
           if (!cancelled) setPayload(p)
           return
         }
@@ -53,17 +52,17 @@ export default function PublicFlowsSharePage({ token }) {
         const resp = await fetch(`/api/share/flows/${encodeURIComponent(cleanToken)}`)
         const data = await resp.json().catch(() => null)
         if (!resp.ok || !data?.ok) {
-          throw new Error(data?.error || data?.message || 'Link scaduto o non valido')
+          throw new Error(data?.error || data?.message || t('flows.public.expiredLink'))
         }
 
         const p = data?.payload
         if (!p || p.k !== 'flows') {
-          throw new Error('Link non valido')
+          throw new Error(t('flows.public.invalidLink'))
         }
 
         if (!cancelled) setPayload(p)
       } catch (e) {
-        if (!cancelled) setError(e?.message || 'Errore durante il caricamento')
+        if (!cancelled) setError(e?.message || t('flows.public.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -83,19 +82,9 @@ export default function PublicFlowsSharePage({ token }) {
     return (
       <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
-          <div style={{ fontSize: 22, fontWeight: 950 }}>Flows</div>
+          <div style={{ fontSize: 22, fontWeight: 950 }}>{t('sidebar.flows')}</div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
             {error}
-          </div>
-          <div
-            style={{
-              marginTop: 10,
-              color: 'rgba(148,163,184,0.85)',
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            Se ti serve un nuovo link, chiedi a chi gestisce la console di rigenerarlo.
           </div>
         </div>
       </div>
@@ -107,18 +96,6 @@ export default function PublicFlowsSharePage({ token }) {
   return (
     <div style={{ minHeight: '100vh', background: '#070b14' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: 16 }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, color: 'rgba(148,163,184,0.95)' }}>
-            Public view
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 950, color: '#fff' }}>Flows</div>
-          <div
-            style={{ marginTop: 6, fontSize: 12, fontWeight: 700, color: 'rgba(148,163,184,0.95)' }}
-          >
-            Vista read-only: puoi navigare tra i flussi, niente dashboard.
-          </div>
-        </div>
-
         <FlowsPage publicMode sharePayload={payload} />
       </div>
     </div>

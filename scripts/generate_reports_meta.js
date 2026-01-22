@@ -53,6 +53,39 @@ const REPORTS = [
   },
 ]
 
+function walkFiles(dir) {
+  const out = []
+  let items = []
+  try {
+    items = fs.readdirSync(dir, { withFileTypes: true })
+  } catch {
+    return out
+  }
+  for (const ent of items) {
+    const p = path.join(dir, ent.name)
+    if (ent.isDirectory()) {
+      // Skip common noisy folders.
+      const name = String(ent.name || '').toLowerCase()
+      if (name === 'node_modules' || name === 'dist') continue
+      out.push(...walkFiles(p))
+    } else if (ent.isFile()) {
+      out.push(p)
+    }
+  }
+  return out
+}
+
+function isDataFile(p) {
+  const base = path.basename(String(p || ''))
+  if (!base) return false
+  if (base === 'reports_meta.json') return false
+  const lower = base.toLowerCase()
+  if (lower.endsWith('.csv')) return true
+  // Include generated indexes and share artifacts that affect dashboards.
+  if (lower.endsWith('.json')) return true
+  return false
+}
+
 function normKey(k) {
   return String(k || '')
     .toLowerCase()
@@ -189,8 +222,19 @@ function main() {
   if (!FORCE && fs.existsSync(OUT_PATH)) {
     try {
       const outStat = fs.statSync(OUT_PATH)
-      const inputMt = REPORTS
-        .map((r) => (fs.existsSync(r.path) ? fs.statSync(r.path).mtimeMs : 0))
+      // IMPORTANT:
+      // This file is used as a global cache-busting/version signal by the frontend.
+      // If we only watch a subset of reports here, other data files (e.g. KPI/Fraud)
+      // can change without bumping the version, causing clients/CDN to serve stale data.
+      const inputMt = walkFiles(PUBLIC_DIR)
+        .filter(isDataFile)
+        .map((p) => {
+          try {
+            return fs.statSync(p).mtimeMs
+          } catch {
+            return 0
+          }
+        })
         .reduce((a, b) => Math.max(a, b), 0)
       if (outStat.mtimeMs >= inputMt) {
         console.log(`Reports meta up-to-date (use --force to regenerate) -> ${path.relative(process.cwd(), OUT_PATH)}`)

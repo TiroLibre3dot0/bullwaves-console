@@ -2,6 +2,28 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "headers": [
+    {
+      "source": "/reports_meta.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    },
+    {
+      "source": "/(.*)\\.csv",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    },
+    {
+      "source": "/(.*)_index\\.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    },
+    {
+      "source": "/share/(.*)\\.json",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    },
+    {
+      "source": "/fraud_monitor_(.*)\\.(json|csv)",
+      "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0" }]
+    }
+  ],
   "routes": [
     { "src": "^/api/(.*)$", "dest": "/api/$1" },
     { "handle": "filesystem" },

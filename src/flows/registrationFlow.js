@@ -32,7 +32,11 @@ const nodes = [
     id: 'R1',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n1 },
-    data: { label: 'Acquisizione', subLabel: 'Link affiliato / Portale organico', kind: 'primary' },
+    data: {
+      label: { en: 'Acquisition', it: 'Acquisizione' },
+      subLabel: { en: 'Affiliate link / Organic portal', it: 'Link affiliato / Portale organico' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -40,7 +44,11 @@ const nodes = [
     id: 'R2',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n2 },
-    data: { label: 'Registrations', subLabel: 'Registrazione completata', kind: 'primary' },
+    data: {
+      label: { en: 'Registrations', it: 'Registrazioni' },
+      subLabel: { en: 'Registration completed', it: 'Registrazione completata' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -49,8 +57,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n3 },
     data: {
-      label: 'Email di benvenuto inviata',
-      subLabel: 'Apri flusso completo ↗',
+      label: { en: 'Welcome email sent', it: 'Email di benvenuto inviata' },
+      subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
       kind: 'primary',
       linkToFlow: 'mail',
     },
@@ -62,8 +70,8 @@ const nodes = [
     type: 'state',
     position: { x: xCenter(stateW), y: y.n4 },
     data: {
-      label: 'Verifica email / telefono',
-      subLabel: 'Step di attivazione account',
+      label: { en: 'Email / phone verification', it: 'Verifica email / telefono' },
+      subLabel: { en: 'Account activation step', it: 'Step di attivazione account' },
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -73,7 +81,10 @@ const nodes = [
     id: 'R5',
     type: 'state',
     position: { x: xCenter(stateW), y: y.n5 },
-    data: { label: 'KYC inviato e valutato', kind: 'primary' },
+    data: {
+      label: { en: 'KYC submitted & reviewed', it: 'KYC inviato e valutato' },
+      kind: 'primary',
+    },
     style: { width: stateW, zIndex: 10 },
   },
   {
@@ -81,7 +92,7 @@ const nodes = [
     id: 'RD1',
     type: 'decision',
     position: { x: xCenter(decisionW), y: y.d1 },
-    data: { label: 'KYC approvato?', kind: 'primary' },
+    data: { label: { en: 'KYC approved?', it: 'KYC approvato?' }, kind: 'primary' },
     style: { width: decisionW, height: decisionW, zIndex: 10 },
   },
 
@@ -92,7 +103,7 @@ const nodes = [
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
     data: {
-      label: 'Utente pronto a navigare',
+      label: { en: 'User ready to navigate', it: 'Utente pronto a navigare' },
       kind: 'positive',
       linkToFlow: 'navigation',
     },
@@ -103,7 +114,10 @@ const nodes = [
     id: 'RO2',
     type: 'outcome',
     position: { x: 860, y: y.outcomes },
-    data: { label: 'KYC in attesa / rifiutato', kind: 'neutral' },
+    data: {
+      label: { en: 'KYC pending / rejected', it: 'KYC in attesa / rifiutato' },
+      kind: 'neutral',
+    },
     style: { width: outcomeW, zIndex: 10 },
   },
 ]
@@ -162,7 +176,7 @@ const edges = [
     target: 'RO1',
     sourceHandle: 'out-left',
     targetHandle: 'in',
-    label: 'SI',
+    label: { en: 'YES', it: 'SÌ' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -174,7 +188,7 @@ const edges = [
     target: 'RO2',
     sourceHandle: 'out-right',
     targetHandle: 'in',
-    label: 'NO',
+    label: { en: 'NO', it: 'NO' },
     labelStyle: { fill: 'rgba(226,232,240,0.95)', fontWeight: 800, fontSize: 11 },
     labelBgStyle: { fill: 'rgba(2,6,23,0.85)', borderRadius: 6 },
     labelBgPadding: [6, 4],
@@ -183,9 +197,11 @@ const edges = [
 
 export const meta = {
   id: 'registration',
-  title: 'Flusso di registrazione',
-  description:
-    'Dall’acquisizione all’approvazione KYC. Gli step cross-flow (es. email di benvenuto, passaggio a Navigazione) sono cliccabili (↗).',
+  title: { en: 'Registration flow', it: 'Flusso di registrazione' },
+  description: {
+    en: 'From acquisition to KYC approval. Cross-flow steps (e.g. welcome email, handoff to Navigation) are clickable (↗).',
+    it: 'Dall’acquisizione all’approvazione KYC. Gli step cross-flow (es. email di benvenuto, passaggio a Navigazione) sono cliccabili (↗).',
+  },
 }
 
 export { nodes, edges }

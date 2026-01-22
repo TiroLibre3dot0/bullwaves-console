@@ -36,7 +36,15 @@ function randomHex(bytes = 12) {
 }
 
 export default function FlowsPage({ publicMode = false, sharePayload = null }) {
-  const { t } = useI18n()
+  const { t, locale } = useI18n()
+
+  const pickText = (value) => {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const v = value?.[locale] ?? value?.en ?? value?.it
+      return v == null ? '' : String(v)
+    }
+    return value == null ? '' : String(value)
+  }
 
   const flows = useMemo(
     () => ({
@@ -140,12 +148,47 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
 
       setShareState({ status: 'ready', href, error: '', copied: false })
     } catch (e) {
-      setShareState({ status: 'error', href: '', error: e?.message || 'Errore', copied: false })
+      setShareState({
+        status: 'error',
+        href: '',
+        error: e?.message || t('flows.share.error'),
+        copied: false,
+      })
     }
   }
 
   const active = flows[flowId] || flows.retention
   const meta = active.meta
+
+  const localizedNodes = useMemo(() => {
+    return (active.nodes || []).map((n) => {
+      const data = n?.data || {}
+      return {
+        ...n,
+        data: {
+          ...data,
+          label: pickText(data.label),
+          subLabel: data.subLabel == null ? undefined : pickText(data.subLabel),
+        },
+      }
+    })
+  }, [active.nodes, locale])
+
+  const localizedEdges = useMemo(() => {
+    return (active.edges || []).map((e) => ({
+      ...e,
+      label: e?.label == null ? undefined : pickText(e.label),
+      data: e?.data
+        ? {
+            ...e.data,
+            primary: e.data?.primary == null ? undefined : pickText(e.data.primary),
+            secondary: e.data?.secondary == null ? undefined : pickText(e.data.secondary),
+          }
+        : e.data,
+    }))
+  }, [active.edges, locale])
+
+  const metaTitle = pickText(meta?.title)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -172,125 +215,55 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
             className={`tab ${flowId === 'registration' ? 'active' : ''}`}
             onClick={() => goFlow('registration')}
           >
-            Registrazione
+            {t('flows.tab.registration')}
           </button>
           <button
             type="button"
             className={`tab ${flowId === 'navigation' ? 'active' : ''}`}
             onClick={() => goFlow('navigation')}
           >
-            Navigazione
+            {t('flows.tab.navigation')}
           </button>
           <button
             type="button"
             className={`tab ${flowId === 'retention' ? 'active' : ''}`}
             onClick={() => goFlow('retention')}
           >
-            Retention
+            {t('flows.tab.retention')}
           </button>
           <button
             type="button"
             className={`tab ${flowId === 'mail' ? 'active' : ''}`}
             onClick={() => goFlow('mail')}
           >
-            Email marketing
+            {t('flows.tab.mail')}
           </button>
-        </div>
 
-        <div style={{ height: 10 }} />
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 12,
-            flexWrap: 'wrap',
-          }}
-        >
-          <div>
-            <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', letterSpacing: 0.2 }}>
-              {meta.title}
-            </div>
-            <div
-              style={{
-                marginTop: 6,
-                fontSize: 12,
-                fontWeight: 700,
-                color: 'rgba(148,163,184,0.95)',
-              }}
-            >
-              {meta.description}
-            </div>
-            <div
-              style={{
-                marginTop: 6,
-                fontSize: 12,
-                fontWeight: 800,
-                color: 'rgba(226,232,240,0.82)',
-              }}
-            >
-              I box con il simbolo ↗ sono cliccabili e aprono il flusso completo. Contorno blu =
-              step; contorno viola = influenza. Le frecce tratteggiate (quando presenti) indicano
-              solo contesto/influenze.
-            </div>
-
-            {publicMode ? (
-              <div
+          {publicMode ? null : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 10 }}>
+              <button
+                type="button"
+                onClick={createPublicLink}
                 style={{
-                  marginTop: 8,
+                  padding: '8px 10px',
+                  borderRadius: 10,
+                  fontWeight: 900,
                   fontSize: 12,
-                  fontWeight: 800,
-                  color: 'rgba(148,163,184,0.95)',
+                  background: 'rgba(59,130,246,0.14)',
+                  border: '1px solid rgba(59,130,246,0.30)',
+                  color: '#e2e8f0',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
                 }}
               >
-                Vista pubblica read-only.
-              </div>
-            ) : null}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 10,
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              maxWidth: 520,
-            }}
-          >
-            <LegendItem label="Step (freccia)" shape="edgeSolid" />
-            <LegendItem label="Influenza (freccia)" shape="edgeDashed" />
-            <LegendItem label="Stato" shape="rect" />
-            <LegendItem label="Decisione" shape="diamond" />
-            <LegendItem label="Esito" shape="pill" />
-            <LegendItem label="Influenza" shape="dashed" />
-
-            {publicMode ? null : (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginLeft: 8 }}>
-                <button
-                  type="button"
-                  onClick={createPublicLink}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 10,
-                    fontWeight: 900,
-                    fontSize: 12,
-                    background: 'rgba(59,130,246,0.14)',
-                    border: '1px solid rgba(59,130,246,0.30)',
-                    color: '#e2e8f0',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {shareState.status === 'loading'
-                    ? 'Creo link…'
-                    : shareState.copied
-                      ? 'Link copiato'
-                      : 'Condividi (link pubblico)'}
-                </button>
-              </div>
-            )}
-          </div>
+                {shareState.status === 'loading'
+                  ? t('flows.share.creating')
+                  : shareState.copied
+                    ? t('flows.share.copied')
+                    : t('flows.share.cta')}
+              </button>
+            </div>
+          )}
         </div>
 
         {!publicMode && shareState.status === 'ready' && shareState.href ? (
@@ -309,14 +282,14 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
             }}
           >
             <div style={{ fontSize: 12, fontWeight: 800, color: 'rgba(226,232,240,0.85)' }}>
-              Link pubblico (read-only):{' '}
+              {t('flows.share.publicLink')}{' '}
               <a
                 href={shareState.href}
                 target="_blank"
                 rel="noreferrer"
                 style={{ color: '#93c5fd' }}
               >
-                apri
+                {t('flows.share.open')}
               </a>
             </div>
             <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(148,163,184,0.95)' }}>
@@ -329,15 +302,50 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           <div
             style={{ marginTop: 8, fontSize: 12, fontWeight: 800, color: 'rgba(248,113,113,0.95)' }}
           >
-            {shareState.error || 'Errore durante la creazione del link'}
+            {shareState.error || t('flows.share.error')}
           </div>
         ) : null}
 
         <div style={{ height: 10 }} />
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 950, color: '#fff', letterSpacing: 0.2 }}>
+              {metaTitle}
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 10,
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              maxWidth: 520,
+            }}
+          >
+            <LegendItem label={t('flows.legend.stepArrow')} shape="edgeSolid" />
+            <LegendItem label={t('flows.legend.influenceArrow')} shape="edgeDashed" />
+            <LegendItem label={t('flows.legend.clickable')} shape="clickable" />
+            <LegendItem label={t('flows.legend.state')} shape="rect" />
+            <LegendItem label={t('flows.legend.decision')} shape="diamond" />
+            <LegendItem label={t('flows.legend.outcome')} shape="pill" />
+          </div>
+        </div>
+
+        <div style={{ height: 10 }} />
         <FlowDiagram
           key={flowId}
-          nodes={active.nodes}
-          edges={active.edges}
+          nodes={localizedNodes}
+          edges={localizedEdges}
           onNavigateFlow={goFlow}
         />
       </div>
@@ -378,6 +386,42 @@ function LegendItem({ label, shape }) {
             strokeLinejoin="round"
           />
         </svg>
+        <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(226,232,240,0.85)' }}>
+          {label}
+        </div>
+      </div>
+    )
+  }
+
+  if (shape === 'clickable') {
+    return (
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{
+            width: 18,
+            height: 12,
+            background: 'rgba(15, 23, 42, 0.65)',
+            border: '1px solid rgba(56, 189, 248, 0.72)',
+            borderRadius: 3,
+            boxShadow: '0 0 0 2px rgba(34, 211, 238, 0.12)',
+            position: 'relative',
+          }}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              top: -6,
+              right: -6,
+              fontSize: 11,
+              fontWeight: 950,
+              color: 'rgba(56, 189, 248, 0.95)',
+              lineHeight: 1,
+            }}
+            aria-hidden="true"
+          >
+            ↗
+          </div>
+        </div>
         <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(226,232,240,0.85)' }}>
           {label}
         </div>
