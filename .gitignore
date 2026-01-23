@@ -39,3 +39,6 @@ public/affiliate_kpi_index.json
 public/fraud_patterns_index.json
 public/reports_meta.json
 public/support_users_index.json
+
+.vercel
+.env*.local
