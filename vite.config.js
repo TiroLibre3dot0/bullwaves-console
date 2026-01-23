@@ -3,6 +3,14 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // Vercel/Rollup sometimes fails to resolve CSS subpath exports from `reactflow`.
+      // Keep a hard alias so legacy imports like `reactflow/dist/style.css` keep working.
+      'reactflow/dist/style.css': '@reactflow/core/dist/style.css',
+      'reactflow/dist/base.css': '@reactflow/core/dist/base.css',
+    },
+  },
   plugins: [
     react(),
     VitePWA({
