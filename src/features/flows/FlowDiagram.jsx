@@ -1,6 +1,7 @@
 import React from 'react'
 import { ReactFlow, Background, Controls } from './reactflowCompat'
-import 'reactflow/dist/style.css'
+import '@reactflow/core/dist/style.css'
+import '@reactflow/controls/dist/style.css'
 
 import { nodes as retentionNodes, edges as retentionEdges } from '../../flows/retentionFlow'
 
