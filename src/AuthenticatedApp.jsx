@@ -25,6 +25,7 @@ import { useI18n } from './i18n/I18nContext'
 import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
 
 const FlowsPage = React.lazy(() => import('./features/flows/FlowsPage'))
+const ProjectBoardPage = React.lazy(() => import('./features/project-board/ProjectBoardPage'))
 
 export default function AuthenticatedApp() {
   const { t } = useI18n()
@@ -44,6 +45,7 @@ export default function AuthenticatedApp() {
       fraud: '/fraud-monitoring',
       flows: '/flows',
       marketingPlan: '/marketing-plan',
+      projectBoard: '/project-board',
       orgChart: '/org-chart',
       overview: '/overview',
       report: '/report',
@@ -64,6 +66,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/overview')) return 'overview'
     if (pathname.startsWith('/profit-analysis')) return 'overview'
     if (pathname.startsWith('/flows')) return 'flows'
+    if (pathname.startsWith('/project-board')) return 'projectBoard'
     if (
       pathname.startsWith('/executive') ||
       pathname.startsWith('/executive-summary') ||
@@ -301,6 +304,7 @@ export default function AuthenticatedApp() {
       executive: 'executive',
       fraud: 'fraud-monitoring',
       marketingPlan: 'marketing-plan',
+      projectBoard: 'project-board',
       summary: 'summary',
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
@@ -381,6 +385,13 @@ export default function AuthenticatedApp() {
                   fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
                 >
                   <FlowsPage />
+                </React.Suspense>
+              )}
+              {view === 'projectBoard' && (
+                <React.Suspense
+                  fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
+                >
+                  <ProjectBoardPage />
                 </React.Suspense>
               )}
               {view === 'admin' && isAdmin && <AdminPanel />}
