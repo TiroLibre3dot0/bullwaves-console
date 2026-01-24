@@ -215,30 +215,6 @@ export default function Sidebar({
             <span>{t('sidebar.executiveSuite')}</span>
           </span>
         </button>
-
-        <button
-          disabled={disabled('marketingPlan')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
-          onClick={() => navigate('marketingPlan')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="layout" />
-            <span>{t('sidebar.marketingPlan')}</span>
-          </span>
-        </button>
-
-        <button
-          disabled={disabled('projectBoard')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'projectBoard' ? 'active' : ''}`}
-          onClick={() => navigate('projectBoard')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="card" />
-            <span>{t('sidebar.projectBoard') || 'Project Board'}</span>
-          </span>
-        </button>
         {view === 'executive' && (
           <div className="sidebar-subsection">
             <button
@@ -357,6 +333,37 @@ export default function Sidebar({
             <span>{t('sidebar.fraud')}</span>
           </span>
         </button>
+      </div>
+
+      <div className="sidebar-section" style={{ marginTop: 10 }}>
+        <div className="sidebar-title">
+          {t('sidebar.projectManagement') || 'Project management'}
+        </div>
+
+        <button
+          disabled={disabled('marketingPlan')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
+          onClick={() => navigate('marketingPlan')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="layout" />
+            <span>{t('sidebar.marketingPlan')}</span>
+          </span>
+        </button>
+
+        <button
+          disabled={disabled('projectBoard')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'projectBoard' ? 'active' : ''}`}
+          onClick={() => navigate('projectBoard')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="card" />
+            <span>{t('sidebar.projectBoard') || 'Project Board'}</span>
+          </span>
+        </button>
+
         <button
           disabled={disabled('roadmap')}
           type="button"

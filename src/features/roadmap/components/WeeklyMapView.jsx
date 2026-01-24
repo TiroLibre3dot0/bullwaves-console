@@ -751,13 +751,14 @@ export default function WeeklyMapView({
           >
             {checklistOpen ? (
               <div
-                className="modal-card"
-                style={{ width: 'min(720px, 96vw)' }}
+                className="modal-card weekly-map-modal weekly-map-modal--checklist"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="modal-header">
                   <div>
-                    <div style={{ fontWeight: 800 }}>{checklistData.title}</div>
+                    <div style={{ fontWeight: 800, overflowWrap: 'anywhere' }}>
+                      {checklistData.title}
+                    </div>
                     {(() => {
                       const toolTokens = parseToolTokens(checklistTask?.tool)
                       const tools = toolTokens.map(resolveTool).filter((x) => x && x.url)
@@ -810,7 +811,12 @@ export default function WeeklyMapView({
                       {section.items.map((text) => (
                         <div
                           key={text}
-                          style={{ color: 'var(--text)', fontSize: 13, lineHeight: 1.4 }}
+                          style={{
+                            color: 'var(--text)',
+                            fontSize: 13,
+                            lineHeight: 1.4,
+                            overflowWrap: 'anywhere',
+                          }}
                         >
                           • {text}
                         </div>
@@ -823,13 +829,14 @@ export default function WeeklyMapView({
 
             {detailOpen ? (
               <div
-                className="modal-card"
-                style={{ width: 'min(680px, 96vw)' }}
+                className="modal-card weekly-map-modal weekly-map-modal--detail"
                 onMouseDown={(e) => e.stopPropagation()}
               >
                 <div className="modal-header">
                   <div>
-                    <div style={{ fontWeight: 800 }}>{detailTask.title || '—'}</div>
+                    <div style={{ fontWeight: 800, overflowWrap: 'anywhere' }}>
+                      {detailTask.title || '—'}
+                    </div>
                     <div style={{ marginTop: 8, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                       <div style={{ fontSize: 12 }}>
                         <span className="label">{t('weeklyMap.card.mega')}</span>
@@ -897,7 +904,14 @@ export default function WeeklyMapView({
                   <div className="modal-section">
                     <div className="label">{t('weeklyMap.form.expectedImpactMandatory')}</div>
                     <div
-                      style={{ marginTop: 6, color: 'var(--text)', fontSize: 13, lineHeight: 1.5 }}
+                      style={{
+                        marginTop: 6,
+                        color: 'var(--text)',
+                        fontSize: 13,
+                        lineHeight: 1.5,
+                        whiteSpace: 'pre-wrap',
+                        overflowWrap: 'anywhere',
+                      }}
                     >
                       {detailTask.expectedImpact}
                     </div>

@@ -4151,9 +4151,12 @@ export default function FraudMonitoringDashboard() {
             position: 'fixed',
             inset: 0,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             background: 'rgba(2,6,23,0.7)',
+            padding: 'clamp(10px, 3vw, 16px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             zIndex: 60,
           }}
           onClick={(e) => {
@@ -4163,10 +4166,14 @@ export default function FraudMonitoringDashboard() {
           <div
             style={{
               width: 'min(1000px, 95%)',
+              maxHeight: 'calc(100dvh - 32px)',
+              overflow: 'auto',
+              overscrollBehavior: 'contain',
               background: palette.surface,
               color: '#e6eef8',
               borderRadius: 12,
-              overflow: 'hidden',
+              overflowX: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             <div
@@ -4179,8 +4186,12 @@ export default function FraudMonitoringDashboard() {
               }}
             >
               <div>
-                <div style={{ fontSize: 18, fontWeight: 800 }}>{modalCase.title}</div>
-                <div style={{ color: palette.muted }}>{modalCase.description}</div>
+                <div style={{ fontSize: 18, fontWeight: 800, overflowWrap: 'anywhere' }}>
+                  {modalCase.title}
+                </div>
+                <div style={{ color: palette.muted, overflowWrap: 'anywhere' }}>
+                  {modalCase.description}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <div style={{ textAlign: 'right' }}>
@@ -4202,8 +4213,8 @@ export default function FraudMonitoringDashboard() {
               </div>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 0 }}>
-              <div style={{ padding: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch' }}>
+              <div style={{ padding: 16, minWidth: 0, flex: '2 1 560px' }}>
                 <h4 style={{ marginTop: 0 }}>Details</h4>
                 <div style={{ color: palette.muted, marginBottom: 12 }}>
                   Affiliate: {modalCase.details?.affiliate || '—'} · Country:{' '}
@@ -4250,7 +4261,10 @@ export default function FraudMonitoringDashboard() {
               <aside
                 style={{
                   padding: 16,
+                  minWidth: 0,
+                  flex: '1 1 280px',
                   borderLeft: '1px solid rgba(255,255,255,0.03)',
+                  borderTop: '1px solid rgba(255,255,255,0.03)',
                   background: '#071428',
                 }}
               >
@@ -4305,9 +4319,12 @@ export default function FraudMonitoringDashboard() {
             position: 'fixed',
             inset: 0,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'center',
             background: 'rgba(2,6,23,0.7)',
+            padding: 'clamp(10px, 3vw, 16px)',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
             zIndex: 70,
           }}
           onClick={(e) => {
@@ -4317,10 +4334,14 @@ export default function FraudMonitoringDashboard() {
           <div
             style={{
               width: 'min(720px, 95%)',
+              maxHeight: 'calc(100dvh - 32px)',
+              overflow: 'auto',
+              overscrollBehavior: 'contain',
               background: palette.surface,
               color: '#e6eef8',
               borderRadius: 12,
-              overflow: 'hidden',
+              overflowX: 'hidden',
+              overflowWrap: 'anywhere',
             }}
           >
             <div

@@ -829,7 +829,7 @@ export default function RoadmapPage() {
 
       {showImpactModal && (
         <div className="modal-backdrop">
-          <div className="modal-card">
+          <div className="modal-card modal-form">
             <div className="modal-header">
               <div>
                 <div className="detail-label">{t('roadmap.markDone.title')}</div>
@@ -844,71 +844,73 @@ export default function RoadmapPage() {
               </button>
             </div>
 
-            <div className="modal-section">
-              <div className="label">{t('roadmap.markDone.impactType')}</div>
-              <select
-                value={impactDraft.impactType}
-                onChange={(e) => setImpactDraft((d) => ({ ...d, impactType: e.target.value }))}
-              >
-                <option value="">{t('roadmap.markDone.selectImpactType')}</option>
-                {impactTypes.map((tp) => (
-                  <option key={tp} value={tp}>
-                    {impactTypeText(tp)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-section">
-              <div className="label">{t('roadmap.markDone.impactedDepartment')}</div>
-              <select
-                value={impactDraft.impactedDepartment}
-                onChange={(e) =>
-                  setImpactDraft((d) => ({ ...d, impactedDepartment: e.target.value }))
-                }
-              >
-                <option value="">{t('roadmap.markDone.selectDepartment')}</option>
-                {departments.map((d) => (
-                  <option key={d} value={d}>
-                    {departmentText(d)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-section">
-              <div className="label">{t('roadmap.markDone.impactedPlatformArea')}</div>
-              <select
-                value={impactDraft.impactedPlatformArea}
-                onChange={(e) =>
-                  setImpactDraft((d) => ({ ...d, impactedPlatformArea: e.target.value }))
-                }
-              >
-                <option value="">{t('roadmap.markDone.selectArea')}</option>
-                {platformAreas.map((p) => (
-                  <option key={p} value={p}>
-                    {platformAreaText(p)}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="modal-section">
-              <div className="label">{t('roadmap.markDone.impactedKpi')}</div>
-              <input
-                type="text"
-                value={impactDraft.impactedKPI}
-                onChange={(e) => setImpactDraft((d) => ({ ...d, impactedKPI: e.target.value }))}
-                placeholder={t('roadmap.markDone.kpiPlaceholder')}
-              />
-            </div>
-            <div className="modal-section">
-              <div className="label">{t('roadmap.markDone.impactNoteOptional')}</div>
-              <textarea
-                rows={3}
-                value={impactDraft.impactNote}
-                onChange={(e) => setImpactDraft((d) => ({ ...d, impactNote: e.target.value }))}
-              />
+            <div className="modal-form__grid">
+              <div className="modal-section">
+                <div className="label">{t('roadmap.markDone.impactType')}</div>
+                <select
+                  value={impactDraft.impactType}
+                  onChange={(e) => setImpactDraft((d) => ({ ...d, impactType: e.target.value }))}
+                >
+                  <option value="">{t('roadmap.markDone.selectImpactType')}</option>
+                  {impactTypes.map((tp) => (
+                    <option key={tp} value={tp}>
+                      {impactTypeText(tp)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-section">
+                <div className="label">{t('roadmap.markDone.impactedDepartment')}</div>
+                <select
+                  value={impactDraft.impactedDepartment}
+                  onChange={(e) =>
+                    setImpactDraft((d) => ({ ...d, impactedDepartment: e.target.value }))
+                  }
+                >
+                  <option value="">{t('roadmap.markDone.selectDepartment')}</option>
+                  {departments.map((d) => (
+                    <option key={d} value={d}>
+                      {departmentText(d)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-section">
+                <div className="label">{t('roadmap.markDone.impactedPlatformArea')}</div>
+                <select
+                  value={impactDraft.impactedPlatformArea}
+                  onChange={(e) =>
+                    setImpactDraft((d) => ({ ...d, impactedPlatformArea: e.target.value }))
+                  }
+                >
+                  <option value="">{t('roadmap.markDone.selectArea')}</option>
+                  {platformAreas.map((p) => (
+                    <option key={p} value={p}>
+                      {platformAreaText(p)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="modal-section">
+                <div className="label">{t('roadmap.markDone.impactedKpi')}</div>
+                <input
+                  type="text"
+                  value={impactDraft.impactedKPI}
+                  onChange={(e) => setImpactDraft((d) => ({ ...d, impactedKPI: e.target.value }))}
+                  placeholder={t('roadmap.markDone.kpiPlaceholder')}
+                />
+              </div>
+              <div className="modal-section modal-form__full">
+                <div className="label">{t('roadmap.markDone.impactNoteOptional')}</div>
+                <textarea
+                  rows={3}
+                  value={impactDraft.impactNote}
+                  onChange={(e) => setImpactDraft((d) => ({ ...d, impactNote: e.target.value }))}
+                />
+              </div>
             </div>
 
-            <div className="ongoing-detail-actions" style={{ marginTop: 6 }}>
+            <div className="modal-form__footer ongoing-detail-actions" style={{ marginTop: 6 }}>
               <button
                 type="button"
                 className="btn secondary"
