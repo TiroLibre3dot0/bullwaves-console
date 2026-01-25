@@ -1,12 +1,6 @@
-const PLAUSIBLE_API = 'https://plausible.io/api/v2/query'
+const { json } = require('./_http')
 
-function json(res, status, payload) {
-  res.statusCode = status
-  res.setHeader('Content-Type', 'application/json; charset=utf-8')
-  // Avoid caching; these are live stats.
-  res.setHeader('Cache-Control', 'no-store')
-  res.end(JSON.stringify(payload))
-}
+const PLAUSIBLE_API = 'https://plausible.io/api/v2/query'
 
 function env(name) {
   const v = process.env[name]
@@ -61,27 +55,54 @@ function mapRows(result, dimLabel) {
     .filter((r) => r.events > 0)
 }
 
-module.exports = async (req, res) => {
+async function handleHealth(req, res) {
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET')
-    return json(res, 405, { ok: false, error: 'Method Not Allowed' })
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
   }
 
   const { apiKey, siteId } = getConfig()
-  if (!apiKey || !siteId) {
-    return json(res, 501, {
-      ok: false,
-      error: 'Analytics API not configured. Set PLAUSIBLE_STATS_API_KEY and PLAUSIBLE_SITE_ID.',
+
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      configured: Boolean(apiKey && siteId),
       missing: {
         PLAUSIBLE_STATS_API_KEY: !apiKey,
         PLAUSIBLE_SITE_ID: !siteId,
       },
-    })
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+}
+
+async function handlePublicShareOpen(req, res) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET')
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const { apiKey, siteId } = getConfig()
+  if (!apiKey || !siteId) {
+    return json(
+      res,
+      501,
+      {
+        ok: false,
+        error: 'Analytics API not configured. Set PLAUSIBLE_STATS_API_KEY and PLAUSIBLE_SITE_ID.',
+        missing: {
+          PLAUSIBLE_STATS_API_KEY: !apiKey,
+          PLAUSIBLE_SITE_ID: !siteId,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
   }
 
   const range = normalizeRange(req.query?.range)
 
-  // Note: We query conversions via event:goal. Create a goal named `public_share_open` in Plausible.
   const base = {
     site_id: siteId,
     date_range: range,
@@ -120,24 +141,38 @@ module.exports = async (req, res) => {
       pagination: { limit: 20, offset: 0 },
     })
 
-    const totalEvents = Array.isArray(total?.results) && total.results[0]?.metrics
-      ? Number(total.results[0].metrics[0] || 0) || 0
-      : 0
+    const totalEvents =
+      Array.isArray(total?.results) && total.results[0]?.metrics
+        ? Number(total.results[0].metrics[0] || 0) || 0
+        : 0
 
-    return json(res, 200, {
-      ok: true,
-      range,
-      siteId,
-      totalEvents,
-      byKind: mapRows(byKind, 'kind'),
-      byPage: mapRows(byPage, 'page'),
-      byDevice: mapRows(byDevice, 'device'),
-      byReferrer: mapRows(byReferrer, 'referrer'),
-    })
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        range,
+        siteId,
+        totalEvents,
+        byKind: mapRows(byKind, 'kind'),
+        byPage: mapRows(byPage, 'page'),
+        byDevice: mapRows(byDevice, 'device'),
+        byReferrer: mapRows(byReferrer, 'referrer'),
+      },
+      { 'Cache-Control': 'no-store' }
+    )
   } catch (e) {
-    return json(res, 502, {
-      ok: false,
-      error: e?.message || 'Failed to query Plausible',
-    })
+    return json(res, 502, { ok: false, error: e?.message || 'Failed to query Plausible' }, { 'Cache-Control': 'no-store' })
   }
+}
+
+async function routeAnalytics(req, res, parts) {
+  const head = parts[0] || ''
+  if (head === 'health') return handleHealth(req, res)
+  if (head === 'public-share-open') return handlePublicShareOpen(req, res)
+  return json(res, 404, { ok: false, error: 'Not found' }, { 'Cache-Control': 'no-store' })
+}
+
+module.exports = {
+  routeAnalytics,
 }

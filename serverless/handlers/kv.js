@@ -36,7 +36,6 @@ async function kvSetJson(key, value, ttlSeconds) {
   const encodedKey = encodeURIComponent(key)
   const encodedValue = encodeURIComponent(json)
   const ex = ttlSeconds ? `?EX=${encodeURIComponent(String(ttlSeconds))}` : ''
-  // Upstash REST: /set/<key>/<value>?EX=<seconds>
   await kvRequest(`/set/${encodedKey}/${encodedValue}${ex}`)
 }
 
@@ -59,7 +58,6 @@ async function kvExpire(key, ttlSeconds) {
   const encodedKey = encodeURIComponent(key)
   const ttl = Number(ttlSeconds)
   if (!Number.isFinite(ttl) || ttl <= 0) return
-  // Upstash REST: /expire/<key>/<seconds>
   await kvRequest(`/expire/${encodedKey}/${encodeURIComponent(String(ttl))}`)
 }
 
@@ -67,7 +65,6 @@ async function kvLpushJson(key, value) {
   const json = JSON.stringify(value)
   const encodedKey = encodeURIComponent(key)
   const encodedValue = encodeURIComponent(json)
-  // Upstash REST: /lpush/<key>/<value>
   await kvRequest(`/lpush/${encodedKey}/${encodedValue}`)
 }
 
