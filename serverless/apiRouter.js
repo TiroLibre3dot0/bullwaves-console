@@ -15,8 +15,22 @@ function json(res, status, payload, headers) {
 function getPathParts(req) {
   const raw = req?.query?.path
   if (Array.isArray(raw)) return raw.map((p) => String(p))
-  if (raw == null || raw === '') return []
-  return [String(raw)]
+  if (raw == null || raw === '') {
+    // Fallback: parse from URL pathname.
+    try {
+      const u = new URL(req.url, 'http://localhost')
+      const pathname = String(u.pathname || '')
+      if (!pathname.startsWith('/api')) return []
+      const rest = pathname.replace(/^\/api\/?/, '')
+      return rest ? rest.split('/').filter(Boolean) : []
+    } catch {
+      return []
+    }
+  }
+
+  const s = String(raw)
+  // When coming from a rewrite, :path* is a slash-delimited string.
+  return s.includes('/') ? s.split('/').filter(Boolean) : [s]
 }
 
 async function routeApi(req, res) {
