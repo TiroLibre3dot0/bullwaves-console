@@ -20,6 +20,7 @@ import {
 import CohortDecayView from '../../../components/CohortDecayView'
 import { useCohortNetDepositsCalendar } from '../hooks/useCohortNetDepositsCalendar'
 import { buildAffiliateInsights } from '../insights/affiliateInsightEngine'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 const REGISTRATIONS_CANDIDATES = [
   '/Registrations Report.csv',
@@ -3605,6 +3606,20 @@ export default function PublicAffiliateAnalysisSharePage({
   }, [routePeriodType])
 
   const effectivePeriodType = periodType
+
+  useEffect(() => {
+    if (validating || !isValidToken) return
+    trackPublicShareOpen({
+      kind: boardMode ? 'affiliate_reports_board' : 'affiliate_reports',
+      token: token ? String(token).trim() : null,
+      generatedAt: null,
+      extra: {
+        mode: boardMode ? 'board' : 'public',
+        view: activeAffiliateId ? 'affiliate' : 'overview',
+        period: effectivePeriodType,
+      },
+    })
+  }, [validating, isValidToken, boardMode, token, activeAffiliateId, effectivePeriodType])
 
   const affiliateNameIndex = useMemo(() => {
     const map = new Map()

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { decodeSharePayload } from '../../../utils/shareCodec.js'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 function fmtEuro2(n) {
   if (n == null || Number.isNaN(n)) return '—'
@@ -139,6 +140,7 @@ export default function PublicSupportBotListPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(null)
   const [payload, setPayload] = useState(null)
+  const [shareToken, setShareToken] = useState(null)
   const [copied, setCopied] = useState(false)
   const [affiliateFilter, setAffiliateFilter] = useState('')
   const [query, setQuery] = useState('')
@@ -205,6 +207,7 @@ export default function PublicSupportBotListPage() {
         setLoadError(null)
 
         const desc = extractShareDescriptorFromLocation()
+        setShareToken(desc?.kind === 'token' ? desc.value : null)
         if (!desc) {
           setPayload(null)
           return
@@ -264,6 +267,15 @@ export default function PublicSupportBotListPage() {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!payload) return
+    trackPublicShareOpen({
+      kind: 'support_botlist',
+      token: shareToken,
+      generatedAt: payload?.generatedAt,
+    })
+  }, [payload, shareToken])
 
   useEffect(() => {
     const title = payload?.title || t('support.userCheck.botList.title')

@@ -3,6 +3,7 @@ import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import FullPageLoader from '../../../components/FullPageLoader'
 import WeeklyExecutionHistoryPage from './WeeklyExecutionHistoryPage'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 export default function PublicWeeklyExecutionHistoryPage({ token }) {
   const { t } = useI18n()
@@ -41,6 +42,15 @@ export default function PublicWeeklyExecutionHistoryPage({ token }) {
       resetOpenGraphMeta()
     }
   }, [])
+
+  useEffect(() => {
+    if (loading || !isValidToken) return
+    trackPublicShareOpen({
+      kind: 'weekly_execution_history',
+      token,
+      generatedAt: null,
+    })
+  }, [loading, isValidToken, token])
 
   if (loading) {
     return <FullPageLoader progress={40} subtitle={t('common.loading')} />

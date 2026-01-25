@@ -1,4 +1,5 @@
 const js = require('@eslint/js')
+const pluginReact = require('eslint-plugin-react')
 const pluginReactHooks = require('eslint-plugin-react-hooks')
 const pluginReactRefresh = require('eslint-plugin-react-refresh')
 
@@ -48,15 +49,20 @@ module.exports = [
       },
     },
     plugins: {
-      // Keep the old key to avoid breaking existing rule prefixes,
-      // but also register the canonical key used by eslint-plugin-react-hooks.
-      react: pluginReactHooks,
+      react: pluginReact,
       'react-hooks': pluginReactHooks,
       'react-refresh': pluginReactRefresh,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
     },
     rules: {
       ...js.configs.recommended.rules,
       'react/jsx-no-target-blank': 'off',
+      // Ensure JSX usage counts as variable usage (prevents false no-unused-vars).
+      'react/jsx-uses-vars': 'error',
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },

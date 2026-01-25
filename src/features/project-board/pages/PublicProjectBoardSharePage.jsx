@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import ProjectBoardPage from '../ProjectBoardPage'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 export default function PublicProjectBoardSharePage({ token }) {
   const decoded = useMemo(() => decodeSharePayload(token), [token])
@@ -22,6 +23,15 @@ export default function PublicProjectBoardSharePage({ token }) {
     Array.isArray(decoded.tasks) &&
     decoded.tasks.every((t) => t && typeof t === 'object' && typeof t.id === 'string')
 
+  useEffect(() => {
+    if (!isValid) return
+    trackPublicShareOpen({
+      kind: 'project_board',
+      token,
+      generatedAt: decoded?.generatedAt,
+    })
+  }, [isValid, token, decoded?.generatedAt])
+
   if (!isValid) {
     return (
       <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
@@ -37,7 +47,7 @@ export default function PublicProjectBoardSharePage({ token }) {
 
   return (
     <div style={{ minHeight: '100vh', background: '#070b14' }}>
-      <div style={{ maxWidth: 1400, margin: '0 auto', padding: 16 }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: 'clamp(12px, 3vw, 16px)' }}>
         <div
           style={{
             display: 'flex',

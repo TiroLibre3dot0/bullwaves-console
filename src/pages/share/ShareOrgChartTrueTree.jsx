@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { trackPublicShareOpen } from '../../utils/analytics'
 
 function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
@@ -373,6 +374,15 @@ export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
   const [peoplePayload, setPeoplePayload] = useState(null)
   const [peopleLoadError, setPeopleLoadError] = useState(null)
+
+  useEffect(() => {
+    trackPublicShareOpen({
+      kind: 'org_chart',
+      token: null,
+      generatedAt: null,
+      extra: { variant: 'true_tree' },
+    })
+  }, [])
 
   const governance = ORG_TREE.children.find((c) => c.id === 'governance')
   const macroGroup = ORG_TREE.children.find((c) => c.id === 'macro-areas')

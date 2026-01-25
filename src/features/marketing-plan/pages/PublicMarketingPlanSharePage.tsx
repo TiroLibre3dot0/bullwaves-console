@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 type SharePayload = {
   v: 1
@@ -56,6 +57,15 @@ export default function PublicMarketingPlanSharePage({ token }: { token: string 
     })
     return () => resetOpenGraphMeta()
   }, [])
+
+  useEffect(() => {
+    if (!decoded || decoded.v !== 1 || !decoded.plan) return
+    trackPublicShareOpen({
+      kind: 'marketing_plan',
+      token,
+      generatedAt: decoded.generatedAt,
+    })
+  }, [token, decoded?.v, decoded?.plan, decoded?.generatedAt])
 
   if (!decoded || decoded.v !== 1 || !decoded.plan) {
     return (

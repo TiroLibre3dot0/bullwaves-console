@@ -165,7 +165,7 @@ function toPartnerCustomerIdFromQuery(q) {
 const sectionTitleStyle = { fontSize: 13, fontWeight: 900, color: '#fff', marginBottom: 8 }
 const sectionContentStyle = { color: '#9aa4b2' }
 
-export default function SupportUserCheck() {
+export default function SupportUserCheck({ shareConfig = null }) {
   const { t } = useI18n()
 
   const [query, setQuery] = useState('')
@@ -296,6 +296,80 @@ export default function SupportUserCheck() {
   const [botHoverIndex, setBotHoverIndex] = useState(null)
   const [botListMissingPositionCount, setBotListMissingPositionCount] = useState(false)
   const [botShareCopied, setBotShareCopied] = useState(false)
+  const [pageShareCopied, setPageShareCopied] = useState(false)
+
+  const onShareSupportUserCheck = async () => {
+    try {
+      if (typeof window === 'undefined') return
+      const origin = window.location.origin
+
+      const payload = {
+        v: 1,
+        k: 'suc',
+        g: Date.now(),
+        // Mask config (kept compact)
+        m: { comm: true, arev: true },
+      }
+
+      const randomTokenSuffix = (len = 12) => {
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+        let out = ''
+        const arr = new Uint8Array(len)
+        try {
+          window.crypto?.getRandomValues?.(arr)
+          for (let i = 0; i < len; i++) out += alphabet[arr[i] % alphabet.length]
+          return out
+        } catch {
+          // ignore
+        }
+        for (let i = 0; i < len; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)]
+        return out
+      }
+
+      let href = null
+      try {
+        const resp = await fetch('/api/share/create-support-user-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ payload }),
+        })
+        const data = await resp.json().catch(() => null)
+        const token = data?.token
+        if (resp.ok && token && String(token).startsWith('share_')) {
+          href = `${origin}/share/support-user-check/${token}`
+        }
+      } catch {
+        // ignore
+      }
+
+      // Local dev fallback (no Vercel functions): store config in localStorage
+      if (!href && /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)) {
+        try {
+          const token = `share_local_${randomTokenSuffix(16)}`
+          const key = `bw_share_support_user_check:${token}`
+          window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
+          href = `${origin}/share/support-user-check/${token}`
+        } catch {
+          // ignore
+        }
+      }
+
+      // Absolute fallback (no token)
+      if (!href) href = `${origin}/share/support-user-check`
+
+      try {
+        await navigator.clipboard.writeText(href)
+        setPageShareCopied(true)
+        window.setTimeout(() => setPageShareCopied(false), 1400)
+      } catch {
+        // ignore
+      }
+
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } catch {
+      // ignore
+    }
+  }
 
   // Precompute a default "Potential Bot (EA aggressive)" list for fast triage.
   useEffect(() => {
@@ -879,6 +953,7 @@ export default function SupportUserCheck() {
       >
         <SupportUserDetails
           selected={selected}
+          shareConfig={shareConfig}
           affiliateName={affiliateName}
           affiliateKpi={affiliateKpi}
           paymentsLoaded={paymentsLoaded}
@@ -921,7 +996,15 @@ export default function SupportUserCheck() {
               textAlign: showHero ? 'center' : 'left',
             }}
           >
-            <div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: showHero ? 'center' : 'space-between',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
               <h1
                 className="support-hero-title"
                 style={{
@@ -933,6 +1016,26 @@ export default function SupportUserCheck() {
               >
                 {t('support.userCheck.title')}
               </h1>
+              {typeof window !== 'undefined' &&
+              !window.location.pathname.startsWith('/share/support-user-check') ? (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={onShareSupportUserCheck}
+                  title={t('support.userCheck.pageShare.hint')}
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: 999,
+                    fontSize: 12,
+                    lineHeight: 1,
+                    opacity: 0.95,
+                  }}
+                >
+                  {pageShareCopied
+                    ? t('support.userCheck.pageShare.copied')
+                    : t('support.userCheck.pageShare.label')}
+                </button>
+              ) : null}
             </div>
             <div
               style={{

@@ -4,6 +4,7 @@ import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import WeeklyMapView from '../components/WeeklyMapView'
 import { loadWeeklyMapStore, getWeekRange } from '../utils/weeklyMapStore'
 import FullPageLoader from '../../../components/FullPageLoader'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 export default function PublicWeeklyMapPage({ token }) {
   const { t } = useI18n()
@@ -38,6 +39,15 @@ export default function PublicWeeklyMapPage({ token }) {
 
     validateToken()
   }, [token])
+
+  useEffect(() => {
+    if (loading || !isValidToken) return
+    trackPublicShareOpen({
+      kind: 'weekly_map',
+      token,
+      generatedAt: null,
+    })
+  }, [loading, isValidToken, token])
 
   // Set Open Graph meta tags for link preview
   useEffect(() => {

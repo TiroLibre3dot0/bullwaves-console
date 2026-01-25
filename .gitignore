@@ -45,3 +45,12 @@ public/support_users_index.json
 
 .vercel
 .env*.local
+
+# Temporary ESLint output
+.eslint_tmp.json
+
+# ESLint cache
+.eslintcache
+
+# Local build debug output
+build_debug.txt

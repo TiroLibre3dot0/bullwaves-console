@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { encodeSharePayload } from '../../utils/shareCodec'
 
 const STATUSES = ['Backlog', 'In Progress', 'Blocked', 'Done']
@@ -33,6 +33,9 @@ function DepartmentPill({ department }) {
         fontWeight: 700,
         letterSpacing: 0.12,
         whiteSpace: 'nowrap',
+        maxWidth: 180,
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
       }}
       title={clean}
     >
@@ -598,9 +601,18 @@ function Card({ task, onOpen, draggable, onDragStart }) {
           alignItems: 'flex-start',
           justifyContent: 'space-between',
           gap: 10,
+          flexWrap: 'wrap',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, minWidth: 0 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 10,
+            minWidth: 0,
+            flex: '1 1 220px',
+          }}
+        >
           <div style={{ color: 'rgba(226,232,240,0.70)', marginTop: 2, flex: '0 0 auto' }}>
             <StoryIcon name={iconName} />
           </div>
@@ -612,12 +624,16 @@ function Card({ task, onOpen, draggable, onDragStart }) {
               color: 'rgba(241,245,249,0.96)',
               lineHeight: 1.22,
               textRendering: 'geometricPrecision',
+              minWidth: 0,
+              overflowWrap: 'anywhere',
             }}
           >
             {task.title}
           </div>
         </div>
-        <DepartmentPill department={task.owner} />
+        <div style={{ flex: '0 0 auto' }}>
+          <DepartmentPill department={task.owner} />
+        </div>
       </div>
     </button>
   )
@@ -633,6 +649,36 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
   const [activeSubtaskId, setActiveSubtaskId] = useState(null)
   const [subtaskDensity, setSubtaskDensity] = useState('compact')
 
+  const requestClose = (e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    onClose()
+  }
+
+  const requestCloseSubtask = (e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    setActiveSubtaskId(null)
+  }
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return
+      // If subtask is open, close it first.
+      if (activeSubtaskId) {
+        setActiveSubtaskId(null)
+        return
+      }
+      onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [activeSubtaskId, onClose])
+
   const activeSubtask = subtasks.find((st) => st.id === activeSubtaskId) || null
   const descriptionBlocks = useMemo(
     () => parseDescriptionBlocks(task?.description),
@@ -644,7 +690,7 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
       role="dialog"
       aria-modal="true"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
+        if (e.target === e.currentTarget) requestClose(e)
       }}
       style={{
         position: 'fixed',
@@ -705,7 +751,8 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
           <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
             <button
               type="button"
-              onClick={onClose}
+              onPointerDown={requestClose}
+              onClick={requestClose}
               style={{
                 padding: '8px 10px',
                 borderRadius: 10,
@@ -953,6 +1000,7 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
                       </div>
 
                       <div
+                        className="pb-subtask-meta"
                         style={{
                           display: 'inline-flex',
                           gap: 6,
@@ -1041,7 +1089,7 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
             role="dialog"
             aria-modal="true"
             onMouseDown={(e) => {
-              if (e.target === e.currentTarget) setActiveSubtaskId(null)
+              if (e.target === e.currentTarget) requestCloseSubtask(e)
             }}
             style={{
               position: 'fixed',
@@ -1102,7 +1150,8 @@ function Modal({ task, onClose, onUpdate, readOnly = false }) {
 
                 <button
                   type="button"
-                  onClick={() => setActiveSubtaskId(null)}
+                  onPointerDown={requestCloseSubtask}
+                  onClick={requestCloseSubtask}
                   style={{
                     padding: '8px 10px',
                     borderRadius: 10,
@@ -1336,7 +1385,7 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
           return (
             <div
               key={status}
-              className="card"
+              className="card pb-column"
               onDragOver={(e) => {
                 if (!publicMode) e.preventDefault()
               }}
@@ -1395,12 +1444,24 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
       />
 
       <style>{`
-        .pb-grid { grid-template-columns: repeat(4, minmax(240px, 1fr)); }
+        .pb-grid { grid-template-columns: repeat(4, minmax(260px, 1fr)); }
         @media (max-width: 1100px) {
-          .pb-grid { grid-template-columns: repeat(2, minmax(240px, 1fr)); }
+          .pb-grid { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
         }
         @media (max-width: 720px) {
-          .pb-grid { grid-template-columns: 1fr; }
+          /* Mobile-first Kanban: swipe columns horizontally instead of stacking a very tall page */
+          .pb-grid {
+            grid-template-columns: none;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(86vw, 1fr);
+            overflow-x: auto;
+            overflow-y: visible;
+            padding-bottom: 10px;
+            scroll-snap-type: x mandatory;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+          }
+          .pb-column { scroll-snap-align: start; }
         }
       `}</style>
     </div>

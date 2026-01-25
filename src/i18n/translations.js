@@ -38,6 +38,7 @@ export const translations = {
     'sidebar.fraud': 'Fraud Monitoring',
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
+    'sidebar.customEvents': 'Custom Events',
 
     // Flows
     'flows.tab.registration': 'Registration',
@@ -1913,6 +1914,12 @@ export const translations = {
     'support.userCheck.botList.share.copied': 'Link copied',
     'support.userCheck.botList.share.hint':
       'Create a public link that opens only this table (no dashboard).',
+
+    'support.userCheck.pageShare.badge': 'Share mode (login required)',
+    'support.userCheck.pageShare.label': 'Share page',
+    'support.userCheck.pageShare.copied': 'Link copied',
+    'support.userCheck.pageShare.hint':
+      'Copy a link that opens Support User Check (login required).',
     'support.userCheck.botList.positionCountBadge.tooltip':
       'Anti-regression check: the report must include Position Count',
     'support.userCheck.botList.positionCountBadge.checking': 'Position Count: checking…',
@@ -2037,6 +2044,7 @@ export const translations = {
     'sidebar.fraud': 'Monitoraggio Frodi',
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
+    'sidebar.customEvents': 'Eventi custom',
 
     // Flows
     'flows.tab.registration': 'Registrazione',
@@ -3944,6 +3952,12 @@ export const translations = {
     'support.userCheck.botList.share.copied': 'Link copiato',
     'support.userCheck.botList.share.hint':
       'Crea un link pubblico che apre solo questa tabella (senza dashboard).',
+
+    'support.userCheck.pageShare.badge': 'Modalità condivisa (login richiesto)',
+    'support.userCheck.pageShare.label': 'Condividi pagina',
+    'support.userCheck.pageShare.copied': 'Link copiato',
+    'support.userCheck.pageShare.hint':
+      'Copia un link che apre Support User Check (login richiesto).',
     'support.userCheck.botList.positionCountBadge.tooltip':
       'Anti-regressione: il report deve includere Position Count',
     'support.userCheck.botList.positionCountBadge.checking': 'Position Count: verifica…',
@@ -4069,6 +4083,8 @@ export const translations = {
     'sidebar.analysis': 'Analiza Izveštaja',
     'sidebar.fraud': 'Nadzor prevara',
     'sidebar.traderPoints': 'Trader Points',
+    'sidebar.flows': 'Flows',
+    'sidebar.customEvents': 'Custom Events',
 
     // Share — Affiliate Analysis (board report)
     'shareAffiliateAnalysis.header.eyebrow': 'Board izveštaj',

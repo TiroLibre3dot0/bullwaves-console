@@ -3,6 +3,7 @@ import FlowsPage from '../FlowsPage'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
+import { trackPublicShareOpen } from '../../../utils/analytics'
 
 function isShareToken(value) {
   const clean = String(value || '').trim()
@@ -73,6 +74,15 @@ export default function PublicFlowsSharePage({ token }) {
       cancelled = true
     }
   }, [cleanToken])
+
+  useEffect(() => {
+    if (!payload) return
+    trackPublicShareOpen({
+      kind: 'flows',
+      token: cleanToken,
+      generatedAt: payload?.generatedAt,
+    })
+  }, [payload, cleanToken])
 
   if (loading) {
     return <FullPageLoader progress={25} subtitle={t('common.loading')} />

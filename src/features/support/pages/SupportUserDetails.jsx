@@ -434,6 +434,7 @@ function DecisionCard({ title, decision, category, bonusInputs, onChangeBonusInp
 
 export default function SupportUserDetails({
   selected,
+  shareConfig,
   affiliateName,
   affiliateKpi,
   paymentsLoaded,
@@ -446,14 +447,47 @@ export default function SupportUserDetails({
 }) {
   const { t } = useI18n()
 
+  const maskPii = Boolean(shareConfig?.mask?.pii)
+  const maskCommissions = Boolean(shareConfig?.mask?.commissions)
+  const maskAffiliateRevenue = Boolean(shareConfig?.mask?.affiliateRevenue)
+
+  const maskedMoney = (value, formatter) => {
+    if (value === null || value === undefined) return '—'
+    const s = String(value).trim()
+    if (!s) return '—'
+    if (maskCommissions || maskAffiliateRevenue) return '•••'
+    return formatter ? formatter(value) : s
+  }
+
+  const maskKeepEnd = (value, keep = 2) => {
+    const s = String(value || '').trim()
+    if (!s || s === '—') return '—'
+    const end = s.slice(-keep)
+    const masked = '•'.repeat(Math.max(s.length - keep, 4))
+    return `${masked}${end}`
+  }
+
+  const maskName = (value) => {
+    const s = String(value || '').trim()
+    if (!s || s === '—') return '—'
+    const parts = s.split(/\s+/).filter(Boolean)
+    const first = parts[0] || ''
+    const second = parts[1] || ''
+    const out = `${first[0] || '•'}${second[0] ? second[0] : '•'}`.toUpperCase()
+    return out || '•'
+  }
+
   const [affiliateMoves, setAffiliateMoves] = useState([])
   const [affiliateMovesLoading, setAffiliateMovesLoading] = useState(false)
 
   // Derived UI values (computed once)
   const mapped = selected || { raw: {} }
-  const displayName = mapped.name || mapped.userId || '—'
-  const accountId = mapped.userId || '—'
-  const mt5 = mapped.mt5 || '—'
+  const displayNameRaw = mapped.name || mapped.userId || '—'
+  const accountIdRaw = mapped.userId || '—'
+  const mt5Raw = mapped.mt5 || '—'
+  const displayName = maskPii ? maskName(displayNameRaw) : displayNameRaw
+  const accountId = maskPii ? maskKeepEnd(accountIdRaw, 3) : accountIdRaw
+  const mt5 = maskPii ? maskKeepEnd(mt5Raw, 2) : mt5Raw
   const country = mapped.country || '—'
   const totalDeposits = fmtEuro(mapped.totalDeposits)
   const withdrawals = fmtEuro(mapped.withdrawals)
@@ -480,10 +514,12 @@ export default function SupportUserDetails({
     return digits ? `bullwaves-${digits}` : null
   }
 
-  const partnerCustomerId = toPartnerCustomerId(accountId)
+  const partnerCustomerId = toPartnerCustomerId(accountIdRaw)
   const partnerProfileUrl = partnerCustomerId
     ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerCustomerId)}`
     : null
+
+  const partnerProfileUrlUi = maskPii ? null : partnerProfileUrl
 
   function initialsForName(v) {
     const s = String(v || '').trim()
@@ -1158,10 +1194,10 @@ export default function SupportUserDetails({
                   >
                     {displayName}
                   </span>
-                  {partnerProfileUrl ? (
+                  {partnerProfileUrlUi ? (
                     <a
                       className="support-partner-pill"
-                      href={partnerProfileUrl}
+                      href={partnerProfileUrlUi}
                       target="_blank"
                       rel="noreferrer"
                       title={t('support.details.partnerProfile.hint', {
@@ -1219,10 +1255,10 @@ export default function SupportUserDetails({
             style={{ textAlign: 'left', alignSelf: 'stretch' }}
           >
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              {partnerProfileUrl ? (
+              {partnerProfileUrlUi ? (
                 <a
                   className="support-partner-avatar-link"
-                  href={partnerProfileUrl}
+                  href={partnerProfileUrlUi}
                   target="_blank"
                   rel="noreferrer"
                   title={t('support.details.partnerProfile.hint', {
@@ -1402,7 +1438,7 @@ export default function SupportUserDetails({
                   {t('support.details.commissions.title')}
                 </div>
                 <div style={{ fontWeight: 800, fontSize: 18, marginTop: 8 }}>
-                  {commissionsTotal}
+                  {maskCommissions ? '•••' : commissionsTotal}
                 </div>
                 <div style={{ marginTop: 10, display: 'grid', gap: 8, fontSize: 13 }}>
                   <div
@@ -1415,9 +1451,11 @@ export default function SupportUserDetails({
                     <div>{t('support.details.commissions.revshare')}</div>
                     <div>
                       {revshareComm
-                        ? fmtEuro
-                          ? fmtEuro(revshareComm)
-                          : String(revshareComm)
+                        ? maskCommissions
+                          ? '•••'
+                          : fmtEuro
+                            ? fmtEuro(revshareComm)
+                            : String(revshareComm)
                         : '—'}
                     </div>
                   </div>
@@ -1431,9 +1469,11 @@ export default function SupportUserDetails({
                     <div>{t('support.details.commissions.cpa')}</div>
                     <div>
                       {cpaEffective
-                        ? fmtEuro
-                          ? fmtEuro(cpaEffective)
-                          : String(cpaEffective)
+                        ? maskCommissions
+                          ? '•••'
+                          : fmtEuro
+                            ? fmtEuro(cpaEffective)
+                            : String(cpaEffective)
                         : '—'}
                     </div>
                   </div>
@@ -1445,7 +1485,15 @@ export default function SupportUserDetails({
                     }}
                   >
                     <div>{t('support.details.commissions.cpl')}</div>
-                    <div>{cplComm ? (fmtEuro ? fmtEuro(cplComm) : String(cplComm)) : '—'}</div>
+                    <div>
+                      {cplComm
+                        ? maskCommissions
+                          ? '•••'
+                          : fmtEuro
+                            ? fmtEuro(cplComm)
+                            : String(cplComm)
+                        : '—'}
+                    </div>
                   </div>
                   {affiliateEffective ? (
                     <div
@@ -1457,7 +1505,11 @@ export default function SupportUserDetails({
                     >
                       <div>{t('support.details.commissions.affiliate')}</div>
                       <div>
-                        {fmtEuro ? fmtEuro(affiliateEffective) : String(affiliateEffective)}
+                        {maskCommissions
+                          ? '•••'
+                          : fmtEuro
+                            ? fmtEuro(affiliateEffective)
+                            : String(affiliateEffective)}
                       </div>
                     </div>
                   ) : null}
@@ -1471,9 +1523,11 @@ export default function SupportUserDetails({
                     <div>{t('support.details.commissions.subAffiliate')}</div>
                     <div>
                       {subAffiliateComm
-                        ? fmtEuro
-                          ? fmtEuro(subAffiliateComm)
-                          : String(subAffiliateComm)
+                        ? maskCommissions
+                          ? '•••'
+                          : fmtEuro
+                            ? fmtEuro(subAffiliateComm)
+                            : String(subAffiliateComm)
                         : '—'}
                     </div>
                   </div>
@@ -2073,7 +2127,12 @@ export default function SupportUserDetails({
                                 {t('support.details.affiliateOverview.metrics.revenue')}
                               </div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
-                                {fmtEuro(currentAffiliateOverview.revenue)}
+                                {maskAffiliateRevenue &&
+                                currentAffiliateOverview.revenue !== null &&
+                                currentAffiliateOverview.revenue !== undefined &&
+                                String(currentAffiliateOverview.revenue).trim() !== ''
+                                  ? '•••'
+                                  : fmtEuro(currentAffiliateOverview.revenue)}
                               </div>
 
                               <div style={{ fontSize: 10, color: 'var(--muted)' }}>
@@ -2137,7 +2196,12 @@ export default function SupportUserDetails({
                                   {t('support.details.affiliateOverview.metrics.revenue')}
                                 </div>
                                 <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
-                                  {fmtEuro(targetAffiliateOverview.revenue)}
+                                  {maskAffiliateRevenue &&
+                                  targetAffiliateOverview.revenue !== null &&
+                                  targetAffiliateOverview.revenue !== undefined &&
+                                  String(targetAffiliateOverview.revenue).trim() !== ''
+                                    ? '•••'
+                                    : fmtEuro(targetAffiliateOverview.revenue)}
                                 </div>
 
                                 <div style={{ fontSize: 10, color: 'var(--muted)' }}>

@@ -440,6 +440,17 @@ export default function Sidebar({
           </span>
         </button>
         <button
+          disabled={disabled('customEvents')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'customEvents' ? 'active' : ''}`}
+          onClick={() => navigate('customEvents')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="chart" />
+            <span>{t('sidebar.customEvents') || 'Custom Events'}</span>
+          </span>
+        </button>
+        <button
           disabled={disabled('upload')}
           type="button"
           className={`sidebar-item sidebar-main tab ${view === 'upload' ? 'active' : ''}`}

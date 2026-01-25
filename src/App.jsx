@@ -23,6 +23,9 @@ const PublicFlowsSharePage = React.lazy(() => import('./features/flows/pages/Pub
 const PublicProjectBoardSharePage = React.lazy(
   () => import('./features/project-board/pages/PublicProjectBoardSharePage')
 )
+const SupportUserCheckSharePage = React.lazy(
+  () => import('./features/support/pages/SupportUserCheckSharePage')
+)
 
 export default function App() {
   const { t } = useI18n()
@@ -84,6 +87,8 @@ export default function App() {
     if (p === '/share/login' || p.startsWith('/share/login/')) return 'board-login'
     if (p.startsWith('/share/org-chart')) return 'org-chart'
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
+    if (p === '/share/support-user-check' || p.startsWith('/share/support-user-check/'))
+      return 'support-user-check'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
@@ -116,6 +121,18 @@ export default function App() {
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicSupportBotListPage />
       </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'support-user-check') {
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    const token = parts[2] || ''
+    return (
+      <RequireAuth>
+        <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+          <SupportUserCheckSharePage token={token} />
+        </React.Suspense>
+      </RequireAuth>
     )
   }
 

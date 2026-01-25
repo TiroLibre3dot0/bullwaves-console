@@ -1366,6 +1366,21 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   outline-offset: 2px;
 }
 
+@media (max-width: 520px) {
+  /* Make subtask rows readable on very small screens */
+  .pb-subtask-row {
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    grid-auto-rows: auto;
+  }
+
+  .pb-subtask-meta {
+    grid-column: 1 / -1;
+    justify-content: flex-start !important;
+    padding-left: 26px;
+    padding-top: 2px;
+  }
+}
+
 @media (min-width: 1024px) {
   .pb-story-modal { width: min(1100px, 100%) !important; }
   .pb-story-modal__body {

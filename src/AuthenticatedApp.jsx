@@ -23,6 +23,7 @@ import UploadReportsPage from './pages/UploadReportsPage'
 import { translate } from './i18n/translations'
 import { useI18n } from './i18n/I18nContext'
 import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
+import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
 
 const FlowsPage = React.lazy(() => import('./features/flows/FlowsPage'))
 const ProjectBoardPage = React.lazy(() => import('./features/project-board/ProjectBoardPage'))
@@ -57,6 +58,7 @@ export default function AuthenticatedApp() {
       // lab removed
       supportUserCheck: '/support/user-check',
       upload: '/upload',
+      customEvents: '/custom-events',
     }),
     []
   )
@@ -92,6 +94,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/summary-report')) return 'summary'
     if (pathname.startsWith('/support')) return 'supportUserCheck'
     if (pathname.startsWith('/upload')) return 'upload'
+    if (pathname.startsWith('/custom-events')) return 'customEvents'
     return 'overview'
   }
 
@@ -379,6 +382,7 @@ export default function AuthenticatedApp() {
                 </React.Suspense>
               )}
               {view === 'upload' && <UploadReportsPage />}
+              {view === 'customEvents' && <CustomEventsPage />}
               {view === 'traderPointsSimulator' && <TraderPointsSimulatorPage />}
               {view === 'flows' && (
                 <React.Suspense
