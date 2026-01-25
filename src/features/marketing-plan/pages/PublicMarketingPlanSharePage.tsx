@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import { trackPublicShareOpen } from '../../../utils/analytics'
@@ -46,7 +46,60 @@ function statusLabel(status: string) {
 }
 
 export default function PublicMarketingPlanSharePage({ token }: { token: string }) {
-  const decoded = useMemo(() => decodeSharePayload(token) as SharePayload | null, [token])
+  const [payload, setPayload] = useState<SharePayload | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const looksLikeToken = useMemo(() => {
+    const t = String(token || '').trim()
+    return (t.startsWith('share_') || t.startsWith('share_local_')) && t.length <= 96
+  }, [token])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function load() {
+      try {
+        setLoadError(null)
+
+        const t = String(token || '').trim()
+        if (!t) {
+          if (!cancelled) setPayload(null)
+          return
+        }
+
+        if (looksLikeToken) {
+          if (t.startsWith('share_local_')) {
+            const raw = window.localStorage.getItem(`bw_share_marketing_plan:${t}`)
+            const parsed = raw ? JSON.parse(raw) : null
+            const p = (parsed?.payload as SharePayload | null) || null
+            if (!p) throw new Error('Missing local share snapshot')
+            if (!cancelled) setPayload(p)
+            return
+          }
+
+          const resp = await fetch(`/api/share/marketing-plan/${encodeURIComponent(t)}`)
+          const data = await resp.json().catch(() => null)
+          const p = (data?.payload as SharePayload | null) || null
+          if (!resp.ok || !data?.ok || !p) throw new Error(data?.error || data?.message || 'Failed to load share')
+          if (!cancelled) setPayload(p)
+          return
+        }
+
+        const decoded = decodeSharePayload(t) as SharePayload | null
+        if (!cancelled) setPayload(decoded)
+      } catch (e: any) {
+        if (!cancelled) {
+          setPayload(null)
+          setLoadError(e?.message || 'Failed to load share')
+        }
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [token, looksLikeToken])
 
   useEffect(() => {
     setOpenGraphMeta({
@@ -59,31 +112,31 @@ export default function PublicMarketingPlanSharePage({ token }: { token: string 
   }, [])
 
   useEffect(() => {
-    if (!decoded || decoded.v !== 1 || !decoded.plan) return
+    if (!payload || payload.v !== 1 || !payload.plan) return
     trackPublicShareOpen({
       kind: 'marketing_plan',
       token,
-      generatedAt: decoded.generatedAt,
+      generatedAt: payload.generatedAt,
     })
-  }, [token, decoded?.v, decoded?.plan, decoded?.generatedAt])
+  }, [token, payload?.v, payload?.plan, payload?.generatedAt])
 
-  if (!decoded || decoded.v !== 1 || !decoded.plan) {
+  if (!payload || payload.v !== 1 || !payload.plan) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <h2 style={{ color: 'var(--text)' }}>Link non valido</h2>
         <p style={{ color: 'var(--muted)', marginTop: 10 }}>
-          Il link condiviso del piano marketing è mancante o non valido.
+          {loadError || 'Il link condiviso del piano marketing è mancante o non valido.'}
         </p>
       </div>
     )
   }
 
-  const plan = decoded.plan
-  const metrics = decoded.metrics || {}
+  const plan = payload.plan
+  const metrics = payload.metrics || {}
   const initiatives = Array.isArray(plan.initiatives) ? plan.initiatives : []
   const objectives = Array.isArray(plan.objectives) ? plan.objectives : []
 
-  const scenario = decoded.scenario || 'base'
+  const scenario = payload.scenario || 'base'
 
   const totals = initiatives.reduce(
     (acc: any, i: any) => {
@@ -116,7 +169,7 @@ export default function PublicMarketingPlanSharePage({ token }: { token: string 
             </div>
             <h1 style={{ color: 'var(--text)', fontSize: 30, margin: '6px 0 6px 0' }}>Vista board</h1>
             <div style={{ color: 'var(--muted)', fontSize: 13 }}>
-              Condivisione in sola lettura · Generato {new Date(decoded.generatedAt).toLocaleString()} · Scenario: {scenario}
+              Condivisione in sola lettura · Generato {new Date(payload.generatedAt).toLocaleString()} · Scenario: {scenario}
             </div>
           </div>
 

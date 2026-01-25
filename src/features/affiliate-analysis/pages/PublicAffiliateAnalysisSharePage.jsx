@@ -4133,6 +4133,7 @@ export default function PublicAffiliateAnalysisSharePage({
   const shareBase = useMemo(() => {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     if (boardMode) return `${origin}/share/affiliate-reports`
+    if (String(token || '').startsWith('share_')) return `${origin}/s/${encodeURIComponent(token)}`
     return `${origin}/share/affiliate-reports/${token}`
   }, [token, boardMode])
 

@@ -2,15 +2,18 @@ function hasKvEnv() {
   return Boolean(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
 }
 
-async function kvRequest(path) {
+async function kvRequest(path, options) {
   const base = process.env.KV_REST_API_URL
   const token = process.env.KV_REST_API_TOKEN
-  const url = `${base}${path}`
+  const url = path ? `${base}${path}` : base
 
   const resp = await fetch(url, {
+    method: options?.method || 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
+      ...(options?.headers || null),
     },
+    body: options?.body,
   })
 
   let data = null
@@ -31,12 +34,26 @@ async function kvRequest(path) {
   return data
 }
 
+async function kvCommand(commandArray) {
+  // Upstash Redis REST API supports POSTing a command array to the base URL.
+  // This avoids URL length limits for large values.
+  return kvRequest('', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(commandArray),
+  })
+}
+
 async function kvSetJson(key, value, ttlSeconds) {
   const json = JSON.stringify(value)
-  const encodedKey = encodeURIComponent(key)
-  const encodedValue = encodeURIComponent(json)
-  const ex = ttlSeconds ? `?EX=${encodeURIComponent(String(ttlSeconds))}` : ''
-  await kvRequest(`/set/${encodedKey}/${encodedValue}${ex}`)
+  const ttl = Number(ttlSeconds)
+  if (Number.isFinite(ttl) && ttl > 0) {
+    await kvCommand(['SET', key, json, 'EX', String(Math.trunc(ttl))])
+  } else {
+    await kvCommand(['SET', key, json])
+  }
 }
 
 async function kvGetJson(key) {
@@ -63,9 +80,7 @@ async function kvExpire(key, ttlSeconds) {
 
 async function kvLpushJson(key, value) {
   const json = JSON.stringify(value)
-  const encodedKey = encodeURIComponent(key)
-  const encodedValue = encodeURIComponent(json)
-  await kvRequest(`/lpush/${encodedKey}/${encodedValue}`)
+  await kvCommand(['LPUSH', key, json])
 }
 
 module.exports = {

@@ -106,6 +106,9 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         flows: ['registration', 'navigation', 'retention', 'mail'],
       }
 
+      const origin = window.location?.origin || ''
+      const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+
       let token = ''
       try {
         const resp = await fetch('/api/share/create-flows', {
@@ -117,7 +120,17 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         if (resp.ok && data?.ok && data?.token) token = String(data.token)
         else throw new Error(data?.error || data?.message || 'share-not-available')
       } catch {
-        // Local fallback (dev only / when KV is not available)
+        if (!isLocalhost) {
+          setShareState({
+            status: 'error',
+            href: '',
+            error: 'Share link non disponibile (storage share non configurato).',
+            copied: false,
+          })
+          return
+        }
+
+        // Local fallback (dev only): store snapshot in localStorage (same browser/device only)
         token = `share_local_${randomHex(12)}`
         try {
           window.localStorage.setItem(`bw_share_flows:${token}`, JSON.stringify({ payload }))
@@ -125,9 +138,9 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           // ignore
         }
       }
-
-      const origin = window.location?.origin || ''
-      const href = `${origin}/share/flows/${encodeURIComponent(token)}?flow=${encodeURIComponent(flowId)}`
+      const href = token.startsWith('share_')
+        ? `${origin}/s/${encodeURIComponent(token)}`
+        : `${origin}/share/flows/${encodeURIComponent(token)}?flow=${encodeURIComponent(flowId)}`
 
       // Primary UX: open the public page immediately.
       try {

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import WeeklyMapView from '../components/WeeklyMapView'
-import { loadWeeklyMapStore, getWeekRange } from '../utils/weeklyMapStore'
+import { getWeekRange } from '../utils/weeklyMapStore'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { trackPublicShareOpen } from '../../../utils/analytics'
 
@@ -10,34 +10,66 @@ export default function PublicWeeklyMapPage({ token }) {
   const { t } = useI18n()
   const [weeklyMapStore, setWeeklyMapStore] = useState(null)
   const [isValidToken, setIsValidToken] = useState(false)
+  const [loadError, setLoadError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate token validation - in production, verify against server/API
-    const validateToken = () => {
-      // Get the stored token from current browser's localStorage
-      // This allows sharing within the same origin but not cross-origin without auth
-      const storedToken =
-        typeof window !== 'undefined'
-          ? window.localStorage.getItem('bw_weekly_map_share_token')
-          : null
+    let cancelled = false
 
-      if (storedToken && token === storedToken) {
-        setIsValidToken(true)
-      } else if (!storedToken) {
-        // If no token in localStorage, assume this is a first-time public visitor
-        // In production, you'd verify token against a server-side registry
-        // For now, allow access (tokens are hard to guess but not cryptographically secure)
-        setIsValidToken(true)
+    async function load() {
+      try {
+        setLoading(true)
+        setLoadError('')
+        setIsValidToken(false)
+
+        const clean = String(token || '').trim()
+        if (!clean) {
+          setWeeklyMapStore(null)
+          setLoading(false)
+          return
+        }
+
+        // Dev-only local snapshots
+        if (/^share_local_/i.test(clean)) {
+          const raw = window.localStorage.getItem(`bw_share_weekly_map:${clean}`)
+          const parsed = raw ? JSON.parse(raw) : null
+          const p = parsed?.payload
+          const m = p?.m
+          if (!m) throw new Error('Missing local share snapshot')
+          if (!cancelled) {
+            setWeeklyMapStore(m)
+            setIsValidToken(true)
+          }
+          return
+        }
+
+        const resp = await fetch(`/api/share/weekly-map/${encodeURIComponent(clean)}`)
+        const data = await resp.json().catch(() => null)
+        const payload = data?.payload
+        const m = payload?.m
+        if (!resp.ok || !data?.ok || !payload || !m) {
+          throw new Error(data?.error || data?.message || 'Invalid or expired link')
+        }
+
+        if (!cancelled) {
+          setWeeklyMapStore(m)
+          setIsValidToken(true)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setWeeklyMapStore(null)
+          setIsValidToken(false)
+          setLoadError(e?.message || 'Invalid or expired link')
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-
-      // Load the weekly map data
-      const store = loadWeeklyMapStore()
-      setWeeklyMapStore(store)
-      setLoading(false)
     }
 
-    validateToken()
+    load()
+    return () => {
+      cancelled = true
+    }
   }, [token])
 
   useEffect(() => {
@@ -73,7 +105,9 @@ export default function PublicWeeklyMapPage({ token }) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <h2 style={{ color: 'var(--text)' }}>{t('common.accessDenied') || 'Access Denied'}</h2>
-        <p style={{ color: 'var(--muted)', marginTop: 10 }}>This share link is no longer valid.</p>
+        <p style={{ color: 'var(--muted)', marginTop: 10 }}>
+          {loadError || 'This share link is no longer valid.'}
+        </p>
       </div>
     )
   }
@@ -83,8 +117,13 @@ export default function PublicWeeklyMapPage({ token }) {
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         {(() => {
           const origin = typeof window !== 'undefined' ? window.location.origin : ''
-          const mapHref = `${origin}/share/weekly-map/${token}`
-          const histHref = `${origin}/share/weekly-execution-history/${token}`
+          const isLocal = /^share_local_/i.test(String(token || ''))
+          const mapHref = isLocal
+            ? `${origin}/share/weekly-map/${encodeURIComponent(token)}`
+            : `${origin}/s/${encodeURIComponent(token)}`
+          const histHref = isLocal
+            ? `${origin}/share/weekly-execution-history/${encodeURIComponent(token)}`
+            : `${origin}/s/${encodeURIComponent(token)}/h`
           return (
             <div style={{ marginBottom: 14, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <a className="btn" href={mapHref}>

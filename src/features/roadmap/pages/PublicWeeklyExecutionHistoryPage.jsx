@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import FullPageLoader from '../../../components/FullPageLoader'
@@ -8,27 +8,66 @@ import { trackPublicShareOpen } from '../../../utils/analytics'
 export default function PublicWeeklyExecutionHistoryPage({ token }) {
   const { t } = useI18n()
   const [isValidToken, setIsValidToken] = useState(false)
+  const [loadError, setLoadError] = useState('')
+  const [historyStore, setHistoryStore] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  const storedToken = useMemo(() => {
-    return typeof window !== 'undefined'
-      ? window.localStorage.getItem('bw_weekly_map_share_token')
-      : null
-  }, [])
-
   useEffect(() => {
-    const validateToken = () => {
-      if (storedToken && token === storedToken) {
-        setIsValidToken(true)
-      } else if (!storedToken) {
-        // Same public-access behaviour as PublicWeeklyMapPage: allow if no token exists locally.
-        setIsValidToken(true)
+    let cancelled = false
+
+    async function load() {
+      try {
+        setLoading(true)
+        setLoadError('')
+        setIsValidToken(false)
+
+        const clean = String(token || '').trim()
+        if (!clean) {
+          setLoading(false)
+          return
+        }
+
+        if (/^share_local_/i.test(clean)) {
+          const raw = window.localStorage.getItem(`bw_share_weekly_map:${clean}`)
+          const parsed = raw ? JSON.parse(raw) : null
+          const p = parsed?.payload
+          const h = p?.h
+          if (!h) throw new Error('Missing local share snapshot')
+          if (!cancelled) {
+            setHistoryStore(h)
+            setIsValidToken(true)
+          }
+          return
+        }
+
+        const resp = await fetch(`/api/share/weekly-execution-history/${encodeURIComponent(clean)}`)
+        const data = await resp.json().catch(() => null)
+        const payload = data?.payload
+        const h = payload?.h
+        if (!resp.ok || !data?.ok || !payload || !h) {
+          throw new Error(data?.error || data?.message || 'Invalid or expired link')
+        }
+
+        if (!cancelled) {
+          setHistoryStore(h)
+          setIsValidToken(true)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setIsValidToken(false)
+          setLoadError(e?.message || 'Invalid or expired link')
+          setHistoryStore(null)
+        }
+      } finally {
+        if (!cancelled) setLoading(false)
       }
-      setLoading(false)
     }
 
-    validateToken()
-  }, [token, storedToken])
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   useEffect(() => {
     setOpenGraphMeta({
@@ -60,14 +99,21 @@ export default function PublicWeeklyExecutionHistoryPage({ token }) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
         <h2 style={{ color: 'var(--text)' }}>{t('common.accessDenied') || 'Access Denied'}</h2>
-        <p style={{ color: 'var(--muted)', marginTop: 10 }}>This share link is no longer valid.</p>
+        <p style={{ color: 'var(--muted)', marginTop: 10 }}>
+          {loadError || 'This share link is no longer valid.'}
+        </p>
       </div>
     )
   }
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  const mapHref = `${origin}/share/weekly-map/${token}`
-  const histHref = `${origin}/share/weekly-execution-history/${token}`
+  const isLocal = /^share_local_/i.test(String(token || ''))
+  const mapHref = isLocal
+    ? `${origin}/share/weekly-map/${encodeURIComponent(token)}`
+    : `${origin}/s/${encodeURIComponent(token)}`
+  const histHref = isLocal
+    ? `${origin}/share/weekly-execution-history/${encodeURIComponent(token)}`
+    : `${origin}/s/${encodeURIComponent(token)}/h`
 
   return (
     <div style={{ padding: 20 }}>
@@ -81,7 +127,7 @@ export default function PublicWeeklyExecutionHistoryPage({ token }) {
           </a>
         </div>
 
-        <WeeklyExecutionHistoryPage />
+        <WeeklyExecutionHistoryPage storeOverride={historyStore} />
       </div>
     </div>
   )

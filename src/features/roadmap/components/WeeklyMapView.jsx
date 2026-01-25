@@ -14,6 +14,7 @@ import {
   saveWeeklyMapStore,
   upsertWeeklyTask,
 } from '../utils/weeklyMapStore'
+import { loadWeeklyExecutionHistory } from '../utils/weeklyExecutionHistoryStore'
 
 const departments = ['Infrastructure', 'Product', 'Data', 'Compliance', 'UX', 'Partners']
 
@@ -722,7 +723,14 @@ export default function WeeklyMapView({
   }
 
   const copyBoardReport = async () => {
-    const shareLink = getShareLink()
+    const shareLink = await getShareLink({
+      weeklyMapStore: store,
+      weeklyExecutionHistory: loadWeeklyExecutionHistory(),
+    })
+    if (!shareLink) {
+      window.alert('Share link non disponibile (storage share non configurato).')
+      return
+    }
     const ok = await copyTextToClipboard(shareLink)
     if (ok) setReportCopied(true)
   }

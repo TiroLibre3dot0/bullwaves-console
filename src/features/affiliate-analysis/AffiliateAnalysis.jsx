@@ -66,6 +66,7 @@ export default function AffiliateAnalysis() {
     }
 
     const origin = window.location.origin
+    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
 
     let href = null
     try {
@@ -86,14 +87,14 @@ export default function AffiliateAnalysis() {
       const data = await resp.json().catch(() => null)
       const token = data?.token
       if (resp.ok && token && String(token).startsWith('share_')) {
-        href = `${origin}/share/affiliate-reports/${encodeURIComponent(token)}`
+        href = `${origin}/s/${encodeURIComponent(token)}`
       }
     } catch {
       // ignore
     }
 
     // Local dev fallback (Vite dev doesn't run serverless functions): store a marker in localStorage.
-    if (!href && /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)) {
+    if (!href && isLocalhost) {
       try {
         const token = `share_local_${randomTokenSuffix(16)}`
         const key = `bw_share_affrep:${token}`
@@ -105,7 +106,11 @@ export default function AffiliateAnalysis() {
     }
 
     if (!href) {
-      setShareError(t('affiliateAnalysis.share.error') || 'Unable to create share link')
+      if (!isLocalhost) {
+        setShareError('Share link non disponibile (storage share non configurato).')
+      } else {
+        setShareError(t('affiliateAnalysis.share.error') || 'Unable to create share link')
+      }
       setShareBusy(false)
       return
     }

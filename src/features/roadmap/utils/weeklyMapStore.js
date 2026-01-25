@@ -1,5 +1,4 @@
 ﻿const STORAGE_KEY = 'bw_weekly_map_v1'
-const SHARE_TOKEN_KEY = 'bw_weekly_map_share_token'
 
 function safeJsonParse(raw, fallback) {
   try {
@@ -9,32 +8,58 @@ function safeJsonParse(raw, fallback) {
   }
 }
 
-function generateShareToken() {
-  return (
-    'share_' +
-    Math.random().toString(36).substring(2, 15) +
-    Math.random().toString(36).substring(2, 15)
-  )
-}
+async function getShareLink(snapshot) {
+  if (typeof window === 'undefined') return ''
 
-function getOrCreateShareToken() {
-  let token = typeof window !== 'undefined' ? window.localStorage.getItem(SHARE_TOKEN_KEY) : null
-  if (!token) {
-    token = generateShareToken()
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(SHARE_TOKEN_KEY, token)
+  const origin = window.location?.origin || ''
+  const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+
+  const payload = {
+    k: 'wmap',
+    v: 1,
+    g: Date.now(),
+    m: snapshot?.weeklyMapStore || null,
+    h: snapshot?.weeklyExecutionHistory || null,
+  }
+
+  let token = ''
+  try {
+    const resp = await fetch('/api/share/create-weekly-map', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payload }),
+    })
+    const data = await resp.json().catch(() => null)
+    if (resp.ok && data?.ok && data?.token && String(data.token).startsWith('share_')) {
+      token = String(data.token)
+    } else {
+      throw new Error(data?.error || data?.message || 'share-not-available')
+    }
+  } catch {
+    if (!isLocalhost) return ''
+    // Local fallback (dev only): store snapshot in localStorage (same browser/device only)
+    try {
+      const bytes = new Uint8Array(12)
+      window.crypto?.getRandomValues?.(bytes)
+      token = `share_local_${Array.from(bytes)
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')}`
+    } catch {
+      token = `share_local_${Math.random().toString(16).slice(2)}`
+    }
+    try {
+      window.localStorage.setItem(`bw_share_weekly_map:${token}`, JSON.stringify({ payload }))
+    } catch {
+      // ignore
     }
   }
-  return token
+
+  return token.startsWith('share_')
+    ? `${origin}/s/${encodeURIComponent(token)}`
+    : `${origin}/share/weekly-map/${encodeURIComponent(token)}`
 }
 
-function getShareLink() {
-  const token = getOrCreateShareToken()
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${origin}/share/weekly-map/${token}`
-}
-
-export { getOrCreateShareToken, getShareLink }
+export { getShareLink }
 
 function toIsoDate(d) {
   return new Date(d).toISOString().slice(0, 10)

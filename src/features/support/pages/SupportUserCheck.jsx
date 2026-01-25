@@ -336,7 +336,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
         const data = await resp.json().catch(() => null)
         const token = data?.token
         if (resp.ok && token && String(token).startsWith('share_')) {
-          href = `${origin}/share/support-user-check/${token}`
+          href = `${origin}/s/${encodeURIComponent(String(token))}`
         }
       } catch {
         // ignore
@@ -770,7 +770,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
       }
 
       // Prefer a short token link (WhatsApp-friendly preview).
-      // Falls back to legacy encoded payload if the share API isn't available.
+      // No legacy payload-in-URL fallback: keep public URLs short.
       let href = null
       try {
         const resp = await fetch('/api/share/create-support-botlist', {
@@ -781,7 +781,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
         const data = await resp.json().catch(() => null)
         const token = data?.token
         if (resp.ok && token && String(token).startsWith('share_')) {
-          href = `${origin}/share/support-botlist/${token}`
+          href = `${origin}/s/${encodeURIComponent(String(token))}`
         }
       } catch {
         // ignore
@@ -801,9 +801,8 @@ export default function SupportUserCheck({ shareConfig = null }) {
       }
 
       if (!href) {
-        const d = encodeSharePayload(payload)
-        // Legacy: payload in the path.
-        href = `${origin}/share/support-botlist/${d}`
+        window.alert('Share link non disponibile (storage share non configurato).')
+        return
       }
 
       // best-effort: copy to clipboard + open

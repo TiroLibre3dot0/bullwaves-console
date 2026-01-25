@@ -1,11 +1,64 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ProjectBoardPage from '../ProjectBoardPage'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import { trackPublicShareOpen } from '../../../utils/analytics'
 
 export default function PublicProjectBoardSharePage({ token }) {
-  const decoded = useMemo(() => decodeSharePayload(token), [token])
+  const [payload, setPayload] = useState(null)
+  const [loadError, setLoadError] = useState(null)
+
+  const looksLikeToken = useMemo(() => {
+    const t = String(token || '').trim()
+    return (t.startsWith('share_') || t.startsWith('share_local_')) && t.length <= 96
+  }, [token])
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      try {
+        setLoadError(null)
+
+        const t = String(token || '').trim()
+        if (!t) {
+          if (!cancelled) setPayload(null)
+          return
+        }
+
+        if (looksLikeToken) {
+          if (t.startsWith('share_local_')) {
+            const raw = window.localStorage.getItem(`bw_share_project_board:${t}`)
+            const parsed = raw ? JSON.parse(raw) : null
+            const p = parsed?.payload
+            if (!p) throw new Error('Missing local share snapshot')
+            if (!cancelled) setPayload(p)
+            return
+          }
+
+          const resp = await fetch(`/api/share/project-board/${encodeURIComponent(t)}`)
+          const data = await resp.json().catch(() => null)
+          const p = data?.payload
+          if (!resp.ok || !data?.ok || !p)
+            throw new Error(data?.error || data?.message || 'Failed to load share')
+          if (!cancelled) setPayload(p)
+          return
+        }
+
+        const decoded = decodeSharePayload(t)
+        if (!cancelled) setPayload(decoded)
+      } catch (e) {
+        if (!cancelled) {
+          setPayload(null)
+          setLoadError(e?.message || 'Failed to load share')
+        }
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [token, looksLikeToken])
 
   useEffect(() => {
     setOpenGraphMeta({
@@ -18,19 +71,19 @@ export default function PublicProjectBoardSharePage({ token }) {
   }, [])
 
   const isValid =
-    decoded &&
-    decoded.v === 1 &&
-    Array.isArray(decoded.tasks) &&
-    decoded.tasks.every((t) => t && typeof t === 'object' && typeof t.id === 'string')
+    payload &&
+    payload.v === 1 &&
+    Array.isArray(payload.tasks) &&
+    payload.tasks.every((t) => t && typeof t === 'object' && typeof t.id === 'string')
 
   useEffect(() => {
     if (!isValid) return
     trackPublicShareOpen({
       kind: 'project_board',
       token,
-      generatedAt: decoded?.generatedAt,
+      generatedAt: payload?.generatedAt,
     })
-  }, [isValid, token, decoded?.generatedAt])
+  }, [isValid, token, payload?.generatedAt])
 
   if (!isValid) {
     return (
@@ -38,7 +91,7 @@ export default function PublicProjectBoardSharePage({ token }) {
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <div style={{ fontSize: 22, fontWeight: 950 }}>Project Board</div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
-            Invalid or expired link.
+            {loadError || 'Invalid or expired link.'}
           </div>
         </div>
       </div>
@@ -74,9 +127,9 @@ export default function PublicProjectBoardSharePage({ token }) {
           }}
         >
           Read-only share · Generated{' '}
-          {decoded.generatedAt ? new Date(decoded.generatedAt).toLocaleString() : '—'}
+          {payload.generatedAt ? new Date(payload.generatedAt).toLocaleString() : '—'}
         </div>
-        <ProjectBoardPage publicMode sharePayload={decoded} />
+        <ProjectBoardPage publicMode sharePayload={payload} />
       </div>
     </div>
   )

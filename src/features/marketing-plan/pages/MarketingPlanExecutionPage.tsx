@@ -381,6 +381,7 @@ export default function MarketingPlanExecutionPage() {
   const handleGenerateShare = async () => {
     // Istantanea del piano + baseline per un link board self-contained (senza login)
     const payload: any = {
+      k: 'mplan',
       v: 1,
       generatedAt: new Date().toISOString(),
       scenario,
@@ -390,9 +391,45 @@ export default function MarketingPlanExecutionPage() {
       },
     }
 
-    const token = encodeSharePayload(payload)
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    const href = `${origin}/share/marketing-plan/${token}`
+    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+
+    let token = ''
+    try {
+      const resp = await fetch('/api/share/create-marketing-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload }),
+      })
+      const data = await resp.json().catch(() => null)
+      if (resp.ok && data?.ok && data?.token) token = String(data.token)
+      else throw new Error(data?.error || data?.message || 'share-not-available')
+    } catch {
+      if (!isLocalhost) {
+        window.alert('Share link non disponibile (storage share non configurato).')
+        return
+      }
+
+      // Local fallback (dev only): store snapshot in localStorage (same browser/device only)
+      try {
+        const bytes = new Uint8Array(12)
+        if (typeof window !== 'undefined' && window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes)
+        token = `share_local_${Array.from(bytes)
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')}`
+      } catch {
+        token = `share_local_${Math.random().toString(16).slice(2)}`
+      }
+      try {
+        window.localStorage.setItem(`bw_share_marketing_plan:${token}`, JSON.stringify({ payload }))
+      } catch {
+        // ignore
+      }
+    }
+
+    const href = token.startsWith('share_')
+      ? `${origin}/s/${encodeURIComponent(token)}`
+      : `${origin}/share/marketing-plan/${encodeURIComponent(token)}`
     try {
       await navigator.clipboard.writeText(href)
       window.alert('Link board copiato negli appunti')

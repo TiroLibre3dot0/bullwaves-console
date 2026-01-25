@@ -183,6 +183,8 @@ async function handleCreateShare(req, res, expectedK, prefix, ttlSeconds) {
   const token = `share_${crypto.randomBytes(12).toString('hex')}`
   const key = `${prefix}:${token}`
   await kvSetJson(key, payload, ttlSeconds)
+  // Also store a small mapping for fast short-link resolution.
+  await kvSetJson(`smap:${token}`, { p: prefix, k: expectedK, t: Date.now() }, ttlSeconds)
   return json(res, 200, { ok: true, token })
 }
 
@@ -212,6 +214,22 @@ async function routeShare(req, res, parts) {
     return handleShareTokenGet(req, res, 'affrep', getTokenFrom(parts, 1))
   }
 
+  if (head === 'marketing-plan' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'mplan', getTokenFrom(parts, 1))
+  }
+
+  if (head === 'project-board' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'pboard', getTokenFrom(parts, 1))
+  }
+
+  if (head === 'weekly-map' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'wmap', getTokenFrom(parts, 1))
+  }
+
+  if (head === 'weekly-execution-history' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'wmap', getTokenFrom(parts, 1))
+  }
+
   if (head === 'create-support-user-check') {
     return handleCreateShare(req, res, 'suc', 'suc', 60 * 60 * 24 * 30)
   }
@@ -230,6 +248,18 @@ async function routeShare(req, res, parts) {
 
   if (head === 'create-affiliate-reports') {
     return handleCreateShare(req, res, 'affrep', 'affrep', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-marketing-plan') {
+    return handleCreateShare(req, res, 'mplan', 'mplan', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-project-board') {
+    return handleCreateShare(req, res, 'pboard', 'pboard', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-weekly-map') {
+    return handleCreateShare(req, res, 'wmap', 'wmap', 60 * 60 * 24 * 30)
   }
 
   return json(res, 404, { ok: false, error: 'Not found' })

@@ -2,10 +2,10 @@ import React, { useMemo } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { listHistoryWeeks, loadWeeklyExecutionHistory } from '../utils/weeklyExecutionHistoryStore'
 
-export default function WeeklyExecutionHistoryPage() {
+export default function WeeklyExecutionHistoryPage({ storeOverride = null }) {
   const { t } = useI18n()
 
-  const store = useMemo(() => loadWeeklyExecutionHistory(), [])
+  const store = useMemo(() => storeOverride || loadWeeklyExecutionHistory(), [storeOverride])
   const weeks = useMemo(() => listHistoryWeeks(store), [store])
 
   const weeksAsc = useMemo(() => {
