@@ -1703,6 +1703,21 @@ export default function SupportUserCheck({ shareConfig = null }) {
                       const partnerUrl = partnerId
                         ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
                         : null
+                      // Cellxpert logic (existing, do not modify)
+                      const cellxpertUrl = partnerId
+                        ? `https://secure.cellxpert.com/affiliate/partner/${encodeURIComponent(partnerId)}`
+                        : null
+
+                      // Skale logic: fixed format, only last 6 digits from user input
+                      let skaleUrl = null
+                      if (partnerId) {
+                        // Extract only the last 6 digits from the user input
+                        const digits = String(query || '').replace(/\D+/g, '')
+                        const last6 = digits.slice(-6)
+                        if (last6.length === 6) {
+                          skaleUrl = `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${last6}`
+                        }
+                      }
 
                       return (
                         <div
@@ -1723,27 +1738,50 @@ export default function SupportUserCheck({ shareConfig = null }) {
                               <div style={{ marginTop: 4, opacity: 0.8 }}>{partnerId}</div>
                             ) : null}
                           </div>
-                          {partnerUrl ? (
-                            <a
-                              href={partnerUrl}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{
-                                padding: '8px 12px',
-                                borderRadius: 999,
-                                border: '1px solid rgba(99,102,241,0.28)',
-                                background: 'rgba(99,102,241,0.14)',
-                                color: 'rgba(255,255,255,0.92)',
-                                fontWeight: 900,
-                                fontSize: 12,
-                                textDecoration: 'none',
-                                whiteSpace: 'nowrap',
-                              }}
-                              title={partnerUrl}
-                            >
-                              {t('support.userCheck.openInPartner')}
-                            </a>
-                          ) : null}
+                          <div style={{ display: 'flex', gap: 8 }}>
+                            {cellxpertUrl && (
+                              <a
+                                href={cellxpertUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: 999,
+                                  border: '1px solid rgba(99,102,241,0.28)',
+                                  background: 'rgba(99,102,241,0.14)',
+                                  color: 'rgba(255,255,255,0.92)',
+                                  fontWeight: 900,
+                                  fontSize: 12,
+                                  textDecoration: 'none',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title="Open in Cellxpert"
+                              >
+                                Open in Cellxpert
+                              </a>
+                            )}
+                            {skaleUrl && (
+                              <a
+                                href={skaleUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  padding: '8px 12px',
+                                  borderRadius: 999,
+                                  border: '1px solid rgba(99,102,241,0.28)',
+                                  background: 'rgba(99,102,241,0.14)',
+                                  color: 'rgba(255,255,255,0.92)',
+                                  fontWeight: 900,
+                                  fontSize: 12,
+                                  textDecoration: 'none',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title="Open in Skale"
+                              >
+                                Open in Skale
+                              </a>
+                            )}
+                          </div>
                         </div>
                       )
                     })()}
