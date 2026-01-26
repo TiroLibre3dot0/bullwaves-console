@@ -1703,10 +1703,15 @@ export default function SupportUserCheck({ shareConfig = null }) {
                       const partnerUrl = partnerId
                         ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
                         : null
-                      // Cellxpert logic (existing, do not modify)
-                      const cellxpertUrl = partnerId
-                        ? `https://secure.cellxpert.com/affiliate/partner/${encodeURIComponent(partnerId)}`
-                        : null
+                      // Cellxpert logic: fixed format, only last 6 digits from user input
+                      let cellxpertUrl = null
+                      if (partnerId) {
+                        const digits = String(query || '').replace(/\D+/g, '')
+                        const last6 = digits.slice(-6)
+                        if (last6.length === 6) {
+                          cellxpertUrl = `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/bullwaves-${last6}`
+                        }
+                      }
 
                       // Skale logic: fixed format, only last 6 digits from user input
                       let skaleUrl = null
