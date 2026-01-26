@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { trackPublicShareOpen } from '../../utils/analytics'
+import { track, trackPublicShareOpen } from '../../utils/analytics'
 
 function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
@@ -374,6 +374,10 @@ export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
   const [peoplePayload, setPeoplePayload] = useState(null)
   const [peopleLoadError, setPeopleLoadError] = useState(null)
+
+  useEffect(() => {
+    track('page_view', { page: 'ShareOrgChartTrueTree', access: 'public' })
+  }, [])
 
   useEffect(() => {
     trackPublicShareOpen({

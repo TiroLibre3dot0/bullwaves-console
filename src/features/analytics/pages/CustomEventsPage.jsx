@@ -17,10 +17,26 @@ function formatNumber(n) {
   }
 }
 
+function formatDateTime(ts) {
+  if (!ts) return ''
+  try {
+    return new Date(ts).toLocaleString()
+  } catch {
+    return String(ts)
+  }
+}
+
 function Table({ title, rows, dimKey }) {
   return (
     <div
-      style={{ border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, overflow: 'hidden' }}
+      style={{
+        border: '1px solid rgba(99,102,241,0.18)',
+        borderRadius: 16,
+        overflow: 'hidden',
+        background: 'rgba(30,41,59,0.85)',
+        boxShadow: '0 2px 12px 0 rgba(30,41,59,0.10)',
+        marginBottom: 18,
+      }}
     >
       <div
         style={{

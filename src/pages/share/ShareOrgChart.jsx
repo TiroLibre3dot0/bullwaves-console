@@ -3,6 +3,7 @@ import { useI18n } from '../../i18n/I18nContext'
 import OrgDiagram from '../../components/orgchart/OrgDiagram'
 import { buildPublicOrgTreeModel } from '../../components/orgchart/orgModel'
 import { sections } from '../orgChartData'
+import { track } from '../../utils/analytics'
 
 function buildPeopleFromSections() {
   return sections.flatMap((section) => {
@@ -176,6 +177,10 @@ export default function ShareOrgChart() {
       return { x: nextX, y: nextY, scale: nextScale }
     })
   }
+
+  useEffect(() => {
+    track('page_view', { page: 'ShareOrgChart', access: 'public' })
+  }, [])
 
   return (
     <div className="w-full min-h-screen">

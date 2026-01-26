@@ -9,6 +9,7 @@ import {
 } from '../lib/formatters'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
 import { withReportsVersion } from '../lib/fetchCache'
+import { track } from '../utils/analytics'
 
 const formatNumberFull = (value) => formatNumber(value)
 
@@ -126,6 +127,10 @@ export default function SummaryReport() {
 
     loadReports()
   }, [reportsVersion])
+
+  useEffect(() => {
+    track('page_view', { page: 'SummaryReport', access: 'console' })
+  }, [])
 
   const byAffiliate = useMemo(() => {
     const map = new Map()

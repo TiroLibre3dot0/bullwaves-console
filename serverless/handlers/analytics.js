@@ -103,49 +103,46 @@ async function handlePublicShareOpen(req, res) {
 
   const range = normalizeRange(req.query?.range)
 
-  const base = {
-    site_id: siteId,
-    date_range: range,
-    metrics: ['events'],
-    filters: [['is', 'event:goal', ['public_share_open']]],
-  }
+  // Try as goal first, fallback to direct event if not found
+  const goalFilter = [['is', 'event:goal', ['public_share_open']]]
+  const eventFilter = [['is', 'event:name', ['public_share_open']]]
 
-  try {
-    const total = await plausibleQuery(apiKey, base)
-
-    const byKind = await plausibleQuery(apiKey, {
-      ...base,
-      dimensions: ['event:props:kind'],
-      order_by: [['events', 'desc']],
-      pagination: { limit: 50, offset: 0 },
-    })
-
-    const byPage = await plausibleQuery(apiKey, {
-      ...base,
-      dimensions: ['event:page'],
-      order_by: [['events', 'desc']],
-      pagination: { limit: 50, offset: 0 },
-    })
-
-    const byDevice = await plausibleQuery(apiKey, {
-      ...base,
-      dimensions: ['visit:device'],
-      order_by: [['events', 'desc']],
-      pagination: { limit: 20, offset: 0 },
-    })
-
-    const byReferrer = await plausibleQuery(apiKey, {
-      ...base,
-      dimensions: ['visit:referrer'],
-      order_by: [['events', 'desc']],
-      pagination: { limit: 20, offset: 0 },
-    })
-
+  async function queryAll(filters) {
+    const base = {
+      site_id: siteId,
+      date_range: range,
+      metrics: ['events'],
+      filters,
+    }
+    const [total, byKind, byPage, byDevice, byReferrer] = await Promise.all([
+      plausibleQuery(apiKey, base),
+      plausibleQuery(apiKey, { ...base, dimensions: ['event:props:kind'], order_by: [['events', 'desc']], pagination: { limit: 50, offset: 0 } }),
+      plausibleQuery(apiKey, { ...base, dimensions: ['event:page'], order_by: [['events', 'desc']], pagination: { limit: 50, offset: 0 } }),
+      plausibleQuery(apiKey, { ...base, dimensions: ['visit:device'], order_by: [['events', 'desc']], pagination: { limit: 20, offset: 0 } }),
+      plausibleQuery(apiKey, { ...base, dimensions: ['visit:referrer'], order_by: [['events', 'desc']], pagination: { limit: 20, offset: 0 } }),
+    ])
     const totalEvents =
       Array.isArray(total?.results) && total.results[0]?.metrics
         ? Number(total.results[0].metrics[0] || 0) || 0
         : 0
+    return {
+      totalEvents,
+      byKind: mapRows(byKind, 'kind'),
+      byPage: mapRows(byPage, 'page'),
+      byDevice: mapRows(byDevice, 'device'),
+      byReferrer: mapRows(byReferrer, 'referrer'),
+    }
+  }
 
+  try {
+    // 1. Try as goal
+    let data = await queryAll(goalFilter)
+    // If no events, try as direct event
+    if (data.totalEvents === 0) {
+      const fallback = await queryAll(eventFilter)
+      // If fallback has data, use it
+      if (fallback.totalEvents > 0) data = fallback
+    }
     return json(
       res,
       200,
@@ -153,11 +150,7 @@ async function handlePublicShareOpen(req, res) {
         ok: true,
         range,
         siteId,
-        totalEvents,
-        byKind: mapRows(byKind, 'kind'),
-        byPage: mapRows(byPage, 'page'),
-        byDevice: mapRows(byDevice, 'device'),
-        byReferrer: mapRows(byReferrer, 'referrer'),
+        ...data,
       },
       { 'Cache-Control': 'no-store' }
     )

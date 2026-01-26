@@ -10,6 +10,7 @@ import AffiliatePayments2 from '../features/affiliate/components/AffiliatePaymen
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
 import FullPageLoader from '../components/FullPageLoader'
 import { useI18n } from '../i18n/I18nContext'
+import { track } from '../utils/analytics'
 
 const formatEuroShort = (value) => `${formatNumberShort(value)} €`
 const formatNumberFull = (value) => formatNumber(value)
@@ -111,6 +112,10 @@ export default function Report() {
     }
 
     loadReports()
+  }, [])
+
+  useEffect(() => {
+    track('page_view', { page: 'Report', access: 'console' })
   }, [])
 
   if (loading) {

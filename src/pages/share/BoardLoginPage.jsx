@@ -8,6 +8,7 @@ import {
   setBoardSessionToken,
   validateAffiliateReportsToken,
 } from '../../features/affiliate-analysis/utils/shareAuth'
+import { track } from '../../utils/analytics'
 
 function readQueryParam(name) {
   if (typeof window === 'undefined') return ''
@@ -262,6 +263,10 @@ export default function BoardLoginPage() {
     e.preventDefault()
     await attemptLogin(token)
   }
+
+  useEffect(() => {
+    track('page_view', { page: 'BoardLoginPage', access: 'public' })
+  }, [])
 
   return (
     <div

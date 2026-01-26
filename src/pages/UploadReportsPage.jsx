@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../i18n/I18nContext'
+import { track } from '../utils/analytics'
 
 export default function UploadReportsPage() {
   const { t } = useI18n()
@@ -63,6 +64,10 @@ export default function UploadReportsPage() {
       // ignore
     }
   }, [reportType, uploadProgress, serverProgress, status, resultText])
+
+  useEffect(() => {
+    track('page_view', { page: 'UploadReports', access: 'console' })
+  }, [])
 
   const sizeLabel = useMemo(() => {
     if (!file) return ''

@@ -29,24 +29,27 @@ Set these Vite env vars (e.g. in `.env.local`):
 - `VITE_PLAUSIBLE_DOMAIN=your-domain.com`
 - (optional) `VITE_PLAUSIBLE_SRC=https://plausible.io/js/script.js`
 
+
 ### Console: Custom Events page
 
-The internal console includes a **Custom Events** page (route: `/custom-events`) that shows aggregated visibility for the `public_share_open` event.
+La console interna include una pagina **Custom Events** (`/custom-events`) che mostra i conteggi aggregati per l’evento `public_share_open`.
 
-This page queries Plausible via a server-side endpoint so the API key is not exposed in the browser.
+La pagina interroga Plausible tramite un endpoint server-side, così la chiave API non è mai esposta al browser.
 
-Set these server env vars (Vercel / Node runtime env):
+**Robustezza:**
+- Se esiste un goal custom chiamato `public_share_open`, la console mostra i conteggi goal (conversions).
+- Se il goal non esiste, la console conta direttamente l’evento custom `public_share_open` (fallback automatico, nessuna configurazione manuale obbligatoria).
 
-- `PLAUSIBLE_STATS_API_KEY=...` (Plausible Stats API key)
-- `PLAUSIBLE_SITE_ID=your-domain.com` (the Plausible site id / domain)
+Impostare queste variabili d’ambiente server (Vercel/Node):
+- `PLAUSIBLE_STATS_API_KEY=...` (API key Plausible)
+- `PLAUSIBLE_SITE_ID=your-domain.com` (site id Plausible)
 
-Template file (safe to commit): [Bullwaves_new/.env.server.example](Bullwaves_new/.env.server.example)
+File template: [Bullwaves_new/.env.server.example](Bullwaves_new/.env.server.example)
 
-Healthcheck endpoint (should return `configured: true` when env vars are set):
-
+Endpoint healthcheck (deve restituire `configured: true` se le env sono ok):
 - `/api/analytics/health`
 
-Server endpoint: [api/analytics/public-share-open.js](api/analytics/public-share-open.js)
+Endpoint server: [serverless/handlers/analytics.js](serverless/handlers/analytics.js)
 
 ### Where the code lives
 

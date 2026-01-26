@@ -14,6 +14,7 @@ import {
   fetchFirstOkCsvRowsCached,
   withReportsVersion,
 } from '../lib/fetchCache'
+import { track } from '../utils/analytics'
 
 const formatter = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 0,
@@ -289,6 +290,10 @@ export default function ProfitAnalysisPage() {
     }
   }, [])
 
+  useEffect(() => {
+    track('page_view', { page: 'ProfitAnalysis', access: 'console' })
+  }, [])
+
   const yearOptions = useMemo(() => {
     const set = new Set(mediaRows.map((r) => r.year).filter((y) => y && y !== '—'))
     return ['all', ...Array.from(set).sort()]
@@ -514,7 +519,13 @@ export default function ProfitAnalysisPage() {
       </div>
 
       <div
-        style={{ display: 'flex', flexWrap: 'nowrap', gap: 8, overflowX: 'auto', paddingBottom: 2 }}
+        style={{
+          display: 'flex',
+          flexWrap: 'nowrap',
+          gap: 8,
+          overflowX: 'auto',
+          paddingBottom: 2,
+        }}
       >
         <KpiCard
           size="sm"

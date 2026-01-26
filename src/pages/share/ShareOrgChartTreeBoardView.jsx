@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useEffect } from 'react'
+import { track } from '../../utils/analytics'
 
 function initials(name) {
   const s = String(name || '').trim()
@@ -213,6 +214,10 @@ export default function ShareOrgChartTreeBoardView() {
       pillBorder: 'border-emerald-400/20',
     },
   }
+
+  useEffect(() => {
+    track('page_view', { page: 'ShareOrgChartTreeBoardView', access: 'public' })
+  }, [])
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">

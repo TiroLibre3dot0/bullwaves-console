@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 import { departmentColors, divisionColors, getFlagData, sections } from './orgChartData'
+import { track } from '../utils/analytics'
 
 function SectionCard({ title, roles = [], bullets = [], t }) {
   const hasGrid = roles && roles.length > 0
@@ -241,6 +242,10 @@ export default function OrgChart() {
       setPendingScrollId(null)
     }
   }, [pendingScrollId, selected])
+
+  useEffect(() => {
+    track('page_view', { page: 'OrgChart', access: 'console' })
+  }, [])
 
   return (
     <div className="w-full px-6 2xl:px-10">
