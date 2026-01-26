@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import LanguageSwitcher from '../../../components/LanguageSwitcher'
 import { DataStatusProvider } from '../../../context/DataStatusContext'
 import { useAuth } from '../../../context/AuthContext'
 import FullPageLoader from '../../../components/FullPageLoader'
@@ -137,7 +138,8 @@ export default function SupportUserCheckSharePage({ token = '' }) {
             </div>
           </div>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 18 }}>
+            <LanguageSwitcher />
             {user?.email && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 {/* Avatar con iniziali */}
