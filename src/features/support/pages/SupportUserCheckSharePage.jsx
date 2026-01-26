@@ -228,9 +228,9 @@ export default function SupportUserCheckSharePage({ token = '' }) {
                 cursor: 'pointer',
                 transition: 'background 0.2s',
               }}
-              title={t('auth.logout')}
+              title="Logout"
             >
-              <span style={{ fontSize: 18, marginRight: 2 }}>⎋</span> {t('auth.logout')}
+              <span style={{ fontSize: 18, marginRight: 2 }}>⎋</span> Logout
             </button>
           </div>
         </header>
