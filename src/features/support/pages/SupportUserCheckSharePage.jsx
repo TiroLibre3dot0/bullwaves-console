@@ -137,24 +137,75 @@ export default function SupportUserCheckSharePage({ token = '' }) {
             </div>
           </div>
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 14 }}>
             {user?.email && (
-              <div
-                style={{
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.75)',
-                  padding: '6px 10px',
-                  borderRadius: 999,
-                  border: '1px solid rgba(255,255,255,0.10)',
-                  background: 'rgba(255,255,255,0.02)',
-                  maxWidth: '52vw',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-                title={user.email}
-              >
-                {user.email}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {/* Avatar con iniziali */}
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg,#6366f1 60%,#0ea5e9 100%)',
+                    color: '#fff',
+                    fontWeight: 800,
+                    fontSize: 16,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 1px 4px 0 rgba(0,0,0,0.10)',
+                    letterSpacing: 0.5,
+                    textTransform: 'uppercase',
+                  }}
+                  title={user.name || user.email}
+                >
+                  {user.name
+                    ? user.name
+                        .split(' ')
+                        .map((w) => w[0])
+                        .join('')
+                        .slice(0, 2)
+                    : user.email.split('@')[0].slice(0, 2)}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'flex-end',
+                    minWidth: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: 14,
+                      color: '#fff',
+                      maxWidth: 160,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    title={user.name || user.email}
+                  >
+                    {user.name || user.email}
+                  </div>
+                  {user.title || user.department ? (
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: '#a5b4fc',
+                        fontWeight: 600,
+                        maxWidth: 160,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                      title={user.title || user.department}
+                    >
+                      {user.title || user.department}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             )}
             <button
@@ -162,13 +213,24 @@ export default function SupportUserCheckSharePage({ token = '' }) {
               className="btn secondary"
               onClick={logout}
               style={{
-                padding: '8px 12px',
+                padding: '8px 14px',
                 borderRadius: 10,
-                fontSize: 13,
+                fontSize: 14,
                 lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                background: 'rgba(99,102,241,0.10)',
+                color: '#6366f1',
+                border: '1px solid #6366f1',
+                fontWeight: 700,
+                boxShadow: '0 1px 4px 0 rgba(99,102,241,0.08)',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
               }}
+              title={t('auth.logout')}
             >
-              {t('auth.logout')}
+              <span style={{ fontSize: 18, marginRight: 2 }}>⎋</span> {t('auth.logout')}
             </button>
           </div>
         </header>

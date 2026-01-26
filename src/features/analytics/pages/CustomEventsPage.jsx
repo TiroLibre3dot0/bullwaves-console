@@ -1,3 +1,183 @@
+// Badge color per tipo evento
+const EVENT_COLORS = {
+  public_share_open: '#6366f1',
+  page_view: '#10b981',
+  support_botlist: '#f59e42',
+  default: '#64748b',
+}
+
+// Icona per tipo evento
+const EVENT_ICONS = {
+  public_share_open: '🔗',
+  page_view: '👁️',
+  support_botlist: '🤖',
+  default: '📊',
+}
+
+function describeEvent(eventName, props) {
+  if (eventName === 'public_share_open') {
+    let kind = props?.kind || ''
+    let share = ''
+    if (kind === 'org_chart') share = 'Organigramma'
+    else if (kind === 'project_board') share = 'Project Board'
+    else if (kind === 'affiliate_reports') share = 'Report Affiliato'
+    else if (kind) share = kind.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+    else share = 'Link pubblico'
+
+    let details = []
+    if (props?.variant)
+      details.push(
+        <span
+          style={{
+            background: '#e0e7ff',
+            color: '#3730a3',
+            borderRadius: 6,
+            padding: '2px 7px',
+            marginRight: 4,
+            fontWeight: 600,
+          }}
+        >
+          Vista: {props.variant}
+        </span>
+      )
+    if (props?.mode)
+      details.push(
+        <span
+          style={{
+            background: '#fef9c3',
+            color: '#92400e',
+            borderRadius: 6,
+            padding: '2px 7px',
+            marginRight: 4,
+            fontWeight: 600,
+          }}
+        >
+          Modalità: {props.mode}
+        </span>
+      )
+    if (props?.period)
+      details.push(
+        <span
+          style={{
+            background: '#bbf7d0',
+            color: '#166534',
+            borderRadius: 6,
+            padding: '2px 7px',
+            marginRight: 4,
+            fontWeight: 600,
+          }}
+        >
+          Periodo: {props.period}
+        </span>
+      )
+    if (props?.generated_at)
+      details.push(
+        <span
+          style={{
+            background: '#f1f5f9',
+            color: '#334155',
+            borderRadius: 6,
+            padding: '2px 7px',
+            marginRight: 4,
+          }}
+        >
+          Creato il: {formatDateTime(props.generated_at)}
+        </span>
+      )
+    if (props?.share_id)
+      details.push(
+        <span
+          style={{
+            background: '#f3e8ff',
+            color: '#7c3aed',
+            borderRadius: 6,
+            padding: '2px 7px',
+            marginRight: 4,
+          }}
+        >
+          ID: {props.share_id}
+        </span>
+      )
+    return (
+      <span>
+        <b>{share}</b> {details}
+      </span>
+    )
+  }
+  if (eventName === 'page_view') {
+    return (
+      <span>
+        <b>Page View</b>{' '}
+        {props?.page && (
+          <span
+            style={{
+              background: '#d1fae5',
+              color: '#065f46',
+              borderRadius: 6,
+              padding: '2px 7px',
+              marginRight: 4,
+            }}
+          >
+            page: {props.page}
+          </span>
+        )}{' '}
+        {props?.access && (
+          <span
+            style={{
+              background: '#fef3c7',
+              color: '#92400e',
+              borderRadius: 6,
+              padding: '2px 7px',
+              marginRight: 4,
+            }}
+          >
+            access: {props.access}
+          </span>
+        )}
+      </span>
+    )
+  }
+  if (eventName === 'support_botlist') {
+    return (
+      <span>
+        <b>Support Botlist</b>{' '}
+        {props?.share_id && (
+          <span
+            style={{
+              background: '#f3e8ff',
+              color: '#7c3aed',
+              borderRadius: 6,
+              padding: '2px 7px',
+              marginRight: 4,
+            }}
+          >
+            ID: {props.share_id}
+          </span>
+        )}{' '}
+        {props?.kind && (
+          <span
+            style={{
+              background: '#fee2e2',
+              color: '#991b1b',
+              borderRadius: 6,
+              padding: '2px 7px',
+              marginRight: 4,
+            }}
+          >
+            kind: {props.kind}
+          </span>
+        )}
+      </span>
+    )
+  }
+  // fallback generico
+  return (
+    <span>
+      <b>{eventName.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())}</b>
+    </span>
+  )
+}
+
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { clearLocalEvents, getRecentLocalEvents } from '../../../utils/analytics'
 
@@ -194,18 +374,33 @@ export default function CustomEventsPage() {
       {error && (
         <div
           style={{
-            marginTop: 14,
-            padding: '10px 12px',
-            borderRadius: 12,
-            border: '1px solid rgba(239,68,68,0.35)',
-            background: 'rgba(239,68,68,0.10)',
+            marginTop: 18,
+            padding: '18px 18px',
+            borderRadius: 16,
+            border: '1px solid #f87171',
+            background: 'linear-gradient(90deg, #f87171 0%, #fbbf24 100%)',
+            color: '#fff',
+            fontWeight: 700,
+            fontSize: 17,
+            boxShadow: '0 2px 12px 0 rgba(239,68,68,0.10)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
           }}
         >
-          <div style={{ fontWeight: 600 }}>Analytics unavailable</div>
-          <div style={{ opacity: 0.85, marginTop: 4 }}>{error}</div>
-          <div style={{ opacity: 0.75, marginTop: 8 }}>
-            Configure server env vars: PLAUSIBLE_STATS_API_KEY and PLAUSIBLE_SITE_ID.
-          </div>
+          <span style={{ fontSize: 28, marginRight: 8 }}>⚠️</span>
+          <span>
+            Analytics non disponibili
+            <br />
+            <span style={{ fontWeight: 400, opacity: 0.95 }}>{error}</span>
+            <br />
+            <span style={{ fontWeight: 400, opacity: 0.85 }}>
+              Verifica le variabili d'ambiente <b>PLAUSIBLE_STATS_API_KEY</b> e{' '}
+              <b>PLAUSIBLE_SITE_ID</b> sul server.
+              <br />
+              La preview locale funziona comunque.
+            </span>
+          </span>
         </div>
       )}
 
@@ -329,34 +524,64 @@ export default function CustomEventsPage() {
             <thead>
               <tr style={{ textAlign: 'left', opacity: 0.85 }}>
                 <th style={{ padding: '10px 14px', fontWeight: 600 }}>time</th>
-                <th style={{ padding: '10px 14px', fontWeight: 600 }}>event</th>
-                <th style={{ padding: '10px 14px', fontWeight: 600 }}>props</th>
+                <th style={{ padding: '10px 14px', fontWeight: 600 }}>evento</th>
+                <th style={{ padding: '10px 14px', fontWeight: 600 }}>dettagli</th>
               </tr>
             </thead>
             <tbody>
-              {localEvents.map((e, idx) => (
-                <tr
-                  key={`${e.ts}-${idx}`}
-                  style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
-                    {new Date(e.ts).toLocaleString()}
-                  </td>
-                  <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{e.eventName}</td>
-                  <td
-                    style={{
-                      padding: '10px 14px',
-                      maxWidth: 720,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={JSON.stringify(e.props || {})}
+              {localEvents.map((e, idx) => {
+                const color = EVENT_COLORS[e.eventName] || EVENT_COLORS.default
+                const icon = EVENT_ICONS[e.eventName] || EVENT_ICONS.default
+                return (
+                  <tr
+                    key={`${e.ts}-${idx}`}
+                    style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
                   >
-                    {JSON.stringify(e.props || {})}
-                  </td>
-                </tr>
-              ))}
+                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
+                      {formatDateTime(e.ts)}
+                    </td>
+                    <td style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontWeight: 700 }}>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 6,
+                          background: color,
+                          color: '#fff',
+                          borderRadius: 8,
+                          padding: '2px 10px',
+                          marginRight: 8,
+                          fontSize: 15,
+                          fontWeight: 800,
+                          boxShadow: '0 1px 4px 0 rgba(0,0,0,0.08)',
+                        }}
+                      >
+                        {icon}
+                      </span>{' '}
+                      {describeEvent(e.eventName, e.props)}
+                    </td>
+                    <td
+                      style={{
+                        padding: '10px 14px',
+                        maxWidth: 720,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        opacity: 0.85,
+                      }}
+                      title={JSON.stringify(e.props || {})}
+                    >
+                      {Object.keys(e.props || {}).length
+                        ? Object.entries(e.props)
+                            .map(([k, v]) => `${k}: ${v}`)
+                            .join(' | ')
+                        : '—'}
+                    </td>
+                  </tr>
+                )
+              })}
               {!localEvents.length && (
                 <tr>
                   <td style={{ padding: '12px 14px', opacity: 0.7 }} colSpan={3}>
