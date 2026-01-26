@@ -366,7 +366,7 @@ export const sections = [
         division: 'Technology',
         department: 'Support Team',
         region: 'Serbia',
-        email: '—',
+        email: 'nevena.planic@bullwaves.com',
         focus: 'Hybrid ops/support (systems)',
         duties: 'User provisioning, system operations, internal tooling support.',
       },
