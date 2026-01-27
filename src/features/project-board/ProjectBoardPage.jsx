@@ -1,14 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import { encodeSharePayload } from '../../utils/shareCodec'
+import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
+import TaskSidebar from '../../components/sidebars/TaskSidebar'
 
-const STATUSES = ['Backlog', 'In Progress', 'Blocked', 'Done']
+const STATUSES = ['Backlog', 'Planned', 'Executing', 'Review & QA', 'Blocked', 'Done']
+
+const STRATEGIC_CATEGORIES = {
+  'Growth & Acquisition': { color: '#10b981', label: 'Growth' }, // emerald
+  'Retention & Monetization': { color: '#f59e0b', label: 'Retention' }, // amber
+  'Platform & Infrastructure': { color: '#8b5cf6', label: 'Platform' }, // violet
+  'Partnerships & Affiliates': { color: '#06b6d4', label: 'Partners' }, // cyan
+  'Operations & Compliance': { color: '#ef4444', label: 'Ops' }, // red
+}
+
+const IMPACT_LEVELS = {
+  High: { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.3)' },
+  Medium: { color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.3)' },
+  Low: { color: '#10b981', bg: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)' },
+}
 
 const DEPARTMENT_ACCENTS = {
-  // Colors aligned with Org Chart accents (marketing=fuchsia, ops/cyan, finance=emerald)
-  Marketing: { rgb: [232, 121, 249] },
-  Sales: { rgb: [34, 211, 238] },
-  'CRM & Automation': { rgb: [232, 121, 249] },
-  'Payments & Compliance': { rgb: [52, 211, 153] },
+  // Updated to use strategic categories with colors
+  'Growth & Acquisition': { rgb: [16, 185, 129] }, // emerald
+  'Retention & Monetization': { rgb: [245, 158, 11] }, // amber
+  'Platform & Infrastructure': { rgb: [139, 92, 246] }, // violet
+  'Partnerships & Affiliates': { rgb: [6, 182, 212] }, // cyan
+  'Operations & Compliance': { rgb: [239, 68, 68] }, // red
 }
 
 function rgba(rgb, a) {
@@ -480,750 +497,302 @@ function generatePrioritizedSubtasks(story) {
 const seedTasks = () => [
   {
     id: makeId(),
-    title: 'Acquisition & Traffic Structure',
+    title: 'Optimize Acquisition Channels for Scalable Growth',
+    strategicCategory: 'Growth & Acquisition',
+    impactLevel: 'High',
     owner: 'Marketing',
     status: 'Backlog',
+    strategicObjective:
+      'Build a scalable acquisition engine that delivers high-quality leads at optimal cost',
+    problemSolved:
+      'Current acquisition is fragmented and lacks systematic testing/scaling framework',
+    expectedBusinessImpact:
+      '30% increase in qualified leads, 25% reduction in CAC, foundation for 2x revenue growth',
+    kpiOrMetric: 'Qualified leads per month, CAC, conversion rate from lead to client',
+    taskBreakdown: [
+      'Audit all current acquisition channels and performance metrics',
+      'Implement structured test → kill → scale framework for new channels',
+      'Set up advanced tracking and attribution for all touchpoints',
+      'Optimize internal traffic flows for maximum conversion efficiency',
+      'Establish partnerships with high-quality media sources',
+    ],
     description:
       'Traffic is easy to unlock — media agencies are constantly looking to monetize. The key is structuring acquisition channels properly, not chasing random volume.\n\nFocus on:\n\nDirect sources (e.g. investing.com): understand delivery model, lead quality and scalability.\n\nIndirect sources: media buying & affiliates, with fast test → kill → scale logic and strict tracking.\n\nIn parallel, structure internal traffic flows to maximize conversion efficiency and LTV.',
     summary: 'Direct + indirect traffic sources, fast testing, strict tracking.',
     icon: 'megaphone',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Acquisition & Traffic Structure',
-      description:
-        'Traffic is easy to unlock — media agencies are constantly looking to monetize. The key is structuring acquisition channels properly, not chasing random volume.\n\nFocus on:\n\nDirect sources (e.g. investing.com): understand delivery model, lead quality and scalability.\n\nIndirect sources: media buying & affiliates, with fast test → kill → scale logic and strict tracking.\n\nIn parallel, structure internal traffic flows to maximize conversion efficiency and LTV.',
-    }),
   },
   {
     id: makeId(),
-    title: 'Sales Leverage: Prop Clients → Forex & Account Management',
+    title: 'Systematize Client Upsell Flows to Forex & Account Management',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
     owner: 'Sales',
     status: 'Backlog',
+    strategicObjective:
+      'Convert existing prop clients into higher-value forex traders and account management clients',
+    problemSolved:
+      'Warm traffic from prop clients is not being systematically monetized through upsells',
+    expectedBusinessImpact:
+      '40% increase in average client LTV, 25% improvement in monetization efficiency',
+    kpiOrMetric:
+      'Upsell conversion rate, average LTV per client segment, monthly recurring revenue from upsells',
+    taskBreakdown: [
+      'Map current client journey from prop trading to potential upsells',
+      'Design automated upsell triggers based on trading behavior and performance',
+      'Create compelling value propositions for forex trading and account management',
+      'Implement A/B testing for upsell messaging and timing',
+      'Set up tracking and analytics for upsell funnel performance',
+    ],
     description:
       'Prop clients are already warm traffic. We should build a structured upsell flow to convert them into:\n\nForex traders\n\nAccount management clients\n\nGoal:\n\nIncrease LTV\n\nImprove monetization efficiency\n\nLeverage existing traffic at near-zero acquisition cost',
     summary: 'Systematize upsell of warm internal traffic.',
     icon: 'briefcase',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Sales Leverage: Prop Clients → Forex & Account Management',
-      description:
-        'Prop clients are already warm traffic. We should build a structured upsell flow to convert them into:\n\nForex traders\n\nAccount management clients\n\nGoal:\n\nIncrease LTV\n\nImprove monetization efficiency\n\nLeverage existing traffic at near-zero acquisition cost',
-    }),
   },
   {
     id: makeId(),
-    title: 'Client Communication Channels (Premium Support & Booking)',
+    title: 'Centralize Premium Client Communication Channels',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
     owner: 'CRM & Automation',
     status: 'Backlog',
+    strategicObjective: 'Create unified premium support and booking experience across all channels',
+    problemSolved:
+      'Client communication is fragmented across multiple platforms with inconsistent experience',
+    expectedBusinessImpact:
+      '50% reduction in support response time, 30% increase in client satisfaction scores',
+    kpiOrMetric: 'Average response time, client satisfaction NPS, booking conversion rate',
+    taskBreakdown: [
+      'Evaluate and select unified communication platform (convrs.io)',
+      'Integrate WhatsApp, Telegram, and Discord channels',
+      'Design structured flows for support tickets and call booking',
+      'Implement automated routing based on client tier and issue type',
+      'Create standardized response templates and escalation procedures',
+    ],
     description:
       'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
     summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
     icon: 'messages',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Client Communication Channels (Premium Support & Booking)',
-      description:
-        'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
-    }),
   },
   {
     id: makeId(),
-    title: 'Automation: Market Analysis & News Distribution',
+    title: 'Automate Market Intelligence Distribution',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'Medium',
     owner: 'CRM & Automation',
     status: 'Backlog',
+    strategicObjective:
+      'Deliver personalized market insights to increase client engagement and retention',
+    problemSolved:
+      'Market analysis and news are distributed manually with inconsistent reach and timing',
+    expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
+    kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
+    taskBreakdown: [
+      'Design content calendar for market analysis and news distribution',
+      'Set up automated segmentation for personalized content delivery',
+      'Integrate market data feeds for real-time insights',
+      'Create A/B testing framework for content and messaging',
+      'Implement engagement tracking and optimization loops',
+    ],
     description:
       'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
     summary: 'Automated market insights and news via messaging channels.',
     icon: 'broadcast',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Automation: Market Analysis & News Distribution',
-      description:
-        'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
-    }),
   },
   {
     id: makeId(),
-    title: 'Outreach Review: Kommo Performance & Feedback',
+    title: 'Optimize Outreach Performance and Conversion',
+    strategicCategory: 'Growth & Acquisition',
+    impactLevel: 'Medium',
     owner: 'Sales',
     status: 'Backlog',
+    strategicObjective: 'Improve outreach effectiveness through data-driven optimization',
+    problemSolved: 'Outreach efforts lack systematic measurement and optimization framework',
+    expectedBusinessImpact:
+      '40% increase in outreach conversion rate, 25% improvement in lead quality',
+    kpiOrMetric: 'Response rate, conversion rate, cost per qualified lead',
+    taskBreakdown: [
+      'Implement comprehensive tracking for all outreach activities',
+      'Analyze current performance across all channels and scripts',
+      'A/B test messaging, timing, and targeting strategies',
+      'Develop predictive models for lead scoring and prioritization',
+      'Create automated optimization loops for ongoing improvement',
+    ],
     description:
       'Review Kommo activity:\n\nMessage volume\n\nResponse rate\n\nFeedback quality\n\nConversion impact\n\nGoal:\n\nUnderstand real performance\n\nOptimize scripts\n\nImprove targeting\n\nIncrease conversion efficiency',
     summary: 'Measure effectiveness of current outreach.',
     icon: 'search',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Outreach Review: Kommo Performance & Feedback',
-      description:
-        'Review Kommo activity:\n\nMessage volume\n\nResponse rate\n\nFeedback quality\n\nConversion impact\n\nGoal:\n\nUnderstand real performance\n\nOptimize scripts\n\nImprove targeting\n\nIncrease conversion efficiency',
-    }),
   },
   {
     id: makeId(),
-    title: 'Withdrawals Automation (Critical)',
+    title: 'Implement Automated Withdrawal Systems',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
     owner: 'Payments & Compliance',
     status: 'Backlog',
+    strategicObjective:
+      'Eliminate manual withdrawal processing to improve client experience and operational efficiency',
+    problemSolved:
+      'Manual withdrawal processing creates delays, errors, and high operational costs',
+    expectedBusinessImpact:
+      '90% reduction in withdrawal processing time, 60% decrease in support tickets, major UX improvement',
+    kpiOrMetric: 'Average withdrawal processing time, support ticket volume, client satisfaction',
+    taskBreakdown: [
+      'Select and integrate card withdrawal providers (BridgerPay + SolidPayments)',
+      'Implement instant card withdrawal functionality',
+      'Set up crypto withdrawal automation (Skale + Uniwire)',
+      'Create comprehensive testing and failover procedures',
+      'Develop client communication and support processes for automated withdrawals',
+    ],
     description:
       'Implement automated withdrawals:\n\nCard withdrawals — BridgerPay + SolidPayments\n\nInstant credit to clients\n\nNo banking fees\n\nStrong UX improvement\n\nSignificant support workload reduction\n\nCrypto withdrawals — Skale + Uniwire\n\nInstant payouts\n\nMassive operational efficiency\n\nMajor time saving for support and finance teams\n\nThis is a must-have and deal-breaker priority.',
     summary: 'Full automation of card and crypto withdrawals.',
     icon: 'payments',
     notes: '',
-    subtasks: generatePrioritizedSubtasks({
-      title: 'Withdrawals Automation (Critical)',
-      description:
-        'Implement automated withdrawals:\n\nCard withdrawals — BridgerPay + SolidPayments\n\nInstant credit to clients\n\nNo banking fees\n\nStrong UX improvement\n\nSignificant support workload reduction\n\nCrypto withdrawals — Skale + Uniwire\n\nInstant payouts\n\nMassive operational efficiency\n\nMajor time saving for support and finance teams\n\nThis is a must-have and deal-breaker priority.',
-    }),
   },
 ]
 
 function Card({ task, onOpen, draggable, onDragStart }) {
   const iconName = resolveStoryIcon(task)
+  const category = STRATEGIC_CATEGORIES[task.strategicCategory] || { color: '#64748b', label: '—' }
+  const impact = IMPACT_LEVELS[task.impactLevel] || IMPACT_LEVELS.Medium
+
   return (
     <button
       type="button"
       className="card"
       style={{
-        padding: 12,
+        padding: 16,
         textAlign: 'left',
-        borderRadius: 12,
+        borderRadius: 16,
         border: '1px solid rgba(255,255,255,0.08)',
-        background: 'rgba(255,255,255,0.02)',
+        background:
+          'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
         cursor: 'pointer',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+        transition: 'all 0.2s ease',
+        position: 'relative',
+        overflow: 'hidden',
       }}
       onClick={() => onOpen(task.id)}
       draggable={draggable}
       onDragStart={onDragStart}
       title={task.title}
     >
+      {/* Strategic Category Tag */}
       <div
         style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 10,
-          flexWrap: 'wrap',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 4,
+          background: `linear-gradient(90deg, ${category.color} 0%, ${category.color}dd 100%)`,
         }}
-      >
+      />
+
+      <div style={{ marginTop: 8 }}>
+        {/* Title */}
+        <div
+          style={{
+            fontWeight: 900,
+            fontSize: 15,
+            letterSpacing: 0.1,
+            color: 'rgba(241,245,249,0.96)',
+            lineHeight: 1.3,
+            marginBottom: 12,
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {task.title}
+        </div>
+
+        {/* Strategic Category and Impact Level */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'flex-start',
-            gap: 10,
-            minWidth: 0,
-            flex: '1 1 220px',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            marginBottom: 12,
           }}
         >
-          <div style={{ color: 'rgba(226,232,240,0.70)', marginTop: 2, flex: '0 0 auto' }}>
-            <StoryIcon name={iconName} />
-          </div>
           <div
             style={{
-              fontWeight: 850,
-              fontSize: 13,
-              letterSpacing: 0.1,
-              color: 'rgba(241,245,249,0.96)',
-              lineHeight: 1.22,
-              textRendering: 'geometricPrecision',
-              minWidth: 0,
-              overflowWrap: 'anywhere',
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 20,
+              background: `rgba(${category.color
+                .replace('#', '')
+                .match(/.{2}/g)
+                .map((x) => parseInt(x, 16))
+                .join(',')}, 0.15)`,
+              border: `1px solid rgba(${category.color
+                .replace('#', '')
+                .match(/.{2}/g)
+                .map((x) => parseInt(x, 16))
+                .join(',')}, 0.3)`,
+              padding: '4px 12px',
+              fontSize: 11,
+              fontWeight: 800,
+              color: category.color,
+              letterSpacing: 0.5,
             }}
           >
-            {task.title}
+            {category.label}
+          </div>
+
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 12,
+              background: impact.bg,
+              border: `1px solid ${impact.border}`,
+              padding: '3px 8px',
+              fontSize: 10,
+              fontWeight: 900,
+              color: impact.color,
+              letterSpacing: 0.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            {task.impactLevel}
           </div>
         </div>
-        <div style={{ flex: '0 0 auto' }}>
-          <DepartmentPill department={task.owner} />
+
+        {/* Owner/Department */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}
+        >
+          <div style={{ color: 'rgba(148,163,184,0.8)', fontSize: 12, fontWeight: 700 }}>
+            {task.owner || '—'}
+          </div>
+
+          <div style={{ color: 'rgba(226,232,240,0.6)', marginTop: 1 }}>
+            <StoryIcon name={iconName} size={16} />
+          </div>
         </div>
       </div>
     </button>
   )
 }
 
-function Modal({ task, onClose, onUpdate, readOnly = false }) {
-  if (!task) return null
-
-  const canEdit = !readOnly
-  const subtasks = Array.isArray(task?.subtasks) ? task.subtasks : []
-  const complex = isComplexStory(task)
-  const hasSubtasks = subtasks.length > 0
-  const [activeSubtaskId, setActiveSubtaskId] = useState(null)
-  const [subtaskDensity, setSubtaskDensity] = useState('compact')
-
-  const requestClose = (e) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    onClose()
-  }
-
-  const requestCloseSubtask = (e) => {
-    if (e) {
-      e.preventDefault()
-      e.stopPropagation()
-    }
-    setActiveSubtaskId(null)
-  }
-
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key !== 'Escape') return
-      // If subtask is open, close it first.
-      if (activeSubtaskId) {
-        setActiveSubtaskId(null)
-        return
-      }
-      onClose()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeSubtaskId, onClose])
-
-  const activeSubtask = subtasks.find((st) => st.id === activeSubtaskId) || null
-  const descriptionBlocks = useMemo(
-    () => parseDescriptionBlocks(task?.description),
-    [task?.description]
-  )
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) requestClose(e)
-      }}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.55)',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'center',
-        padding: 'clamp(10px, 3vw, 16px)',
-        overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        zIndex: 60,
-      }}
-    >
-      <div
-        className={`card pb-story-modal ${subtaskDensity === 'compact' ? 'pb-density-compact' : 'pb-density-comfort'}`}
-        style={{
-          width: 'min(920px, 100%)',
-          maxHeight: 'calc(100dvh - 32px)',
-          overflow: 'auto',
-          overscrollBehavior: 'contain',
-          borderRadius: 14,
-          border: '1px solid rgba(255,255,255,0.10)',
-          background: '#0b1020',
-          padding: 'clamp(10px, 2vw, 14px)',
-          boxShadow: '0 30px 80px rgba(0,0,0,0.45)',
-        }}
-      >
-        <div
-          className="pb-story-modal__header"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 12,
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
-          }}
-        >
-          <div style={{ minWidth: 0 }}>
-            <div style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>Project</div>
-            <div
-              style={{
-                color: 'var(--text)',
-                fontSize: 'clamp(16px, 2.2vw, 20px)',
-                fontWeight: 950,
-                marginTop: 4,
-                lineHeight: 1.15,
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {task.title}
-            </div>
-            <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, marginTop: 6 }}>
-              Department: {task.owner || '—'}
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-            <button
-              type="button"
-              onPointerDown={requestClose}
-              onClick={requestClose}
-              style={{
-                padding: '8px 10px',
-                borderRadius: 10,
-                fontWeight: 900,
-                fontSize: 12,
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.10)',
-                color: '#e2e8f0',
-                cursor: 'pointer',
-              }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-
-        <div
-          className="pb-story-modal__body"
-          style={{
-            marginTop: 12,
-          }}
-        >
-          <div
-            className="pb-story-modal__main"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-              minWidth: 0,
-            }}
-          >
-            <div className="card" style={{ padding: 12, borderRadius: 12 }}>
-              <div style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>
-                Description
-              </div>
-              {String(task.summary || '').trim() && (
-                <div
-                  style={{
-                    color: 'rgba(226,232,240,0.84)',
-                    fontSize: 12,
-                    marginTop: 8,
-                    fontWeight: 700,
-                    overflowWrap: 'anywhere',
-                  }}
-                >
-                  {task.summary}
-                </div>
-              )}
-              <div className="pb-desc" style={{ marginTop: 10 }}>
-                {descriptionBlocks.length ? (
-                  descriptionBlocks.map((block, idx) => {
-                    if (block.type === 'h') {
-                      return (
-                        <div key={`${block.type}-${idx}`} className="pb-desc__heading">
-                          {block.text}
-                        </div>
-                      )
-                    }
-                    if (block.type === 'ul') {
-                      return (
-                        <ul key={`${block.type}-${idx}`} className="pb-desc__list">
-                          {block.items.map((item) => (
-                            <li key={item} className="pb-desc__li">
-                              {item}
-                            </li>
-                          ))}
-                        </ul>
-                      )
-                    }
-                    return (
-                      <div
-                        key={`${block.type}-${idx}`}
-                        className={idx === 0 ? 'pb-desc__lead' : 'pb-desc__p'}
-                      >
-                        {block.text}
-                      </div>
-                    )
-                  })
-                ) : (
-                  <div className="pb-desc__p">—</div>
-                )}
-              </div>
-            </div>
-
-            <div className="card" style={{ padding: 12, borderRadius: 12 }}>
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                }}
-              >
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>Tasks</div>
-                  {hasSubtasks && (
-                    <div style={{ marginTop: 4, color: 'rgba(148,163,184,0.92)', fontSize: 12 }}>
-                      Click a task to read/edit its text.
-                    </div>
-                  )}
-                </div>
-
-                {hasSubtasks && (
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      justifyContent: 'flex-end',
-                    }}
-                  >
-                    <div style={{ color: 'rgba(148,163,184,0.92)', fontSize: 12, fontWeight: 800 }}>
-                      View
-                    </div>
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        borderRadius: 10,
-                        border: '1px solid rgba(255,255,255,0.10)',
-                        background: 'rgba(255,255,255,0.03)',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setSubtaskDensity('compact')}
-                        style={{
-                          padding: '8px 10px',
-                          border: 0,
-                          background:
-                            subtaskDensity === 'compact' ? 'rgba(34,211,238,0.12)' : 'transparent',
-                          color: 'rgba(226,232,240,0.95)',
-                          fontWeight: 900,
-                          fontSize: 12,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Compact
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSubtaskDensity('comfort')}
-                        style={{
-                          padding: '8px 10px',
-                          border: 0,
-                          background:
-                            subtaskDensity === 'comfort' ? 'rgba(34,211,238,0.12)' : 'transparent',
-                          color: 'rgba(226,232,240,0.95)',
-                          fontWeight: 900,
-                          fontSize: 12,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Comfort
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {canEdit && complex && !hasSubtasks && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onUpdate(task.id, { subtasks: generatePrioritizedSubtasks(task) })
-                    }
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: 10,
-                      fontWeight: 900,
-                      fontSize: 12,
-                      background: 'rgba(34,211,238,0.10)',
-                      border: '1px solid rgba(34,211,238,0.25)',
-                      color: 'rgba(226,232,240,0.95)',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Generate
-                  </button>
-                )}
-              </div>
-
-              {!hasSubtasks ? (
-                <div style={{ marginTop: 10, color: 'rgba(148,163,184,0.95)', fontSize: 13 }}>
-                  {complex
-                    ? 'No tasks yet. Use Generate to break this story down.'
-                    : 'Story looks simple — no task breakdown needed.'}
-                </div>
-              ) : (
-                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {subtasks.map((st) => (
-                    <div
-                      key={st.id}
-                      className="pb-subtask-row"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setActiveSubtaskId(st.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
-                          setActiveSubtaskId(st.id)
-                        }
-                      }}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '18px minmax(0, 1fr) auto',
-                        gap: subtaskDensity === 'compact' ? 8 : 10,
-                        alignItems: 'center',
-                        padding: subtaskDensity === 'compact' ? '6px 8px' : '8px 10px',
-                        borderRadius: 10,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        background: 'rgba(255,255,255,0.02)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <input
-                        className="pb-subtask-checkbox"
-                        type="checkbox"
-                        checked={Boolean(st.done)}
-                        disabled={!canEdit}
-                        onClick={(e) => e.stopPropagation()}
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onChange={(e) => {
-                          const next = subtasks.map((x) =>
-                            x.id === st.id ? { ...x, done: e.target.checked } : x
-                          )
-                          onUpdate(task.id, { subtasks: next })
-                        }}
-                        style={{ marginTop: 2 }}
-                      />
-
-                      <div
-                        style={{
-                          minWidth: 0,
-                          color: 'rgba(226,232,240,0.92)',
-                          fontSize: subtaskDensity === 'compact' ? 12 : 13,
-                          fontWeight: 850,
-                          textAlign: 'left',
-                          textDecoration: st.done ? 'line-through' : 'none',
-                          opacity: st.done ? 0.65 : 1,
-                          overflowWrap: 'anywhere',
-                        }}
-                        title="Open task text"
-                      >
-                        {st.title}
-                      </div>
-
-                      <div
-                        className="pb-subtask-meta"
-                        style={{
-                          display: 'inline-flex',
-                          gap: 6,
-                          alignItems: 'center',
-                          justifyContent: 'flex-end',
-                          flex: '0 0 auto',
-                        }}
-                      >
-                        <span
-                          className={`pb-priority-pill pb-priority-${priorityNumber(st.priority || 'P1')}`}
-                        >
-                          Priority {priorityNumber(st.priority || 'P1')}
-                        </span>
-                        {st.done ? <span className="pb-done-pill">Done</span> : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div
-            className="card pb-story-modal__aside"
-            style={{ padding: 12, borderRadius: 12, minWidth: 0 }}
-          >
-            <div style={{ color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>Status</div>
-            {canEdit ? (
-              <select
-                value={task.status}
-                onChange={(e) => onUpdate(task.id, { status: e.target.value })}
-                style={{
-                  marginTop: 8,
-                  width: '100%',
-                  padding: '10px 10px',
-                  borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  background: 'rgba(255,255,255,0.04)',
-                  color: 'var(--text)',
-                  fontWeight: 800,
-                }}
-              >
-                {STATUSES.map((s) => (
-                  <option key={s} value={s} style={{ background: '#0b1020' }}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <div style={{ marginTop: 8, fontWeight: 900, color: 'var(--text)' }}>
-                {task.status}
-              </div>
-            )}
-
-            <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>
-              Notes
-            </div>
-            {canEdit ? (
-              <textarea
-                value={task.notes || ''}
-                onChange={(e) => onUpdate(task.id, { notes: e.target.value })}
-                placeholder="Add notes, risks, dependencies…"
-                rows={5}
-                style={{
-                  marginTop: 8,
-                  width: '100%',
-                  padding: 10,
-                  borderRadius: 10,
-                  border: '1px solid rgba(255,255,255,0.12)',
-                  background: 'rgba(255,255,255,0.03)',
-                  color: 'var(--text)',
-                  resize: 'vertical',
-                  fontSize: 13,
-                }}
-              />
-            ) : (
-              <div style={{ marginTop: 8, color: 'rgba(226,232,240,0.92)', fontSize: 13 }}>
-                {String(task.notes || '').trim() ? task.notes : '—'}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {activeSubtask && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) requestCloseSubtask(e)
-            }}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.55)',
-              display: 'flex',
-              alignItems: 'flex-start',
-              justifyContent: 'center',
-              padding: 'clamp(10px, 3vw, 16px)',
-              overflowY: 'auto',
-              WebkitOverflowScrolling: 'touch',
-              zIndex: 70,
-            }}
-          >
-            <div
-              className="card"
-              style={{
-                width: 'min(760px, 100%)',
-                maxHeight: 'calc(100dvh - 32px)',
-                overflow: 'auto',
-                overscrollBehavior: 'contain',
-                borderRadius: 14,
-                border: '1px solid rgba(255,255,255,0.10)',
-                background: '#0b1020',
-                padding: 'clamp(10px, 2vw, 14px)',
-                boxShadow: '0 30px 80px rgba(0,0,0,0.45)',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      gap: 8,
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                    }}
-                  >
-                    <span
-                      className={`pb-priority-pill pb-priority-${priorityNumber(activeSubtask.priority || 'P1')}`}
-                    >
-                      Priority {priorityNumber(activeSubtask.priority || 'P1')}
-                    </span>
-                    <div
-                      style={{
-                        color: 'rgba(241,245,249,0.96)',
-                        fontSize: 'clamp(14px, 2vw, 16px)',
-                        fontWeight: 950,
-                        lineHeight: 1.2,
-                        overflowWrap: 'anywhere',
-                        minWidth: 0,
-                      }}
-                    >
-                      {activeSubtask.title}
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onPointerDown={requestCloseSubtask}
-                  onClick={requestCloseSubtask}
-                  style={{
-                    padding: '8px 10px',
-                    borderRadius: 10,
-                    fontWeight: 900,
-                    fontSize: 12,
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.10)',
-                    color: '#e2e8f0',
-                    cursor: 'pointer',
-                    flex: '0 0 auto',
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-
-              <div style={{ marginTop: 12, color: 'var(--muted)', fontSize: 12, fontWeight: 900 }}>
-                Text
-              </div>
-
-              {canEdit ? (
-                <textarea
-                  value={activeSubtask.description || ''}
-                  onChange={(e) => {
-                    const next = subtasks.map((x) =>
-                      x.id === activeSubtask.id ? { ...x, description: e.target.value } : x
-                    )
-                    onUpdate(task.id, { subtasks: next })
-                  }}
-                  placeholder="Task text (definition of done, notes, links…)"
-                  rows={8}
-                  style={{
-                    marginTop: 8,
-                    width: '100%',
-                    padding: 10,
-                    borderRadius: 12,
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    background: 'rgba(255,255,255,0.02)',
-                    color: 'rgba(226,232,240,0.92)',
-                    resize: 'vertical',
-                    fontSize: 13,
-                    lineHeight: 1.35,
-                    minHeight: 160,
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    marginTop: 8,
-                    padding: 10,
-                    borderRadius: 12,
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    background: 'rgba(255,255,255,0.02)',
-                    color: 'rgba(226,232,240,0.92)',
-                    fontSize: 13,
-                    lineHeight: 1.4,
-                    whiteSpace: 'pre-wrap',
-                    overflowWrap: 'anywhere',
-                  }}
-                >
-                  {String(activeSubtask.description || '').trim() ? activeSubtask.description : '—'}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function ProjectBoardPage({ publicMode = false, sharePayload = null }) {
+export default function ProjectBoardPage({
+  publicMode = false,
+  sharePayload = null,
+  embedded = false,
+  onShareSnapshot,
+}) {
   const [tasks, setTasks] = useState(() => {
     const inPayload = Array.isArray(sharePayload?.tasks) ? sharePayload.tasks : null
 
@@ -1242,6 +811,14 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
     })
   })
   const [activeId, setActiveId] = useState(null)
+  const [taskOpen, setTaskOpen] = useState(false)
+
+  useEffect(() => {
+    if (typeof onShareSnapshot !== 'function') return
+    onShareSnapshot({
+      tasks,
+    })
+  }, [tasks, onShareSnapshot])
 
   const grouped = useMemo(() => {
     const by = {
@@ -1297,8 +874,9 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
       tasks,
     }
 
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+    const shareOrigin = getPublicShareOrigin()
+    const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(runtimeOrigin)
 
     let token = ''
     try {
@@ -1334,9 +912,10 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
       }
     }
 
-    const href = token.startsWith('share_')
-      ? `${origin}/s/${encodeURIComponent(token)}`
-      : `${origin}/share/project-board/${encodeURIComponent(token)}`
+    const isKvToken = token.startsWith('share_') && !token.startsWith('share_local_')
+    const href = isKvToken
+      ? `${shareOrigin}/s/${encodeURIComponent(token)}`
+      : `${shareOrigin}/share/project-board/${encodeURIComponent(token)}`
 
     // Primary UX: open the public page immediately.
     try {
@@ -1355,21 +934,46 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
 
   const activeTask = useMemo(() => tasks.find((t) => t.id === activeId) || null, [tasks, activeId])
 
+  const openTask = (id) => {
+    setActiveId(id)
+    setTaskOpen(true)
+  }
+
+  const closeTask = () => {
+    setTaskOpen(false)
+    window.setTimeout(() => setActiveId(null), 220)
+  }
+
+  const toggleSubtaskDone = (subtask) => {
+    if (publicMode) return
+    if (!activeTask?.id || !subtask?.id) return
+    const current = Array.isArray(activeTask.subtasks) ? activeTask.subtasks : []
+    if (!current.length) return
+
+    const next = current.map((st) => (st.id === subtask.id ? { ...st, done: !st.done } : st))
+    updateTask(activeTask.id, { subtasks: next })
+  }
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <div>
-        {publicMode ? null : (
-          <div style={{ fontSize: 12, fontWeight: 900, color: '#9aa4b2', letterSpacing: 0.2 }}>
-            Tools
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12, padding: embedded ? 24 : 0 }}>
+      {embedded ? null : (
+        <div>
+          {publicMode ? null : (
+            <div style={{ fontSize: 12, fontWeight: 900, color: '#9aa4b2', letterSpacing: 0.2 }}>
+              Tools
+            </div>
+          )}
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>
+            Strategic Execution Control System
           </div>
-        )}
-        <div style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>Project Board</div>
-        <div
-          style={{ marginTop: 6, color: 'rgba(148,163,184,0.95)', fontWeight: 650, fontSize: 12 }}
-        >
-          Kanban board for strategic initiatives. Drag & drop to update status.
+          <div
+            style={{ marginTop: 6, color: 'rgba(148,163,184,0.95)', fontWeight: 650, fontSize: 12 }}
+          >
+            Bullwaves strategic initiatives board. Each card represents a strategic story with clear
+            business impact.
+          </div>
         </div>
-      </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
         {publicMode ? (
@@ -1419,6 +1023,14 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
         }}
       >
         {STATUSES.map((status) => {
+          const columnTitles = {
+            Backlog: 'Backlog',
+            Planned: 'Planned',
+            Executing: 'Executing',
+            'Review & QA': 'Review & QA',
+            Blocked: 'Blocked',
+            Done: 'Done',
+          }
           const list = grouped[status] || []
           return (
             <div
@@ -1437,7 +1049,9 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <div style={{ fontWeight: 950, color: 'var(--text)' }}>{status}</div>
+                <div style={{ fontWeight: 950, color: 'var(--text)' }}>
+                  {columnTitles[status] || status}
+                </div>
                 <div style={{ color: 'rgba(148,163,184,0.95)', fontWeight: 900, fontSize: 12 }}>
                   {list.length}
                 </div>
@@ -1448,7 +1062,7 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
                   <Card
                     key={task.id}
                     task={task}
-                    onOpen={setActiveId}
+                    onOpen={openTask}
                     draggable={!publicMode}
                     onDragStart={onDragStart(task.id)}
                   />
@@ -1474,17 +1088,20 @@ export default function ProjectBoardPage({ publicMode = false, sharePayload = nu
         })}
       </div>
 
-      <Modal
+      <TaskSidebar
+        open={Boolean(activeTask) && taskOpen}
         task={activeTask}
-        onClose={() => setActiveId(null)}
-        onUpdate={updateTask}
+        parentStory={null}
+        onClose={closeTask}
+        onBackToStory={null}
         readOnly={publicMode}
+        onToggleSubtaskDone={toggleSubtaskDone}
       />
 
       <style>{`
-        .pb-grid { grid-template-columns: repeat(4, minmax(260px, 1fr)); }
-        @media (max-width: 1100px) {
-          .pb-grid { grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+        .pb-grid { grid-template-columns: repeat(6, minmax(220px, 1fr)); }
+        @media (max-width: 1400px) {
+          .pb-grid { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
         }
         @media (max-width: 720px) {
           /* Mobile-first Kanban: swipe columns horizontally instead of stacking a very tall page */

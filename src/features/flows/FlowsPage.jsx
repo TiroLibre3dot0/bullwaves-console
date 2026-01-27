@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../i18n/I18nContext'
+import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import FlowDiagram from './FlowDiagram'
 import {
   nodes as retentionNodes,
@@ -106,8 +107,9 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         flows: ['registration', 'navigation', 'retention', 'mail'],
       }
 
-      const origin = window.location?.origin || ''
-      const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+      const shareOrigin = getPublicShareOrigin()
+      const runtimeOrigin = window.location?.origin || ''
+      const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(runtimeOrigin)
 
       let token = ''
       try {
@@ -138,9 +140,10 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           // ignore
         }
       }
-      const href = token.startsWith('share_')
-        ? `${origin}/s/${encodeURIComponent(token)}`
-        : `${origin}/share/flows/${encodeURIComponent(token)}?flow=${encodeURIComponent(flowId)}`
+      const isKvToken = token.startsWith('share_') && !token.startsWith('share_local_')
+      const href = isKvToken
+        ? `${shareOrigin}/s/${encodeURIComponent(token)}`
+        : `${shareOrigin}/share/flows/${encodeURIComponent(token)}?flow=${encodeURIComponent(flowId)}`
 
       // Primary UX: open the public page immediately.
       try {

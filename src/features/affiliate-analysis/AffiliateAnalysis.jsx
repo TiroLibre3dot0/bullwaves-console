@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import CardSection from '../../components/common/CardSection'
+import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import KpiCard from '../../components/common/KpiCard'
 import PnLTrendChart from '../../components/PnLTrendChart'
 import {
@@ -59,14 +60,16 @@ export default function AffiliateAnalysis() {
     setShareError('')
     setShareBusy(true)
 
-    const payload = {
-      v: 1,
-      k: 'affrep',
-      g: Date.now(),
-    }
-
+    const shareOrigin = getPublicShareOrigin()
     const origin = window.location.origin
     const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+
+    const payload = {
+      k: 'affrep',
+      g: Date.now(),
+      affiliate: selectedAffiliate || '',
+      year: selectedYear || 'all',
+    }
 
     let href = null
     try {
@@ -87,7 +90,7 @@ export default function AffiliateAnalysis() {
       const data = await resp.json().catch(() => null)
       const token = data?.token
       if (resp.ok && token && String(token).startsWith('share_')) {
-        href = `${origin}/s/${encodeURIComponent(token)}`
+        href = `${shareOrigin}/s/${encodeURIComponent(token)}`
       }
     } catch {
       // ignore

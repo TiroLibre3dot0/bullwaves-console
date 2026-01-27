@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 import FullPageLoader from '../../../components/FullPageLoader'
 import WeeklyExecutionHistoryPage from './WeeklyExecutionHistoryPage'
 import { trackPublicShareOpen } from '../../../utils/analytics'
@@ -106,7 +107,7 @@ export default function PublicWeeklyExecutionHistoryPage({ token }) {
     )
   }
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  const origin = getPublicShareOrigin()
   const isLocal = /^share_local_/i.test(String(token || ''))
   const mapHref = isLocal
     ? `${origin}/share/weekly-map/${encodeURIComponent(token)}`

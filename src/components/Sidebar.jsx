@@ -181,6 +181,82 @@ export default function Sidebar({
   return (
     <div className="sidebar">
       <div className="sidebar-section">
+        <div className="sidebar-title">
+          {t('sidebar.projectManagement') || 'Project management'}
+        </div>
+        <button
+          disabled={disabled('commandCenter')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'commandCenter' ? 'active' : ''}`}
+          onClick={() => navigate('commandCenter')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="home" />
+            <span>Command Center</span>
+          </span>
+        </button>
+        <button
+          disabled={disabled('marketingPlan')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
+          onClick={() => navigate('marketingPlan')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="layout" />
+            <span>Execution marketing</span>
+          </span>
+        </button>
+        <button
+          disabled={disabled('roadmap')}
+          type="button"
+          className={`sidebar-item sidebar-main tab ${roadmapActive ? 'active' : ''}`}
+          onClick={() => navigate('roadmap')}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <Icon name="map" />
+            <span>Mega stories</span>
+          </span>
+        </button>
+        {roadmapActive && (
+          <div className="sidebar-subsection">
+            <button
+              disabled={disabled('roadmap')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'roadmap' ? 'active' : ''}`}
+              onClick={() => navigate('roadmap')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="map" />
+                <span>{t('sidebar.roadmap')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('weeklyMap')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyMap' ? 'active' : ''}`}
+              onClick={() => navigate('weeklyMap')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="calendar" />
+                <span>{t('sidebar.weeklyMap')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('weeklyExecutionHistory')}
+              type="button"
+              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
+              onClick={() => navigate('weeklyExecutionHistory')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="calendar" />
+                <span>{t('sidebar.weeklyExecutionHistory')}</span>
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="sidebar-section" style={{ marginTop: 10 }}>
         <div className="sidebar-title">{t('sidebar.dashboard')}</div>
         <button
           disabled={disabled('overview')}
@@ -333,86 +409,6 @@ export default function Sidebar({
             <span>{t('sidebar.fraud')}</span>
           </span>
         </button>
-      </div>
-
-      <div className="sidebar-section" style={{ marginTop: 10 }}>
-        <div className="sidebar-title">
-          {t('sidebar.projectManagement') || 'Project management'}
-        </div>
-
-        <button
-          disabled={disabled('marketingPlan')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
-          onClick={() => navigate('marketingPlan')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="layout" />
-            <span>{t('sidebar.marketingPlan')}</span>
-          </span>
-        </button>
-
-        <button
-          disabled={disabled('projectBoard')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'projectBoard' ? 'active' : ''}`}
-          onClick={() => navigate('projectBoard')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="card" />
-            <span>{t('sidebar.projectBoard') || 'Project Board'}</span>
-          </span>
-        </button>
-
-        <button
-          disabled={disabled('roadmap')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${roadmapActive ? 'active' : ''}`}
-          onClick={() => navigate('roadmap')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="map" />
-            <span>{t('sidebar.roadmap')}</span>
-          </span>
-        </button>
-        {roadmapActive && (
-          <div className="sidebar-subsection">
-            <button
-              disabled={disabled('roadmap')}
-              type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'roadmap' ? 'active' : ''}`}
-              onClick={() => navigate('roadmap')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="map" />
-                <span>{t('sidebar.roadmap')}</span>
-              </span>
-            </button>
-            <button
-              disabled={disabled('weeklyMap')}
-              type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyMap' ? 'active' : ''}`}
-              onClick={() => navigate('weeklyMap')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="calendar" />
-                <span>{t('sidebar.weeklyMap')}</span>
-              </span>
-            </button>
-
-            <button
-              disabled={disabled('weeklyExecutionHistory')}
-              type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
-              onClick={() => navigate('weeklyExecutionHistory')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="calendar" />
-                <span>{t('sidebar.weeklyExecutionHistory')}</span>
-              </span>
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="sidebar-section" style={{ marginTop: 10 }}>

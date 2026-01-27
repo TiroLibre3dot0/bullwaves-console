@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { encodeSharePayload } from '../../../utils/shareCodec.js'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 import { loadMarketingPlan, resetMarketingPlan, saveMarketingPlan } from '../store/marketingPlanStore'
 import {
   addMarketingExecutionSnapshot,
@@ -391,8 +392,9 @@ export default function MarketingPlanExecutionPage() {
       },
     }
 
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+    const shareOrigin = getPublicShareOrigin()
+    const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+    const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(runtimeOrigin)
 
     let token = ''
     try {
@@ -428,8 +430,8 @@ export default function MarketingPlanExecutionPage() {
     }
 
     const href = token.startsWith('share_')
-      ? `${origin}/s/${encodeURIComponent(token)}`
-      : `${origin}/share/marketing-plan/${encodeURIComponent(token)}`
+      ? `${shareOrigin}/s/${encodeURIComponent(token)}`
+      : `${shareOrigin}/share/marketing-plan/${encodeURIComponent(token)}`
     try {
       await navigator.clipboard.writeText(href)
       window.alert('Link board copiato negli appunti')

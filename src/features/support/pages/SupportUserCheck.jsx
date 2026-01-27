@@ -1,6 +1,7 @@
 // src/features/support/pages/SupportUserCheck.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { encodeSharePayload } from '../../../utils/shareCodec.js'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import {
@@ -301,6 +302,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
   const onShareSupportUserCheck = async () => {
     try {
       if (typeof window === 'undefined') return
+      const shareOrigin = getPublicShareOrigin()
       const origin = window.location.origin
 
       const payload = {
@@ -336,7 +338,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
         const data = await resp.json().catch(() => null)
         const token = data?.token
         if (resp.ok && token && String(token).startsWith('share_')) {
-          href = `${origin}/s/${encodeURIComponent(String(token))}`
+          href = `${shareOrigin}/s/${encodeURIComponent(String(token))}`
         }
       } catch {
         // ignore
@@ -348,14 +350,14 @@ export default function SupportUserCheck({ shareConfig = null }) {
           const token = `share_local_${randomTokenSuffix(16)}`
           const key = `bw_share_support_user_check:${token}`
           window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
-          href = `${origin}/share/support-user-check/${token}`
+          href = `${shareOrigin}/share/support-user-check/${token}`
         } catch {
           // ignore
         }
       }
 
       // Absolute fallback (no token)
-      if (!href) href = `${origin}/share/support-user-check`
+      if (!href) href = `${shareOrigin}/share/support-user-check`
 
       try {
         await navigator.clipboard.writeText(href)
@@ -773,6 +775,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
       // No legacy payload-in-URL fallback: keep public URLs short.
       let href = null
       try {
+        const shareOrigin = getPublicShareOrigin()
         const resp = await fetch('/api/share/create-support-botlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -781,7 +784,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
         const data = await resp.json().catch(() => null)
         const token = data?.token
         if (resp.ok && token && String(token).startsWith('share_')) {
-          href = `${origin}/s/${encodeURIComponent(String(token))}`
+          href = `${shareOrigin}/s/${encodeURIComponent(String(token))}`
         }
       } catch {
         // ignore
@@ -791,10 +794,11 @@ export default function SupportUserCheck({ shareConfig = null }) {
       // by storing the snapshot in localStorage (works only on the same browser/device).
       if (!href && /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)) {
         try {
+          const shareOrigin = getPublicShareOrigin()
           const token = `share_local_${randomTokenSuffix(16)}`
           const key = `bw_share_support_botlist:${token}`
           window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
-          href = `${origin}/share/support-botlist/${token}`
+          href = `${shareOrigin}/share/support-botlist/${token}`
         } catch {
           // ignore
         }

@@ -1,35 +1,36 @@
 import React, { useEffect, useMemo, useState } from 'react'
+
 import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
 import OrgChart from './pages/OrgChart'
-import SummaryReport from './features/media-payments/pages/SummaryReport'
-import Report from './features/media-payments/pages/Report'
-import { useAuth } from './context/AuthContext'
-import { trackEvent } from './services/trackingService'
-import AdminPanel from './components/AdminPanel'
+import ExecutionHubPage from './features/execution/ExecutionHubPage'
+import OngoingPage from './features/ongoing/pages/OngoingPage'
+import FlowsPage from './features/flows/FlowsPage'
+import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
+import AffiliateHub from './features/affiliate/pages/AffiliateHub'
+import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
+import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
+import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
 import RoadmapPage from './features/roadmap/pages/RoadmapPage'
 import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
 import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecutionHistoryPage'
-import AffiliateHub from './features/affiliate/pages/AffiliateHub'
-import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
-import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
-import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
-import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
-import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
-import { DataStatusProvider } from './context/DataStatusContext'
-import FullPageLoader from './components/FullPageLoader'
-import UploadReportsPage from './pages/UploadReportsPage'
-import { translate } from './i18n/translations'
-import { useI18n } from './i18n/I18nContext'
-import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
 import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
+import UploadReportsPage from './pages/UploadReportsPage'
+import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
+import NotionBoard from './features/notion/NotionBoard'
+import { useAuth } from './context/AuthContext'
+import { trackEvent } from './services/trackingService'
+import AdminPanel from './components/AdminPanel'
 
-const FlowsPage = React.lazy(() => import('./features/flows/FlowsPage'))
-const ProjectBoardPage = React.lazy(() => import('./features/project-board/ProjectBoardPage'))
+// StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
 
 export default function AuthenticatedApp() {
-  const { t } = useI18n()
+  const [notionPillarFilter] = useState(null)
+
+  const [executiveSection, setExecutiveSection] = useState('summary')
+  const [affiliateSection, setAffiliateSection] = useState('analysis')
+
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
@@ -40,81 +41,55 @@ export default function AuthenticatedApp() {
 
   const routes = useMemo(
     () => ({
-      cohort: '/',
-      executive: '/executive',
-      affiliate: '/affiliate',
-      fraud: '/fraud-monitoring',
-      flows: '/flows',
-      marketingPlan: '/marketing-plan',
+      commandCenter: '/', // Default landing page
+      storiesKanban: '/stories-kanban',
       projectBoard: '/project-board',
-      orgChart: '/org-chart',
-      overview: '/overview',
-      report: '/report',
+      marketingPlan: '/marketing-plan',
       roadmap: '/roadmap',
       weeklyMap: '/weekly-map',
       weeklyExecutionHistory: '/weekly-execution-history',
+      overview: '/overview',
+      flows: '/flows',
+      executive: '/executive',
+      affiliate: '/affiliate',
       analysis: '/analysis',
-      traderPointsSimulator: '/lab/trader-points-simulator',
-      // lab removed
+      traderPointsSimulator: '/trader-points',
+      fraud: '/fraud',
+      orgChart: '/org-chart',
       supportUserCheck: '/support/user-check',
-      upload: '/upload',
       customEvents: '/custom-events',
+      upload: '/upload',
+      notion: '/notion',
+      admin: '/admin',
     }),
     []
   )
 
   const pathToView = (pathname) => {
-    if (!pathname || pathname === '/') return 'overview'
-    if (pathname.startsWith('/overview')) return 'overview'
-    if (pathname.startsWith('/profit-analysis')) return 'overview'
-    if (pathname.startsWith('/flows')) return 'flows'
+    if (!pathname || pathname === '/') return 'commandCenter'
+    if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
-    if (
-      pathname.startsWith('/executive') ||
-      pathname.startsWith('/executive-summary') ||
-      pathname.startsWith('/executive-view') ||
-      pathname.startsWith('/global')
-    )
-      return 'executive'
-    if (pathname.startsWith('/affiliate') || pathname.startsWith('/affiliate-analysis'))
-      return 'affiliate'
-    if (pathname.startsWith('/marketing-expenses')) return 'affiliate'
-    if (pathname.startsWith('/investments')) return 'affiliate'
-    if (pathname.startsWith('/fraud')) return 'fraud'
-    if (pathname.startsWith('/analysis')) return 'analysis'
-    if (pathname.startsWith('/report')) return 'report'
-    if (pathname.startsWith('/cohort')) return 'affiliate'
     if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
-    if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/roadmap')) return 'roadmap'
     if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
     if (pathname.startsWith('/weekly-execution-history')) return 'weeklyExecutionHistory'
-    if (pathname.startsWith('/lab/trader-points-simulator')) return 'traderPointsSimulator'
-    if (pathname.startsWith('/ongoing')) return 'roadmap'
-    if (pathname.startsWith('/summary-report')) return 'summary'
-    if (pathname.startsWith('/support')) return 'supportUserCheck'
-    if (pathname.startsWith('/upload')) return 'upload'
+    if (pathname.startsWith('/overview')) return 'overview'
+    if (pathname.startsWith('/flows')) return 'flows'
+    if (pathname.startsWith('/executive')) return 'executive'
+    if (pathname.startsWith('/affiliate')) return 'affiliate'
+    if (pathname.startsWith('/analysis')) return 'analysis'
+    if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
+    if (pathname.startsWith('/fraud')) return 'fraud'
+    if (pathname.startsWith('/org-chart')) return 'orgChart'
+    if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
-    return 'overview'
-  }
-
-  const affiliateSectionFromPath = (pathname) => {
-    if (pathname.startsWith('/marketing-expenses') || pathname.startsWith('/investments'))
-      return 'payments'
-    if (pathname.startsWith('/cohort')) return 'cohort'
-    return 'analysis'
+    if (pathname.startsWith('/upload')) return 'upload'
+    if (pathname.startsWith('/notion')) return 'notion'
+    if (pathname.startsWith('/admin')) return 'admin'
+    return 'commandCenter'
   }
 
   const [view, setView] = useState(() => pathToView(window.location.pathname))
-  const [affiliateSection, setAffiliateSection] = useState(() =>
-    affiliateSectionFromPath(window.location.pathname)
-  )
-  const [executiveSection, setExecutiveSection] = useState(() => {
-    const p = window.location.pathname
-    if (p.startsWith('/executive-summary') || p.startsWith('/global')) return 'summary'
-    if (p.startsWith('/executive-view')) return 'view'
-    return 'summary'
-  })
 
   useEffect(() => {
     const onPop = () => {
@@ -139,7 +114,6 @@ export default function AuthenticatedApp() {
       }
 
       setView(pathToView(nextPath))
-      setAffiliateSection(affiliateSectionFromPath(nextPath))
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
@@ -156,73 +130,39 @@ export default function AuthenticatedApp() {
     setView('supportUserCheck')
   }, [user, isSupportUser])
 
-  const goAffiliateSection = (section = 'analysis') => {
-    if (isSupportUser) {
-      navigate('supportUserCheck')
-      return
-    }
-    const pathBySection = {
-      analysis: '/affiliate-analysis',
-      payments: '/marketing-expenses',
-      cohort: '/cohort',
-    }
-    const nextPath = pathBySection[section] || '/affiliate'
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({ view: 'affiliate', section }, '', nextPath)
-    }
-    setAffiliateSection(section)
-    setView('affiliate')
-  }
-
-  const goExecutiveSection = (section = 'summary') => {
-    if (isSupportUser) {
-      navigate('supportUserCheck')
-      return
-    }
-    const pathBySection = {
-      summary: '/executive-summary',
-      view: '/executive-view',
-    }
-    const nextPath = pathBySection[section] || '/executive'
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({ view: 'executive', section }, '', nextPath)
-    }
-    setExecutiveSection(section)
-    setView('executive')
-  }
-
   const navigate = (nextView) => {
     setIsSidebarOpen(false)
+    if (!nextView) return
+
+    if (nextView === 'admin' && !isAdmin) return
+
     if (isSupportUser && !supportAllowedViews.has(nextView)) {
-      nextView = 'supportUserCheck'
-    }
-    if (window.__bwUploadInProgress && nextView !== 'upload') {
-      const locale =
-        typeof window !== 'undefined' ? window.localStorage.getItem('bw-locale') || 'en' : 'en'
-      const ok = window.confirm(translate(locale, 'app.uploadLeaveConfirm'))
-      if (!ok) return
-    }
-    if (nextView === 'admin' && !isAdmin) {
-      setView('overview')
+      const nextPath = routes.supportUserCheck
+      if (window.location.pathname !== nextPath) {
+        window.history.pushState({ view: 'supportUserCheck' }, '', nextPath)
+      }
+      setView('supportUserCheck')
       return
     }
-    if (nextView === 'affiliate') {
-      goAffiliateSection(affiliateSection || 'analysis')
-      return
-    }
-    if (nextView === 'executive') {
-      goExecutiveSection(executiveSection || 'summary')
-      return
-    }
+
     const nextPath = routes[nextView] || '/'
-    if (nextView === 'admin') {
-      setView('admin')
-      return
-    }
     if (window.location.pathname !== nextPath) {
       window.history.pushState({ view: nextView }, '', nextPath)
     }
     setView(nextView)
+  }
+
+  const goExecutiveSection = (section) => {
+    const s = section === 'view' ? 'view' : 'summary'
+    setExecutiveSection(s)
+    navigate('executive')
+  }
+
+  const goAffiliateSection = (section) => {
+    const allowed = new Set(['analysis', 'payments', 'payments2', 'cohort'])
+    const s = allowed.has(section) ? section : 'analysis'
+    setAffiliateSection(s)
+    navigate('affiliate')
   }
 
   useEffect(() => {
@@ -308,6 +248,7 @@ export default function AuthenticatedApp() {
       fraud: 'fraud-monitoring',
       marketingPlan: 'marketing-plan',
       projectBoard: 'project-board',
+      notion: 'notion',
       summary: 'summary',
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
@@ -331,78 +272,55 @@ export default function AuthenticatedApp() {
   }, [view, user])
 
   return (
-    <DataStatusProvider>
-      <div className="app-root">
-        <Topbar
-          onAdminClick={() => navigate('admin')}
-          showAdmin={isAdmin}
-          onToggleSidebar={toggleSidebar}
-          isSidebarOpen={isSidebarOpen}
-        />
+    <div className="app-root">
+      <Topbar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      <div className={`dashboard-shell${isSidebarOpen ? ' sidebar-open' : ''}`}>
+        {isSidebarOpen && (
+          <div className="dashboard-sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
+        )}
+        <aside className="dashboard-sidebar">
+          <Sidebar
+            view={view}
+            executiveSection={executiveSection}
+            affiliateSection={affiliateSection}
+            supportOnly={isSupportUser}
+            navigate={navigate}
+            goExecutiveSection={goExecutiveSection}
+            goAffiliateSection={goAffiliateSection}
+          />
+        </aside>
+        <main className="dashboard-content">
+          <div className="dashboard-inner">
+            {['commandCenter', 'storiesKanban', 'projectBoard'].includes(view) ? (
+              <ExecutionHubPage activeTab={view} onChangeTab={(nextTab) => navigate(nextTab)} />
+            ) : null}
 
-        <div className={`dashboard-shell${isSidebarOpen ? ' sidebar-open' : ''}`}>
-          {isSidebarOpen && (
-            <div className="dashboard-sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
-          )}
-          <aside className="dashboard-sidebar">
-            <Sidebar
-              view={view}
-              executiveSection={executiveSection}
-              affiliateSection={affiliateSection}
-              supportOnly={isSupportUser}
-              navigate={navigate}
-              goExecutiveSection={goExecutiveSection}
-              goAffiliateSection={goAffiliateSection}
-            />
-          </aside>
+            {view === 'marketingPlan' ? <MarketingPlanExecutionPage /> : null}
+            {view === 'roadmap' ? <RoadmapPage /> : null}
+            {view === 'weeklyMap' ? <WeeklyMapPage /> : null}
+            {view === 'weeklyExecutionHistory' ? <WeeklyExecutionHistoryPage /> : null}
 
-          <main className="dashboard-content">
-            <div className="dashboard-inner">
-              {view === 'overview' && <ProfitAnalysisPage />}
-              {view === 'executive' && (
-                <ExecutiveSuite section={executiveSection} onSectionChange={goExecutiveSection} />
-              )}
-              {view === 'affiliate' && (
-                <AffiliateHub section={affiliateSection} onSectionChange={goAffiliateSection} />
-              )}
-              {view === 'fraud' && <FraudMonitoringDashboard />}
-              {view === 'analysis' && <CommentsAnalysisPage />}
-              {view === 'report' && <Report />}
-              {view === 'roadmap' && <RoadmapPage />}
-              {view === 'weeklyMap' && <WeeklyMapPage />}
-              {view === 'weeklyExecutionHistory' && <WeeklyExecutionHistoryPage />}
-              {view === 'marketingPlan' && <MarketingPlanExecutionPage />}
-              {view === 'orgChart' && <OrgChart />}
-              {view === 'summary' && <SummaryReport />}
-              {view === 'supportUserCheck' && (
-                <React.Suspense
-                  fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
-                >
-                  <SupportUserCheck />
-                </React.Suspense>
-              )}
-              {view === 'upload' && <UploadReportsPage />}
-              {view === 'customEvents' && <CustomEventsPage />}
-              {view === 'traderPointsSimulator' && <TraderPointsSimulatorPage />}
-              {view === 'flows' && (
-                <React.Suspense
-                  fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
-                >
-                  <FlowsPage />
-                </React.Suspense>
-              )}
-              {view === 'projectBoard' && (
-                <React.Suspense
-                  fallback={<FullPageLoader progress={35} subtitle={t('support.loader.page')} />}
-                >
-                  <ProjectBoardPage />
-                </React.Suspense>
-              )}
-              {view === 'admin' && isAdmin && <AdminPanel />}
-            </div>
-          </main>
-        </div>
+            {view === 'overview' ? <OngoingPage /> : null}
+            {view === 'flows' ? <FlowsPage /> : null}
+            {view === 'executive' ? (
+              <ExecutiveSuite section={executiveSection} onSectionChange={setExecutiveSection} />
+            ) : null}
+            {view === 'affiliate' ? (
+              <AffiliateHub section={affiliateSection} onSectionChange={setAffiliateSection} />
+            ) : null}
+            {view === 'analysis' ? <ProfitAnalysisPage /> : null}
+            {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
+            {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
+
+            {view === 'orgChart' ? <OrgChart /> : null}
+            {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
+            {view === 'customEvents' ? <CustomEventsPage /> : null}
+            {view === 'upload' ? <UploadReportsPage /> : null}
+            {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}
+            {view === 'admin' ? <AdminPanel /> : null}
+          </div>
+        </main>
       </div>
-    </DataStatusProvider>
+    </div>
   )
 }

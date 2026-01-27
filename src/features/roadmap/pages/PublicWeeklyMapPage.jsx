@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useI18n } from '../../../i18n/I18nContext'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import WeeklyMapView from '../components/WeeklyMapView'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 import { getWeekRange } from '../utils/weeklyMapStore'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { trackPublicShareOpen } from '../../../utils/analytics'
@@ -116,7 +117,7 @@ export default function PublicWeeklyMapPage({ token }) {
     <div style={{ padding: 20 }}>
       <div style={{ maxWidth: 1400, margin: '0 auto' }}>
         {(() => {
-          const origin = typeof window !== 'undefined' ? window.location.origin : ''
+          const origin = getPublicShareOrigin()
           const isLocal = /^share_local_/i.test(String(token || ''))
           const mapHref = isLocal
             ? `${origin}/share/weekly-map/${encodeURIComponent(token)}`

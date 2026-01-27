@@ -31,7 +31,7 @@ async function resolveShare(req, token) {
   }
 
   // Backward-compatible fallback: brute-force known prefixes.
-  const prefixes = ['flows', 'affrep', 'mplan', 'pboard', 'sb50', 'suc', 'wmap']
+  const prefixes = ['flows', 'affrep', 'mplan', 'pboard', 'exec', 'sb50', 'suc', 'wmap']
   for (const prefix of prefixes) {
     const payload = await tryGetPayload(prefix, token)
     if (payload) return { prefix, payload }
@@ -48,6 +48,7 @@ function destinationFor(prefix, token, payload) {
   if (prefix === 'affrep') return `/share/affiliate-reports/${encodeURIComponent(token)}`
   if (prefix === 'mplan') return `/share/marketing-plan/${encodeURIComponent(token)}`
   if (prefix === 'pboard') return `/share/project-board/${encodeURIComponent(token)}`
+  if (prefix === 'exec') return `/share/execution/${encodeURIComponent(token)}`
   if (prefix === 'sb50') return `/share/support-botlist/${encodeURIComponent(token)}`
   if (prefix === 'suc') return `/share/support-user-check/${encodeURIComponent(token)}`
   if (prefix === 'wmap') {

@@ -23,6 +23,9 @@ const PublicFlowsSharePage = React.lazy(() => import('./features/flows/pages/Pub
 const PublicProjectBoardSharePage = React.lazy(
   () => import('./features/project-board/pages/PublicProjectBoardSharePage')
 )
+const PublicExecutionSharePage = React.lazy(
+  () => import('./features/execution/pages/PublicExecutionSharePage')
+)
 const SupportUserCheckSharePage = React.lazy(
   () => import('./features/support/pages/SupportUserCheckSharePage')
 )
@@ -94,6 +97,7 @@ export default function App() {
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
     if (p.startsWith('/share/flows/')) return 'flows'
     if (p.startsWith('/share/project-board/')) return 'project-board'
+    if (p.startsWith('/share/execution/')) return 'execution'
     if (p === '/share/affiliate-reports' || p.startsWith('/share/affiliate-reports/'))
       return 'affiliate-reports'
     if (p.startsWith('/share/affiliate-analysis/')) return 'affiliate-analysis'
@@ -177,6 +181,15 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicProjectBoardSharePage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'execution') {
+    const token = window.location.pathname.split('/').pop()
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicExecutionSharePage token={token} />
       </React.Suspense>
     )
   }

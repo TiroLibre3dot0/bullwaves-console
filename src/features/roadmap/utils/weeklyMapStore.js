@@ -1,4 +1,6 @@
-﻿const STORAGE_KEY = 'bw_weekly_map_v1'
+﻿import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
+
+const STORAGE_KEY = 'bw_weekly_map_v1'
 
 function safeJsonParse(raw, fallback) {
   try {
@@ -11,8 +13,9 @@ function safeJsonParse(raw, fallback) {
 async function getShareLink(snapshot) {
   if (typeof window === 'undefined') return ''
 
-  const origin = window.location?.origin || ''
-  const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+  const shareOrigin = getPublicShareOrigin()
+  const runtimeOrigin = window.location?.origin || ''
+  const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(runtimeOrigin)
 
   const payload = {
     k: 'wmap',
@@ -54,9 +57,10 @@ async function getShareLink(snapshot) {
     }
   }
 
-  return token.startsWith('share_')
-    ? `${origin}/s/${encodeURIComponent(token)}`
-    : `${origin}/share/weekly-map/${encodeURIComponent(token)}`
+  const isKvToken = token.startsWith('share_') && !token.startsWith('share_local_')
+  return isKvToken
+    ? `${shareOrigin}/s/${encodeURIComponent(token)}`
+    : `${shareOrigin}/share/weekly-map/${encodeURIComponent(token)}`
 }
 
 export { getShareLink }

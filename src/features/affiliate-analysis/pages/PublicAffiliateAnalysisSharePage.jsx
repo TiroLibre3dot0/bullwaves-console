@@ -21,6 +21,7 @@ import CohortDecayView from '../../../components/CohortDecayView'
 import { useCohortNetDepositsCalendar } from '../hooks/useCohortNetDepositsCalendar'
 import { buildAffiliateInsights } from '../insights/affiliateInsightEngine'
 import { trackPublicShareOpen } from '../../../utils/analytics'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 
 const REGISTRATIONS_CANDIDATES = [
   '/Registrations Report.csv',
@@ -4131,10 +4132,14 @@ export default function PublicAffiliateAnalysisSharePage({
   ])
 
   const shareBase = useMemo(() => {
-    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const origin = getPublicShareOrigin()
     if (boardMode) return `${origin}/share/affiliate-reports`
-    if (String(token || '').startsWith('share_')) return `${origin}/s/${encodeURIComponent(token)}`
-    return `${origin}/share/affiliate-reports/${token}`
+    const cleanToken = String(token || '').trim()
+    if (cleanToken.startsWith('share_local_')) {
+      return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
+    }
+    if (cleanToken.startsWith('share_')) return `${origin}/s/${encodeURIComponent(cleanToken)}`
+    return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
   }, [token, boardMode])
 
   const onSelectAffiliate = useMemo(() => {
