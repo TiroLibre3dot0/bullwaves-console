@@ -137,6 +137,7 @@ export default function StorySidebar({
   onSelectTask,
   onOpenProjectBoard,
   onToggleTaskDone,
+  publicMode = false,
 }) {
   const epic = useMemo(() => resolveEpic(story), [story])
 
@@ -209,6 +210,22 @@ export default function StorySidebar({
     return seed.slice(0, 3)
   }, [story])
 
+  const sensitiveStyle = useMemo(
+    () => ({
+      filter: 'blur(7px)',
+      opacity: 0.32,
+      userSelect: 'none',
+    }),
+    []
+  )
+
+  const renderSensitive = (v) => {
+    const txt = String(v ?? '—')
+    if (!publicMode) return txt
+    if (!txt || txt === '—') return txt
+    return <span style={sensitiveStyle}>{txt}</span>
+  }
+
   if (!story) return null
 
   return (
@@ -268,7 +285,7 @@ export default function StorySidebar({
                 whiteSpace: 'nowrap',
               }}
             >
-              Open Project Board
+              Open Tasks
             </button>
           </div>
 
@@ -355,9 +372,11 @@ export default function StorySidebar({
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <span>{String(k.current)}</span>
+                  <span>{renderSensitive(k.current)}</span>
                   <span style={{ color: 'rgba(226,232,240,0.35)' }}>→</span>
-                  <span style={{ color: 'rgba(226,232,240,0.92)' }}>{String(k.target)}</span>
+                  <span style={{ color: 'rgba(226,232,240,0.92)' }}>
+                    {renderSensitive(k.target)}
+                  </span>
                 </div>
               </div>
             ))}
@@ -417,6 +436,9 @@ export default function StorySidebar({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {tasks.map((task) => {
                 const done = isDone(task)
+                const success = String(
+                  task?.success || task?.metric || task?.context || task?.summary || ''
+                ).trim()
                 return (
                   <div
                     key={task.id || task.title}
@@ -470,9 +492,23 @@ export default function StorySidebar({
                       >
                         {task.title || task}
                       </div>
+                      {success ? (
+                        <div
+                          style={{
+                            marginTop: 4,
+                            color: 'rgba(148,163,184,0.82)',
+                            fontSize: 12,
+                            fontWeight: 750,
+                            fontStyle: 'italic',
+                            overflowWrap: 'anywhere',
+                          }}
+                        >
+                          {success}
+                        </div>
+                      ) : null}
                       <div
                         style={{
-                          marginTop: 4,
+                          marginTop: success ? 6 : 4,
                           color: 'rgba(148,163,184,0.9)',
                           fontSize: 12,
                           fontWeight: 800,

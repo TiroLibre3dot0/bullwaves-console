@@ -19,7 +19,7 @@ function describeEvent(eventName, props) {
     let kind = props?.kind || ''
     let share = ''
     if (kind === 'org_chart') share = 'Organigramma'
-    else if (kind === 'project_board') share = 'Project Board'
+    else if (kind === 'project_board') share = 'Tasks'
     else if (kind === 'affiliate_reports') share = 'Report Affiliato'
     else if (kind) share = kind.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
     else share = 'Link pubblico'

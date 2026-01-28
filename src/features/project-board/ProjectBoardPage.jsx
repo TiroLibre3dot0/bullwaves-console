@@ -965,7 +965,7 @@ export default function ProjectBoardPage({
       v: 1,
       generatedAt: new Date().toISOString(),
       board: {
-        title: 'Project Board',
+        title: 'Tasks',
       },
       tasks,
     }

@@ -62,8 +62,8 @@ export default function PublicProjectBoardSharePage({ token }) {
 
   useEffect(() => {
     setOpenGraphMeta({
-      title: 'Project Board — Board View',
-      description: 'Public read-only view of the Project Board (Kanban).',
+      title: 'Tasks — Board View',
+      description: 'Public read-only view of the Tasks board (Kanban).',
       image: '/Logo.png',
       url: typeof window !== 'undefined' ? window.location.href : '',
     })
@@ -89,7 +89,7 @@ export default function PublicProjectBoardSharePage({ token }) {
     return (
       <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
-          <div style={{ fontSize: 22, fontWeight: 950 }}>Project Board</div>
+          <div style={{ fontSize: 22, fontWeight: 950 }}>Tasks</div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
             {loadError || 'Invalid or expired link.'}
           </div>

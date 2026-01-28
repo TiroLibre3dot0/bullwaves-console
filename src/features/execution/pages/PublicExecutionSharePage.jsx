@@ -65,8 +65,7 @@ export default function PublicExecutionSharePage({ token }) {
   useEffect(() => {
     setOpenGraphMeta({
       title: 'Execution — Command Center',
-      description:
-        'Public read-only view of the Execution hub (Command Center, Stories, Project Board).',
+      description: 'Public read-only view of the Execution hub (Command Center, Stories, Tasks).',
       image: '/Logo.png',
       url: typeof window !== 'undefined' ? window.location.href : '',
     })

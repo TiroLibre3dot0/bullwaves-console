@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import CommandCenter from '../command-center/CommandCenter'
+import CommandCenter from '../command-center/CommandCenterCockpit'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 
 const StoriesKanbanPage = React.lazy(() => import('../stories-kanban/StoriesKanbanPage'))
@@ -18,7 +18,7 @@ const TAB_META = [
   },
   {
     key: 'projectBoard',
-    label: 'Project Board',
+    label: 'Tasks',
     helper: 'Operational execution',
   },
 ]
@@ -69,7 +69,7 @@ export default function ExecutionHubPage({
       generatedAt: new Date().toISOString(),
       activeTab: activeTab || 'commandCenter',
       projectBoard: {
-        title: 'Project Board',
+        title: 'Tasks',
         tasks: Array.isArray(projectBoardSnapshot?.tasks) ? projectBoardSnapshot.tasks : [],
       },
     }
@@ -216,6 +216,7 @@ export default function ExecutionHubPage({
             >
               <CommandCenter
                 embedded
+                publicMode={publicMode}
                 onOpenKanban={() => {
                   setTab('storiesKanban')
                 }}
@@ -265,7 +266,7 @@ export default function ExecutionHubPage({
                   sharePayload={
                     sharePayload?.projectBoard?.tasks
                       ? {
-                          board: { title: sharePayload?.projectBoard?.title || 'Project Board' },
+                          board: { title: sharePayload?.projectBoard?.title || 'Tasks' },
                           tasks: sharePayload.projectBoard.tasks,
                         }
                       : null
