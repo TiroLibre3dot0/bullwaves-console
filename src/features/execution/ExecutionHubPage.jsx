@@ -31,6 +31,7 @@ export default function ExecutionHubPage({
 }) {
   const [mountedTabs, setMountedTabs] = useState(() => new Set([activeTab || 'commandCenter']))
   const [projectBoardSnapshot, setProjectBoardSnapshot] = useState(null)
+  const [projectBoardFocus, setProjectBoardFocus] = useState(null)
 
   useEffect(() => {
     const key = activeTab || 'commandCenter'
@@ -48,6 +49,11 @@ export default function ExecutionHubPage({
   const setTab = (key) => {
     if (!key) return
     if (typeof onChangeTab === 'function') onChangeTab(key)
+  }
+
+  const openProjectBoard = (focus) => {
+    setProjectBoardFocus(focus || null)
+    setTab('projectBoard')
   }
 
   const createPublicLink = async () => {
@@ -140,7 +146,11 @@ export default function ExecutionHubPage({
                 <button
                   key={t.key}
                   type="button"
-                  onClick={() => setTab(t.key)}
+                  onClick={() => {
+                    // Manual navigation should not keep a previous story-focus filter.
+                    if (t.key === 'projectBoard') setProjectBoardFocus(null)
+                    setTab(t.key)
+                  }}
                   className="no-card-hover"
                   style={{
                     padding: '10px 2px',
@@ -204,7 +214,19 @@ export default function ExecutionHubPage({
             <div
               style={{ display: activeTab === 'commandCenter' ? 'block' : 'none', height: '100%' }}
             >
-              <CommandCenter embedded onDrillDown={() => setTab('storiesKanban')} />
+              <CommandCenter
+                embedded
+                onOpenKanban={() => {
+                  setTab('storiesKanban')
+                }}
+                onOpenProjectBoard={() => {
+                  openProjectBoard(null)
+                }}
+                onDrillDown={() => {
+                  // Back-compat fallback if CommandCenter uses it.
+                  setTab('storiesKanban')
+                }}
+              />
             </div>
           ) : null}
 
@@ -220,7 +242,7 @@ export default function ExecutionHubPage({
                 <StoriesKanbanPage
                   embedded
                   publicMode={publicMode}
-                  onOpenProjectBoard={() => setTab('projectBoard')}
+                  onOpenProjectBoard={openProjectBoard}
                 />
               </React.Suspense>
             </div>
@@ -238,6 +260,8 @@ export default function ExecutionHubPage({
                 <ProjectBoardPage
                   embedded
                   publicMode={publicMode}
+                  focus={projectBoardFocus}
+                  onClearFocus={() => setProjectBoardFocus(null)}
                   sharePayload={
                     sharePayload?.projectBoard?.tasks
                       ? {

@@ -175,6 +175,17 @@ export default function StorySidebar({
     return doneCount / tasks.length
   }, [story, tasks])
 
+  const projectBoardFocus = useMemo(() => {
+    if (!story) return null
+    const titles = (tasks || []).map((t) => String(t?.title || t || '').trim()).filter(Boolean)
+    return {
+      storyId: String(story?.id || ''),
+      storyTitle: String(story?.title || '').trim(),
+      storyEpic: String(story?.epic || story?.pillar || story?.category || '').trim(),
+      taskTitles: titles,
+    }
+  }, [story, tasks])
+
   const risk = riskTone(story?.risk)
   const goal = String(story?.goal || story?.strategicObjective || story?.objective || '').trim()
 
@@ -241,7 +252,10 @@ export default function StorySidebar({
 
             <button
               type="button"
-              onClick={onOpenProjectBoard}
+              onClick={() => {
+                if (!onOpenProjectBoard) return
+                onOpenProjectBoard(projectBoardFocus)
+              }}
               style={{
                 padding: '8px 10px',
                 borderRadius: 12,

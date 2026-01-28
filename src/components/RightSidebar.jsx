@@ -47,7 +47,8 @@ export default function RightSidebar({
 
   if (!mounted) return null
 
-  const resolvedWidth = typeof width === 'number' ? `${width}px` : String(width || '420px')
+  const resolvedWidth =
+    typeof width === 'number' ? `min(${width}px, 100vw)` : String(width || 'min(420px, 100vw)')
 
   return (
     <aside

@@ -124,6 +124,22 @@ export default function TaskSidebar({
     return []
   }, [task])
 
+  const projectBoardFocus = useMemo(() => {
+    if (!parentStory) return null
+    const titles = Array.isArray(parentStory?.tasks)
+      ? parentStory.tasks.map((t) => String(t?.title || t || '').trim()).filter(Boolean)
+      : []
+    return {
+      storyId: String(parentStory?.id || ''),
+      storyTitle: String(parentStory?.title || '').trim(),
+      storyEpic: String(
+        parentStory?.epic || parentStory?.pillar || parentStory?.category || ''
+      ).trim(),
+      taskTitles: titles,
+      highlightTitle: String(task?.title || '').trim(),
+    }
+  }, [parentStory, task?.title])
+
   useEffect(() => {
     if (!open || !task?.id) return
     try {
@@ -233,7 +249,10 @@ export default function TaskSidebar({
                 {onOpenProjectBoard ? (
                   <button
                     type="button"
-                    onClick={onOpenProjectBoard}
+                    onClick={() => {
+                      if (!onOpenProjectBoard) return
+                      onOpenProjectBoard(projectBoardFocus)
+                    }}
                     style={{
                       padding: '6px 10px',
                       borderRadius: 999,

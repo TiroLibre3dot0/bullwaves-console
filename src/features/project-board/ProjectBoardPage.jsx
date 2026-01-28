@@ -792,6 +792,8 @@ export default function ProjectBoardPage({
   sharePayload = null,
   embedded = false,
   onShareSnapshot,
+  focus = null,
+  onClearFocus,
 }) {
   const [tasks, setTasks] = useState(() => {
     const inPayload = Array.isArray(sharePayload?.tasks) ? sharePayload.tasks : null
@@ -813,12 +815,106 @@ export default function ProjectBoardPage({
   const [activeId, setActiveId] = useState(null)
   const [taskOpen, setTaskOpen] = useState(false)
 
+  const focusTitles = useMemo(() => {
+    const list = Array.isArray(focus?.taskTitles) ? focus.taskTitles : []
+    return list
+      .map((t) => String(t || '').trim())
+      .filter(Boolean)
+      .map((t) => t.toLowerCase())
+  }, [focus])
+
+  const focusMeta = useMemo(() => {
+    const title = String(focus?.storyTitle || '').trim()
+    const epic = String(focus?.storyEpic || '').trim()
+    const highlight = String(focus?.highlightTitle || '').trim()
+    return {
+      storyTitle: title,
+      storyEpic: epic,
+      highlightTitle: highlight,
+    }
+  }, [focus])
+
+  const resolveStrategicCategoryFromFocus = () => {
+    const t = `${focusMeta.storyTitle} ${focusMeta.storyEpic}`.toLowerCase()
+    if (t.includes('partner') || t.includes('ib') || t.includes('affiliate'))
+      return 'Partnerships & Affiliates'
+    if (t.includes('retention') || t.includes('reactivation') || t.includes('prop'))
+      return 'Retention & Monetization'
+    if (
+      t.includes('platform') ||
+      t.includes('crm') ||
+      t.includes('product') ||
+      t.includes('dashboard')
+    )
+      return 'Platform & Infrastructure'
+    if (t.includes('ops') || t.includes('compliance') || t.includes('payroll') || t.includes('hr'))
+      return 'Operations & Compliance'
+    return 'Growth & Acquisition'
+  }
+
+  useEffect(() => {
+    if (!focusTitles.length) return
+    if (publicMode) return
+
+    // Ensure story-scoped tasks exist on the board (so filtering never looks empty).
+    setTasks((prev) => {
+      const existing = new Set(
+        (prev || []).map((t) =>
+          String(t?.title || '')
+            .trim()
+            .toLowerCase()
+        )
+      )
+      const strategicCategory = resolveStrategicCategoryFromFocus()
+
+      const missing = (Array.isArray(focus?.taskTitles) ? focus.taskTitles : [])
+        .map((t) => String(t || '').trim())
+        .filter(Boolean)
+        .filter((t) => !existing.has(t.toLowerCase()))
+
+      if (!missing.length) return prev
+
+      const now = new Date().toISOString()
+      const additions = missing.map((title) => ({
+        id: makeId(),
+        title,
+        strategicCategory,
+        impactLevel: 'Medium',
+        owner: focusMeta.storyTitle ? focusMeta.storyTitle : '—',
+        status: 'Backlog',
+        strategicObjective: focusMeta.storyTitle || '—',
+        problemSolved: '',
+        expectedBusinessImpact: '',
+        kpiOrMetric: '',
+        taskBreakdown: [],
+        description: '',
+        summary: `Imported from Stories Kanban (${focusMeta.storyTitle || 'story'}).`,
+        icon: 'plus',
+        notes: `seededAt: ${now}`,
+      }))
+
+      return [...(prev || []), ...additions]
+    })
+  }, [focusTitles.join('|'), publicMode])
+
   useEffect(() => {
     if (typeof onShareSnapshot !== 'function') return
     onShareSnapshot({
       tasks,
     })
   }, [tasks, onShareSnapshot])
+
+  const visibleTasks = useMemo(() => {
+    if (!focusTitles.length) return tasks
+    const byTitle = new Set(focusTitles)
+    return (tasks || []).filter((t) =>
+      byTitle.has(
+        String(t?.title || '')
+          .trim()
+          .toLowerCase()
+      )
+    )
+  }, [tasks, focusTitles])
 
   const grouped = useMemo(() => {
     const by = {
@@ -827,12 +923,12 @@ export default function ProjectBoardPage({
       Blocked: [],
       Done: [],
     }
-    for (const t of tasks || []) {
+    for (const t of visibleTasks || []) {
       const key = STATUSES.includes(t.status) ? t.status : 'Backlog'
       by[key].push(t)
     }
     return by
-  }, [tasks])
+  }, [visibleTasks])
 
   const updateTask = (id, patch) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
@@ -1011,8 +1107,52 @@ export default function ProjectBoardPage({
         )}
 
         <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 800 }}>
-          Total: {tasks.length}
+          Total: {visibleTasks.length}
+          {focusTitles.length ? (
+            <span style={{ marginLeft: 8, opacity: 0.85 }}>(filtered)</span>
+          ) : null}
         </div>
+
+        {focusTitles.length ? (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 10,
+              padding: '8px 10px',
+              borderRadius: 999,
+              border: '1px solid rgba(56,189,248,0.26)',
+              background: 'rgba(56,189,248,0.10)',
+              color: 'rgba(226,232,240,0.92)',
+              fontWeight: 900,
+              fontSize: 12,
+              maxWidth: '100%',
+            }}
+            title={focusMeta.storyTitle ? `Focused on: ${focusMeta.storyTitle}` : 'Focused view'}
+          >
+            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Focus: {focusMeta.storyTitle || 'Story'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof onClearFocus === 'function') onClearFocus()
+              }}
+              style={{
+                padding: '4px 8px',
+                borderRadius: 999,
+                border: '1px solid rgba(255,255,255,0.14)',
+                background: 'rgba(0,0,0,0.20)',
+                color: 'rgba(226,232,240,0.92)',
+                fontWeight: 900,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div
@@ -1102,6 +1242,9 @@ export default function ProjectBoardPage({
         .pb-grid { grid-template-columns: repeat(6, minmax(220px, 1fr)); }
         @media (max-width: 1400px) {
           .pb-grid { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
+        }
+        @media (max-width: 1000px) {
+          .pb-grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
         }
         @media (max-width: 720px) {
           /* Mobile-first Kanban: swipe columns horizontally instead of stacking a very tall page */
