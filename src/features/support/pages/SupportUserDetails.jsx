@@ -489,6 +489,13 @@ export default function SupportUserDetails({
   const accountId = maskPii ? maskKeepEnd(accountIdRaw, 3) : accountIdRaw
   const mt5 = maskPii ? maskKeepEnd(mt5Raw, 2) : mt5Raw
   const country = mapped.country || '—'
+  const credentials = (() => {
+    const a = String(accountId || '').trim()
+    const m = String(mt5 || '').trim()
+    if (!a || a === '—') return m || '—'
+    if (!m || m === '—' || m === a) return a
+    return `${a} · ${m}`
+  })()
   const totalDeposits = fmtEuro(mapped.totalDeposits)
   const withdrawals = fmtEuro(mapped.withdrawals)
   const netDeposits = fmtEuro(mapped.netDeposits)
@@ -520,6 +527,19 @@ export default function SupportUserDetails({
     : null
 
   const partnerProfileUrlUi = maskPii ? null : partnerProfileUrl
+
+  function toSkaleRecordId(id) {
+    const digits = String(id || '').replace(/\D+/g, '')
+    const last6 = digits.slice(-6)
+    return last6.length === 6 ? last6 : null
+  }
+
+  const skaleRecordId = toSkaleRecordId(accountIdRaw)
+  const skaleUrl = skaleRecordId
+    ? `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${encodeURIComponent(skaleRecordId)}`
+    : null
+
+  const skaleUrlUi = maskPii ? null : skaleUrl
 
   function initialsForName(v) {
     const s = String(v || '').trim()
@@ -1194,29 +1214,55 @@ export default function SupportUserDetails({
                   >
                     {displayName}
                   </span>
-                  {partnerProfileUrlUi ? (
-                    <a
-                      className="support-partner-pill"
-                      href={partnerProfileUrlUi}
-                      target="_blank"
-                      rel="noreferrer"
-                      title={t('support.details.partnerProfile.hint', {
-                        customerId: partnerCustomerId,
-                      })}
-                      aria-label={t('support.details.partnerProfile.hint', {
-                        customerId: partnerCustomerId,
-                      })}
-                    >
-                      <span className="support-partner-pill-initials">{partnerInitials}</span>
-                      <span className="support-partner-pill-text">
-                        {t('support.details.partnerProfile.label')}
-                      </span>
-                      <span aria-hidden className="support-partner-pill-ext">
-                        ↗
-                      </span>
-                    </a>
-                  ) : null}
                 </div>
+                {partnerProfileUrlUi || skaleUrlUi ? (
+                  <div className="support-details-topbar-links">
+                    {partnerProfileUrlUi ? (
+                      <a
+                        className="support-partner-pill is-cellxpert"
+                        href={partnerProfileUrlUi}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={t('support.details.partnerProfile.hint', {
+                          customerId: partnerCustomerId,
+                        })}
+                        aria-label={t('support.details.partnerProfile.hint', {
+                          customerId: partnerCustomerId,
+                        })}
+                      >
+                        <span className="support-partner-pill-initials">CX</span>
+                        <span className="support-partner-pill-text">
+                          {t('support.details.partnerProfile.label')}
+                        </span>
+                        <span aria-hidden className="support-partner-pill-ext">
+                          ↗
+                        </span>
+                      </a>
+                    ) : null}
+                    {skaleUrlUi ? (
+                      <a
+                        className="support-partner-pill is-skale"
+                        href={skaleUrlUi}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={t('support.details.skale.hint', {
+                          recordId: skaleRecordId,
+                        })}
+                        aria-label={t('support.details.skale.hint', {
+                          recordId: skaleRecordId,
+                        })}
+                      >
+                        <span className="support-partner-pill-initials">SK</span>
+                        <span className="support-partner-pill-text">
+                          {t('support.details.skale.label')}
+                        </span>
+                        <span aria-hidden className="support-partner-pill-ext">
+                          ↗
+                        </span>
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="support-details-topbar-meta">
                   {accountId}
                   {mt5 ? ` · ${mt5}` : ''}
@@ -1255,63 +1301,102 @@ export default function SupportUserDetails({
             style={{ textAlign: 'left', alignSelf: 'stretch' }}
           >
             <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-              {partnerProfileUrlUi ? (
-                <a
-                  className="support-partner-avatar-link"
-                  href={partnerProfileUrlUi}
-                  target="_blank"
-                  rel="noreferrer"
-                  title={t('support.details.partnerProfile.hint', {
-                    customerId: partnerCustomerId,
-                  })}
-                  aria-label={t('support.details.partnerProfile.hint', {
-                    customerId: partnerCustomerId,
-                  })}
-                >
-                  <div
-                    className="support-partner-avatar"
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 10,
-                      background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
-                      color: '#fff',
-                      display: 'grid',
-                      placeItems: 'center',
-                      fontWeight: 800,
-                      fontSize: 16,
-                    }}
-                  >
-                    {partnerInitials}
-                    <span aria-hidden className="support-partner-avatar-ext">
-                      ↗
-                    </span>
-                  </div>
-                </a>
-              ) : (
+              <div
+                className="support-partner-avatar"
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 10,
+                  background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
+                  color: '#fff',
+                  display: 'grid',
+                  placeItems: 'center',
+                  fontWeight: 800,
+                  fontSize: 16,
+                }}
+              >
+                {partnerInitials}
+              </div>
+              <div>
                 <div
                   style={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 10,
-                    background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
-                    color: '#fff',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontWeight: 800,
-                    fontSize: 16,
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 10,
+                    flexWrap: 'wrap',
                   }}
                 >
-                  {partnerInitials}
+                  <div style={{ fontSize: 18, fontWeight: 900, minWidth: 0 }}>{displayName}</div>
+                  <div
+                    style={{
+                      color: 'var(--muted)',
+                      fontSize: 12,
+                      fontWeight: 800,
+                      minWidth: 0,
+                      maxWidth: '100%',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={credentials}
+                  >
+                    {credentials}
+                  </div>
                 </div>
-              )}
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 900 }}>{displayName}</div>
-                <div style={{ color: 'var(--muted)', fontSize: 13, marginTop: 6 }}>
-                  {country} · {mt5}
-                </div>
-                {mapped.status ? (
-                  <div style={{ marginTop: 8 }} className="status-help-wrap">
+                {!maskPii && (partnerProfileUrlUi || skaleUrlUi) ? (
+                  <div className="support-external-actions" style={{ marginTop: 10 }}>
+                    {partnerProfileUrlUi ? (
+                      <a
+                        className="support-external-link support-external-link--cellxpert"
+                        href={partnerProfileUrlUi}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={t('support.details.partnerProfile.hint', {
+                          customerId: partnerCustomerId,
+                        })}
+                        aria-label={t('support.details.partnerProfile.hint', {
+                          customerId: partnerCustomerId,
+                        })}
+                      >
+                        {t('support.details.partnerProfile.label')} <span aria-hidden>↗</span>
+                      </a>
+                    ) : null}
+                    {skaleUrlUi ? (
+                      <a
+                        className="support-external-link support-external-link--skale"
+                        href={skaleUrlUi}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={t('support.details.skale.hint', {
+                          recordId: skaleRecordId,
+                        })}
+                        aria-label={t('support.details.skale.hint', {
+                          recordId: skaleRecordId,
+                        })}
+                      >
+                        {t('support.details.skale.label')} <span aria-hidden>↗</span>
+                      </a>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+            <div className="support-id-block">
+              <div className="support-id-field">
+                <div className="support-id-label">{t('support.details.account')}</div>
+                <div className="support-id-value">{accountId}</div>
+              </div>
+
+              <div className="support-id-field">
+                <div className="support-id-label">{t('support.details.country')}</div>
+                <div className="support-id-value is-medium">{country || '—'}</div>
+              </div>
+
+              {mapped.status ? (
+                <div className="support-id-field">
+                  <div className="support-id-label">{t('support.details.statusFallback')}</div>
+                  <div style={{ marginTop: 6 }} className="status-help-wrap">
                     <button
                       type="button"
                       className={`badge status status-help-trigger${statusHelpOpen ? ' is-open' : ''}`}
@@ -1340,26 +1425,12 @@ export default function SupportUserDetails({
                       })()}
                     </div>
                   </div>
-                ) : null}
-              </div>
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                {t('support.details.account')}
-              </div>
-              <div style={{ fontWeight: 800, marginTop: 6 }}>{accountId}</div>
-              <div style={{ height: 12 }} />
-              <div
-                style={{
-                  borderTop: '1px solid rgba(255,255,255,0.03)',
-                  marginTop: 12,
-                  paddingTop: 12,
-                }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  {t('support.details.affiliate')}
                 </div>
-                <div style={{ fontWeight: 700, marginTop: 6 }}>
+              ) : null}
+
+              <div className="support-id-section">
+                <div className="support-id-label">{t('support.details.affiliate')}</div>
+                <div className="support-id-value is-medium">
                   {affiliateDisplay || t('support.details.noAffiliate')}
                   {affiliateMappingMissing && (
                     <span style={{ color: 'orange', fontSize: 10, marginLeft: 8 }}>
@@ -1375,16 +1446,8 @@ export default function SupportUserDetails({
               </div>
 
               {/* Affiliate move history (from comments report) */}
-              <div
-                style={{
-                  marginTop: 12,
-                  borderTop: '1px solid rgba(255,255,255,0.03)',
-                  paddingTop: 12,
-                }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  {t('support.details.affiliateMoves.title')}
-                </div>
+              <div className="support-id-section">
+                <div className="support-id-label">{t('support.details.affiliateMoves.title')}</div>
                 {affiliateMovesLoading ? (
                   <div style={{ marginTop: 8, color: 'var(--muted)', fontSize: 13 }}>
                     {t('support.details.affiliateMoves.loading')}
@@ -1427,16 +1490,8 @@ export default function SupportUserDetails({
               </div>
 
               {/* Commissions detail inserted into left sidebar */}
-              <div
-                style={{
-                  marginTop: 12,
-                  borderTop: '1px solid rgba(255,255,255,0.03)',
-                  paddingTop: 12,
-                }}
-              >
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  {t('support.details.commissions.title')}
-                </div>
+              <div className="support-id-section">
+                <div className="support-id-label">{t('support.details.commissions.title')}</div>
                 <div style={{ fontWeight: 800, fontSize: 18, marginTop: 8 }}>
                   {maskCommissions ? '•••' : commissionsTotal}
                 </div>
