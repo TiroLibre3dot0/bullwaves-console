@@ -41,7 +41,7 @@ export default function AuthenticatedApp() {
 
   const routes = useMemo(
     () => ({
-      commandCenter: '/', // Default landing page
+      commandCenter: '/command-center',
       storiesKanban: '/stories-kanban',
       projectBoard: '/project-board',
       marketingPlan: '/marketing-plan',
@@ -66,7 +66,8 @@ export default function AuthenticatedApp() {
   )
 
   const pathToView = (pathname) => {
-    if (!pathname || pathname === '/') return 'commandCenter'
+    if (!pathname || pathname === '/' || pathname.startsWith('/command-center'))
+      return 'commandCenter'
     if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
     if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
@@ -129,6 +130,17 @@ export default function AuthenticatedApp() {
     }
     setView('supportUserCheck')
   }, [user, isSupportUser])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!user) return
+    if (isSupportUser) return
+
+    // Canonicalize legacy root route to a dedicated Command Center URL.
+    if (window.location.pathname === '/') {
+      window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+    }
+  }, [user, isSupportUser, routes.commandCenter])
 
   const navigate = (nextView) => {
     setIsSidebarOpen(false)
@@ -292,7 +304,11 @@ export default function AuthenticatedApp() {
         <main className="dashboard-content">
           <div className="dashboard-inner">
             {['commandCenter', 'storiesKanban', 'projectBoard'].includes(view) ? (
-              <ExecutionHubPage activeTab={view} onChangeTab={(nextTab) => navigate(nextTab)} />
+              <ExecutionHubPage
+                activeTab={view}
+                onChangeTab={(nextTab) => navigate(nextTab)}
+                showLanguageSelect={false}
+              />
             ) : null}
 
             {view === 'marketingPlan' ? <MarketingPlanExecutionPage /> : null}

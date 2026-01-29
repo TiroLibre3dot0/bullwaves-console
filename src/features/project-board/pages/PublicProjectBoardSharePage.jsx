@@ -3,8 +3,11 @@ import ProjectBoardPage from '../ProjectBoardPage'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import { trackPublicShareOpen } from '../../../utils/analytics'
+import { useI18n } from '../../../i18n/I18nContext'
+import LanguageSelect from '../../../components/LanguageSelect'
 
 export default function PublicProjectBoardSharePage({ token }) {
+  const { t, locale } = useI18n()
   const [payload, setPayload] = useState(null)
   const [loadError, setLoadError] = useState(null)
 
@@ -62,13 +65,13 @@ export default function PublicProjectBoardSharePage({ token }) {
 
   useEffect(() => {
     setOpenGraphMeta({
-      title: 'Tasks — Board View',
-      description: 'Public read-only view of the Tasks board (Kanban).',
+      title: t('publicShare.tasks.ogTitle'),
+      description: t('publicShare.tasks.ogDescription'),
       image: '/Logo.png',
       url: typeof window !== 'undefined' ? window.location.href : '',
     })
     return () => resetOpenGraphMeta()
-  }, [])
+  }, [t])
 
   const isValid =
     payload &&
@@ -89,9 +92,19 @@ export default function PublicProjectBoardSharePage({ token }) {
     return (
       <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
-          <div style={{ fontSize: 22, fontWeight: 950 }}>Tasks</div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 22, fontWeight: 950 }}>{t('publicShare.tasks.title')}</div>
+            <LanguageSelect />
+          </div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
-            {loadError || 'Invalid or expired link.'}
+            {loadError || t('publicShare.invalid')}
           </div>
         </div>
       </div>
@@ -116,6 +129,7 @@ export default function PublicProjectBoardSharePage({ token }) {
               style={{ height: 26, width: 'auto', display: 'block', opacity: 0.95 }}
             />
           </div>
+          <LanguageSelect />
         </div>
 
         <div
@@ -126,8 +140,9 @@ export default function PublicProjectBoardSharePage({ token }) {
             fontWeight: 800,
           }}
         >
-          Read-only share · Generated{' '}
-          {payload.generatedAt ? new Date(payload.generatedAt).toLocaleString() : '—'}
+          {t('publicShare.readOnlyGenerated', {
+            date: payload.generatedAt ? new Date(payload.generatedAt).toLocaleString(locale) : '—',
+          })}
         </div>
         <ProjectBoardPage publicMode sharePayload={payload} />
       </div>

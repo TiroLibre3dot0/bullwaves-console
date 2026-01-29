@@ -1,27 +1,28 @@
 import React, { useMemo } from 'react'
 import RightSidebar from '../RightSidebar'
+import { useI18n } from '../../i18n/I18nContext'
 
 const EPICS = {
   Retention: {
-    label: 'Retention',
+    key: 'Retention',
     color: '#f59e0b',
     bg: 'rgba(245,158,11,0.14)',
     border: 'rgba(245,158,11,0.30)',
   },
   Acquisition: {
-    label: 'Acquisition',
+    key: 'Acquisition',
     color: '#10b981',
     bg: 'rgba(16,185,129,0.14)',
     border: 'rgba(16,185,129,0.30)',
   },
   Platform: {
-    label: 'Platform',
+    key: 'Platform',
     color: '#8b5cf6',
     bg: 'rgba(139,92,246,0.14)',
     border: 'rgba(139,92,246,0.30)',
   },
   Ops: {
-    label: 'Ops',
+    key: 'Ops',
     color: '#ef4444',
     bg: 'rgba(239,68,68,0.14)',
     border: 'rgba(239,68,68,0.30)',
@@ -112,9 +113,9 @@ function normalizeStatus(s) {
 
 function riskTone(level) {
   const v = String(level || '').toLowerCase()
-  if (v.includes('high') || v.includes('red')) return { label: 'High', color: '#ef4444' }
-  if (v.includes('low') || v.includes('green')) return { label: 'Low', color: '#10b981' }
-  return { label: 'Medium', color: '#f59e0b' }
+  if (v.includes('high') || v.includes('red')) return { key: 'high', color: '#ef4444' }
+  if (v.includes('low') || v.includes('green')) return { key: 'low', color: '#10b981' }
+  return { key: 'medium', color: '#f59e0b' }
 }
 
 function isDone(task) {
@@ -139,6 +140,7 @@ export default function StorySidebar({
   onToggleTaskDone,
   publicMode = false,
 }) {
+  const { t } = useI18n()
   const epic = useMemo(() => resolveEpic(story), [story])
 
   const tasks = useMemo(() => {
@@ -205,10 +207,11 @@ export default function StorySidebar({
     // Fallback: keep UI stable with 3 rows
     const seed = normalized.length
       ? normalized
-      : [{ label: String(story?.kpi || 'Primary KPI'), current: '—', target: '—' }]
-    while (seed.length < 3) seed.push({ label: 'KPI', current: '—', target: '—' })
+      : [{ label: String(story?.kpi || t('storySidebar.primaryKpi')), current: '—', target: '—' }]
+    while (seed.length < 3)
+      seed.push({ label: t('storySidebar.kpiRow'), current: '—', target: '—' })
     return seed.slice(0, 3)
-  }, [story])
+  }, [story, t])
 
   const sensitiveStyle = useMemo(
     () => ({
@@ -229,7 +232,7 @@ export default function StorySidebar({
   if (!story) return null
 
   return (
-    <RightSidebar open={open} onClose={onClose} width={460} ariaLabel="Story sidebar">
+    <RightSidebar open={open} onClose={onClose} width={460} ariaLabel={t('storySidebar.ariaLabel')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Header */}
         <div
@@ -264,7 +267,7 @@ export default function StorySidebar({
                 textTransform: 'uppercase',
               }}
             >
-              {epic.label}
+              {t(`epics.${epic.key}`)}
             </div>
 
             <button
@@ -285,7 +288,7 @@ export default function StorySidebar({
                 whiteSpace: 'nowrap',
               }}
             >
-              Open Tasks
+              {t('storySidebar.openTasks')}
             </button>
           </div>
 
@@ -315,14 +318,16 @@ export default function StorySidebar({
                 fontWeight: 850,
               }}
             >
-              <div>{Math.round(computedProgress * 100)}% progress</div>
-              <div>Owner: {story.owner || '—'}</div>
+              <div>{t('common.progressPct', { pct: Math.round(computedProgress * 100) })}</div>
+              <div>
+                {t('common.owner')}: {story.owner || '—'}
+              </div>
             </div>
           </div>
         </div>
 
         {/* GOAL */}
-        <SectionCard title="GOAL">
+        <SectionCard title={t('storySidebar.sections.goal')}>
           <div
             style={{
               color: 'rgba(226,232,240,0.92)',
@@ -336,7 +341,7 @@ export default function StorySidebar({
         </SectionCard>
 
         {/* KPI TARGET */}
-        <SectionCard title="KPI TARGET">
+        <SectionCard title={t('storySidebar.sections.kpiTarget')}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {kpis.map((k, idx) => (
               <div
@@ -384,14 +389,14 @@ export default function StorySidebar({
         </SectionCard>
 
         {/* CURRENT STATUS */}
-        <SectionCard title="CURRENT STATUS">
+        <SectionCard title={t('storySidebar.sections.currentStatus')}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
             <div
               className="card"
               style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}
             >
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                Progress
+                {t('storySidebar.status.progress')}
               </div>
               <div style={{ marginTop: 6, color: 'rgba(241,245,249,0.96)', fontWeight: 950 }}>
                 {Math.round(computedProgress * 100)}%
@@ -402,16 +407,18 @@ export default function StorySidebar({
               style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}
             >
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                Risk
+                {t('storySidebar.status.risk')}
               </div>
-              <div style={{ marginTop: 6, color: risk.color, fontWeight: 980 }}>{risk.label}</div>
+              <div style={{ marginTop: 6, color: risk.color, fontWeight: 980 }}>
+                {t(`common.risk.${risk.key}`)}
+              </div>
             </div>
             <div
               className="card"
               style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}
             >
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                Blockers
+                {t('storySidebar.status.blockers')}
               </div>
               <div style={{ marginTop: 6, color: 'rgba(241,245,249,0.96)', fontWeight: 980 }}>
                 {blockers.length}
@@ -426,12 +433,12 @@ export default function StorySidebar({
               fontWeight: 850,
             }}
           >
-            Status: {normalizeStatus(story.status)}
+            {t('storySidebar.status.statusLabel')}: {normalizeStatus(story.status)}
           </div>
         </SectionCard>
 
         {/* TASK LIST */}
-        <SectionCard title="TASK LIST">
+        <SectionCard title={t('storySidebar.sections.taskList')}>
           {tasks.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {tasks.map((task) => {
@@ -453,7 +460,7 @@ export default function StorySidebar({
                       cursor: 'pointer',
                     }}
                     onClick={() => onSelectTask?.(task)}
-                    title="Open task cockpit"
+                    title={t('storySidebar.task.openCockpit')}
                   >
                     <button
                       type="button"
@@ -475,8 +482,8 @@ export default function StorySidebar({
                         fontSize: 12,
                         lineHeight: '16px',
                       }}
-                      aria-label={done ? 'Mark not done' : 'Mark done'}
-                      title={done ? 'Mark not done' : 'Mark done'}
+                      aria-label={done ? t('common.markNotDone') : t('common.markDone')}
+                      title={done ? t('common.markNotDone') : t('common.markDone')}
                     >
                       {done ? '✓' : ''}
                     </button>
@@ -514,7 +521,7 @@ export default function StorySidebar({
                           fontWeight: 800,
                         }}
                       >
-                        {task.owner ? `Owner: ${task.owner}` : ''}
+                        {task.owner ? `${t('common.owner')}: ${task.owner}` : ''}
                       </div>
                     </div>
                   </div>
@@ -527,7 +534,7 @@ export default function StorySidebar({
         </SectionCard>
 
         {/* BLOCKERS & ALERTS */}
-        <SectionCard title="BLOCKERS & ALERTS">
+        <SectionCard title={t('storySidebar.sections.blockersAlerts')}>
           {blockers.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {blockers.map((b, idx) => (
@@ -551,13 +558,13 @@ export default function StorySidebar({
             </div>
           ) : (
             <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 800 }}>
-              No active blockers.
+              {t('storySidebar.empty.noBlockers')}
             </div>
           )}
         </SectionCard>
 
         {/* DECISION ZONE */}
-        <SectionCard title="DECISION ZONE">
+        <SectionCard title={t('storySidebar.sections.decisionZone')}>
           {decisions.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {decisions.map((d, idx) => (
@@ -585,9 +592,9 @@ export default function StorySidebar({
                         fontWeight: 800,
                       }}
                     >
-                      {d?.owner ? `Owner: ${d.owner}` : ''}
+                      {d?.owner ? `${t('common.owner')}: ${d.owner}` : ''}
                       {d?.owner && d?.due ? ' • ' : ''}
-                      {d?.due ? `Due: ${d.due}` : ''}
+                      {d?.due ? `${t('common.due')}: ${d.due}` : ''}
                     </div>
                   ) : null}
                 </div>
@@ -595,7 +602,7 @@ export default function StorySidebar({
             </div>
           ) : (
             <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 800 }}>
-              No decisions required.
+              {t('storySidebar.empty.noDecisions')}
             </div>
           )}
         </SectionCard>

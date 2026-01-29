@@ -1,23 +1,24 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import CardSection from '../../components/common/CardSection'
 import { fetchCsvRowsCached, withReportsVersion } from '../../lib/fetchCache'
+import { useI18n } from '../../i18n/I18nContext'
 import { seedStories } from '../stories-kanban/storiesSeed'
 
-function formatInt(n) {
+function formatInt(n, locale) {
   const x = Number(n)
   if (!Number.isFinite(x)) return '—'
   try {
-    return new Intl.NumberFormat().format(Math.round(x))
+    return new Intl.NumberFormat(locale || undefined).format(Math.round(x))
   } catch {
     return String(Math.round(x))
   }
 }
 
-function formatCurrencyEUR(n) {
+function formatCurrencyEUR(n, locale) {
   const x = Number(n)
   if (!Number.isFinite(x)) return '—'
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale || undefined, {
       style: 'currency',
       currency: 'EUR',
       maximumFractionDigits: 0,
@@ -27,11 +28,11 @@ function formatCurrencyEUR(n) {
   }
 }
 
-function formatPct01(n) {
+function formatPct01(n, locale) {
   const x = Number(n)
   if (!Number.isFinite(x)) return '—'
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale || undefined, {
       style: 'percent',
       maximumFractionDigits: 0,
     }).format(x)
@@ -69,10 +70,12 @@ function parseCohortDateLoose(s) {
   return null
 }
 
-function formatMonthYear(d) {
+function formatMonthYear(d, locale) {
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return '—'
   try {
-    return new Intl.DateTimeFormat(undefined, { month: 'short', year: 'numeric' }).format(d)
+    return new Intl.DateTimeFormat(locale || undefined, { month: 'short', year: 'numeric' }).format(
+      d
+    )
   } catch {
     return `${d.getMonth() + 1}/${d.getFullYear()}`
   }
@@ -96,17 +99,19 @@ function endOfLocalDay(d) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 0, 0, 0, 0)
 }
 
-function formatWeekdayShort(d) {
+function formatWeekdayShort(d, locale) {
   try {
-    return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(d)
+    return new Intl.DateTimeFormat(locale || undefined, { weekday: 'short' }).format(d)
   } catch {
     return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()] || ''
   }
 }
 
-function formatMonthDay(d) {
+function formatMonthDay(d, locale) {
   try {
-    return new Intl.DateTimeFormat(undefined, { day: '2-digit', month: 'short' }).format(d)
+    return new Intl.DateTimeFormat(locale || undefined, { day: '2-digit', month: 'short' }).format(
+      d
+    )
   } catch {
     return `${d.getDate()}/${d.getMonth() + 1}`
   }
@@ -130,7 +135,16 @@ const SENSITIVE_BLUR_STYLE = {
   userSelect: 'none',
 }
 
-function MacroCard({ label, primary, secondary, tone, onClick, hint, obscure = false }) {
+function MacroCard({
+  label,
+  primary,
+  secondary,
+  tone,
+  onClick,
+  hint,
+  obscure = false,
+  obscureLabel = 'Obscured',
+}) {
   const accent = toneAccent(tone)
   const shouldObscurePrimary = obscure && primary != null && String(primary) !== '—'
   const shouldObscureSecondary = obscure && secondary != null && String(secondary) !== '—'
@@ -208,7 +222,7 @@ function MacroCard({ label, primary, secondary, tone, onClick, hint, obscure = f
               pointerEvents: 'none',
             }}
           >
-            Obscured
+            {obscureLabel}
           </div>
         ) : null}
       </div>
@@ -245,7 +259,7 @@ function riskTone(risk) {
   return null
 }
 
-function StoryCard({ story, onOpenKanban, onOpenProjectBoard }) {
+function StoryCard({ story, onOpenKanban, onOpenProjectBoard, labels }) {
   const tone = riskTone(story?.risk)
   const accent = toneAccent(tone)
   const pct = Number.isFinite(Number(story?.progress))
@@ -253,9 +267,16 @@ function StoryCard({ story, onOpenKanban, onOpenProjectBoard }) {
     : 0
 
   return (
-    <button
-      type="button"
-      onClick={() => onOpenKanban?.()}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onOpenKanban?.(story?.id)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onOpenKanban?.(story?.id)
+        }
+      }}
       style={{
         textAlign: 'left',
         width: '100%',
@@ -296,7 +317,7 @@ function StoryCard({ story, onOpenKanban, onOpenProjectBoard }) {
           <div
             style={{ marginTop: 6, color: 'rgba(148,163,184,0.92)', fontSize: 12, fontWeight: 750 }}
           >
-            Owner: {story?.owner || '—'}
+            {labels?.owner || 'Owner'}: {story?.owner || '—'}
           </div>
         </div>
 
@@ -313,7 +334,11 @@ function StoryCard({ story, onOpenKanban, onOpenProjectBoard }) {
               fontWeight: 750,
             }}
           >
-            <div>{Math.round(pct * 100)}% progress</div>
+            <div>
+              {labels?.progress
+                ? labels.progress(Math.round(pct * 100))
+                : `${Math.round(pct * 100)}% progress`}
+            </div>
             {onOpenProjectBoard ? (
               <button
                 type="button"
@@ -333,13 +358,13 @@ function StoryCard({ story, onOpenKanban, onOpenProjectBoard }) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                Open Board
+                {labels?.openTasks || 'Open Tasks'}
               </button>
             ) : null}
           </div>
         </div>
       </div>
-    </button>
+    </div>
   )
 }
 
@@ -350,6 +375,7 @@ export default function CommandCenterCockpit({
   embedded = false,
   publicMode = false,
 }) {
+  const { t, locale } = useI18n()
   const [nowTs, setNowTs] = useState(() => Date.now())
   const [metrics, setMetrics] = useState(() => ({
     ftd: null,
@@ -477,10 +503,10 @@ export default function CommandCenterCockpit({
 
           setMetrics((prev) => ({
             ...prev,
-            retentionCohort: retentionRow ? formatMonthYear(retentionRow.d) : null,
+            retentionCohort: retentionRow ? formatMonthYear(retentionRow.d, locale) : null,
             retentionM1: buildRate(retentionRow, 1),
             retentionM3: buildRate(retentionRow, 3),
-            reactivationCohort: reactivationRow ? formatMonthYear(reactivationRow.d) : null,
+            reactivationCohort: reactivationRow ? formatMonthYear(reactivationRow.d, locale) : null,
             reactivationM6: buildRate(reactivationRow, 6),
             reactivationM9: buildRate(reactivationRow, 9),
             updatedAt: new Date().toISOString(),
@@ -495,9 +521,9 @@ export default function CommandCenterCockpit({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale])
 
-  const stories = useMemo(() => seedStories(), [])
+  const stories = useMemo(() => seedStories({ locale }), [locale])
 
   const executionBuckets = useMemo(() => {
     const live = []
@@ -558,45 +584,56 @@ export default function CommandCenterCockpit({
     return [
       {
         id: 'acq',
-        label: 'Acquisition (FTD)',
-        primary: formatInt(metrics.ftd),
-        secondary: `Avg CPA: ${formatCurrencyEUR(metrics.avgCpa)}`,
+        label: t('commandCenter.macro.acq.label'),
+        primary: formatInt(metrics.ftd, locale),
+        secondary: t('commandCenter.macro.acq.secondary', {
+          cpa: Number.isFinite(Number(metrics.avgCpa))
+            ? formatCurrencyEUR(metrics.avgCpa, locale)
+            : '—',
+        }),
         tone: qualityTone,
         onClick: onDrillDown || onOpenKanban,
-        hint: 'Acquisition volume + unit cost (from Media Report.csv)',
+        hint: t('commandCenter.macro.acq.hint'),
       },
       {
         id: 'ret',
-        label: 'Retention (Repeat Deposit)',
-        primary: metrics.retentionM1 == null ? '—' : formatPct01(metrics.retentionM1),
-        secondary:
-          metrics.retentionM3 == null ? 'M3: —' : `M3: ${formatPct01(metrics.retentionM3)}`,
+        label: t('commandCenter.macro.ret.label'),
+        primary: metrics.retentionM1 == null ? '—' : formatPct01(metrics.retentionM1, locale),
+        secondary: t('commandCenter.macro.ret.secondary', {
+          m3: metrics.retentionM3 == null ? '—' : formatPct01(metrics.retentionM3, locale),
+        }),
         tone: null,
         onClick: onDrillDown || onOpenKanban,
-        hint: `Cohort ${metrics.retentionCohort || '—'} • rates are MonthN / Month0 from cohort deposits file`,
+        hint: t('commandCenter.macro.ret.hint', {
+          cohort: metrics.retentionCohort || '—',
+        }),
       },
       {
         id: 'react',
-        label: 'Reactivation (Long-tail)',
-        primary: metrics.reactivationM6 == null ? '—' : formatPct01(metrics.reactivationM6),
-        secondary:
-          metrics.reactivationM9 == null ? 'M9: —' : `M9: ${formatPct01(metrics.reactivationM9)}`,
+        label: t('commandCenter.macro.reactivation.label'),
+        primary: metrics.reactivationM6 == null ? '—' : formatPct01(metrics.reactivationM6, locale),
+        secondary: t('commandCenter.macro.reactivation.secondary', {
+          m9: metrics.reactivationM9 == null ? '—' : formatPct01(metrics.reactivationM9, locale),
+        }),
         tone: null,
         onClick: onDrillDown || onOpenKanban,
-        hint: `Cohort ${metrics.reactivationCohort || '—'} • rates are MonthN / Month0 from cohort deposits file`,
+        hint: t('commandCenter.macro.reactivation.hint', {
+          cohort: metrics.reactivationCohort || '—',
+        }),
       },
       {
         id: 'ops',
-        label: 'Platform / Ops',
-        primary: formatCurrencyEUR(metrics.netDeposits),
-        secondary:
-          withdrawalRatio == null ? 'WD/DEP: —' : `WD/DEP: ${formatPct01(withdrawalRatio)}`,
+        label: t('commandCenter.macro.ops.label'),
+        primary: formatCurrencyEUR(metrics.netDeposits, locale),
+        secondary: t('commandCenter.macro.ops.secondary', {
+          ratio: withdrawalRatio == null ? '—' : formatPct01(withdrawalRatio, locale),
+        }),
         tone: cashflowTone,
         onClick: onDrillDown || onOpenKanban,
-        hint: 'Cashflow health proxy until ops incidents are wired',
+        hint: t('commandCenter.macro.ops.hint'),
       },
     ]
-  }, [metrics, onDrillDown, onOpenKanban, qualifyRate, withdrawalRatio])
+  }, [metrics, onDrillDown, onOpenKanban, qualifyRate, withdrawalRatio, t, locale])
 
   const timeline = useMemo(() => {
     const now = new Date(nowTs)
@@ -612,11 +649,11 @@ export default function CommandCenterCockpit({
     monday.setDate(base.getDate() - (baseDay - 1))
 
     const schedule = [
-      { key: 'mon', title: 'Milestone review', type: 'review' },
-      { key: 'tue', title: 'Approval window', type: 'approval' },
-      { key: 'wed', title: 'Delivery checkpoint', type: 'delivery' },
-      { key: 'thu', title: 'Risk sync', type: 'risk' },
-      { key: 'fri', title: 'Executive recap', type: 'recap' },
+      { key: 'mon', title: t('commandCenter.timeline.mon'), type: 'review' },
+      { key: 'tue', title: t('commandCenter.timeline.tue'), type: 'approval' },
+      { key: 'wed', title: t('commandCenter.timeline.wed'), type: 'delivery' },
+      { key: 'thu', title: t('commandCenter.timeline.thu'), type: 'risk' },
+      { key: 'fri', title: t('commandCenter.timeline.fri'), type: 'recap' },
     ]
 
     return schedule.map((s, idx) => {
@@ -625,11 +662,11 @@ export default function CommandCenterCockpit({
       return {
         ...s,
         date: d,
-        label: formatWeekdayShort(d),
-        dateLabel: formatMonthDay(d),
+        label: formatWeekdayShort(d, locale),
+        dateLabel: formatMonthDay(d, locale),
       }
     })
-  }, [nowTs])
+  }, [nowTs, t, locale])
 
   const controlTower = useMemo(() => {
     const signals = []
@@ -637,26 +674,34 @@ export default function CommandCenterCockpit({
     if (Number.isFinite(Number(metrics.netDeposits)) && Number(metrics.netDeposits) < 0) {
       signals.push({
         tone: 'critical',
-        text: `Net deposits negative: ${formatCurrencyEUR(metrics.netDeposits)}`,
+        text: t('commandCenter.control.signals.netDepositsNegative', {
+          value: formatCurrencyEUR(metrics.netDeposits, locale),
+        }),
       })
     }
 
     if (withdrawalRatio != null && withdrawalRatio >= 1) {
       signals.push({
         tone: 'critical',
-        text: `Withdrawal ratio exceeded deposits: ${formatPct01(withdrawalRatio)}`,
+        text: t('commandCenter.control.signals.withdrawalExceeded', {
+          value: formatPct01(withdrawalRatio, locale),
+        }),
       })
     } else if (withdrawalRatio != null && withdrawalRatio >= 0.8) {
       signals.push({
         tone: 'warning',
-        text: `High withdrawal ratio: ${formatPct01(withdrawalRatio)}`,
+        text: t('commandCenter.control.signals.withdrawalHigh', {
+          value: formatPct01(withdrawalRatio, locale),
+        }),
       })
     }
 
     if (qualifyRate != null && qualifyRate < 0.05) {
       signals.push({
         tone: 'warning',
-        text: `Low qualification rate (QFTD/FTD): ${formatPct01(qualifyRate)}`,
+        text: t('commandCenter.control.signals.qualifyLow', {
+          value: formatPct01(qualifyRate, locale),
+        }),
       })
     }
 
@@ -668,7 +713,9 @@ export default function CommandCenterCockpit({
     if (atRisk.length) {
       signals.push({
         tone: 'critical',
-        text: `Execution at risk: ${String(atRisk[0]?.title || '—')}`,
+        text: t('commandCenter.control.signals.executionAtRisk', {
+          title: String(atRisk[0]?.title || '—'),
+        }),
       })
     }
 
@@ -708,7 +755,7 @@ export default function CommandCenterCockpit({
       signals: signals.slice(0, 3),
       actions: actions.slice(0, 3),
     }
-  }, [metrics.netDeposits, qualifyRate, stories, withdrawalRatio])
+  }, [metrics.netDeposits, qualifyRate, stories, withdrawalRatio, t, locale])
 
   return (
     <div style={{ padding: embedded ? 0 : 24 }}>
@@ -722,23 +769,23 @@ export default function CommandCenterCockpit({
               letterSpacing: 0.2,
             }}
           >
-            Strategic Execution
+            {t('commandCenter.header.topline')}
           </div>
           <div style={{ marginTop: 6, fontSize: 22, fontWeight: 950, color: '#fff' }}>
-            Command Center
+            {t('commandCenter.header.title')}
           </div>
           <div
             style={{ marginTop: 6, color: 'rgba(148,163,184,0.95)', fontWeight: 650, fontSize: 12 }}
           >
-            Status → Risks → Decisions → Execution
+            {t('commandCenter.header.subtitle')}
           </div>
         </div>
       )}
 
       {/* 1) SYSTEM STATUS */}
       <CardSection
-        title="System Status"
-        subtitle="STATUS — 4 macro indicators (real sources; missing stays standby)."
+        title={t('commandCenter.sections.systemStatus.title')}
+        subtitle={t('commandCenter.sections.systemStatus.subtitle')}
         background="rgba(255,255,255,0.00)"
       >
         <div
@@ -759,21 +806,25 @@ export default function CommandCenterCockpit({
               onClick={m.onClick}
               hint={m.hint}
               obscure={publicMode}
+              obscureLabel={t('common.obscured')}
             />
           ))}
         </div>
         <div
           style={{ marginTop: 10, color: 'rgba(148,163,184,0.82)', fontSize: 12, fontWeight: 650 }}
         >
-          Updated: {metrics.updatedAt ? new Date(metrics.updatedAt).toLocaleString() : '—'}
+          {t('commandCenter.updated')}{' '}
+          {metrics.updatedAt
+            ? new Date(metrics.updatedAt).toLocaleString(locale || undefined)
+            : '—'}
         </div>
       </CardSection>
 
       {/* 2) STRATEGIC EXECUTION */}
       <div style={{ marginTop: 12 }}>
         <CardSection
-          title="Strategic Execution"
-          subtitle="EXECUTION — Live / Next / In progress (click to open Kanban)."
+          title={t('commandCenter.sections.execution.title')}
+          subtitle={t('commandCenter.sections.execution.subtitle')}
           background="rgba(255,255,255,0.00)"
         >
           <div
@@ -781,9 +832,21 @@ export default function CommandCenterCockpit({
             style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}
           >
             {[
-              { key: 'live', label: 'LIVE', items: executionBuckets.live },
-              { key: 'next', label: 'NEXT', items: executionBuckets.next },
-              { key: 'ip', label: 'IN PROGRESS', items: executionBuckets.inProgress },
+              {
+                key: 'live',
+                label: t('commandCenter.executionBuckets.live'),
+                items: executionBuckets.live,
+              },
+              {
+                key: 'next',
+                label: t('commandCenter.executionBuckets.next'),
+                items: executionBuckets.next,
+              },
+              {
+                key: 'ip',
+                label: t('commandCenter.executionBuckets.inProgress'),
+                items: executionBuckets.inProgress,
+              },
             ].map((col) => (
               <div
                 key={col.key}
@@ -811,6 +874,11 @@ export default function CommandCenterCockpit({
                       story={s}
                       onOpenKanban={onOpenKanban || onDrillDown}
                       onOpenProjectBoard={onOpenProjectBoard}
+                      labels={{
+                        owner: t('common.owner'),
+                        progress: (pct) => t('commandCenter.story.progress', { pct }),
+                        openTasks: t('commandCenter.story.openTasks'),
+                      }}
                     />
                   ))}
                   {(col.items || []).length ? null : (
@@ -828,8 +896,8 @@ export default function CommandCenterCockpit({
       {/* 3) WEEKLY TIMELINE */}
       <div style={{ marginTop: 12 }}>
         <CardSection
-          title="Weekly Timeline"
-          subtitle="TIMELINE — Real dates for this workweek; today shows day progress."
+          title={t('commandCenter.sections.timeline.title')}
+          subtitle={t('commandCenter.sections.timeline.subtitle')}
           background="rgba(255,255,255,0.00)"
         >
           <div
@@ -840,13 +908,13 @@ export default function CommandCenterCockpit({
               gap: 10,
             }}
           >
-            {timeline.map((t) => {
+            {timeline.map((day) => {
               const now = new Date(nowTs)
-              const isToday = isSameLocalDay(t.date, now)
-              const isDecisionDay = t.type === 'approval' || t.type === 'risk'
+              const isToday = isSameLocalDay(day.date, now)
+              const isDecisionDay = day.type === 'approval' || day.type === 'risk'
               const accent =
                 isToday && isDecisionDay
-                  ? t.type === 'risk'
+                  ? day.type === 'risk'
                     ? toneAccent('critical')
                     : toneAccent('warning')
                   : null
@@ -867,7 +935,7 @@ export default function CommandCenterCockpit({
 
               return (
                 <div
-                  key={t.key}
+                  key={day.key}
                   style={{
                     borderRadius: 14,
                     padding: 12,
@@ -903,7 +971,7 @@ export default function CommandCenterCockpit({
                   ) : null}
                   <div style={{ position: 'relative' }}>
                     <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                      {t.label} · {t.dateLabel}
+                      {day.label} · {day.dateLabel}
                     </div>
                     <div
                       style={{
@@ -914,7 +982,7 @@ export default function CommandCenterCockpit({
                         lineHeight: 1.2,
                       }}
                     >
-                      {t.title}
+                      {day.title}
                     </div>
                     {isToday ? (
                       <div
@@ -956,7 +1024,7 @@ export default function CommandCenterCockpit({
                               fontWeight: 900,
                             }}
                           >
-                            Day progress (0–24)
+                            {t('commandCenter.timeline.dayProgressLabel')}
                           </div>
                           <div
                             style={{
@@ -1000,8 +1068,8 @@ export default function CommandCenterCockpit({
       {/* 4) CONTROL TOWER */}
       <div style={{ marginTop: 12 }}>
         <CardSection
-          title="Control Tower"
-          subtitle="CONTROL — Max 3 signals + max 3 actions required."
+          title={t('commandCenter.sections.control.title')}
+          subtitle={t('commandCenter.sections.control.subtitle')}
           background="rgba(255,255,255,0.00)"
         >
           <div
@@ -1024,7 +1092,7 @@ export default function CommandCenterCockpit({
                   letterSpacing: 0.6,
                 }}
               >
-                CRITICAL SIGNALS
+                {t('commandCenter.control.criticalSignals')}
               </div>
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {controlTower.signals.length ? (
@@ -1094,7 +1162,7 @@ export default function CommandCenterCockpit({
                   letterSpacing: 0.6,
                 }}
               >
-                ACTIONS REQUIRED
+                {t('commandCenter.control.actionsRequired')}
               </div>
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {controlTower.actions.length ? (
@@ -1146,7 +1214,8 @@ export default function CommandCenterCockpit({
                               fontWeight: 750,
                             }}
                           >
-                            Owner: {a.owner} • Linked: {a.story}
+                            {t('common.owner')}: {a.owner} • {t('commandCenter.control.linked')}:{' '}
+                            {a.story}
                           </div>
                         </div>
                       </button>

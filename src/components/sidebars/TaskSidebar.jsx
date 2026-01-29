@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import RightSidebar from '../RightSidebar'
+import { useI18n } from '../../i18n/I18nContext'
 
 function clamp01(n) {
   const x = Number(n)
@@ -90,6 +91,7 @@ export default function TaskSidebar({
   readOnly = false,
   onOpenProjectBoard,
 }) {
+  const { t, locale } = useI18n()
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState([])
   const inputRef = useRef(null)
@@ -180,7 +182,7 @@ export default function TaskSidebar({
   if (!open || !task) return null
 
   return (
-    <RightSidebar open={open} onClose={onClose} width={460} ariaLabel="Task sidebar">
+    <RightSidebar open={open} onClose={onClose} width={460} ariaLabel={t('taskSidebar.ariaLabel')}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Header */}
         <div
@@ -202,7 +204,7 @@ export default function TaskSidebar({
           >
             <div style={{ minWidth: 0 }}>
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 950 }}>
-                Task
+                {t('taskSidebar.header.kicker')}
               </div>
               <div
                 style={{
@@ -240,7 +242,7 @@ export default function TaskSidebar({
                       cursor: 'pointer',
                       maxWidth: '100%',
                     }}
-                    title="Back to story cockpit"
+                    title={t('taskSidebar.backToStory')}
                   >
                     ← {parentStory.title}
                   </button>
@@ -265,12 +267,12 @@ export default function TaskSidebar({
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    Open Board
+                    {t('taskSidebar.openTasks')}
                   </button>
                 ) : null}
 
                 <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 850 }}>
-                  Owner: {task.owner || '—'}
+                  {t('common.owner')}: {task.owner || '—'}
                 </div>
               </div>
             </div>
@@ -289,14 +291,16 @@ export default function TaskSidebar({
                 fontWeight: 850,
               }}
             >
-              <div>{Math.round(progress * 100)}% progress</div>
-              <div>ETA: {eta}</div>
+              <div>{t('common.progressPct', { pct: Math.round(progress * 100) })}</div>
+              <div>
+                {t('taskSidebar.eta')}: {eta}
+              </div>
             </div>
           </div>
         </div>
 
         {/* CONTEXT */}
-        <SectionCard title="CONTEXT">
+        <SectionCard title={t('taskSidebar.sections.context')}>
           <div
             style={{
               color: 'rgba(226,232,240,0.92)',
@@ -310,14 +314,14 @@ export default function TaskSidebar({
         </SectionCard>
 
         {/* STATUS */}
-        <SectionCard title="STATUS">
+        <SectionCard title={t('taskSidebar.sections.status')}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             <div
               className="card"
               style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}
             >
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                Progress
+                {t('taskSidebar.status.progress')}
               </div>
               <div style={{ marginTop: 6, color: 'rgba(241,245,249,0.96)', fontWeight: 950 }}>
                 {Math.round(progress * 100)}%
@@ -328,7 +332,7 @@ export default function TaskSidebar({
               style={{ padding: 10, borderRadius: 12, background: 'rgba(255,255,255,0.02)' }}
             >
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 11, fontWeight: 950 }}>
-                ETA
+                {t('taskSidebar.status.eta')}
               </div>
               <div style={{ marginTop: 6, color: 'rgba(241,245,249,0.96)', fontWeight: 950 }}>
                 {eta}
@@ -346,7 +350,7 @@ export default function TaskSidebar({
                 textTransform: 'uppercase',
               }}
             >
-              Dependencies
+              {t('taskSidebar.dependencies')}
             </div>
             {dependencies.length ? (
               <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -385,7 +389,7 @@ export default function TaskSidebar({
         </SectionCard>
 
         {/* SUBTASKS */}
-        <SectionCard title="SUBTASKS">
+        <SectionCard title={t('taskSidebar.sections.subtasks')}>
           {subtasks.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {subtasks.map((st) => {
@@ -421,8 +425,8 @@ export default function TaskSidebar({
                         fontSize: 12,
                         lineHeight: '16px',
                       }}
-                      aria-label={done ? 'Mark not done' : 'Mark done'}
-                      title={done ? 'Mark not done' : 'Mark done'}
+                      title={done ? t('common.markNotDone') : t('common.markDone')}
+                      aria-label={done ? t('common.markNotDone') : t('common.markDone')}
                     >
                       {done ? '✓' : ''}
                     </button>
@@ -449,7 +453,7 @@ export default function TaskSidebar({
         </SectionCard>
 
         {/* LINKS */}
-        <SectionCard title="LINKS">
+        <SectionCard title={t('taskSidebar.sections.links')}>
           {links.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {links.map((l, idx) => (
@@ -469,7 +473,7 @@ export default function TaskSidebar({
                   }}
                 >
                   <div style={{ fontWeight: 900, fontSize: 13 }}>
-                    {String(l?.label || l?.title || 'Link')}
+                    {String(l?.label || l?.title || t('taskSidebar.link'))}
                   </div>
                   <div
                     style={{
@@ -490,13 +494,13 @@ export default function TaskSidebar({
         </SectionCard>
 
         {/* COMMENTS */}
-        <SectionCard title="COMMENTS">
+        <SectionCard title={t('taskSidebar.sections.comments')}>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               ref={inputRef}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
-              placeholder={readOnly ? 'Read-only' : 'Write a comment…'}
+              placeholder={readOnly ? t('taskSidebar.readOnly') : t('taskSidebar.writeComment')}
               disabled={readOnly}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -532,7 +536,7 @@ export default function TaskSidebar({
                 whiteSpace: 'nowrap',
               }}
             >
-              Send
+              {t('taskSidebar.send')}
             </button>
           </div>
 
@@ -562,13 +566,13 @@ export default function TaskSidebar({
                       fontWeight: 850,
                     }}
                   >
-                    {new Date(c.at).toLocaleString()}
+                    {new Date(c.at).toLocaleString(locale || undefined)}
                   </div>
                 </div>
               ))
             ) : (
               <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 800 }}>
-                No comments yet.
+                {t('taskSidebar.noComments')}
               </div>
             )}
           </div>

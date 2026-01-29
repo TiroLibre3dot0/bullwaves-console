@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import StorySidebar from '../../components/sidebars/StorySidebar'
 import TaskSidebar from '../../components/sidebars/TaskSidebar'
 import { fetchCsvRowsCached, withReportsVersion } from '../../lib/fetchCache'
+import { useI18n } from '../../i18n/I18nContext'
 import { seedStories } from './storiesSeed'
 
 function laneKeyForStory(story) {
@@ -26,21 +27,21 @@ function storySort(a, b) {
   })
 }
 
-function formatInt(n) {
+function formatInt(n, locale) {
   const x = Number(n)
   if (!Number.isFinite(x)) return '—'
   try {
-    return new Intl.NumberFormat().format(Math.round(x))
+    return new Intl.NumberFormat(locale || undefined).format(Math.round(x))
   } catch {
     return String(Math.round(x))
   }
 }
 
-function formatCurrencyEUR(n) {
+function formatCurrencyEUR(n, locale) {
   const x = Number(n)
   if (!Number.isFinite(x)) return '—'
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(locale || undefined, {
       style: 'currency',
       currency: 'EUR',
       maximumFractionDigits: 0,
@@ -59,16 +60,65 @@ function getValRow(r, keys) {
   return ''
 }
 
+function mergeLocalizedStories(prev, locale) {
+  const template = seedStories({ locale })
+  const prevById = new Map((Array.isArray(prev) ? prev : []).map((s) => [s.id, s]))
+
+  return (template || []).map((s) => {
+    const prevStory = prevById.get(s.id)
+
+    const prevTasks = new Map(
+      (Array.isArray(prevStory?.tasks) ? prevStory.tasks : []).map((t) => [t.id, t])
+    )
+    const nextTasks = (Array.isArray(s.tasks) ? s.tasks : []).map((t) => {
+      const prior = prevTasks.get(t.id)
+      return prior ? { ...t, done: !!prior.done } : t
+    })
+
+    const prevKpis = new Map(
+      (Array.isArray(prevStory?.kpis) ? prevStory.kpis : []).map((k) => [k.id, k])
+    )
+    const nextKpis = (Array.isArray(s.kpis) ? s.kpis : []).map((k) => {
+      const prior = prevKpis.get(k.id)
+      if (!prior) return k
+      return {
+        ...k,
+        current: prior.current ?? k.current,
+        target: prior.target ?? k.target,
+      }
+    })
+
+    return {
+      ...s,
+      // Preserve runtime fields if anything else mutates them.
+      progress: prevStory?.progress ?? s.progress,
+      risk: prevStory?.risk ?? s.risk,
+      status: prevStory?.status ?? s.status,
+      kpis: nextKpis,
+      tasks: nextTasks,
+    }
+  })
+}
+
 export default function StoriesKanbanPage({
   onOpenProjectBoard,
   embedded = false,
   publicMode = false,
+  focusStoryId = null,
+  focusNonce = 0,
 }) {
-  const [stories, setStories] = useState(() => seedStories())
+  const { t, locale } = useI18n()
+  const [stories, setStories] = useState(() => seedStories({ locale }))
   const [dockStoryId, setDockStoryId] = useState(null)
   const [dockTaskId, setDockTaskId] = useState(null)
   const [storyOpen, setStoryOpen] = useState(false)
   const [taskOpen, setTaskOpen] = useState(false)
+  const [pulseStoryId, setPulseStoryId] = useState(null)
+  const rootRef = useRef(null)
+
+  useEffect(() => {
+    setStories((prev) => mergeLocalizedStories(prev, locale))
+  }, [locale])
 
   // Real KPI wiring: reuse existing Fraud Monitoring KPIs.
   // Everything not yet calculated stays on standby (no example numbers).
@@ -167,41 +217,43 @@ export default function StoriesKanbanPage({
           (prev || []).map((s) => {
             if (s.id !== 'story-growth-acq' && s.id !== 'story-retention-prop') return s
             const nextKpis = (Array.isArray(s.kpis) ? s.kpis : []).map((k) => {
-              const label = String(k?.label || '').toLowerCase()
+              const id = String(k?.id || '')
 
               // Growth
               if (s.id === 'story-growth-acq') {
-                if (label.includes('(ftd)')) return { ...k, current: formatInt(ftd) }
-                if (label.includes('(qftd)')) return { ...k, current: formatInt(qftd) }
-                if (label.includes('(cpa)'))
+                if (id === 'ftd') return { ...k, current: formatInt(ftd, locale) }
+                if (id === 'qftd') return { ...k, current: formatInt(qftd, locale) }
+                if (id === 'cpa')
                   return {
                     ...k,
-                    current: Number.isFinite(Number(avgCpa)) ? formatCurrencyEUR(avgCpa) : '—',
+                    current: Number.isFinite(Number(avgCpa))
+                      ? formatCurrencyEUR(avgCpa, locale)
+                      : '—',
                   }
                 return k
               }
 
               // Retention (from Media Report totals)
               if (s.id === 'story-retention-prop') {
-                if (label.includes('(nd)'))
+                if (id === 'nd')
                   return {
                     ...k,
                     current: Number.isFinite(Number(mediaTotalNetDeposits))
-                      ? formatCurrencyEUR(mediaTotalNetDeposits)
+                      ? formatCurrencyEUR(mediaTotalNetDeposits, locale)
                       : '—',
                   }
-                if (label.includes('(dep)'))
+                if (id === 'dep')
                   return {
                     ...k,
                     current: Number.isFinite(Number(mediaTotalDeposits))
-                      ? formatCurrencyEUR(mediaTotalDeposits)
+                      ? formatCurrencyEUR(mediaTotalDeposits, locale)
                       : '—',
                   }
-                if (label.includes('(wd)'))
+                if (id === 'wd')
                   return {
                     ...k,
                     current: Number.isFinite(Number(mediaTotalWithdrawals))
-                      ? formatCurrencyEUR(mediaTotalWithdrawals)
+                      ? formatCurrencyEUR(mediaTotalWithdrawals, locale)
                       : '—',
                   }
                 return k
@@ -221,7 +273,7 @@ export default function StoriesKanbanPage({
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [locale])
 
   const lanes = useMemo(() => {
     const buckets = { planned: [], inProgress: [], atRisk: [], done: [] }
@@ -266,13 +318,50 @@ export default function StoriesKanbanPage({
     setTaskOpen(false)
   }
 
+  // Option A: Story continuity/handoff.
+  // When a story is clicked in the cockpit, Execution Hub switches here and passes focusStoryId.
+  // We open the same story, scroll it into view, and briefly highlight it.
+  useEffect(() => {
+    const sid = typeof focusStoryId === 'string' ? focusStoryId : null
+    if (!sid) return
+
+    openStory(sid)
+    setPulseStoryId(sid)
+
+    const tryScroll = () => {
+      const root = rootRef.current
+      if (!root) return false
+      const el = root.querySelector(`[data-story-id="${sid}"]`)
+      if (!el || typeof el.scrollIntoView !== 'function') return false
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' })
+      } catch {
+        // ignore
+      }
+      return true
+    }
+
+    // Tabs are kept mounted but may be display:none; schedule a couple attempts.
+    const t1 = window.setTimeout(() => {
+      const ok = tryScroll()
+      if (!ok) window.setTimeout(() => tryScroll(), 120)
+    }, 60)
+
+    const t2 = window.setTimeout(() => setPulseStoryId(null), 1600)
+
+    return () => {
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
+    }
+    // focusNonce lets us re-trigger even if the same story is clicked twice.
+  }, [focusStoryId, focusNonce])
+
   const closeStory = () => {
     setStoryOpen(false)
-    // Allow sidebar slide-out before clearing the story.
+    // Keep the selected story docked so its card stays highlighted.
+    setTaskOpen(false)
     window.setTimeout(() => {
-      setDockStoryId(null)
       setDockTaskId(null)
-      setTaskOpen(false)
     }, 220)
   }
 
@@ -293,7 +382,7 @@ export default function StoriesKanbanPage({
   return (
     <div style={{ display: 'flex', height: '100%', position: 'relative' }}>
       {/* Stories Kanban */}
-      <div className="sk-root" style={{ flex: 1, padding: 24 }}>
+      <div ref={rootRef} className="sk-root" style={{ flex: 1, padding: 24 }}>
         {embedded ? null : (
           <>
             <div
@@ -304,10 +393,10 @@ export default function StoriesKanbanPage({
                 letterSpacing: 0.2,
               }}
             >
-              Strategic Execution
+              {t('storiesKanban.topline')}
             </div>
             <div style={{ marginTop: 6, fontSize: 22, fontWeight: 950, color: '#fff' }}>
-              Stories Kanban
+              {t('storiesKanban.title')}
             </div>
             <div
               style={{
@@ -317,7 +406,7 @@ export default function StoriesKanbanPage({
                 fontSize: 12,
               }}
             >
-              Select a story to open the Strategic Decision Cockpit.
+              {t('storiesKanban.subtitle')}
             </div>
           </>
         )}
@@ -326,25 +415,25 @@ export default function StoriesKanbanPage({
           {[
             {
               key: 'planned',
-              title: 'Planned',
+              title: t('storiesKanban.lanes.planned'),
               tone: { border: 'rgba(148,163,184,0.22)', bg: 'rgba(148,163,184,0.06)' },
               items: lanes.planned,
             },
             {
               key: 'inProgress',
-              title: 'In Progress',
+              title: t('storiesKanban.lanes.inProgress'),
               tone: { border: 'rgba(59,130,246,0.30)', bg: 'rgba(59,130,246,0.08)' },
               items: lanes.inProgress,
             },
             {
               key: 'atRisk',
-              title: 'At Risk',
+              title: t('storiesKanban.lanes.atRisk'),
               tone: { border: 'rgba(239,68,68,0.30)', bg: 'rgba(239,68,68,0.08)' },
               items: lanes.atRisk,
             },
             {
               key: 'done',
-              title: 'Done',
+              title: t('storiesKanban.lanes.done'),
               tone: { border: 'rgba(16,185,129,0.30)', bg: 'rgba(16,185,129,0.08)' },
               items: lanes.done,
             },
@@ -391,65 +480,84 @@ export default function StoriesKanbanPage({
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {(col.items || []).map((story) => (
-                  <button
-                    key={story.id}
-                    type="button"
-                    className="card sk-card"
-                    onClick={() => {
-                      openStory(story.id)
-                    }}
-                    style={{
-                      textAlign: 'left',
-                      width: '100%',
-                      padding: 12,
-                      borderRadius: 14,
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      background:
-                        'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
-                      boxShadow: '0 10px 24px rgba(0,0,0,0.18)',
-                      cursor: 'pointer',
-                    }}
-                    title={story.title}
-                  >
-                    <div
-                      className="sk-card-title"
-                      style={{
-                        color: 'rgba(226,232,240,0.96)',
-                        fontWeight: 950,
-                        fontSize: 13,
-                        lineHeight: 1.2,
-                        overflowWrap: 'anywhere',
-                      }}
-                    >
-                      {story.title}
-                    </div>
-                    <div
-                      className="sk-card-owner"
-                      style={{
-                        marginTop: 8,
-                        color: 'rgba(148,163,184,0.95)',
-                        fontSize: 12,
-                        fontWeight: 750,
-                      }}
-                    >
-                      Owner: {story.owner || '—'}
-                    </div>
-                    <div
-                      className="sk-card-goal"
-                      style={{
-                        marginTop: 6,
-                        color: 'rgba(148,163,184,0.82)',
-                        fontSize: 12,
-                        fontWeight: 650,
-                        lineHeight: 1.3,
-                      }}
-                    >
-                      {String(story.goal || '').slice(0, 90)}
-                      {String(story.goal || '').length > 90 ? '…' : ''}
-                    </div>
-                  </button>
-                ))}
+                {(col.items || []).map((story) =>
+                  (() => {
+                    const isPulse = story.id === pulseStoryId
+                    const isSelected = story.id === dockStoryId
+
+                    return (
+                      <button
+                        key={story.id}
+                        type="button"
+                        data-story-id={story.id}
+                        className={`card sk-card${isSelected ? ' sk-selected' : ''}${
+                          isPulse ? ' sk-handoff' : ''
+                        }`}
+                        onClick={() => {
+                          openStory(story.id)
+                        }}
+                        style={{
+                          textAlign: 'left',
+                          width: '100%',
+                          padding: 12,
+                          borderRadius: 14,
+                          border:
+                            isPulse || isSelected
+                              ? '1px solid rgba(226,232,240,0.85)'
+                              : '1px solid rgba(255,255,255,0.08)',
+                          background:
+                            'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
+                          boxShadow:
+                            isPulse || isSelected
+                              ? '0 18px 52px rgba(0,0,0,0.45)'
+                              : '0 10px 24px rgba(0,0,0,0.18)',
+                          cursor: 'pointer',
+                          transform: isPulse ? 'translateY(-1px)' : 'translateY(0px)',
+                          transition:
+                            'box-shadow 220ms ease, border-color 220ms ease, transform 220ms ease',
+                        }}
+                        title={story.title}
+                      >
+                        <div
+                          className="sk-card-title"
+                          style={{
+                            color: 'rgba(226,232,240,0.96)',
+                            fontWeight: 950,
+                            fontSize: 13,
+                            lineHeight: 1.2,
+                            overflowWrap: 'anywhere',
+                          }}
+                        >
+                          {story.title}
+                        </div>
+                        <div
+                          className="sk-card-owner"
+                          style={{
+                            marginTop: 8,
+                            color: 'rgba(148,163,184,0.95)',
+                            fontSize: 12,
+                            fontWeight: 750,
+                          }}
+                        >
+                          {t('storiesKanban.ownerLabel')}: {story.owner || '—'}
+                        </div>
+                        <div
+                          className="sk-card-goal"
+                          style={{
+                            marginTop: 6,
+                            color: 'rgba(148,163,184,0.82)',
+                            fontSize: 12,
+                            fontWeight: 650,
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {String(story.goal || '').slice(0, 90)}
+                          {String(story.goal || '').length > 90 ? '…' : ''}
+                        </div>
+                      </button>
+                    )
+                  })()
+                )}
                 {(col.items || []).length ? null : (
                   <div style={{ color: 'rgba(148,163,184,0.9)', fontSize: 12, fontWeight: 800 }}>
                     —
@@ -467,6 +575,30 @@ export default function StoriesKanbanPage({
           grid-template-columns: repeat(4, minmax(260px, 1fr));
           gap: 12px;
           align-items: start;
+        }
+
+        @keyframes skHandoffPulse {
+          0% { box-shadow: 0 0 0 rgba(0,0,0,0); }
+          40% { box-shadow: 0 0 0 6px rgba(226,232,240,0.22); }
+          100% { box-shadow: 0 0 0 0 rgba(226,232,240,0.00); }
+        }
+
+        .sk-handoff {
+          animation: skHandoffPulse 1100ms ease-out 1;
+        }
+
+        .sk-selected {
+          position: relative;
+        }
+
+        .sk-selected::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-left: 3px solid rgba(226,232,240,0.70);
+          background: rgba(226,232,240,0.05);
+          border-radius: 14px;
+          pointer-events: none;
         }
 
         @media (max-width: 720px) {

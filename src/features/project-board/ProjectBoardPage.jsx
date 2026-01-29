@@ -2,15 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import { encodeSharePayload } from '../../utils/shareCodec'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import TaskSidebar from '../../components/sidebars/TaskSidebar'
+import { useI18n } from '../../i18n/I18nContext'
+import { buildBoardTasksFromStories, mergeTasksById } from './storyTasksImport'
 
 const STATUSES = ['Backlog', 'Planned', 'Executing', 'Review & QA', 'Blocked', 'Done']
 
 const STRATEGIC_CATEGORIES = {
-  'Growth & Acquisition': { color: '#10b981', label: 'Growth' }, // emerald
-  'Retention & Monetization': { color: '#f59e0b', label: 'Retention' }, // amber
-  'Platform & Infrastructure': { color: '#8b5cf6', label: 'Platform' }, // violet
-  'Partnerships & Affiliates': { color: '#06b6d4', label: 'Partners' }, // cyan
-  'Operations & Compliance': { color: '#ef4444', label: 'Ops' }, // red
+  'Growth & Acquisition': { color: '#10b981', labelKey: 'tasksBoard.categories.growth' }, // emerald
+  'Retention & Monetization': { color: '#f59e0b', labelKey: 'tasksBoard.categories.retention' }, // amber
+  'Platform & Infrastructure': { color: '#8b5cf6', labelKey: 'tasksBoard.categories.platform' }, // violet
+  'Partnerships & Affiliates': { color: '#06b6d4', labelKey: 'tasksBoard.categories.partners' }, // cyan
+  'Operations & Compliance': { color: '#ef4444', labelKey: 'tasksBoard.categories.ops' }, // red
 }
 
 const IMPACT_LEVELS = {
@@ -63,20 +65,50 @@ function DepartmentPill({ department }) {
 
 function resolveStoryIcon(task) {
   const title = String(task?.title || '').toLowerCase()
-  if (title.includes('acquisition') || title.includes('traffic')) return 'target'
+  if (
+    title.includes('acquisition') ||
+    title.includes('acquisizione') ||
+    title.includes('traffic') ||
+    title.includes('traffico')
+  )
+    return 'target'
   if (
     title.includes('sales leverage') ||
     title.includes('account management') ||
-    title.includes('forex')
+    title.includes('forex') ||
+    title.includes('gestione account')
   )
     return 'briefcase'
-  if (title.includes('communication') || title.includes('channels') || title.includes('booking'))
+  if (
+    title.includes('communication') ||
+    title.includes('comunicazione') ||
+    title.includes('channels') ||
+    title.includes('canali') ||
+    title.includes('booking') ||
+    title.includes('prenot')
+  )
     return 'link'
-  if (title.includes('market analysis') || title.includes('news')) return 'broadcast'
+  if (
+    title.includes('market analysis') ||
+    title.includes('analisi di mercato') ||
+    title.includes('news') ||
+    title.includes('notizie')
+  )
+    return 'broadcast'
   if (title.includes('outreach') || title.includes('kommo') || title.includes('review'))
     return 'activity'
-  if (title.includes('withdraw')) return 'shield'
+  if (title.includes('withdraw') || title.includes('preliev')) return 'shield'
   return 'plus'
+}
+
+function isItalian(locale) {
+  return String(locale || '')
+    .toLowerCase()
+    .startsWith('it')
+}
+
+function pick(locale, en, it) {
+  return isItalian(locale) ? it : en
 }
 
 function StoryIcon({ name, size = 18 }) {
@@ -275,12 +307,17 @@ function isHeadingLine(line) {
   if (!lower) return false
   return (
     lower === 'focus on:' ||
+    lower === 'focus su:' ||
+    lower === 'focus su' ||
     lower === 'goal:' ||
+    lower === 'obiettivo:' ||
+    lower === 'obiettivi:' ||
     lower === 'objectives:' ||
     lower === 'objectives' ||
     lower === 'focus on' ||
     lower === 'goals:' ||
-    lower === 'notes:'
+    lower === 'notes:' ||
+    lower === 'note:'
   )
 }
 
@@ -388,46 +425,100 @@ function priorityForTitle(title, story) {
   const t = String(title || '').toLowerCase()
   const full = `${String(story?.title || '').toLowerCase()}\n${String(story?.description || '').toLowerCase()}`
 
-  if (full.includes('critical') || full.includes('deal-breaker') || full.includes('must-have'))
+  if (
+    full.includes('critical') ||
+    full.includes('critico') ||
+    full.includes('deal-breaker') ||
+    full.includes('must-have') ||
+    full.includes('imprescindibile')
+  )
     return 'P0'
-  if (t.includes('define') || t.includes('scope') || t.includes('acceptance')) return 'P0'
+  if (
+    t.includes('define') ||
+    t.includes('definisci') ||
+    t.includes('scope') ||
+    t.includes('ambito') ||
+    t.includes('acceptance') ||
+    t.includes('accettazione')
+  )
+    return 'P0'
   if (
     t.includes('implement') ||
     t.includes('setup') ||
     t.includes('integrat') ||
-    t.includes('centralize')
+    t.includes('centralize') ||
+    t.includes('implementa') ||
+    t.includes('integra')
   )
     return 'P0'
-  if (t.includes('test') || t.includes('qa') || t.includes('monitor') || t.includes('tracking'))
+  if (
+    t.includes('test') ||
+    t.includes('qa') ||
+    t.includes('monitor') ||
+    t.includes('monitoraggio') ||
+    t.includes('tracking') ||
+    t.includes('tracciamento')
+  )
     return 'P1'
   if (
     t.includes('optimiz') ||
+    t.includes('ottimiz') ||
     t.includes('improv') ||
+    t.includes('miglior') ||
     t.includes('evaluate') ||
+    t.includes('valuta') ||
     t.includes('review')
   )
     return 'P1'
-  if (t.includes('doc') || t.includes('rollout') || t.includes('polish')) return 'P2'
+  if (
+    t.includes('doc') ||
+    t.includes('document') ||
+    t.includes('rollout') ||
+    t.includes('rilascio') ||
+    t.includes('polish') ||
+    t.includes('rifinit')
+  )
+    return 'P2'
 
   return 'P1'
 }
 
-function descriptionForSubtask(title, priority, story) {
+function descriptionForSubtask(title, priority, story, locale) {
   const cleanTitle = String(title || '').trim()
   const storyTitle = String(story?.title || '').trim()
 
-  const prefix = storyTitle ? `From “${storyTitle}”` : 'From story'
+  const prefix = storyTitle
+    ? pick(locale, `From “${storyTitle}”`, `Da “${storyTitle}”`)
+    : pick(locale, 'From story', 'Dalla storia')
+
+  const deliverable = pick(
+    locale,
+    'Deliverable: link/PR + 2–3 lines of notes in the task comments.',
+    'Deliverable: link/PR + 2–3 righe di note nei commenti del task.'
+  )
 
   if (priority === 'P0') {
-    return `${prefix}: deliver this first. Define “done” clearly, list dependencies, and implement the core piece for: ${cleanTitle}.`
+    return pick(
+      locale,
+      `${prefix}: do this first. Define “done”, list dependencies, then implement: ${cleanTitle}. ${deliverable}`,
+      `${prefix}: fai questo per primo. Definisci “fatto”, elenca le dipendenze, poi implementa: ${cleanTitle}. ${deliverable}`
+    )
   }
   if (priority === 'P2') {
-    return `${prefix}: polish/rollout task. Document decisions, communicate changes, and ship safely for: ${cleanTitle}.`
+    return pick(
+      locale,
+      `${prefix}: polish/rollout. Validate, document decisions, communicate changes, and ship safely for: ${cleanTitle}. ${deliverable}`,
+      `${prefix}: rifinitura/rilascio. Valida, documenta le decisioni, comunica i cambiamenti e rilascia in sicurezza per: ${cleanTitle}. ${deliverable}`
+    )
   }
-  return `${prefix}: second-phase task. Validate, monitor, and improve the delivery for: ${cleanTitle}.`
+  return pick(
+    locale,
+    `${prefix}: implement next, then validate + monitor. Task: ${cleanTitle}. ${deliverable}`,
+    `${prefix}: implementa, poi valida + monitora. Task: ${cleanTitle}. ${deliverable}`
+  )
 }
 
-function generatePrioritizedSubtasks(story) {
+function generatePrioritizedSubtasks(story, locale) {
   const description = String(story?.description || '').trim()
   if (!description) return []
 
@@ -441,7 +532,7 @@ function generatePrioritizedSubtasks(story) {
       subtasks.push({
         id: makeId('pbst'),
         title,
-        description: descriptionForSubtask(title, priority, story),
+        description: descriptionForSubtask(title, priority, story, locale),
         priority,
         done: false,
       })
@@ -449,33 +540,60 @@ function generatePrioritizedSubtasks(story) {
   } else {
     const base = [
       {
-        title: 'Define scope, acceptance criteria, and dependencies',
-        description:
+        title: pick(
+          locale,
+          'Define scope, acceptance criteria, and dependencies',
+          'Definisci ambito, criteri di accettazione e dipendenze'
+        ),
+        description: pick(
+          locale,
           'Write a 5–10 bullet definition of done, constraints, owners, dependencies, and rollout plan. Confirm success metrics and risks.',
+          'Scrivi una definizione di “fatto” in 5–10 punti con vincoli, owner, dipendenze e piano di rilascio. Conferma metriche di successo e rischi.'
+        ),
         priority: 'P0',
       },
       {
-        title: 'Deliver core implementation (MVP)',
-        description:
+        title: pick(
+          locale,
+          'Deliver core implementation (MVP)',
+          'Consegna implementazione core (MVP)'
+        ),
+        description: pick(
+          locale,
           'Implement the minimum viable solution end-to-end. Ensure the main flow works and blockers are resolved.',
+          'Implementa la soluzione minima end-to-end. Assicura che il flusso principale funzioni e rimuovi i blocchi.'
+        ),
         priority: 'P0',
       },
       {
-        title: 'Add tracking/monitoring and edge-case handling',
-        description:
+        title: pick(
+          locale,
+          'Add tracking/monitoring and edge-case handling',
+          'Aggiungi tracking/monitoraggio e gestione edge-case'
+        ),
+        description: pick(
+          locale,
           'Add logging/metrics/alerts where needed, and cover edge cases. Validate the system is observable and resilient.',
+          'Aggiungi log/metriche/alert dove serve e copri gli edge-case. Valida che il sistema sia osservabile e resiliente.'
+        ),
         priority: 'P1',
       },
       {
-        title: 'QA: test plan + validation',
-        description:
+        title: pick(locale, 'QA: test plan + validation', 'QA: piano test + validazione'),
+        description: pick(
+          locale,
           'Create a test checklist, validate main scenarios + regressions, and confirm acceptance criteria are met.',
+          'Crea una checklist test, valida scenari principali + regressioni e conferma che i criteri di accettazione siano soddisfatti.'
+        ),
         priority: 'P1',
       },
       {
-        title: 'Documentation + rollout notes',
-        description:
+        title: pick(locale, 'Documentation + rollout notes', 'Documentazione + note di rilascio'),
+        description: pick(
+          locale,
           'Document what changed, how to operate it, and how to roll back. Share rollout notes with stakeholders.',
+          'Documenta cosa è cambiato, come operarlo e come fare rollback. Condividi le note di rilascio con gli stakeholder.'
+        ),
         priority: 'P2',
       },
     ]
@@ -494,172 +612,339 @@ function generatePrioritizedSubtasks(story) {
     .map(({ _idx, ...rest }) => rest)
 }
 
-const seedTasks = () => [
+const TASK_SEEDS = [
   {
-    id: makeId(),
-    title: 'Optimize Acquisition Channels for Scalable Growth',
+    id: 'pb_acq_channels',
     strategicCategory: 'Growth & Acquisition',
     impactLevel: 'High',
     owner: 'Marketing',
     status: 'Backlog',
-    strategicObjective:
-      'Build a scalable acquisition engine that delivers high-quality leads at optimal cost',
-    problemSolved:
-      'Current acquisition is fragmented and lacks systematic testing/scaling framework',
-    expectedBusinessImpact:
-      '30% increase in qualified leads, 25% reduction in CAC, foundation for 2x revenue growth',
-    kpiOrMetric: 'Qualified leads per month, CAC, conversion rate from lead to client',
-    taskBreakdown: [
-      'Audit all current acquisition channels and performance metrics',
-      'Implement structured test → kill → scale framework for new channels',
-      'Set up advanced tracking and attribution for all touchpoints',
-      'Optimize internal traffic flows for maximum conversion efficiency',
-      'Establish partnerships with high-quality media sources',
-    ],
-    description:
-      'Traffic is easy to unlock — media agencies are constantly looking to monetize. The key is structuring acquisition channels properly, not chasing random volume.\n\nFocus on:\n\nDirect sources (e.g. investing.com): understand delivery model, lead quality and scalability.\n\nIndirect sources: media buying & affiliates, with fast test → kill → scale logic and strict tracking.\n\nIn parallel, structure internal traffic flows to maximize conversion efficiency and LTV.',
-    summary: 'Direct + indirect traffic sources, fast testing, strict tracking.',
     icon: 'megaphone',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Optimize Acquisition Channels for Scalable Growth',
+        strategicObjective:
+          'Build a scalable acquisition engine that delivers high-quality leads at optimal cost',
+        problemSolved:
+          'Current acquisition is fragmented and lacks systematic testing/scaling framework',
+        expectedBusinessImpact:
+          '30% increase in qualified leads, 25% reduction in CAC, foundation for 2x revenue growth',
+        kpiOrMetric: 'Qualified leads per month, CAC, conversion rate from lead to client',
+        taskBreakdown: [
+          'Audit all current acquisition channels and performance metrics',
+          'Implement structured test → kill → scale framework for new channels',
+          'Set up advanced tracking and attribution for all touchpoints',
+          'Optimize internal traffic flows for maximum conversion efficiency',
+          'Establish partnerships with high-quality media sources',
+        ],
+        description:
+          'Traffic is easy to unlock — media agencies are constantly looking to monetize. The key is structuring acquisition channels properly, not chasing random volume.\n\nFocus on:\n\nDirect sources (e.g. investing.com): understand delivery model, lead quality and scalability.\n\nIndirect sources: media buying & affiliates, with fast test → kill → scale logic and strict tracking.\n\nIn parallel, structure internal traffic flows to maximize conversion efficiency and LTV.',
+        summary: 'Direct + indirect traffic sources, fast testing, strict tracking.',
+        notes: '',
+      },
+      it: {
+        title: 'Ottimizzare i canali di acquisizione per una crescita scalabile',
+        strategicObjective:
+          'Costruire un motore di acquisizione scalabile che generi lead di qualità al costo ottimale',
+        problemSolved:
+          'L’acquisizione attuale è frammentata e manca di un framework sistematico di test/scaling',
+        expectedBusinessImpact:
+          'Aumento del 30% dei lead qualificati, riduzione del 25% del CAC, base per raddoppiare i ricavi',
+        kpiOrMetric: 'Lead qualificati/mese, CAC, tasso di conversione lead → cliente',
+        taskBreakdown: [
+          'Audit di tutti i canali di acquisizione attuali e delle performance',
+          'Implementare framework test → kill → scale per nuovi canali',
+          'Impostare tracking avanzato e attribuzione su tutti i touchpoint',
+          'Ottimizzare i flussi di traffico interni per massimizzare conversione e LTV',
+          'Stabilire partnership con fonti media di alta qualità',
+        ],
+        description:
+          'Sbloccare traffico è relativamente facile: le agenzie media cercano continuamente di monetizzare. La chiave è strutturare correttamente i canali di acquisizione, non inseguire volume casuale.\n\nFocus su:\n\nFonti dirette (es. investing.com): capire modello di delivery, qualità lead e scalabilità.\n\nFonti indirette: media buying e affiliate, con logica veloce test → kill → scale e tracking rigoroso.\n\nIn parallelo, strutturare i flussi interni per massimizzare efficienza di conversione e LTV.',
+        summary: 'Traffico diretto + indiretto, test rapidi, tracking rigoroso.',
+        notes: '',
+      },
+    },
   },
   {
-    id: makeId(),
-    title: 'Systematize Client Upsell Flows to Forex & Account Management',
+    id: 'pb_upsell_forex_am',
     strategicCategory: 'Retention & Monetization',
     impactLevel: 'High',
     owner: 'Sales',
     status: 'Backlog',
-    strategicObjective:
-      'Convert existing prop clients into higher-value forex traders and account management clients',
-    problemSolved:
-      'Warm traffic from prop clients is not being systematically monetized through upsells',
-    expectedBusinessImpact:
-      '40% increase in average client LTV, 25% improvement in monetization efficiency',
-    kpiOrMetric:
-      'Upsell conversion rate, average LTV per client segment, monthly recurring revenue from upsells',
-    taskBreakdown: [
-      'Map current client journey from prop trading to potential upsells',
-      'Design automated upsell triggers based on trading behavior and performance',
-      'Create compelling value propositions for forex trading and account management',
-      'Implement A/B testing for upsell messaging and timing',
-      'Set up tracking and analytics for upsell funnel performance',
-    ],
-    description:
-      'Prop clients are already warm traffic. We should build a structured upsell flow to convert them into:\n\nForex traders\n\nAccount management clients\n\nGoal:\n\nIncrease LTV\n\nImprove monetization efficiency\n\nLeverage existing traffic at near-zero acquisition cost',
-    summary: 'Systematize upsell of warm internal traffic.',
     icon: 'briefcase',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Systematize Client Upsell Flows to Forex & Account Management',
+        strategicObjective:
+          'Convert existing prop clients into higher-value forex traders and account management clients',
+        problemSolved:
+          'Warm traffic from prop clients is not being systematically monetized through upsells',
+        expectedBusinessImpact:
+          '40% increase in average client LTV, 25% improvement in monetization efficiency',
+        kpiOrMetric:
+          'Upsell conversion rate, average LTV per client segment, monthly recurring revenue from upsells',
+        taskBreakdown: [
+          'Map current client journey from prop trading to potential upsells',
+          'Design automated upsell triggers based on trading behavior and performance',
+          'Create compelling value propositions for forex trading and account management',
+          'Implement A/B testing for upsell messaging and timing',
+          'Set up tracking and analytics for upsell funnel performance',
+        ],
+        description:
+          'Prop clients are already warm traffic. We should build a structured upsell flow to convert them into:\n\nForex traders\n\nAccount management clients\n\nGoal:\n\nIncrease LTV\n\nImprove monetization efficiency\n\nLeverage existing traffic at near-zero acquisition cost',
+        summary: 'Systematize upsell of warm internal traffic.',
+        notes: '',
+      },
+      it: {
+        title: 'Sistematizzare gli upsell verso Forex e Account Management',
+        strategicObjective:
+          'Convertire i clienti prop esistenti in trader forex e clienti di account management a maggiore valore',
+        problemSolved:
+          'Il traffico caldo dei clienti prop non viene monetizzato in modo sistematico tramite upsell',
+        expectedBusinessImpact:
+          'Aumento del 40% dell’LTV medio, miglioramento del 25% dell’efficienza di monetizzazione',
+        kpiOrMetric:
+          'Tasso di conversione upsell, LTV medio per segmento, ricavi ricorrenti mensili da upsell',
+        taskBreakdown: [
+          'Mappare il journey attuale dal prop trading agli upsell',
+          'Progettare trigger automatici in base a comportamento e performance',
+          'Creare value proposition convincenti per forex e account management',
+          'Implementare A/B test su messaggi e timing di upsell',
+          'Impostare tracking e analytics del funnel di upsell',
+        ],
+        description:
+          'I clienti prop sono già traffico caldo. Serve un flusso di upsell strutturato per convertirli in:\n\nTrader forex\n\nClienti di account management\n\nObiettivo:\n\nAumentare LTV\n\nMigliorare efficienza di monetizzazione\n\nSfruttare traffico esistente a costo di acquisizione quasi zero',
+        summary: 'Upsell strutturato sul traffico interno caldo.',
+        notes: '',
+      },
+    },
   },
   {
-    id: makeId(),
-    title: 'Centralize Premium Client Communication Channels',
+    id: 'pb_premium_channels',
     strategicCategory: 'Platform & Infrastructure',
     impactLevel: 'Medium',
     owner: 'CRM & Automation',
     status: 'Backlog',
-    strategicObjective: 'Create unified premium support and booking experience across all channels',
-    problemSolved:
-      'Client communication is fragmented across multiple platforms with inconsistent experience',
-    expectedBusinessImpact:
-      '50% reduction in support response time, 30% increase in client satisfaction scores',
-    kpiOrMetric: 'Average response time, client satisfaction NPS, booking conversion rate',
-    taskBreakdown: [
-      'Evaluate and select unified communication platform (convrs.io)',
-      'Integrate WhatsApp, Telegram, and Discord channels',
-      'Design structured flows for support tickets and call booking',
-      'Implement automated routing based on client tier and issue type',
-      'Create standardized response templates and escalation procedures',
-    ],
-    description:
-      'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
-    summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
     icon: 'messages',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Centralize Premium Client Communication Channels',
+        strategicObjective:
+          'Create unified premium support and booking experience across all channels',
+        problemSolved:
+          'Client communication is fragmented across multiple platforms with inconsistent experience',
+        expectedBusinessImpact:
+          '50% reduction in support response time, 30% increase in client satisfaction scores',
+        kpiOrMetric: 'Average response time, client satisfaction NPS, booking conversion rate',
+        taskBreakdown: [
+          'Evaluate and select unified communication platform (convrs.io)',
+          'Integrate WhatsApp, Telegram, and Discord channels',
+          'Design structured flows for support tickets and call booking',
+          'Implement automated routing based on client tier and issue type',
+          'Create standardized response templates and escalation procedures',
+        ],
+        description:
+          'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
+        summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
+        notes: '',
+      },
+      it: {
+        title: 'Centralizzare i canali di comunicazione per clienti premium',
+        strategicObjective:
+          'Creare un’esperienza unificata di supporto premium e prenotazione call su tutti i canali',
+        problemSolved:
+          'La comunicazione con i clienti è frammentata su più piattaforme con un’esperienza incoerente',
+        expectedBusinessImpact:
+          'Riduzione del 50% dei tempi di risposta, +30% nei punteggi di soddisfazione cliente',
+        kpiOrMetric: 'Tempo medio di risposta, NPS soddisfazione, conversione prenotazione call',
+        taskBreakdown: [
+          'Valutare e scegliere la piattaforma unificata (convrs.io)',
+          'Integrare WhatsApp, Telegram e Discord',
+          'Progettare flussi strutturati per ticket supporto e booking call',
+          'Implementare routing automatico per tier cliente e tipo di issue',
+          'Creare template standard e procedure di escalation',
+        ],
+        description:
+          'Testare e implementare l’integrazione convrs.io per centralizzare:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObiettivi:\n\nCanale premium di supporto\n\nPrenotazione call diretta con sales o market analyst\n\nEngagement strutturato post-registrazione\n\nSolo dopo aver validato questo layer, valutare eventuali integrazioni aggiuntive con Solitics.\nOrlin ha un ruolo chiave nel design dei flussi, logica di automazione e segmentazione.',
+        summary: 'Centralizzazione canali premium e booking call.',
+        notes: '',
+      },
+    },
   },
   {
-    id: makeId(),
-    title: 'Automate Market Intelligence Distribution',
+    id: 'pb_market_intel',
     strategicCategory: 'Retention & Monetization',
     impactLevel: 'Medium',
     owner: 'CRM & Automation',
     status: 'Backlog',
-    strategicObjective:
-      'Deliver personalized market insights to increase client engagement and retention',
-    problemSolved:
-      'Market analysis and news are distributed manually with inconsistent reach and timing',
-    expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
-    kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
-    taskBreakdown: [
-      'Design content calendar for market analysis and news distribution',
-      'Set up automated segmentation for personalized content delivery',
-      'Integrate market data feeds for real-time insights',
-      'Create A/B testing framework for content and messaging',
-      'Implement engagement tracking and optimization loops',
-    ],
-    description:
-      'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
-    summary: 'Automated market insights and news via messaging channels.',
     icon: 'broadcast',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Automate Market Intelligence Distribution',
+        strategicObjective:
+          'Deliver personalized market insights to increase client engagement and retention',
+        problemSolved:
+          'Market analysis and news are distributed manually with inconsistent reach and timing',
+        expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
+        kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
+        taskBreakdown: [
+          'Design content calendar for market analysis and news distribution',
+          'Set up automated segmentation for personalized content delivery',
+          'Integrate market data feeds for real-time insights',
+          'Create A/B testing framework for content and messaging',
+          'Implement engagement tracking and optimization loops',
+        ],
+        description:
+          'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
+        summary: 'Automated market insights and news via messaging channels.',
+        notes: '',
+      },
+      it: {
+        title: 'Automatizzare la distribuzione di market intelligence',
+        strategicObjective:
+          'Inviare insight di mercato personalizzati per aumentare engagement e retention',
+        problemSolved:
+          'Analisi di mercato e news sono distribuite manualmente con copertura e timing incoerenti',
+        expectedBusinessImpact: '+35% engagement cliente, -20% churn',
+        kpiOrMetric: 'Tasso engagement, open rate contenuti, retention per segmento',
+        taskBreakdown: [
+          'Progettare calendario contenuti per analisi e news',
+          'Impostare segmentazione automatica per contenuti personalizzati',
+          'Integrare feed dati di mercato per insight real-time',
+          'Creare framework A/B test per contenuto e messaggi',
+          'Implementare tracking engagement e loop di ottimizzazione',
+        ],
+        description:
+          'Automatizzare la distribuzione di analisi di mercato e news tramite WhatsApp e altri canali di messaggistica.\n\nObiettivi:\n\nAumentare engagement\n\nMigliorare retention\n\nRidurre lavoro manuale\n\nStandardizzare la qualità della comunicazione\n\nValutare l’integrazione con Solitics solo dopo che convrs.io è stabile.',
+        summary: 'Insight e news automatizzati via messaggistica.',
+        notes: '',
+      },
+    },
   },
   {
-    id: makeId(),
-    title: 'Optimize Outreach Performance and Conversion',
+    id: 'pb_outreach_opt',
     strategicCategory: 'Growth & Acquisition',
     impactLevel: 'Medium',
     owner: 'Sales',
     status: 'Backlog',
-    strategicObjective: 'Improve outreach effectiveness through data-driven optimization',
-    problemSolved: 'Outreach efforts lack systematic measurement and optimization framework',
-    expectedBusinessImpact:
-      '40% increase in outreach conversion rate, 25% improvement in lead quality',
-    kpiOrMetric: 'Response rate, conversion rate, cost per qualified lead',
-    taskBreakdown: [
-      'Implement comprehensive tracking for all outreach activities',
-      'Analyze current performance across all channels and scripts',
-      'A/B test messaging, timing, and targeting strategies',
-      'Develop predictive models for lead scoring and prioritization',
-      'Create automated optimization loops for ongoing improvement',
-    ],
-    description:
-      'Review Kommo activity:\n\nMessage volume\n\nResponse rate\n\nFeedback quality\n\nConversion impact\n\nGoal:\n\nUnderstand real performance\n\nOptimize scripts\n\nImprove targeting\n\nIncrease conversion efficiency',
-    summary: 'Measure effectiveness of current outreach.',
     icon: 'search',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Optimize Outreach Performance and Conversion',
+        strategicObjective: 'Improve outreach effectiveness through data-driven optimization',
+        problemSolved: 'Outreach efforts lack systematic measurement and optimization framework',
+        expectedBusinessImpact:
+          '40% increase in outreach conversion rate, 25% improvement in lead quality',
+        kpiOrMetric: 'Response rate, conversion rate, cost per qualified lead',
+        taskBreakdown: [
+          'Implement comprehensive tracking for all outreach activities',
+          'Analyze current performance across all channels and scripts',
+          'A/B test messaging, timing, and targeting strategies',
+          'Develop predictive models for lead scoring and prioritization',
+          'Create automated optimization loops for ongoing improvement',
+        ],
+        description:
+          'Review Kommo activity:\n\nMessage volume\n\nResponse rate\n\nFeedback quality\n\nConversion impact\n\nGoal:\n\nUnderstand real performance\n\nOptimize scripts\n\nImprove targeting\n\nIncrease conversion efficiency',
+        summary: 'Measure effectiveness of current outreach.',
+        notes: '',
+      },
+      it: {
+        title: 'Ottimizzare performance e conversione dell’outreach',
+        strategicObjective: 'Migliorare l’efficacia dell’outreach con ottimizzazione data-driven',
+        problemSolved:
+          'Le attività di outreach mancano di un framework sistematico di misurazione e ottimizzazione',
+        expectedBusinessImpact: '+40% conversione outreach, +25% qualità lead',
+        kpiOrMetric: 'Response rate, conversion rate, costo per lead qualificato',
+        taskBreakdown: [
+          'Implementare tracking completo per tutte le attività di outreach',
+          'Analizzare performance attuali su canali e script',
+          'A/B test su messaggi, timing e targeting',
+          'Sviluppare modelli predittivi per lead scoring e priorità',
+          'Creare loop di ottimizzazione automatizzati',
+        ],
+        description:
+          'Review attività Kommo:\n\nVolume messaggi\n\nResponse rate\n\nQualità feedback\n\nImpatto conversione\n\nObiettivo:\n\nCapire performance reali\n\nOttimizzare script\n\nMigliorare targeting\n\nAumentare efficienza di conversione',
+        summary: 'Misurare e ottimizzare l’outreach attuale.',
+        notes: '',
+      },
+    },
   },
   {
-    id: makeId(),
-    title: 'Implement Automated Withdrawal Systems',
+    id: 'pb_withdraw_automation',
     strategicCategory: 'Operations & Compliance',
     impactLevel: 'High',
     owner: 'Payments & Compliance',
     status: 'Backlog',
-    strategicObjective:
-      'Eliminate manual withdrawal processing to improve client experience and operational efficiency',
-    problemSolved:
-      'Manual withdrawal processing creates delays, errors, and high operational costs',
-    expectedBusinessImpact:
-      '90% reduction in withdrawal processing time, 60% decrease in support tickets, major UX improvement',
-    kpiOrMetric: 'Average withdrawal processing time, support ticket volume, client satisfaction',
-    taskBreakdown: [
-      'Select and integrate card withdrawal providers (BridgerPay + SolidPayments)',
-      'Implement instant card withdrawal functionality',
-      'Set up crypto withdrawal automation (Skale + Uniwire)',
-      'Create comprehensive testing and failover procedures',
-      'Develop client communication and support processes for automated withdrawals',
-    ],
-    description:
-      'Implement automated withdrawals:\n\nCard withdrawals — BridgerPay + SolidPayments\n\nInstant credit to clients\n\nNo banking fees\n\nStrong UX improvement\n\nSignificant support workload reduction\n\nCrypto withdrawals — Skale + Uniwire\n\nInstant payouts\n\nMassive operational efficiency\n\nMajor time saving for support and finance teams\n\nThis is a must-have and deal-breaker priority.',
-    summary: 'Full automation of card and crypto withdrawals.',
     icon: 'payments',
-    notes: '',
+    i18n: {
+      en: {
+        title: 'Implement Automated Withdrawal Systems',
+        strategicObjective:
+          'Eliminate manual withdrawal processing to improve client experience and operational efficiency',
+        problemSolved:
+          'Manual withdrawal processing creates delays, errors, and high operational costs',
+        expectedBusinessImpact:
+          '90% reduction in withdrawal processing time, 60% decrease in support tickets, major UX improvement',
+        kpiOrMetric:
+          'Average withdrawal processing time, support ticket volume, client satisfaction',
+        taskBreakdown: [
+          'Select and integrate card withdrawal providers (BridgerPay + SolidPayments)',
+          'Implement instant card withdrawal functionality',
+          'Set up crypto withdrawal automation (Skale + Uniwire)',
+          'Create comprehensive testing and failover procedures',
+          'Develop client communication and support processes for automated withdrawals',
+        ],
+        description:
+          'Implement automated withdrawals:\n\nCard withdrawals — BridgerPay + SolidPayments\n\nInstant credit to clients\n\nNo banking fees\n\nStrong UX improvement\n\nSignificant support workload reduction\n\nCrypto withdrawals — Skale + Uniwire\n\nInstant payouts\n\nMassive operational efficiency\n\nMajor time saving for support and finance teams\n\nThis is a must-have and deal-breaker priority.',
+        summary: 'Full automation of card and crypto withdrawals.',
+        notes: '',
+      },
+      it: {
+        title: 'Implementare sistemi di prelievo automatizzati',
+        strategicObjective:
+          'Eliminare la gestione manuale dei prelievi per migliorare UX cliente ed efficienza operativa',
+        problemSolved:
+          'La gestione manuale dei prelievi crea ritardi, errori e alti costi operativi',
+        expectedBusinessImpact:
+          '-90% tempo di processing prelievi, -60% ticket supporto, grande miglioramento UX',
+        kpiOrMetric:
+          'Tempo medio processing prelievi, volume ticket supporto, soddisfazione cliente',
+        taskBreakdown: [
+          'Selezionare e integrare provider prelievi carta (BridgerPay + SolidPayments)',
+          'Implementare prelievo carta istantaneo',
+          'Impostare automazione prelievi crypto (Skale + Uniwire)',
+          'Creare procedure complete di test e failover',
+          'Definire comunicazione cliente e processi supporto per prelievi automatizzati',
+        ],
+        description:
+          'Implementare prelievi automatizzati:\n\nPrelievi carta — BridgerPay + SolidPayments\n\nAccredito istantaneo ai clienti\n\nZero fee bancarie\n\nForte miglioramento UX\n\nRiduzione significativa carico support\n\nPrelievi crypto — Skale + Uniwire\n\nPagamenti istantanei\n\nEnorme efficienza operativa\n\nGrande risparmio di tempo per support e finance\n\nPriorità must-have / deal-breaker.',
+        summary: 'Automazione completa prelievi carta e crypto.',
+        notes: '',
+      },
+    },
   },
 ]
 
+export const seedTasks = ({ locale } = {}) => {
+  const lang = isItalian(locale) ? 'it' : 'en'
+  return TASK_SEEDS.map((seed) => {
+    const { i18n, ...rest } = seed
+    const text = i18n?.[lang] || i18n?.en || {}
+    return { ...rest, ...text }
+  })
+}
+
 function Card({ task, onOpen, draggable, onDragStart }) {
+  const { t } = useI18n()
   const iconName = resolveStoryIcon(task)
-  const category = STRATEGIC_CATEGORIES[task.strategicCategory] || { color: '#64748b', label: '—' }
+  const category = STRATEGIC_CATEGORIES[task.strategicCategory] || {
+    color: '#64748b',
+    labelKey: null,
+  }
   const impact = IMPACT_LEVELS[task.impactLevel] || IMPACT_LEVELS.Medium
+  const impactLabel =
+    t?.(`tasksBoard.impact.${String(task?.impactLevel || '').toLowerCase()}`) ||
+    String(task?.impactLevel || '')
 
   return (
     <button
@@ -743,7 +1028,7 @@ function Card({ task, onOpen, draggable, onDragStart }) {
               letterSpacing: 0.5,
             }}
           >
-            {category.label}
+            {category.labelKey ? t(category.labelKey) : '—'}
           </div>
 
           <div
@@ -761,7 +1046,7 @@ function Card({ task, onOpen, draggable, onDragStart }) {
               textTransform: 'uppercase',
             }}
           >
-            {task.impactLevel}
+            {impactLabel}
           </div>
         </div>
 
@@ -795,10 +1080,13 @@ export default function ProjectBoardPage({
   focus = null,
   onClearFocus,
 }) {
+  const { t, locale } = useI18n()
+
   const [tasks, setTasks] = useState(() => {
     const inPayload = Array.isArray(sharePayload?.tasks) ? sharePayload.tasks : null
 
-    const base = publicMode && inPayload ? inPayload : seedTasks()
+    const base =
+      publicMode && Array.isArray(inPayload) && inPayload.length ? inPayload : seedTasks({ locale })
     if (publicMode) return base
 
     // For editable mode, automatically break down complex Backlog stories the first time
@@ -807,7 +1095,7 @@ export default function ProjectBoardPage({
       const hasSubtasks = Array.isArray(t?.subtasks) && t.subtasks.length > 0
       const isBacklog = String(t?.status || '') === 'Backlog'
       if (isBacklog && !hasSubtasks && isComplexStory(t)) {
-        return { ...t, subtasks: generatePrioritizedSubtasks(t) }
+        return { ...t, subtasks: generatePrioritizedSubtasks(t, locale) }
       }
       return t
     })
@@ -838,16 +1126,30 @@ export default function ProjectBoardPage({
     const t = `${focusMeta.storyTitle} ${focusMeta.storyEpic}`.toLowerCase()
     if (t.includes('partner') || t.includes('ib') || t.includes('affiliate'))
       return 'Partnerships & Affiliates'
-    if (t.includes('retention') || t.includes('reactivation') || t.includes('prop'))
+    if (
+      t.includes('retention') ||
+      t.includes('ritenzione') ||
+      t.includes('reactivation') ||
+      t.includes('riattiv') ||
+      t.includes('prop')
+    )
       return 'Retention & Monetization'
     if (
       t.includes('platform') ||
+      t.includes('piattaform') ||
       t.includes('crm') ||
       t.includes('product') ||
       t.includes('dashboard')
     )
       return 'Platform & Infrastructure'
-    if (t.includes('ops') || t.includes('compliance') || t.includes('payroll') || t.includes('hr'))
+    if (
+      t.includes('ops') ||
+      t.includes('operaz') ||
+      t.includes('compliance') ||
+      t.includes('conformit') ||
+      t.includes('payroll') ||
+      t.includes('hr')
+    )
       return 'Operations & Compliance'
     return 'Growth & Acquisition'
   }
@@ -888,7 +1190,7 @@ export default function ProjectBoardPage({
         kpiOrMetric: '',
         taskBreakdown: [],
         description: '',
-        summary: `Imported from Stories Kanban (${focusMeta.storyTitle || 'story'}).`,
+        summary: t('tasksBoard.importedFromStories', { story: focusMeta.storyTitle || '—' }),
         icon: 'plus',
         notes: `seededAt: ${now}`,
       }))
@@ -904,6 +1206,73 @@ export default function ProjectBoardPage({
     })
   }, [tasks, onShareSnapshot])
 
+  useEffect(() => {
+    if (publicMode) return
+    if (Array.isArray(sharePayload?.tasks)) return
+
+    const seeded = seedTasks({ locale })
+    const byId = new Map(seeded.map((s) => [s.id, s]))
+
+    setTasks((prev) =>
+      (prev || []).map((task) => {
+        const seed = byId.get(task.id)
+        if (!seed) return task
+
+        return {
+          ...task,
+          title: seed.title,
+          strategicObjective: seed.strategicObjective,
+          problemSolved: seed.problemSolved,
+          expectedBusinessImpact: seed.expectedBusinessImpact,
+          kpiOrMetric: seed.kpiOrMetric,
+          taskBreakdown: seed.taskBreakdown,
+          description: seed.description,
+          summary: seed.summary,
+        }
+      })
+    )
+  }, [locale, publicMode, sharePayload])
+
+  useEffect(() => {
+    if (publicMode) return
+    let cancelled = false
+
+    const run = async () => {
+      try {
+        const mod = await import('../stories-kanban/storiesSeed')
+        const stories = typeof mod.seedStories === 'function' ? mod.seedStories({ locale }) : []
+        const incoming = buildBoardTasksFromStories(stories, { t })
+        if (!incoming.length || cancelled) return
+
+        const incomingById = new Map(incoming.map((x) => [x.id, x]))
+
+        setTasks((prev) => {
+          const merged = mergeTasksById(prev, incoming)
+          return (merged || []).map((task) => {
+            const src = incomingById.get(task?.id)
+            if (!src) return task
+            // Keep board-owned fields (like status) intact; update only localization-sensitive text.
+            return {
+              ...task,
+              title: src.title,
+              context: src.context,
+              description: src.description,
+              strategicObjective: src.strategicObjective,
+              summary: src.summary,
+            }
+          })
+        })
+      } catch {
+        // ignore
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [publicMode, locale, t])
+
   const visibleTasks = useMemo(() => {
     if (!focusTitles.length) return tasks
     const byTitle = new Set(focusTitles)
@@ -917,12 +1286,7 @@ export default function ProjectBoardPage({
   }, [tasks, focusTitles])
 
   const grouped = useMemo(() => {
-    const by = {
-      Backlog: [],
-      'In Progress': [],
-      Blocked: [],
-      Done: [],
-    }
+    const by = Object.fromEntries(STATUSES.map((s) => [s, []]))
     for (const t of visibleTasks || []) {
       const key = STATUSES.includes(t.status) ? t.status : 'Backlog'
       by[key].push(t)
@@ -986,7 +1350,7 @@ export default function ProjectBoardPage({
       else throw new Error(data?.error || data?.message || 'share-not-available')
     } catch {
       if (!isLocalhost) {
-        window.alert('Share link non disponibile (storage share non configurato).')
+        window.alert(t('tasksBoard.share.notAvailable'))
         return
       }
 
@@ -1019,13 +1383,6 @@ export default function ProjectBoardPage({
     } catch {
       // ignore
     }
-
-    try {
-      await navigator.clipboard.writeText(href)
-      window.alert('Link copiato negli appunti')
-    } catch {
-      window.prompt('Copia il link:', href)
-    }
   }
 
   const activeTask = useMemo(() => tasks.find((t) => t.id === activeId) || null, [tasks, activeId])
@@ -1056,17 +1413,16 @@ export default function ProjectBoardPage({
         <div>
           {publicMode ? null : (
             <div style={{ fontSize: 12, fontWeight: 900, color: '#9aa4b2', letterSpacing: 0.2 }}>
-              Tools
+              {t('app.tools')}
             </div>
           )}
           <div style={{ fontSize: 22, fontWeight: 900, color: '#fff' }}>
-            Strategic Execution Control System
+            {t('tasksBoard.header.title')}
           </div>
           <div
             style={{ marginTop: 6, color: 'rgba(148,163,184,0.95)', fontWeight: 650, fontSize: 12 }}
           >
-            Bullwaves strategic initiatives board. Each card represents a strategic story with clear
-            business impact.
+            {t('tasksBoard.header.subtitle')}
           </div>
         </div>
       )}
@@ -1084,9 +1440,9 @@ export default function ProjectBoardPage({
               fontSize: 12,
             }}
           >
-            Read-only
+            {t('common.readOnly')}
           </div>
-        ) : (
+        ) : embedded ? null : (
           <button
             type="button"
             onClick={createPublicLink}
@@ -1102,14 +1458,14 @@ export default function ProjectBoardPage({
               whiteSpace: 'nowrap',
             }}
           >
-            Share (public link)
+            {t('tasksBoard.actions.sharePublicLink')}
           </button>
         )}
 
         <div style={{ color: 'rgba(148,163,184,0.95)', fontSize: 12, fontWeight: 800 }}>
-          Total: {visibleTasks.length}
+          {t('tasksBoard.stats.total', { count: visibleTasks.length })}
           {focusTitles.length ? (
-            <span style={{ marginLeft: 8, opacity: 0.85 }}>(filtered)</span>
+            <span style={{ marginLeft: 8, opacity: 0.85 }}>{t('tasksBoard.stats.filtered')}</span>
           ) : null}
         </div>
 
@@ -1128,10 +1484,16 @@ export default function ProjectBoardPage({
               fontSize: 12,
               maxWidth: '100%',
             }}
-            title={focusMeta.storyTitle ? `Focused on: ${focusMeta.storyTitle}` : 'Focused view'}
+            title={
+              focusMeta.storyTitle
+                ? t('tasksBoard.focus.titleWithStory', { story: focusMeta.storyTitle })
+                : t('tasksBoard.focus.title')
+            }
           >
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Focus: {focusMeta.storyTitle || 'Story'}
+              {t('tasksBoard.focus.label', {
+                story: focusMeta.storyTitle || t('tasksBoard.focus.fallbackStory'),
+              })}
             </span>
             <button
               type="button"
@@ -1149,7 +1511,7 @@ export default function ProjectBoardPage({
                 whiteSpace: 'nowrap',
               }}
             >
-              Clear
+              {t('common.clear')}
             </button>
           </div>
         ) : null}
@@ -1164,12 +1526,12 @@ export default function ProjectBoardPage({
       >
         {STATUSES.map((status) => {
           const columnTitles = {
-            Backlog: 'Backlog',
-            Planned: 'Planned',
-            Executing: 'Executing',
-            'Review & QA': 'Review & QA',
-            Blocked: 'Blocked',
-            Done: 'Done',
+            Backlog: t('tasksBoard.status.backlog'),
+            Planned: t('tasksBoard.status.planned'),
+            Executing: t('tasksBoard.status.executing'),
+            'Review & QA': t('tasksBoard.status.reviewQa'),
+            Blocked: t('tasksBoard.status.blocked'),
+            Done: t('tasksBoard.status.done'),
           }
           const list = grouped[status] || []
           return (
@@ -1219,7 +1581,7 @@ export default function ProjectBoardPage({
                       fontWeight: 800,
                     }}
                   >
-                    Drop items here
+                    {t('tasksBoard.empty.dropHere')}
                   </div>
                 ) : null}
               </div>

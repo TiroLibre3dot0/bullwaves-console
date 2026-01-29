@@ -1,25 +1,28 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import CommandCenter from '../command-center/CommandCenterCockpit'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
+import { useI18n } from '../../i18n/I18nContext'
+import LanguageSelect from '../../components/LanguageSelect'
+import { buildBoardTasksFromStories, mergeTasksById } from '../project-board/storyTasksImport'
 
 const StoriesKanbanPage = React.lazy(() => import('../stories-kanban/StoriesKanbanPage'))
 const ProjectBoardPage = React.lazy(() => import('../project-board/ProjectBoardPage'))
 
-const TAB_META = [
+const TAB_META_KEYS = [
   {
     key: 'commandCenter',
-    label: 'Command Center',
-    helper: 'Strategic overview',
+    labelKey: 'execHub.tabs.commandCenter',
+    helperKey: 'execHub.tabs.commandCenter.helper',
   },
   {
     key: 'storiesKanban',
-    label: 'Stories Kanban',
-    helper: 'Strategic execution',
+    labelKey: 'execHub.tabs.storiesKanban',
+    helperKey: 'execHub.tabs.storiesKanban.helper',
   },
   {
     key: 'projectBoard',
-    label: 'Tasks',
-    helper: 'Operational execution',
+    labelKey: 'execHub.tabs.tasks',
+    helperKey: 'execHub.tabs.tasks.helper',
   },
 ]
 
@@ -28,10 +31,14 @@ export default function ExecutionHubPage({
   sharePayload = null,
   activeTab,
   onChangeTab,
+  showLanguageSelect = true,
 }) {
+  const { t, locale } = useI18n()
   const [mountedTabs, setMountedTabs] = useState(() => new Set([activeTab || 'commandCenter']))
   const [projectBoardSnapshot, setProjectBoardSnapshot] = useState(null)
   const [projectBoardFocus, setProjectBoardFocus] = useState(null)
+  const [kanbanFocusStoryId, setKanbanFocusStoryId] = useState(null)
+  const [kanbanFocusNonce, setKanbanFocusNonce] = useState(0)
 
   useEffect(() => {
     const key = activeTab || 'commandCenter'
@@ -43,12 +50,32 @@ export default function ExecutionHubPage({
     })
   }, [activeTab])
 
-  const tabs = useMemo(() => TAB_META, [])
+  const tabs = useMemo(
+    () =>
+      TAB_META_KEYS.map((x) => ({
+        key: x.key,
+        label: t(x.labelKey),
+        helper: t(x.helperKey),
+      })),
+    [t]
+  )
   const current = tabs.find((t) => t.key === activeTab) || tabs[0]
 
   const setTab = (key) => {
     if (!key) return
     if (typeof onChangeTab === 'function') onChangeTab(key)
+  }
+
+  const openKanban = (maybeStoryId) => {
+    // If called by a click handler, this may be a React synthetic event.
+    const storyId = typeof maybeStoryId === 'string' ? maybeStoryId : null
+    if (storyId) {
+      setKanbanFocusStoryId(storyId)
+      setKanbanFocusNonce((n) => n + 1)
+    } else {
+      setKanbanFocusStoryId(null)
+    }
+    setTab('storiesKanban')
   }
 
   const openProjectBoard = (focus) => {
@@ -58,6 +85,34 @@ export default function ExecutionHubPage({
 
   const createPublicLink = async () => {
     if (publicMode) return
+
+    let tasksForShare = Array.isArray(projectBoardSnapshot?.tasks)
+      ? projectBoardSnapshot.tasks
+      : null
+
+    // If the user never opened the Tasks tab, `projectBoardSnapshot` may be null.
+    // In that case, fall back to seeded tasks so the public page isn't blank.
+    if (!Array.isArray(tasksForShare) || tasksForShare.length === 0) {
+      try {
+        const mod = await import('../project-board/ProjectBoardPage')
+        const seeded = typeof mod.seedTasks === 'function' ? mod.seedTasks({ locale }) : null
+        if (Array.isArray(seeded) && seeded.length) tasksForShare = seeded
+      } catch {
+        // ignore
+      }
+    }
+
+    // Always merge in story-level tasks so the board is aligned with the Stories view.
+    try {
+      const mod = await import('../stories-kanban/storiesSeed')
+      const stories = typeof mod.seedStories === 'function' ? mod.seedStories({ locale }) : []
+      const storyTasks = buildBoardTasksFromStories(stories, { t })
+      tasksForShare = mergeTasksById(tasksForShare, storyTasks)
+    } catch {
+      // ignore
+    }
+
+    if (!Array.isArray(tasksForShare)) tasksForShare = []
 
     const shareOrigin = getPublicShareOrigin()
     const runtimeOrigin = typeof window !== 'undefined' ? window.location.origin : ''
@@ -70,7 +125,7 @@ export default function ExecutionHubPage({
       activeTab: activeTab || 'commandCenter',
       projectBoard: {
         title: 'Tasks',
-        tasks: Array.isArray(projectBoardSnapshot?.tasks) ? projectBoardSnapshot.tasks : [],
+        tasks: tasksForShare,
       },
     }
 
@@ -86,7 +141,7 @@ export default function ExecutionHubPage({
       else throw new Error(data?.error || data?.message || 'share-not-available')
     } catch {
       if (!isLocalhost) {
-        window.alert('Share link non disponibile (storage share non configurato).')
+        window.alert(t('execHub.share.unavailable'))
         return
       }
 
@@ -119,13 +174,6 @@ export default function ExecutionHubPage({
     } catch {
       // ignore
     }
-
-    try {
-      await navigator.clipboard.writeText(href)
-      window.alert('Link copiato negli appunti')
-    } catch {
-      window.prompt('Copia il link:', href)
-    }
   }
 
   return (
@@ -149,6 +197,7 @@ export default function ExecutionHubPage({
                   onClick={() => {
                     // Manual navigation should not keep a previous story-focus filter.
                     if (t.key === 'projectBoard') setProjectBoardFocus(null)
+                    if (t.key === 'storiesKanban') setKanbanFocusStoryId(null)
                     setTab(t.key)
                   }}
                   className="no-card-hover"
@@ -174,6 +223,7 @@ export default function ExecutionHubPage({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {showLanguageSelect ? <LanguageSelect /> : null}
             {!publicMode ? (
               <button
                 type="button"
@@ -190,7 +240,7 @@ export default function ExecutionHubPage({
                   whiteSpace: 'nowrap',
                 }}
               >
-                Share link
+                {t('execHub.share.cta')}
               </button>
             ) : (
               <div style={{ width: 1, height: 1 }} />
@@ -217,15 +267,13 @@ export default function ExecutionHubPage({
               <CommandCenter
                 embedded
                 publicMode={publicMode}
-                onOpenKanban={() => {
-                  setTab('storiesKanban')
-                }}
+                onOpenKanban={openKanban}
                 onOpenProjectBoard={() => {
                   openProjectBoard(null)
                 }}
                 onDrillDown={() => {
                   // Back-compat fallback if CommandCenter uses it.
-                  setTab('storiesKanban')
+                  openKanban(null)
                 }}
               />
             </div>
@@ -237,13 +285,17 @@ export default function ExecutionHubPage({
             >
               <React.Suspense
                 fallback={
-                  <div style={{ padding: 24, color: 'rgba(148,163,184,0.9)' }}>Loading…</div>
+                  <div style={{ padding: 24, color: 'rgba(148,163,184,0.9)' }}>
+                    {t('common.loading')}
+                  </div>
                 }
               >
                 <StoriesKanbanPage
                   embedded
                   publicMode={publicMode}
                   onOpenProjectBoard={openProjectBoard}
+                  focusStoryId={kanbanFocusStoryId}
+                  focusNonce={kanbanFocusNonce}
                 />
               </React.Suspense>
             </div>
@@ -255,7 +307,9 @@ export default function ExecutionHubPage({
             >
               <React.Suspense
                 fallback={
-                  <div style={{ padding: 24, color: 'rgba(148,163,184,0.9)' }}>Loading…</div>
+                  <div style={{ padding: 24, color: 'rgba(148,163,184,0.9)' }}>
+                    {t('common.loading')}
+                  </div>
                 }
               >
                 <ProjectBoardPage

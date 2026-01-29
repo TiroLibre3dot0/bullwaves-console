@@ -3,8 +3,11 @@ import ExecutionHubPage from '../ExecutionHubPage'
 import { decodeSharePayload } from '../../../utils/shareCodec'
 import { setOpenGraphMeta, resetOpenGraphMeta } from '../../../utils/ogMeta'
 import { trackPublicShareOpen } from '../../../utils/analytics'
+import { useI18n } from '../../../i18n/I18nContext'
+import LanguageSelect from '../../../components/LanguageSelect'
 
 export default function PublicExecutionSharePage({ token }) {
+  const { t, locale } = useI18n()
   const [payload, setPayload] = useState(null)
   const [loadError, setLoadError] = useState(null)
   const [activeTab, setActiveTab] = useState('commandCenter')
@@ -64,13 +67,13 @@ export default function PublicExecutionSharePage({ token }) {
 
   useEffect(() => {
     setOpenGraphMeta({
-      title: 'Execution — Command Center',
-      description: 'Public read-only view of the Execution hub (Command Center, Stories, Tasks).',
+      title: t('publicShare.execution.ogTitle'),
+      description: t('publicShare.execution.ogDescription'),
       image: '/Logo.png',
       url: typeof window !== 'undefined' ? window.location.href : '',
     })
     return () => resetOpenGraphMeta()
-  }, [])
+  }, [t])
 
   const isValid = payload && payload.v === 1 && payload.k === 'exec'
 
@@ -92,9 +95,19 @@ export default function PublicExecutionSharePage({ token }) {
     return (
       <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
-          <div style={{ fontSize: 22, fontWeight: 950 }}>Execution</div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 12,
+            }}
+          >
+            <div style={{ fontSize: 22, fontWeight: 950 }}>{t('publicShare.execution.title')}</div>
+            <LanguageSelect />
+          </div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
-            {loadError || 'Invalid or expired link.'}
+            {loadError || t('publicShare.invalid')}
           </div>
         </div>
       </div>
@@ -119,6 +132,7 @@ export default function PublicExecutionSharePage({ token }) {
               style={{ height: 26, width: 'auto', display: 'block', opacity: 0.95 }}
             />
           </div>
+          <LanguageSelect />
         </div>
 
         <div
@@ -129,8 +143,9 @@ export default function PublicExecutionSharePage({ token }) {
             fontWeight: 800,
           }}
         >
-          Read-only share · Generated{' '}
-          {payload.generatedAt ? new Date(payload.generatedAt).toLocaleString() : '—'}
+          {t('publicShare.readOnlyGenerated', {
+            date: payload.generatedAt ? new Date(payload.generatedAt).toLocaleString(locale) : '—',
+          })}
         </div>
 
         <ExecutionHubPage
@@ -138,6 +153,7 @@ export default function PublicExecutionSharePage({ token }) {
           activeTab={activeTab}
           onChangeTab={(t) => setActiveTab(t)}
           sharePayload={payload}
+          showLanguageSelect={false}
         />
       </div>
     </div>
