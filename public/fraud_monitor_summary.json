@@ -1,10 +1,10 @@
 {
   "summary": {
-    "total_users": 83513,
-    "total_accounts": 83513,
+    "total_users": 84355,
+    "total_accounts": 84355,
     "users_with_multiple_accounts": 0,
-    "users_with_ftd": 29884,
-    "users_with_qftd": 1834
+    "users_with_ftd": 30306,
+    "users_with_qftd": 1856
   },
   "sample_multi_users": []
 }

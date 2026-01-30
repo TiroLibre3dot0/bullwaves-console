@@ -337,7 +337,7 @@ function BotUsersSection() {
   )
 }
 
-export default function CommentsAnalysisPage() {
+export default function CommentsAnalysisPage({ mode = 'full' }) {
   const { t } = useI18n()
   const tRef = useRef(t)
   const [rows, setRows] = useState([])
@@ -346,7 +346,13 @@ export default function CommentsAnalysisPage() {
   const [error, setError] = useState(null)
   const [selectedYear, setSelectedYear] = useState('all')
   const [selectedMonth, setSelectedMonth] = useState('all')
+  const transfersOnly = mode === 'transfersOnly'
   const [tab, setTab] = useState('comments')
+
+  useEffect(() => {
+    if (!transfersOnly) return
+    setTab('comments')
+  }, [transfersOnly])
 
   useEffect(() => {
     tRef.current = t
@@ -655,22 +661,24 @@ export default function CommentsAnalysisPage() {
           <p className="page-subtitle">{t('analysis.header.subtitle')}</p>
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className="tabs" style={{ display: 'flex', gap: 8 }}>
-            <button
-              type="button"
-              className={`pill-tab ${tab === 'comments' ? 'active' : ''}`}
-              onClick={() => setTab('comments')}
-            >
-              {t('analysis.tabs.comments')}
-            </button>
-            <button
-              type="button"
-              className={`pill-tab ${tab === 'bots' ? 'active' : ''}`}
-              onClick={() => setTab('bots')}
-            >
-              {t('analysis.tabs.bots')}
-            </button>
-          </div>
+          {!transfersOnly && (
+            <div className="tabs" style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className={`pill-tab ${tab === 'comments' ? 'active' : ''}`}
+                onClick={() => setTab('comments')}
+              >
+                {t('analysis.tabs.comments')}
+              </button>
+              <button
+                type="button"
+                className={`pill-tab ${tab === 'bots' ? 'active' : ''}`}
+                onClick={() => setTab('bots')}
+              >
+                {t('analysis.tabs.bots')}
+              </button>
+            </div>
+          )}
           <PeriodSelector
             availableYears={periodOptions.years}
             availableMonths={periodOptions.monthsObj}
@@ -693,7 +701,7 @@ export default function CommentsAnalysisPage() {
           affiliateMap={affiliateMap}
         />
       )}
-      {tab === 'bots' && <BotUsersSection />}
+      {!transfersOnly && tab === 'bots' && <BotUsersSection />}
     </div>
   )
 }

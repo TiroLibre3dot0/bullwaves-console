@@ -298,7 +298,10 @@ export default function Dashboard() {
   const { setDataStatus } = useDataStatus()
   const showCohortDbBlock = false // temporarily hidden per request
   const showAutoReportBlock = false // temporarily hidden per request
-  const [selectedCalendarYear, setSelectedCalendarYear] = useState(2025)
+  const [selectedCalendarYear, setSelectedCalendarYear] = useState('all')
+
+  // Temporarily hide everything after the "Time-based cohort decay" section.
+  const showPostCohortDecaySections = false
 
   const [cohortDbLoaded, setCohortDbLoaded] = useState(false)
   const [balanceLoaded, setBalanceLoaded] = useState(false)
@@ -552,6 +555,12 @@ export default function Dashboard() {
 
     return { rows: parsed, labels, startAbs: 0, years }
   }, [cohortsDetail])
+
+  const calendarYearOptions = useMemo(() => {
+    const fixed = [2023, 2024, 2025, 2026]
+    const extra = (cohortCalendar?.years || []).filter((y) => !fixed.includes(y))
+    return [...fixed, ...extra].sort((a, b) => a - b)
+  }, [cohortCalendar?.years])
 
   const calendarView = useMemo(() => {
     const filteredRows = cohortCalendar.rows.filter((r) =>
@@ -1743,7 +1752,7 @@ export default function Dashboard() {
                 className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2 min-w-[140px]"
               >
                 <option value="all">{t('dashboard.years.all')}</option>
-                {cohortCalendar.years.map((y) => (
+                {calendarYearOptions.map((y) => (
                   <option key={y} value={y}>
                     {y}
                   </option>
@@ -1955,882 +1964,889 @@ export default function Dashboard() {
         />
       </section>
 
-      <div className="grid grid-cols-1 gap-8 items-start dashboard-grid">
-        {/* Legacy cohort inputs & reports */}
-        <div className="space-y-4 w-full">
-          <aside className="card w-full">
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 8,
-                marginBottom: 4,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <h2 style={{ fontSize: 14, margin: 0 }}>{t('dashboard.cohortKpis.title')}</h2>
-                <button
-                  aria-label={t('dashboard.cohortKpis.infoAria')}
-                  className="btn secondary"
-                  style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                  onClick={() => setShowKpiInfo((v) => !v)}
-                >
-                  i
-                </button>
-              </div>
-              <button
-                className="btn secondary"
-                style={{ padding: '4px 10px', height: 28 }}
-                onClick={() => setShowCohortKpisBlock((v) => !v)}
+      {showPostCohortDecaySections && (
+        <div className="grid grid-cols-1 gap-8 items-start dashboard-grid">
+          {/* Legacy cohort inputs & reports */}
+          <div className="space-y-4 w-full">
+            <aside className="card w-full">
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 8,
+                  marginBottom: 4,
+                }}
               >
-                {showCohortKpisBlock ? t('common.hide') : t('common.show')}
-              </button>
-            </div>
-
-            {showCohortKpisBlock && (
-              <>
-                {showKpiInfo && (
-                  <div
-                    style={{
-                      fontSize: 11,
-                      color: '#94a3b8',
-                      marginBottom: 6,
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      padding: '8px 10px',
-                      borderRadius: 8,
-                    }}
-                  >
-                    {t('dashboard.cohortKpis.infoText')}
-                  </div>
-                )}
-                <div
-                  style={{
-                    display: 'grid',
-                    gap: 6,
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  }}
-                >
-                  {cohortKpiCards.map((card) => {
-                    const formatted = card.formatter ? card.formatter(card.value) : card.value
-                    const isNegative = typeof card.value === 'number' && card.value < 0
-                    const valueColor = (() => {
-                      if (card.key === 'netDepToCommission') {
-                        if (card.value === null) return '#cbd5e1'
-                        return card.value < 1.5 ? '#fbbf24' : '#34d399'
-                      }
-                      if (card.type === 'currency' || card.type === 'percent') {
-                        return isNegative ? '#f87171' : '#34d399'
-                      }
-                      return '#cbd5e1'
-                    })()
-
-                    return (
-                      <div
-                        key={card.key}
-                        className="small-card"
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 4,
-                          fontSize: 12,
-                          minHeight: 80,
-                        }}
-                        title={card.helper}
-                      >
-                        <div
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'flex-start',
-                            gap: 8,
-                          }}
-                        >
-                          <span style={kpiLabelStyle}>{card.label}</span>
-                          <div style={{ fontWeight: 600, color: valueColor }} title={formatted}>
-                            {formatted}
-                          </div>
-                        </div>
-                        {card.helper && (
-                          <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
-                            {card.helper}
-                          </div>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </>
-            )}
-          </aside>
-        </div>
-
-        {/* COLONNA 2: tabella + top affiliates */}
-        <div className="space-y-4 w-full">
-          <main className="card w-full">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: 8,
-                flexWrap: 'wrap',
-              }}
-            >
-              <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <h2 style={{ marginBottom: 4, marginTop: 0 }}>Monthly aggregates</h2>
+                  <h2 style={{ fontSize: 14, margin: 0 }}>{t('dashboard.cohortKpis.title')}</h2>
                   <button
-                    aria-label={t('dashboard.monthlyAggregates.infoAria')}
+                    aria-label={t('dashboard.cohortKpis.infoAria')}
                     className="btn secondary"
-                    style={{ padding: '2px 6px', height: 26, minWidth: 26 }}
-                    onClick={() => setShowMonthlyInfo((v) => !v)}
+                    style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                    onClick={() => setShowKpiInfo((v) => !v)}
                   >
                     i
                   </button>
                 </div>
-                {showMonthlyInfo && (
+                <button
+                  className="btn secondary"
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowCohortKpisBlock((v) => !v)}
+                >
+                  {showCohortKpisBlock ? t('common.hide') : t('common.show')}
+                </button>
+              </div>
+
+              {showCohortKpisBlock && (
+                <>
+                  {showKpiInfo && (
+                    <div
+                      style={{
+                        fontSize: 11,
+                        color: '#94a3b8',
+                        marginBottom: 6,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        padding: '8px 10px',
+                        borderRadius: 8,
+                      }}
+                    >
+                      {t('dashboard.cohortKpis.infoText')}
+                    </div>
+                  )}
                   <div
                     style={{
-                      color: '#94a3b8',
-                      fontSize: 12,
-                      marginTop: 4,
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      padding: '8px 10px',
-                      borderRadius: 8,
-                      maxWidth: 780,
+                      display: 'grid',
+                      gap: 6,
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                     }}
                   >
-                    {t('dashboard.monthlyAggregates.infoText', { cohortMetricLabel })}
+                    {cohortKpiCards.map((card) => {
+                      const formatted = card.formatter ? card.formatter(card.value) : card.value
+                      const isNegative = typeof card.value === 'number' && card.value < 0
+                      const valueColor = (() => {
+                        if (card.key === 'netDepToCommission') {
+                          if (card.value === null) return '#cbd5e1'
+                          return card.value < 1.5 ? '#fbbf24' : '#34d399'
+                        }
+                        if (card.type === 'currency' || card.type === 'percent') {
+                          return isNegative ? '#f87171' : '#34d399'
+                        }
+                        return '#cbd5e1'
+                      })()
+
+                      return (
+                        <div
+                          key={card.key}
+                          className="small-card"
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 4,
+                            fontSize: 12,
+                            minHeight: 80,
+                          }}
+                          title={card.helper}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              gap: 8,
+                            }}
+                          >
+                            <span style={kpiLabelStyle}>{card.label}</span>
+                            <div style={{ fontWeight: 600, color: valueColor }} title={formatted}>
+                              {formatted}
+                            </div>
+                          </div>
+                          {card.helper && (
+                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                              {card.helper}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
-                )}
-              </div>
-              <button
-                className="btn secondary"
-                style={{ padding: '4px 10px', height: 28 }}
-                onClick={() => setShowMonthlyAggregatesBlock((v) => !v)}
+                </>
+              )}
+            </aside>
+          </div>
+
+          {/* COLONNA 2: tabella + top affiliates */}
+          <div className="space-y-4 w-full">
+            <main className="card w-full">
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: 8,
+                  flexWrap: 'wrap',
+                }}
               >
-                {showMonthlyAggregatesBlock ? t('common.hide') : t('common.show')}
-              </button>
-            </div>
-
-            {showMonthlyAggregatesBlock && (
-              <>
-                <div
-                  style={{
-                    marginTop: 12,
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 12,
-                    alignItems: 'flex-end',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                      {t('dashboard.monthlyAggregates.cohortLabel')}
-                    </span>
-                    <select
-                      value={selectedCohortMonth ?? ''}
-                      onChange={(e) => {
-                        const val = e.target.value
-                        if (val === 'all') return setSelectedCohortMonth('all')
-                        const grouped = ['Q1', 'Q2', 'Q3', 'Q4', 'S1', 'S2']
-                        if (grouped.includes(val)) return setSelectedCohortMonth(val)
-                        setSelectedCohortMonth(Number(val))
-                      }}
-                      disabled={!cohortsSummary.length}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <h2 style={{ marginBottom: 4, marginTop: 0 }}>Monthly aggregates</h2>
+                    <button
+                      aria-label={t('dashboard.monthlyAggregates.infoAria')}
+                      className="btn secondary"
+                      style={{ padding: '2px 6px', height: 26, minWidth: 26 }}
+                      onClick={() => setShowMonthlyInfo((v) => !v)}
+                    >
+                      i
+                    </button>
+                  </div>
+                  {showMonthlyInfo && (
+                    <div
                       style={{
-                        minWidth: 200,
-                        background: '#0b1420',
-                        color: 'var(--text)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: 8,
+                        color: '#94a3b8',
+                        fontSize: 12,
+                        marginTop: 4,
+                        background: 'rgba(255,255,255,0.02)',
+                        border: '1px solid rgba(255,255,255,0.06)',
                         padding: '8px 10px',
+                        borderRadius: 8,
+                        maxWidth: 780,
                       }}
                     >
-                      {!cohortsSummary.length && (
-                        <option value="" disabled>
-                          —
-                        </option>
-                      )}
-                      <option value="all">{t('dashboard.monthlyAggregates.cohort.all')}</option>
-                      <option value="Q1">{t('dashboard.monthlyAggregates.cohort.q1')}</option>
-                      <option value="Q2">{t('dashboard.monthlyAggregates.cohort.q2')}</option>
-                      <option value="Q3">{t('dashboard.monthlyAggregates.cohort.q3')}</option>
-                      <option value="Q4">{t('dashboard.monthlyAggregates.cohort.q4')}</option>
-                      <option value="S1">{t('dashboard.monthlyAggregates.cohort.s1')}</option>
-                      <option value="S2">{t('dashboard.monthlyAggregates.cohort.s2')}</option>
-                      {cohortsSummary.map((c) => (
-                        <option key={c.monthIndex} value={c.monthIndex}>
-                          {months[c.monthIndex]}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                      {t('dashboard.monthlyAggregates.affiliateLabel')}
-                    </span>
-                    <select
-                      value={selectedAffiliate}
-                      onChange={(e) => setSelectedAffiliate(e.target.value)}
-                      disabled={selectedCohortMonth === null}
-                      style={{
-                        minWidth: 220,
-                        background: '#0b1420',
-                        color: 'var(--text)',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        borderRadius: 8,
-                        padding: '8px 10px',
-                      }}
-                    >
-                      <option value="all">{t('dashboard.monthlyAggregates.affiliate.all')}</option>
-                      {affiliateOptionGroups.top.length === 0 && (
-                        <option value="" disabled>
-                          {t('dashboard.monthlyAggregates.affiliate.noneAvailable')}
-                        </option>
-                      )}
-                      {affiliateOptionGroups.top.length > 0 && (
-                        <optgroup label={t('dashboard.monthlyAggregates.affiliate.top10Label')}>
-                          {affiliateOptionGroups.top.map((name) => (
-                            <option key={`top-${name}`} value={name}>
-                              {name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      )}
-                    </select>
-                  </div>
-
-                  <div style={{ fontSize: 12, color: '#94a3b8', maxWidth: 260 }}>
-                    {t('dashboard.monthlyAggregates.tableAutoFillHint', { cohortMetricLabel })}
-                  </div>
+                      {t('dashboard.monthlyAggregates.infoText', { cohortMetricLabel })}
+                    </div>
+                  )}
                 </div>
+                <button
+                  className="btn secondary"
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowMonthlyAggregatesBlock((v) => !v)}
+                >
+                  {showMonthlyAggregatesBlock ? t('common.hide') : t('common.show')}
+                </button>
+              </div>
 
-                <div style={{ marginTop: 10 }}>
-                  <table className="table w-full">
-                    <thead>
-                      <tr>
-                        <th>{t('dashboard.table.metric')}</th>
-                        {months.map((m) => (
-                          <th key={m} style={{ textAlign: 'center' }} className="month-col">
-                            {m}
-                          </th>
+              {showMonthlyAggregatesBlock && (
+                <>
+                  <div
+                    style={{
+                      marginTop: 12,
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: 12,
+                      alignItems: 'flex-end',
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                        {t('dashboard.monthlyAggregates.cohortLabel')}
+                      </span>
+                      <select
+                        value={selectedCohortMonth ?? ''}
+                        onChange={(e) => {
+                          const val = e.target.value
+                          if (val === 'all') return setSelectedCohortMonth('all')
+                          const grouped = ['Q1', 'Q2', 'Q3', 'Q4', 'S1', 'S2']
+                          if (grouped.includes(val)) return setSelectedCohortMonth(val)
+                          setSelectedCohortMonth(Number(val))
+                        }}
+                        disabled={!cohortsSummary.length}
+                        style={{
+                          minWidth: 200,
+                          background: '#0b1420',
+                          color: 'var(--text)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: 8,
+                          padding: '8px 10px',
+                        }}
+                      >
+                        {!cohortsSummary.length && (
+                          <option value="" disabled>
+                            —
+                          </option>
+                        )}
+                        <option value="all">{t('dashboard.monthlyAggregates.cohort.all')}</option>
+                        <option value="Q1">{t('dashboard.monthlyAggregates.cohort.q1')}</option>
+                        <option value="Q2">{t('dashboard.monthlyAggregates.cohort.q2')}</option>
+                        <option value="Q3">{t('dashboard.monthlyAggregates.cohort.q3')}</option>
+                        <option value="Q4">{t('dashboard.monthlyAggregates.cohort.q4')}</option>
+                        <option value="S1">{t('dashboard.monthlyAggregates.cohort.s1')}</option>
+                        <option value="S2">{t('dashboard.monthlyAggregates.cohort.s2')}</option>
+                        {cohortsSummary.map((c) => (
+                          <option key={c.monthIndex} value={c.monthIndex}>
+                            {months[c.monthIndex]}
+                          </option>
                         ))}
-                        <th style={{ textAlign: 'right' }}>{t('dashboard.table.total')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Active users first */}
-                      {['Active users'].map((r) => (
-                        <tr key={r}>
-                          <td>{r}</td>
-                          {months.map((m, idx) => (
-                            <td key={m} style={{ textAlign: 'right', color: '#cbd5e1' }}>
-                              <span
-                                title={formatNumberFull(Math.round(derivedSeries[r][idx] || 0))}
-                                className="num"
-                              >
-                                {formatNumberShort(Math.round(derivedSeries[r][idx] || 0))}
-                              </span>
-                            </td>
-                          ))}
-                          <td style={{ textAlign: 'right' }}>
-                            <span
-                              title={formatNumberFull(Math.round(totals[r] || 0))}
-                              className="num"
-                            >
-                              {formatNumberShort(Math.round(totals[r] || 0))}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      </select>
+                    </div>
 
-                      {/* Input metrics without marketing spend */}
-                      {inputMetrics
-                        .filter((r) => r !== 'Marketing spend')
-                        .map((r) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                        {t('dashboard.monthlyAggregates.affiliateLabel')}
+                      </span>
+                      <select
+                        value={selectedAffiliate}
+                        onChange={(e) => setSelectedAffiliate(e.target.value)}
+                        disabled={selectedCohortMonth === null}
+                        style={{
+                          minWidth: 220,
+                          background: '#0b1420',
+                          color: 'var(--text)',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          borderRadius: 8,
+                          padding: '8px 10px',
+                        }}
+                      >
+                        <option value="all">
+                          {t('dashboard.monthlyAggregates.affiliate.all')}
+                        </option>
+                        {affiliateOptionGroups.top.length === 0 && (
+                          <option value="" disabled>
+                            {t('dashboard.monthlyAggregates.affiliate.noneAvailable')}
+                          </option>
+                        )}
+                        {affiliateOptionGroups.top.length > 0 && (
+                          <optgroup label={t('dashboard.monthlyAggregates.affiliate.top10Label')}>
+                            {affiliateOptionGroups.top.map((name) => (
+                              <option key={`top-${name}`} value={name}>
+                                {name}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
+                      </select>
+                    </div>
+
+                    <div style={{ fontSize: 12, color: '#94a3b8', maxWidth: 260 }}>
+                      {t('dashboard.monthlyAggregates.tableAutoFillHint', { cohortMetricLabel })}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: 10 }}>
+                    <table className="table w-full">
+                      <thead>
+                        <tr>
+                          <th>{t('dashboard.table.metric')}</th>
+                          {months.map((m) => (
+                            <th key={m} style={{ textAlign: 'center' }} className="month-col">
+                              {m}
+                            </th>
+                          ))}
+                          <th style={{ textAlign: 'right' }}>{t('dashboard.table.total')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* Active users first */}
+                        {['Active users'].map((r) => (
                           <tr key={r}>
-                            <td>{r === 'Net deposits' ? cohortMetricLabel : r}</td>
+                            <td>{r}</td>
                             {months.map((m, idx) => (
-                              <td key={m}>
-                                <input
-                                  className="input-num"
-                                  type="number"
-                                  step={r === 'Churn %' ? '0.1' : '1'}
-                                  min={r === 'Churn %' ? '0' : undefined}
-                                  max={r === 'Churn %' ? '100' : undefined}
-                                  value={
-                                    r === 'Churn %'
-                                      ? monthlyData[r][idx]
-                                      : r === 'Commissions paid'
-                                        ? Math.round(Math.abs(monthlyData[r][idx] || 0))
-                                        : Math.round(monthlyData[r][idx] || 0)
-                                  }
-                                  title={
-                                    r === 'Churn %'
-                                      ? formatPercent(monthlyData[r][idx] || 0)
-                                      : r === 'Users'
-                                        ? formatNumberFull(monthlyData[r][idx] || 0)
-                                        : formatEuroFull(Math.abs(monthlyData[r][idx] || 0))
-                                  }
-                                  style={{
-                                    color:
-                                      r === 'Churn %'
-                                        ? '#cbd5e1'
-                                        : r === 'Users'
-                                          ? '#cbd5e1'
-                                          : (monthlyData[r][idx] || 0) >= 0
-                                            ? '#34d399'
-                                            : '#f87171',
-                                  }}
-                                  onChange={(e) =>
-                                    updateValue(
-                                      r,
-                                      idx,
-                                      r === 'Commissions paid'
-                                        ? -Math.abs(Number(e.target.value) || 0)
-                                        : e.target.value
-                                    )
-                                  }
-                                  readOnly={r === 'Commissions paid'}
-                                />
+                              <td key={m} style={{ textAlign: 'right', color: '#cbd5e1' }}>
+                                <span
+                                  title={formatNumberFull(Math.round(derivedSeries[r][idx] || 0))}
+                                  className="num"
+                                >
+                                  {formatNumberShort(Math.round(derivedSeries[r][idx] || 0))}
+                                </span>
                               </td>
                             ))}
                             <td style={{ textAlign: 'right' }}>
-                              {r === 'Users' ? (
-                                <span title={formatNumberFull(totals[r] || 0)} className="num">
-                                  {formatNumberShort(totals[r] || 0)}
-                                </span>
-                              ) : r === 'Churn %' ? (
-                                <span title={formatPercent(avgChurn)} className="num">
-                                  {formatPercent(avgChurn)}
-                                </span>
-                              ) : (
-                                <span
-                                  title={formatEuroFull(Math.abs(totals[r] || 0))}
-                                  className="num"
-                                  style={{
-                                    color: '#34d399',
-                                  }}
-                                >
-                                  {formatEuro(Math.abs(totals[r] || 0))}
-                                </span>
-                              )}
+                              <span
+                                title={formatNumberFull(Math.round(totals[r] || 0))}
+                                className="num"
+                              >
+                                {formatNumberShort(Math.round(totals[r] || 0))}
+                              </span>
                             </td>
                           </tr>
                         ))}
 
-                      {/* P&L row */}
-                      {['P&L'].map((r) => (
-                        <tr key={r}>
-                          <td>{r}</td>
+                        {/* Input metrics without marketing spend */}
+                        {inputMetrics
+                          .filter((r) => r !== 'Marketing spend')
+                          .map((r) => (
+                            <tr key={r}>
+                              <td>{r === 'Net deposits' ? cohortMetricLabel : r}</td>
+                              {months.map((m, idx) => (
+                                <td key={m}>
+                                  <input
+                                    className="input-num"
+                                    type="number"
+                                    step={r === 'Churn %' ? '0.1' : '1'}
+                                    min={r === 'Churn %' ? '0' : undefined}
+                                    max={r === 'Churn %' ? '100' : undefined}
+                                    value={
+                                      r === 'Churn %'
+                                        ? monthlyData[r][idx]
+                                        : r === 'Commissions paid'
+                                          ? Math.round(Math.abs(monthlyData[r][idx] || 0))
+                                          : Math.round(monthlyData[r][idx] || 0)
+                                    }
+                                    title={
+                                      r === 'Churn %'
+                                        ? formatPercent(monthlyData[r][idx] || 0)
+                                        : r === 'Users'
+                                          ? formatNumberFull(monthlyData[r][idx] || 0)
+                                          : formatEuroFull(Math.abs(monthlyData[r][idx] || 0))
+                                    }
+                                    style={{
+                                      color:
+                                        r === 'Churn %'
+                                          ? '#cbd5e1'
+                                          : r === 'Users'
+                                            ? '#cbd5e1'
+                                            : (monthlyData[r][idx] || 0) >= 0
+                                              ? '#34d399'
+                                              : '#f87171',
+                                    }}
+                                    onChange={(e) =>
+                                      updateValue(
+                                        r,
+                                        idx,
+                                        r === 'Commissions paid'
+                                          ? -Math.abs(Number(e.target.value) || 0)
+                                          : e.target.value
+                                      )
+                                    }
+                                    readOnly={r === 'Commissions paid'}
+                                  />
+                                </td>
+                              ))}
+                              <td style={{ textAlign: 'right' }}>
+                                {r === 'Users' ? (
+                                  <span title={formatNumberFull(totals[r] || 0)} className="num">
+                                    {formatNumberShort(totals[r] || 0)}
+                                  </span>
+                                ) : r === 'Churn %' ? (
+                                  <span title={formatPercent(avgChurn)} className="num">
+                                    {formatPercent(avgChurn)}
+                                  </span>
+                                ) : (
+                                  <span
+                                    title={formatEuroFull(Math.abs(totals[r] || 0))}
+                                    className="num"
+                                    style={{
+                                      color: '#34d399',
+                                    }}
+                                  >
+                                    {formatEuro(Math.abs(totals[r] || 0))}
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+
+                        {/* P&L row */}
+                        {['P&L'].map((r) => (
+                          <tr key={r}>
+                            <td>{r}</td>
+                            {months.map((m, idx) => (
+                              <td
+                                key={m}
+                                style={{
+                                  textAlign: 'right',
+                                  color: (derivedSeries[r][idx] || 0) >= 0 ? '#34d399' : '#f87171',
+                                }}
+                              >
+                                <span
+                                  title={formatEuroFull(derivedSeries[r][idx] || 0)}
+                                  className="num"
+                                >
+                                  {formatEuro(derivedSeries[r][idx] || 0)}
+                                </span>
+                              </td>
+                            ))}
+                            <td style={{ textAlign: 'right' }}>
+                              <span
+                                style={{
+                                  color: (totals[r] || 0) >= 0 ? '#34d399' : '#f87171',
+                                }}
+                                title={formatEuroFull(totals[r] || 0)}
+                                className="num"
+                              >
+                                {formatEuro(totals[r] || 0)}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+
+                        {/* Break-even cumulative: PL cumulato - commissioni paid cumulative */}
+                        <tr>
+                          <td>{t('dashboard.table.breakEven')}</td>
                           {months.map((m, idx) => (
                             <td
                               key={m}
                               style={{
                                 textAlign: 'right',
-                                color: (derivedSeries[r][idx] || 0) >= 0 ? '#34d399' : '#f87171',
+                                color:
+                                  breakEvenRow[idx] === null || breakEvenRow[idx] === undefined
+                                    ? '#94a3b8'
+                                    : (breakEvenRow[idx] || 0) >= 0
+                                      ? '#34d399'
+                                      : '#f87171',
                               }}
                             >
-                              <span
-                                title={formatEuroFull(derivedSeries[r][idx] || 0)}
-                                className="num"
-                              >
-                                {formatEuro(derivedSeries[r][idx] || 0)}
-                              </span>
+                              {breakEvenRow[idx] === null || breakEvenRow[idx] === undefined ? (
+                                <span className="num" style={{ color: '#94a3b8' }}>
+                                  —
+                                </span>
+                              ) : (
+                                <span
+                                  title={formatEuroFull(breakEvenRow[idx] || 0)}
+                                  className="num"
+                                >
+                                  {formatEuro(breakEvenRow[idx] || 0)}
+                                </span>
+                              )}
                             </td>
                           ))}
                           <td style={{ textAlign: 'right' }}>
                             <span
                               style={{
-                                color: (totals[r] || 0) >= 0 ? '#34d399' : '#f87171',
+                                color: (lastBreakEvenValue || 0) >= 0 ? '#34d399' : '#f87171',
                               }}
-                              title={formatEuroFull(totals[r] || 0)}
+                              title={
+                                lastBreakEvenValue === null
+                                  ? undefined
+                                  : formatEuroFull(lastBreakEvenValue || 0)
+                              }
                               className="num"
                             >
-                              {formatEuro(totals[r] || 0)}
+                              {lastBreakEvenValue === null
+                                ? '—'
+                                : formatEuro(lastBreakEvenValue || 0)}
                             </span>
                           </td>
                         </tr>
-                      ))}
-
-                      {/* Break-even cumulative: PL cumulato - commissioni paid cumulative */}
-                      <tr>
-                        <td>{t('dashboard.table.breakEven')}</td>
-                        {months.map((m, idx) => (
-                          <td
-                            key={m}
-                            style={{
-                              textAlign: 'right',
-                              color:
-                                breakEvenRow[idx] === null || breakEvenRow[idx] === undefined
-                                  ? '#94a3b8'
-                                  : (breakEvenRow[idx] || 0) >= 0
-                                    ? '#34d399'
-                                    : '#f87171',
-                            }}
-                          >
-                            {breakEvenRow[idx] === null || breakEvenRow[idx] === undefined ? (
-                              <span className="num" style={{ color: '#94a3b8' }}>
-                                —
-                              </span>
-                            ) : (
-                              <span title={formatEuroFull(breakEvenRow[idx] || 0)} className="num">
-                                {formatEuro(breakEvenRow[idx] || 0)}
-                              </span>
-                            )}
-                          </td>
-                        ))}
-                        <td style={{ textAlign: 'right' }}>
-                          <span
-                            style={{
-                              color: (lastBreakEvenValue || 0) >= 0 ? '#34d399' : '#f87171',
-                            }}
-                            title={
-                              lastBreakEvenValue === null
-                                ? undefined
-                                : formatEuroFull(lastBreakEvenValue || 0)
-                            }
-                            className="num"
-                          >
-                            {lastBreakEvenValue === null
-                              ? '—'
-                              : formatEuro(lastBreakEvenValue || 0)}
-                          </span>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </main>
-
-          {showCohortDbBlock && (
-            <aside className="card w-full" style={{ marginTop: 12 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <h3 style={{ margin: 0 }}>Cohort DB (CSV)</h3>
-                <button
-                  aria-label={t('dashboard.cohortDb.infoAria')}
-                  className="btn secondary"
-                  style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                  onClick={() => setShowCohortDbInfo((v) => !v)}
-                >
-                  i
-                </button>
-              </div>
-              {showCohortDbInfo && (
-                <p
-                  style={{
-                    color: '#94a3b8',
-                    fontSize: 13,
-                    marginTop: 6,
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                  }}
-                >
-                  {t('dashboard.cohortDb.infoText')}
-                </p>
+                      </tbody>
+                    </table>
+                  </div>
+                </>
               )}
-              <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                <button className="btn secondary" onClick={() => setShowCohortDb((v) => !v)}>
-                  {showCohortDb
-                    ? t('dashboard.cohortDb.toggle.hide')
-                    : t('dashboard.cohortDb.toggle.show')}
-                </button>
-                <button
-                  className="btn secondary"
-                  onClick={() => setShowAffiliatesDetail((v) => !v)}
-                >
-                  {showAffiliatesDetail
-                    ? t('dashboard.cohortDb.affiliates.toggle.hide')
-                    : t('dashboard.cohortDb.affiliates.toggle.show')}
-                </button>
-              </div>
+            </main>
 
-              {showCohortDb && (
-                <div style={{ overflowX: 'auto', marginTop: 10 }}>
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>{t('dashboard.cohortDb.table.monthFd')}</th>
-                        <th style={{ textAlign: 'right' }}>
-                          {t('dashboard.cohortDb.table.cohortSize')}
-                        </th>
-                        <th style={{ textAlign: 'right' }}>
-                          {t('dashboard.cohortDb.table.month0')}
-                        </th>
-                        <th style={{ textAlign: 'right' }}>
-                          {t('dashboard.cohortDb.table.month1')}
-                        </th>
-                        <th style={{ textAlign: 'right' }}>
-                          {t('dashboard.cohortDb.table.month2')}
-                        </th>
-                        <th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {cohortsSummary.map((c) => (
-                        <tr key={c.monthIndex}>
-                          <td>{months[c.monthIndex]}</td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatNumberFull(c.cohortSize || 0)}
-                            className="num"
-                          >
-                            {formatNumberShort(c.cohortSize || 0)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatEuroFull(c.m0 || 0)}
-                            className="num"
-                          >
-                            {formatEuro(c.m0 || 0)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatEuroFull(c.m1 || 0)}
-                            className="num"
-                          >
-                            {formatEuro(c.m1 || 0)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatEuroFull(c.m2 || 0)}
-                            className="num"
-                          >
-                            {formatEuro(c.m2 || 0)}
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <input
-                              type="radio"
-                              name="cohort-month"
-                              checked={selectedCohortMonth === c.monthIndex}
-                              onChange={() => setSelectedCohortMonth(c.monthIndex)}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+            {showCohortDbBlock && (
+              <aside className="card w-full" style={{ marginTop: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <h3 style={{ margin: 0 }}>Cohort DB (CSV)</h3>
+                  <button
+                    aria-label={t('dashboard.cohortDb.infoAria')}
+                    className="btn secondary"
+                    style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                    onClick={() => setShowCohortDbInfo((v) => !v)}
+                  >
+                    i
+                  </button>
                 </div>
-              )}
+                {showCohortDbInfo && (
+                  <p
+                    style={{
+                      color: '#94a3b8',
+                      fontSize: 13,
+                      marginTop: 6,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {t('dashboard.cohortDb.infoText')}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                  <button className="btn secondary" onClick={() => setShowCohortDb((v) => !v)}>
+                    {showCohortDb
+                      ? t('dashboard.cohortDb.toggle.hide')
+                      : t('dashboard.cohortDb.toggle.show')}
+                  </button>
+                  <button
+                    className="btn secondary"
+                    onClick={() => setShowAffiliatesDetail((v) => !v)}
+                  >
+                    {showAffiliatesDetail
+                      ? t('dashboard.cohortDb.affiliates.toggle.hide')
+                      : t('dashboard.cohortDb.affiliates.toggle.show')}
+                  </button>
+                </div>
 
-              {showAffiliatesDetail && (
-                <div style={{ marginTop: 10 }}>
-                  <h4 style={{ margin: '8px 0 6px', color: '#cbd5e1' }}>
-                    {t('dashboard.cohortDb.affiliates.title')}
-                  </h4>
-                  <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                {showCohortDb && (
+                  <div style={{ overflowX: 'auto', marginTop: 10 }}>
                     <table className="table">
                       <thead>
                         <tr>
-                          <th>{t('dashboard.cohortDb.affiliates.table.affiliate')}</th>
-                          <th>{t('dashboard.cohortDb.affiliates.table.month')}</th>
+                          <th>{t('dashboard.cohortDb.table.monthFd')}</th>
                           <th style={{ textAlign: 'right' }}>
-                            {t('dashboard.cohortDb.affiliates.table.size')}
+                            {t('dashboard.cohortDb.table.cohortSize')}
                           </th>
-                          <th style={{ textAlign: 'right' }}>M0</th>
-                          <th style={{ textAlign: 'right' }}>M1</th>
-                          <th style={{ textAlign: 'right' }}>M2</th>
+                          <th style={{ textAlign: 'right' }}>
+                            {t('dashboard.cohortDb.table.month0')}
+                          </th>
+                          <th style={{ textAlign: 'right' }}>
+                            {t('dashboard.cohortDb.table.month1')}
+                          </th>
+                          <th style={{ textAlign: 'right' }}>
+                            {t('dashboard.cohortDb.table.month2')}
+                          </th>
+                          <th></th>
                         </tr>
                       </thead>
                       <tbody>
-                        {cohortDetailRows.slice(0, 15).map((r, idx) => (
-                          <tr key={`${r.affiliate}-${idx}`}>
-                            <td>{r.affiliate}</td>
-                            <td>{months[r.monthIndex]}</td>
+                        {cohortsSummary.map((c) => (
+                          <tr key={c.monthIndex}>
+                            <td>{months[c.monthIndex]}</td>
                             <td
                               style={{ textAlign: 'right' }}
-                              title={formatNumberFull(r.cohortSize || 0)}
+                              title={formatNumberFull(c.cohortSize || 0)}
                               className="num"
                             >
-                              {formatNumberShort(r.cohortSize || 0)}
+                              {formatNumberShort(c.cohortSize || 0)}
                             </td>
                             <td
                               style={{ textAlign: 'right' }}
-                              title={formatEuroFull(r.m0 || 0)}
+                              title={formatEuroFull(c.m0 || 0)}
                               className="num"
                             >
-                              {formatEuro(r.m0 || 0)}
+                              {formatEuro(c.m0 || 0)}
                             </td>
                             <td
                               style={{ textAlign: 'right' }}
-                              title={formatEuroFull(r.m1 || 0)}
+                              title={formatEuroFull(c.m1 || 0)}
                               className="num"
                             >
-                              {formatEuro(r.m1 || 0)}
+                              {formatEuro(c.m1 || 0)}
                             </td>
                             <td
                               style={{ textAlign: 'right' }}
-                              title={formatEuroFull(r.m2 || 0)}
+                              title={formatEuroFull(c.m2 || 0)}
                               className="num"
                             >
-                              {formatEuro(r.m2 || 0)}
+                              {formatEuro(c.m2 || 0)}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <input
+                                type="radio"
+                                name="cohort-month"
+                                checked={selectedCohortMonth === c.monthIndex}
+                                onChange={() => setSelectedCohortMonth(c.monthIndex)}
+                              />
                             </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                </div>
-              )}
-            </aside>
-          )}
-        </div>
+                )}
 
-        {/* COLONNA 3: grafici */}
-        <div className="space-y-4 w-full flex flex-col items-end">
-          <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="flex items-center gap-2">
+                {showAffiliatesDetail && (
+                  <div style={{ marginTop: 10 }}>
+                    <h4 style={{ margin: '8px 0 6px', color: '#cbd5e1' }}>
+                      {t('dashboard.cohortDb.affiliates.title')}
+                    </h4>
+                    <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>{t('dashboard.cohortDb.affiliates.table.affiliate')}</th>
+                            <th>{t('dashboard.cohortDb.affiliates.table.month')}</th>
+                            <th style={{ textAlign: 'right' }}>
+                              {t('dashboard.cohortDb.affiliates.table.size')}
+                            </th>
+                            <th style={{ textAlign: 'right' }}>M0</th>
+                            <th style={{ textAlign: 'right' }}>M1</th>
+                            <th style={{ textAlign: 'right' }}>M2</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cohortDetailRows.slice(0, 15).map((r, idx) => (
+                            <tr key={`${r.affiliate}-${idx}`}>
+                              <td>{r.affiliate}</td>
+                              <td>{months[r.monthIndex]}</td>
+                              <td
+                                style={{ textAlign: 'right' }}
+                                title={formatNumberFull(r.cohortSize || 0)}
+                                className="num"
+                              >
+                                {formatNumberShort(r.cohortSize || 0)}
+                              </td>
+                              <td
+                                style={{ textAlign: 'right' }}
+                                title={formatEuroFull(r.m0 || 0)}
+                                className="num"
+                              >
+                                {formatEuro(r.m0 || 0)}
+                              </td>
+                              <td
+                                style={{ textAlign: 'right' }}
+                                title={formatEuroFull(r.m1 || 0)}
+                                className="num"
+                              >
+                                {formatEuro(r.m1 || 0)}
+                              </td>
+                              <td
+                                style={{ textAlign: 'right' }}
+                                title={formatEuroFull(r.m2 || 0)}
+                                className="num"
+                              >
+                                {formatEuro(r.m2 || 0)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </aside>
+            )}
+          </div>
+
+          {/* COLONNA 3: grafici */}
+          <div className="space-y-4 w-full flex flex-col items-end">
+            <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium text-slate-200 m-0">
+                    {t('dashboard.breakEven.title')}
+                  </h3>
+                  <button
+                    aria-label={t('dashboard.breakEven.infoAria')}
+                    className="btn secondary"
+                    style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                    onClick={() => setShowBreakEvenInfo((v) => !v)}
+                  >
+                    i
+                  </button>
+                </div>
+                <button
+                  className="btn secondary"
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowBreakEvenBlock((v) => !v)}
+                >
+                  {showBreakEvenBlock ? t('common.hide') : t('common.show')}
+                </button>
+              </div>
+              {showBreakEvenBlock && (
+                <>
+                  {showBreakEvenInfo && (
+                    <p
+                      className="text-xs text-slate-400 mb-2"
+                      style={{
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: 8,
+                        padding: '8px 10px',
+                      }}
+                    >
+                      {t('dashboard.breakEven.infoText')}
+                    </p>
+                  )}
+                  <div className="h-48 w-full flex justify-end">
+                    <BreakEvenChart
+                      beCurve={breakEvenCurve}
+                      labels={breakEvenLabels}
+                      breakEvenIndex={breakEvenIndex}
+                    />
+                  </div>
+                </>
+              )}
+            </section>
+
+            <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
                 <h3 className="text-sm font-medium text-slate-200 m-0">
-                  {t('dashboard.breakEven.title')}
+                  {t('dashboard.pnlTrend.title')}
                 </h3>
                 <button
-                  aria-label={t('dashboard.breakEven.infoAria')}
                   className="btn secondary"
-                  style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                  onClick={() => setShowBreakEvenInfo((v) => !v)}
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowPnLTrendBlock((v) => !v)}
                 >
-                  i
+                  {showPnLTrendBlock ? t('common.hide') : t('common.show')}
                 </button>
               </div>
-              <button
-                className="btn secondary"
-                style={{ padding: '4px 10px', height: 28 }}
-                onClick={() => setShowBreakEvenBlock((v) => !v)}
-              >
-                {showBreakEvenBlock ? t('common.hide') : t('common.show')}
-              </button>
-            </div>
-            {showBreakEvenBlock && (
-              <>
-                {showBreakEvenInfo && (
-                  <p
-                    className="text-xs text-slate-400 mb-2"
-                    style={{
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      borderRadius: 8,
-                      padding: '8px 10px',
-                    }}
-                  >
-                    {t('dashboard.breakEven.infoText')}
-                  </p>
-                )}
+              {showPnLTrendBlock && (
                 <div className="h-48 w-full flex justify-end">
-                  <BreakEvenChart
-                    beCurve={breakEvenCurve}
-                    labels={breakEvenLabels}
-                    breakEvenIndex={breakEvenIndex}
-                  />
+                  <PnLTrendChart dataPoints={derivedSeries['P&L']} labels={months} />
                 </div>
-              </>
-            )}
-          </section>
+              )}
+            </section>
 
-          <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-medium text-slate-200 m-0">
-                {t('dashboard.pnlTrend.title')}
-              </h3>
-              <button
-                className="btn secondary"
-                style={{ padding: '4px 10px', height: 28 }}
-                onClick={() => setShowPnLTrendBlock((v) => !v)}
-              >
-                {showPnLTrendBlock ? t('common.hide') : t('common.show')}
-              </button>
-            </div>
-            {showPnLTrendBlock && (
-              <div className="h-48 w-full flex justify-end">
-                <PnLTrendChart dataPoints={derivedSeries['P&L']} labels={months} />
+            <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <h3 className="text-sm font-medium text-slate-200 m-0">
+                  {t('dashboard.topAffiliates.title')}
+                </h3>
+                <button
+                  className="btn secondary"
+                  style={{ padding: '4px 10px', height: 28 }}
+                  onClick={() => setShowTopAffiliatesBlock((v) => !v)}
+                >
+                  {showTopAffiliatesBlock ? t('common.hide') : t('common.show')}
+                </button>
               </div>
-            )}
-          </section>
-
-          <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <h3 className="text-sm font-medium text-slate-200 m-0">
-                {t('dashboard.topAffiliates.title')}
-              </h3>
-              <button
-                className="btn secondary"
-                style={{ padding: '4px 10px', height: 28 }}
-                onClick={() => setShowTopAffiliatesBlock((v) => !v)}
-              >
-                {showTopAffiliatesBlock ? t('common.hide') : t('common.show')}
-              </button>
-            </div>
-            {showTopAffiliatesBlock && (
-              <div style={{ overflowX: 'auto' }}>
-                <table className="table" style={{ minWidth: 380 }}>
-                  <thead>
-                    <tr>
-                      <th style={{ width: 30 }}>{t('dashboard.topAffiliates.table.rank')}</th>
-                      <th>{t('dashboard.topAffiliates.table.affiliate')}</th>
-                      <th
-                        style={{ textAlign: 'right' }}
-                        title={t('dashboard.topAffiliates.table.registrationsTitle')}
-                      >
-                        {t('dashboard.topAffiliates.table.registrationsShort')}
-                      </th>
-                      <th
-                        style={{ textAlign: 'right' }}
-                        title={t('dashboard.topAffiliates.table.registrationsPctTitle')}
-                      >
-                        {t('dashboard.topAffiliates.table.registrationsPctShort')}
-                      </th>
-                      <th
-                        style={{ textAlign: 'right' }}
-                        title={t('dashboard.topAffiliates.table.plTitle')}
-                      >
-                        {t('dashboard.topAffiliates.table.plShort')}
-                      </th>
-                      <th
-                        style={{ textAlign: 'right' }}
-                        title={t('dashboard.topAffiliates.table.plPctTitle')}
-                      >
-                        {t('dashboard.topAffiliates.table.plPctShort')}
-                      </th>
-                      <th
-                        style={{ textAlign: 'center' }}
-                        title={t('dashboard.topAffiliates.table.roiTitle')}
-                      >
-                        {t('dashboard.topAffiliates.table.roiSymbol')}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {topAffiliates.map((a, idx) => {
-                      const roiPositive = true // placeholder: show green dot only
-                      return (
-                        <tr key={`${a.affiliate}-${idx}`}>
-                          <td>{idx + 1}</td>
-                          <td style={{ color: '#60a5fa', fontWeight: 600 }}>
-                            {a.affiliate || '—'}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatNumberFull(a.cohortSize || 0)}
-                            className="num"
-                          >
-                            {formatNumberShort(a.cohortSize || 0)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatPercent(a.regPct)}
-                            className="num"
-                          >
-                            {formatPercent(a.regPct)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatEuroFull(a.total || 0)}
-                            className="num"
-                          >
-                            {formatEuro(a.total || 0)}
-                          </td>
-                          <td
-                            style={{ textAlign: 'right' }}
-                            title={formatPercent(a.plPct)}
-                            className="num"
-                          >
-                            {formatPercent(a.plPct)}
-                          </td>
-                          <td style={{ textAlign: 'center' }}>
-                            <span
-                              style={{
-                                display: 'inline-block',
-                                width: 10,
-                                height: 10,
-                                borderRadius: '999px',
-                                background: roiPositive ? '#22c55e' : '#ef4444',
-                              }}
-                              title={t('dashboard.topAffiliates.table.roiTitle')}
-                            ></span>
+              {showTopAffiliatesBlock && (
+                <div style={{ overflowX: 'auto' }}>
+                  <table className="table" style={{ minWidth: 380 }}>
+                    <thead>
+                      <tr>
+                        <th style={{ width: 30 }}>{t('dashboard.topAffiliates.table.rank')}</th>
+                        <th>{t('dashboard.topAffiliates.table.affiliate')}</th>
+                        <th
+                          style={{ textAlign: 'right' }}
+                          title={t('dashboard.topAffiliates.table.registrationsTitle')}
+                        >
+                          {t('dashboard.topAffiliates.table.registrationsShort')}
+                        </th>
+                        <th
+                          style={{ textAlign: 'right' }}
+                          title={t('dashboard.topAffiliates.table.registrationsPctTitle')}
+                        >
+                          {t('dashboard.topAffiliates.table.registrationsPctShort')}
+                        </th>
+                        <th
+                          style={{ textAlign: 'right' }}
+                          title={t('dashboard.topAffiliates.table.plTitle')}
+                        >
+                          {t('dashboard.topAffiliates.table.plShort')}
+                        </th>
+                        <th
+                          style={{ textAlign: 'right' }}
+                          title={t('dashboard.topAffiliates.table.plPctTitle')}
+                        >
+                          {t('dashboard.topAffiliates.table.plPctShort')}
+                        </th>
+                        <th
+                          style={{ textAlign: 'center' }}
+                          title={t('dashboard.topAffiliates.table.roiTitle')}
+                        >
+                          {t('dashboard.topAffiliates.table.roiSymbol')}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topAffiliates.map((a, idx) => {
+                        const roiPositive = true // placeholder: show green dot only
+                        return (
+                          <tr key={`${a.affiliate}-${idx}`}>
+                            <td>{idx + 1}</td>
+                            <td style={{ color: '#60a5fa', fontWeight: 600 }}>
+                              {a.affiliate || '—'}
+                            </td>
+                            <td
+                              style={{ textAlign: 'right' }}
+                              title={formatNumberFull(a.cohortSize || 0)}
+                              className="num"
+                            >
+                              {formatNumberShort(a.cohortSize || 0)}
+                            </td>
+                            <td
+                              style={{ textAlign: 'right' }}
+                              title={formatPercent(a.regPct)}
+                              className="num"
+                            >
+                              {formatPercent(a.regPct)}
+                            </td>
+                            <td
+                              style={{ textAlign: 'right' }}
+                              title={formatEuroFull(a.total || 0)}
+                              className="num"
+                            >
+                              {formatEuro(a.total || 0)}
+                            </td>
+                            <td
+                              style={{ textAlign: 'right' }}
+                              title={formatPercent(a.plPct)}
+                              className="num"
+                            >
+                              {formatPercent(a.plPct)}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span
+                                style={{
+                                  display: 'inline-block',
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: '999px',
+                                  background: roiPositive ? '#22c55e' : '#ef4444',
+                                }}
+                                title={t('dashboard.topAffiliates.table.roiTitle')}
+                              ></span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                      {!topAffiliates.length && (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                            {t('dashboard.topAffiliates.none')}
                           </td>
                         </tr>
-                      )
-                    })}
-                    {!topAffiliates.length && (
-                      <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>
-                          {t('dashboard.topAffiliates.none')}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          {showAutoReportBlock && (
-            <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <h3 className="text-sm font-medium text-slate-200 m-0">Auto report</h3>
-                <button
-                  aria-label={t('dashboard.autoReport.infoAria')}
-                  className="btn secondary"
-                  style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
-                  onClick={() => setShowAutoReportInfo((v) => !v)}
-                >
-                  i
-                </button>
-              </div>
-              {showAutoReportInfo && (
-                <p
-                  style={{
-                    fontSize: 12,
-                    color: '#94a3b8',
-                    marginTop: 0,
-                    background: 'rgba(255,255,255,0.02)',
-                    border: '1px solid rgba(255,255,255,0.06)',
-                    padding: '8px 10px',
-                    borderRadius: 8,
-                  }}
-                >
-                  {t('dashboard.autoReport.infoText')}
-                </p>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               )}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-                <button className="btn" onClick={generateLocalReport} disabled={reportLoading}>
-                  {reportLoading
-                    ? t('dashboard.autoReport.generating')
-                    : t('dashboard.autoReport.generate')}
-                </button>
-                <button className="btn secondary" onClick={() => setReportText('')}>
-                  {t('dashboard.autoReport.clear')}
-                </button>
-              </div>
-              <textarea
-                value={reportText}
-                onChange={(e) => setReportText(e.target.value)}
-                placeholder={t('dashboard.autoReport.placeholder')}
-                style={{
-                  width: '100%',
-                  minHeight: 120,
-                  background: '#0b1420',
-                  color: 'var(--text)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 10,
-                  padding: 10,
-                  fontSize: 12,
-                  resize: 'vertical',
-                }}
-              />
             </section>
-          )}
+
+            {showAutoReportBlock && (
+              <section className="w-full bg-slate-900/70 border border-slate-700 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-sm font-medium text-slate-200 m-0">Auto report</h3>
+                  <button
+                    aria-label={t('dashboard.autoReport.infoAria')}
+                    className="btn secondary"
+                    style={{ padding: '2px 6px', height: 24, minWidth: 24 }}
+                    onClick={() => setShowAutoReportInfo((v) => !v)}
+                  >
+                    i
+                  </button>
+                </div>
+                {showAutoReportInfo && (
+                  <p
+                    style={{
+                      fontSize: 12,
+                      color: '#94a3b8',
+                      marginTop: 0,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      padding: '8px 10px',
+                      borderRadius: 8,
+                    }}
+                  >
+                    {t('dashboard.autoReport.infoText')}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+                  <button className="btn" onClick={generateLocalReport} disabled={reportLoading}>
+                    {reportLoading
+                      ? t('dashboard.autoReport.generating')
+                      : t('dashboard.autoReport.generate')}
+                  </button>
+                  <button className="btn secondary" onClick={() => setReportText('')}>
+                    {t('dashboard.autoReport.clear')}
+                  </button>
+                </div>
+                <textarea
+                  value={reportText}
+                  onChange={(e) => setReportText(e.target.value)}
+                  placeholder={t('dashboard.autoReport.placeholder')}
+                  style={{
+                    width: '100%',
+                    minHeight: 120,
+                    background: '#0b1420',
+                    color: 'var(--text)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 10,
+                    padding: 10,
+                    fontSize: 12,
+                    resize: 'vertical',
+                  }}
+                />
+              </section>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

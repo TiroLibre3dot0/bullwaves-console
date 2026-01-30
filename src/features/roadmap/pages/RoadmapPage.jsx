@@ -1,7 +1,12 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import ongoingItems from '../../ongoing/data/ongoingItems'
-import { strategicObjectives, projects2026 } from '../data/roadmapData'
-import { useI18n } from '../../../i18n/I18nContext'
+import React from 'react'
+
+export default function RoadmapPage() {
+  return null
+}
+
+/*
+
+Legacy implementation intentionally disabled.
 
 const statusLabel = { active: 'Active', blocked: 'Blocked', done: 'Done' }
 const priorityLabel = { high: 'High', medium: 'Medium', low: 'Low' }
@@ -976,3 +981,5 @@ export default function RoadmapPage() {
     </div>
   )
 }
+
+*/

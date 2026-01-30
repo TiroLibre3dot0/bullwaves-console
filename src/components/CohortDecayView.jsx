@@ -37,6 +37,7 @@ export default function CohortDecayView({
   metricLabel = 'Net deposits',
   hideControls = false,
   defaultValueMode = 'percent', // 'percent' | 'absolute'
+  filterByCohortYear = true,
 }) {
   const [viewMode, setViewMode] = useState('heatmap')
   const [valueMode, setValueMode] = useState(() =>
@@ -73,12 +74,14 @@ export default function CohortDecayView({
 
   const filteredRows = useMemo(() => {
     return rows
-      .filter((r) => (yearFilter === null ? true : Number(r.cohortYear) === yearFilter))
+      .filter((r) =>
+        !filterByCohortYear || yearFilter === null ? true : Number(r.cohortYear) === yearFilter
+      )
       .filter((r) =>
         affiliateKey === 'all' ? true : normalizeKey(r.affiliate || '') === affiliateKey
       )
       .sort((a, b) => a.baseAbs - b.baseAbs)
-  }, [rows, selectedYear, affiliateKey])
+  }, [rows, yearFilter, affiliateKey, filterByCohortYear])
 
   const effectiveCalendarEntries = useMemo(() => {
     const list = Array.isArray(calendarEntries) ? calendarEntries : []

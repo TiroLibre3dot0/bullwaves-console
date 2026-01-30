@@ -195,18 +195,19 @@ export default function Topbar({
         <div className="logo-tools-backdrop" onClick={handleOverlayClick} />
       )}
       <header className="topbar">
-        {/* Sidebar Hamburger - Mobile Only */}
-        {typeof window !== 'undefined' && isMobile() && typeof onToggleSidebar === 'function' && (
+        {/* Sidebar Toggle */}
+        {typeof onToggleSidebar === 'function' && (
           <button
             type="button"
             className="sidebar-hamburger"
             onClick={toggleSidebar}
             aria-label={t('topbar.aria.toggleSidebar')}
             aria-expanded={isSidebarOpen ? 'true' : 'false'}
+            title={t('topbar.aria.toggleSidebar')}
           >
-            <span className="hamburger-line" />
-            <span className="hamburger-line" />
-            <span className="hamburger-line" />
+            <span className="sidebar-hamburger-icon" aria-hidden="true">
+              {isSidebarOpen ? '×' : '≡'}
+            </span>
           </button>
         )}
         <div
@@ -263,7 +264,7 @@ export default function Topbar({
 
           {/* Mobile Navigation Menu */}
           {hasNav && showMobileMenu && (
-            <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-gradient-to-b from-slate-900/98 to-slate-800/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
+            <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-linear-to-b from-slate-900/98 to-slate-800/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
               <div className="px-4 py-4 max-h-96 overflow-y-auto">
                 {React.cloneElement(children, {
                   onItemClick: () => setShowMobileMenu(false),

@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { fetchFirstOkCsvRowsCached } from '../../../lib/fetchCache'
 
+const EMPTY_PATHS = []
+const IDENTITY_ROW = (r) => r
+
 // Generic CSV loader with fallback paths and optional row mapping
-export function useCsvData(candidatePaths = [], mapRow = (r) => r) {
+export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 
 function Icon({ name, size = 16 }) {
@@ -173,67 +173,64 @@ export default function Sidebar({
   goAffiliateSection,
 }) {
   const { t } = useI18n()
+  const [openSections, setOpenSections] = useState({
+    projectManagement: false,
+    dashboard: false,
+    affiliate: false,
+    support: false,
+    ops: false,
+  })
+
+  const toggleSection = (sectionKey) => {
+    setOpenSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
+  }
+
   const disabled = (key) =>
     Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
-  const roadmapActive =
-    view === 'roadmap' || view === 'weeklyMap' || view === 'weeklyExecutionHistory'
 
   return (
     <div className="sidebar">
-      <div className="sidebar-section">
-        <div className="sidebar-title">
-          {t('sidebar.projectManagement') || 'Project management'}
-        </div>
+      <div className="sidebar-section sidebar-section--projectManagement">
         <button
-          disabled={disabled('commandCenter')}
           type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'commandCenter' ? 'active' : ''}`}
-          onClick={() => navigate('commandCenter')}
+          className="sidebar-title"
+          onClick={() => toggleSection('projectManagement')}
+          aria-expanded={openSections.projectManagement ? 'true' : 'false'}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="home" />
-            <span>Command Center</span>
+          <span>{t('sidebar.projectManagement')}</span>
+          <span className="sidebar-title-caret" aria-hidden="true">
+            {openSections.projectManagement ? '▾' : '▸'}
           </span>
         </button>
-        <button
-          disabled={disabled('marketingPlan')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
-          onClick={() => navigate('marketingPlan')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="layout" />
-            <span>Execution marketing</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('roadmap')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${roadmapActive ? 'active' : ''}`}
-          onClick={() => navigate('roadmap')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="map" />
-            <span>Mega stories</span>
-          </span>
-        </button>
-        {roadmapActive && (
-          <div className="sidebar-subsection">
+
+        {openSections.projectManagement ? (
+          <>
             <button
-              disabled={disabled('roadmap')}
+              disabled={disabled('commandCenter')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'roadmap' ? 'active' : ''}`}
-              onClick={() => navigate('roadmap')}
+              className={`sidebar-item sidebar-main tab ${view === 'commandCenter' ? 'active' : ''}`}
+              onClick={() => navigate('commandCenter')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="map" />
-                <span>{t('sidebar.roadmap')}</span>
+                <Icon name="home" />
+                <span>{t('sidebar.commandCenter')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('marketingPlan')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
+              onClick={() => navigate('marketingPlan')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="layout" />
+                <span>{t('sidebar.marketingPlan')}</span>
               </span>
             </button>
             <button
               disabled={disabled('weeklyMap')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyMap' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'weeklyMap' ? 'active' : ''}`}
               onClick={() => navigate('weeklyMap')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -241,10 +238,11 @@ export default function Sidebar({
                 <span>{t('sidebar.weeklyMap')}</span>
               </span>
             </button>
+
             <button
               disabled={disabled('weeklyExecutionHistory')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
               onClick={() => navigate('weeklyExecutionHistory')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -252,88 +250,130 @@ export default function Sidebar({
                 <span>{t('sidebar.weeklyExecutionHistory')}</span>
               </span>
             </button>
-          </div>
-        )}
-      </div>
 
-      <div className="sidebar-section" style={{ marginTop: 10 }}>
-        <div className="sidebar-title">{t('sidebar.dashboard')}</div>
-        <button
-          disabled={disabled('overview')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'overview' ? 'active' : ''}`}
-          onClick={() => navigate('overview')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="home" />
-            <span>{t('sidebar.overview')}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('flows')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'flows' ? 'active' : ''}`}
-          onClick={() => navigate('flows')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="chart" />
-            <span>{t('sidebar.flows') || 'Flows'}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('executive')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'executive' ? 'active' : ''}`}
-          onClick={() => goExecutiveSection('summary')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="briefcase" />
-            <span>{t('sidebar.executiveSuite')}</span>
-          </span>
-        </button>
-        {view === 'executive' && (
-          <div className="sidebar-subsection">
             <button
-              disabled={disabled('executive')}
+              disabled={disabled('flows')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${executiveSection === 'summary' ? 'active' : ''}`}
-              onClick={() => goExecutiveSection('summary')}
+              className={`sidebar-item sidebar-main tab ${view === 'flows' ? 'active' : ''}`}
+              onClick={() => navigate('flows')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="chart" />
-                <span>{t('sidebar.executive.summary')}</span>
+                <span>{t('sidebar.flows')}</span>
+              </span>
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      <div className="sidebar-section sidebar-section--dashboard" style={{ marginTop: 10 }}>
+        <button
+          type="button"
+          className="sidebar-title"
+          onClick={() => toggleSection('dashboard')}
+          aria-expanded={openSections.dashboard ? 'true' : 'false'}
+        >
+          <span>{t('sidebar.dashboard')}</span>
+          <span className="sidebar-title-caret" aria-hidden="true">
+            {openSections.dashboard ? '▾' : '▸'}
+          </span>
+        </button>
+
+        {openSections.dashboard ? (
+          <>
+            <button
+              disabled={disabled('overview')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'overview' ? 'active' : ''}`}
+              onClick={() => navigate('overview')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="home" />
+                <span>{t('sidebar.overview')}</span>
               </span>
             </button>
             <button
               disabled={disabled('executive')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${executiveSection === 'view' ? 'active' : ''}`}
-              onClick={() => goExecutiveSection('view')}
+              className={`sidebar-item sidebar-main tab ${view === 'executive' ? 'active' : ''}`}
+              onClick={() => goExecutiveSection('summary')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="layout" />
-                <span>{t('sidebar.executive.view')}</span>
+                <Icon name="briefcase" />
+                <span>{t('sidebar.executiveSuite')}</span>
               </span>
             </button>
-          </div>
-        )}
+            {view === 'executive' && (
+              <div className="sidebar-subsection">
+                <button
+                  disabled={disabled('executive')}
+                  type="button"
+                  className={`sidebar-item sidebar-subitem tab ${executiveSection === 'summary' ? 'active' : ''}`}
+                  onClick={() => goExecutiveSection('summary')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <Icon name="chart" />
+                    <span>{t('sidebar.executive.summary')}</span>
+                  </span>
+                </button>
+                <button
+                  disabled={disabled('executive')}
+                  type="button"
+                  className={`sidebar-item sidebar-subitem tab ${executiveSection === 'view' ? 'active' : ''}`}
+                  onClick={() => goExecutiveSection('view')}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <Icon name="layout" />
+                    <span>{t('sidebar.executive.view')}</span>
+                  </span>
+                </button>
+              </div>
+            )}
+            <button
+              disabled={disabled('traderPointsSimulator')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'traderPointsSimulator' ? 'active' : ''}`}
+              onClick={() => navigate('traderPointsSimulator')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="layers" />
+                <span>{t('sidebar.traderPoints')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('fraud')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'fraud' ? 'active' : ''}`}
+              onClick={() => navigate('fraud')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="shield" />
+                <span>{t('sidebar.fraud')}</span>
+              </span>
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      <div className="sidebar-section sidebar-section--affiliate" style={{ marginTop: 10 }}>
         <button
-          disabled={disabled('affiliate')}
           type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'affiliate' ? 'active' : ''}`}
-          onClick={() => goAffiliateSection('analysis')}
+          className="sidebar-title"
+          onClick={() => toggleSection('affiliate')}
+          aria-expanded={openSections.affiliate ? 'true' : 'false'}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="users" />
-            <span>{t('sidebar.affiliate')}</span>
+          <span>{t('sidebar.affiliate')}</span>
+          <span className="sidebar-title-caret" aria-hidden="true">
+            {openSections.affiliate ? '▾' : '▸'}
           </span>
         </button>
-        {view === 'affiliate' && (
-          <div className="sidebar-subsection">
+
+        {openSections.affiliate ? (
+          <>
             <button
               disabled={disabled('affiliate')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${affiliateSection === 'analysis' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'affiliate' && affiliateSection === 'analysis' ? 'active' : ''}`}
               onClick={() => goAffiliateSection('analysis')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -344,7 +384,18 @@ export default function Sidebar({
             <button
               disabled={disabled('affiliate')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${affiliateSection === 'payments' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'affiliate' && affiliateSection === 'clientsMoved' ? 'active' : ''}`}
+              onClick={() => goAffiliateSection('clientsMoved')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.affiliate.clientsMoved')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('affiliate')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'affiliate' && affiliateSection === 'payments' ? 'active' : ''}`}
               onClick={() => goAffiliateSection('payments')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -355,7 +406,7 @@ export default function Sidebar({
             <button
               disabled={disabled('affiliate')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${affiliateSection === 'payments2' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'affiliate' && affiliateSection === 'payments2' ? 'active' : ''}`}
               onClick={() => goAffiliateSection('payments2')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -366,7 +417,7 @@ export default function Sidebar({
             <button
               disabled={disabled('affiliate')}
               type="button"
-              className={`sidebar-item sidebar-subitem tab ${affiliateSection === 'cohort' ? 'active' : ''}`}
+              className={`sidebar-item sidebar-main tab ${view === 'affiliate' && affiliateSection === 'cohort' ? 'active' : ''}`}
               onClick={() => goAffiliateSection('cohort')}
             >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
@@ -374,89 +425,90 @@ export default function Sidebar({
                 <span>{t('sidebar.affiliate.cohort')}</span>
               </span>
             </button>
-          </div>
-        )}
-        <button
-          disabled={disabled('analysis')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'analysis' ? 'active' : ''}`}
-          onClick={() => navigate('analysis')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="chart" />
-            <span>{t('sidebar.analysis')}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('traderPointsSimulator')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'traderPointsSimulator' ? 'active' : ''}`}
-          onClick={() => navigate('traderPointsSimulator')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="layers" />
-            <span>{t('sidebar.traderPoints')}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('fraud')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'fraud' ? 'active' : ''}`}
-          onClick={() => navigate('fraud')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="shield" />
-            <span>{t('sidebar.fraud')}</span>
-          </span>
-        </button>
+          </>
+        ) : null}
       </div>
 
-      <div className="sidebar-section" style={{ marginTop: 10 }}>
-        <div className="sidebar-title">{t('sidebar.ops')}</div>
+      <div className="sidebar-section sidebar-section--support" style={{ marginTop: 10 }}>
         <button
-          disabled={disabled('orgChart')}
           type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'orgChart' ? 'active' : ''}`}
-          onClick={() => navigate('orgChart')}
+          className="sidebar-title"
+          onClick={() => toggleSection('support')}
+          aria-expanded={openSections.support ? 'true' : 'false'}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="org" />
-            <span>{t('sidebar.orgChart')}</span>
+          <span>{t('sidebar.support')}</span>
+          <span className="sidebar-title-caret" aria-hidden="true">
+            {openSections.support ? '▾' : '▸'}
           </span>
         </button>
+
+        {openSections.support ? (
+          <>
+            <button
+              disabled={disabled('supportUserCheck')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'supportUserCheck' ? 'active' : ''}`}
+              onClick={() => navigate('supportUserCheck')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="search" />
+                <span>{t('sidebar.supportUserCheck')}</span>
+              </span>
+            </button>
+          </>
+        ) : null}
+      </div>
+
+      <div className="sidebar-section sidebar-section--ops" style={{ marginTop: 10 }}>
         <button
-          disabled={disabled('supportUserCheck')}
           type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'supportUserCheck' ? 'active' : ''}`}
-          onClick={() => navigate('supportUserCheck')}
+          className="sidebar-title"
+          onClick={() => toggleSection('ops')}
+          aria-expanded={openSections.ops ? 'true' : 'false'}
         >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="search" />
-            <span>{t('sidebar.supportUserCheck')}</span>
+          <span>{t('sidebar.ops')}</span>
+          <span className="sidebar-title-caret" aria-hidden="true">
+            {openSections.ops ? '▾' : '▸'}
           </span>
         </button>
-        <button
-          disabled={disabled('customEvents')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'customEvents' ? 'active' : ''}`}
-          onClick={() => navigate('customEvents')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="chart" />
-            <span>{t('sidebar.customEvents') || 'Custom Events'}</span>
-          </span>
-        </button>
-        <button
-          disabled={disabled('upload')}
-          type="button"
-          className={`sidebar-item sidebar-main tab ${view === 'upload' ? 'active' : ''}`}
-          onClick={() => navigate('upload')}
-        >
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <Icon name="upload" />
-            <span>{t('sidebar.upload')}</span>
-          </span>
-        </button>
+
+        {openSections.ops ? (
+          <>
+            <button
+              disabled={disabled('orgChart')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'orgChart' ? 'active' : ''}`}
+              onClick={() => navigate('orgChart')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="org" />
+                <span>{t('sidebar.orgChart')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('customEvents')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'customEvents' ? 'active' : ''}`}
+              onClick={() => navigate('customEvents')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.customEvents')}</span>
+              </span>
+            </button>
+            <button
+              disabled={disabled('upload')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'upload' ? 'active' : ''}`}
+              onClick={() => navigate('upload')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="upload" />
+                <span>{t('sidebar.upload')}</span>
+              </span>
+            </button>
+          </>
+        ) : null}
       </div>
     </div>
   )

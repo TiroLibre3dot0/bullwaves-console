@@ -4,14 +4,13 @@ import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
 import OrgChart from './pages/OrgChart'
 import ExecutionHubPage from './features/execution/ExecutionHubPage'
-import OngoingPage from './features/ongoing/pages/OngoingPage'
 import FlowsPage from './features/flows/FlowsPage'
 import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
 import AffiliateHub from './features/affiliate/pages/AffiliateHub'
 import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
+import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
-import RoadmapPage from './features/roadmap/pages/RoadmapPage'
 import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
 import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecutionHistoryPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
@@ -28,16 +27,84 @@ import AdminPanel from './components/AdminPanel'
 export default function AuthenticatedApp() {
   const [notionPillarFilter] = useState(null)
 
+  const getIsMobile = () =>
+    typeof window !== 'undefined' && window.matchMedia
+      ? window.matchMedia('(max-width: 900px)').matches
+      : false
+
+  const [isMobile, setIsMobile] = useState(() => getIsMobile())
+
   const [executiveSection, setExecutiveSection] = useState('summary')
-  const [affiliateSection, setAffiliateSection] = useState('analysis')
+  const pathToAffiliateSection = (pathname) => {
+    if (!pathname || !pathname.startsWith('/affiliate')) return 'analysis'
+    // Backward-compatible alias: old standalone Report Analysis URL
+    if (pathname.startsWith('/analysis')) return 'clientsMoved'
+    if (pathname.startsWith('/affiliate/cohort')) return 'cohort'
+    if (pathname.startsWith('/affiliate/payments2')) return 'payments2'
+    if (pathname.startsWith('/affiliate/payments')) return 'payments'
+    if (pathname.startsWith('/affiliate/clients-moved')) return 'clientsMoved'
+    if (pathname.startsWith('/affiliate/analysis')) return 'analysis'
+    return 'analysis'
+  }
+
+  const affiliateSectionToPath = (section) => {
+    if (section === 'cohort') return '/affiliate/cohort'
+    if (section === 'payments') return '/affiliate/payments'
+    if (section === 'payments2') return '/affiliate/payments2'
+    if (section === 'clientsMoved') return '/affiliate/clients-moved'
+    return '/affiliate'
+  }
+
+  const [affiliateSection, setAffiliateSection] = useState(() =>
+    pathToAffiliateSection(window.location.pathname)
+  )
 
   const { user } = useAuth()
   const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const supportAllowedViews = useMemo(() => new Set(['supportUserCheck', 'orgChart', 'upload']), [])
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window === 'undefined') return true
+    try {
+      const saved = window.localStorage.getItem('ui.sidebarOpen')
+      if (saved === 'true') return true
+      if (saved === 'false') return false
+    } catch {
+      // ignore
+    }
+    return !getIsMobile()
+  })
   const toggleSidebar = () => setIsSidebarOpen((open) => !open)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.localStorage.setItem('ui.sidebarOpen', String(isSidebarOpen))
+    } catch {
+      // ignore
+    }
+  }, [isSidebarOpen])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!window.matchMedia) return
+    const media = window.matchMedia('(max-width: 900px)')
+
+    const onChange = (e) => setIsMobile(Boolean(e.matches))
+    onChange(media)
+
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', onChange)
+      return () => media.removeEventListener('change', onChange)
+    }
+
+    // Safari fallback
+    if (typeof media.addListener === 'function') {
+      media.addListener(onChange)
+      return () => media.removeListener(onChange)
+    }
+  }, [])
 
   const routes = useMemo(
     () => ({
@@ -52,7 +119,6 @@ export default function AuthenticatedApp() {
       flows: '/flows',
       executive: '/executive',
       affiliate: '/affiliate',
-      analysis: '/analysis',
       traderPointsSimulator: '/trader-points',
       fraud: '/fraud',
       orgChart: '/org-chart',
@@ -71,14 +137,14 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
     if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
-    if (pathname.startsWith('/roadmap')) return 'roadmap'
+    if (pathname.startsWith('/roadmap')) return 'weeklyMap'
     if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
     if (pathname.startsWith('/weekly-execution-history')) return 'weeklyExecutionHistory'
     if (pathname.startsWith('/overview')) return 'overview'
     if (pathname.startsWith('/flows')) return 'flows'
     if (pathname.startsWith('/executive')) return 'executive'
+    if (pathname.startsWith('/analysis')) return 'affiliate'
     if (pathname.startsWith('/affiliate')) return 'affiliate'
-    if (pathname.startsWith('/analysis')) return 'analysis'
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
@@ -93,6 +159,12 @@ export default function AuthenticatedApp() {
   const [view, setView] = useState(() => pathToView(window.location.pathname))
 
   useEffect(() => {
+    // Keep legacy /roadmap URL working but route users to Weekly Map.
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/roadmap')) {
+      window.history.replaceState({ view: 'weeklyMap' }, '', routes.weeklyMap)
+      setView('weeklyMap')
+    }
+
     const onPop = () => {
       const nextPath = window.location.pathname
       if (isSupportUser) {
@@ -114,11 +186,27 @@ export default function AuthenticatedApp() {
         return
       }
 
-      setView(pathToView(nextPath))
+      const nextView = pathToView(nextPath)
+
+      if (nextPath.startsWith('/roadmap')) {
+        window.history.replaceState({ view: 'weeklyMap' }, '', routes.weeklyMap)
+        setView('weeklyMap')
+        return
+      }
+
+      setView(nextView)
+      if (nextView === 'affiliate') {
+        setAffiliateSection(pathToAffiliateSection(nextPath))
+      }
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [isSupportUser])
+  }, [isSupportUser, routes.weeklyMap])
+
+  useEffect(() => {
+    if (view !== 'affiliate') return
+    setAffiliateSection(pathToAffiliateSection(window.location.pathname))
+  }, [view])
 
   useEffect(() => {
     if (!user) return
@@ -143,7 +231,7 @@ export default function AuthenticatedApp() {
   }, [user, isSupportUser, routes.commandCenter])
 
   const navigate = (nextView) => {
-    setIsSidebarOpen(false)
+    if (isMobile) setIsSidebarOpen(false)
     if (!nextView) return
 
     if (nextView === 'admin' && !isAdmin) return
@@ -157,7 +245,8 @@ export default function AuthenticatedApp() {
       return
     }
 
-    const nextPath = routes[nextView] || '/'
+    const nextPath =
+      nextView === 'affiliate' ? affiliateSectionToPath(affiliateSection) : routes[nextView] || '/'
     if (window.location.pathname !== nextPath) {
       window.history.pushState({ view: nextView }, '', nextPath)
     }
@@ -171,10 +260,15 @@ export default function AuthenticatedApp() {
   }
 
   const goAffiliateSection = (section) => {
-    const allowed = new Set(['analysis', 'payments', 'payments2', 'cohort'])
+    const allowed = new Set(['analysis', 'payments', 'payments2', 'cohort', 'clientsMoved'])
     const s = allowed.has(section) ? section : 'analysis'
     setAffiliateSection(s)
-    navigate('affiliate')
+
+    const nextPath = affiliateSectionToPath(s)
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({ view: 'affiliate', affiliateSection: s }, '', nextPath)
+    }
+    setView('affiliate')
   }
 
   useEffect(() => {
@@ -265,7 +359,6 @@ export default function AuthenticatedApp() {
       roadmap: 'mega-stories',
       weeklyMap: 'weekly-map',
       weeklyExecutionHistory: 'weekly-execution-history',
-      analysis: 'analysis',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -287,7 +380,7 @@ export default function AuthenticatedApp() {
     <div className="app-root">
       <Topbar onToggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
       <div className={`dashboard-shell${isSidebarOpen ? ' sidebar-open' : ''}`}>
-        {isSidebarOpen && (
+        {isMobile && isSidebarOpen && (
           <div className="dashboard-sidebar-backdrop" onClick={() => setIsSidebarOpen(false)} />
         )}
         <aside className="dashboard-sidebar">
@@ -312,11 +405,10 @@ export default function AuthenticatedApp() {
             ) : null}
 
             {view === 'marketingPlan' ? <MarketingPlanExecutionPage /> : null}
-            {view === 'roadmap' ? <RoadmapPage /> : null}
             {view === 'weeklyMap' ? <WeeklyMapPage /> : null}
             {view === 'weeklyExecutionHistory' ? <WeeklyExecutionHistoryPage /> : null}
 
-            {view === 'overview' ? <OngoingPage /> : null}
+            {view === 'overview' ? <ProfitAnalysisPage /> : null}
             {view === 'flows' ? <FlowsPage /> : null}
             {view === 'executive' ? (
               <ExecutiveSuite section={executiveSection} onSectionChange={setExecutiveSection} />
@@ -324,7 +416,7 @@ export default function AuthenticatedApp() {
             {view === 'affiliate' ? (
               <AffiliateHub section={affiliateSection} onSectionChange={setAffiliateSection} />
             ) : null}
-            {view === 'analysis' ? <ProfitAnalysisPage /> : null}
+            {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
             {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
             {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
