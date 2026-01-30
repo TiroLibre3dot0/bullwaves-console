@@ -28,6 +28,7 @@ export default function CommunicationNode({ data }) {
       style={{
         position: 'relative',
         padding: isInfluence ? '8px 10px' : '9px 12px',
+        paddingRight: isLink ? (isInfluence ? 34 : 36) : undefined,
         background: isInfluence ? 'rgba(15, 23, 42, 0.28)' : 'rgba(15, 23, 42, 0.55)',
         border: isLink
           ? `1px solid ${linkPalette.border}`

@@ -22,6 +22,31 @@ import {
   edges as mailEdges,
   meta as mailMeta,
 } from '../../flows/mailMarketingFlow'
+import {
+  nodes as kycRecoveryNodes,
+  edges as kycRecoveryEdges,
+  meta as kycRecoveryMeta,
+} from '../../flows/kycRecoveryFlow'
+import {
+  nodes as reactivationNodes,
+  edges as reactivationEdges,
+  meta as reactivationMeta,
+} from '../../flows/reactivation14dFlow'
+import {
+  nodes as ftdFirstTradeNodes,
+  edges as ftdFirstTradeEdges,
+  meta as ftdFirstTradeMeta,
+} from '../../flows/ftdFirstTradeFlow'
+import {
+  nodes as preFtdConversionNodes,
+  edges as preFtdConversionEdges,
+  meta as preFtdConversionMeta,
+} from '../../flows/preFtdConversionFlow'
+import {
+  nodes as masterNodes,
+  edges as masterEdges,
+  meta as masterMeta,
+} from '../../flows/masterLifecycleFlow'
 
 function randomHex(bytes = 12) {
   try {
@@ -49,10 +74,27 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
 
   const flows = useMemo(
     () => ({
+      master: { meta: masterMeta, nodes: masterNodes, edges: masterEdges },
       retention: { meta: retentionMeta, nodes: retentionNodes, edges: retentionEdges },
       registration: { meta: registrationMeta, nodes: registrationNodes, edges: registrationEdges },
       navigation: { meta: navigationMeta, nodes: navigationNodes, edges: navigationEdges },
       mail: { meta: mailMeta, nodes: mailNodes, edges: mailEdges },
+      kycRecovery: { meta: kycRecoveryMeta, nodes: kycRecoveryNodes, edges: kycRecoveryEdges },
+      reactivation14d: {
+        meta: reactivationMeta,
+        nodes: reactivationNodes,
+        edges: reactivationEdges,
+      },
+      ftdFirstTrade: {
+        meta: ftdFirstTradeMeta,
+        nodes: ftdFirstTradeNodes,
+        edges: ftdFirstTradeEdges,
+      },
+      preFtdConversion: {
+        meta: preFtdConversionMeta,
+        nodes: preFtdConversionNodes,
+        edges: preFtdConversionEdges,
+      },
     }),
     []
   )
@@ -104,7 +146,17 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         v: 1,
         createdAt: Date.now(),
         initialFlow: flowId,
-        flows: ['registration', 'navigation', 'retention', 'mail'],
+        flows: [
+          'master',
+          'registration',
+          'navigation',
+          'retention',
+          'mail',
+          'kycRecovery',
+          'reactivation14d',
+          'ftdFirstTrade',
+          'preFtdConversion',
+        ],
       }
 
       const shareOrigin = getPublicShareOrigin()
@@ -228,6 +280,13 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         <div className="subnav" style={{ padding: 0, justifyContent: 'flex-start' }}>
           <button
             type="button"
+            className={`tab ${flowId === 'master' ? 'active' : ''}`}
+            onClick={() => goFlow('master')}
+          >
+            {t('flows.tab.master')}
+          </button>
+          <button
+            type="button"
             className={`tab ${flowId === 'registration' ? 'active' : ''}`}
             onClick={() => goFlow('registration')}
           >
@@ -253,6 +312,34 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
             onClick={() => goFlow('mail')}
           >
             {t('flows.tab.mail')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'kycRecovery' ? 'active' : ''}`}
+            onClick={() => goFlow('kycRecovery')}
+          >
+            {t('flows.tab.kycRecovery')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'reactivation14d' ? 'active' : ''}`}
+            onClick={() => goFlow('reactivation14d')}
+          >
+            {t('flows.tab.reactivation14d')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'ftdFirstTrade' ? 'active' : ''}`}
+            onClick={() => goFlow('ftdFirstTrade')}
+          >
+            {t('flows.tab.ftdFirstTrade')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'preFtdConversion' ? 'active' : ''}`}
+            onClick={() => goFlow('preFtdConversion')}
+          >
+            {t('flows.tab.preFtdConversion')}
           </button>
 
           {publicMode ? null : (

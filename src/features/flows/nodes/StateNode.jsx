@@ -39,6 +39,7 @@ export default function StateNode({ data }) {
       style={{
         position: 'relative',
         padding: isPrimary ? '12px 14px' : '10px 12px',
+        paddingRight: isLink ? (isPrimary ? 40 : 38) : undefined,
         background: isPrimary ? 'rgba(2, 6, 23, 0.78)' : 'rgba(15, 23, 42, 0.65)',
         border: isPrimary
           ? '1px solid rgba(226,232,240,0.22)'

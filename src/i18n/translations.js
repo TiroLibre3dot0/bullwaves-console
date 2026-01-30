@@ -234,10 +234,15 @@ export const translations = {
     'sidebar.customEvents': 'Custom Events',
 
     // Flows
+    'flows.tab.master': 'Master Flow',
     'flows.tab.registration': 'Registration',
     'flows.tab.navigation': 'Navigation',
     'flows.tab.retention': 'Retention',
     'flows.tab.mail': 'Email marketing',
+    'flows.tab.kycRecovery': 'KYC Recovery',
+    'flows.tab.reactivation14d': 'Re-Activation (14d)',
+    'flows.tab.ftdFirstTrade': 'FTD → First Trade',
+    'flows.tab.preFtdConversion': 'Pre-FTD Conversion',
     'flows.legend.stepArrow': 'Step (arrow)',
     'flows.legend.influenceArrow': 'Influence (dashed arrow)',
     'flows.legend.clickable': 'Clickable (↗)',
@@ -2441,10 +2446,15 @@ export const translations = {
     'sidebar.customEvents': 'Eventi custom',
 
     // Flows
+    'flows.tab.master': 'Master Flow',
     'flows.tab.registration': 'Registrazione',
     'flows.tab.navigation': 'Navigazione',
     'flows.tab.retention': 'Retention',
     'flows.tab.mail': 'Email marketing',
+    'flows.tab.kycRecovery': 'KYC Recovery',
+    'flows.tab.reactivation14d': 'Re-Activation (14d)',
+    'flows.tab.ftdFirstTrade': 'FTD → First Trade',
+    'flows.tab.preFtdConversion': 'Pre-FTD Conversion',
     'flows.legend.stepArrow': 'Step (freccia)',
     'flows.legend.influenceArrow': 'Influenza (freccia tratteggiata)',
     'flows.legend.clickable': 'Cliccabile (↗)',
