@@ -1406,7 +1406,8 @@ export default function FraudMonitoringDashboard() {
       if (m) {
         const y = Number(m[1])
         const mo = Number(m[2])
-        if (!isNaN(y) && !isNaN(mo)) return new Date(y, mo - 1, 1)
+        // Use UTC to avoid timezone shifting the month key (critical for projection/MTD scaling).
+        if (!isNaN(y) && !isNaN(mo)) return new Date(Date.UTC(y, mo - 1, 1))
       }
       return null
     }
@@ -1936,24 +1937,74 @@ export default function FraudMonitoringDashboard() {
     // Projection (model-based) up to Dec 2026.
     // IMPORTANT:
     // 1) Ignore trailing months with no source rows (they appear as zeros due to range extension).
-    // 2) Exclude the *current* month from model-fitting even if it has partial real data
-    //    (so the projection stays stable and doesn't get distorted by MTD values).
+    // 2) If MTD scaling is OFF: exclude the current month from model-fitting.
+    // 3) If MTD scaling is ON: include the current month, but scale its MTD values to a full-month estimate
+    //    (this changes the slope/baseline, as it did previously).
     const dataForForecast = (() => {
       if (!data || data.length < 2) return data
+
       const pad2 = (n) => String(n).padStart(2, '0')
       const now = new Date()
       const currentKey = `${now.getUTCFullYear()}-${pad2(now.getUTCMonth() + 1)}`
 
-      // prefer the last month that has data AND is not the current month
-      for (let i = data.length - 1; i >= 0; i--) {
-        if (data[i] && data[i].hasData && data[i].key && data[i].key !== currentKey)
+      const sliceToLastHasData = (opts = { excludeCurrentMonth: false }) => {
+        const excludeCurrentMonth = !!opts.excludeCurrentMonth
+
+        for (let i = data.length - 1; i >= 0; i--) {
+          const row = data[i]
+          if (!row || !row.hasData || !row.key) continue
+          if (excludeCurrentMonth && row.key === currentKey) continue
           return data.slice(0, i + 1)
+        }
+
+        // fallback to whatever we have
+        return data
       }
-      // fallback to last hasData month
-      for (let i = data.length - 1; i >= 0; i--) {
-        if (data[i] && data[i].hasData) return data.slice(0, i + 1)
-      }
-      return data
+
+      const base = sliceToLastHasData({ excludeCurrentMonth: !useMtdScaling })
+      if (!useMtdScaling) return base
+
+      // Apply MTD scaling to the current month *inside the forecast input*.
+      const daysElapsed = now.getUTCDate()
+      const daysInMonth = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)
+      ).getUTCDate()
+      if (!daysElapsed || !daysInMonth || daysElapsed <= 0) return base
+      if (daysElapsed >= daysInMonth) return base
+
+      const idx = base.findIndex((d) => d && d.key === currentKey && d.hasData)
+      if (idx === -1) return base
+
+      const scale = daysInMonth / Math.max(1, daysElapsed)
+
+      // Rebuild a consistent series (monthly increments + cumulative) for the forecaster.
+      let runRegs = 0
+      let runFtd = 0
+      let runQftd = 0
+      return base.map((d, i) => {
+        const regs = Number(d?.regs || 0)
+        const ftd = Number(d?.ftd || 0)
+        const qftd = Number(d?.qftd || 0)
+
+        const scaledRegs = i === idx ? Math.round(regs * scale) : regs
+        const scaledFtd = i === idx ? Math.round(ftd * scale) : ftd
+        const scaledQftd = i === idx ? Math.round(qftd * scale) : qftd
+
+        runRegs += Number(scaledRegs || 0)
+        runFtd += Number(scaledFtd || 0)
+        runQftd += Number(scaledQftd || 0)
+
+        return {
+          ...d,
+          regs: scaledRegs,
+          ftd: scaledFtd,
+          qftd: Math.min(scaledQftd, scaledFtd),
+          cumRegs: runRegs,
+          cumFTD: runFtd,
+          cumQFTD: Math.min(runQftd, runFtd),
+          hasData: true,
+        }
+      })
     })()
     const projInfo = forecastTo2026(dataForForecast)
     const proj =
@@ -2031,12 +2082,11 @@ export default function FraudMonitoringDashboard() {
       qftdRate: p.qftdRate || 0,
     }))
 
-    // Month extension: if the current month has partial real data (e.g. first days of Jan),
-    // update ONLY that month by scaling MTD values to a full-month estimate, while keeping
-    // the rest of the projection increments intact (only an offset to cumulative values).
-    // This makes the projection effectively "svincolata" from real data beyond a simple baseline adjustment.
+    // Month extension (legacy mode): only needed when the forecast *excludes* current month from fitting.
+    // If useMtdScaling is ON we now include a scaled current-month point in `dataForForecast`,
+    // so projecting the current month and offsetting cumulatives would double-apply.
     ;(() => {
-      if (!useMtdScaling) return
+      if (useMtdScaling) return
       if (!projMapped || projMapped.length === 0) return
       const pad2 = (n) => String(n).padStart(2, '0')
       const now = new Date()

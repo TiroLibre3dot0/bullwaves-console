@@ -40,6 +40,13 @@ const nodes = [
     data: {
       label: { en: 'Registrations', it: 'Registrazioni' },
       subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
+      kpis: [
+        {
+          label: { en: 'Registrations', it: 'Registrazioni' },
+          value: { en: '—', it: '—' },
+          metricKey: 'registrations',
+        },
+      ],
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -53,6 +60,13 @@ const nodes = [
     data: {
       label: { en: 'First access / landing', it: 'Primo accesso / landing' },
       subLabel: { en: 'Portal or app entry', it: 'Ingresso portale o app' },
+      kpis: [
+        {
+          label: { en: 'Unique Visitors', it: 'Visitatori Unici' },
+          value: { en: '—', it: '—' },
+          metricKey: 'uniqueVisitors',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -90,6 +104,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits', it: 'Depositi' },
       subLabel: { en: 'Method + amount + confirm', it: 'Metodo + importo + conferma' },
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -102,6 +123,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits', it: 'Depositi' },
       subLabel: { en: 'Request sent / processing', it: 'Richiesta inviata / in processing' },
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -125,7 +153,17 @@ const nodes = [
     id: 'O1',
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
-    data: { label: { en: 'FTD', it: 'FTD' }, kind: 'positive' },
+    data: {
+      label: { en: 'FTD', it: 'FTD' },
+      kind: 'positive',
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+      ],
+    },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -198,6 +236,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits', it: 'Depositi' },
       subLabel: { en: 'New deposit if loss', it: 'Nuovo deposito se perdita' },
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },

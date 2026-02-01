@@ -167,6 +167,11 @@
 .bot-top10-only-wide { display: none; }
 .bot-top10-only-compact { display: block; }
 
+/* Flows: allow external KPI pills (rendered outside node boxes) */
+.react-flow__node {
+  overflow: visible !important;
+}
+
 @media (min-width: 1700px) {
   .bot-top10-wrap {
     max-width: 1380px; /* 22/27" monitors */

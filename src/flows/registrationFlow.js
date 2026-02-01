@@ -35,6 +35,13 @@ const nodes = [
     data: {
       label: { en: 'Acquisition', it: 'Acquisizione' },
       subLabel: { en: 'Affiliate link / Organic portal', it: 'Link affiliato / Portale organico' },
+      kpis: [
+        {
+          label: { en: 'Unique Visitors', it: 'Visitatori Unici' },
+          value: { en: '—', it: '—' },
+          metricKey: 'uniqueVisitors',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -47,6 +54,13 @@ const nodes = [
     data: {
       label: { en: 'Registrations', it: 'Registrazioni' },
       subLabel: { en: 'Registration completed', it: 'Registrazione completata' },
+      kpis: [
+        {
+          label: { en: 'Registrations', it: 'Registrazioni' },
+          value: { en: '—', it: '—' },
+          metricKey: 'registrations',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },

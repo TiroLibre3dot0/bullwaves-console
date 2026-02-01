@@ -1,4 +1,26 @@
 name,country,count,members_user_ids,members_accounts
+sam taylor,united kingdom,3,bullwaves-920682|bullwaves-368621|bullwaves-368601,3009801|949966|949964
+ali ahmed,united kingdom,2,bullwaves-920591|bullwaves-734972,3009794|3000395
+sameer bacchus,united kingdom,2,bullwaves-920500|bullwaves-438306,3009788|1205048
+oliver pekola,finland,2,bullwaves-920454|bullwaves-691015,3009784|1315769
+andrew wissman,australia,2,bullwaves-920304|bullwaves-621827,3009775|1308307
+li ping peh,singapore,2,bullwaves-919991|bullwaves-599947,2002058|1305961
+tom smith,united kingdom,3,bullwaves-919766|bullwaves-660263|bullwaves-574382,3009720|1312142|1302676
+michael wade,united arab emirates,2,bullwaves-919707|bullwaves-404732,3009713|1201119
+daniel tyler,united kingdom,3,bullwaves-919638|bullwaves-637602|bullwaves-244888,2002056|1309840|931973
+james white,united kingdom,2,bullwaves-919583|bullwaves-314722,3009707|942876
+andrew lavalette,canada,2,bullwaves-919412|bullwaves-565968,"3009692,3009696|1301555"
+jason wake,united kingdom,2,bullwaves-919374|bullwaves-622577,3009686|1308401
+benny kattoll,germany,2,bullwaves-918920|bullwaves-918917,3009641|3009640
+andrew smith,united kingdom,4,bullwaves-918837|bullwaves-868032|bullwaves-657257|bullwaves-313532,2002048|2001650|1311816|942714
+james kimeu,kenya,2,bullwaves-918767|bullwaves-247093,|932442
+trevor andrews,australia,3,bullwaves-918574|bullwaves-834287|bullwaves-829884,|2001334|3004931
+amruthakumar sudalagunta,singapore,3,bullwaves-918530|bullwaves-862460|bullwaves-862348,3009605|3006776|2001617
+daniel murray,united kingdom,3,bullwaves-918453|bullwaves-762169|bullwaves-443853,3009598|3001949|1205791
+karlie rofael,australia,2,bullwaves-918435|bullwaves-830821,|3005013
+paul stevenson,united kingdom,2,bullwaves-918374|bullwaves-541476,3009592|1218249
+callum miller,united kingdom,4,bullwaves-917951|bullwaves-804847|bullwaves-538878|bullwaves-216719,3009570||1217962|927387
+carolyn hardy,united kingdom,2,bullwaves-917766|bullwaves-900957,3009565|3008732
 matteo alborghetti,italy,2,bullwaves-916156|bullwaves-125609,3009509|912906
 alexander kanci,united kingdom,2,bullwaves-916030|bullwaves-450933,3009504|1206813
 lewis munn,united kingdom,2,bullwaves-915597|bullwaves-606456,3009486|1306768
@@ -227,7 +249,6 @@ justin foley,australia,2,bullwaves-868506|bullwaves-168937,2001653|920201
 robert clarke,united kingdom,3,bullwaves-868406|bullwaves-358277|bullwaves-281522,3007038|948768|937881
 caylum grattan,ireland,2,bullwaves-868394|bullwaves-491920,2001651|1211895
 ethan clavero,australia,2,bullwaves-868191|bullwaves-165612,3007027|919615
-andrew smith,united kingdom,3,bullwaves-868032|bullwaves-657257|bullwaves-313532,2001650|1311816|942714
 rick elting,netherlands,2,bullwaves-867342|bullwaves-717733,2001646|1318972
 michael mitchell,united kingdom,2,bullwaves-867076|bullwaves-143536,3006959|915788
 francesco buda,italy,3,bullwaves-865740|bullwaves-800206|bullwaves-176765,3006927||921161
@@ -244,7 +265,6 @@ marco coluccia,italy,2,bullwaves-863677|bullwaves-863639,3006808|2001622
 kwabena owusu ansah,united kingdom,2,bullwaves-863590|bullwaves-756044,3006804|2000429
 arjan roetman,netherlands,2,bullwaves-863343|bullwaves-407379,3006792|1201412
 anusha todurkar,united kingdom,18,bullwaves-863209|bullwaves-852186|bullwaves-845584|bullwaves-837804|bullwaves-809525|bullwaves-805264|bullwaves-701786|bullwaves-646527|bullwaves-640991|bullwaves-639345|bullwaves-629630|bullwaves-586926|bullwaves-577467|bullwaves-539364|bullwaves-378286|bullwaves-363173|bullwaves-352638|bullwaves-228689,"2001621|2001528|2001467|2001384|2001008||1317021|1310764|1310097|1309983|1309146|1304220|1303036|1218029|951138|949377|948009,948015|929336"
-amruthakumar sudalagunta,singapore,2,bullwaves-862460|bullwaves-862348,3006776|2001617
 valerio papagno,italy,2,bullwaves-862242|bullwaves-72908,2001615|905144
 bilal nawaz,united kingdom,2,bullwaves-861462|bullwaves-699467,|1316808
 simranjeet singh,new zealand,2,bullwaves-861272|bullwaves-790825,|3003454
@@ -394,7 +414,6 @@ aaron smith,united kingdom,4,bullwaves-834652|bullwaves-834608|bullwaves-471471|
 omar abidat,united kingdom,2,bullwaves-834584|bullwaves-58929,2001342|903493
 albert vasseur,netherlands,4,bullwaves-834467|bullwaves-799027|bullwaves-79959|bullwaves-25476,3005160||906162|0
 ethan brown,united kingdom,2,bullwaves-834367|bullwaves-197283,3005153|924392
-trevor andrews,australia,2,bullwaves-834287|bullwaves-829884,2001334|3004931
 archie fleming,united kingdom,3,bullwaves-833299|bullwaves-505945|bullwaves-283284,2001322|1213912|938190
 tatsuya oi,unknown country,2,bullwaves-832884|bullwaves-263388,3005111|935212
 loris crosato,italy,2,bullwaves-832740|bullwaves-740150,3005104|3000637
@@ -872,7 +891,6 @@ rachel quinn,united kingdom,2,bullwaves-804969|bullwaves-547962,|1219080
 andy constantinou,united kingdom,2,bullwaves-804938|bullwaves-545366,|1218771
 rylee elsdon,united kingdom,2,bullwaves-805186|bullwaves-563294,|1301152
 ferwez lozai,united kingdom,2,bullwaves-805156|bullwaves-561385,|1300890
-callum miller,united kingdom,3,bullwaves-804847|bullwaves-538878|bullwaves-216719,|1217962|927387
 darren relf,united kingdom,3,bullwaves-805237|bullwaves-777300|bullwaves-572312,|3002755|1302395
 devendra simkhada,nepal,2,bullwaves-804839|bullwaves-537840,|1217814
 shanta alexander,canada,2,bullwaves-805073|bullwaves-554016,|1300099
@@ -7895,7 +7913,6 @@ callum hirst,germany,2,bullwaves-762869|bullwaves-217239,3001974|927450
 alex wakeford,united kingdom,2,bullwaves-762830|bullwaves-715019,|1318646
 guido minnaard,netherlands,3,bullwaves-762217|bullwaves-762233|bullwaves-762193,3001951|3001954|3001950
 paolo benedetti,italy,2,bullwaves-762210|bullwaves-749721,2000522|3001221
-daniel murray,united kingdom,2,bullwaves-762169|bullwaves-443853,3001949|1205791
 isaiah tuatagaloa,australia,4,bullwaves-762038|bullwaves-103326|bullwaves-103315|bullwaves-101205,"2000520,2000890|909698|909696|909413"
 lennon bridgwood,united kingdom,2,bullwaves-761895|bullwaves-692181,"2000518|1315890,1315911"
 martin lewis,united kingdom,3,bullwaves-761869|bullwaves-643629|bullwaves-123339,3001935|1310439|912581
@@ -8357,7 +8374,6 @@ daniel williams,united kingdom,6,bullwaves-660537|bullwaves-660480|bullwaves-655
 adam holub,united kingdom,2,bullwaves-660501|bullwaves-660490,1312175|1312174
 james weir,ireland,2,bullwaves-660407|bullwaves-606305,|1306743
 owen wakefield,united kingdom,2,bullwaves-660305|bullwaves-660300,1312147|1312146
-tom smith,united kingdom,2,bullwaves-660263|bullwaves-574382,1312142|1302676
 mechelle castro,philippines,2,bullwaves-660260|bullwaves-569801,1312141|1302069
 charlene mcfarlane,united kingdom,2,bullwaves-659872|bullwaves-659861,1312099|1312096
 hassan ejaz,united kingdom,2,bullwaves-659618|bullwaves-565739,1312060|1301512
@@ -8461,7 +8477,6 @@ kayleigh henry,united kingdom,2,bullwaves-638439|bullwaves-638217,1309907|130988
 alessandro lucci,italy,2,bullwaves-638317|bullwaves-39653,1309897|901067
 sam wright,united kingdom,2,bullwaves-638155|bullwaves-599668,1309883|1305927
 alessandro pieracci,italy,2,bullwaves-637919|bullwaves-343045,1309863|946719
-daniel tyler,united kingdom,2,bullwaves-637602|bullwaves-244888,1309840|931973
 eonan humphrey,united kingdom,2,bullwaves-637330|bullwaves-594570,1309811|1305187
 dimitar kostadinov,bulgaria,2,bullwaves-637090|bullwaves-252462,1309777|933390
 mark morgan,united kingdom,2,bullwaves-636914|bullwaves-635145,1309767|1309596
@@ -9501,7 +9516,6 @@ michele maestroni,italy,2,bullwaves-370249|bullwaves-370244,950144|950142
 riccardo fallico,italy,3,bullwaves-369503|bullwaves-15539|moonance-2362,"950045|0|8930:1047221,8931:1047222,8932:3969"
 serena esposto,italy,2,bullwaves-368931|bullwaves-239941,949999|931163
 mariska janse,netherlands,2,bullwaves-368821|bullwaves-225554,|928759
-sam taylor,united kingdom,2,bullwaves-368621|bullwaves-368601,949966|949964
 mohammed akhtar,united kingdom,3,bullwaves-368555|bullwaves-268778|bullwaves-203503,949962|936047|925449
 miriam mancuso,italy,3,bullwaves-368217|bullwaves-301321|bullwaves-299422,949931|940781|940538
 mouhcine ben oudra meftahe,spain,2,bullwaves-367673|bullwaves-288581,949869|938963

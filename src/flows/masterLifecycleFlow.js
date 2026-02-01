@@ -160,6 +160,13 @@ const nodes = [
     data: {
       label: { en: 'Traffic / Acquisition', it: 'Traffico / Acquisizione' },
       subLabel: { en: 'Top of funnel', it: 'Top of funnel' },
+      kpis: [
+        {
+          label: { en: 'Unique Visitors', it: 'Visitatori Unici' },
+          value: { en: '—', it: '—' },
+          metricKey: 'uniqueVisitors',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -172,6 +179,13 @@ const nodes = [
     data: {
       label: { en: 'Registration', it: 'Registrazione' },
       subLabel: { en: 'User created an account', it: 'Utente creato account' },
+      kpis: [
+        {
+          label: { en: 'Registrations', it: 'Registrazioni' },
+          value: { en: '—', it: '—' },
+          metricKey: 'registrations',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -196,6 +210,18 @@ const nodes = [
     data: {
       label: { en: 'First Deposit (FTD)', it: 'Primo deposito (FTD)' },
       subLabel: { en: 'Revenue creation starts', it: 'Inizio creazione revenue' },
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -208,6 +234,13 @@ const nodes = [
     data: {
       label: { en: 'First Trade', it: 'Primo trade' },
       subLabel: { en: 'Activation milestone', it: 'Milestone di attivazione' },
+      kpis: [
+        {
+          label: { en: 'FTS', it: 'FTS' },
+          value: { en: '—', it: '—' },
+          metricKey: 'fts',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -338,6 +371,13 @@ const nodes = [
       kind: 'influence',
       label: { en: 'Retention', it: 'Retention' },
       subLabel: { en: 'Prevent dormancy • Open ↗', it: 'Prevenzione dormienza • Apri ↗' },
+      kpis: [
+        {
+          label: { en: 'QFTD', it: 'QFTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'qftd',
+        },
+      ],
       linkToFlow: 'retention',
     },
     style: { width: influenceW, zIndex: 10 },

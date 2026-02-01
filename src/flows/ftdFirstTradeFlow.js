@@ -97,6 +97,18 @@ const nodes = [
     position: { x: xInLane('user', stateW), y: y.ftd },
     data: {
       label: { en: 'User deposited (FTD)', it: 'Utente ha depositato (FTD)' },
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -204,6 +216,13 @@ const nodes = [
         it: 'Primo trade eseguito → Trader attivo',
       },
       kind: 'positive',
+      kpis: [
+        {
+          label: { en: 'FTS', it: 'FTS' },
+          value: { en: '—', it: '—' },
+          metricKey: 'fts',
+        },
+      ],
     },
     style: { width: outcomeW, zIndex: 10 },
   },

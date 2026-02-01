@@ -198,6 +198,18 @@ const nodes = [
         it: 'Primo deposito completato → Utente FTD',
       },
       kind: 'positive',
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
     },
     style: { width: outcomeW, zIndex: 10 },
   },

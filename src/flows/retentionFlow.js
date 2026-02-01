@@ -55,6 +55,13 @@ const nodes = [
         en: 'Registration completed • Open full flow ↗',
         it: 'Registrazione completata • Apri flusso completo ↗',
       },
+      kpis: [
+        {
+          label: { en: 'Registrations', it: 'Registrazioni' },
+          value: { en: '—', it: '—' },
+          metricKey: 'registrations',
+        },
+      ],
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -114,6 +121,18 @@ const nodes = [
     data: {
       label: { en: 'Deposits', it: 'Depositi' },
       subLabel: { en: 'FTD (First Time Deposit)', it: 'FTD (First Time Deposit)' },
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -174,6 +193,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits', it: 'Depositi' },
       subLabel: { en: 'New deposit if loss', it: 'Nuovo deposito se perdita' },
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -237,7 +263,17 @@ const nodes = [
     id: 'O1',
     type: 'outcome',
     position: { x: 520, y: y.outcomes },
-    data: { label: { en: 'QFTD', it: 'QFTD' }, kind: 'positive' },
+    data: {
+      label: { en: 'QFTD', it: 'QFTD' },
+      kind: 'positive',
+      kpis: [
+        {
+          label: { en: 'QFTD', it: 'QFTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'qftd',
+        },
+      ],
+    },
     style: { width: outcomeW, zIndex: 10 },
   },
   {
@@ -256,6 +292,13 @@ const nodes = [
     data: {
       label: { en: 'Affiliate commission', it: "Commissione all'affiliato" },
       subLabel: { en: 'After QFTD', it: 'Dopo QFTD' },
+      kpis: [
+        {
+          label: { en: 'QFTD', it: 'QFTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'qftd',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: outcomeW, zIndex: 10 },

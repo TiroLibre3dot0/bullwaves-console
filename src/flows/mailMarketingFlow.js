@@ -36,6 +36,13 @@ const nodes = [
     data: {
       label: { en: 'Registrations', it: 'Registrazioni' },
       subLabel: { en: 'Open full flow ↗', it: 'Apri flusso completo ↗' },
+      kpis: [
+        {
+          label: { en: 'Registrations', it: 'Registrazioni' },
+          value: { en: '—', it: '—' },
+          metricKey: 'registrations',
+        },
+      ],
       kind: 'primary',
       linkToFlow: 'registration',
     },
@@ -99,6 +106,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits reminder', it: 'Promemoria Depositi' },
       subLabel: { en: 'If FTD is not done yet', it: 'Se non ha ancora fatto FTD' },
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -124,6 +138,13 @@ const nodes = [
     data: {
       label: { en: 'FTD follow-up', it: 'Follow-up FTD' },
       subLabel: { en: 'After First Time Deposit', it: 'Dopo First Time Deposit' },
+      kpis: [
+        {
+          label: { en: 'FTD', it: 'FTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'ftd',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -139,6 +160,13 @@ const nodes = [
         en: 'Threshold: opened positions or deposit amount',
         it: 'Soglia: posizioni aperte o ammontare deposito',
       },
+      kpis: [
+        {
+          label: { en: 'QFTD', it: 'QFTD' },
+          value: { en: '—', it: '—' },
+          metricKey: 'qftd',
+        },
+      ],
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
@@ -165,6 +193,13 @@ const nodes = [
     data: {
       label: { en: 'Deposits / activity started', it: 'Depositi / attività avviata' },
       kind: 'positive',
+      kpis: [
+        {
+          label: { en: 'N° deposits', it: 'N° depositi' },
+          value: { en: '—', it: '—' },
+          metricKey: 'depositsCount',
+        },
+      ],
     },
     style: { width: outcomeW, zIndex: 10 },
   },

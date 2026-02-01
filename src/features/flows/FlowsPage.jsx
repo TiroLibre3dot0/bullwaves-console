@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../i18n/I18nContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
+import { formatEuro, formatNumber } from '../../lib/formatters'
 import FlowDiagram from './FlowDiagram'
+import useUserBehaviorMetrics from './hooks/useUserBehaviorMetrics'
 import {
   nodes as retentionNodes,
   edges as retentionEdges,
@@ -63,6 +65,7 @@ function randomHex(bytes = 12) {
 
 export default function FlowsPage({ publicMode = false, sharePayload = null }) {
   const { t, locale } = useI18n()
+  const userBehaviorMetrics = useUserBehaviorMetrics()
 
   const pickText = (value) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -237,10 +240,34 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           ...data,
           label: pickText(data.label),
           subLabel: data.subLabel == null ? undefined : pickText(data.subLabel),
+          kpis: Array.isArray(data.kpis)
+            ? data.kpis.filter(Boolean).map((k) => ({
+                ...k,
+                label: pickText(k?.label),
+                value: (() => {
+                  const metricKey = k?.metricKey
+                  if (!metricKey) return pickText(k?.value)
+                  if (!userBehaviorMetrics?.loaded) return '—'
+
+                  const rawMetric = userBehaviorMetrics?.[metricKey]
+                  if (rawMetric == null) return '—'
+                  const n = Number(rawMetric)
+                  if (!Number.isFinite(n)) return '—'
+                  if (
+                    metricKey === 'deposits' ||
+                    metricKey === 'withdrawals' ||
+                    metricKey === 'netDeposits'
+                  ) {
+                    return formatEuro(n)
+                  }
+                  return formatNumber(Math.round(n))
+                })(),
+              }))
+            : undefined,
         },
       }
     })
-  }, [active.nodes, locale])
+  }, [active.nodes, locale, userBehaviorMetrics])
 
   const localizedEdges = useMemo(() => {
     return (active.edges || []).map((e) => ({
