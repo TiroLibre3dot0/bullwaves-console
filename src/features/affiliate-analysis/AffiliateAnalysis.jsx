@@ -29,7 +29,7 @@ const badgeTone = (t, profit) => {
   return { label: t('affiliateAnalysis.badge.atRisk'), color: '#ef4444' }
 }
 
-export default function AffiliateAnalysis() {
+export default function AffiliateAnalysis({ initialAffiliate = '', initialYear = '' } = {}) {
   const { t } = useI18n()
   const { mediaRows, payments, affiliateOptions } = useMediaPaymentsData()
   const [selectedAffiliate, setSelectedAffiliate] = useState('')
@@ -39,6 +39,30 @@ export default function AffiliateAnalysis() {
   const [shareCopied, setShareCopied] = useState(false)
   const [shareError, setShareError] = useState('')
   const { setDataStatus } = useDataStatus()
+
+  // Allow deep-linking and embedding:
+  // - /affiliate?affiliate=<nameOrId>&year=<all|YYYY>
+  // - <AffiliateAnalysis initialAffiliate="..." initialYear="..." />
+  //
+  // Note: we intentionally only auto-apply these values when the local state
+  // is still empty/default so we don't override the user's manual selections.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const params = new window.URLSearchParams(window.location.search || '')
+    const urlAffiliate = String(params.get('affiliate') || '').trim()
+    const urlYear = String(params.get('year') || '').trim()
+
+    const seedAffiliate = String(initialAffiliate || urlAffiliate || '').trim()
+    const seedYear = String(initialYear || urlYear || '').trim()
+
+    if (!selectedAffiliate && seedAffiliate) {
+      setSelectedAffiliate(seedAffiliate)
+    }
+    if (selectedYear === 'all' && seedYear && seedYear !== 'all') {
+      setSelectedYear(seedYear)
+    }
+  }, [initialAffiliate, initialYear, selectedAffiliate, selectedYear])
 
   const randomTokenSuffix = (len = 12) => {
     const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'

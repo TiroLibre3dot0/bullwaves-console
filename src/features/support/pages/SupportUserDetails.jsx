@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import FullPageLoader from '../../../components/FullPageLoader'
+import PublicAffiliateAnalysisSharePage from '../../affiliate-analysis/pages/PublicAffiliateAnalysisSharePage'
 import {
   buildSupportDecision,
   buildSupportDecisions,
@@ -996,6 +997,157 @@ export default function SupportUserDetails({
   const [targetAffiliateId, setTargetAffiliateId] = useState('')
   const [statusHelpOpen, setStatusHelpOpen] = useState(false)
 
+  // Affiliate report (inline modal)
+  const affiliateSeed = String(affiliateName?.affiliateName || affiliateId || '').trim()
+  const hasAffiliateSeed = Boolean(affiliateSeed && affiliateSeed !== '—')
+  const [affiliateReportOpen, setAffiliateReportOpen] = useState(false)
+  const [affiliateReportToken, setAffiliateReportToken] = useState('')
+  const [affiliateReportTokenBusy, setAffiliateReportTokenBusy] = useState(false)
+
+  const shareHref = (() => {
+    if (!hasAffiliateSeed) return '/share/affiliate-reports'
+    if (!affiliateReportToken)
+      return `/share/affiliate-reports/${encodeURIComponent(affiliateSeed)}`
+    return `/share/affiliate-reports/${encodeURIComponent(affiliateReportToken)}/${encodeURIComponent(affiliateSeed)}`
+  })()
+
+  const openAffiliateReportInModal = () => {
+    if (!hasAffiliateSeed) return
+    setAffiliateReportOpen(true)
+  }
+
+  const onAffiliateLinkClick = (e) => {
+    if (!hasAffiliateSeed) return
+    // Keep normal browser behavior for modifier clicks (new tab, etc.)
+    if (e?.metaKey || e?.ctrlKey || e?.shiftKey || e?.altKey) return
+    e.preventDefault()
+    openAffiliateReportInModal()
+  }
+
+  // When the modal opens, generate a token compatible with the public share page:
+  // - On localhost: share_local_ token stored in localStorage (no serverless functions)
+  // - Elsewhere: best-effort share_ token via /api/share/create-affiliate-reports
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!affiliateReportOpen) return
+    if (!hasAffiliateSeed) return
+    if (affiliateReportToken || affiliateReportTokenBusy) return
+
+    let cancelled = false
+
+    const normalizeTokenPart = (v, maxLen = 44) => {
+      const s = String(v || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '')
+      if (!s) return ''
+      return s.slice(0, Math.max(8, maxLen))
+    }
+
+    const randomTokenSuffix = (len = 12) => {
+      const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789'
+      let out = ''
+      const arr = new Uint8Array(len)
+      try {
+        window.crypto?.getRandomValues?.(arr)
+        for (let i = 0; i < len; i++) out += alphabet[arr[i] % alphabet.length]
+        return out
+      } catch {
+        // ignore
+      }
+      for (let i = 0; i < len; i++) out += alphabet[Math.floor(Math.random() * alphabet.length)]
+      return out
+    }
+
+    const run = async () => {
+      try {
+        setAffiliateReportTokenBusy(true)
+        const origin = window.location.origin
+        const isLocalhost = /^(http:\/\/localhost|http:\/\/127\.0\.0\.1)/i.test(origin)
+
+        const payload = {
+          k: 'affrep',
+          g: Date.now(),
+          affiliate: affiliateSeed,
+          year: 'all',
+        }
+
+        if (isLocalhost) {
+          // Stable local token per affiliate so the URL is consistent across opens.
+          const keyPart = normalizeTokenPart(affiliateSeed)
+          const token = keyPart
+            ? `share_local_affrep_${keyPart}`
+            : `share_local_affrep_${randomTokenSuffix(16)}`
+          const key = `bw_share_affrep:${token}`
+          try {
+            window.localStorage.setItem(key, JSON.stringify({ payload, createdAt: Date.now() }))
+          } catch {
+            // ignore
+          }
+          if (!cancelled) setAffiliateReportToken(token)
+          return
+        }
+
+        // Best-effort: create a share token using the same API used by the AffiliateAnalysis share.
+        try {
+          const resp = await fetch('/api/share/create-affiliate-reports', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ payload }),
+          })
+          const data = await resp.json().catch(() => null)
+          const token = data?.token
+          if (resp.ok && token && String(token).startsWith('share_')) {
+            if (!cancelled) setAffiliateReportToken(String(token))
+            return
+          }
+        } catch {
+          // ignore
+        }
+
+        // Fallback: render in boardMode (no token) if token generation fails.
+        if (!cancelled) setAffiliateReportToken('')
+      } finally {
+        if (!cancelled) setAffiliateReportTokenBusy(false)
+      }
+    }
+
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [
+    affiliateReportOpen,
+    affiliateReportToken,
+    affiliateReportTokenBusy,
+    affiliateSeed,
+    hasAffiliateSeed,
+  ])
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!affiliateReportOpen) return
+
+    const onKeyDown = (e) => {
+      if (e.defaultPrevented) return
+      if (String(e.key || '') !== 'Escape') return
+      setAffiliateReportOpen(false)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [affiliateReportOpen])
+
+  React.useEffect(() => {
+    if (typeof document === 'undefined') return
+    if (!affiliateReportOpen) return
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prev
+    }
+  }, [affiliateReportOpen])
+
   // UI: focus mode (widen center content by hiding side columns)
   const [isFocusCenter, setIsFocusCenter] = useState(false)
 
@@ -1172,6 +1324,95 @@ export default function SupportUserDetails({
 
   return (
     <div className="support-user-details-page">
+      {affiliateReportOpen && hasAffiliateSeed ? (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('support.details.affiliate')}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onMouseDown={() => setAffiliateReportOpen(false)}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'rgba(2,6,23,0.72)',
+              backdropFilter: 'blur(6px)',
+            }}
+          />
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              margin: '4vh auto',
+              width: 'min(1200px, 94vw)',
+              height: '92vh',
+              borderRadius: 14,
+              overflow: 'hidden',
+              border: '1px solid rgba(255,255,255,0.10)',
+              background: 'linear-gradient(180deg, rgba(15,23,42,0.92), rgba(2,6,23,0.92))',
+              boxShadow: '0 22px 60px rgba(0,0,0,0.55)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                padding: '10px 12px',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 900, fontSize: 13, color: 'rgba(255,255,255,0.92)' }}>
+                  {t('support.details.affiliate')} · {affiliateSeed}
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(148,163,184,0.95)' }}>
+                  Affiliate report (public share view)
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <a
+                  href={shareHref}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{
+                    fontSize: 12,
+                    color: 'rgba(34,211,238,0.95)',
+                    textDecoration: 'none',
+                    fontWeight: 800,
+                  }}
+                >
+                  Apri in nuova scheda ↗
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setAffiliateReportOpen(false)}
+                  className="btn secondary"
+                  style={{ padding: '8px 10px', borderRadius: 10, fontSize: 12 }}
+                >
+                  Chiudi
+                </button>
+              </div>
+            </div>
+
+            <div style={{ height: 'calc(92vh - 54px)', overflow: 'auto', padding: 12 }}>
+              <PublicAffiliateAnalysisSharePage
+                token={affiliateReportToken}
+                affiliateId={affiliateSeed}
+                period={''}
+                boardMode={!affiliateReportToken}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Desktop back button: topbar is mobile-only */}
       <div className="support-details-desktop-back">
         <button
@@ -1286,7 +1527,24 @@ export default function SupportUserDetails({
           </div>
 
           <div className="support-details-topbar-affiliate">
-            {t('support.details.affiliate')}: {affiliateDisplay}
+            {t('support.details.affiliate')}:{' '}
+            {hasAffiliateSeed ? (
+              <a
+                href={shareHref}
+                onClick={onAffiliateLinkClick}
+                title={t('support.details.affiliate')}
+                style={{
+                  color: 'rgba(34,211,238,0.95)',
+                  textDecoration: 'underline',
+                  textUnderlineOffset: 2,
+                  fontWeight: 900,
+                }}
+              >
+                {affiliateDisplay} <span aria-hidden>↗</span>
+              </a>
+            ) : (
+              affiliateDisplay
+            )}
           </div>
         </div>
       </div>
@@ -1431,7 +1689,23 @@ export default function SupportUserDetails({
               <div className="support-id-section">
                 <div className="support-id-label">{t('support.details.affiliate')}</div>
                 <div className="support-id-value is-medium">
-                  {affiliateDisplay || t('support.details.noAffiliate')}
+                  {hasAffiliateSeed ? (
+                    <a
+                      href={shareHref}
+                      onClick={onAffiliateLinkClick}
+                      style={{
+                        color: 'rgba(34,211,238,0.95)',
+                        textDecoration: 'underline',
+                        textUnderlineOffset: 2,
+                        fontWeight: 900,
+                      }}
+                    >
+                      {affiliateDisplay || t('support.details.noAffiliate')}{' '}
+                      <span aria-hidden>↗</span>
+                    </a>
+                  ) : (
+                    affiliateDisplay || t('support.details.noAffiliate')
+                  )}
                   {affiliateMappingMissing && (
                     <span style={{ color: 'orange', fontSize: 10, marginLeft: 8 }}>
                       ({t('support.details.affiliateNameMissing')})
