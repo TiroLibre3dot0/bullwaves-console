@@ -4219,7 +4219,6 @@ export default function PublicAffiliateAnalysisSharePage({
     if (cleanToken.startsWith('share_local_')) {
       return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
     }
-    if (cleanToken.startsWith('share_')) return `${origin}/s/${encodeURIComponent(cleanToken)}`
     return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
   }, [token, boardMode])
 
