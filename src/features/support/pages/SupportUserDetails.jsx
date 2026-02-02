@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import FullPageLoader from '../../../components/FullPageLoader'
 import PublicAffiliateAnalysisSharePage from '../../affiliate-analysis/pages/PublicAffiliateAnalysisSharePage'
+import { useAuth } from '../../../context/AuthContext'
 import {
   buildSupportDecision,
   buildSupportDecisions,
@@ -433,6 +434,16 @@ function DecisionCard({ title, decision, category, bonusInputs, onChangeBonusInp
   )
 }
 
+function isSupportDepartment(department = '') {
+  const d = String(department || '')
+    .trim()
+    .toLowerCase()
+  if (!d) return false
+  if (d === 'support') return true
+  if (d === 'support team') return true
+  return d.includes('support')
+}
+
 export default function SupportUserDetails({
   selected,
   shareConfig,
@@ -447,10 +458,20 @@ export default function SupportUserDetails({
   onBack,
 }) {
   const { t } = useI18n()
+  const { user: viewer } = useAuth()
+  const viewerIsSupport = isSupportDepartment(viewer?.department)
 
   const maskPii = Boolean(shareConfig?.mask?.pii)
-  const maskCommissions = Boolean(shareConfig?.mask?.commissions)
-  const maskAffiliateRevenue = Boolean(shareConfig?.mask?.affiliateRevenue)
+  const maskFinancials = viewerIsSupport
+  const maskCommissions = Boolean(shareConfig?.mask?.commissions) || maskFinancials
+  const maskAffiliateRevenue = Boolean(shareConfig?.mask?.affiliateRevenue) || maskFinancials
+
+  const fmtEuroSafe = (value) => {
+    if (value === null || value === undefined) return '—'
+    return typeof fmtEuro === 'function' ? fmtEuro(value) : String(value)
+  }
+
+  const fmtEuroMasked = (value) => (maskFinancials ? '•••' : fmtEuroSafe(value))
 
   const maskedMoney = (value, formatter) => {
     if (value === null || value === undefined) return '—'
@@ -497,10 +518,10 @@ export default function SupportUserDetails({
     if (!m || m === '—' || m === a) return a
     return `${a} · ${m}`
   })()
-  const totalDeposits = fmtEuro(mapped.totalDeposits)
-  const withdrawals = fmtEuro(mapped.withdrawals)
-  const netDeposits = fmtEuro(mapped.netDeposits)
-  const volume = mapped.volume || '—'
+  const totalDeposits = fmtEuroMasked(mapped.totalDeposits)
+  const withdrawals = fmtEuroMasked(mapped.withdrawals)
+  const netDeposits = fmtEuroMasked(mapped.netDeposits)
+  const volume = maskFinancials ? '•••' : mapped.volume || '—'
   const plRaw = mapped.pl || ''
   const affiliateId = mapped.affiliateId || ''
   const affiliateLabel = affiliateName?.affiliateName || '—'
@@ -773,13 +794,13 @@ export default function SupportUserDetails({
       : Number(pickRawField(mapped.raw || {}, withdrawalCountCandidates)) || null
   const avgDeposit =
     depositsCountVal && depositsCountVal > 0 && mapped.totalDeposits != null
-      ? fmtEuro(Number(mapped.totalDeposits) / depositsCountVal)
+      ? fmtEuroMasked(Number(mapped.totalDeposits) / depositsCountVal)
       : null
   const avgWithdrawal =
     withdrawalsCountVal && withdrawalsCountVal > 0 && mapped.withdrawals != null
-      ? fmtEuro(Number(mapped.withdrawals) / withdrawalsCountVal)
+      ? fmtEuroMasked(Number(mapped.withdrawals) / withdrawalsCountVal)
       : null
-  const netCashFlow = mapped.netDeposits != null ? fmtEuro(mapped.netDeposits) : null
+  const netCashFlow = mapped.netDeposits != null ? fmtEuroMasked(mapped.netDeposits) : null
   const tradingDaysVal = mapped.tradingDays != null ? Number(mapped.tradingDays) || 0 : null
 
   // ROI: P/L divided by total deposits (percentage)
@@ -790,12 +811,18 @@ export default function SupportUserDetails({
     String((mapped.withdrawals || '').toString().replace(/[^0-9.-]+/g, '')) || 0
   )
   const plNum = Number(String((mapped.pl || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-  const plDisplay = plRaw ? (fmtEuro ? fmtEuro(plNum) : plNum.toFixed(2)) : '—'
-  const roiVal = totalDepositsNum ? `${((plNum / totalDepositsNum) * 100).toFixed(2)}%` : null
+  const plDisplay = plRaw ? (maskFinancials ? '•••' : fmtEuroSafe(plNum)) : '—'
+  const roiVal = totalDepositsNum
+    ? maskFinancials
+      ? '•••'
+      : `${((plNum / totalDepositsNum) * 100).toFixed(2)}%`
+    : null
 
   const withdrawalRatioVal =
     totalDepositsNum > 0 && withdrawalsNum >= 0
-      ? `${((withdrawalsNum / Math.max(totalDepositsNum, 1)) * 100).toFixed(0)}%`
+      ? maskFinancials
+        ? '•••'
+        : `${((withdrawalsNum / Math.max(totalDepositsNum, 1)) * 100).toFixed(0)}%`
       : null
 
   const withdrawalRatioPct =
@@ -1407,6 +1434,7 @@ export default function SupportUserDetails({
                 affiliateId={affiliateSeed}
                 period={''}
                 boardMode={!affiliateReportToken}
+                maskFinancials={viewerIsSupport}
               />
             </div>
           </div>
@@ -2461,7 +2489,7 @@ export default function SupportUserDetails({
                                 currentAffiliateOverview.revenue !== undefined &&
                                 String(currentAffiliateOverview.revenue).trim() !== ''
                                   ? '•••'
-                                  : fmtEuro(currentAffiliateOverview.revenue)}
+                                  : fmtEuroMasked(currentAffiliateOverview.revenue)}
                               </div>
 
                               <div style={{ fontSize: 10, color: 'var(--muted)' }}>
@@ -2469,7 +2497,7 @@ export default function SupportUserDetails({
                               </div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
                                 {currentAffiliateOverview.ecpa
-                                  ? fmtEuro(currentAffiliateOverview.ecpa)
+                                  ? fmtEuroMasked(currentAffiliateOverview.ecpa)
                                   : '—'}
                               </div>
 
@@ -2488,7 +2516,9 @@ export default function SupportUserDetails({
                                 }}
                               >
                                 {currentAffiliateOverview.roi
-                                  ? `${currentAffiliateOverview.roi.toFixed(1)}%`
+                                  ? maskFinancials
+                                    ? '•••'
+                                    : `${currentAffiliateOverview.roi.toFixed(1)}%`
                                   : '—'}
                               </div>
                             </div>
@@ -2530,7 +2560,7 @@ export default function SupportUserDetails({
                                   targetAffiliateOverview.revenue !== undefined &&
                                   String(targetAffiliateOverview.revenue).trim() !== ''
                                     ? '•••'
-                                    : fmtEuro(targetAffiliateOverview.revenue)}
+                                    : fmtEuroMasked(targetAffiliateOverview.revenue)}
                                 </div>
 
                                 <div style={{ fontSize: 10, color: 'var(--muted)' }}>
@@ -2538,7 +2568,7 @@ export default function SupportUserDetails({
                                 </div>
                                 <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
                                   {targetAffiliateOverview.ecpa
-                                    ? fmtEuro(targetAffiliateOverview.ecpa)
+                                    ? fmtEuroMasked(targetAffiliateOverview.ecpa)
                                     : '—'}
                                 </div>
 
@@ -2557,7 +2587,9 @@ export default function SupportUserDetails({
                                   }}
                                 >
                                   {targetAffiliateOverview.roi
-                                    ? `${targetAffiliateOverview.roi.toFixed(1)}%`
+                                    ? maskFinancials
+                                      ? '•••'
+                                      : `${targetAffiliateOverview.roi.toFixed(1)}%`
                                     : '—'}
                                 </div>
                               </div>

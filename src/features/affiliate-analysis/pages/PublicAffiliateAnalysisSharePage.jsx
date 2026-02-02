@@ -22,6 +22,7 @@ import { useCohortNetDepositsCalendar } from '../hooks/useCohortNetDepositsCalen
 import { buildAffiliateInsights } from '../insights/affiliateInsightEngine'
 import { trackPublicShareOpen } from '../../../utils/analytics'
 import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
+import { useAuth } from '../../../context/AuthContext'
 
 const REGISTRATIONS_CANDIDATES = [
   '/Registrations Report.csv',
@@ -63,6 +64,16 @@ const parseLooseUsDate = (raw) => {
   const year = Number(m[3])
   const d = new Date(year, Math.max(month, 1) - 1, Math.max(day, 1))
   return Number.isNaN(d.getTime()) ? null : d
+}
+
+function isSupportDepartment(department = '') {
+  const d = String(department || '')
+    .trim()
+    .toLowerCase()
+  if (!d) return false
+  if (d === 'support') return true
+  if (d === 'support team') return true
+  return d.includes('support')
 }
 
 function getReportsVersion() {
@@ -848,8 +859,11 @@ function AffiliateExecutiveCumulativeChart({
   height = 260,
   highlightStartId = null,
   highlightEndId = null,
+  maskFinancials = false,
 }) {
   if (!data || data.length === 0) return null
+
+  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
 
   const colors = {
     regs: '#ffffff',
@@ -1011,6 +1025,7 @@ function AffiliateExecutiveCumulativeChart({
   const step = Math.max(1, Math.ceil(series.length / maxXlabels))
 
   const formatEuroShort = (v) => {
+    if (maskFinancials) return '•••'
     const n = Number(v || 0)
     const sign = n < 0 ? '-' : ''
     return `${sign}€${formatNumberShort(Math.abs(n))}`
@@ -1554,7 +1569,7 @@ function AffiliateExecutiveCumulativeChart({
               <span style={{ color: Number(hover.pl || 0) >= 0 ? colors.plPos : colors.plNeg }}>
                 {t('shareAffiliateReports.chart.tooltip.pl') || 'P&L'}
               </span>
-              <span>{formatEuro(hover.pl || 0)}</span>
+              <span>{fmtEuro(hover.pl || 0)}</span>
             </div>
           ) : null}
         </div>
@@ -1563,7 +1578,34 @@ function AffiliateExecutiveCumulativeChart({
   )
 }
 
-function PublicAffiliateReportsEntryView({ t, locale, setLocale, affiliates, shareBase }) {
+function PublicAffiliateReportsEntryView({
+  t,
+  locale,
+  setLocale,
+  affiliates,
+  shareBase,
+  maskFinancials = false,
+}) {
+  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
+
+  const maskedBadge = maskFinancials ? (
+    <span
+      style={{
+        padding: '6px 10px',
+        borderRadius: 999,
+        border: '1px solid rgba(250,204,21,0.28)',
+        background: 'rgba(250,204,21,0.08)',
+        color: 'rgba(250,204,21,0.98)',
+        fontWeight: 950,
+        fontSize: 12,
+        whiteSpace: 'nowrap',
+      }}
+      title={'Financial values are hidden for Support viewers.'}
+    >
+      Financials hidden (Support)
+    </span>
+  ) : null
+
   return (
     <div
       style={{
@@ -1595,6 +1637,7 @@ function PublicAffiliateReportsEntryView({ t, locale, setLocale, affiliates, sha
             >
               {t('shareAffiliateReports.header.subtitle') || 'Read-only executive summary'}
             </div>
+            {maskedBadge ? <div style={{ marginTop: 8 }}>{maskedBadge}</div> : null}
             <h1
               style={{
                 color: 'var(--text)',
@@ -1665,7 +1708,7 @@ function PublicAffiliateReportsEntryView({ t, locale, setLocale, affiliates, sha
               <Card
                 key={a.affiliate}
                 title={a.affiliate}
-                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${formatEuro(a.netDeposits || 0)} · ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${formatEuro(a.pl || 0)} · ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
+                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${fmtEuro(a.netDeposits || 0)} · ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${fmtEuro(a.pl || 0)} · ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
                 rightTag={rightTag}
                 onClick={() => {
                   const next = `${shareBase}/${encodeAffiliateId(a.affiliate)}`
@@ -1705,9 +1748,32 @@ function PublicAffiliateReportsDetailView({
   kpiContext,
   insightContext,
   cumulativeSeries,
+  maskFinancials = false,
 }) {
   const current = report?.currentKpis || null
   const previous = report?.previousKpis || null
+
+  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
+  const fmtSensitivePercent = (value, decimals = 1) =>
+    maskFinancials ? '•••' : formatPercent(value, decimals)
+
+  const maskedBadge = maskFinancials ? (
+    <span
+      style={{
+        padding: '6px 10px',
+        borderRadius: 999,
+        border: '1px solid rgba(250,204,21,0.28)',
+        background: 'rgba(250,204,21,0.08)',
+        color: 'rgba(250,204,21,0.98)',
+        fontWeight: 950,
+        fontSize: 12,
+        whiteSpace: 'nowrap',
+      }}
+      title={'Financial values are hidden for Support viewers.'}
+    >
+      Financials hidden (Support)
+    </span>
+  ) : null
 
   const [affiliatePickerOpen, setAffiliatePickerOpen] = useState(false)
   const [switchingAffiliate, setSwitchingAffiliate] = useState(false)
@@ -2750,6 +2816,17 @@ function PublicAffiliateReportsDetailView({
               >
                 {t('shareAffiliateReports.report.eyebrow') || 'Affiliate report'}
               </div>
+              {maskedBadge ? (
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: headerLayout === 'stack-narrow' ? 'center' : 'flex-start',
+                    width: '100%',
+                  }}
+                >
+                  {maskedBadge}
+                </div>
+              ) : null}
               <div
                 style={{
                   display: 'flex',
@@ -2966,15 +3043,15 @@ function PublicAffiliateReportsDetailView({
                               >
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-                                  : {nd === null ? '—' : formatEuro(nd)}
+                                  : {nd === null ? '—' : fmtEuro(nd)}
                                 </span>
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.pl') || 'P&L'}:{' '}
-                                  {pl === null ? '—' : formatEuro(pl)}
+                                  {pl === null ? '—' : fmtEuro(pl)}
                                 </span>
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.roi') || 'ROI'}:{' '}
-                                  {roi === null ? '—' : formatPercent(roi, 1)}
+                                  {roi === null ? '—' : fmtSensitivePercent(roi, 1)}
                                 </span>
                               </div>
                             </div>
@@ -3143,6 +3220,7 @@ function PublicAffiliateReportsDetailView({
                 height={310}
                 highlightStartId={highlightStartId}
                 highlightEndId={highlightEndId}
+                maskFinancials={maskFinancials}
               />
             ) : (
               <div
@@ -3196,17 +3274,17 @@ function PublicAffiliateReportsDetailView({
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-              value={netDeposits === null ? '—' : formatEuro(netDeposits)}
+              value={netDeposits === null ? '—' : fmtEuro(netDeposits)}
               tone={toneForSigned(netDeposits)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.pl') || 'P&L'}
-              value={pl === null ? '—' : formatEuro(pl)}
+              value={pl === null ? '—' : fmtEuro(pl)}
               tone={toneForSigned(pl)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.payments') || 'Payments'}
-              value={paymentsTotal === null ? '—' : formatEuro(paymentsTotal)}
+              value={paymentsTotal === null ? '—' : fmtEuro(paymentsTotal)}
               tone={
                 paymentsTotal !== null && Number(paymentsTotal) < 0
                   ? toneForSigned(paymentsTotal)
@@ -3215,7 +3293,7 @@ function PublicAffiliateReportsDetailView({
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.roi') || 'ROI'}
-              value={roi === null ? '—' : formatPercent(roi, 1)}
+              value={roi === null ? '—' : fmtSensitivePercent(roi, 1)}
               tone={roi !== null && roi < 0 ? '#ef4444' : '#22c55e'}
             />
           </div>
@@ -3333,21 +3411,21 @@ function PublicAffiliateReportsDetailView({
               />
               <Badge
                 label={t('shareAffiliateReports.metric.losingRatio') || 'Losing ratio% (P&L/ND)'}
-                value={losingRatioPct === null ? '—' : formatPercent(losingRatioPct, 2)}
+                value={losingRatioPct === null ? '—' : fmtSensitivePercent(losingRatioPct, 2)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.arpu') || 'ARPU'}
-                value={formatEuro(kpiContext?.values?.arpu || 0)}
+                value={fmtEuro(kpiContext?.values?.arpu || 0)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.cpa') || 'CPA'}
-                value={formatEuro(kpiContext?.values?.cpa || 0)}
+                value={fmtEuro(kpiContext?.values?.cpa || 0)}
               />
               <Badge
                 label={
                   t('shareAffiliateReports.metric.avgDepositsPerUser') || 'Avg deposits / FTD user'
                 }
-                value={formatEuro(kpiContext?.values?.avgDepositsPerUser || 0)}
+                value={fmtEuro(kpiContext?.values?.avgDepositsPerUser || 0)}
               />
               <Badge
                 label={
@@ -3513,8 +3591,11 @@ export default function PublicAffiliateAnalysisSharePage({
   affiliateId,
   period,
   boardMode = false,
+  maskFinancials = false,
 }) {
   const { t, locale, setLocale } = useI18n()
+  const { user: viewer } = useAuth()
+  const effectiveMaskFinancials = Boolean(maskFinancials || isSupportDepartment(viewer?.department))
   const [validating, setValidating] = useState(true)
   const [isValidToken, setIsValidToken] = useState(false)
   const [periodType, setPeriodType] = useState('since-ever')
@@ -4261,6 +4342,7 @@ export default function PublicAffiliateAnalysisSharePage({
         setLocale={setLocale}
         affiliates={top20Affiliates}
         shareBase={shareBase}
+        maskFinancials={effectiveMaskFinancials}
       />
     )
   }
@@ -4286,6 +4368,7 @@ export default function PublicAffiliateAnalysisSharePage({
       kpiContext={kpiContext}
       insightContext={insightContext}
       cumulativeSeries={affiliateCumulativeSeries}
+      maskFinancials={effectiveMaskFinancials}
     />
   )
 }
