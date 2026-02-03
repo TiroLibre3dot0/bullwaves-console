@@ -85,7 +85,8 @@ export const projects2026 = [
     department: 'Product',
     area: 'Retention',
     activity: 'Economic calendar notifications',
-    target: 'Spec + delivery for pre/post event alerts',
+    target:
+      'In progress (evaluation phase): run demo calls with Autochartist and Trading Central to assess product fit for automation, trader engagement, and scalability. Next: complete demos → internal comparison → recommendation → decision; then ship spec + delivery for pre/post event alerts.',
     priority: 'High',
     responsibleName: 'Product',
     dueDate: 'Q1 2026',
@@ -218,8 +219,9 @@ export const projects2026 = [
     id: 'sales-voiso-skale',
     department: 'Sales',
     area: 'Reporting',
-    activity: 'Skale integrating stats on Voiso',
-    target: 'Unify call/reporting metrics',
+    activity: 'Voiso + Skale integration (call stats → CRM reporting)',
+    target:
+      'Ongoing. Integration between Voiso call statistics and Skale CRM for call performance visibility, attribution, and ops reporting. Current work: data mapping and technical alignment in progress. Next: complete mapping and validate data consistency.',
     priority: 'Medium',
     responsibleName: 'Jake Morgan',
     dueDate: 'H1 2026',

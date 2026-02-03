@@ -54,10 +54,11 @@ const EPICS = [
         milestones: [],
         ownerDepartment: 'CRM',
         status: 'executing',
-        notes: 'We are enabling WhatsApp Business Platform through convrs.io.',
+        notes:
+          'Status: ongoing. Cyprus numbers purchased. Account validated. Facebook identity verification pending (external dependency). Decision: start WhatsApp testing this week despite pending Facebook verification. Support contact: Regine (convrs.io). Next: complete FB verification and validate messaging flows end-to-end.',
         tasks: ['Enable API', 'Setup onboarding flows', 'Monitor engagement'],
         createdAt: '2026-01-01',
-        updatedAt: '2026-01-20',
+        updatedAt: '2026-02-02',
       },
       {
         initiativeId: '1.2',
@@ -66,12 +67,12 @@ const EPICS = [
         kpis: ['Segments created', 'Automated journeys live'],
         milestones: [],
         ownerDepartment: 'CRM',
-        status: 'planned',
+        status: 'executing',
         notes:
-          'Onboarding is ongoing with Roman (our Customer Manager) to learn the dashboard and capabilities.',
+          'Status: ongoing onboarding. Current phase: setup and alignment. Next milestone: call scheduled with Roman on 3 February.',
         tasks: ['Complete onboarding', 'Define segments', 'Deploy first journeys'],
         createdAt: '2026-01-01',
-        updatedAt: '2026-01-20',
+        updatedAt: '2026-02-02',
       },
       {
         initiativeId: '1.3',
@@ -183,11 +184,12 @@ const EPICS = [
         kpis: ['Test env ready'],
         milestones: [],
         ownerDepartment: 'Tech',
-        status: 'planned',
-        notes: '',
+        status: 'executing',
+        notes:
+          'Skale requested MT5 credentials to provision the test environment — credentials already provided. Now waiting for environment readiness. Next: once the environment is ready, apply our code and run end-to-end UI tests on Skale (auth → account → wallet).',
         tasks: ['Request access', 'Configure env', 'Validate setup'],
         createdAt: '2026-01-01',
-        updatedAt: '2026-01-20',
+        updatedAt: '2026-02-02',
       },
       {
         initiativeId: '3.2',

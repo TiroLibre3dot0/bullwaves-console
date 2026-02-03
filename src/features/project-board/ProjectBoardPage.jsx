@@ -724,7 +724,7 @@ const TASK_SEEDS = [
     strategicCategory: 'Platform & Infrastructure',
     impactLevel: 'Medium',
     owner: 'CRM & Automation',
-    status: 'Backlog',
+    status: 'Executing',
     icon: 'messages',
     i18n: {
       en: {
@@ -746,7 +746,8 @@ const TASK_SEEDS = [
         description:
           'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
         summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
-        notes: '',
+        notes:
+          'Status: ongoing. Cyprus numbers purchased. Account validated. Facebook identity verification pending (external dependency). Decision: start WhatsApp testing this week despite pending Facebook verification. Support contact: Regine (convrs.io). Next: complete FB verification and validate flows end-to-end.',
       },
       it: {
         title: 'Centralizzare i canali di comunicazione per clienti premium',
@@ -767,7 +768,207 @@ const TASK_SEEDS = [
         description:
           'Testare e implementare l’integrazione convrs.io per centralizzare:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObiettivi:\n\nCanale premium di supporto\n\nPrenotazione call diretta con sales o market analyst\n\nEngagement strutturato post-registrazione\n\nSolo dopo aver validato questo layer, valutare eventuali integrazioni aggiuntive con Solitics.\nOrlin ha un ruolo chiave nel design dei flussi, logica di automazione e segmentazione.',
         summary: 'Centralizzazione canali premium e booking call.',
-        notes: '',
+        notes:
+          'Status: ongoing. Numeri Cipro acquistati. Account validato. Verifica identità Facebook in attesa (dipendenza esterna). Decisione: iniziare i test WhatsApp questa settimana anche senza verifica Facebook completata. Supporto: Regine (convrs.io). Prossimo step: completare verifica FB e validare i flussi end-to-end.',
+      },
+    },
+  },
+  {
+    id: 'pb_skale_test_env',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Executing',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Skale Test Environment Setup (New UI)',
+        strategicObjective:
+          'Provision and validate a Skale test environment to safely test and iterate on the new UI layer',
+        problemSolved:
+          'Without a ready Skale test environment we cannot run end-to-end validation of the new UI against real flows',
+        expectedBusinessImpact:
+          'Unblocks UI delivery and reduces integration risk by enabling structured E2E testing before production',
+        kpiOrMetric: 'Test environment ready, E2E smoke tests passing, critical flows validated',
+        taskBreakdown: [
+          'Confirm Skale test environment provisioning status',
+          'Validate access + connectivity (accounts, auth, wallet)',
+          'Run E2E smoke tests on the new UI (auth → account → wallet)',
+          'Document gaps/blockers and align fixes with Skale',
+        ],
+        description:
+          'Skale requested MT5 credentials to provision the test environment — credentials already provided. We are currently waiting for the environment to be ready.\n\nNext: once the environment is live, apply our code and run end-to-end UI tests on Skale.',
+        summary: 'MT5 creds sent; waiting env; then apply code + test UI.',
+        notes:
+          'Status: executing. MT5 credentials already provided to Skale. Waiting for test environment readiness; then apply our code and validate E2E flows.',
+      },
+      it: {
+        title: 'Setup ambiente di test Skale (nuova UI)',
+        strategicObjective:
+          'Provisionare e validare un ambiente di test Skale per testare in sicurezza la nuova UI',
+        problemSolved:
+          'Senza un ambiente di test Skale pronto non possiamo fare validazione end-to-end della nuova UI sui flussi reali',
+        expectedBusinessImpact:
+          'Sblocca la delivery della UI e riduce il rischio di integrazione abilitando test E2E strutturati prima della produzione',
+        kpiOrMetric: 'Ambiente di test pronto, smoke test E2E ok, flussi critici validati',
+        taskBreakdown: [
+          'Confermare lo stato di provisioning ambiente test Skale',
+          'Validare accesso + connettività (account, auth, wallet)',
+          'Eseguire smoke test E2E sulla nuova UI (auth → account → wallet)',
+          'Documentare gap/blocchi e allineare fix con Skale',
+        ],
+        description:
+          'Skale ha richiesto le credenziali MT5 per provisionare l’ambiente di test — credenziali già fornite. In questo momento stiamo aspettando che l’ambiente sia pronto.\n\nProssimo step: appena l’ambiente è live, applicare il nostro codice e fare test end-to-end della UI su Skale.',
+        summary: 'Credenziali MT5 inviate; attesa ambiente; poi codice + test UI.',
+        notes:
+          'Status: executing. Credenziali MT5 già inviate a Skale. In attesa dell’ambiente di test; poi applicare il nostro codice e validare i flussi E2E.',
+      },
+    },
+  },
+  {
+    id: 'pb_support_user_check_release',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Support User Check tool — released to Support',
+        strategicObjective:
+          'Give Support a fast, reliable internal tool to inspect users and resolve cases without manual report digging',
+        problemSolved:
+          'Support workflows were slow and inconsistent due to scattered data and manual checks',
+        expectedBusinessImpact:
+          'Faster case resolution, fewer escalations, and better operational visibility for day-to-day support',
+        kpiOrMetric: 'Time-to-resolution, escalation rate, Support adoption',
+        taskBreakdown: [
+          'Ship the tool in the console',
+          'Validate access and permissions',
+          'Roll out to Support team and collect feedback',
+        ],
+        description:
+          'Released Support User Check and it is already actively used by the Support team. This is a completed delivery item.',
+        summary: 'Released and in active use by Support.',
+        notes: 'Completed: released and adopted by Support.',
+      },
+      it: {
+        title: 'Support User Check — rilasciato al team Supporto',
+        strategicObjective:
+          'Dare al Supporto uno strumento veloce e affidabile per verificare utenti e risolvere casi senza controlli manuali',
+        problemSolved:
+          'I flussi Support erano lenti e incoerenti per dati sparsi e verifiche manuali',
+        expectedBusinessImpact:
+          'Riduzione tempi di risoluzione, meno escalation, maggiore visibilità operativa nel day-to-day',
+        kpiOrMetric: 'Time-to-resolution, tasso escalation, adozione tool',
+        taskBreakdown: [
+          'Rilasciare il tool nella console',
+          'Validare accessi e permessi',
+          'Rollout al team Supporto e raccolta feedback',
+        ],
+        description:
+          'Support User Check è stato rilasciato ed è già utilizzato dal team di supporto. Questo task è da considerarsi completato.',
+        summary: 'Rilasciato e in uso dal Supporto.',
+        notes: 'Completato: rilasciato e adottato dal Supporto.',
+      },
+    },
+  },
+  {
+    id: 'pb_affiliate_console_analytics',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Affiliate analytics console — data processing + insights',
+        strategicObjective:
+          'Centralize processed affiliate data and analyses into a single console for faster decisions and partner ops',
+        problemSolved:
+          'Affiliate performance and economics were hard to read and required manual report stitching',
+        expectedBusinessImpact:
+          'Better partner decisions, faster anomaly detection, and clearer payout/ROI visibility',
+        kpiOrMetric: 'Time to produce reports, partner ROI visibility, anomaly detection time',
+        taskBreakdown: [
+          'Process key reports into consolidated datasets',
+          'Build the console views for affiliate analysis',
+          'Validate calculations and publish to internal users',
+        ],
+        description:
+          'Console with processed data and affiliate analyses is already completed and has been available internally for some time.',
+        summary: 'Affiliate analytics console completed.',
+        notes: 'Completed: console exists with processed affiliate analysis data.',
+      },
+      it: {
+        title: 'Console analisi affiliati — dati elaborati + insight',
+        strategicObjective:
+          'Centralizzare dati elaborati e analisi affiliati in una console unica per decisioni più rapide',
+        problemSolved:
+          'Le performance affiliate e l’economia erano difficili da leggere e richiedevano unione manuale report',
+        expectedBusinessImpact:
+          'Migliori decisioni partner, rilevazione anomalie più veloce, visibilità payout/ROI più chiara',
+        kpiOrMetric: 'Tempo produzione report, visibilità ROI partner, tempo rilevazione anomalie',
+        taskBreakdown: [
+          'Elaborare i report chiave in dataset consolidati',
+          'Costruire le viste console per l’analisi affiliati',
+          'Validare calcoli e pubblicare per uso interno',
+        ],
+        description:
+          'La console con i dati elaborati e le analisi degli affiliati è già completata e disponibile internamente da tempo.',
+        summary: 'Console affiliate completata.',
+        notes: 'Completato: console disponibile con analisi affiliati.',
+      },
+    },
+  },
+  {
+    id: 'pb_affiliate_monthly_payments_rework',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Executing',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Revisit monthly affiliate payments calculation',
+        strategicObjective:
+          'Make monthly affiliate payout calculations consistent, auditable, and aligned with current rules and edge-cases',
+        problemSolved:
+          'Current monthly payout calculation logic needs revision to reduce mismatches, rework, and disputes',
+        expectedBusinessImpact:
+          'Lower payout errors, faster monthly runs, clearer audit trail for partner disputes',
+        kpiOrMetric: 'Payout Error Rate (PER), time to produce monthly payout, dispute count',
+        taskBreakdown: [
+          'Review current monthly payout logic and edge cases',
+          'Align rules + tiers and define single source of truth',
+          'Validate against agreed sample cases and historical months',
+          'Ship updated calculation + report outputs',
+        ],
+        description:
+          'Ongoing: revisiting the monthly affiliate payments calculation to ensure correctness and auditability. Next: confirm rules, validate samples, then ship updated logic.',
+        summary: 'Rework monthly affiliate payout calculation.',
+        notes: 'Status: executing. Focus on correctness + audit trail.',
+      },
+      it: {
+        title: 'Rivisitazione calcolo pagamenti mensili affiliati',
+        strategicObjective:
+          'Rendere il calcolo payout affiliate mensile coerente, auditabile e allineato alle regole attuali',
+        problemSolved:
+          'La logica di calcolo dei pagamenti mensili richiede revisione per ridurre mismatch, rework e contestazioni',
+        expectedBusinessImpact:
+          'Meno errori payout, run mensile più veloce, audit trail chiaro per dispute con i partner',
+        kpiOrMetric:
+          'Tasso errori payout (PER), tempo produzione payout mensile, numero contestazioni',
+        taskBreakdown: [
+          'Rivedere logica attuale e casi limite',
+          'Allineare regole + tier e definire single source of truth',
+          'Validare su casi campione concordati e mesi storici',
+          'Rilasciare calcolo aggiornato + output report',
+        ],
+        description:
+          'Ongoing: revisione del calcolo dei pagamenti mensili affiliati per garantire correttezza e auditabilità. Prossimo step: confermare regole, validare campioni, poi rilasciare la logica aggiornata.',
+        summary: 'Rework calcolo payout affiliate mensile.',
+        notes: 'Status: executing. Focus su correttezza + audit trail.',
       },
     },
   },
@@ -776,7 +977,7 @@ const TASK_SEEDS = [
     strategicCategory: 'Retention & Monetization',
     impactLevel: 'Medium',
     owner: 'CRM & Automation',
-    status: 'Backlog',
+    status: 'Executing',
     icon: 'broadcast',
     i18n: {
       en: {
@@ -788,6 +989,8 @@ const TASK_SEEDS = [
         expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
         kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
         taskBreakdown: [
+          'Run demo calls with Autochartist and Trading Central (evaluation)',
+          'Internal comparison → recommendation → decision',
           'Design content calendar for market analysis and news distribution',
           'Set up automated segmentation for personalized content delivery',
           'Integrate market data feeds for real-time insights',
@@ -797,7 +1000,8 @@ const TASK_SEEDS = [
         description:
           'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
         summary: 'Automated market insights and news via messaging channels.',
-        notes: '',
+        notes:
+          'Status: in progress (evaluation phase). Objective: run demos with Autochartist and Trading Central to assess product fit for automation, trader engagement, and scalability. Next: complete demos → internal comparison → recommendation → decision.',
       },
       it: {
         title: 'Automatizzare la distribuzione di market intelligence',
@@ -808,6 +1012,8 @@ const TASK_SEEDS = [
         expectedBusinessImpact: '+35% engagement cliente, -20% churn',
         kpiOrMetric: 'Tasso engagement, open rate contenuti, retention per segmento',
         taskBreakdown: [
+          'Demo call con Autochartist e Trading Central (fase valutazione)',
+          'Confronto interno → raccomandazione → decisione',
           'Progettare calendario contenuti per analisi e news',
           'Impostare segmentazione automatica per contenuti personalizzati',
           'Integrare feed dati di mercato per insight real-time',
@@ -817,7 +1023,8 @@ const TASK_SEEDS = [
         description:
           'Automatizzare la distribuzione di analisi di mercato e news tramite WhatsApp e altri canali di messaggistica.\n\nObiettivi:\n\nAumentare engagement\n\nMigliorare retention\n\nRidurre lavoro manuale\n\nStandardizzare la qualità della comunicazione\n\nValutare l’integrazione con Solitics solo dopo che convrs.io è stabile.',
         summary: 'Insight e news automatizzati via messaggistica.',
-        notes: '',
+        notes:
+          'Status: in corso (fase valutazione). Obiettivo: demo con Autochartist e Trading Central per valutare il fit su automazione, engagement trader e scalabilità. Prossimo step: completare demo → confronto interno → raccomandazione → decisione.',
       },
     },
   },

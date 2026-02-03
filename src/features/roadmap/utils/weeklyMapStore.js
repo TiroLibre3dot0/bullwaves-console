@@ -140,7 +140,7 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       department: 'Ops / Marketing',
       tool: 'Solitics onboarding session',
       expectedImpact:
-        'Schedule and attend Product Overview #2 to move from data and segmentation fundamentals to journeys, activations, and practical use cases. Outcome: clear understanding of how to activate journeys and campaigns using existing data and segments.',
+        'Schedule and attend Product Overview #2 to move from data and segmentation fundamentals to journeys, activations, and practical use cases. Next milestone: call scheduled with Roman on 3 February. Outcome: clear understanding of how to activate journeys and campaigns using existing data and segments.',
       status: 'planned',
     },
   ],
@@ -152,8 +152,8 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       department: 'Ops / Support',
       tool: 'Bullwaves console — Support User Check',
       expectedImpact:
-        'Enhancements completed (Position Count, withdrawals, affiliate moves). Next: demo to Emanuele and decide if/how to share with the Support team (especially Cellxpert-access users).',
-      status: 'in_progress',
+        'Enhancements completed (Position Count, withdrawals, affiliate moves). Rollout completed: Support team is already using the tool. Next: monitor usage, collect feedback, and keep a short backlog for incremental improvements.',
+      status: 'done',
     },
   ],
 

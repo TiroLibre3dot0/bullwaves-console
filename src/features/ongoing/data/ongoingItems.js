@@ -10,9 +10,11 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'solitics-integration',
     objective: 'Establish secure private connectivity for data systems',
-    nextStep: 'Complete VPC endpoint provisioning and confirm routing; secure delivery date from Solitics',
+    nextStep:
+      'Complete VPC endpoint provisioning and confirm routing; secure delivery date from Solitics',
     dependencies: ['Solitics network window', 'VPC endpoint approval'],
-    description: 'Establishing PrivateLink connectivity between Bullwaves VPCs and Solitics-managed resources to isolate data flows and simplify firewall posture.',
+    description:
+      'Establishing PrivateLink connectivity between Bullwaves VPCs and Solitics-managed resources to isolate data flows and simplify firewall posture.',
     createdAt: '2025-12-05',
   },
   {
@@ -28,7 +30,8 @@ export const ongoingItems = [
     objective: 'Enable secure MySQL connectivity once PrivateLink is live',
     nextStep: 'Wire MySQL over PrivateLink once endpoint is up; validate TLS and rotation',
     dependencies: ['PrivateLink completed'],
-    description: 'Follow-up to PrivateLink: ensure MySQL endpoints are reachable via the private channel with TLS and secret rotation.',
+    description:
+      'Follow-up to PrivateLink: ensure MySQL endpoints are reachable via the private channel with TLS and secret rotation.',
     createdAt: '2025-12-06',
   },
   {
@@ -42,15 +45,17 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'solitics-integration',
     objective: 'Confirm permission to process PII and approve costs',
-    nextStep: 'Send consolidated reply: PII fields, purpose/retention, cost breakdown; request firm delivery date',
+    nextStep:
+      'Send consolidated reply: PII fields, purpose/retention, cost breakdown; request firm delivery date',
     dependencies: ['Legal + finance approval', 'Email reply to Solitics'],
-    description: 'Clarify legal allowance and budget impact for processing PII with Solitics: residency, consent handling, budget ceiling; unblock integration timeline.',
+    description:
+      'Clarify legal allowance and budget impact for processing PII with Solitics: residency, consent handling, budget ceiling; unblock integration timeline.',
     createdAt: '2025-12-04',
   },
   {
     id: 'ongoing-4',
     title: 'Economic Calendar notifications - spec to unblock',
-    status: 'blocked',
+    status: 'active',
     priority: 'high',
     owner: 'Product',
     department: 'Product',
@@ -58,9 +63,15 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'notifications-econ-calendar',
     objective: 'Add economic calendar notifications and increase trading engagement',
-    nextStep: 'Draft and send spec: triggers (pre/release/high-impact), targeting, frequency/quiet hours, channels, admin config/logs',
-    dependencies: ['Spec draft ready', 'Skale ticket update'],
-    description: 'Unblock Skale by providing a minimal precise spec; also assess internal path to reduce vendor dependency.',
+    nextStep:
+      'Run demos with Autochartist and Trading Central (evaluation) → internal comparison → recommendation → decision; then draft and send spec: triggers (pre/release/high-impact), targeting, frequency/quiet hours, channels, admin config/logs',
+    dependencies: [
+      'Autochartist/Trading Central demos',
+      'Decision: provider selection',
+      'Skale ticket update',
+    ],
+    description:
+      'Evaluation phase to select Autochartist vs Trading Central, then unblock Skale with a minimal precise spec and delivery plan for pre/post event alerts.',
     createdAt: '2025-12-07',
   },
   {
@@ -74,9 +85,11 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'solitics-integration',
     objective: 'Behavioral insights, segmentation, user activity tracking',
-    nextStep: 'Align on required events and governance once PII approval is confirmed',
+    nextStep:
+      'Align on required events and governance once PII approval is confirmed; next milestone: call scheduled with Roman on 3 February',
     dependencies: ['PII approval', 'Integration timelines from Solitics'],
-    description: 'Discovery for Solitics integration: event schema, PII handling model, rollout sequence, and governance.',
+    description:
+      'Discovery for Solitics integration: event schema, PII handling model, rollout sequence, and governance.',
     createdAt: '2025-12-03',
   },
   {
@@ -90,9 +103,11 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'insights-qlik-proxy',
     objective: 'Show community/user insights inside profile and dashboards',
-    nextStep: 'Fix backend routing to expose /api/qlik/ping, /items, /apps; validate server/deploy target and retest',
+    nextStep:
+      'Fix backend routing to expose /api/qlik/ping, /items, /apps; validate server/deploy target and retest',
     dependencies: ['Backend routing fix', 'Deploy with routes exposed'],
-    description: 'API proxy currently 404; must expose routes so console/profile can consume Qlik insights reliably.',
+    description:
+      'API proxy currently 404; must expose routes so console/profile can consume Qlik insights reliably.',
     createdAt: '2025-12-02',
   },
   {
@@ -108,7 +123,8 @@ export const ongoingItems = [
     objective: 'Enable in-platform trading access',
     nextStep: 'Improve UX, responsiveness, and session reliability',
     dependencies: ['Auth/session constraints', 'UI layout improvements'],
-    description: 'Iterating on embedded MetaTrader experience to keep sessions stable, responsive, and aligned with the platform shell.',
+    description:
+      'Iterating on embedded MetaTrader experience to keep sessions stable, responsive, and aligned with the platform shell.',
     createdAt: '2025-12-01',
   },
   {
@@ -124,7 +140,8 @@ export const ongoingItems = [
     objective: 'Make profile/dashboard more ordered and management-ready',
     nextStep: 'Implement sidebar navigation + top navbar metrics strip',
     dependencies: ['UX component structure', 'Data availability for metrics'],
-    description: 'Restructuring profile screens with navigable sidebar and metrics strip for discoverability and exec readability.',
+    description:
+      'Restructuring profile screens with navigable sidebar and metrics strip for discoverability and exec readability.',
     createdAt: '2025-11-30',
   },
   {
@@ -160,9 +177,11 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'social-trading-brokeree',
     objective: 'Enable social trading via Skale ↔ Brokeree integration',
-    nextStep: 'Install Social Trading plugin in test env; configure credentials from FBOM → Skale Marketplace',
+    nextStep:
+      'Install Social Trading plugin in test env; configure credentials from FBOM → Skale Marketplace',
     dependencies: ['Plugin package', 'Test credentials'],
-    description: 'Use the native Skale/Brokeree integration to light up social trading; start in test environment.',
+    description:
+      'Use the native Skale/Brokeree integration to light up social trading; start in test environment.',
     createdAt: '2025-12-13',
   },
   {
@@ -176,9 +195,11 @@ export const ongoingItems = [
     megaStoryId: 'profitability',
     storyId: 'social-trading-brokeree',
     objective: 'Clear all MT5 constraints and integration steps with Skale',
-    nextStep: 'Open/Update ticket with checklist: hide trades vs PnL, fee limits by group, reporting exports, credentials/licensing',
+    nextStep:
+      'Open/Update ticket with checklist: hide trades vs PnL, fee limits by group, reporting exports, credentials/licensing',
     dependencies: ['Ticket with Skale'],
-    description: 'Consolidate MT5 constraints and Brokeree configuration questions to unblock go-live.',
+    description:
+      'Consolidate MT5 constraints and Brokeree configuration questions to unblock go-live.',
     createdAt: '2025-12-13',
   },
   {
@@ -194,7 +215,8 @@ export const ongoingItems = [
     objective: 'Ensure correct MT5 group permissions for social trading',
     nextStep: 'Validate group mapping, fee limits, and visibility (hide trades vs PnL only)',
     dependencies: ['MT5 access', 'Brokeree plugin config'],
-    description: 'Prevent permission leaks and enforce fee/visibility rules before social trading launch.',
+    description:
+      'Prevent permission leaks and enforce fee/visibility rules before social trading launch.',
     createdAt: '2025-12-13',
   },
   {
@@ -210,7 +232,8 @@ export const ongoingItems = [
     objective: 'Define validation steps before enabling users',
     nextStep: 'Draft checklist: test accounts, fees, reporting exports, rollback plan',
     dependencies: ['Plugins installed', 'MT5 constraints confirmed'],
-    description: 'Guardrails for moving from test to production once Brokeree plugins are validated.',
+    description:
+      'Guardrails for moving from test to production once Brokeree plugins are validated.',
     createdAt: '2025-12-13',
   },
   {
@@ -226,7 +249,8 @@ export const ongoingItems = [
     objective: 'Reduce dependency on vendor for notifications',
     nextStep: 'Evaluate lightweight internal logic for triggers/targeting after spec is drafted',
     dependencies: ['Spec draft'],
-    description: 'Assess cost/benefit of an in-house notification flow to avoid full vendor dependency.',
+    description:
+      'Assess cost/benefit of an in-house notification flow to avoid full vendor dependency.',
     createdAt: '2025-12-13',
   },
   {
@@ -240,7 +264,8 @@ export const ongoingItems = [
     megaStoryId: 'exit',
     storyId: 'internal-alignment',
     objective: 'Keep board visibility on progress and risks',
-    nextStep: 'Send concise board note covering Social Trading, Qlik API fix, PII approval, notifications spec',
+    nextStep:
+      'Send concise board note covering Social Trading, Qlik API fix, PII approval, notifications spec',
     dependencies: ['Latest status from workstreams'],
     description: 'Regular board communication to align expectations and risks.',
     createdAt: '2025-12-13',
@@ -290,7 +315,8 @@ export const ongoingItems = [
     objective: 'Connect support decision tool to live Skale data',
     nextStep: 'Integrate Skale API endpoints for real-time user data',
     dependencies: ['API access', 'Tool backend setup'],
-    description: 'Enable the support decision tool to pull live data from Skale APIs for better decision making.',
+    description:
+      'Enable the support decision tool to pull live data from Skale APIs for better decision making.',
     createdAt: '2025-12-23',
   },
   {
