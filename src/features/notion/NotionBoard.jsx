@@ -55,10 +55,10 @@ const EPICS = [
         ownerDepartment: 'CRM',
         status: 'executing',
         notes:
-          'Status: ongoing. Cyprus numbers purchased. Account validated. Facebook identity verification pending (external dependency). Decision: start WhatsApp testing this week despite pending Facebook verification. Support contact: Regine (convrs.io). Next: complete FB verification and validate messaging flows end-to-end.',
+          'Status: executing. WhatsApp Business Platform tested and first user accounts created. Facebook verification for Bullwaves is still pending (external dependency). Next: call with convrs.io to deep-dive how the platform works end-to-end; then Orlin will act as primary owner / point of contact for day-to-day tool management. Support contact: Regine (convrs.io).',
         tasks: ['Enable API', 'Setup onboarding flows', 'Monitor engagement'],
         createdAt: '2026-01-01',
-        updatedAt: '2026-02-02',
+        updatedAt: '2026-02-03',
       },
       {
         initiativeId: '1.2',
@@ -69,10 +69,10 @@ const EPICS = [
         ownerDepartment: 'CRM',
         status: 'executing',
         notes:
-          'Status: ongoing onboarding. Current phase: setup and alignment. Next milestone: call scheduled with Roman on 3 February.',
+          'Status: onboarding in execution. Last onboarding call completed with Roman on 3 February. Next: end-of-February call with the real dashboard ahead of the March go-live.',
         tasks: ['Complete onboarding', 'Define segments', 'Deploy first journeys'],
         createdAt: '2026-01-01',
-        updatedAt: '2026-02-02',
+        updatedAt: '2026-02-03',
       },
       {
         initiativeId: '1.3',

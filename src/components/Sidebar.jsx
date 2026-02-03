@@ -168,6 +168,7 @@ export default function Sidebar({
   executiveSection,
   affiliateSection,
   supportOnly,
+  customEventsDisabled,
   navigate,
   goExecutiveSection,
   goAffiliateSection,
@@ -185,8 +186,10 @@ export default function Sidebar({
     setOpenSections((prev) => ({ ...prev, [sectionKey]: !prev[sectionKey] }))
   }
 
-  const disabled = (key) =>
-    Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
+  const disabled = (key) => {
+    if (customEventsDisabled && key === 'customEvents') return true
+    return Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
+  }
 
   return (
     <div className="sidebar">

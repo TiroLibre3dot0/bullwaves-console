@@ -747,7 +747,7 @@ const TASK_SEEDS = [
           'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
         summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
         notes:
-          'Status: ongoing. Cyprus numbers purchased. Account validated. Facebook identity verification pending (external dependency). Decision: start WhatsApp testing this week despite pending Facebook verification. Support contact: Regine (convrs.io). Next: complete FB verification and validate flows end-to-end.',
+          'Status: executing. WhatsApp Business Platform tested and first user accounts created. Facebook verification for Bullwaves is still pending (external dependency). Next: call with convrs.io to deep-dive how the platform works end-to-end; then Orlin will act as primary owner / point of contact for day-to-day tool management. Support contact: Regine (convrs.io).',
       },
       it: {
         title: 'Centralizzare i canali di comunicazione per clienti premium',
@@ -769,7 +769,7 @@ const TASK_SEEDS = [
           'Testare e implementare l’integrazione convrs.io per centralizzare:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObiettivi:\n\nCanale premium di supporto\n\nPrenotazione call diretta con sales o market analyst\n\nEngagement strutturato post-registrazione\n\nSolo dopo aver validato questo layer, valutare eventuali integrazioni aggiuntive con Solitics.\nOrlin ha un ruolo chiave nel design dei flussi, logica di automazione e segmentazione.',
         summary: 'Centralizzazione canali premium e booking call.',
         notes:
-          'Status: ongoing. Numeri Cipro acquistati. Account validato. Verifica identità Facebook in attesa (dipendenza esterna). Decisione: iniziare i test WhatsApp questa settimana anche senza verifica Facebook completata. Supporto: Regine (convrs.io). Prossimo step: completare verifica FB e validare i flussi end-to-end.',
+          'Status: executing. WhatsApp Business Platform testato e create le prime utenze. Verifica Bullwaves da Facebook ancora in attesa (dipendenza esterna). Prossimo step: call con convrs.io per capire meglio il funzionamento end-to-end; poi Orlin prenderà ownership come referente principale per la gestione operativa del tool. Supporto: Regine (convrs.io).',
       },
     },
   },
@@ -989,8 +989,8 @@ const TASK_SEEDS = [
         expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
         kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
         taskBreakdown: [
-          'Run demo calls with Autochartist and Trading Central (evaluation)',
-          'Internal comparison → recommendation → decision',
+          'Demo calls completed with Autochartist and Trading Central (evaluation)',
+          'Comparison email sent to the Board → await decision on tool selection',
           'Design content calendar for market analysis and news distribution',
           'Set up automated segmentation for personalized content delivery',
           'Integrate market data feeds for real-time insights',
@@ -1001,7 +1001,7 @@ const TASK_SEEDS = [
           'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
         summary: 'Automated market insights and news via messaging channels.',
         notes:
-          'Status: in progress (evaluation phase). Objective: run demos with Autochartist and Trading Central to assess product fit for automation, trader engagement, and scalability. Next: complete demos → internal comparison → recommendation → decision.',
+          'Status: executing (evaluation phase). Demo calls completed with Autochartist and Trading Central. A comparison email has been sent to the Board; waiting for a decision on which tool to select. Next: once selected, define scope + integration approach and move into implementation planning.',
       },
       it: {
         title: 'Automatizzare la distribuzione di market intelligence',
@@ -1012,8 +1012,8 @@ const TASK_SEEDS = [
         expectedBusinessImpact: '+35% engagement cliente, -20% churn',
         kpiOrMetric: 'Tasso engagement, open rate contenuti, retention per segmento',
         taskBreakdown: [
-          'Demo call con Autochartist e Trading Central (fase valutazione)',
-          'Confronto interno → raccomandazione → decisione',
+          'Demo call completate con Autochartist e Trading Central (fase valutazione)',
+          'Mail di comparazione inviata al Board → in attesa decisione sul tool da selezionare',
           'Progettare calendario contenuti per analisi e news',
           'Impostare segmentazione automatica per contenuti personalizzati',
           'Integrare feed dati di mercato per insight real-time',
@@ -1024,7 +1024,7 @@ const TASK_SEEDS = [
           'Automatizzare la distribuzione di analisi di mercato e news tramite WhatsApp e altri canali di messaggistica.\n\nObiettivi:\n\nAumentare engagement\n\nMigliorare retention\n\nRidurre lavoro manuale\n\nStandardizzare la qualità della comunicazione\n\nValutare l’integrazione con Solitics solo dopo che convrs.io è stabile.',
         summary: 'Insight e news automatizzati via messaggistica.',
         notes:
-          'Status: in corso (fase valutazione). Obiettivo: demo con Autochartist e Trading Central per valutare il fit su automazione, engagement trader e scalabilità. Prossimo step: completare demo → confronto interno → raccomandazione → decisione.',
+          'Status: executing (fase valutazione). Demo call completate con Autochartist e Trading Central. Mail di comparazione inviata al Board; in attesa della decisione su quale tool selezionare. Prossimo step: una volta scelto, definire scope + approccio integrazione e passare al planning implementativo.',
       },
     },
   },

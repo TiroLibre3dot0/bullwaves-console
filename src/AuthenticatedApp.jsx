@@ -60,8 +60,11 @@ export default function AuthenticatedApp() {
   )
 
   const { user } = useAuth()
-  const isAdmin = user?.email?.toLowerCase() === 'paolo.v@bullwaves.com'
+  const normalizedEmail = user?.email?.toLowerCase() || ''
+  const isAdmin = normalizedEmail === 'paolo.v@bullwaves.com'
+  const isManagementTeam = Boolean(user?.isManagementTeam)
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
+  const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
   const supportAllowedViews = useMemo(() => new Set(['supportUserCheck', 'orgChart', 'upload']), [])
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -167,7 +170,7 @@ export default function AuthenticatedApp() {
 
     const onPop = () => {
       const nextPath = window.location.pathname
-      if (isSupportUser) {
+      if (isSupportOnly) {
         if (nextPath.startsWith('/support/user-check')) {
           setView('supportUserCheck')
           return
@@ -186,6 +189,12 @@ export default function AuthenticatedApp() {
         return
       }
 
+      if (!isAdmin && nextPath.startsWith('/custom-events')) {
+        window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+        setView('commandCenter')
+        return
+      }
+
       const nextView = pathToView(nextPath)
 
       if (nextPath.startsWith('/roadmap')) {
@@ -201,7 +210,7 @@ export default function AuthenticatedApp() {
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [isSupportUser, routes.weeklyMap])
+  }, [isAdmin, isSupportOnly, routes.commandCenter, routes.weeklyMap])
 
   useEffect(() => {
     if (view !== 'affiliate') return
@@ -210,33 +219,44 @@ export default function AuthenticatedApp() {
 
   useEffect(() => {
     if (!user) return
-    if (!isSupportUser) return
+    if (!isSupportOnly) return
     // Support landing page defaults to Support • User Check.
     const p = window.location.pathname
     if (!p.startsWith('/support/user-check')) {
       window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
     }
     setView('supportUserCheck')
-  }, [user, isSupportUser])
+  }, [user, isSupportOnly])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!user) return
-    if (isSupportUser) return
+    if (isSupportOnly) return
 
     // Canonicalize legacy root route to a dedicated Command Center URL.
     if (window.location.pathname === '/') {
       window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
     }
-  }, [user, isSupportUser, routes.commandCenter])
+  }, [user, isSupportOnly, routes.commandCenter])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!user) return
+    if (view !== 'customEvents') return
+    if (isAdmin) return
+
+    window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+    setView('commandCenter')
+  }, [isAdmin, routes.commandCenter, user, view])
 
   const navigate = (nextView) => {
     if (isMobile) setIsSidebarOpen(false)
     if (!nextView) return
 
     if (nextView === 'admin' && !isAdmin) return
+    if (nextView === 'customEvents' && !isAdmin) return
 
-    if (isSupportUser && !supportAllowedViews.has(nextView)) {
+    if (isSupportOnly && !supportAllowedViews.has(nextView)) {
       const nextPath = routes.supportUserCheck
       if (window.location.pathname !== nextPath) {
         window.history.pushState({ view: 'supportUserCheck' }, '', nextPath)
@@ -388,7 +408,8 @@ export default function AuthenticatedApp() {
             view={view}
             executiveSection={executiveSection}
             affiliateSection={affiliateSection}
-            supportOnly={isSupportUser}
+            supportOnly={isSupportOnly}
+            customEventsDisabled={!isAdmin}
             navigate={navigate}
             goExecutiveSection={goExecutiveSection}
             goAffiliateSection={goAffiliateSection}
@@ -422,7 +443,7 @@ export default function AuthenticatedApp() {
 
             {view === 'orgChart' ? <OrgChart /> : null}
             {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
-            {view === 'customEvents' ? <CustomEventsPage /> : null}
+            {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
             {view === 'upload' ? <UploadReportsPage /> : null}
             {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}
             {view === 'admin' ? <AdminPanel /> : null}

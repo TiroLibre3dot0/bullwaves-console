@@ -3,7 +3,12 @@ import { sections } from '../pages/orgChartData'
 import { trackEvent } from '../services/trackingService'
 import { translate } from '../i18n/translations'
 
-const AuthContext = createContext({ user: null, allowlist: [], loginWithEmail: () => ({ success: false }), logout: () => {} })
+const AuthContext = createContext({
+  user: null,
+  allowlist: [],
+  loginWithEmail: () => ({ success: false }),
+  logout: () => {},
+})
 const STORAGE_KEY = 'bw-auth-user'
 
 function buildAllowlist() {
@@ -14,7 +19,13 @@ function buildAllowlist() {
     if (sectionId === 'management-team') return true
     if (sectionId === 'finance') return true
     if (sectionId === 'support-team') return true
-    return d === 'finance' || d === 'reconciliation' || d === 'psp' || d === 'support team' || d === 'support'
+    return (
+      d === 'finance' ||
+      d === 'reconciliation' ||
+      d === 'psp' ||
+      d === 'support team' ||
+      d === 'support'
+    )
   }
 
   sections.forEach((section) => {
@@ -24,12 +35,15 @@ function buildAllowlist() {
       if (!email || email === '—') return
       if (!allowDept(role.department || '', section.id)) return
       const key = email.toLowerCase()
+      const prev = deduped.get(key)
+      const isManagementTeam = Boolean(prev?.isManagementTeam || section.id === 'management-team')
       deduped.set(key, {
         name: role.name,
         email,
         division: role.division || '',
         department: role.department || '',
         title: role.title || '',
+        isManagementTeam,
       })
     })
   })
@@ -46,7 +60,9 @@ export function AuthProvider({ children }) {
     if (!saved) return
     try {
       const parsed = JSON.parse(saved)
-      const match = allowlist.find((entry) => entry.email.toLowerCase() === (parsed.email || '').toLowerCase())
+      const match = allowlist.find(
+        (entry) => entry.email.toLowerCase() === (parsed.email || '').toLowerCase()
+      )
       if (match) {
         setUser(match)
       }
@@ -71,12 +87,18 @@ export function AuthProvider({ children }) {
 
     const match = allowlist.find((entry) => entry.email.toLowerCase() === normalized)
     if (!match) {
-      const locale = typeof window !== 'undefined' ? (window.localStorage.getItem('bw-locale') || 'en') : 'en'
+      const locale =
+        typeof window !== 'undefined' ? window.localStorage.getItem('bw-locale') || 'en' : 'en'
       return { success: false, message: translate(locale, 'auth.emailNotAllowlisted') }
     }
 
     setUser(match)
-    trackEvent({ type: 'LOGIN', userEmail: match.email, userName: match.name, userRole: match.title || match.department })
+    trackEvent({
+      type: 'LOGIN',
+      userEmail: match.email,
+      userName: match.name,
+      userRole: match.title || match.department,
+    })
     return { success: true, user: match }
   }
 
