@@ -977,7 +977,7 @@ const TASK_SEEDS = [
     strategicCategory: 'Retention & Monetization',
     impactLevel: 'Medium',
     owner: 'CRM & Automation',
-    status: 'Executing',
+    status: 'Review & QA',
     icon: 'broadcast',
     i18n: {
       en: {
@@ -1025,6 +1025,64 @@ const TASK_SEEDS = [
         summary: 'Insight e news automatizzati via messaggistica.',
         notes:
           'Status: executing (fase valutazione). Demo call completate con Autochartist e Trading Central. Mail di comparazione inviata al Board; in attesa della decisione su quale tool selezionare. Prossimo step: una volta scelto, definire scope + approccio integrazione e passare al planning implementativo.',
+      },
+    },
+  },
+  {
+    id: 'pb_ifx_expo_feb_2026',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'Medium',
+    owner: 'Marketing',
+    status: 'Planned',
+    icon: 'briefcase',
+    i18n: {
+      en: {
+        title: 'IFX Expo — 10–12 February (2026)',
+        strategicObjective:
+          'Use IFX Expo to accelerate partnerships and business development through structured meetings and follow-ups',
+        problemSolved:
+          'Without a structured plan, expo attendance risks becoming untracked networking with low conversion into real pipeline',
+        expectedBusinessImpact:
+          'Increase qualified partner conversations, speed up BD cycles, and convert top meetings into actionable next steps',
+        kpiOrMetric:
+          'Number of meetings booked, qualified leads, follow-ups completed, partnerships progressed post-event',
+        taskBreakdown: [
+          'Confirm attendance logistics (passes, travel, agenda)',
+          'Prepare pitch deck + one-pager + offer positioning',
+          'Create target partner list and pre-book meetings (10–12 Feb)',
+          'Meetings: Trading Central, Autochartist, Skale, Solitics, convrs.io',
+          'Run meetings on-site and capture notes/next steps consistently',
+          'Post-event follow-ups + pipeline tracking within 72h',
+        ],
+        description:
+          'Plan and execute IFX Expo attendance during 10–12 February.\n\nPlanned meetings:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nGoals:\n\nPartnership discovery\n\nBD meetings and introductions\n\nClear follow-up actions and pipeline tracking after the event.',
+        summary: 'Expo plan + meetings + follow-up pipeline.',
+        notes:
+          'Status: planned. Event window: 10–12 February (IFX Expo). Meetings scheduled with Trading Central, Autochartist, Skale, Solitics, convrs.io.',
+      },
+      it: {
+        title: 'IFX Expo — 10–12 Febbraio (2026)',
+        strategicObjective:
+          'Usare IFX Expo per accelerare partnership e sviluppo business con meeting pianificati e follow-up strutturati',
+        problemSolved:
+          'Senza un piano strutturato, la presenza in fiera rischia di rimanere networking non tracciato e con bassa conversione in pipeline',
+        expectedBusinessImpact:
+          'Aumentare conversazioni qualificate con partner, velocizzare cicli BD e trasformare i meeting migliori in next step concreti',
+        kpiOrMetric:
+          'Numero meeting prenotati, lead qualificati, follow-up completati, partnership avanzate post-evento',
+        taskBreakdown: [
+          'Confermare logistica (pass, viaggio, agenda)',
+          'Preparare pitch deck + one-pager + posizionamento offerta',
+          'Definire lista target e pre-book dei meeting (10–12 Feb)',
+          'Meeting: Trading Central, Autochartist, Skale, Solitics, convrs.io',
+          'Eseguire meeting on-site e tracciare note/next step in modo consistente',
+          'Follow-up post-evento + tracking pipeline entro 72h',
+        ],
+        description:
+          "Pianificare ed eseguire la presenza a IFX Expo dal 10 al 12 Febbraio.\n\nMeeting pianificati:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nObiettivi:\n\nScouting partnership\n\nMeeting BD e introduzioni\n\nAzioni di follow-up chiare e tracking pipeline dopo l'evento.",
+        summary: 'Piano expo + meeting + pipeline follow-up.',
+        notes:
+          'Status: planned. Finestra evento: 10–12 Febbraio (IFX Expo). Meeting pianificati con Trading Central, Autochartist, Skale, Solitics, convrs.io.',
       },
     },
   },
