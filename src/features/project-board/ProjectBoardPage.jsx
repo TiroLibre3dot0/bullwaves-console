@@ -826,6 +826,116 @@ const TASK_SEEDS = [
     },
   },
   {
+    id: 'pb_voiso_skale_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Executing',
+    icon: 'messages',
+    i18n: {
+      en: {
+        title: 'Voiso ↔ Skale Integration (Calling + Ops)',
+        strategicObjective:
+          'Integrate Voiso with Skale so calling workflows and operational signals are consistent and trackable',
+        problemSolved:
+          'Voiso calling activity and Skale operational events are not yet integrated, causing manual work and blind spots',
+        expectedBusinessImpact:
+          'Faster agent workflows, better attribution/monitoring, fewer operational gaps during rollout',
+        kpiOrMetric:
+          'Integration live, call events synced, automated routing working, error rate under threshold',
+        taskBreakdown: [
+          'Confirm scope: required Voiso events + Skale endpoints/fields',
+          'Implement event mapping + webhook (or polling) integration',
+          'Backfill / reconcile identifiers (user, account, lead, agent)',
+          'Add monitoring + retry / dead-letter handling',
+          'Run end-to-end validation with real test accounts and sign off',
+        ],
+        description:
+          'Execute the Voiso ↔ Skale integration so we can track calling outcomes and operational signals end-to-end.\n\nFocus on:\n\nEvent mapping + IDs\n\nReliability (retries + monitoring)\n\nE2E validation\n\nThis needs to be closed tomorrow.',
+        summary: 'Voiso + Skale integration to remove manual ops gaps.',
+        notes: 'Status: executing. Priority: close integration loop ASAP (target: tomorrow).',
+      },
+      it: {
+        title: 'Integrazione Voiso ↔ Skale (Calling + Ops)',
+        strategicObjective:
+          'Integrare Voiso con Skale per rendere coerenti e tracciabili i flussi di calling e i segnali operativi',
+        problemSolved:
+          'Le attività di calling su Voiso e gli eventi operativi su Skale non sono integrati: oggi serve lavoro manuale e si creano blind spot',
+        expectedBusinessImpact:
+          'Workflow agent più veloce, migliore attribuzione/monitoraggio, meno gap operativi durante il rollout',
+        kpiOrMetric:
+          'Integrazione live, eventi chiamata sincronizzati, routing automatizzato ok, error rate sotto soglia',
+        taskBreakdown: [
+          'Confermare scope: eventi Voiso richiesti + endpoint/campi Skale',
+          'Implementare mapping eventi + integrazione webhook (o polling)',
+          'Allineare identificativi (user, account, lead, agent) e riconciliazione',
+          'Aggiungere monitoring + retry / dead-letter handling',
+          'Validazione end-to-end con account di test e sign-off',
+        ],
+        description:
+          'Eseguire l’integrazione Voiso ↔ Skale per tracciare end-to-end esiti di calling e segnali operativi.\n\nFocus su:\n\nMapping eventi + ID\n\nAffidabilità (retry + monitoring)\n\nValidazione E2E\n\nDa chiudere domani.',
+        summary: 'Integrazione Voiso + Skale per chiudere i gap operativi manuali.',
+        notes: 'Status: executing. Priorità: chiudere il loop integrazione ASAP (target: domani).',
+      },
+    },
+  },
+  {
+    id: 'pb_cellxpert_escail_data_alignment',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'CRM & Automation',
+    status: 'Executing',
+    icon: 'broadcast',
+    i18n: {
+      en: {
+        title: 'Cellxpert ↔ Escail Data Alignment (Slack loop)',
+        strategicObjective:
+          'Align data fields and event semantics between Cellxpert and Escail to ensure consistent reporting and operations',
+        problemSolved:
+          'There is an open Slack loop on mismatched / unclear data alignment between Cellxpert and Escail',
+        expectedBusinessImpact:
+          'Removes inconsistencies, prevents wrong decisions, and unblocks downstream automation/reporting',
+        kpiOrMetric:
+          'Field map agreed, discrepancies closed, sync validated, stakeholders sign-off',
+        taskBreakdown: [
+          'Collect the Slack thread details + list current mismatches',
+          'Define canonical field map (IDs, timestamps, statuses, ownership)',
+          'Implement mapping / transform layer (or update ETL) accordingly',
+          'Validate on sample users and recent production days',
+          'Document final mapping + close the Slack loop',
+        ],
+        description:
+          'Close the open Slack loop by aligning Cellxpert ↔ Escail data.\n\nDeliverable:\n\nOne canonical field map + validated sync.\n\nThis needs to be resolved tomorrow.',
+        summary: 'Resolve Cellxpert/Escail mismatch and close Slack loop.',
+        notes:
+          'Status: executing. Action: close alignment loop and confirm with stakeholders (target: tomorrow).',
+      },
+      it: {
+        title: 'Allineamento dati Cellxpert ↔ Escail (loop Slack)',
+        strategicObjective:
+          'Allineare campi e semantica eventi tra Cellxpert ed Escail per avere reporting e operatività coerenti',
+        problemSolved:
+          'C’è un loop aperto su Slack per mismatch / ambiguità nell’allineamento dati tra Cellxpert ed Escail',
+        expectedBusinessImpact:
+          'Rimuove inconsistenze, evita decisioni errate e sblocca automazioni/reporting downstream',
+        kpiOrMetric:
+          'Field map concordata, discrepanze chiuse, sync validata, sign-off stakeholder',
+        taskBreakdown: [
+          'Recuperare dettagli del thread Slack + lista mismatch attuali',
+          'Definire field map canonica (ID, timestamp, status, ownership)',
+          'Implementare mapping/transform (o aggiornare ETL) di conseguenza',
+          'Validare su utenti campione e giorni recenti',
+          'Documentare mapping finale + chiudere il loop su Slack',
+        ],
+        description:
+          'Chiudere il loop su Slack allineando i dati Cellxpert ↔ Escail.\n\nDeliverable:\n\nUna field map canonica + sync validata.\n\nDa risolvere domani.',
+        summary: 'Risolvi mismatch Cellxpert/Escail e chiudi loop Slack.',
+        notes:
+          'Status: executing. Azione: chiudere allineamento e confermare con stakeholder (target: domani).',
+      },
+    },
+  },
+  {
     id: 'pb_support_user_check_release',
     strategicCategory: 'Operations & Compliance',
     impactLevel: 'High',
