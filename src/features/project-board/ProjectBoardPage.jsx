@@ -1032,6 +1032,520 @@ const TASK_SEEDS = [
     },
   },
   {
+    id: 'pb_solitics_product_overview_1',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'Paolo / Solitics',
+    status: 'Done',
+    icon: 'messages',
+    i18n: {
+      en: {
+        title: 'Solitics Product Overview #1 — data flow & segmentation',
+        strategicObjective:
+          'Complete onboarding fundamentals: data model, event flow, attributes, and segmentation mechanics',
+        problemSolved:
+          'Without a shared understanding of Solitics data/segmentation, journeys and automation cannot be executed reliably',
+        expectedBusinessImpact:
+          'Clear segmentation strategy and data requirements, enabling faster journey activation with fewer rework cycles',
+        kpiOrMetric: 'Overview completed, segmentation approach agreed, next steps defined',
+        taskBreakdown: [
+          'Review Solitics data model + aggregation tables',
+          'Confirm event-based ingestion (member/transaction/frontend)',
+          'Align on attributes + event handling rules',
+          'Validate segmentation creation + syncing behavior',
+        ],
+        description:
+          'Completed Product Overview #1 with Solitics. Key outcomes: data model overview, event-based data flow, attributes/event handling for segmentation, and segment creation/syncing behavior.',
+        summary: 'Solitics onboarding overview #1 completed.',
+        notes: 'Done: Product Overview #1 completed with Solitics.',
+      },
+      it: {
+        title: 'Solitics Product Overview #1 — data flow & segmentazione',
+        strategicObjective:
+          'Completare le basi onboarding: data model, flusso eventi, attributi e meccaniche di segmentazione',
+        problemSolved:
+          'Senza una comprensione condivisa di dati/segmentazione Solitics, journey e automazioni non possono essere eseguiti in modo affidabile',
+        expectedBusinessImpact:
+          'Strategia di segmentazione e requisiti dati chiari, abilitando attivazione più rapida dei journey con meno rework',
+        kpiOrMetric: 'Overview completata, approccio segmentazione concordato, next step definiti',
+        taskBreakdown: [
+          'Rivedere data model Solitics + tabelle di aggregazione',
+          'Confermare ingestion a eventi (member/transaction/frontend)',
+          'Allineare regole su attributi + handling eventi',
+          'Validare creazione segmenti + comportamento di syncing',
+        ],
+        description:
+          'Completato Product Overview #1 con Solitics. Outcome: overview data model, data flow ad eventi, attributi/handling eventi per segmentazione, creazione segmenti e syncing.',
+        summary: 'Overview onboarding Solitics #1 completata.',
+        notes: 'Done: Product Overview #1 completato con Solitics.',
+      },
+    },
+  },
+  {
+    id: 'pb_support_user_check_v2_rollout',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Paolo / Emanuele',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Support User Check v2 — rollout review',
+        strategicObjective:
+          'Validate the v2 rollout with Support stakeholders and confirm the enhancements are adopted correctly',
+        problemSolved:
+          'Enhancements need confirmation, adoption tracking, and a small backlog for follow-ups',
+        expectedBusinessImpact:
+          'More reliable Support workflows and fewer escalations thanks to better tooling and clear ownership',
+        kpiOrMetric: 'Rollout confirmed, adoption stable, backlog captured',
+        taskBreakdown: [
+          'Review enhancements (Position Count, withdrawals, affiliate moves)',
+          'Confirm access/permissions and day-to-day usage',
+          'Collect feedback and define micro-backlog',
+        ],
+        description:
+          'Rollout review completed with Emanuele; enhancements shipped and Support team is using the tool.',
+        summary: 'Support User Check v2 rollout confirmed.',
+        notes: 'Done: rollout review completed; tool in active use.',
+      },
+      it: {
+        title: 'Support User Check v2 — review rollout',
+        strategicObjective:
+          'Validare il rollout v2 con gli stakeholder Support e confermare l’adozione delle migliorie',
+        problemSolved:
+          'Le migliorie richiedono conferma, tracking adozione e un mini backlog follow-up',
+        expectedBusinessImpact:
+          'Workflow Support più affidabile e meno escalation grazie a tooling migliore e ownership chiara',
+        kpiOrMetric: 'Rollout confermato, adozione stabile, backlog raccolto',
+        taskBreakdown: [
+          'Review migliorie (Position Count, withdrawals, affiliate moves)',
+          'Confermare accessi/permessi e uso operativo',
+          'Raccogliere feedback e definire micro-backlog',
+        ],
+        description:
+          'Review rollout completata con Emanuele; migliorie rilasciate e tool già in uso dal team Supporto.',
+        summary: 'Rollout Support User Check v2 confermato.',
+        notes: 'Done: review rollout completata; tool in uso.',
+      },
+    },
+  },
+  {
+    id: 'pb_history_reports_analysis',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'Medium',
+    owner: 'Ops',
+    status: 'Done',
+    icon: 'search',
+    i18n: {
+      en: {
+        title: 'Reports analysis — Media, Registration, Payments',
+        strategicObjective:
+          'Build baseline understanding of report structure and data flows for decision-making',
+        problemSolved:
+          'Without a baseline read of key reports, analytics and ops decisions rely on assumptions',
+        expectedBusinessImpact:
+          'Faster analytics iterations and fewer data misunderstandings across stakeholders',
+        kpiOrMetric: 'Reports reviewed, key fields identified, data flow understood',
+        taskBreakdown: [
+          'Download reports',
+          'Inspect key columns + edge cases',
+          'Document data flow',
+        ],
+        description: 'Downloaded and analyzed Media, Registration, and Payment reports.',
+        summary: 'Baseline reports reviewed.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Analisi report — Media, Registrazioni, Pagamenti',
+        strategicObjective:
+          'Creare una baseline di comprensione su struttura report e data flow per decisioni corrette',
+        problemSolved:
+          'Senza una baseline sui report chiave, analisi e decisioni ops si basano su assunzioni',
+        expectedBusinessImpact:
+          'Iterazioni analytics più rapide e meno misunderstanding tra stakeholder',
+        kpiOrMetric: 'Report analizzati, campi chiave identificati, data flow compreso',
+        taskBreakdown: [
+          'Scaricare report',
+          'Ispezionare colonne + edge case',
+          'Documentare data flow',
+        ],
+        description: 'Scaricati e analizzati i report Media, Registrazioni e Pagamenti.',
+        summary: 'Report base analizzati.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_internal_console_processing',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'Tech',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Internal console — data processing baseline',
+        strategicObjective:
+          'Create an internal tool to process core datasets and accelerate ops/analytics workflows',
+        problemSolved: 'Manual report stitching and ad-hoc analysis slowed down execution',
+        expectedBusinessImpact:
+          'Faster internal visibility and lower manual workload for recurring analysis',
+        kpiOrMetric: 'Tool usable internally, datasets processed, repeatable outputs',
+        taskBreakdown: [
+          'Implement processing pipeline',
+          'Validate outputs',
+          'Ship internal access',
+        ],
+        description: 'Built an internal console to process data.',
+        summary: 'Internal processing console built.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Console interna — processing dati baseline',
+        strategicObjective:
+          'Creare un tool interno per processare dataset core e accelerare workflow ops/analytics',
+        problemSolved: 'Unione manuale report e analisi ad-hoc rallentavano l’esecuzione',
+        expectedBusinessImpact:
+          'Più visibilità interna e meno lavoro manuale per analisi ricorrenti',
+        kpiOrMetric: 'Tool usabile internamente, dataset processati, output ripetibili',
+        taskBreakdown: [
+          'Implementare pipeline processing',
+          'Validare output',
+          'Abilitare accesso interno',
+        ],
+        description: 'Costruita una console interna per processare i dati.',
+        summary: 'Console interna di processing completata.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_affiliate_kpis',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'Medium',
+    owner: 'Dan',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Affiliate KPIs — initial extraction',
+        strategicObjective:
+          'Extract minimum affiliate KPIs to enable internal visibility and faster partner ops decisions',
+        problemSolved:
+          'Affiliate performance was not immediately visible without manual calculations',
+        expectedBusinessImpact: 'Faster anomaly detection and clearer ROI/payout decisions',
+        kpiOrMetric: 'Initial KPI set extracted and shared',
+        taskBreakdown: ['Define KPI list', 'Extract from reports', 'Share internally'],
+        description: 'Extracted initial affiliate KPIs for internal visibility.',
+        summary: 'Initial affiliate KPIs extracted.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'KPI affiliati — estrazione iniziale',
+        strategicObjective:
+          'Estrarre un set minimo di KPI affiliate per visibilità interna e decisioni più rapide',
+        problemSolved:
+          'Le performance affiliate non erano immediatamente visibili senza calcoli manuali',
+        expectedBusinessImpact: 'Rilevazione anomalie più rapida e decisioni ROI/payout più chiare',
+        kpiOrMetric: 'Set KPI iniziale estratto e condiviso',
+        taskBreakdown: ['Definire lista KPI', 'Estrarre dai report', 'Condividere internamente'],
+        description: 'Estratti KPI affiliate iniziali per visibilità interna.',
+        summary: 'KPI affiliate iniziali estratti.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_mt_web_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'MetaTrader Web integration — completed',
+        strategicObjective: 'Enable web-based trading access through MetaTrader Web integration',
+        problemSolved: 'Without MetaTrader Web integration, web trading access is limited',
+        expectedBusinessImpact: 'Better client UX and broader accessibility for trading flows',
+        kpiOrMetric: 'Integration live, webtrader accessible, critical flows validated',
+        taskBreakdown: ['Complete integration', 'Validate critical flows', 'Publish access'],
+        description: 'Completed MetaTrader Web integration.',
+        summary: 'MetaTrader Web integration completed.',
+        notes: 'URL: https://portal.bullwaves.com/custom/webtrader',
+      },
+      it: {
+        title: 'Integrazione MetaTrader Web — completata',
+        strategicObjective: 'Abilitare accesso al trading via web con integrazione MetaTrader Web',
+        problemSolved: 'Senza integrazione MetaTrader Web, l’accesso al trading via web è limitato',
+        expectedBusinessImpact: 'UX cliente migliore e maggiore accessibilità ai flussi di trading',
+        kpiOrMetric: 'Integrazione live, webtrader accessibile, flussi critici validati',
+        taskBreakdown: ['Completare integrazione', 'Validare flussi critici', 'Pubblicare accesso'],
+        description: 'Completata integrazione MetaTrader Web.',
+        summary: 'Integrazione MetaTrader Web completata.',
+        notes: 'URL: https://portal.bullwaves.com/custom/webtrader',
+      },
+    },
+  },
+  {
+    id: 'pb_history_social_trading_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Done',
+    icon: 'plus',
+    i18n: {
+      en: {
+        title: 'Social Trading integration — completed',
+        strategicObjective: 'Enable social trading experience through Brokeree integration',
+        problemSolved:
+          'Social trading required a complete integration layer to be usable in production',
+        expectedBusinessImpact:
+          'Expanded product offering and improved engagement options for clients',
+        kpiOrMetric: 'Integration live, key flows validated, stable operation',
+        taskBreakdown: ['Complete integration', 'Resolve critical issues', 'Validate end-to-end'],
+        description: 'Completed Social Trading integration.',
+        summary: 'Social Trading integration completed.',
+        notes: 'URL: https://portal.bullwaves.com/brokeree-social-trading-three',
+      },
+      it: {
+        title: 'Integrazione Social Trading — completata',
+        strategicObjective: 'Abilitare esperienza di social trading tramite integrazione Brokeree',
+        problemSolved:
+          'Il social trading richiedeva un layer di integrazione completo per uso in produzione',
+        expectedBusinessImpact:
+          'Offerta prodotto ampliata e maggiori opzioni di engagement per i clienti',
+        kpiOrMetric: 'Integrazione live, flussi chiave validati, operatività stabile',
+        taskBreakdown: [
+          'Completare integrazione',
+          'Risolvere issue critiche',
+          'Validare end-to-end',
+        ],
+        description: 'Completata integrazione Social Trading.',
+        summary: 'Integrazione Social Trading completata.',
+        notes: 'URL: https://portal.bullwaves.com/brokeree-social-trading-three',
+      },
+    },
+  },
+  {
+    id: 'pb_history_scale_brokeree_coordination',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'Tech',
+    status: 'Done',
+    icon: 'briefcase',
+    i18n: {
+      en: {
+        title: 'Scale + Brokeree coordination — integration complexities resolved',
+        strategicObjective:
+          'Coordinate vendors to resolve integration complexities and unblock delivery',
+        problemSolved:
+          'Cross-vendor integration issues required direct coordination to reach resolution',
+        expectedBusinessImpact:
+          'Reduced integration risk and faster delivery for trading-related integrations',
+        kpiOrMetric: 'Blockers closed, integration stable, stakeholders aligned',
+        taskBreakdown: ['Collect blockers', 'Coordinate calls', 'Confirm resolutions in writing'],
+        description: 'Coordinated with Scale and Brokeree to resolve integration complexities.',
+        summary: 'Vendor coordination completed.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Coordinamento Scale + Brokeree — complessità integrazione risolte',
+        strategicObjective:
+          'Coordinare i vendor per risolvere complessità di integrazione e sbloccare la delivery',
+        problemSolved:
+          'Issue cross-vendor richiedevano coordinamento diretto per arrivare a una risoluzione',
+        expectedBusinessImpact:
+          'Meno rischio di integrazione e delivery più veloce per integrazioni trading',
+        kpiOrMetric: 'Blocchi chiusi, integrazione stabile, stakeholder allineati',
+        taskBreakdown: [
+          'Raccogliere blocchi',
+          'Coordinare call',
+          'Confermare risoluzioni per iscritto',
+        ],
+        description: 'Coordinati Scale e Brokeree per risolvere complessità di integrazione.',
+        summary: 'Coordinamento vendor completato.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_solitics_kickoff_onboarding',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'Paolo / Solitics',
+    status: 'Done',
+    icon: 'messages',
+    i18n: {
+      en: {
+        title: 'Solitics kick-off — onboarding activated',
+        strategicObjective:
+          'Kick off Solitics engagement and activate onboarding with clear owners and cadence',
+        problemSolved:
+          'Onboarding without activation/cadence tends to stall and creates unclear ownership',
+        expectedBusinessImpact:
+          'Faster time-to-value for retention/journey setup and clearer execution rhythm',
+        kpiOrMetric: 'Kick-off completed, onboarding active, next steps owned',
+        taskBreakdown: ['Run kick-off', 'Agree on cadence', 'Activate onboarding execution'],
+        description: 'Solitics kick-off completed; onboarding activated.',
+        summary: 'Solitics kick-off completed.',
+        notes: 'URL: https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
+      },
+      it: {
+        title: 'Kick-off Solitics — onboarding attivato',
+        strategicObjective: 'Avviare Solitics e attivare onboarding con ownership chiara e cadenza',
+        problemSolved:
+          'Un onboarding senza attivazione/cadenza tende a bloccarsi e crea ownership ambigua',
+        expectedBusinessImpact:
+          'Time-to-value più veloce per retention/journey e ritmo di esecuzione più chiaro',
+        kpiOrMetric: 'Kick-off completato, onboarding attivo, next step in ownership',
+        taskBreakdown: ['Eseguire kick-off', 'Concordare cadenza', 'Attivare onboarding'],
+        description: 'Kick-off Solitics completato; onboarding attivato.',
+        summary: 'Kick-off Solitics completato.',
+        notes: 'URL: https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
+      },
+    },
+  },
+  {
+    id: 'pb_history_retention_alignment',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'Medium',
+    owner: 'Ops',
+    status: 'Done',
+    icon: 'messages',
+    i18n: {
+      en: {
+        title: 'Retention alignment — owners + next steps defined',
+        strategicObjective:
+          'Align stakeholders on retention scope, owners, and concrete next steps',
+        problemSolved: 'Retention efforts drift when ownership and next actions are not explicit',
+        expectedBusinessImpact: 'Cleaner execution and fewer coordination delays',
+        kpiOrMetric: 'Owners assigned, next steps written, follow-up cadence set',
+        taskBreakdown: ['Align scope', 'Assign owners', 'Write next steps'],
+        description: 'Retention alignment completed; owners and next steps defined.',
+        summary: 'Retention alignment completed.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Allineamento retention — owner + next step definiti',
+        strategicObjective:
+          'Allineare stakeholder su scope retention, ownership e next step concreti',
+        problemSolved:
+          'Le iniziative retention deragliano se ownership e azioni non sono esplicite',
+        expectedBusinessImpact: 'Esecuzione più pulita e meno ritardi di coordinamento',
+        kpiOrMetric: 'Owner assegnati, next step scritti, cadenza follow-up definita',
+        taskBreakdown: ['Allineare scope', 'Assegnare owner', 'Scrivere next step'],
+        description: 'Allineamento retention completato; owner e next step definiti.',
+        summary: 'Allineamento retention completato.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_compliance_sync',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'Medium',
+    owner: 'Compliance',
+    status: 'Done',
+    icon: 'payments',
+    i18n: {
+      en: {
+        title: 'Compliance sync — risk scoring + KYC improvements',
+        strategicObjective:
+          'Align compliance stakeholders on risk scoring and KYC improvements status',
+        problemSolved:
+          'Compliance execution requires shared definitions and alignment to avoid inconsistent handling',
+        expectedBusinessImpact: 'Fewer compliance gaps and faster escalation decisions',
+        kpiOrMetric: 'Sync completed, definitions aligned, next steps captured',
+        taskBreakdown: ['Run sync', 'Align definitions', 'Capture next steps'],
+        description: 'Compliance sync completed (risk scoring + KYC improvements).',
+        summary: 'Compliance sync completed.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Sync compliance — risk scoring + miglioramenti KYC',
+        strategicObjective:
+          'Allineare stakeholder compliance su stato risk scoring e miglioramenti KYC',
+        problemSolved:
+          'L’esecuzione compliance richiede definizioni condivise per evitare handling incoerente',
+        expectedBusinessImpact: 'Meno gap compliance e decisioni escalation più rapide',
+        kpiOrMetric: 'Sync completata, definizioni allineate, next step raccolti',
+        taskBreakdown: ['Eseguire sync', 'Allineare definizioni', 'Raccogliere next step'],
+        description: 'Sync compliance completata (risk scoring + miglioramenti KYC).',
+        summary: 'Sync compliance completata.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
+    id: 'pb_history_trading_platform_overview',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Low',
+    owner: 'Ops',
+    status: 'Done',
+    icon: 'briefcase',
+    i18n: {
+      en: {
+        title: 'Trading platform overview — shared',
+        strategicObjective:
+          'Share a clear overview of the trading platform to align stakeholders quickly',
+        problemSolved:
+          'Stakeholders need a shared baseline for platform capabilities and current state',
+        expectedBusinessImpact: 'Less misalignment and faster integration/ops decisions',
+        kpiOrMetric: 'Overview shared, stakeholders aligned',
+        taskBreakdown: ['Prepare overview', 'Share via email', 'Capture questions'],
+        description: 'Trading platform overview shared via email.',
+        summary: 'Trading platform overview shared.',
+        notes: 'URL: https://trading-platform-self-two.vercel.app/trade',
+      },
+      it: {
+        title: 'Overview piattaforma trading — condivisa',
+        strategicObjective:
+          'Condividere un’overview chiara della piattaforma trading per allineare rapidamente gli stakeholder',
+        problemSolved: 'Serve una baseline condivisa su capacità e stato della piattaforma',
+        expectedBusinessImpact: 'Meno misalignment e decisioni integrazione/ops più rapide',
+        kpiOrMetric: 'Overview condivisa, stakeholder allineati',
+        taskBreakdown: ['Preparare overview', 'Condividere via email', 'Raccogliere domande'],
+        description: 'Overview piattaforma trading condivisa via email.',
+        summary: 'Overview piattaforma trading condivisa.',
+        notes: 'URL: https://trading-platform-self-two.vercel.app/trade',
+      },
+    },
+  },
+  {
+    id: 'pb_history_first_month_invoice',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'Low',
+    owner: 'Ops',
+    status: 'Done',
+    icon: 'payments',
+    i18n: {
+      en: {
+        title: 'First month invoice — issued and sent',
+        strategicObjective: 'Complete first-month invoicing as part of operational readiness',
+        problemSolved: 'Invoicing must be executed on time to avoid operational debt',
+        expectedBusinessImpact: 'Clean ops baseline and fewer admin follow-ups',
+        kpiOrMetric: 'Invoice issued and sent',
+        taskBreakdown: ['Issue invoice', 'Send to counterparties', 'Archive reference'],
+        description: 'First month invoice issued and sent.',
+        summary: 'Invoice issued and sent.',
+        notes: 'Done (from Weekly Execution History).',
+      },
+      it: {
+        title: 'Prima fattura mese — emessa e inviata',
+        strategicObjective:
+          'Completare la fatturazione del primo mese come parte della readiness operativa',
+        problemSolved: 'La fatturazione va eseguita on-time per evitare debito operativo',
+        expectedBusinessImpact: 'Baseline ops pulita e meno follow-up amministrativi',
+        kpiOrMetric: 'Fattura emessa e inviata',
+        taskBreakdown: ['Emettere fattura', 'Inviare ai referenti', 'Archiviare riferimento'],
+        description: 'Prima fattura mese emessa e inviata.',
+        summary: 'Fattura emessa e inviata.',
+        notes: 'Done (da Weekly Execution History).',
+      },
+    },
+  },
+  {
     id: 'pb_affiliate_monthly_payments_rework',
     strategicCategory: 'Partnerships & Affiliates',
     impactLevel: 'High',

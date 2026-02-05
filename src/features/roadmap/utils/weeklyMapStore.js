@@ -90,15 +90,6 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
       status: 'in_progress',
     },
     {
-      title: 'Solitics Product Overview #1 – data flow & segmentation',
-      owner: 'Paolo / Solitics',
-      department: 'Ops / Analytics',
-      tool: 'Solitics onboarding session',
-      expectedImpact:
-        'Completed Product Overview #1. Outcomes: Solitics data model overview (member profiles, transactions, aggregation table); event-based data flow (member, transactional, frontend events); attributes + event handling for segmentation; segment creation logic and syncing behavior.',
-      status: 'done',
-    },
-    {
       title: 'Solitics marketing plan (calendar + assets)',
       owner: 'Daniel Taddei',
       department: 'Marketing',
@@ -146,15 +137,7 @@ const INITIAL_EXECUTION_PLAN_BY_MEGA = {
   ],
 
   ops_governance: [
-    {
-      title: 'Support User Check v2 – rollout review with Emanuele',
-      owner: 'Paolo / Emanuele',
-      department: 'Ops / Support',
-      tool: 'Bullwaves console — Support User Check',
-      expectedImpact:
-        'Enhancements completed (Position Count, withdrawals, affiliate moves). Rollout completed: Support team is already using the tool. Next: monitor usage, collect feedback, and keep a short backlog for incremental improvements.',
-      status: 'done',
-    },
+    // (migrated completed items to Tasks Board)
   ],
 
   aml_compliance: [

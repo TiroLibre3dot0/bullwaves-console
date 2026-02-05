@@ -31,6 +31,24 @@ const URL_BY_DONE_TEXT = {
     'https://portal.bullwaves.com/brokeree-social-trading-three',
 }
 
+// Migration intent: keep Weekly Execution History for planning/memory structure,
+// but move completed items into the Tasks Board as the single source of truth.
+const MIGRATED_DONE_TEXTS = new Set([
+  'Downloaded and analyzed Media, Registration, and Payment reports',
+  'Built an internal console to process data',
+  'Extracted initial affiliate KPIs for internal visibility',
+  'Completed MetaTrader Web integration',
+  'Completed Social Trading integration',
+  'Coordinated with Scale and Brokeree to resolve integration complexities',
+  'Designed and implemented the Support User Check tool',
+  'Integrated it into the operational workflow',
+  'Solitics kick-off completed; onboarding activated',
+  'Retention alignment completed; owners and next steps defined',
+  'Compliance sync completed (risk scoring + KYC improvements)',
+  'Trading platform overview shared via email',
+  'First month invoice issued and sent',
+])
+
 export function getHistoryWeekEnd(weekStart) {
   return addDays(weekStart, 6)
 }
@@ -58,11 +76,7 @@ export const DEFAULT_WEEKLY_EXECUTION_HISTORY = {
       week_start: '2025-12-08',
       week_end: '2025-12-14',
       planned: ['Review existing reports and understand data flows'],
-      done: [
-        'Downloaded and analyzed Media, Registration, and Payment reports',
-        'Built an internal console to process data',
-        'Extracted initial affiliate KPIs for internal visibility',
-      ],
+      done: [],
     },
 
     // Week starting Monday, 15 December 2025
@@ -70,17 +84,7 @@ export const DEFAULT_WEEKLY_EXECUTION_HISTORY = {
       week_start: '2025-12-15',
       week_end: '2025-12-21',
       planned: ['Platform integrations (trading)'],
-      done: [
-        {
-          text: 'Completed MetaTrader Web integration',
-          url: 'https://portal.bullwaves.com/custom/webtrader',
-        },
-        {
-          text: 'Completed Social Trading integration',
-          url: 'https://portal.bullwaves.com/brokeree-social-trading-three',
-        },
-        'Coordinated with Scale and Brokeree to resolve integration complexities',
-      ],
+      done: [],
     },
 
     // Week starting Monday, 22 December 2025
@@ -88,13 +92,7 @@ export const DEFAULT_WEEKLY_EXECUTION_HISTORY = {
       week_start: '2025-12-22',
       week_end: '2025-12-28',
       planned: ['Improve operational visibility for support'],
-      done: [
-        {
-          text: 'Designed and implemented the Support User Check tool',
-          url: 'https://bullwaves-console.vercel.app/support/user-check',
-        },
-        'Integrated it into the operational workflow',
-      ],
+      done: [],
     },
 
     // Week starting Sunday, 4 January 2026 (kept aligned with operational week selector style)
@@ -102,19 +100,7 @@ export const DEFAULT_WEEKLY_EXECUTION_HISTORY = {
       week_start: '2026-01-04',
       week_end: '2026-01-10',
       planned: ['Solitics onboarding and retention setup', 'AML and compliance execution'],
-      done: [
-        {
-          text: 'Solitics kick-off completed; onboarding activated',
-          url: 'https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-        },
-        'Retention alignment completed; owners and next steps defined',
-        'Compliance sync completed (risk scoring + KYC improvements)',
-        {
-          text: 'Trading platform overview shared via email',
-          url: 'https://trading-platform-self-two.vercel.app/trade',
-        },
-        'First month invoice issued and sent',
-      ],
+      done: [],
     },
   },
 }
@@ -139,12 +125,14 @@ export function loadWeeklyExecutionHistory() {
   Object.keys(merged.weeks || {}).forEach((weekStart) => {
     const w = merged.weeks[weekStart]
     if (!w) return
+    const planned = Array.isArray(w.planned) ? w.planned.map(normalizeEntry).filter(Boolean) : []
+    const done = Array.isArray(w.done) ? w.done.map(normalizeEntry).filter(Boolean) : []
     merged.weeks[weekStart] = {
       ...w,
       week_start: w.week_start || weekStart,
       week_end: w.week_end || getHistoryWeekEnd(w.week_start || weekStart),
-      planned: Array.isArray(w.planned) ? w.planned.map(normalizeEntry).filter(Boolean) : [],
-      done: Array.isArray(w.done) ? w.done.map(normalizeEntry).filter(Boolean) : [],
+      planned,
+      done: done.filter((entry) => !MIGRATED_DONE_TEXTS.has(entry.text)),
     }
   })
 
