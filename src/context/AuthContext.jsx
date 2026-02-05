@@ -19,6 +19,7 @@ function buildAllowlist() {
     if (sectionId === 'management-team') return true
     if (sectionId === 'finance') return true
     if (sectionId === 'support-team') return true
+    if (sectionId === 'business-development') return true
     return (
       d === 'finance' ||
       d === 'reconciliation' ||

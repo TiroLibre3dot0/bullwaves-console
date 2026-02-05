@@ -956,11 +956,14 @@ const TASK_SEEDS = [
           'Ship the tool in the console',
           'Validate access and permissions',
           'Roll out to Support team and collect feedback',
+          'Ship v2 enhancements (Position Count, withdrawals, affiliate moves)',
+          'Confirm rollout with Support stakeholders (review with Emanuele) and capture micro-backlog',
         ],
         description:
-          'Released Support User Check and it is already actively used by the Support team. This is a completed delivery item.',
+          'Released Support User Check and it is already actively used by the Support team. Delivery included v2 enhancements (Position Count, withdrawals, affiliate moves) and a rollout review with Support stakeholders to confirm adoption and capture follow-ups.',
         summary: 'Released and in active use by Support.',
-        notes: 'Completed: released and adopted by Support.',
+        notes:
+          'Completed: designed + implemented, integrated into workflow, released and adopted by Support (v2 rollout confirmed; micro-backlog captured).',
       },
       it: {
         title: 'Support User Check — rilasciato al team Supporto',
@@ -975,11 +978,14 @@ const TASK_SEEDS = [
           'Rilasciare il tool nella console',
           'Validare accessi e permessi',
           'Rollout al team Supporto e raccolta feedback',
+          'Rilasciare migliorie v2 (Position Count, withdrawals, affiliate moves)',
+          'Confermare rollout con stakeholder Support (review con Emanuele) e raccogliere micro-backlog',
         ],
         description:
-          'Support User Check è stato rilasciato ed è già utilizzato dal team di supporto. Questo task è da considerarsi completato.',
+          'Support User Check è stato rilasciato ed è già utilizzato dal team di supporto. La delivery includeva anche migliorie v2 (Position Count, withdrawals, affiliate moves) e una review del rollout con gli stakeholder Support per confermare l’adozione e raccogliere follow-up.',
         summary: 'Rilasciato e in uso dal Supporto.',
-        notes: 'Completato: rilasciato e adottato dal Supporto.',
+        notes:
+          'Completato: progettato + implementato, integrato nel workflow, rilasciato e adottato dal Supporto (rollout v2 confermato; micro-backlog raccolto).',
       },
     },
   },
@@ -1004,11 +1010,15 @@ const TASK_SEEDS = [
           'Process key reports into consolidated datasets',
           'Build the console views for affiliate analysis',
           'Validate calculations and publish to internal users',
+          'Baseline analysis of Media/Registration/Payment reports',
+          'Internal processing console shipped for repeatable outputs',
+          'Initial affiliate KPI set extracted and shared internally',
         ],
         description:
-          'Console with processed data and affiliate analyses is already completed and has been available internally for some time.',
+          'Console with processed data and affiliate analyses is already completed and has been available internally for some time. Work included baseline analysis of Media/Registration/Payment reports, building an internal processing console for repeatable outputs, and extracting initial affiliate KPIs for internal visibility.',
         summary: 'Affiliate analytics console completed.',
-        notes: 'Completed: console exists with processed affiliate analysis data.',
+        notes:
+          'Completed: console exists with processed affiliate analysis data (reports analyzed, internal processing baseline shipped, initial KPI extraction shared).',
       },
       it: {
         title: 'Console analisi affiliati — dati elaborati + insight',
@@ -1023,11 +1033,15 @@ const TASK_SEEDS = [
           'Elaborare i report chiave in dataset consolidati',
           'Costruire le viste console per l’analisi affiliati',
           'Validare calcoli e pubblicare per uso interno',
+          'Analisi baseline dei report Media/Registrazioni/Pagamenti',
+          'Console di processing interna per output ripetibili',
+          'Set KPI affiliate iniziale estratto e condiviso internamente',
         ],
         description:
-          'La console con i dati elaborati e le analisi degli affiliati è già completata e disponibile internamente da tempo.',
+          'La console con i dati elaborati e le analisi degli affiliati è già completata e disponibile internamente da tempo. Il lavoro includeva analisi baseline dei report Media/Registrazioni/Pagamenti, costruzione di una console di processing interna per output ripetibili ed estrazione dei KPI affiliate iniziali per visibilità interna.',
         summary: 'Console affiliate completata.',
-        notes: 'Completato: console disponibile con analisi affiliati.',
+        notes:
+          'Completato: console disponibile con analisi affiliati (report analizzati, processing baseline, KPI iniziali condivisi).',
       },
     },
   },
@@ -1078,180 +1092,6 @@ const TASK_SEEDS = [
           'Completato Product Overview #1 con Solitics. Outcome: overview data model, data flow ad eventi, attributi/handling eventi per segmentazione, creazione segmenti e syncing.',
         summary: 'Overview onboarding Solitics #1 completata.',
         notes: 'Done: Product Overview #1 completato con Solitics.',
-      },
-    },
-  },
-  {
-    id: 'pb_support_user_check_v2_rollout',
-    strategicCategory: 'Operations & Compliance',
-    impactLevel: 'High',
-    owner: 'Paolo / Emanuele',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Support User Check v2 — rollout review',
-        strategicObjective:
-          'Validate the v2 rollout with Support stakeholders and confirm the enhancements are adopted correctly',
-        problemSolved:
-          'Enhancements need confirmation, adoption tracking, and a small backlog for follow-ups',
-        expectedBusinessImpact:
-          'More reliable Support workflows and fewer escalations thanks to better tooling and clear ownership',
-        kpiOrMetric: 'Rollout confirmed, adoption stable, backlog captured',
-        taskBreakdown: [
-          'Review enhancements (Position Count, withdrawals, affiliate moves)',
-          'Confirm access/permissions and day-to-day usage',
-          'Collect feedback and define micro-backlog',
-        ],
-        description:
-          'Rollout review completed with Emanuele; enhancements shipped and Support team is using the tool.',
-        summary: 'Support User Check v2 rollout confirmed.',
-        notes: 'Done: rollout review completed; tool in active use.',
-      },
-      it: {
-        title: 'Support User Check v2 — review rollout',
-        strategicObjective:
-          'Validare il rollout v2 con gli stakeholder Support e confermare l’adozione delle migliorie',
-        problemSolved:
-          'Le migliorie richiedono conferma, tracking adozione e un mini backlog follow-up',
-        expectedBusinessImpact:
-          'Workflow Support più affidabile e meno escalation grazie a tooling migliore e ownership chiara',
-        kpiOrMetric: 'Rollout confermato, adozione stabile, backlog raccolto',
-        taskBreakdown: [
-          'Review migliorie (Position Count, withdrawals, affiliate moves)',
-          'Confermare accessi/permessi e uso operativo',
-          'Raccogliere feedback e definire micro-backlog',
-        ],
-        description:
-          'Review rollout completata con Emanuele; migliorie rilasciate e tool già in uso dal team Supporto.',
-        summary: 'Rollout Support User Check v2 confermato.',
-        notes: 'Done: review rollout completata; tool in uso.',
-      },
-    },
-  },
-  {
-    id: 'pb_history_reports_analysis',
-    strategicCategory: 'Operations & Compliance',
-    impactLevel: 'Medium',
-    owner: 'Ops',
-    status: 'Done',
-    icon: 'search',
-    i18n: {
-      en: {
-        title: 'Reports analysis — Media, Registration, Payments',
-        strategicObjective:
-          'Build baseline understanding of report structure and data flows for decision-making',
-        problemSolved:
-          'Without a baseline read of key reports, analytics and ops decisions rely on assumptions',
-        expectedBusinessImpact:
-          'Faster analytics iterations and fewer data misunderstandings across stakeholders',
-        kpiOrMetric: 'Reports reviewed, key fields identified, data flow understood',
-        taskBreakdown: [
-          'Download reports',
-          'Inspect key columns + edge cases',
-          'Document data flow',
-        ],
-        description: 'Downloaded and analyzed Media, Registration, and Payment reports.',
-        summary: 'Baseline reports reviewed.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Analisi report — Media, Registrazioni, Pagamenti',
-        strategicObjective:
-          'Creare una baseline di comprensione su struttura report e data flow per decisioni corrette',
-        problemSolved:
-          'Senza una baseline sui report chiave, analisi e decisioni ops si basano su assunzioni',
-        expectedBusinessImpact:
-          'Iterazioni analytics più rapide e meno misunderstanding tra stakeholder',
-        kpiOrMetric: 'Report analizzati, campi chiave identificati, data flow compreso',
-        taskBreakdown: [
-          'Scaricare report',
-          'Ispezionare colonne + edge case',
-          'Documentare data flow',
-        ],
-        description: 'Scaricati e analizzati i report Media, Registrazioni e Pagamenti.',
-        summary: 'Report base analizzati.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_history_internal_console_processing',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'Medium',
-    owner: 'Tech',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Internal console — data processing baseline',
-        strategicObjective:
-          'Create an internal tool to process core datasets and accelerate ops/analytics workflows',
-        problemSolved: 'Manual report stitching and ad-hoc analysis slowed down execution',
-        expectedBusinessImpact:
-          'Faster internal visibility and lower manual workload for recurring analysis',
-        kpiOrMetric: 'Tool usable internally, datasets processed, repeatable outputs',
-        taskBreakdown: [
-          'Implement processing pipeline',
-          'Validate outputs',
-          'Ship internal access',
-        ],
-        description: 'Built an internal console to process data.',
-        summary: 'Internal processing console built.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Console interna — processing dati baseline',
-        strategicObjective:
-          'Creare un tool interno per processare dataset core e accelerare workflow ops/analytics',
-        problemSolved: 'Unione manuale report e analisi ad-hoc rallentavano l’esecuzione',
-        expectedBusinessImpact:
-          'Più visibilità interna e meno lavoro manuale per analisi ricorrenti',
-        kpiOrMetric: 'Tool usabile internamente, dataset processati, output ripetibili',
-        taskBreakdown: [
-          'Implementare pipeline processing',
-          'Validare output',
-          'Abilitare accesso interno',
-        ],
-        description: 'Costruita una console interna per processare i dati.',
-        summary: 'Console interna di processing completata.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_history_affiliate_kpis',
-    strategicCategory: 'Partnerships & Affiliates',
-    impactLevel: 'Medium',
-    owner: 'Dan',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Affiliate KPIs — initial extraction',
-        strategicObjective:
-          'Extract minimum affiliate KPIs to enable internal visibility and faster partner ops decisions',
-        problemSolved:
-          'Affiliate performance was not immediately visible without manual calculations',
-        expectedBusinessImpact: 'Faster anomaly detection and clearer ROI/payout decisions',
-        kpiOrMetric: 'Initial KPI set extracted and shared',
-        taskBreakdown: ['Define KPI list', 'Extract from reports', 'Share internally'],
-        description: 'Extracted initial affiliate KPIs for internal visibility.',
-        summary: 'Initial affiliate KPIs extracted.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'KPI affiliati — estrazione iniziale',
-        strategicObjective:
-          'Estrarre un set minimo di KPI affiliate per visibilità interna e decisioni più rapide',
-        problemSolved:
-          'Le performance affiliate non erano immediatamente visibili senza calcoli manuali',
-        expectedBusinessImpact: 'Rilevazione anomalie più rapida e decisioni ROI/payout più chiare',
-        kpiOrMetric: 'Set KPI iniziale estratto e condiviso',
-        taskBreakdown: ['Definire lista KPI', 'Estrarre dai report', 'Condividere internamente'],
-        description: 'Estratti KPI affiliate iniziali per visibilità interna.',
-        summary: 'KPI affiliate iniziali estratti.',
-        notes: 'Done (da Weekly Execution History).',
       },
     },
   },

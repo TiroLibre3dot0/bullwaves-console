@@ -7,10 +7,6 @@ const AuthenticatedApp = React.lazy(() => import('./AuthenticatedApp'))
 const PublicSupportBotListPage = React.lazy(
   () => import('./features/support/pages/PublicSupportBotListPage')
 )
-const PublicWeeklyMapPage = React.lazy(() => import('./features/roadmap/pages/PublicWeeklyMapPage'))
-const PublicWeeklyExecutionHistoryPage = React.lazy(
-  () => import('./features/roadmap/pages/PublicWeeklyExecutionHistoryPage')
-)
 const ShareOrgChartPage = React.lazy(() => import('./pages/share/ShareOrgChartTrueTree'))
 const BoardLoginPage = React.lazy(() => import('./pages/share/BoardLoginPage'))
 const PublicMarketingPlanSharePage = React.lazy(
@@ -142,20 +138,18 @@ export default function App() {
 
   if (shareRoute === 'weekly-map') {
     const token = window.location.pathname.split('/').pop()
-    return (
-      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
-        <PublicWeeklyMapPage token={token} />
-      </React.Suspense>
-    )
+    if (typeof window !== 'undefined') {
+      window.location.replace(`/share/project-board/${token}`)
+    }
+    return <FullPageLoader progress={20} subtitle={t('common.loading')} />
   }
 
   if (shareRoute === 'weekly-execution-history') {
     const token = window.location.pathname.split('/').pop()
-    return (
-      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
-        <PublicWeeklyExecutionHistoryPage token={token} />
-      </React.Suspense>
-    )
+    if (typeof window !== 'undefined') {
+      window.location.replace(`/share/project-board/${token}`)
+    }
+    return <FullPageLoader progress={20} subtitle={t('common.loading')} />
   }
 
   if (shareRoute === 'marketing-plan') {

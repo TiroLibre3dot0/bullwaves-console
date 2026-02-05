@@ -444,6 +444,14 @@ function isSupportDepartment(department = '') {
   return d.includes('support')
 }
 
+function isBusinessDevelopmentOrSalesDepartment(department = '') {
+  const d = String(department || '')
+    .trim()
+    .toLowerCase()
+  if (!d) return false
+  return d.startsWith('sales') || d.includes('business development')
+}
+
 export default function SupportUserDetails({
   selected,
   shareConfig,
@@ -459,25 +467,32 @@ export default function SupportUserDetails({
 }) {
   const { t } = useI18n()
   const { user: viewer } = useAuth()
-  const viewerIsSupport = isSupportDepartment(viewer?.department)
+  const viewerIsBusinessDevSales = isBusinessDevelopmentOrSalesDepartment(viewer?.department)
 
   const maskPii = Boolean(shareConfig?.mask?.pii)
-  const maskFinancials = viewerIsSupport
-  const maskCommissions = Boolean(shareConfig?.mask?.commissions) || maskFinancials
-  const maskAffiliateRevenue = Boolean(shareConfig?.mask?.affiliateRevenue) || maskFinancials
+  // Keep user economic data visible in-app. Allow share links to optionally mask them.
+  const maskUserEconomics = Boolean(shareConfig?.mask?.economics)
+
+  // Business Development / Sales can use the tool to understand customers,
+  // but should not see affiliate commission values.
+  const maskCommissions = Boolean(shareConfig?.mask?.commissions) || viewerIsBusinessDevSales
+
+  // Affiliate Overview should remain visible, but can optionally hide economic metrics.
+  const maskAffiliateEconomics =
+    Boolean(shareConfig?.mask?.affiliateRevenue) || viewerIsBusinessDevSales
 
   const fmtEuroSafe = (value) => {
     if (value === null || value === undefined) return '—'
     return typeof fmtEuro === 'function' ? fmtEuro(value) : String(value)
   }
 
-  const fmtEuroMasked = (value) => (maskFinancials ? '•••' : fmtEuroSafe(value))
+  const fmtEuroMasked = (value) => (maskUserEconomics ? '•••' : fmtEuroSafe(value))
 
   const maskedMoney = (value, formatter) => {
     if (value === null || value === undefined) return '—'
     const s = String(value).trim()
     if (!s) return '—'
-    if (maskCommissions || maskAffiliateRevenue) return '•••'
+    if (maskCommissions) return '•••'
     return formatter ? formatter(value) : s
   }
 
@@ -521,7 +536,7 @@ export default function SupportUserDetails({
   const totalDeposits = fmtEuroMasked(mapped.totalDeposits)
   const withdrawals = fmtEuroMasked(mapped.withdrawals)
   const netDeposits = fmtEuroMasked(mapped.netDeposits)
-  const volume = maskFinancials ? '•••' : mapped.volume || '—'
+  const volume = maskUserEconomics ? '•••' : mapped.volume || '—'
   const plRaw = mapped.pl || ''
   const affiliateId = mapped.affiliateId || ''
   const affiliateLabel = affiliateName?.affiliateName || '—'
@@ -811,16 +826,16 @@ export default function SupportUserDetails({
     String((mapped.withdrawals || '').toString().replace(/[^0-9.-]+/g, '')) || 0
   )
   const plNum = Number(String((mapped.pl || '').toString().replace(/[^0-9.-]+/g, '')) || 0)
-  const plDisplay = plRaw ? (maskFinancials ? '•••' : fmtEuroSafe(plNum)) : '—'
+  const plDisplay = plRaw ? (maskUserEconomics ? '•••' : fmtEuroSafe(plNum)) : '—'
   const roiVal = totalDepositsNum
-    ? maskFinancials
+    ? maskUserEconomics
       ? '•••'
       : `${((plNum / totalDepositsNum) * 100).toFixed(2)}%`
     : null
 
   const withdrawalRatioVal =
     totalDepositsNum > 0 && withdrawalsNum >= 0
-      ? maskFinancials
+      ? maskUserEconomics
         ? '•••'
         : `${((withdrawalsNum / Math.max(totalDepositsNum, 1)) * 100).toFixed(0)}%`
       : null
@@ -1434,7 +1449,7 @@ export default function SupportUserDetails({
                 affiliateId={affiliateSeed}
                 period={''}
                 boardMode={!affiliateReportToken}
-                maskFinancials={viewerIsSupport}
+                maskFinancials={viewerIsBusinessDevSales}
               />
             </div>
           </div>
@@ -2484,7 +2499,7 @@ export default function SupportUserDetails({
                                 {t('support.details.affiliateOverview.metrics.revenue')}
                               </div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
-                                {maskAffiliateRevenue &&
+                                {maskAffiliateEconomics &&
                                 currentAffiliateOverview.revenue !== null &&
                                 currentAffiliateOverview.revenue !== undefined &&
                                 String(currentAffiliateOverview.revenue).trim() !== ''
@@ -2497,7 +2512,9 @@ export default function SupportUserDetails({
                               </div>
                               <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
                                 {currentAffiliateOverview.ecpa
-                                  ? fmtEuroMasked(currentAffiliateOverview.ecpa)
+                                  ? maskAffiliateEconomics
+                                    ? '•••'
+                                    : fmtEuroMasked(currentAffiliateOverview.ecpa)
                                   : '—'}
                               </div>
 
@@ -2516,7 +2533,7 @@ export default function SupportUserDetails({
                                 }}
                               >
                                 {currentAffiliateOverview.roi
-                                  ? maskFinancials
+                                  ? maskAffiliateEconomics
                                     ? '•••'
                                     : `${currentAffiliateOverview.roi.toFixed(1)}%`
                                   : '—'}
@@ -2555,7 +2572,7 @@ export default function SupportUserDetails({
                                   {t('support.details.affiliateOverview.metrics.revenue')}
                                 </div>
                                 <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
-                                  {maskAffiliateRevenue &&
+                                  {maskAffiliateEconomics &&
                                   targetAffiliateOverview.revenue !== null &&
                                   targetAffiliateOverview.revenue !== undefined &&
                                   String(targetAffiliateOverview.revenue).trim() !== ''
@@ -2568,7 +2585,9 @@ export default function SupportUserDetails({
                                 </div>
                                 <div style={{ fontSize: 11, fontWeight: 600, textAlign: 'right' }}>
                                   {targetAffiliateOverview.ecpa
-                                    ? fmtEuroMasked(targetAffiliateOverview.ecpa)
+                                    ? maskAffiliateEconomics
+                                      ? '•••'
+                                      : fmtEuroMasked(targetAffiliateOverview.ecpa)
                                     : '—'}
                                 </div>
 
@@ -2587,7 +2606,7 @@ export default function SupportUserDetails({
                                   }}
                                 >
                                   {targetAffiliateOverview.roi
-                                    ? maskFinancials
+                                    ? maskAffiliateEconomics
                                       ? '•••'
                                       : `${targetAffiliateOverview.roi.toFixed(1)}%`
                                     : '—'}

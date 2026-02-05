@@ -168,6 +168,7 @@ export default function Sidebar({
   executiveSection,
   affiliateSection,
   supportOnly,
+  allowedViews,
   customEventsDisabled,
   navigate,
   goExecutiveSection,
@@ -188,7 +189,12 @@ export default function Sidebar({
 
   const disabled = (key) => {
     if (customEventsDisabled && key === 'customEvents') return true
-    return Boolean(supportOnly && !['supportUserCheck', 'orgChart', 'upload'].includes(key))
+    if (!supportOnly) return false
+    const allowed =
+      allowedViews && typeof allowedViews.has === 'function'
+        ? allowedViews
+        : new Set(['supportUserCheck', 'orgChart', 'upload'])
+    return !allowed.has(key)
   }
 
   return (
@@ -228,29 +234,6 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="layout" />
                 <span>{t('sidebar.marketingPlan')}</span>
-              </span>
-            </button>
-            <button
-              disabled={disabled('weeklyMap')}
-              type="button"
-              className={`sidebar-item sidebar-main tab ${view === 'weeklyMap' ? 'active' : ''}`}
-              onClick={() => navigate('weeklyMap')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="calendar" />
-                <span>{t('sidebar.weeklyMap')}</span>
-              </span>
-            </button>
-
-            <button
-              disabled={disabled('weeklyExecutionHistory')}
-              type="button"
-              className={`sidebar-item sidebar-main tab ${view === 'weeklyExecutionHistory' ? 'active' : ''}`}
-              onClick={() => navigate('weeklyExecutionHistory')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="calendar" />
-                <span>{t('sidebar.weeklyExecutionHistory')}</span>
               </span>
             </button>
 

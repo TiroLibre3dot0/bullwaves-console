@@ -11,8 +11,6 @@ import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
 import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
 import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
 import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
-import WeeklyMapPage from './features/roadmap/pages/WeeklyMapPage'
-import WeeklyExecutionHistoryPage from './features/roadmap/pages/WeeklyExecutionHistoryPage'
 import SupportUserCheck from './features/support/pages/SupportUserCheck'
 import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
 import UploadReportsPage from './pages/UploadReportsPage'
@@ -26,6 +24,14 @@ import AdminPanel from './components/AdminPanel'
 
 export default function AuthenticatedApp() {
   const [notionPillarFilter] = useState(null)
+
+  const isSalesDepartment = (department = '') => {
+    const d = String(department || '')
+      .trim()
+      .toLowerCase()
+    if (!d) return false
+    return d.startsWith('sales') || d.includes('business development')
+  }
 
   const getIsMobile = () =>
     typeof window !== 'undefined' && window.matchMedia
@@ -65,7 +71,14 @@ export default function AuthenticatedApp() {
   const isManagementTeam = Boolean(user?.isManagementTeam)
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
-  const supportAllowedViews = useMemo(() => new Set(['supportUserCheck', 'orgChart', 'upload']), [])
+  const isBusinessDevSales = Boolean(!isManagementTeam && isSalesDepartment(user?.department || ''))
+  const isRestrictedUser = Boolean(isSupportOnly || isBusinessDevSales)
+
+  const restrictedAllowedViews = useMemo(() => {
+    // Support can upload reports; BD/Sales should not.
+    if (isSupportOnly) return new Set(['supportUserCheck', 'orgChart', 'upload'])
+    return new Set(['supportUserCheck', 'orgChart'])
+  }, [isSupportOnly])
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -115,9 +128,6 @@ export default function AuthenticatedApp() {
       storiesKanban: '/stories-kanban',
       projectBoard: '/project-board',
       marketingPlan: '/marketing-plan',
-      roadmap: '/roadmap',
-      weeklyMap: '/weekly-map',
-      weeklyExecutionHistory: '/weekly-execution-history',
       overview: '/overview',
       flows: '/flows',
       executive: '/executive',
@@ -140,9 +150,9 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
     if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
-    if (pathname.startsWith('/roadmap')) return 'weeklyMap'
-    if (pathname.startsWith('/weekly-map')) return 'weeklyMap'
-    if (pathname.startsWith('/weekly-execution-history')) return 'weeklyExecutionHistory'
+    if (pathname.startsWith('/roadmap')) return 'projectBoard'
+    if (pathname.startsWith('/weekly-map')) return 'projectBoard'
+    if (pathname.startsWith('/weekly-execution-history')) return 'projectBoard'
     if (pathname.startsWith('/overview')) return 'overview'
     if (pathname.startsWith('/flows')) return 'flows'
     if (pathname.startsWith('/executive')) return 'executive'
@@ -162,15 +172,22 @@ export default function AuthenticatedApp() {
   const [view, setView] = useState(() => pathToView(window.location.pathname))
 
   useEffect(() => {
-    // Keep legacy /roadmap URL working but route users to Weekly Map.
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/roadmap')) {
-      window.history.replaceState({ view: 'weeklyMap' }, '', routes.weeklyMap)
-      setView('weeklyMap')
+    // Keep legacy Weekly Map / History URLs working but route users to the Tasks Board.
+    if (typeof window !== 'undefined') {
+      const p = window.location.pathname
+      if (
+        p.startsWith('/roadmap') ||
+        p.startsWith('/weekly-map') ||
+        p.startsWith('/weekly-execution-history')
+      ) {
+        window.history.replaceState({ view: 'projectBoard' }, '', routes.projectBoard)
+        setView('projectBoard')
+      }
     }
 
     const onPop = () => {
       const nextPath = window.location.pathname
-      if (isSupportOnly) {
+      if (isRestrictedUser) {
         if (nextPath.startsWith('/support/user-check')) {
           setView('supportUserCheck')
           return
@@ -179,7 +196,7 @@ export default function AuthenticatedApp() {
           setView('orgChart')
           return
         }
-        if (nextPath.startsWith('/upload')) {
+        if (isSupportOnly && nextPath.startsWith('/upload')) {
           setView('upload')
           return
         }
@@ -195,13 +212,17 @@ export default function AuthenticatedApp() {
         return
       }
 
-      const nextView = pathToView(nextPath)
-
-      if (nextPath.startsWith('/roadmap')) {
-        window.history.replaceState({ view: 'weeklyMap' }, '', routes.weeklyMap)
-        setView('weeklyMap')
+      if (
+        nextPath.startsWith('/roadmap') ||
+        nextPath.startsWith('/weekly-map') ||
+        nextPath.startsWith('/weekly-execution-history')
+      ) {
+        window.history.replaceState({ view: 'projectBoard' }, '', routes.projectBoard)
+        setView('projectBoard')
         return
       }
+
+      const nextView = pathToView(nextPath)
 
       setView(nextView)
       if (nextView === 'affiliate') {
@@ -210,7 +231,7 @@ export default function AuthenticatedApp() {
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [isAdmin, isSupportOnly, routes.commandCenter, routes.weeklyMap])
+  }, [isAdmin, isRestrictedUser, isSupportOnly, routes.commandCenter, routes.projectBoard])
 
   useEffect(() => {
     if (view !== 'affiliate') return
@@ -219,25 +240,25 @@ export default function AuthenticatedApp() {
 
   useEffect(() => {
     if (!user) return
-    if (!isSupportOnly) return
-    // Support landing page defaults to Support • User Check.
+    if (!isRestrictedUser) return
+    // Restricted landing page defaults to Support • User Check.
     const p = window.location.pathname
     if (!p.startsWith('/support/user-check')) {
       window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
     }
     setView('supportUserCheck')
-  }, [user, isSupportOnly])
+  }, [user, isRestrictedUser])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!user) return
-    if (isSupportOnly) return
+    if (isRestrictedUser) return
 
     // Canonicalize legacy root route to a dedicated Command Center URL.
     if (window.location.pathname === '/') {
       window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
     }
-  }, [user, isSupportOnly, routes.commandCenter])
+  }, [user, isRestrictedUser, routes.commandCenter])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -256,7 +277,7 @@ export default function AuthenticatedApp() {
     if (nextView === 'admin' && !isAdmin) return
     if (nextView === 'customEvents' && !isAdmin) return
 
-    if (isSupportOnly && !supportAllowedViews.has(nextView)) {
+    if (isRestrictedUser && !restrictedAllowedViews.has(nextView)) {
       const nextPath = routes.supportUserCheck
       if (window.location.pathname !== nextPath) {
         window.history.pushState({ view: 'supportUserCheck' }, '', nextPath)
@@ -376,9 +397,6 @@ export default function AuthenticatedApp() {
       projectBoard: 'project-board',
       notion: 'notion',
       summary: 'summary',
-      roadmap: 'mega-stories',
-      weeklyMap: 'weekly-map',
-      weeklyExecutionHistory: 'weekly-execution-history',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -408,7 +426,8 @@ export default function AuthenticatedApp() {
             view={view}
             executiveSection={executiveSection}
             affiliateSection={affiliateSection}
-            supportOnly={isSupportOnly}
+            supportOnly={isRestrictedUser}
+            allowedViews={restrictedAllowedViews}
             customEventsDisabled={!isAdmin}
             navigate={navigate}
             goExecutiveSection={goExecutiveSection}
@@ -426,8 +445,6 @@ export default function AuthenticatedApp() {
             ) : null}
 
             {view === 'marketingPlan' ? <MarketingPlanExecutionPage /> : null}
-            {view === 'weeklyMap' ? <WeeklyMapPage /> : null}
-            {view === 'weeklyExecutionHistory' ? <WeeklyExecutionHistoryPage /> : null}
 
             {view === 'overview' ? <ProfitAnalysisPage /> : null}
             {view === 'flows' ? <FlowsPage /> : null}
