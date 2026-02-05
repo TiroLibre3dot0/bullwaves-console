@@ -29,16 +29,53 @@ const USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
 const MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
 const REGDATE_KEYS = [
   'registrationdate',
+  'registrationDate',
   'regdate',
+  'regDate',
   'externaldate',
+  'externalDate',
   'registered',
+  'registeredAt',
+  'registration_at',
   'registration_date',
 ]
-const FIRST_DEPOSIT_KEYS = ['firstdeposit', 'first_deposit', 'first deposit']
-const QUALIFY_KEYS = ['qualificationdate', 'qualification_date', 'qualifydate']
-const DEPOSIT_COUNT_KEYS = ['depositcount', 'deposit_count', 'depositscount', 'deposits_count']
-const TOTAL_DEPOSITS_KEYS = ['totaldeposits', 'total_deposits', 'totaldeposit', 'total_deposit']
-const NET_DEPOSITS_KEYS = ['netdeposits', 'net_deposits']
+const FIRST_DEPOSIT_KEYS = [
+  'firstdeposit',
+  'firstDeposit',
+  'first_deposit',
+  'first deposit',
+  'firstDepositAmount',
+]
+const FIRST_DEPOSIT_DATE_KEYS = [
+  'firstdepositdate',
+  'firstDepositDate',
+  'firstdeposit_at',
+  'firstDepositAt',
+]
+const QUALIFY_KEYS = [
+  'qualificationdate',
+  'qualificationDate',
+  'qualification_date',
+  'qualifydate',
+  'qftd',
+]
+const DEPOSIT_COUNT_KEYS = [
+  'depositcount',
+  'depositCount',
+  'deposit_count',
+  'depositscount',
+  'depositsCount',
+  'deposits_count',
+]
+const TOTAL_DEPOSITS_KEYS = [
+  'totaldeposits',
+  'totalDeposits',
+  'total_deposits',
+  'totaldeposit',
+  'totalDeposit',
+  'total_deposit',
+]
+const NET_DEPOSITS_KEYS = ['netdeposits', 'netDeposits', 'net_deposits']
 const WITHDRAWALS_KEYS = ['withdrawals', 'totalwithdrawals', 'total_withdrawals']
 const AFF_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
 const STATUS_KEYS = ['status']
@@ -116,6 +153,33 @@ function toNum(x) {
   return Number.isFinite(n) ? n : 0
 }
 
+function parseDateToTs(value) {
+  const s = String(value || '').trim()
+  if (!s) return null
+
+  // Try native parsing first (handles ISO, RFC, etc.)
+  const native = Date.parse(s)
+  if (Number.isFinite(native)) return native
+
+  // Common formats we see in exports: dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy
+  const m1 = s.match(
+    /^\s*(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?\s*$/
+  )
+  if (m1) {
+    const day = Number(m1[1])
+    const month = Number(m1[2])
+    const year = Number(m1[3])
+    const hh = m1[4] != null ? Number(m1[4]) : 0
+    const mm = m1[5] != null ? Number(m1[5]) : 0
+    const ss = m1[6] != null ? Number(m1[6]) : 0
+    const dt = new Date(year, Math.max(0, month - 1), day, hh, mm, ss)
+    const ts = dt.getTime()
+    return Number.isFinite(ts) ? ts : null
+  }
+
+  return null
+}
+
 function fmtEuro(v) {
   if (v === null || v === undefined || String(v).trim() === '') return '—'
   const n = toNum(v)
@@ -174,6 +238,9 @@ export default function SupportUserCheck({ shareConfig = null }) {
   const [selectedRaw, setSelectedRaw] = useState(null)
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+
+  const [resultsFilter, setResultsFilter] = useState('all')
+  const [browseDays, setBrowseDays] = useState(14)
 
   // Avoid blocking initial render with heavy CSV work; show the UI immediately.
   const [initializing, setInitializing] = useState(false)
@@ -288,6 +355,42 @@ export default function SupportUserCheck({ shareConfig = null }) {
     () => (results || []).map((r) => ({ raw: r, mapped: getMapped(r) })),
     [results]
   )
+
+  const filteredResults = useMemo(() => {
+    if (!mappedResults || mappedResults.length === 0) return []
+    if (!resultsFilter || resultsFilter === 'all') return mappedResults
+
+    const hasFtd = (m) => {
+      if (!m) return false
+      const firstDeposit = String(m.firstDeposit || '').trim()
+      const depositCount = toNum(m.depositCount)
+      const totalDeposits = toNum(m.totalDeposits)
+      const netDeposits = toNum(m.netDeposits)
+      return Boolean(firstDeposit) || depositCount > 0 || totalDeposits > 0 || netDeposits > 0
+    }
+
+    const isQualified = (m) => {
+      if (!m) return false
+      const q = String(m.qualificationDate || '').trim()
+      return Boolean(q)
+    }
+
+    const hasRegistration = (m) => {
+      if (!m) return false
+      const r = String(m.regDate || '').trim()
+      return Boolean(r)
+    }
+
+    if (resultsFilter === 'registeredNoDeposit') {
+      return mappedResults.filter(({ mapped }) => hasRegistration(mapped) && !hasFtd(mapped))
+    }
+
+    if (resultsFilter === 'ftdNotQualified') {
+      return mappedResults.filter(({ mapped }) => hasFtd(mapped) && !isQualified(mapped))
+    }
+
+    return mappedResults
+  }, [mappedResults, resultsFilter])
   const cacheRef = useRef(new Map())
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
@@ -370,6 +473,80 @@ export default function SupportUserCheck({ shareConfig = null }) {
       window.open(href, '_blank', 'noopener,noreferrer')
     } catch {
       // ignore
+    }
+  }
+
+  const hasFtdFromRow = (row) => {
+    if (!row) return false
+    const firstDeposit = String(pickField(row, FIRST_DEPOSIT_KEYS) || '').trim()
+    const firstDepositDate = String(pickField(row, FIRST_DEPOSIT_DATE_KEYS) || '').trim()
+    const depositCount = toNum(pickField(row, DEPOSIT_COUNT_KEYS))
+    const totalDeposits = toNum(pickField(row, TOTAL_DEPOSITS_KEYS))
+    const netDeposits = toNum(pickField(row, NET_DEPOSITS_KEYS))
+    return (
+      Boolean(firstDeposit) ||
+      Boolean(firstDepositDate) ||
+      depositCount > 0 ||
+      totalDeposits > 0 ||
+      netDeposits > 0
+    )
+  }
+
+  const isQualifiedFromRow = (row) => {
+    if (!row) return false
+    const q = String(pickField(row, QUALIFY_KEYS) || '').trim()
+    return Boolean(q)
+  }
+
+  const hasRegistrationFromRow = (row) => {
+    if (!row) return false
+    const r = String(pickField(row, REGDATE_KEYS) || '').trim()
+    return Boolean(r)
+  }
+
+  const runBrowse = async (segment) => {
+    const nextSegment = segment || 'registeredNoDeposit'
+    const days = Number(browseDays) || 14
+
+    setLoading(true)
+    setSearched(true)
+    setSelectedRaw(null)
+    setResultsFilter(nextSegment)
+
+    try {
+      const rows = await loadCsvRows()
+      const now = Date.now()
+      const minTs = now - days * 24 * 60 * 60 * 1000
+
+      const candidates = []
+      for (const row of rows || []) {
+        const regStr = pickField(row, REGDATE_KEYS)
+        const regTs = parseDateToTs(regStr)
+        if (!regTs || regTs < minTs) continue
+
+        if (nextSegment === 'registeredNoDeposit') {
+          if (!hasRegistrationFromRow(row)) continue
+          if (hasFtdFromRow(row)) continue
+          candidates.push({ row, regTs })
+          continue
+        }
+
+        if (nextSegment === 'ftdNotQualified') {
+          if (!hasFtdFromRow(row)) continue
+          if (isQualifiedFromRow(row)) continue
+          candidates.push({ row, regTs })
+          continue
+        }
+      }
+
+      candidates.sort((a, b) => b.regTs - a.regTs)
+      const limited = candidates.slice(0, 500).map((c) => c.row)
+      setResults(limited)
+    } catch (err) {
+      console.error('Failed to build browse list', err)
+      setResults([])
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -907,14 +1084,14 @@ export default function SupportUserCheck({ shareConfig = null }) {
 
   // sort mapped results by numeric total deposits (descending) to surface biggest depositors first
   const sortedResults = useMemo(() => {
-    if (!mappedResults || mappedResults.length === 0) return []
+    if (!filteredResults || filteredResults.length === 0) return []
     // create shallow copy and sort by mapped.depositNum (precomputed) falling back to parsed value
-    return mappedResults.slice().sort((a, b) => {
+    return filteredResults.slice().sort((a, b) => {
       const aNum = (a?.mapped?.depositNum ?? toNum(a?.mapped?.totalDeposits)) || 0
       const bNum = (b?.mapped?.depositNum ?? toNum(b?.mapped?.totalDeposits)) || 0
       return bNum - aNum
     })
-  }, [mappedResults])
+  }, [filteredResults])
 
   const resultsToShow = sortedResults.length > 0 ? sortedResults.slice(0, 15) : []
 
@@ -1145,6 +1322,70 @@ export default function SupportUserCheck({ shareConfig = null }) {
                       {t('support.userCheck.hint.toFocus')} ·{' '}
                       <strong>{t('common.keys.enter')}</strong> {t('support.userCheck.hint.toRun')}
                     </div>
+                  </div>
+                )}
+
+                {showHero && (
+                  <div
+                    style={{
+                      marginTop: 14,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      opacity: 0.95,
+                    }}
+                  >
+                    <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--muted)' }}>
+                      Liste retention
+                    </div>
+                    <select
+                      value={browseDays}
+                      onChange={(e) => setBrowseDays(Number(e.target.value) || 14)}
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: 10,
+                        border: '1px solid rgba(148,163,184,0.22)',
+                        background: 'rgba(2,6,23,0.35)',
+                        color: 'rgba(255,255,255,0.92)',
+                        fontSize: 12,
+                        fontWeight: 800,
+                        outline: 'none',
+                      }}
+                      aria-label="Retention timeframe"
+                    >
+                      <option value={7}>Ultimi 7 giorni</option>
+                      <option value={14}>Ultimi 14 giorni</option>
+                      <option value={30}>Ultimi 30 giorni</option>
+                      <option value={90}>Ultimi 90 giorni</option>
+                    </select>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => runBrowse('registeredNoDeposit')}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}
+                    >
+                      Registrati · 0 depositi
+                    </button>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => runBrowse('ftdNotQualified')}
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: 999,
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}
+                    >
+                      FTD · non qualificati
+                    </button>
                   </div>
                 )}
 
@@ -1630,170 +1871,218 @@ export default function SupportUserCheck({ shareConfig = null }) {
                   subtitle={t('support.loader.results')}
                 />
               ) : (
-                <div className="support-list">
-                  {resultsToShow.map(({ raw, mapped }, idx) => {
-                    const isSel = selectedRaw === raw
-                    const isHover = hoverIndex === idx
-                    const initials = initialsFor(mapped)
-                    return (
-                      <div key={idx} className="support-list-item" style={{ marginBottom: 6 }}>
-                        <div
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') onSelectUser(raw)
-                          }}
-                          onClick={() => onSelectUser(raw)}
-                          onMouseEnter={() => setHoverIndex(idx)}
-                          onMouseLeave={() => setHoverIndex(null)}
-                          className="support-row"
-                          style={{ border: isSel ? '1px solid rgba(99,102,241,0.9)' : undefined }}
-                        >
+                <div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 10,
+                      flexWrap: 'wrap',
+                      marginBottom: 10,
+                    }}
+                  >
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--muted)' }}>
+                        Filtro
+                      </div>
+                      <select
+                        value={resultsFilter}
+                        onChange={(e) => setResultsFilter(e.target.value)}
+                        style={{
+                          padding: '8px 10px',
+                          borderRadius: 10,
+                          border: '1px solid rgba(148,163,184,0.22)',
+                          background: 'rgba(2,6,23,0.35)',
+                          color: 'rgba(255,255,255,0.92)',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          outline: 'none',
+                        }}
+                        aria-label="Results filter"
+                      >
+                        <option value="all">Tutti</option>
+                        <option value="registeredNoDeposit">Registrati, 0 depositi</option>
+                        <option value="ftdNotQualified">FTD, non qualificati</option>
+                      </select>
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 800 }}>
+                      {sortedResults.length.toLocaleString()} results
+                    </div>
+                  </div>
+
+                  <div className="support-list">
+                    {resultsToShow.map(({ raw, mapped }, idx) => {
+                      const isSel = selectedRaw === raw
+                      const isHover = hoverIndex === idx
+                      const initials = initialsFor(mapped)
+                      return (
+                        <div key={idx} className="support-list-item" style={{ marginBottom: 6 }}>
                           <div
-                            style={{ display: 'flex', gap: 14, alignItems: 'center', minWidth: 0 }}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') onSelectUser(raw)
+                            }}
+                            onClick={() => onSelectUser(raw)}
+                            onMouseEnter={() => setHoverIndex(idx)}
+                            onMouseLeave={() => setHoverIndex(null)}
+                            className="support-row"
+                            style={{ border: isSel ? '1px solid rgba(99,102,241,0.9)' : undefined }}
                           >
                             <div
                               style={{
-                                width: 48,
-                                height: 48,
-                                borderRadius: 12,
-                                background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
-                                color: '#fff',
                                 display: 'flex',
+                                gap: 14,
                                 alignItems: 'center',
-                                justifyContent: 'center',
-                                fontWeight: 800,
+                                minWidth: 0,
                               }}
                             >
-                              {initials}
-                            </div>
-                            <div style={{ minWidth: 0 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div className="name">{mapped.name || mapped.userId || '—'}</div>
-                                {(() => {
-                                  const isTop =
-                                    mapped?.depositNum &&
-                                    topThreshold > 0 &&
-                                    mapped.depositNum >= topThreshold
-                                  return isTop ? (
-                                    <span className="badge top">
-                                      {t('support.userCheck.badge.top')}
-                                    </span>
-                                  ) : null
-                                })()}
-                              </div>
-                              <div className="meta">
-                                {mapped.userId || ''}
-                                {mapped.mt5 ? ` · ${mapped.mt5}` : ''}
-                                {mapped.country ? ` · ${mapped.country}` : ''}
-                              </div>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontWeight: 900 }}>{fmtEuro(mapped.totalDeposits)}</div>
-                            <div className="deposits">
-                              {t('support.userCheck.deposits', {
-                                count: mapped.depositCount || '0',
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                  {resultsToShow.length === 0 &&
-                    (() => {
-                      const partnerId = toPartnerCustomerIdFromQuery(query)
-                      const partnerUrl = partnerId
-                        ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
-                        : null
-                      // Cellxpert logic: fixed format, only last 6 digits from user input
-                      let cellxpertUrl = null
-                      if (partnerId) {
-                        const digits = String(query || '').replace(/\D+/g, '')
-                        const last6 = digits.slice(-6)
-                        if (last6.length === 6) {
-                          cellxpertUrl = `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/bullwaves-${last6}`
-                        }
-                      }
-
-                      // Skale logic: fixed format, only last 6 digits from user input
-                      let skaleUrl = null
-                      if (partnerId) {
-                        // Extract only the last 6 digits from the user input
-                        const digits = String(query || '').replace(/\D+/g, '')
-                        const last6 = digits.slice(-6)
-                        if (last6.length === 6) {
-                          skaleUrl = `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${last6}`
-                        }
-                      }
-
-                      return (
-                        <div
-                          className="neutral-card"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 12,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <div style={{ minWidth: 0 }}>
-                            <div style={{ fontWeight: 900 }}>
-                              {t('support.userCheck.noResults')}
-                            </div>
-                            {partnerId ? (
-                              <div style={{ marginTop: 4, opacity: 0.8 }}>{partnerId}</div>
-                            ) : null}
-                          </div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            {cellxpertUrl && (
-                              <a
-                                href={cellxpertUrl}
-                                target="_blank"
-                                rel="noreferrer"
+                              <div
                                 style={{
-                                  padding: '8px 12px',
-                                  borderRadius: 999,
-                                  border: '1px solid rgba(99,102,241,0.28)',
-                                  background: 'rgba(99,102,241,0.14)',
-                                  color: 'rgba(255,255,255,0.92)',
-                                  fontWeight: 900,
-                                  fontSize: 12,
-                                  textDecoration: 'none',
-                                  whiteSpace: 'nowrap',
+                                  width: 48,
+                                  height: 48,
+                                  borderRadius: 12,
+                                  background: 'linear-gradient(135deg,#06b6d4,#7c3aed)',
+                                  color: '#fff',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontWeight: 800,
                                 }}
-                                title="Open in Cellxpert"
                               >
-                                Open in Cellxpert
-                              </a>
-                            )}
-                            {skaleUrl && (
-                              <a
-                                href={skaleUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                style={{
-                                  padding: '8px 12px',
-                                  borderRadius: 999,
-                                  border: '1px solid rgba(99,102,241,0.28)',
-                                  background: 'rgba(99,102,241,0.14)',
-                                  color: 'rgba(255,255,255,0.92)',
-                                  fontWeight: 900,
-                                  fontSize: 12,
-                                  textDecoration: 'none',
-                                  whiteSpace: 'nowrap',
-                                }}
-                                title="Open in Skale"
-                              >
-                                Open in Skale
-                              </a>
-                            )}
+                                {initials}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div className="name">{mapped.name || mapped.userId || '—'}</div>
+                                  {(() => {
+                                    const isTop =
+                                      mapped?.depositNum &&
+                                      topThreshold > 0 &&
+                                      mapped.depositNum >= topThreshold
+                                    return isTop ? (
+                                      <span className="badge top">
+                                        {t('support.userCheck.badge.top')}
+                                      </span>
+                                    ) : null
+                                  })()}
+                                </div>
+                                <div className="meta">
+                                  {mapped.userId || ''}
+                                  {mapped.mt5 ? ` · ${mapped.mt5}` : ''}
+                                  {mapped.country ? ` · ${mapped.country}` : ''}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontWeight: 900 }}>{fmtEuro(mapped.totalDeposits)}</div>
+                              <div className="deposits">
+                                {t('support.userCheck.deposits', {
+                                  count: mapped.depositCount || '0',
+                                })}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       )
-                    })()}
+                    })}
+                    {resultsToShow.length === 0 &&
+                      (() => {
+                        const partnerId = toPartnerCustomerIdFromQuery(query)
+                        const partnerUrl = partnerId
+                          ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
+                          : null
+                        // Cellxpert logic: fixed format, only last 6 digits from user input
+                        let cellxpertUrl = null
+                        if (partnerId) {
+                          const digits = String(query || '').replace(/\D+/g, '')
+                          const last6 = digits.slice(-6)
+                          if (last6.length === 6) {
+                            cellxpertUrl = `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/bullwaves-${last6}`
+                          }
+                        }
+
+                        // Skale logic: fixed format, only last 6 digits from user input
+                        let skaleUrl = null
+                        if (partnerId) {
+                          // Extract only the last 6 digits from the user input
+                          const digits = String(query || '').replace(/\D+/g, '')
+                          const last6 = digits.slice(-6)
+                          if (last6.length === 6) {
+                            skaleUrl = `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${last6}`
+                          }
+                        }
+
+                        return (
+                          <div
+                            className="neutral-card"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 12,
+                              flexWrap: 'wrap',
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontWeight: 900 }}>
+                                {t('support.userCheck.noResults')}
+                              </div>
+                              {partnerId ? (
+                                <div style={{ marginTop: 4, opacity: 0.8 }}>{partnerId}</div>
+                              ) : null}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              {cellxpertUrl && (
+                                <a
+                                  href={cellxpertUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(99,102,241,0.28)',
+                                    background: 'rgba(99,102,241,0.14)',
+                                    color: 'rgba(255,255,255,0.92)',
+                                    fontWeight: 900,
+                                    fontSize: 12,
+                                    textDecoration: 'none',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title="Open in Cellxpert"
+                                >
+                                  Open in Cellxpert
+                                </a>
+                              )}
+                              {skaleUrl && (
+                                <a
+                                  href={skaleUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: 999,
+                                    border: '1px solid rgba(99,102,241,0.28)',
+                                    background: 'rgba(99,102,241,0.14)',
+                                    color: 'rgba(255,255,255,0.92)',
+                                    fontWeight: 900,
+                                    fontSize: 12,
+                                    textDecoration: 'none',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                  title="Open in Skale"
+                                >
+                                  Open in Skale
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        )
+                      })()}
+                  </div>
                 </div>
               )}
             </div>
