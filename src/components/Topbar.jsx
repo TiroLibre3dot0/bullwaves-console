@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDataStatus } from '../context/DataStatusContext'
 import { useMediaPaymentsData } from '../features/media-payments/hooks/useMediaPaymentsData'
@@ -59,7 +59,6 @@ export default function Topbar({
   const [showTools, setShowTools] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDataInfoModal, setShowDataInfoModal] = useState(false)
-  const hoverTimer = useRef(null)
   const hasNav = Boolean(children)
 
   const isMobile = () => window.innerWidth <= 768
@@ -149,9 +148,8 @@ export default function Topbar({
   const tools = useMemo(() => CONSOLE_TOOLS, [])
 
   const handleLogoClick = () => {
-    if (isMobile()) {
-      setShowTools(!showTools)
-    }
+    setShowTools((v) => !v)
+    setShowMobileMenu(false)
   }
 
   const handleOverlayClick = () => {
@@ -176,18 +174,15 @@ export default function Topbar({
     setShowTools(false)
   }
 
-  const handleEnter = () => {
-    if (!isMobile()) {
-      if (hoverTimer.current) window.clearTimeout(hoverTimer.current)
-      setShowTools(true)
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!showTools) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setShowTools(false)
     }
-  }
-
-  const handleLeave = () => {
-    if (!isMobile()) {
-      hoverTimer.current = setTimeout(() => setShowTools(false), 120)
-    }
-  }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showTools])
 
   return (
     <>
@@ -212,9 +207,14 @@ export default function Topbar({
         )}
         <div
           className="title logo-hit flex items-center"
-          onMouseEnter={handleEnter}
-          onMouseLeave={handleLeave}
           onClick={handleLogoClick}
+          role="button"
+          tabIndex={0}
+          aria-label={t('app.tools')}
+          aria-expanded={showTools ? 'true' : 'false'}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') handleLogoClick()
+          }}
         >
           <img
             src="/Logo.png"
@@ -223,7 +223,7 @@ export default function Topbar({
           />
           {dataStatus && <DataStatusIcon dataStatus={dataStatus} onClick={handleDataStatusClick} />}
           {showTools && (
-            <div className="logo-tools-pop" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+            <div className="logo-tools-pop">
               <div className="logo-tools-title">{t('app.tools')}</div>
               <div className="logo-tools-list">
                 {tools.map((tool) => (
