@@ -1,7 +1,733 @@
 {
-  "total_name_country_groups": 68953,
-  "multi_groups": 13023,
+  "total_name_country_groups": 69185,
+  "multi_groups": 13041,
   "groups": [
+    {
+      "name": "david smith",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-938250",
+          "mt5_account": "2002176",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-742469",
+          "mt5_account": "3000826",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "anusha todurkar",
+      "country": "india",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-938201",
+          "mt5_account": "2002175",
+          "has_ftd": true,
+          "has_qftd": true
+        },
+        {
+          "user_id": "bullwaves-791823",
+          "mt5_account": "2000877",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "anusha todurkar",
+      "country": "united kingdom",
+      "count": 19,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-938135",
+          "mt5_account": "2002173",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-863209",
+          "mt5_account": "2001621",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-852186",
+          "mt5_account": "2001528",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-845584",
+          "mt5_account": "2001467",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-837804",
+          "mt5_account": "2001384",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-809525",
+          "mt5_account": "2001008",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-805264",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-701786",
+          "mt5_account": "1317021",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-646527",
+          "mt5_account": "1310764",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-640991",
+          "mt5_account": "1310097",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-639345",
+          "mt5_account": "1309983",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-629630",
+          "mt5_account": "1309146",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-586926",
+          "mt5_account": "1304220",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-577467",
+          "mt5_account": "1303036",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-539364",
+          "mt5_account": "1218029",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-378286",
+          "mt5_account": "951138",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-363173",
+          "mt5_account": "949377",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-352638",
+          "mt5_account": "948009,948015",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-228689",
+          "mt5_account": "929336",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "akshay damania",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-937627",
+          "mt5_account": "2002169",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-576917",
+          "mt5_account": "1302987",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "tim sakaio",
+      "country": "australia",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-937456",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-913734",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "matthew mcmahon",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-937354",
+          "mt5_account": "3010478",
+          "has_ftd": true,
+          "has_qftd": true
+        },
+        {
+          "user_id": "bullwaves-932913",
+          "mt5_account": "2002128",
+          "has_ftd": true,
+          "has_qftd": true
+        }
+      ]
+    },
+    {
+      "name": "jaskaran singh",
+      "country": "united kingdom",
+      "count": 4,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-937292",
+          "mt5_account": "3010475",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-802067",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-354321",
+          "mt5_account": "948233",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-275947",
+          "mt5_account": "937072",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "ghassen zaghdoud",
+      "country": "united arab emirates",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-936959",
+          "mt5_account": "3010460",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-713724",
+          "mt5_account": "1318514",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "wei wen hoon",
+      "country": "singapore",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-936934",
+          "mt5_account": "3010458,3010469",
+          "has_ftd": true,
+          "has_qftd": true
+        },
+        {
+          "user_id": "bullwaves-915594",
+          "mt5_account": "3009485",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "jamie vickery",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-936785",
+          "mt5_account": "3010451",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-782604",
+          "mt5_account": "2000741",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "arshdeep singh",
+      "country": "new zealand",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-936659",
+          "mt5_account": "3010445",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-747159",
+          "mt5_account": "3001105",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "regan jones",
+      "country": "united kingdom",
+      "count": 5,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-935779",
+          "mt5_account": "2002155",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-800576",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-554815",
+          "mt5_account": "1300184",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-210012",
+          "mt5_account": "926388",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-209995",
+          "mt5_account": "926383",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "abdul wahab",
+      "country": "indonesia",
+      "count": 3,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-935725",
+          "mt5_account": "2002153",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-797640",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-5437",
+          "mt5_account": "500998",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "anthony ballard",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-934855",
+          "mt5_account": "2002143",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-896105",
+          "mt5_account": "3008465",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "christian ragasa",
+      "country": "australia",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-934690",
+          "mt5_account": "2002141",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-312446",
+          "mt5_account": "942563",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "james coleman",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-934499",
+          "mt5_account": "3010344",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-378669",
+          "mt5_account": "951195",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "usman hussain",
+      "country": "united kingdom",
+      "count": 5,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-934279",
+          "mt5_account": "3010339",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-742674",
+          "mt5_account": "3000845",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-511389",
+          "mt5_account": "1214716",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-328500",
+          "mt5_account": "944779",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-320274",
+          "mt5_account": "943608",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "jordan cox",
+      "country": "australia",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-933558",
+          "mt5_account": "2002135",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-227727",
+          "mt5_account": "929176",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "adrian paul castro",
+      "country": "guam",
+      "count": 3,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-933506",
+          "mt5_account": "3010317",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-800731",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-229391",
+          "mt5_account": "929458",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "emmanuel asare",
+      "country": "united kingdom",
+      "count": 3,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-933411",
+          "mt5_account": "3010314",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-800858",
+          "mt5_account": "",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-243792",
+          "mt5_account": "931763",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "steven de deyne",
+      "country": "netherlands",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-932989",
+          "mt5_account": "3010294",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-472423",
+          "mt5_account": "1209470",
+          "has_ftd": true,
+          "has_qftd": true
+        }
+      ]
+    },
+    {
+      "name": "barlin warsame",
+      "country": "netherlands",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-932741",
+          "mt5_account": "3010284",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-789249",
+          "mt5_account": "3003376",
+          "has_ftd": true,
+          "has_qftd": true
+        }
+      ]
+    },
+    {
+      "name": "mohamed abdulle",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-932726",
+          "mt5_account": "3010283",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-574788",
+          "mt5_account": "1302735",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "joshua smith",
+      "country": "united kingdom",
+      "count": 4,
+      "has_ftd": true,
+      "has_qftd": true,
+      "members": [
+        {
+          "user_id": "bullwaves-932687",
+          "mt5_account": "3010282",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-455645",
+          "mt5_account": "1207348",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-296845",
+          "mt5_account": "940104",
+          "has_ftd": true,
+          "has_qftd": true
+        },
+        {
+          "user_id": "bullwaves-59481",
+          "mt5_account": "903541",
+          "has_ftd": true,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "ahmed ibrahim",
+      "country": "maldives",
+      "count": 2,
+      "has_ftd": false,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-932485",
+          "mt5_account": "3010276",
+          "has_ftd": false,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-918777",
+          "mt5_account": "3009626",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
+    {
+      "name": "stephen smith",
+      "country": "united kingdom",
+      "count": 2,
+      "has_ftd": true,
+      "has_qftd": false,
+      "members": [
+        {
+          "user_id": "bullwaves-932440",
+          "mt5_account": "3010274",
+          "has_ftd": true,
+          "has_qftd": false
+        },
+        {
+          "user_id": "bullwaves-741247",
+          "mt5_account": "3000712",
+          "has_ftd": false,
+          "has_qftd": false
+        }
+      ]
+    },
     {
       "name": "fintan brough",
       "country": "united kingdom",
@@ -70,13 +796,13 @@
       "country": "united kingdom",
       "count": 2,
       "has_ftd": true,
-      "has_qftd": false,
+      "has_qftd": true,
       "members": [
         {
           "user_id": "bullwaves-930918",
           "mt5_account": "2002111,2002114",
-          "has_ftd": false,
-          "has_qftd": false
+          "has_ftd": true,
+          "has_qftd": true
         },
         {
           "user_id": "bullwaves-278479",
@@ -175,13 +901,13 @@
       "country": "united kingdom",
       "count": 2,
       "has_ftd": true,
-      "has_qftd": true,
+      "has_qftd": false,
       "members": [
         {
           "user_id": "bullwaves-929020",
           "mt5_account": "3010154",
           "has_ftd": true,
-          "has_qftd": true
+          "has_qftd": false
         },
         {
           "user_id": "bullwaves-769262",
@@ -780,7 +1506,7 @@
         {
           "user_id": "bullwaves-925614",
           "mt5_account": "2002082",
-          "has_ftd": false,
+          "has_ftd": true,
           "has_qftd": false
         },
         {
@@ -903,13 +1629,13 @@
       "name": "bhupinder singh",
       "country": "australia",
       "count": 2,
-      "has_ftd": false,
+      "has_ftd": true,
       "has_qftd": false,
       "members": [
         {
           "user_id": "bullwaves-922472",
           "mt5_account": "3009910",
-          "has_ftd": false,
+          "has_ftd": true,
           "has_qftd": false
         },
         {
@@ -988,13 +1714,13 @@
       "country": "unknown country",
       "count": 2,
       "has_ftd": true,
-      "has_qftd": true,
+      "has_qftd": false,
       "members": [
         {
           "user_id": "bullwaves-921710",
           "mt5_account": "3009882",
           "has_ftd": true,
-          "has_qftd": true
+          "has_qftd": false
         },
         {
           "user_id": "bullwaves-848029",
@@ -2083,13 +2809,13 @@
       "country": "united kingdom",
       "count": 2,
       "has_ftd": true,
-      "has_qftd": false,
+      "has_qftd": true,
       "members": [
         {
           "user_id": "bullwaves-911028",
           "mt5_account": "3009292",
-          "has_ftd": false,
-          "has_qftd": false
+          "has_ftd": true,
+          "has_qftd": true
         },
         {
           "user_id": "bullwaves-249226",
@@ -2406,14 +3132,14 @@
       "name": "panagiotis vervitas",
       "country": "greece",
       "count": 2,
-      "has_ftd": false,
-      "has_qftd": false,
+      "has_ftd": true,
+      "has_qftd": true,
       "members": [
         {
           "user_id": "bullwaves-907782",
           "mt5_account": "2001987",
-          "has_ftd": false,
-          "has_qftd": false
+          "has_ftd": true,
+          "has_qftd": true
         },
         {
           "user_id": "bullwaves-906659",
@@ -3144,14 +3870,14 @@
       "name": "alexandra graham",
       "country": "united kingdom",
       "count": 5,
-      "has_ftd": false,
-      "has_qftd": false,
+      "has_ftd": true,
+      "has_qftd": true,
       "members": [
         {
           "user_id": "bullwaves-901574",
           "mt5_account": "3008773",
-          "has_ftd": false,
-          "has_qftd": false
+          "has_ftd": true,
+          "has_qftd": true
         },
         {
           "user_id": "bullwaves-803622",
@@ -7504,123 +8230,6 @@
           "user_id": "bullwaves-407379",
           "mt5_account": "1201412",
           "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
-      "name": "anusha todurkar",
-      "country": "united kingdom",
-      "count": 18,
-      "has_ftd": true,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-863209",
-          "mt5_account": "2001621",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-852186",
-          "mt5_account": "2001528",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-845584",
-          "mt5_account": "2001467",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-837804",
-          "mt5_account": "2001384",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-809525",
-          "mt5_account": "2001008",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-805264",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-701786",
-          "mt5_account": "1317021",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-646527",
-          "mt5_account": "1310764",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-640991",
-          "mt5_account": "1310097",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-639345",
-          "mt5_account": "1309983",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-629630",
-          "mt5_account": "1309146",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-586926",
-          "mt5_account": "1304220",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-577467",
-          "mt5_account": "1303036",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-539364",
-          "mt5_account": "1218029",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-378286",
-          "mt5_account": "951138",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-363173",
-          "mt5_account": "949377",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-352638",
-          "mt5_account": "948009,948015",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-228689",
-          "mt5_account": "929336",
-          "has_ftd": true,
           "has_qftd": false
         }
       ]
@@ -99444,27 +100053,6 @@
       ]
     },
     {
-      "name": "adrian paul castro",
-      "country": "guam",
-      "count": 2,
-      "has_ftd": false,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-800731",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-229391",
-          "mt5_account": "929458",
-          "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
       "name": "dumisani mabutho",
       "country": "zimbabwe",
       "count": 2,
@@ -103023,39 +103611,6 @@
         {
           "user_id": "bullwaves-172817",
           "mt5_account": "920770",
-          "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
-      "name": "regan jones",
-      "country": "united kingdom",
-      "count": 4,
-      "has_ftd": true,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-800576",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-554815",
-          "mt5_account": "1300184",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-210012",
-          "mt5_account": "926388",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-209995",
-          "mt5_account": "926383",
           "has_ftd": false,
           "has_qftd": false
         }
@@ -111174,27 +111729,6 @@
       ]
     },
     {
-      "name": "emmanuel asare",
-      "country": "united kingdom",
-      "count": 2,
-      "has_ftd": false,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-800858",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-243792",
-          "mt5_account": "931763",
-          "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
       "name": "aboubakar diarrassouba",
       "country": "united kingdom",
       "count": 2,
@@ -112713,33 +113247,6 @@
         {
           "user_id": "bullwaves-178668",
           "mt5_account": "921406",
-          "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
-      "name": "jaskaran singh",
-      "country": "united kingdom",
-      "count": 3,
-      "has_ftd": false,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-802067",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-354321",
-          "mt5_account": "948233",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-275947",
-          "mt5_account": "937072",
           "has_ftd": false,
           "has_qftd": false
         }
@@ -177054,27 +177561,6 @@
       ]
     },
     {
-      "name": "abdul wahab",
-      "country": "indonesia",
-      "count": 2,
-      "has_ftd": false,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-797640",
-          "mt5_account": "",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-5437",
-          "mt5_account": "500998",
-          "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
       "name": "teo sze hoo",
       "country": "malaysia",
       "count": 2,
@@ -183790,39 +184276,6 @@
           "user_id": "bullwaves-192405",
           "mt5_account": "923539",
           "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
-      "name": "usman hussain",
-      "country": "united kingdom",
-      "count": 4,
-      "has_ftd": true,
-      "has_qftd": false,
-      "members": [
-        {
-          "user_id": "bullwaves-742674",
-          "mt5_account": "3000845",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-511389",
-          "mt5_account": "1214716",
-          "has_ftd": true,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-328500",
-          "mt5_account": "944779",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-320274",
-          "mt5_account": "943608",
-          "has_ftd": true,
           "has_qftd": false
         }
       ]
@@ -205351,7 +205804,7 @@
       "country": "new zealand",
       "count": 2,
       "has_ftd": true,
-      "has_qftd": false,
+      "has_qftd": true,
       "members": [
         {
           "user_id": "bullwaves-535622",
@@ -205362,8 +205815,8 @@
         {
           "user_id": "bullwaves-205701",
           "mt5_account": "925813",
-          "has_ftd": false,
-          "has_qftd": false
+          "has_ftd": true,
+          "has_qftd": true
         }
       ]
     },
@@ -211288,33 +211741,6 @@
           "user_id": "bullwaves-287555",
           "mt5_account": "938827",
           "has_ftd": false,
-          "has_qftd": false
-        }
-      ]
-    },
-    {
-      "name": "joshua smith",
-      "country": "united kingdom",
-      "count": 3,
-      "has_ftd": true,
-      "has_qftd": true,
-      "members": [
-        {
-          "user_id": "bullwaves-455645",
-          "mt5_account": "1207348",
-          "has_ftd": false,
-          "has_qftd": false
-        },
-        {
-          "user_id": "bullwaves-296845",
-          "mt5_account": "940104",
-          "has_ftd": true,
-          "has_qftd": true
-        },
-        {
-          "user_id": "bullwaves-59481",
-          "mt5_account": "903541",
-          "has_ftd": true,
           "has_qftd": false
         }
       ]
