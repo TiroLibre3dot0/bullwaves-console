@@ -1,4 +1,4 @@
-// Single source of truth for the 5 execution stories used across the Execution Hub.
+// Single source of truth for the Execution Hub Mega Stories.
 
 export const seedStories = ({ locale } = {}) => {
   const lang = locale === 'it' ? 'it' : 'en'
@@ -270,6 +270,209 @@ export const seedStories = ({ locale } = {}) => {
         },
       ],
     },
+
+    {
+      id: 'story-bizdev-callcenter',
+      epic: 'Acquisition',
+      title: pick(
+        'Business Development: Call Center Services (FTD Pipeline)',
+        'Business Development: Call Center Services (pipeline FTD)'
+      ),
+      owner: pick('Business Development / Sales Ops', 'Business Development / Sales Ops'),
+      progress: 0.12,
+      risk: 'Medium',
+      goal: pick(
+        'Build and execute a call-center driven acquisition channel with clear owners, training, and weekly reporting. Targets: Rahul → Call Center Services (ongoing, 60–70 FTD target). Joseph → Call Center Services AMKS (pipeline).',
+        'Costruire ed eseguire un canale di acquisizione via call center con owner chiari, training e reporting settimanale. Target: Rahul → Call Center Services (ongoing, target 60–70 FTD). Joseph → Call Center Services AMKS (pipeline).'
+      ),
+      kpis: [
+        {
+          id: 'ftd_ccs',
+          label: pick(
+            'FTD target — Call Center Services (Rahul)',
+            'Target FTD — Call Center Services (Rahul)'
+          ),
+          current: '—',
+          target: pick('60–70 (ongoing)', '60–70 (ongoing)'),
+        },
+        {
+          id: 'amks_pipeline',
+          label: pick('AMKS pipeline — Joseph', 'Pipeline AMKS — Joseph'),
+          current: '—',
+          target: pick('Pipeline active + first test deals', 'Pipeline attiva + primi deal test'),
+        },
+        {
+          id: 'weekly_reporting',
+          label: pick('Weekly KPI reporting', 'Reporting KPI settimanale'),
+          current: '—',
+          target: pick('Every Monday snapshot', 'Snapshot ogni lunedì'),
+        },
+      ],
+      status: 'Executing',
+      blockers: [
+        pick(
+          'KPI attribution not wired end-to-end (Voiso ↔ Skale reporting still evolving)',
+          'Attribuzione KPI non wired end-to-end (reporting Voiso ↔ Skale ancora in evoluzione)'
+        ),
+        pick(
+          'No single dashboard to track outreach → calls → FTD and AMKS pipeline stages',
+          'Nessuna dashboard unica per tracciare outreach → calls → FTD e stadi pipeline AMKS'
+        ),
+      ],
+      decisions: [
+        {
+          text: pick(
+            'Confirm owners: Marina (Hiring), Ghassam (Training), Rahul (Target Execution), Joseph (AMKS Pipeline).',
+            'Confermare owner: Marina (Hiring), Ghassam (Training), Rahul (Target Execution), Joseph (Pipeline AMKS).'
+          ),
+          owner: pick('COO / BD Lead', 'COO / BD Lead'),
+        },
+        {
+          text: pick(
+            'Approve KPI definitions + reporting cadence (FTD attribution window, pipeline stages, weekly snapshot format).',
+            'Approvare definizioni KPI + cadenza reporting (finestra attribuzione FTD, stadi pipeline, formato snapshot settimanale).'
+          ),
+          owner: pick('Sales Ops / BI', 'Sales Ops / BI'),
+        },
+      ],
+      tasks: [
+        {
+          id: 'task-bd-1',
+          title: pick(
+            'Phase 1 — Hiring (Marina): define roles + capacity plan',
+            'Fase 1 — Hiring (Marina): definire ruoli + capacity plan'
+          ),
+          context: pick(
+            'Define what needs to be hired for the call center channel (roles, coverage, shift plan, KPIs). Output: a 1-page hiring plan used for recruiting and onboarding.',
+            'Definire cosa assumere per il canale call center (ruoli, copertura, turni, KPI). Output: hiring plan in 1 pagina usato per recruiting e onboarding.'
+          ),
+          owner: pick('Marina', 'Marina'),
+          status: 'Executing',
+          done: false,
+          impact: 'High',
+        },
+        {
+          id: 'task-bd-2',
+          title: pick(
+            'Phase 1 — Hiring (Marina): outreach team onboarding checklist',
+            'Fase 1 — Hiring (Marina): checklist onboarding team outreach'
+          ),
+          context: pick(
+            'Create an onboarding checklist (access, tools, scripts, QA). Output: new hires ready to perform supervised calls within 5 business days.',
+            'Creare una checklist onboarding (accessi, tool, script, QA). Output: nuovi assunti pronti a fare chiamate supervisionate entro 5 giorni lavorativi.'
+          ),
+          owner: pick('Marina', 'Marina'),
+          status: 'Executing',
+          done: false,
+          impact: 'Medium',
+        },
+        {
+          id: 'task-bd-3',
+          title: pick(
+            'Phase 2 — Training (Ghassam): playbook + scripts + QA',
+            'Fase 2 — Training (Ghassam): playbook + script + QA'
+          ),
+          context: pick(
+            'Produce the training playbook: value prop, objection handling, call scripts, and QA checklist. Output: 1 standard flow + 2 variants and a QA scoring rubric.',
+            'Produrre playbook training: value prop, gestione obiezioni, call script e checklist QA. Output: 1 flow standard + 2 varianti e rubric di scoring QA.'
+          ),
+          owner: pick('Ghassam', 'Ghassam'),
+          status: 'Executing',
+          done: false,
+          impact: 'High',
+        },
+        {
+          id: 'task-bd-4',
+          title: pick(
+            'Phase 2 — Training (Ghassam): tools + reporting readiness',
+            'Fase 2 — Training (Ghassam): tool + readiness reporting'
+          ),
+          context: pick(
+            'Ensure the team is trained on the tools (Voiso/CRM tagging) and on how KPIs are tracked. Output: everyone knows how to tag outcomes so reporting is reliable.',
+            'Assicurare training su tool (Voiso/tagging CRM) e su come sono tracciati i KPI. Output: tutti sanno taggare gli esiti in modo affidabile per il reporting.'
+          ),
+          owner: pick('Ghassam', 'Ghassam'),
+          status: 'Executing',
+          done: false,
+          impact: 'High',
+        },
+        {
+          id: 'task-bd-5',
+          title: pick(
+            'Phase 3 — Target Execution: outreach setup (lists, cadences, ownership)',
+            'Fase 3 — Target Execution: setup outreach (liste, cadenze, ownership)'
+          ),
+          context: pick(
+            'Set up outreach operations: lead lists, daily call cadence, assignment rules, and ownership. Output: a repeatable daily routine with clear SLAs and handoffs.',
+            'Impostare operations outreach: liste lead, cadenza chiamate, regole assegnazione e ownership. Output: routine giornaliera ripetibile con SLA e handoff chiari.'
+          ),
+          owner: pick('Sales Ops', 'Sales Ops'),
+          status: 'Executing',
+          done: false,
+          impact: 'High',
+        },
+        {
+          id: 'task-bd-6',
+          title: pick(
+            'Phase 3 — Target Execution (Rahul): hit 60–70 FTD target (ongoing)',
+            'Fase 3 — Target Execution (Rahul): raggiungere target 60–70 FTD (ongoing)'
+          ),
+          context: pick(
+            'Run weekly execution with a clear plan (volume, conversion assumptions, and next actions). Output: weekly snapshot of calls → conversions → FTD and next week adjustments.',
+            'Eseguire weekly execution con piano chiaro (volumi, assunzioni conversione, next actions). Output: snapshot settimanale calls → conversion → FTD e aggiustamenti per la settimana successiva.'
+          ),
+          owner: pick('Rahul', 'Rahul'),
+          status: 'Executing',
+          done: false,
+          impact: 'High',
+        },
+        {
+          id: 'task-bd-7',
+          title: pick(
+            'Phase 3 — Target Execution (Joseph): AMKS pipeline build (pipeline)',
+            'Fase 3 — Target Execution (Joseph): costruire pipeline AMKS (pipeline)'
+          ),
+          context: pick(
+            'Build and maintain AMKS pipeline: define stages, next steps, and owners. Output: pipeline with stage counts + next action per deal reviewed weekly.',
+            'Costruire e mantenere pipeline AMKS: definire stadi, next step e owner. Output: pipeline con conteggi per stadio + next action per deal reviewata settimanalmente.'
+          ),
+          owner: pick('Joseph', 'Joseph'),
+          status: 'Planned',
+          done: false,
+          impact: 'Medium',
+        },
+        {
+          id: 'task-bd-8',
+          title: pick(
+            'Reporting dashboard (calls → FTD + pipeline)',
+            'Reporting dashboard (calls → FTD + pipeline)'
+          ),
+          context: pick(
+            'Create a reporting dashboard for the channel (calls, outcomes, conversion, FTD attribution, and AMKS pipeline). Output: a Monday report used in the Command Center review.',
+            'Creare una dashboard reporting per il canale (calls, esiti, conversione, attribuzione FTD e pipeline AMKS). Output: report del lunedì usato nel review del Command Center.'
+          ),
+          owner: pick('BI', 'BI'),
+          done: false,
+          impact: 'High',
+        },
+
+        {
+          id: 'task-bd-9',
+          title: pick(
+            'KPI tracking + ownership assignment (definitions + cadence)',
+            'Tracking KPI + ownership assignment (definizioni + cadenza)'
+          ),
+          context: pick(
+            'Define KPI tracking end-to-end: metric definitions, attribution rules, owners, and weekly cadence. Output: a shared 1-page “what we track + who owns it” reference used by the team.',
+            'Definire tracking KPI end-to-end: definizioni metriche, regole attribuzione, owner e cadenza settimanale. Output: riferimento condiviso in 1 pagina “cosa tracciamo + chi lo possiede” usato dal team.'
+          ),
+          owner: pick('Sales Ops', 'Sales Ops'),
+          done: false,
+          impact: 'High',
+        },
+      ],
+    },
+
     {
       id: 'story-product-crm',
       epic: 'Platform',

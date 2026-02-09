@@ -830,7 +830,7 @@ const TASK_SEEDS = [
     strategicCategory: 'Platform & Infrastructure',
     impactLevel: 'High',
     owner: 'Tech',
-    status: 'Executing',
+    status: 'Review & QA',
     icon: 'messages',
     i18n: {
       en: {
@@ -853,7 +853,8 @@ const TASK_SEEDS = [
         description:
           'Execute the Voiso ↔ Skale integration so we can track calling outcomes and operational signals end-to-end.\n\nFocus on:\n\nEvent mapping + IDs\n\nReliability (retries + monitoring)\n\nE2E validation\n\nThis needs to be closed tomorrow.',
         summary: 'Voiso + Skale integration to remove manual ops gaps.',
-        notes: 'Status: executing. Priority: close integration loop ASAP (target: tomorrow).',
+        notes:
+          'Status: review & QA. Priority: validate end-to-end and sign off ASAP (target: tomorrow).',
       },
       it: {
         title: 'Integrazione Voiso ↔ Skale (Calling + Ops)',
@@ -875,7 +876,8 @@ const TASK_SEEDS = [
         description:
           'Eseguire l’integrazione Voiso ↔ Skale per tracciare end-to-end esiti di calling e segnali operativi.\n\nFocus su:\n\nMapping eventi + ID\n\nAffidabilità (retry + monitoring)\n\nValidazione E2E\n\nDa chiudere domani.',
         summary: 'Integrazione Voiso + Skale per chiudere i gap operativi manuali.',
-        notes: 'Status: executing. Priorità: chiudere il loop integrazione ASAP (target: domani).',
+        notes:
+          'Status: review & QA. Priorità: validazione end-to-end e sign-off ASAP (target: domani).',
       },
     },
   },
@@ -1497,7 +1499,7 @@ const TASK_SEEDS = [
     strategicCategory: 'Partnerships & Affiliates',
     impactLevel: 'Medium',
     owner: 'Marketing',
-    status: 'Planned',
+    status: 'Executing',
     icon: 'briefcase',
     i18n: {
       en: {
@@ -1522,7 +1524,7 @@ const TASK_SEEDS = [
           'Plan and execute IFX Expo attendance during 10–12 February.\n\nPlanned meetings:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nGoals:\n\nPartnership discovery\n\nBD meetings and introductions\n\nClear follow-up actions and pipeline tracking after the event.',
         summary: 'Expo plan + meetings + follow-up pipeline.',
         notes:
-          'Status: planned. Event window: 10–12 February (IFX Expo). Meetings scheduled with Trading Central, Autochartist, Skale, Solitics, convrs.io.',
+          'Status: executing. Event window: 10–12 February (IFX Expo). Meetings scheduled with Trading Central, Autochartist, Skale, Solitics, convrs.io.',
       },
       it: {
         title: 'IFX Expo — 10–12 Febbraio (2026)',
@@ -1546,7 +1548,7 @@ const TASK_SEEDS = [
           "Pianificare ed eseguire la presenza a IFX Expo dal 10 al 12 Febbraio.\n\nMeeting pianificati:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nObiettivi:\n\nScouting partnership\n\nMeeting BD e introduzioni\n\nAzioni di follow-up chiare e tracking pipeline dopo l'evento.",
         summary: 'Piano expo + meeting + pipeline follow-up.',
         notes:
-          'Status: planned. Finestra evento: 10–12 Febbraio (IFX Expo). Meeting pianificati con Trading Central, Autochartist, Skale, Solitics, convrs.io.',
+          'Status: executing. Finestra evento: 10–12 Febbraio (IFX Expo). Meeting pianificati con Trading Central, Autochartist, Skale, Solitics, convrs.io.',
       },
     },
   },

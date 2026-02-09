@@ -3,6 +3,8 @@ import { useI18n } from '../../i18n/I18nContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { formatEuro, formatNumber } from '../../lib/formatters'
 import FlowDiagram from './FlowDiagram'
+import CommunicationTemplateModal from './components/CommunicationTemplateModal'
+import { templatesById } from './data/communicationTemplates'
 import useUserBehaviorMetrics from './hooks/useUserBehaviorMetrics'
 import {
   nodes as retentionNodes,
@@ -66,6 +68,9 @@ function randomHex(bytes = 12) {
 export default function FlowsPage({ publicMode = false, sharePayload = null }) {
   const { t, locale } = useI18n()
   const userBehaviorMetrics = useUserBehaviorMetrics()
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState(null)
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false)
 
   const pickText = (value) => {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -137,6 +142,19 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
     const nextUrl = `${url.pathname}${qs ? `?${qs}` : ''}`
     window.history.pushState({ view: 'flows', flow: next }, '', nextUrl)
     setFlowId(next)
+  }
+
+  const openTemplate = (templateId) => {
+    const id = String(templateId || '').trim()
+    if (!id) return
+    if (!templatesById?.[id]) return
+    setSelectedTemplateId(id)
+    setIsTemplateModalOpen(true)
+  }
+
+  const closeTemplate = () => {
+    setIsTemplateModalOpen(false)
+    setSelectedTemplateId(null)
   }
 
   const createPublicLink = async () => {
@@ -477,8 +495,15 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           nodes={localizedNodes}
           edges={localizedEdges}
           onNavigateFlow={goFlow}
+          onOpenTemplate={(templateId) => openTemplate(templateId)}
         />
       </div>
+
+      <CommunicationTemplateModal
+        isOpen={isTemplateModalOpen}
+        onClose={closeTemplate}
+        template={selectedTemplateId ? templatesById[selectedTemplateId] : null}
+      />
     </div>
   )
 }

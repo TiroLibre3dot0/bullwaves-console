@@ -4,7 +4,9 @@ import { Handle, Position } from '../reactflowCompat'
 export default function CommunicationNode({ data }) {
   const isInfluence = data?.kind === 'influence'
   const isLink = Boolean(data?.linkToFlow)
-  const linkVariant = isLink && isInfluence ? 'influence' : 'step'
+  const isTemplate = Boolean(data?.templateId)
+  const isClickable = isLink || isTemplate
+  const linkVariant = isClickable && isInfluence ? 'influence' : 'step'
 
   const kpis = Array.isArray(data?.kpis)
     ? data.kpis
@@ -131,23 +133,25 @@ export default function CommunicationNode({ data }) {
         position: 'relative',
         overflow: 'visible',
         padding: isInfluence ? '8px 10px' : '9px 12px',
-        paddingRight: isLink ? (isInfluence ? 34 : 36) : undefined,
+        paddingRight: isClickable ? (isInfluence ? 34 : 36) : undefined,
         background: isInfluence ? 'rgba(15, 23, 42, 0.28)' : 'rgba(15, 23, 42, 0.55)',
-        border: isLink
+        border: isClickable
           ? `1px solid ${linkPalette.border}`
           : isInfluence
             ? '1px dashed rgba(148, 163, 184, 0.38)'
             : '1px dashed rgba(148, 163, 184, 0.55)',
-        outline: isLink ? `2px solid ${linkPalette.outline}` : 'none',
-        outlineOffset: isLink ? 2 : 0,
+        outline: isClickable ? `2px solid ${linkPalette.outline}` : 'none',
+        outlineOffset: isClickable ? 2 : 0,
         borderRadius: 10,
         color: isInfluence ? 'rgba(226,232,240,0.68)' : 'rgba(226,232,240,0.95)',
         fontWeight: isInfluence ? 750 : 800,
         fontSize: isInfluence ? 11 : 12,
         letterSpacing: 0.2,
         opacity: isInfluence ? 0.72 : 1,
-        cursor: isLink ? 'pointer' : 'default',
-        boxShadow: isLink ? `0 0 0 4px ${linkPalette.ring}, 0 0 22px ${linkPalette.glow}` : 'none',
+        cursor: isClickable ? 'pointer' : 'default',
+        boxShadow: isClickable
+          ? `0 0 0 4px ${linkPalette.ring}, 0 0 22px ${linkPalette.glow}`
+          : 'none',
       }}
     >
       {kpis.length ? (
@@ -227,7 +231,7 @@ export default function CommunicationNode({ data }) {
           })}
         </div>
       ) : null}
-      {isLink ? (
+      {isClickable ? (
         <div
           style={{
             position: 'absolute',

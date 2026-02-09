@@ -26,6 +26,28 @@ function resolveStrategicCategoryFromStory({ epic, title }) {
   return 'Growth & Acquisition'
 }
 
+function normalizeBoardStatus(rawStatus, { done } = {}) {
+  if (done) return 'Done'
+
+  const s = String(rawStatus || '')
+    .trim()
+    .toLowerCase()
+  if (!s) return 'Backlog'
+
+  const map = {
+    backlog: 'Backlog',
+    planned: 'Planned',
+    executing: 'Executing',
+    'review & qa': 'Review & QA',
+    review: 'Review & QA',
+    qa: 'Review & QA',
+    blocked: 'Blocked',
+    done: 'Done',
+  }
+
+  return map[s] || 'Backlog'
+}
+
 export function buildBoardTasksFromStories(stories, { t } = {}) {
   const list = Array.isArray(stories) ? stories : []
   const res = []
@@ -64,7 +86,7 @@ export function buildBoardTasksFromStories(stories, { t } = {}) {
         }),
         impactLevel: normalizeImpact(st?.impact),
         owner: String(st?.owner || story?.owner || storyTitle || '—'),
-        status: st?.done ? 'Done' : 'Backlog',
+        status: normalizeBoardStatus(st?.status, { done: st?.done }),
         strategicObjective: storyTitle,
         problemSolved: '',
         expectedBusinessImpact: '',

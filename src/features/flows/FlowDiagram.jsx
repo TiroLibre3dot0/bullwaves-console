@@ -28,6 +28,7 @@ export default function FlowDiagram({
   nodes = retentionNodes,
   edges = retentionEdges,
   onNavigateFlow,
+  onOpenTemplate,
 }) {
   return (
     <div style={{ width: '100%', height: 760 }}>
@@ -42,6 +43,13 @@ export default function FlowDiagram({
         nodesConnectable={false}
         elementsSelectable
         onNodeClick={(e, node) => {
+          const templateId = node?.data?.templateId
+          if (templateId && typeof onOpenTemplate === 'function') {
+            e.preventDefault()
+            e.stopPropagation()
+            onOpenTemplate(String(templateId), node)
+            return
+          }
           const target = node?.data?.linkToFlow
           if (!target || typeof onNavigateFlow !== 'function') return
           e.preventDefault()

@@ -61,6 +61,11 @@ const y = {
 const sysColA = 1010
 const sysColB = 1290
 
+// Local communication templates (MVP): two clickable nodes.
+// NOTE: Click behavior is implemented in the Flows UI via node.data.templateId.
+const commW = 300
+const commX = 320
+
 const nodes = [
   // Swimlane background containers (horizontal bands)
   {
@@ -189,6 +194,32 @@ const nodes = [
       kind: 'primary',
     },
     style: { width: stateW, zIndex: 10 },
+  },
+
+  // Communication templates (click to preview)
+  {
+    ...nodeDefaults,
+    id: 'COMM-WELCOME-EMAIL',
+    type: 'communication',
+    position: { x: commX, y: y.registration - 10 },
+    data: {
+      label: { en: 'Welcome Email', it: 'Welcome Email' },
+      subLabel: { en: 'Email', it: 'Email' },
+      templateId: 'welcome_email',
+    },
+    style: { width: commW, zIndex: 11 },
+  },
+  {
+    ...nodeDefaults,
+    id: 'COMM-WELCOME-WHATSAPP',
+    type: 'communication',
+    position: { x: commX, y: y.registration + 90 },
+    data: {
+      label: { en: 'WhatsApp Message', it: 'Messaggio WhatsApp' },
+      subLabel: { en: 'WhatsApp', it: 'WhatsApp' },
+      templateId: 'welcome_whatsapp',
+    },
+    style: { width: commW, zIndex: 11 },
   },
   {
     ...nodeDefaults,
@@ -441,6 +472,10 @@ const edges = [
   spineEdge('e-S5-S6', 'S5', 'S6'),
   spineEdge('e-S6-S7', 'S6', 'S7'),
   spineEdge('e-S7-S8', 'S7', 'S8'),
+
+  // COMMUNICATION TEMPLATES (preview only)
+  spineEdge('e-S2-COMM-WELCOME-EMAIL', 'S2', 'COMM-WELCOME-EMAIL'),
+  spineEdge('e-COMM-WELCOME-EMAIL-COMM-WHATSAPP', 'COMM-WELCOME-EMAIL', 'COMM-WELCOME-WHATSAPP'),
 
   // Outcome logic (fail path)
   {

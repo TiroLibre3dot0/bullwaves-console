@@ -48,7 +48,7 @@ export const translations = {
     'execHub.tabs.commandCenter': 'Command Center',
     'execHub.tabs.commandCenter.helper': 'Cockpit: STATUS → RISKS → DECISIONS → EXECUTION.',
     'execHub.tabs.storiesKanban': 'Mega Stories',
-    'execHub.tabs.storiesKanban.helper': '5 priority stories with measurable execution.',
+    'execHub.tabs.storiesKanban.helper': 'Priority stories with measurable execution.',
     'execHub.tabs.tasks': 'Tasks',
     'execHub.tabs.tasks.helper': 'Task board linked to stories (read-only on public share).',
 
@@ -67,7 +67,7 @@ export const translations = {
     'storiesKanban.topline': 'Execution marketing',
     'storiesKanban.title': 'Mega Stories',
     'storiesKanban.subtitle':
-      'Five priority stories with clear goals, KPIs, and measurable execution tasks.',
+      'Priority stories with clear goals, KPIs, and measurable execution tasks.',
     'storiesKanban.lanes.planned': 'Planned',
     'storiesKanban.lanes.inProgress': 'In progress',
     'storiesKanban.lanes.atRisk': 'At risk',
@@ -2261,7 +2261,7 @@ export const translations = {
     'execHub.tabs.commandCenter': 'Command Center',
     'execHub.tabs.commandCenter.helper': 'Cockpit: STATO → RISCHI → DECISIONI → ESECUZIONE.',
     'execHub.tabs.storiesKanban': 'Mega Stories',
-    'execHub.tabs.storiesKanban.helper': '5 storie prioritarie con esecuzione misurabile.',
+    'execHub.tabs.storiesKanban.helper': 'Storie prioritarie con esecuzione misurabile.',
     'execHub.tabs.tasks': 'Tasks',
     'execHub.tabs.tasks.helper':
       'Board Tasks collegata alle stories (sola lettura nel link pubblico).',
@@ -2281,7 +2281,7 @@ export const translations = {
     'storiesKanban.topline': 'Execution marketing',
     'storiesKanban.title': 'Mega Stories',
     'storiesKanban.subtitle':
-      'Cinque storie prioritarie con obiettivi, KPI e task di esecuzione misurabili.',
+      'Storie prioritarie con obiettivi, KPI e task di esecuzione misurabili.',
     'storiesKanban.lanes.planned': 'Pianificate',
     'storiesKanban.lanes.inProgress': 'In corso',
     'storiesKanban.lanes.atRisk': 'A rischio',
@@ -4507,7 +4507,7 @@ export const translations = {
     'execHub.tabs.commandCenter': 'Command Center',
     'execHub.tabs.commandCenter.helper': 'Cockpit: STATUS → RIZICI → ODLUKE → IZVRŠENJE.',
     'execHub.tabs.storiesKanban': 'Mega Stories',
-    'execHub.tabs.storiesKanban.helper': '5 prioritetnih priča sa merljivim izvršenjem.',
+    'execHub.tabs.storiesKanban.helper': 'Prioritetne priče sa merljivim izvršenjem.',
     'execHub.tabs.tasks': 'Tasks',
     'execHub.tabs.tasks.helper': 'Tabla taskova povezana sa pričama (samo čitanje u javnom linku).',
 
@@ -4526,7 +4526,7 @@ export const translations = {
     'storiesKanban.topline': 'Marketing execution',
     'storiesKanban.title': 'Mega Stories',
     'storiesKanban.subtitle':
-      'Pet prioritetnih priča sa ciljevima, KPI i merljivim taskovima izvršenja.',
+      'Prioritetne priče sa ciljevima, KPI i merljivim taskovima izvršenja.',
     'storiesKanban.lanes.planned': 'Planirano',
     'storiesKanban.lanes.inProgress': 'U toku',
     'storiesKanban.lanes.atRisk': 'Rizično',
