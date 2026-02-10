@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 
 function Icon({ name, size = 16 }) {
@@ -324,6 +324,18 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="layers" />
                 <span>{t('sidebar.traderPoints')}</span>
+              </span>
+            </button>
+
+            <button
+              disabled={disabled('ranking')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'ranking' ? 'active' : ''}`}
+              onClick={() => navigate('ranking')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.ranking')}</span>
               </span>
             </button>
             <button

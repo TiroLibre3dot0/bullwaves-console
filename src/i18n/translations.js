@@ -232,6 +232,18 @@ export const translations = {
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Custom Events',
+    'sidebar.ranking': 'Ranking',
+
+    // Ranking
+    'ranking.title': 'Ranking',
+    'ranking.subtitle': 'Top 50 leaderboards (cohort by First Deposit Date).',
+    'ranking.period': 'Period',
+    'ranking.search.placeholder': 'Search user…',
+    'ranking.search.ariaLabel': 'Search user',
+    'ranking.share.cta': 'Share (public link)',
+    'ranking.share.copied': 'Link copied',
+    'ranking.empty': 'No results for this period.',
+    'ranking.errorTitle': 'Unable to load rankings',
 
     // Flows
     'flows.tab.master': 'Master Flow',
@@ -2444,6 +2456,18 @@ export const translations = {
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Eventi custom',
+    'sidebar.ranking': 'Ranking',
+
+    // Ranking
+    'ranking.title': 'Ranking',
+    'ranking.subtitle': 'Classifiche Top 50 (coorte per First Deposit Date).',
+    'ranking.period': 'Periodo',
+    'ranking.search.placeholder': 'Cerca utente…',
+    'ranking.search.ariaLabel': 'Cerca utente',
+    'ranking.share.cta': 'Condividi (link pubblico)',
+    'ranking.share.copied': 'Link copiato',
+    'ranking.empty': 'Nessun risultato per questo periodo.',
+    'ranking.errorTitle': 'Impossibile caricare i ranking',
 
     // Flows
     'flows.tab.master': 'Master Flow',
@@ -4689,6 +4713,18 @@ export const translations = {
     'sidebar.traderPoints': 'Trader Points',
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Custom Events',
+    'sidebar.ranking': 'Ranking',
+
+    // Ranking
+    'ranking.title': 'Ranking',
+    'ranking.subtitle': 'Top 50 liste (cohort by First Deposit Date).',
+    'ranking.period': 'Period',
+    'ranking.search.placeholder': 'Pretraži korisnika…',
+    'ranking.search.ariaLabel': 'Pretraži korisnika',
+    'ranking.share.cta': 'Share (public link)',
+    'ranking.share.copied': 'Link copied',
+    'ranking.empty': 'No results for this period.',
+    'ranking.errorTitle': 'Unable to load rankings',
 
     // Share — Affiliate Analysis (board report)
     'shareAffiliateAnalysis.header.eyebrow': 'Board izveštaj',

@@ -803,6 +803,10 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .table tbody td:first-child { width: 180px; }
 .table .month-col { width: 56px; }
 
+/* Ranking table overrides (the first column is '#', not a wide label column) */
+.ranking-table thead th:first-child,
+.ranking-table tbody td:first-child { width: 64px; }
+
 .num { font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 
 .input-num {

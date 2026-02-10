@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
@@ -16,6 +16,7 @@ import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
 import UploadReportsPage from './pages/UploadReportsPage'
 import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
 import NotionBoard from './features/notion/NotionBoard'
+import RankingPage from './features/ranking/pages/RankingPage'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
@@ -133,6 +134,7 @@ export default function AuthenticatedApp() {
       executive: '/executive',
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
+      ranking: '/ranking',
       fraud: '/fraud',
       orgChart: '/org-chart',
       supportUserCheck: '/support/user-check',
@@ -159,6 +161,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/analysis')) return 'affiliate'
     if (pathname.startsWith('/affiliate')) return 'affiliate'
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
+    if (pathname.startsWith('/ranking')) return 'ranking'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
@@ -397,6 +400,7 @@ export default function AuthenticatedApp() {
       projectBoard: 'project-board',
       notion: 'notion',
       summary: 'summary',
+      ranking: 'ranking',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -456,6 +460,7 @@ export default function AuthenticatedApp() {
             ) : null}
             {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
             {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
+            {view === 'ranking' ? <RankingPage /> : null}
             {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
             {view === 'orgChart' ? <OrgChart /> : null}

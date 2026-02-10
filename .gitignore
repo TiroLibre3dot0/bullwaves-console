@@ -40,6 +40,8 @@ analyze_comments.py
 public/affiliate_index.json
 public/affiliate_kpi_index.json
 public/fraud_patterns_index.json
+public/rankings_index.json
+public/rankings_users_table.json
 public/reports_meta.json
 public/support_users_index.json
 

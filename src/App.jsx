@@ -22,6 +22,9 @@ const PublicProjectBoardSharePage = React.lazy(
 const PublicExecutionSharePage = React.lazy(
   () => import('./features/execution/pages/PublicExecutionSharePage')
 )
+const PublicRankingSharePage = React.lazy(
+  () => import('./features/ranking/pages/PublicRankingSharePage')
+)
 const SupportUserCheckSharePage = React.lazy(
   () => import('./features/support/pages/SupportUserCheckSharePage')
 )
@@ -88,6 +91,7 @@ export default function App() {
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
     if (p === '/share/support-user-check' || p.startsWith('/share/support-user-check/'))
       return 'support-user-check'
+    if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
@@ -184,6 +188,14 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicExecutionSharePage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'ranking') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicRankingSharePage />
       </React.Suspense>
     )
   }
