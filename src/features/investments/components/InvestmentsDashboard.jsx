@@ -17,6 +17,7 @@ import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedge
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import { useI18n } from '../../../i18n/I18nContext'
+import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 
 const selectStyle = {
   minWidth: 180,
@@ -69,12 +70,18 @@ const monthLabel = (locale, m) => {
   }
 }
 
-export default function InvestmentsDashboard() {
+export default function InvestmentsDashboard(props) {
+  const {
+    initialSelectedYear = 'all',
+    initialSelectedMonth = 'all',
+    initialSearch = '',
+  } = props || {}
+
   const { t, locale } = useI18n()
   const { payments, mediaRows, loading } = useMediaPaymentsData()
-  const [selectedYear, setSelectedYear] = useState('all')
-  const [selectedMonth, setSelectedMonth] = useState('all')
-  const [search, setSearch] = useState('')
+  const [selectedYear, setSelectedYear] = useState(initialSelectedYear || 'all')
+  const [selectedMonth, setSelectedMonth] = useState(initialSelectedMonth || 'all')
+  const [search, setSearch] = useState(initialSearch || '')
   const [showAllAffiliates, setShowAllAffiliates] = useState(false)
   const [expanded, setExpanded] = useState(null)
   const [financeConfirmed, setFinanceConfirmed] = useState({})
@@ -108,6 +115,21 @@ export default function InvestmentsDashboard() {
   }, [mediaRows, payments, selectedYear, locale])
 
   const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
+
+  const onShare = () => {
+    try {
+      const origin = getPublicShareOrigin()
+      const params = new window.URLSearchParams()
+      if (selectedYear && selectedYear !== 'all') params.set('year', String(selectedYear))
+      if (selectedMonth && selectedMonth !== 'all') params.set('month', String(selectedMonth))
+      if (search) params.set('search', String(search))
+      const qs = params.toString()
+      const href = `${origin}/share/affiliate-payout-summary${qs ? `?${qs}` : ''}`
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      console.warn('Unable to open share link', e)
+    }
+  }
 
   useEffect(() => {
     try {
@@ -294,6 +316,9 @@ export default function InvestmentsDashboard() {
             <h3 style={{ marginBottom: 0, flex: 1 }}>
               {t('investments.section.affiliatePayoutSummary')}
             </h3>
+            <button className="btn" onClick={onShare} title={t('investments.share.title')}>
+              {t('investments.share.cta')}
+            </button>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}

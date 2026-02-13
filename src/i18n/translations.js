@@ -1255,7 +1255,7 @@ export const translations = {
     'investments.section.affiliatePayoutSummary': 'Affiliate payout summary',
 
     'investments.share.cta': 'SHARE',
-    'investments.share.title': 'Open public share page (table only)',
+    'investments.share.title': 'Open public share page',
 
     'investments.search.placeholder': 'Search affiliate',
     'investments.search.aria': 'Search affiliate',
@@ -3517,7 +3517,7 @@ export const translations = {
     'investments.section.affiliatePayoutSummary': 'Riepilogo payout affiliati',
 
     'investments.share.cta': 'SHARE',
-    'investments.share.title': 'Apri pagina pubblica (solo tabella)',
+    'investments.share.title': 'Apri pagina pubblica',
 
     'investments.search.placeholder': 'Cerca affiliato',
     'investments.search.aria': 'Cerca affiliato',
@@ -5457,7 +5457,7 @@ export const translations = {
     'investments.section.affiliatePayoutSummary': 'Pregled isplata afilijata',
 
     'investments.share.cta': 'SHARE',
-    'investments.share.title': 'Otvori javnu stranicu (samo tabela)',
+    'investments.share.title': 'Otvori javnu stranicu',
 
     'investments.search.placeholder': 'Pretraži afilijata',
     'investments.search.aria': 'Pretraži afilijata',

@@ -25,6 +25,9 @@ const PublicExecutionSharePage = React.lazy(
 const PublicRankingSharePage = React.lazy(
   () => import('./features/ranking/pages/PublicRankingSharePage')
 )
+const PublicAffiliatePayoutSummarySharePage = React.lazy(
+  () => import('./features/investments/pages/PublicAffiliatePayoutSummarySharePage')
+)
 const SupportUserCheckSharePage = React.lazy(
   () => import('./features/support/pages/SupportUserCheckSharePage')
 )
@@ -92,6 +95,7 @@ export default function App() {
     if (p === '/share/support-user-check' || p.startsWith('/share/support-user-check/'))
       return 'support-user-check'
     if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking'
+    if (p === '/share/affiliate-payout-summary') return 'affiliate-payout-summary'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
@@ -196,6 +200,14 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicRankingSharePage />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'affiliate-payout-summary') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicAffiliatePayoutSummarySharePage />
       </React.Suspense>
     )
   }
