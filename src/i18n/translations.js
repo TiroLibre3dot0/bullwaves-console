@@ -234,6 +234,13 @@ export const translations = {
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
 
+    // Home
+    'home.welcome.generic': 'Welcome back',
+    'home.welcome.personal': 'Welcome back, {name}',
+    'home.role.default': 'Console user',
+    'home.quickActions.title': 'Main sections',
+    'home.quickActions.noteRestricted': 'Some sections may be restricted for your role.',
+
     // Ranking
     'ranking.title': 'Ranking',
     'ranking.subtitle': 'Top 50 leaderboards (cohort by First Deposit Date).',
@@ -1247,6 +1254,9 @@ export const translations = {
     'investments.section.payoutTimeline': 'Payout timeline',
     'investments.section.affiliatePayoutSummary': 'Affiliate payout summary',
 
+    'investments.share.cta': 'SHARE',
+    'investments.share.title': 'Open public share page (table only)',
+
     'investments.search.placeholder': 'Search affiliate',
     'investments.search.aria': 'Search affiliate',
 
@@ -1283,10 +1293,10 @@ export const translations = {
     'investments.details.header.paymentDate': 'Payment date',
     'investments.details.header.details': 'Details',
 
-    'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission',
+    'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission − 1',
     'investments.details.title.commExpected': 'Expected = commission from Media Report',
     'investments.details.title.commActual':
-      'Actual uses ROI guardrail: if ROI >= 1.5 use expected, else Net Deposits / 1.5',
+      'Actual uses ROI guardrail: if ROI >= 0.5 use expected, else Net Deposits / 1.5',
     'investments.details.title.commPayable': 'Payable = min(expected, actual)',
     'investments.details.title.commDeferred': 'Deferred = expected − payable',
     'investments.details.empty.noMonthlyRows': 'No monthly rows.',
@@ -2458,6 +2468,14 @@ export const translations = {
     'sidebar.customEvents': 'Eventi custom',
     'sidebar.ranking': 'Ranking',
 
+    // Home
+    'home.welcome.generic': 'Bentornato',
+    'home.welcome.personal': 'Bentornato, {name}',
+    'home.role.default': 'Utente console',
+    'home.quickActions.title': 'Sezioni principali',
+    'home.quickActions.noteRestricted':
+      'Alcune sezioni potrebbero essere limitate in base al tuo ruolo.',
+
     // Ranking
     'ranking.title': 'Ranking',
     'ranking.subtitle': 'Classifiche Top 50 (coorte per First Deposit Date).',
@@ -3498,6 +3516,9 @@ export const translations = {
     'investments.section.payoutTimeline': 'Timeline pagamenti',
     'investments.section.affiliatePayoutSummary': 'Riepilogo payout affiliati',
 
+    'investments.share.cta': 'SHARE',
+    'investments.share.title': 'Apri pagina pubblica (solo tabella)',
+
     'investments.search.placeholder': 'Cerca affiliato',
     'investments.search.aria': 'Cerca affiliato',
 
@@ -3534,10 +3555,10 @@ export const translations = {
     'investments.details.header.paymentDate': 'Data pagamento',
     'investments.details.header.details': 'Dettagli',
 
-    'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione',
+    'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione − 1',
     'investments.details.title.commExpected': 'Attesa = commissione dal Media Report',
     'investments.details.title.commActual':
-      'Reale usa una guardrail ROI: se ROI >= 1.5 usa l’attesa, altrimenti Depositi netti / 1.5',
+      'Reale usa una guardrail ROI: se ROI >= 0.5 usa l’attesa, altrimenti Depositi netti / 1.5',
     'investments.details.title.commPayable': 'Pagabile = min(attesa, reale)',
     'investments.details.title.commDeferred': 'Differita = attesa − pagabile',
     'investments.details.empty.noMonthlyRows': 'Nessuna riga mensile.',
@@ -4715,6 +4736,13 @@ export const translations = {
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
 
+    // Home
+    'home.welcome.generic': 'Dobrodošao nazad',
+    'home.welcome.personal': 'Dobrodošao nazad, {name}',
+    'home.role.default': 'Korisnik konzole',
+    'home.quickActions.title': 'Glavne sekcije',
+    'home.quickActions.noteRestricted': 'Neke sekcije mogu biti ograničene za tvoju ulogu.',
+
     // Ranking
     'ranking.title': 'Ranking',
     'ranking.subtitle': 'Top 50 liste (cohort by First Deposit Date).',
@@ -5428,6 +5456,9 @@ export const translations = {
     'investments.section.payoutTimeline': 'Vremenska linija isplata',
     'investments.section.affiliatePayoutSummary': 'Pregled isplata afilijata',
 
+    'investments.share.cta': 'SHARE',
+    'investments.share.title': 'Otvori javnu stranicu (samo tabela)',
+
     'investments.search.placeholder': 'Pretraži afilijata',
     'investments.search.aria': 'Pretraži afilijata',
 
@@ -5464,10 +5495,10 @@ export const translations = {
     'investments.details.header.paymentDate': 'Datum isplate',
     'investments.details.header.details': 'Detalji',
 
-    'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija',
+    'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija − 1',
     'investments.details.title.commExpected': 'Očekivano = provizija iz Media Report-a',
     'investments.details.title.commActual':
-      'Stvarno koristi ROI guardrail: ako je ROI >= 1.5 koristi očekivano, inače Neto depoziti / 1.5',
+      'Stvarno koristi ROI guardrail: ako je ROI >= 0.5 koristi očekivano, inače Neto depoziti / 1.5',
     'investments.details.title.commPayable': 'Isplativo = min(očekivano, stvarno)',
     'investments.details.title.commDeferred': 'Odloženo = očekivano − isplativo',
     'investments.details.empty.noMonthlyRows': 'Nema mesečnih redova.',

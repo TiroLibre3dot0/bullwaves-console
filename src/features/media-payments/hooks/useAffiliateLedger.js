@@ -3,7 +3,7 @@ import { cleanNumber } from '../../../lib/formatters'
 
 const toKey = (year, monthIndex) => `${year}-${String(Number(monthIndex) + 1).padStart(2, '0')}`
 const monthLabel = (year, monthIndex) => {
-  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+  const names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
   const idx = Number(monthIndex)
   if (!Number.isFinite(idx) || idx < 0 || idx > 11) return 'Unknown'
   return `${names[idx]} ${year}`
@@ -16,7 +16,14 @@ const commissionValue = (row) => {
   return cleanNumber(row.commission)
 }
 
-export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear = 'all', selectedMonth = 'all', search = '', negotiatedCpaOverrides = {} }) {
+export function useAffiliateLedger({
+  mediaRows = [],
+  payments = [],
+  selectedYear = 'all',
+  selectedMonth = 'all',
+  search = '',
+  negotiatedCpaOverrides = {},
+}) {
   return useMemo(() => {
     // Build monthly history per affiliate to derive dynamic CPA defaults from last 5 months.
     const monthlyHistory = new Map()
@@ -38,7 +45,8 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       const aff = affiliate || '—'
       const yearVal = Number(year)
       const monthVal = Number(monthIndex)
-      if (!monthlyHistory.has(aff) || !Number.isFinite(yearVal) || !Number.isFinite(monthVal)) return null
+      if (!monthlyHistory.has(aff) || !Number.isFinite(yearVal) || !Number.isFinite(monthVal))
+        return null
       const cutoff = yearVal * 12 + monthVal
       const entries = Array.from(monthlyHistory.get(aff).entries())
         .filter(([ym]) => ym < cutoff)
@@ -54,7 +62,9 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       const yearOk = selectedYear === 'all' ? true : Number(row.year) === Number(selectedYear)
       const rowMonthKey = toKey(row.year, row.monthIndex)
       const monthOk = selectedMonth === 'all' ? true : rowMonthKey === selectedMonth
-      const searchOk = search ? (row.affiliate || '').toLowerCase().includes(search.toLowerCase()) : true
+      const searchOk = search
+        ? (row.affiliate || '').toLowerCase().includes(search.toLowerCase())
+        : true
       return yearOk && monthOk && searchOk
     }
 
@@ -65,11 +75,15 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
     const ensure = (affiliate, year, monthIndex) => {
       const key = `${affiliate || '—'}|${year}|${monthIndex}`
       if (!affMonth.has(key)) {
-        const override = negotiatedCpaOverrides[affiliate] ?? negotiatedCpaOverrides[affiliate || '—']
+        const override =
+          negotiatedCpaOverrides[affiliate] ?? negotiatedCpaOverrides[affiliate || '—']
         const historicalAvg = getAvgCpaLast5Months(affiliate, year, monthIndex)
-        const negotiatedCpa = Number(override) > 0
-          ? Number(override)
-          : (Number.isFinite(historicalAvg) && historicalAvg > 0 ? historicalAvg : fallbackNegotiatedCpa)
+        const negotiatedCpa =
+          Number(override) > 0
+            ? Number(override)
+            : Number.isFinite(historicalAvg) && historicalAvg > 0
+              ? historicalAvg
+              : fallbackNegotiatedCpa
         affMonth.set(key, {
           affiliateId: affiliate || '—',
           affiliateName: affiliate || '—',
@@ -123,12 +137,17 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
 
     affMonth.forEach((entry) => {
       entry.details = Array.from(new Set(entry.details)).filter(Boolean)
-      const roiValue = entry.commissionTotal > 0 ? (entry.netDeposits / Math.max(entry.commissionTotal, 1)) : 0
+      // ROI definition (as requested): ROI = netDeposits / commission - 1
+      // Keep the payout-guardrail logic based on the underlying ratio (netDeposits / commission).
+      const roiRatio =
+        entry.commissionTotal > 0 ? entry.netDeposits / Math.max(entry.commissionTotal, 1) : 0
+      const roiValue = entry.commissionTotal > 0 ? roiRatio - 1 : 0
       entry.roi = roiValue
 
       // Use the commission reported in Media Report as the expected amount.
       entry.marketingExpected = entry.commissionTotal
-      const marketingActual = roiValue >= 1.5 ? entry.marketingExpected : (entry.netDeposits / 1.5)
+      // Guardrail threshold: keep the same economic threshold (ratio >= 1.5) expressed in ROI terms.
+      const marketingActual = roiValue >= 0.5 ? entry.marketingExpected : entry.netDeposits / 1.5
       entry.marketingActual = marketingActual
       entry.marketingPayable = Math.min(entry.marketingExpected, marketingActual)
       entry.marketingDeferred = Math.max(entry.marketingExpected - entry.marketingPayable, 0)
@@ -141,25 +160,31 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       }
     })
 
-    const ledger = Array.from(affMonth.values()).sort((a, b) => (b.year - a.year) || (b.monthIndex - a.monthIndex))
+    const ledger = Array.from(affMonth.values()).sort(
+      (a, b) => b.year - a.year || b.monthIndex - a.monthIndex
+    )
 
     const summaryMap = new Map()
     ledger.forEach((row) => {
       const key = row.affiliateId
-      if (!summaryMap.has(key)) summaryMap.set(key, {
-        affiliateId: row.affiliateId,
-        affiliateName: row.affiliateName,
-        tier: row.tier,
-        totalQftd: 0,
-        totalPaid: 0,
-        totalDeferred: 0,
-        totalPl: 0,
-        currentMonthCommission: 0,
-        lastMonth: null,
-        lastStatus: 'OK',
-      })
+      if (!summaryMap.has(key))
+        summaryMap.set(key, {
+          affiliateId: row.affiliateId,
+          affiliateName: row.affiliateName,
+          tier: row.tier,
+          totalQftd: 0,
+          totalCommission: 0,
+          totalPaid: 0,
+          totalDeferred: 0,
+          totalPl: 0,
+          currentMonthCommission: 0,
+          currentMonthRoi: 0,
+          lastMonth: null,
+          lastStatus: 'OK',
+        })
       const s = summaryMap.get(key)
       s.totalQftd += row.qftd
+      s.totalCommission += row.commissionTotal
       s.totalPaid += row.paidAmount
       s.totalDeferred += row.marketingDeferred
       s.totalPl += row.pl
@@ -167,38 +192,68 @@ export function useAffiliateLedger({ mediaRows = [], payments = [], selectedYear
       if (!s.lastMonth || row.month > s.lastMonth) {
         s.lastMonth = row.month
         s.currentMonthCommission = row.commissionTotal
+        s.currentMonthRoi = row.roi
       }
       if (!s.lastMonth || row.month > s.lastMonth) s.lastMonth = row.month
       if (row.marketingDeferred > 0) s.lastStatus = 'Deferred'
       if (row.status === 'ON_HOLD') s.lastStatus = 'ON_HOLD'
     })
 
-    const affiliateSummaries = Array.from(summaryMap.values()).sort((a, b) => (b.totalPaid || 0) - (a.totalPaid || 0))
+    // Rank affiliates best → worst using commissions as discriminant.
+    const affiliateSummaries = Array.from(summaryMap.values())
+      .map((row) => ({
+        ...row,
+        cpa: row.totalQftd > 0 ? row.totalCommission / row.totalQftd : 0,
+      }))
+      .sort(
+        (a, b) =>
+          (b.totalCommission || 0) - (a.totalCommission || 0) ||
+          String(a.affiliateName || '').localeCompare(String(b.affiliateName || ''))
+      )
+      .map((row, idx) => ({ ...row, rank: idx + 1 }))
 
-    const totalCurrentMonthCommission = affiliateSummaries.reduce((acc, s) => acc + (s.currentMonthCommission || 0), 0)
+    const totalCurrentMonthCommission = affiliateSummaries.reduce(
+      (acc, s) => acc + (s.currentMonthCommission || 0),
+      0
+    )
 
-    const totals = ledger.reduce((acc, r) => {
-      acc.totalQftd += r.qftd
-      acc.totalMarketingExpected += r.marketingExpected
-      acc.totalMarketingActual += r.marketingActual
-      acc.totalMarketingPayable += r.marketingPayable
-      acc.totalMarketingDeferred += r.marketingDeferred
-      acc.totalPaid += r.paidAmount
-      acc.totalNetDeposits += r.netDeposits
-      acc.totalCommission += r.commissionTotal
-      acc.totalPl += r.pl
-      return acc
-    }, { totalQftd: 0, totalMarketingExpected: 0, totalMarketingActual: 0, totalMarketingPayable: 0, totalMarketingDeferred: 0, totalPaid: 0, totalNetDeposits: 0, totalCommission: 0, totalPl: 0 })
+    const totals = ledger.reduce(
+      (acc, r) => {
+        acc.totalQftd += r.qftd
+        acc.totalMarketingExpected += r.marketingExpected
+        acc.totalMarketingActual += r.marketingActual
+        acc.totalMarketingPayable += r.marketingPayable
+        acc.totalMarketingDeferred += r.marketingDeferred
+        acc.totalPaid += r.paidAmount
+        acc.totalNetDeposits += r.netDeposits
+        acc.totalCommission += r.commissionTotal
+        acc.totalPl += r.pl
+        return acc
+      },
+      {
+        totalQftd: 0,
+        totalMarketingExpected: 0,
+        totalMarketingActual: 0,
+        totalMarketingPayable: 0,
+        totalMarketingDeferred: 0,
+        totalPaid: 0,
+        totalNetDeposits: 0,
+        totalCommission: 0,
+        totalPl: 0,
+      }
+    )
 
     totals.totalCurrentMonthCommission = totalCurrentMonthCommission
 
     totals.avgCpa = totals.totalQftd > 0 ? totals.totalCommission / totals.totalQftd : 0
-    totals.totalRoi = totals.totalCommission > 0 ? (totals.totalNetDeposits / totals.totalCommission) : 0
+    totals.totalRoi =
+      totals.totalCommission > 0 ? totals.totalNetDeposits / totals.totalCommission - 1 : 0
 
     const timeline = new Map()
     ledger.forEach((r) => {
       const key = `${r.year}-${String(r.monthIndex).padStart(2, '0')}`
-      if (!timeline.has(key)) timeline.set(key, { key, label: monthLabel(r.year, r.monthIndex), paid: 0 })
+      if (!timeline.has(key))
+        timeline.set(key, { key, label: monthLabel(r.year, r.monthIndex), paid: 0 })
       timeline.get(key).paid += r.paidAmount
     })
     const timelineSeries = Array.from(timeline.values()).sort((a, b) => a.key.localeCompare(b.key))
