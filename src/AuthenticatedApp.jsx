@@ -17,6 +17,7 @@ import UploadReportsPage from './pages/UploadReportsPage'
 import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
 import NotionBoard from './features/notion/NotionBoard'
 import RankingPage from './features/ranking/pages/RankingPage'
+import ConsoleHomePage from './pages/ConsoleHomePage'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
 import AdminPanel from './components/AdminPanel'
@@ -77,8 +78,8 @@ export default function AuthenticatedApp() {
 
   const restrictedAllowedViews = useMemo(() => {
     // Support can upload reports; BD/Sales should not.
-    if (isSupportOnly) return new Set(['supportUserCheck', 'orgChart', 'upload'])
-    return new Set(['supportUserCheck', 'orgChart'])
+    if (isSupportOnly) return new Set(['home', 'supportUserCheck', 'orgChart', 'upload'])
+    return new Set(['home', 'supportUserCheck', 'orgChart'])
   }, [isSupportOnly])
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -125,6 +126,7 @@ export default function AuthenticatedApp() {
 
   const routes = useMemo(
     () => ({
+      home: '/home',
       commandCenter: '/command-center',
       storiesKanban: '/stories-kanban',
       projectBoard: '/project-board',
@@ -147,8 +149,10 @@ export default function AuthenticatedApp() {
   )
 
   const pathToView = (pathname) => {
-    if (!pathname || pathname === '/' || pathname.startsWith('/command-center'))
-      return 'commandCenter'
+    if (!pathname) return 'home'
+    if (pathname.startsWith('/home')) return 'home'
+    if (pathname === '/') return 'home'
+    if (pathname.startsWith('/command-center')) return 'commandCenter'
     if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
     if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
@@ -173,6 +177,34 @@ export default function AuthenticatedApp() {
   }
 
   const [view, setView] = useState(() => pathToView(window.location.pathname))
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!user) return
+
+    // On each new console session (login or reopen), always land on Home once.
+    // sessionStorage survives reloads but resets when the tab is closed.
+    const key = 'bw-console-session-user'
+    const email = String(user?.email || '').toLowerCase()
+    const prev = window.sessionStorage ? window.sessionStorage.getItem(key) : ''
+    const isNewSession = !prev || prev !== email
+
+    if (window.sessionStorage) {
+      try {
+        window.sessionStorage.setItem(key, email)
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!isNewSession) return
+
+    const nextPath = routes.home
+    if (window.location.pathname !== nextPath) {
+      window.history.replaceState({ view: 'home' }, '', nextPath)
+    }
+    setView('home')
+  }, [routes.home, user])
 
   useEffect(() => {
     // Keep legacy Weekly Map / History URLs working but route users to the Tasks Board.
@@ -244,12 +276,12 @@ export default function AuthenticatedApp() {
   useEffect(() => {
     if (!user) return
     if (!isRestrictedUser) return
-    // Restricted landing page defaults to Support • User Check.
+    // Restricted users still land on Home; navigation enforces allowed views.
     const p = window.location.pathname
-    if (!p.startsWith('/support/user-check')) {
-      window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
+    if (!p.startsWith('/home')) {
+      window.history.replaceState({ view: 'home' }, '', routes.home)
     }
-    setView('supportUserCheck')
+    setView('home')
   }, [user, isRestrictedUser])
 
   useEffect(() => {
@@ -257,11 +289,11 @@ export default function AuthenticatedApp() {
     if (!user) return
     if (isRestrictedUser) return
 
-    // Canonicalize legacy root route to a dedicated Command Center URL.
+    // Canonicalize legacy root route to Home.
     if (window.location.pathname === '/') {
-      window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+      window.history.replaceState({ view: 'home' }, '', routes.home)
     }
-  }, [user, isRestrictedUser, routes.commandCenter])
+  }, [user, isRestrictedUser, routes.home])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -392,6 +424,7 @@ export default function AuthenticatedApp() {
   useEffect(() => {
     if (!user) return
     const viewToSection = {
+      home: 'home',
       overview: 'overview',
       affiliate: 'affiliate',
       executive: 'executive',
@@ -440,6 +473,15 @@ export default function AuthenticatedApp() {
         </aside>
         <main className="dashboard-content">
           <div className="dashboard-inner">
+            {view === 'home' ? (
+              <ConsoleHomePage
+                user={user}
+                supportOnly={isRestrictedUser}
+                allowedViews={restrictedAllowedViews}
+                onNavigate={navigate}
+              />
+            ) : null}
+
             {['commandCenter', 'storiesKanban', 'projectBoard'].includes(view) ? (
               <ExecutionHubPage
                 activeTab={view}
