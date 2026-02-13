@@ -4,8 +4,7 @@ import { useI18n } from '../i18n/I18nContext'
 
 function normalizeRoleText(user) {
   if (!user) return ''
-  const raw = String(user.title || user.department || '').trim()
-  return raw
+  return String(user.title || user.department || '').trim()
 }
 
 function roleMeta(user) {
@@ -16,6 +15,7 @@ function roleMeta(user) {
     .trim()
     .toLowerCase()
   const isManagement = Boolean(user?.isManagementTeam)
+
   const isSupport = department.includes('support') || title.includes('support')
   const isFinance =
     department.includes('finance') ||
@@ -58,73 +58,74 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
   const welcome = name ? t('home.welcome.personal', { name }) : t('home.welcome.generic')
 
   return (
-    <div className="w-full" style={{ display: 'flex', justifyContent: 'center' }}>
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 820,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: 14,
-          padding: '28px 12px',
-          minHeight: '60vh',
-          justifyContent: 'center',
-        }}
-      >
+    <div className="console-home">
+      <div className="console-home__inner">
         <div
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 26,
-            background: 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
+          className="console-home__roleIcon"
           aria-hidden="true"
           title={roleText || t('home.role.default')}
         >
           {meta.icon}
         </div>
 
-        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: 0.2 }}>{welcome}</div>
-        <div style={{ fontSize: 13, color: '#94a3b8', marginTop: -6 }}>
-          {roleText || t('home.role.default')}
-        </div>
+        <div className="console-home__welcome">{welcome}</div>
+        <div className="console-home__roleText">{roleText || t('home.role.default')}</div>
 
-        <div style={{ marginTop: 6, fontSize: 12, color: '#94a3b8' }}>
-          {t('home.quickActions.title')}
-        </div>
+        <div className="console-home__sectionLabel">{t('home.quickActions.title')}</div>
 
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+        <div className="card-columns console-home__actions" role="list">
           <button
-            className="btn"
+            type="button"
+            className="card card-global console-home__action"
             onClick={() => go('commandCenter')}
             disabled={!canGo('commandCenter')}
+            role="listitem"
           >
-            {t('sidebar.commandCenter')}
+            <h3 className="console-home__actionTitle">{t('sidebar.commandCenter')}</h3>
+            <div className="console-home__actionDesc">{t('home.action.commandCenter')}</div>
+            <div className="console-home__preview" aria-hidden="true">
+              <span className="console-home__previewPill">{t('home.preview.commandCenter.1')}</span>
+              <span className="console-home__previewPill">{t('home.preview.commandCenter.2')}</span>
+              <span className="console-home__previewPill">{t('home.preview.commandCenter.3')}</span>
+            </div>
           </button>
-          <button className="btn" onClick={() => go('overview')} disabled={!canGo('overview')}>
-            {t('sidebar.dashboard')}
-          </button>
+
           <button
-            className="btn"
+            type="button"
+            className="card card-global console-home__action"
+            onClick={() => go('overview')}
+            disabled={!canGo('overview')}
+            role="listitem"
+          >
+            <h3 className="console-home__actionTitle">{t('sidebar.dashboard')}</h3>
+            <div className="console-home__actionDesc">{t('home.action.dashboard')}</div>
+            <div className="console-home__preview" aria-hidden="true">
+              <span className="console-home__previewPill">{t('home.preview.dashboard.1')}</span>
+              <span className="console-home__previewPill">{t('home.preview.dashboard.2')}</span>
+              <span className="console-home__previewPill">{t('home.preview.dashboard.3')}</span>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            className="card card-global console-home__action"
             onClick={() => go('supportUserCheck')}
             disabled={!canGo('supportUserCheck')}
+            role="listitem"
           >
-            {t('sidebar.supportUserCheck')}
+            <h3 className="console-home__actionTitle">{t('sidebar.supportUserCheck')}</h3>
+            <div className="console-home__actionDesc">{t('home.action.userCheck')}</div>
+            <div className="console-home__preview" aria-hidden="true">
+              <span className="console-home__previewPill">{t('home.preview.userCheck.1')}</span>
+              <span className="console-home__previewPill">{t('home.preview.userCheck.2')}</span>
+              <span className="console-home__previewPill">{t('home.preview.userCheck.3')}</span>
+            </div>
           </button>
         </div>
 
-        {supportOnly && (
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 8 }}>
-            {t('home.quickActions.noteRestricted')}
-          </div>
-        )}
+        {supportOnly ? (
+          <div className="console-home__note">{t('home.quickActions.noteRestricted')}</div>
+        ) : null}
       </div>
     </div>
   )

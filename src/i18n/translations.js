@@ -235,11 +235,24 @@ export const translations = {
     'sidebar.ranking': 'Ranking',
 
     // Home
-    'home.welcome.generic': 'Welcome back',
-    'home.welcome.personal': 'Welcome back, {name}',
+    'home.welcome.generic': 'Welcome back — ready to pick up where you left off?',
+    'home.welcome.personal': 'Welcome back, {name} — ready to continue?',
     'home.role.default': 'Console user',
-    'home.quickActions.title': 'Main sections',
+    'home.quickActions.title': 'Quick access',
     'home.quickActions.noteRestricted': 'Some sections may be restricted for your role.',
+    'home.action.commandCenter': 'Operations view: tasks, executions, and daily tracking.',
+    'home.action.dashboard': 'High-level KPIs and performance overview.',
+    'home.action.userCheck': 'Support tool: user checks and investigation flow.',
+
+    'home.preview.commandCenter.1': 'Tasks',
+    'home.preview.commandCenter.2': 'Executions',
+    'home.preview.commandCenter.3': 'Tracking',
+    'home.preview.dashboard.1': 'KPIs',
+    'home.preview.dashboard.2': 'Affiliate',
+    'home.preview.dashboard.3': 'Reports',
+    'home.preview.userCheck.1': 'Search',
+    'home.preview.userCheck.2': 'Risk',
+    'home.preview.userCheck.3': 'Notes',
 
     // Ranking
     'ranking.title': 'Ranking',
@@ -2469,12 +2482,25 @@ export const translations = {
     'sidebar.ranking': 'Ranking',
 
     // Home
-    'home.welcome.generic': 'Bentornato',
-    'home.welcome.personal': 'Bentornato, {name}',
+    'home.welcome.generic': 'Bentornato — riprendiamo da dove avevi lasciato?',
+    'home.welcome.personal': 'Bentornato, {name} — pronto a ripartire?',
     'home.role.default': 'Utente console',
-    'home.quickActions.title': 'Sezioni principali',
+    'home.quickActions.title': 'Accesso rapido',
     'home.quickActions.noteRestricted':
       'Alcune sezioni potrebbero essere limitate in base al tuo ruolo.',
+    'home.action.commandCenter': 'Vista operativa: task, esecuzioni e tracking giornaliero.',
+    'home.action.dashboard': 'KPI principali e overview delle performance.',
+    'home.action.userCheck': 'Strumento Support: controlli utente e flusso di investigazione.',
+
+    'home.preview.commandCenter.1': 'Task',
+    'home.preview.commandCenter.2': 'Esecuzioni',
+    'home.preview.commandCenter.3': 'Tracking',
+    'home.preview.dashboard.1': 'KPI',
+    'home.preview.dashboard.2': 'Affiliati',
+    'home.preview.dashboard.3': 'Report',
+    'home.preview.userCheck.1': 'Ricerca',
+    'home.preview.userCheck.2': 'Rischio',
+    'home.preview.userCheck.3': 'Note',
 
     // Ranking
     'ranking.title': 'Ranking',
@@ -4737,11 +4763,24 @@ export const translations = {
     'sidebar.ranking': 'Ranking',
 
     // Home
-    'home.welcome.generic': 'Dobrodošao nazad',
-    'home.welcome.personal': 'Dobrodošao nazad, {name}',
+    'home.welcome.generic': 'Dobrodošao nazad — nastavljamo gde si stao?',
+    'home.welcome.personal': 'Dobrodošao nazad, {name} — spreman da nastavimo?',
     'home.role.default': 'Korisnik konzole',
-    'home.quickActions.title': 'Glavne sekcije',
+    'home.quickActions.title': 'Brz pristup',
     'home.quickActions.noteRestricted': 'Neke sekcije mogu biti ograničene za tvoju ulogu.',
+    'home.action.commandCenter': 'Operativni prikaz: zadaci, izvršenja i dnevno praćenje.',
+    'home.action.dashboard': 'Glavni KPI-jevi i pregled performansi.',
+    'home.action.userCheck': 'Support alat: provera korisnika i tok istrage.',
+
+    'home.preview.commandCenter.1': 'Zadaci',
+    'home.preview.commandCenter.2': 'Izvršenja',
+    'home.preview.commandCenter.3': 'Praćenje',
+    'home.preview.dashboard.1': 'KPI',
+    'home.preview.dashboard.2': 'Afilijati',
+    'home.preview.dashboard.3': 'Izveštaji',
+    'home.preview.userCheck.1': 'Pretraga',
+    'home.preview.userCheck.2': 'Rizik',
+    'home.preview.userCheck.3': 'Beleške',
 
     // Ranking
     'ranking.title': 'Ranking',
