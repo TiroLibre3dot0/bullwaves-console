@@ -79,6 +79,9 @@ export default function InvestmentsDashboard(props) {
 
   const { t, locale } = useI18n()
   const { payments, mediaRows, loading } = useMediaPaymentsData()
+  // Always show a loader briefly so users understand why the section takes time.
+  // This also allows the loader to paint before heavy ledger computations begin.
+  const [uiLoading, setUiLoading] = useState(true)
   const [selectedYear, setSelectedYear] = useState(initialSelectedYear || 'all')
   const [selectedMonth, setSelectedMonth] = useState(initialSelectedMonth || 'all')
   const [search, setSearch] = useState(initialSearch || '')
@@ -87,49 +90,20 @@ export default function InvestmentsDashboard(props) {
   const [financeConfirmed, setFinanceConfirmed] = useState({})
   const { setDataStatus } = useDataStatus()
 
-  const ledger = useAffiliateLedger({ mediaRows, payments, selectedYear, selectedMonth, search })
+  useEffect(() => {
+    let cancelled = false
+    setUiLoading(true)
 
-  const availableYears = useMemo(() => {
-    const set = new Set()
-    mediaRows.forEach((m) => Number.isFinite(Number(m.year)) && set.add(Number(m.year)))
-    payments.forEach((p) => Number.isFinite(Number(p.year)) && set.add(Number(p.year)))
-    return Array.from(set).sort((a, b) => a - b)
-  }, [mediaRows, payments])
+    // Give the browser a chance to render the loader.
+    const id = window.setTimeout(() => {
+      if (!cancelled) setUiLoading(false)
+    }, 180)
 
-  const monthOptions = useMemo(() => {
-    const map = new Map()
-    const add = (row) => {
-      if (row == null) return
-      if (selectedYear !== 'all' && Number(row.year) !== Number(selectedYear)) return
-      const year = Number(row.year)
-      const monthIdx = Number(row.monthIndex)
-      if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0) return
-      const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
-      map.set(key, monthLabel(locale, key))
+    return () => {
+      cancelled = true
+      window.clearTimeout(id)
     }
-    mediaRows.forEach(add)
-    payments.forEach(add)
-    return Array.from(map.entries())
-      .map(([value, label]) => ({ value, label }))
-      .sort((a, b) => a.value.localeCompare(b.value))
-  }, [mediaRows, payments, selectedYear, locale])
-
-  const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
-
-  const onShare = () => {
-    try {
-      const origin = getPublicShareOrigin()
-      const params = new window.URLSearchParams()
-      if (selectedYear && selectedYear !== 'all') params.set('year', String(selectedYear))
-      if (selectedMonth && selectedMonth !== 'all') params.set('month', String(selectedMonth))
-      if (search) params.set('search', String(search))
-      const qs = params.toString()
-      const href = `${origin}/share/affiliate-payout-summary${qs ? `?${qs}` : ''}`
-      window.open(href, '_blank', 'noopener,noreferrer')
-    } catch (e) {
-      console.warn('Unable to open share link', e)
-    }
-  }
+  }, [selectedYear, selectedMonth, search])
 
   useEffect(() => {
     try {
@@ -180,12 +154,96 @@ export default function InvestmentsDashboard(props) {
     loadDataStatus()
   }, [])
 
+  if (loading || uiLoading) {
+    return <FullPageLoader progress={45} subtitle={t('investments.loader.data')} />
+  }
+
+  return (
+    <InvestmentsDashboardContent
+      t={t}
+      locale={locale}
+      payments={payments}
+      mediaRows={mediaRows}
+      selectedYear={selectedYear}
+      setSelectedYear={setSelectedYear}
+      selectedMonth={selectedMonth}
+      setSelectedMonth={setSelectedMonth}
+      search={search}
+      setSearch={setSearch}
+      showAllAffiliates={showAllAffiliates}
+      setShowAllAffiliates={setShowAllAffiliates}
+      expanded={expanded}
+      setExpanded={setExpanded}
+      financeConfirmed={financeConfirmed}
+      setFinanceConfirmed={setFinanceConfirmed}
+    />
+  )
+}
+
+function InvestmentsDashboardContent({
+  t,
+  locale,
+  payments,
+  mediaRows,
+  selectedYear,
+  setSelectedYear,
+  selectedMonth,
+  setSelectedMonth,
+  search,
+  setSearch,
+  showAllAffiliates,
+  setShowAllAffiliates,
+  expanded,
+  setExpanded,
+  financeConfirmed,
+  setFinanceConfirmed,
+}) {
+  const ledger = useAffiliateLedger({ mediaRows, payments, selectedYear, selectedMonth, search })
+
+  const availableYears = useMemo(() => {
+    const set = new Set()
+    mediaRows.forEach((m) => Number.isFinite(Number(m.year)) && set.add(Number(m.year)))
+    payments.forEach((p) => Number.isFinite(Number(p.year)) && set.add(Number(p.year)))
+    return Array.from(set).sort((a, b) => a - b)
+  }, [mediaRows, payments])
+
+  const monthOptions = useMemo(() => {
+    const map = new Map()
+    const add = (row) => {
+      if (row == null) return
+      if (selectedYear !== 'all' && Number(row.year) !== Number(selectedYear)) return
+      const year = Number(row.year)
+      const monthIdx = Number(row.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0) return
+      const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
+      map.set(key, monthLabel(locale, key))
+    }
+    mediaRows.forEach(add)
+    payments.forEach(add)
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.value.localeCompare(b.value))
+  }, [mediaRows, payments, selectedYear, locale])
+
+  const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
+
   const toggleFinanceConfirmed = (affiliateId) => {
     setFinanceConfirmed((prev) => ({ ...prev, [affiliateId]: !prev[affiliateId] }))
   }
 
-  if (loading) {
-    return <FullPageLoader progress={45} subtitle={t('investments.loader.data')} />
+  const onShare = () => {
+    try {
+      const origin = getPublicShareOrigin()
+      const params = new window.URLSearchParams()
+      if (selectedYear && selectedYear !== 'all') params.set('year', String(selectedYear))
+      if (selectedMonth && selectedMonth !== 'all') params.set('month', String(selectedMonth))
+      if (search) params.set('search', String(search))
+      const qs = params.toString()
+      const href = `${origin}/share/affiliate-payout-summary${qs ? `?${qs}` : ''}`
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      console.warn('Unable to open share link', e)
+    }
   }
 
   return (
