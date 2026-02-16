@@ -1,4 +1,8 @@
 name,country,count,members_user_ids,members_accounts
+daniel martin,united kingdom,3,bullwaves-943615|bullwaves-589241|bullwaves-577613,3010806|1304527|1303056
+steyn de jager,south africa,2,bullwaves-943561|bullwaves-943298,2002213|3010787
+waseem badroodien,south africa,2,bullwaves-943408|bullwaves-615203,3010794|1307662
+jordan williams,united kingdom,4,bullwaves-943343|bullwaves-928686|bullwaves-606732|bullwaves-236276,"3010789,3011108|3010143|1306806|930738"
 alex wilson,united kingdom,3,bullwaves-942443|bullwaves-853464|bullwaves-662127,2002205|3006321|1312347
 matthew newham,australia,2,bullwaves-942302|bullwaves-82099,2002204|906496
 scott jones,united kingdom,2,bullwaves-942288|bullwaves-265226,3010753|935558
@@ -73,7 +77,6 @@ tyrell simon,united kingdom,2,bullwaves-929829|bullwaves-929843,3010191|3010192
 scott ransom,united kingdom,2,bullwaves-929020|bullwaves-769262,3010154|3002261
 andrea ciccarelli,italy,3,bullwaves-928852|bullwaves-680099|bullwaves-680078,|1314429|1314425
 callum watson,united kingdom,2,bullwaves-928782|bullwaves-531834,3010147|1217090
-jordan williams,united kingdom,3,bullwaves-928686|bullwaves-606732|bullwaves-236276,3010143|1306806|930738
 alexander caven,united kingdom,3,bullwaves-928592|bullwaves-802836|bullwaves-407007,3010134||1201372
 samuel thomas,united kingdom,2,bullwaves-928570|bullwaves-622550,3010133|1308397
 wei kiat sng,singapore,2,bullwaves-928338|bullwaves-425852,3010126|1203461
@@ -3839,7 +3842,7 @@ tatiana afroni,unknown country,2,bullwaves-802284|bullwaves-369621,|950055
 morosanu vasile,unknown country,2,bullwaves-802556|bullwaves-388478,|952301
 barrington reid,united kingdom,2,bullwaves-803462|bullwaves-446650,|1206196
 dobrin simeonov,bulgaria,2,bullwaves-800711|bullwaves-228228,|929252
-thomas daniel,united kingdom,3,bullwaves-800980|bullwaves-260462|bullwaves-204656,||925643
+thomas daniel,united kingdom,3,bullwaves-800980|bullwaves-260462|bullwaves-204656,|1210314|925643
 david loton,united kingdom,2,bullwaves-802340|bullwaves-373404,|950571
 kye waring,united kingdom,2,bullwaves-802984|bullwaves-418261,|1202586
 aiden galloway,united kingdom,2,bullwaves-803411|bullwaves-444059,|1205825
@@ -4901,7 +4904,7 @@ michael den ouden,netherlands,2,bullwaves-800225|bullwaves-178581,|921395
 hector fernandez,spain,2,bullwaves-800745|bullwaves-230732,|929691
 adam morgan,united kingdom,2,bullwaves-802012|bullwaves-349731,|947688
 steven richardson,united kingdom,2,bullwaves-801608|bullwaves-318468,|943376
-gary roughan,australia,3,bullwaves-802265|bullwaves-367696|bullwaves-111616,||910775
+gary roughan,australia,3,bullwaves-802265|bullwaves-367696|bullwaves-111616,|2001975|910775
 paul wetherill,united kingdom,3,bullwaves-800862|bullwaves-244208|bullwaves-26056,|931829|0
 will dungay,australia,4,bullwaves-800542|bullwaves-649814|bullwaves-635055|bullwaves-205100,|1311148|1309589|925721
 reda mellouk,morocco,2,bullwaves-800969|bullwaves-259450,|934566
@@ -8841,7 +8844,6 @@ ali saberi,united arab emirates,2,bullwaves-589516|bullwaves-546131,1304567|1218
 tarro forster-jones,united kingdom,2,bullwaves-589316|bullwaves-583358,1304536|1303754
 violeta saravanja lovric,sweden,2,bullwaves-589272|bullwaves-532005,1304530|1217120
 mohammed yousuf,united kingdom,2,bullwaves-589282|bullwaves-502159,1304533|1213327
-daniel martin,united kingdom,2,bullwaves-589241|bullwaves-577613,1304527|1303056
 syed muhammad kashif,pakistan,2,bullwaves-589144|bullwaves-571789,1304516|1302312
 alessandro bernocchi,italy,2,bullwaves-588651|bullwaves-588631,|1304446
 hamza hussain,united kingdom,2,bullwaves-588643|bullwaves-188924,1304448|922972
