@@ -59,6 +59,7 @@ export default function Topbar({
   const [showTools, setShowTools] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showDataInfoModal, setShowDataInfoModal] = useState(false)
+  const [reportsMeta, setReportsMeta] = useState(null)
   const hasNav = Boolean(children)
 
   const isMobile = () => window.innerWidth <= 768
@@ -144,6 +145,69 @@ export default function Topbar({
   const handleDataStatusClick = () => {
     setShowDataInfoModal(true)
   }
+
+  // Load lightweight meta so we can warn if Registrations Report is behind.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.fetch) return
+
+    let cancelled = false
+
+    const getVersion = () => {
+      try {
+        return String(
+          window.localStorage.getItem('bw_reports_version') ||
+            window.localStorage.getItem('bw_reports_meta_generatedAt') ||
+            ''
+        )
+      } catch {
+        return ''
+      }
+    }
+
+    const fetchMeta = async () => {
+      try {
+        const v = getVersion()
+        const url = v
+          ? `/reports_meta.json?v=${encodeURIComponent(v)}`
+          : `/reports_meta.json?ts=${Date.now()}`
+        const res = await fetch(url, { cache: 'no-store' })
+        if (!res.ok) return
+        const meta = await res.json()
+        if (cancelled) return
+        setReportsMeta(meta || null)
+      } catch {
+        // ignore
+      }
+    }
+
+    const sync = () => fetchMeta()
+
+    const onStorage = (e) => {
+      if (!e || e.key === 'bw_reports_version' || e.key === 'bw_reports_meta_generatedAt') sync()
+    }
+
+    fetchMeta()
+    window.addEventListener('bw-reports-updated', sync)
+    window.addEventListener('storage', onStorage)
+
+    return () => {
+      cancelled = true
+      window.removeEventListener('bw-reports-updated', sync)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [])
+
+  const registrationsMeta = reportsMeta?.reports?.registrations || null
+  const registrationsLatestIso = registrationsMeta?.latestDate || ''
+  const registrationsLatest = registrationsLatestIso ? new Date(registrationsLatestIso) : null
+  const registrationsOutdated = useMemo(() => {
+    if (!registrationsLatest || Number.isNaN(registrationsLatest.getTime())) return false
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const latest = new Date(registrationsLatest)
+    latest.setHours(0, 0, 0, 0)
+    return latest < today
+  }, [registrationsLatestIso])
 
   const tools = useMemo(() => CONSOLE_TOOLS, [])
 
@@ -316,7 +380,11 @@ export default function Topbar({
       <DataInfoModal
         isOpen={showDataInfoModal}
         onClose={() => setShowDataInfoModal(false)}
-        dataInfo={getDataInfo}
+        dataInfo={{
+          ...getDataInfo,
+          registrationsLatestDate: registrationsLatestIso,
+          registrationsOutdated,
+        }}
       />
     </>
   )

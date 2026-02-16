@@ -142,8 +142,19 @@ function scanLatestDateFromCsvText(text, candidates) {
 
       if (!dateKey) {
         const keys = Object.keys(row || {})
-        const found = keys.find((k) => candidateSet.has(normKey(k)))
-        dateKey = found || null
+
+        // Prefer candidates order (e.g. registration_date over external_date)
+        // rather than the first matching header appearance.
+        const byNorm = new Map(keys.map((k) => [normKey(k), k]))
+        const preferredNorm = (candidates || []).map(normKey).find((nk) => byNorm.has(nk))
+
+        // Fallback to any matching key if candidates are malformed.
+        if (preferredNorm) {
+          dateKey = byNorm.get(preferredNorm) || null
+        } else {
+          const found = keys.find((k) => candidateSet.has(normKey(k)))
+          dateKey = found || null
+        }
       }
       if (!dateKey) return
 

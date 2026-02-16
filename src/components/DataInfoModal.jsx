@@ -3,8 +3,20 @@ import React from 'react'
 const DataInfoModal = ({ isOpen, onClose, dataInfo }) => {
   if (!isOpen) return null
 
+  const registrationsIso = dataInfo?.registrationsLatestDate || ''
+  const registrationsDate = registrationsIso ? new Date(registrationsIso) : null
+  const registrationsLabel =
+    registrationsDate && !Number.isNaN(registrationsDate.getTime())
+      ? registrationsDate.toLocaleString('it-IT')
+      : 'N/A'
+  const registrationsOutdated = Boolean(dataInfo?.registrationsOutdated)
+
   const openCellXpert = () => {
-    window.open('https://partner.trackingaffiliates.com/v2/login/admin-login/', '_blank', 'noopener,noreferrer')
+    window.open(
+      'https://partner.trackingaffiliates.com/v2/login/admin-login/',
+      '_blank',
+      'noopener,noreferrer'
+    )
     onClose()
   }
 
@@ -28,7 +40,12 @@ const DataInfoModal = ({ isOpen, onClose, dataInfo }) => {
               className="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -69,13 +86,44 @@ const DataInfoModal = ({ isOpen, onClose, dataInfo }) => {
             </div>
           </div>
 
+          {/* Registrations Report freshness */}
+          {registrationsIso ? (
+            <div
+              className={`flex items-center space-x-3 p-3 rounded-lg ${
+                registrationsOutdated ? 'bg-red-50' : 'bg-green-50'
+              }`}
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  registrationsOutdated ? 'bg-red-100' : 'bg-green-100'
+                }`}
+              >
+                <span className={registrationsOutdated ? 'text-red-700' : 'text-green-700'}>
+                  {registrationsOutdated ? '⚠️' : '✅'}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Registrations Report</p>
+                <p className="font-semibold text-gray-900">Ultima data: {registrationsLabel}</p>
+                {registrationsOutdated ? (
+                  <p className="text-sm text-red-700">
+                    Attenzione: i dati delle registrazioni non sono aggiornati a oggi.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           {/* Info aggiuntiva */}
           <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div className="flex items-start space-x-2">
               <span className="text-yellow-600 mt-0.5">💡</span>
               <div className="text-sm text-yellow-800">
                 <p className="font-medium">Suggerimento:</p>
-                <p>Per aggiornare i dati, scarica i nuovi report da CellXpert e sostituiscili nella cartella public.</p>
+                <p>
+                  Per aggiornare i dati, scarica i nuovi report da CellXpert e sostituiscili nella
+                  cartella public.
+                </p>
               </div>
             </div>
           </div>
