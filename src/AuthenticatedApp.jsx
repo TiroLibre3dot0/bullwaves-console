@@ -69,7 +69,8 @@ export default function AuthenticatedApp() {
 
   const { user } = useAuth()
   const normalizedEmail = user?.email?.toLowerCase() || ''
-  const isAdmin = normalizedEmail === 'paolo.v@bullwaves.com'
+  const adminEmails = new Set(['paolo.v@bullwaves.com', 'affiliates@bullwaves.com'])
+  const isAdmin = adminEmails.has(normalizedEmail)
   const isManagementTeam = Boolean(user?.isManagementTeam)
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
