@@ -69,9 +69,11 @@ export default function AuthenticatedApp() {
 
   const { user } = useAuth()
   const normalizedEmail = user?.email?.toLowerCase() || ''
-  const adminEmails = new Set(['paolo.v@bullwaves.com', 'affiliates@bullwaves.com'])
-  const isAdmin = adminEmails.has(normalizedEmail)
   const isManagementTeam = Boolean(user?.isManagementTeam)
+  // Admin features (Custom Events, Admin Panel) follow the org chart: Management Team has full access.
+  // Keep a small explicit allowlist for exceptional admin users outside management.
+  const adminEmails = new Set(['paolo.v@bullwaves.com'])
+  const isAdmin = Boolean(isManagementTeam || adminEmails.has(normalizedEmail))
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
   const isBusinessDevSales = Boolean(!isManagementTeam && isSalesDepartment(user?.department || ''))
