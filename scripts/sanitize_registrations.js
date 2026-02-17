@@ -8,6 +8,7 @@ Writes cleaned CSV to `public/Registrations Report.csv` and saves raw backup und
 const fs = require('fs')
 const path = require('path')
 const Papa = require('papaparse')
+const { replaceFileSync } = require('./replaceFileSync')
 
 const src = process.argv[2] || 'tmp_registrations.csv'
 const dest = path.join('public', 'Registrations Report.csv')
@@ -468,7 +469,9 @@ if (fs.existsSync(dest)) {
 // write final CSV
 try {
   const out = Papa.unparse(finalRows, { columns: finalFields })
-  fs.writeFileSync(dest, out, 'utf8')
+  const tmpDest = dest + '.tmp'
+  fs.writeFileSync(tmpDest, out, 'utf8')
+  replaceFileSync(tmpDest, dest)
   console.log('Wrote cleaned CSV to', dest)
   console.log('Existing rows:', existingRows.length, 'New added:', toAdd.length, 'Unchanged duplicates skipped:', duplicatesUnchanged.length, 'Affiliate updates:', affiliateUpdates.length, 'Total field updates:', updatesLog.length)
 
@@ -483,6 +486,11 @@ try {
   }
 } catch (e){
   console.error('Failed to write cleaned CSV:', e && e.message)
+  try {
+    const tmpDest = dest + '.tmp'
+    if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest)
+  } catch (e2) { /* ignore */ }
+  process.exitCode = 4
 }
 
-if (malformed.length) process.exitCode = 3
+if (malformed.length && !process.exitCode) process.exitCode = 3

@@ -17,6 +17,7 @@ Usage:
 const fs = require('fs')
 const path = require('path')
 const Papa = require('papaparse')
+const { replaceFileSync } = require('./replaceFileSync')
 
 const src = process.argv[2] || 'tmp_comments.csv'
 const dest = path.join('public', 'comments.csv')
@@ -276,12 +277,29 @@ for (const row of extractedRows) {
 }
 
 const csvOut = Papa.unparse(existingRows, { columns: outputFields })
-fs.writeFileSync(dest, csvOut, 'utf8')
+try {
+  const tmpDest = dest + '.tmp'
+  fs.writeFileSync(tmpDest, csvOut, 'utf8')
+  replaceFileSync(tmpDest, dest)
+} catch (e) {
+  console.error('Failed to write cleaned CSV:', e && e.message)
+  try {
+    const tmpDest = dest + '.tmp'
+    if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest)
+  } catch (e2) { /* ignore */ }
+  process.exitCode = 4
+}
 console.log('Wrote cleaned CSV to', dest)
 try {
-  fs.writeFileSync(destLegacy, csvOut, 'utf8')
+  const tmpLegacy = destLegacy + '.tmp'
+  fs.writeFileSync(tmpLegacy, csvOut, 'utf8')
+  replaceFileSync(tmpLegacy, destLegacy)
   console.log('Wrote cleaned CSV to', destLegacy)
 } catch (e) {
   console.warn('Warning: failed to write legacy comments report:', e && e.message)
+  try {
+    const tmpLegacy = destLegacy + '.tmp'
+    if (fs.existsSync(tmpLegacy)) fs.unlinkSync(tmpLegacy)
+  } catch (e2) { /* ignore */ }
 }
 console.log(`Existing rows: ${existingRows.length - added} New added: ${added} Unchanged duplicates skipped: ${duplicates} Affiliate updates: 0 Total field updates: 0`)

@@ -8,6 +8,7 @@ Writes cleaned CSV to `public/Media Report.csv` and saves raw backup under `publ
 const fs = require('fs')
 const path = require('path')
 const Papa = require('papaparse')
+const { replaceFileSync } = require('./replaceFileSync')
 
 const argv = process.argv.slice(2)
 const dryRun = argv.includes('--dry-run') || argv.includes('--dry')
@@ -373,7 +374,7 @@ try {
   const tmpDest = dest + '.tmp'
   fs.writeFileSync(tmpDest, out, 'utf8')
   // backup existing dest (already performed earlier)
-  fs.renameSync(tmpDest, dest)
+  replaceFileSync(tmpDest, dest)
   console.log('Wrote cleaned CSV to', dest)
   console.log('Existing rows:', originalExistingCount, 'New added:', addedCount, 'Updated:', updatedCount)
   console.log('Unchanged duplicates skipped:', unchangedCount)
@@ -391,8 +392,10 @@ try {
 } catch (e){
   console.error('Failed to write cleaned CSV atomically:', e && e.message)
   try {
-    if (fs.existsSync(dest)) fs.unlinkSync(dest + '.tmp')
+    const tmpDest = dest + '.tmp'
+    if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest)
   } catch (e2) { /* ignore */ }
+  process.exitCode = 4
 }
 
-if (malformed.length) process.exitCode = 3
+if (malformed.length && !process.exitCode) process.exitCode = 3

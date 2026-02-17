@@ -15,6 +15,7 @@ Defaults to: ./tmp_paste.csv
 const fs = require('fs')
 const path = require('path')
 const Papa = require('papaparse')
+const { replaceFileSync } = require('./replaceFileSync')
 
 const src = process.argv[2] || 'tmp_paste.csv'
 const dest = path.join('public', 'Payments Report.csv')
@@ -346,9 +347,20 @@ if (fs.existsSync(dest)) {
 }
 
 // write merged CSV
-const out = Papa.unparse(finalRows, { columns: finalFields })
-fs.writeFileSync(dest, out, 'utf8')
-console.log('Wrote merged CSV to', dest, `(existing=${originalExistingCount}, added=${addedCount}, updated=${updatedCount}, unchanged=${unchangedCount}${dedupedExisting ? `, collapsedDestDuplicates=${dedupedExisting}` : ''}, fieldUpdates=${totalFieldUpdates})`)
+try {
+  const out = Papa.unparse(finalRows, { columns: finalFields })
+  const tmpDest = dest + '.tmp'
+  fs.writeFileSync(tmpDest, out, 'utf8')
+  replaceFileSync(tmpDest, dest)
+  console.log('Wrote merged CSV to', dest, `(existing=${originalExistingCount}, added=${addedCount}, updated=${updatedCount}, unchanged=${unchangedCount}${dedupedExisting ? `, collapsedDestDuplicates=${dedupedExisting}` : ''}, fieldUpdates=${totalFieldUpdates})`)
+} catch (e) {
+  console.error('Failed to write cleaned CSV:', e && e.message)
+  try {
+    const tmpDest = dest + '.tmp'
+    if (fs.existsSync(tmpDest)) fs.unlinkSync(tmpDest)
+  } catch (e2) { /* ignore */ }
+  process.exitCode = 4
+}
 
 // Cleanup: avoid accumulating .bak files unless explicitly requested.
 if (bakPath && process.env.KEEP_BAK !== '1') {
@@ -361,4 +373,4 @@ if (bakPath && process.env.KEEP_BAK !== '1') {
 }
 
 // exit with code indicating presence of malformed rows
-if (malformed.length) process.exitCode = 3
+if (malformed.length && !process.exitCode) process.exitCode = 3
