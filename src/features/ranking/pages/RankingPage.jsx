@@ -117,6 +117,61 @@ function renderExtraValue(key, row) {
   return String(row?.[key] ?? '—')
 }
 
+function clamp(n, min, max) {
+  const v = Number(n)
+  if (!Number.isFinite(v)) return min
+  return Math.max(min, Math.min(max, v))
+}
+
+function computeMockWinRate(positionCount) {
+  const pc = Math.max(0, Math.floor(Number(positionCount) || 0))
+  // Deterministic mock value: clamp( ( (positionCount % 60) + 10 ) / 100 , 0.05, 0.85 )
+  const raw = ((pc % 60) + 10) / 100
+  return clamp(raw, 0.05, 0.85)
+}
+
+function getWinRateTone(winRate) {
+  const pct = (Number(winRate) || 0) * 100
+  if (pct < 35) return 'bad'
+  if (pct < 50) return 'warn'
+  if (pct < 60) return 'mid'
+  return 'good'
+}
+
+function getInitials(name) {
+  const s = String(name || '').trim()
+  if (!s) return ''
+  const parts = s
+    .split(/\s+/g)
+    .map((p) => p.trim())
+    .filter(Boolean)
+  if (!parts.length) return ''
+  const a = parts[0]?.[0] || ''
+  const b = parts.length > 1 ? parts[parts.length - 1]?.[0] || '' : ''
+  const out = `${a}${b}`.toUpperCase()
+  return out.slice(0, 2)
+}
+
+function getRowKey(r) {
+  const userId = String(r?.userId || '').trim()
+  const mt5 = String(r?.mt5Account || '').trim()
+  const base = `${userId}-${mt5}`
+  if (base !== '-') return base
+  const name = String(r?.customerName || '').trim()
+  return name ? `name-${name}` : 'row'
+}
+
+function getRankClass(rank) {
+  if (rank === 1) return 'ranking-top1'
+  if (rank === 2) return 'ranking-top2'
+  if (rank === 3) return 'ranking-top3'
+  return ''
+}
+
+function getRowClass(isSelected) {
+  return isSelected ? 'ranking-selected' : ''
+}
+
 export default function RankingPage({
   publicMode = false,
   initialPeriodId = '',
@@ -135,6 +190,7 @@ export default function RankingPage({
   const [affiliateById, setAffiliateById] = useState(null)
   const [usersTable, setUsersTable] = useState(null)
   const [shareState, setShareState] = useState('')
+  const [selectedRowKey, setSelectedRowKey] = useState('')
 
   const periodPills = useMemo(() => {
     const dynamic = Array.isArray(index?.reportPeriods)
@@ -264,6 +320,11 @@ export default function RankingPage({
   const activeRows = activeBoardId ? leaderboardsForPeriod?.[activeBoardId]?.rows || [] : []
   const activeExtraCols = activeCfg?.extra || []
 
+  const periodMetaUi = index?.periods?.[periodId] || null
+  const ftdStartLabel = periodMetaUi?.start ? formatDateShort(periodMetaUi.start) : ''
+  const ftdEndLabel = index?.now ? formatDateShort(index.now) : ''
+  const ftdRangeLabel = ftdStartLabel ? `${ftdStartLabel} → ${ftdEndLabel || '—'}` : 'All time'
+
   const filteredRows = useMemo(() => {
     const qRaw = String(query || '').trim()
     const q = qRaw.toLowerCase()
@@ -362,7 +423,10 @@ export default function RankingPage({
 
   return (
     <div className="page-shell">
-      <header className="page-header" style={{ alignItems: 'center' }}>
+      <header
+        className="page-header ranking-header ranking-sticky-header"
+        style={{ alignItems: 'center' }}
+      >
         <div>
           <p className="page-label">{publicMode ? 'Public share' : 'Marketing'}</p>
           <h1 className="page-title">{t('ranking.title')}</h1>
@@ -384,6 +448,13 @@ export default function RankingPage({
                 {p.label}
               </button>
             ))}
+          </div>
+
+          <div className="ranking-period-hint" aria-live="polite">
+            <span>FTD window: </span>
+            <strong>{ftdRangeLabel}</strong>
+            <span> · Rows: </span>
+            <strong>{numberFmt0.format(activeRows.length)}</strong>
           </div>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -444,73 +515,135 @@ export default function RankingPage({
           </div>
 
           <div className="table-wrap">
-            <table className="table ranking-table" style={{ minWidth: 980 }}>
-              <colgroup>
-                <col style={{ width: 64 }} />
-                <col style={{ width: 280 }} />
-                <col style={{ width: 220 }} />
-                <col style={{ width: 110 }} />
-                <col style={{ width: 110 }} />
-                <col style={{ width: 140 }} />
-                {activeExtraCols.map((c) => (
-                  <col key={c.key} style={{ width: 140 }} />
-                ))}
-              </colgroup>
-              <thead>
-                <tr>
-                  <th style={{ width: 64 }}>#</th>
-                  <th>User</th>
-                  <th>Affiliate</th>
-                  <th>Country</th>
-                  <th>FTD</th>
-                  <th style={{ textAlign: 'right' }}>{activeCfg.metricLabel}</th>
-                  {activeExtraCols.map((c) => (
-                    <th key={c.key} style={{ textAlign: 'right' }}>
-                      {c.label}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredRows.length ? (
-                  filteredRows.map((r, i) => (
-                    <tr key={`${r.userId || r.mt5Account || r.customerName || 'u'}-${i}`}>
-                      <td>{i + 1}</td>
-                      <td>
-                        <div style={{ fontWeight: 800 }}>{r.customerName || '—'}</div>
-                        <div className="muted" style={{ fontSize: 12 }}>
-                          {r.userId ? `User ID: ${r.userId}` : ''}
-                          {r.mt5Account ? `${r.userId ? ' · ' : ''}MT5: ${r.mt5Account}` : ''}
-                        </div>
-                      </td>
-                      <td>{formatAffiliate(r.affiliateId)}</td>
-                      <td>{r.country || '—'}</td>
-                      <td>{formatDateShort(r.ftdDate)}</td>
-                      <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
-                        {renderMetricValue(activeBoardId, r)}
-                      </td>
-                      {activeExtraCols.map((c) => (
-                        <td
-                          key={c.key}
-                          style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}
-                        >
-                          {renderExtraValue(c.key, r)}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan={6 + activeExtraCols.length}
-                      style={{ padding: 12, color: 'var(--text-muted)' }}
+            <div className="ranking-list" role="list" aria-label={t('ranking.title')}>
+              {filteredRows.length ? (
+                filteredRows.map((r, i) => {
+                  const rank = i + 1
+                  const rowKey = `${getRowKey(r)}-${i}`
+                  const stableKey = getRowKey(r)
+                  const isSelected = stableKey && selectedRowKey === stableKey
+
+                  const netDeposits = Number(r?.netDeposits || 0)
+                  const userPl = Number(r?.userPl || 0)
+                  const ratio = Number(r?.userPlPctNetDeposits || 0)
+
+                  const plValue = formatMoneyLike(userPl)
+                  const plTone = userPl > 0 ? 'pos' : userPl < 0 ? 'neg' : 'zero'
+                  const roiText = formatRatioPct(ratio)
+                  const roiTone = ratio > 0 ? 'pos' : ratio < 0 ? 'neg' : 'zero'
+                  const depositsValue = formatMoneyLike(netDeposits)
+
+                  const positionCount = Math.max(0, Math.floor(Number(r?.positionCount) || 0))
+                  const trades = numberFmt0.format(positionCount)
+                  const winRate = computeMockWinRate(positionCount)
+                  const winRatePct = winRate * 100
+                  const winRateText = `${numberFmt2.format(winRatePct)}%`
+                  const winTone = getWinRateTone(winRate)
+
+                  const displayNameRaw = String(r?.customerName || '').trim()
+                  const userId = String(r?.userId || '').trim()
+                  const displayName = displayNameRaw || (userId ? `User ${userId}` : 'User')
+                  const initials = getInitials(displayNameRaw)
+                  const mt5 = String(r?.mt5Account || '').trim()
+
+                  return (
+                    <div
+                      key={rowKey}
+                      role="listitem"
+                      className={['ranking-row', getRankClass(rank), getRowClass(isSelected)]
+                        .filter(Boolean)
+                        .join(' ')}
+                      onClick={() => setSelectedRowKey(stableKey)}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setSelectedRowKey(stableKey)
+                        }
+                      }}
                     >
-                      {t('ranking.empty')}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                      <div className="ranking-left" aria-hidden="true">
+                        <div className={`ranking-left-value ranking-left-value--${plTone}`}>
+                          {plValue}
+                        </div>
+                        <div className={`ranking-left-percent ranking-left-percent--${roiTone}`}>
+                          {roiText}
+                        </div>
+                      </div>
+
+                      <div className="ranking-center">
+                        <div className="ranking-rank-badge" aria-label={`Rank ${rank}`}>
+                          {rank}
+                        </div>
+
+                        <div className="ranking-avatar" aria-hidden="true">
+                          {initials ? (
+                            <span className="ranking-avatar-initials">{initials}</span>
+                          ) : (
+                            <svg
+                              viewBox="0 0 24 24"
+                              width="16"
+                              height="16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="ranking-avatar-icon"
+                            >
+                              <path
+                                d="M12 12a4.2 4.2 0 1 0-4.2-4.2A4.2 4.2 0 0 0 12 12Zm0 2c-4.33 0-7.8 2.08-7.8 4.65V20h15.6v-1.35C19.8 16.08 16.33 14 12 14Z"
+                                fill="currentColor"
+                                opacity="0.9"
+                              />
+                            </svg>
+                          )}
+                        </div>
+
+                        <div className="ranking-identity">
+                          <div className="ranking-name">{displayName}</div>
+                          <div className="ranking-meta">
+                            {userId ? `User ID: ${userId}` : ''}
+                            {mt5 ? `${userId ? ' · ' : ''}MT5: ${mt5}` : ''}
+                            {r?.affiliateId ? ` · ${formatAffiliate(r.affiliateId)}` : ''}
+                          </div>
+
+                          <div className="ranking-end-mobile" aria-hidden="true">
+                            <div className={`ranking-end-value ranking-end-value--${plTone}`}>
+                              {plValue}
+                            </div>
+                            <div className={`ranking-end-percent ranking-end-percent--${roiTone}`}>
+                              {roiText}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="ranking-right">
+                        <div className="ranking-metric">
+                          <div className="ranking-metric-label">Trades</div>
+                          <div className="ranking-metric-value">{trades}</div>
+                        </div>
+
+                        <div className="ranking-metric ranking-metric--winrate">
+                          <div className="ranking-metric-label">Win rate {winRateText}</div>
+                          <div className="ranking-winbar-track" aria-hidden="true">
+                            <div
+                              className={`ranking-winbar-fill ranking-winbar-fill--${winTone}`}
+                              style={{ width: `${Math.round(winRatePct * 100) / 100}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="ranking-end-desktop" aria-hidden="true">
+                          <div className="ranking-metric-label">Deposits</div>
+                          <div className="ranking-end-value">{depositsValue}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="ranking-empty">{t('ranking.empty')}</div>
+              )}
+            </div>
           </div>
         </section>
       ) : (
