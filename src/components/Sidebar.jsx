@@ -338,6 +338,18 @@ export default function Sidebar({
                 <span>{t('sidebar.ranking')}</span>
               </span>
             </button>
+
+            <button
+              disabled={disabled('creolabs')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'creolabs' ? 'active' : ''}`}
+              onClick={() => navigate('creolabs')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.creolabs')}</span>
+              </span>
+            </button>
             <button
               disabled={disabled('fraud')}
               type="button"

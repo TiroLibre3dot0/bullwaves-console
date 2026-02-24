@@ -506,7 +506,7 @@ paymentdate,id,affiliate_id,affiliate,payment_range,payment_amount,details,actio
 9/16/2024,7,35143,ajmudronja,Up to 09/01/2024,18050,"Automatically created from payment request ID 3, undefined",Remove,
 9/16/2024,6,35144,ajmudronja2,Up to 09/01/2024,1200,"Automatically created from payment request ID 4, undefined",Remove,
 8/19/2024,12,35133,Drforex12,8/8/2024 - 8/18/2024,5980,payment through crypto,Remove,
-,1,,,,,,,10
+,1,,,,0,,,10
 1/5/2026,541,35272,Mertyoz,12/29/2025 - 1/4/2026,42486,KR EQ Multi,Remove,
 1/5/2026,540,35607,JamieLeon,12/19/2025 - 1/1/2026,5713.85,EQ EQ,Remove,
 1/5/2026,539,35680,signalstrading,12/1/2025 - 12/31/2025,170,UN GL,Remove,
@@ -533,8 +533,8 @@ paymentdate,id,affiliate_id,affiliate,payment_range,payment_amount,details,actio
 1/13/2026,560,35607,JamieLeon,12/1/2025 - 12/31/2025,3128.7,Eq EQ,Remove,
 1/12/2026,557,35060,Cantax,12/1/2025 - 12/31/2025,1309,Kr Moon,Remove,
 1/12/2026,556,35060,Cantax,12/1/2025 - 12/31/2025,13000,RAPYD MOON,Remove,
-1/12/2026,555,35270,WealthWave,12/1/2025 - 12/31/2025,87384,,Remove,
-1/12/2026,554,35272,Mertyoz,1/4/2026 - 1/10/2026,107027,,Remove,
+1/12/2026,555,35270,WealthWave,12/1/2025 - 12/31/2025,87384,",""Remove",Remove,
+1/12/2026,554,35272,Mertyoz,1/4/2026 - 1/10/2026,107027,",""Remove",Remove,
 1/12/2026,553,35427,aff.bullwaves,12/1/2025 - 12/31/2025,3272,Un Gl,Remove,
 1/9/2026,552,35273,Fredtrading,12/1/2025 - 12/31/2025,186495.32,KR GL,Remove,
 1/9/2026,551,35583,basil-tyrone,12/1/2025 - 12/31/2025,2129.15,KR EQ MULTI PMNTS,Remove,
@@ -631,3 +631,4 @@ paymentdate,id,affiliate_id,affiliate,payment_range,payment_amount,details,actio
 2/16/2026,659,35272,Mertyoz,2/8/2026 - 2/14/2026,18901,KR EQ,Remove,
 2/16/2026,658,35272,Mertyoz,2/8/2026 - 2/14/2026,90000,EQ EQ,Remove,
 2/16/2026,657,35665,markeliticsita,1/1/2026 - 2/15/2026,8420,Rapyd Moon,Remove,
+2/20/2026,662,35703,tradeflow,1/1/2026 - 1/31/2026,7920,KR EQ,Remove,

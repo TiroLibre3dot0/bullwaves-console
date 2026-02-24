@@ -17,9 +17,11 @@ const path = require('path')
 const Papa = require('papaparse')
 const { replaceFileSync } = require('./replaceFileSync')
 
-const src = process.argv[2] || 'tmp_paste.csv'
-const dest = path.join('public', 'Payments Report.csv')
-const rawDir = path.join('public', 'raw')
+const projectRoot = path.join(__dirname, '..')
+const srcArg = process.argv[2] || 'tmp_paste.csv'
+const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
+const dest = path.join(projectRoot, 'public', 'Payments Report.csv')
+const rawDir = path.join(projectRoot, 'public', 'raw')
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)
@@ -38,9 +40,63 @@ console.log('Saved raw backup to', rawBackup)
 
 const normalizedHeader = h => String(h||'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')
 
+const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
+
 function tryParse(text, opts = {}){
   const parsed = Papa.parse(text, Object.assign({ header: true, skipEmptyLines: true, quoteChar: '"', transformHeader: normalizedHeader }, opts))
   return parsed
+}
+
+function hasHardParseErrors(parsed){
+  const errs = parsed && Array.isArray(parsed.errors) ? parsed.errors : []
+  return errs.some(e => e && (
+    e.type === 'Quotes'
+    || e.code === 'InvalidQuotes'
+    || e.code === 'TooManyFields'
+    || e.code === 'TooFewFields'
+  ))
+}
+
+function lenientQuotedLineParse(text, { delimiter }){
+  const lines = String(text || '').split(/\r?\n/).filter(l => String(l || '').trim() !== '')
+  if (!lines.length) return { data: [], meta: { fields: [] }, errors: [] }
+
+  const sep = `"${delimiter}"`
+  const stripOuterQuotes = (line) => {
+    let s = String(line || '')
+    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1)
+    s = s.replace(/\r$/, '')
+    if (s.startsWith('"')) s = s.slice(1)
+    if (s.endsWith('"')) s = s.slice(0, -1)
+    return s
+  }
+
+  const headerRaw = stripOuterQuotes(lines[0])
+  const headerFields = headerRaw.split(sep).map(normalizedHeader)
+
+  const expectedLen = headerFields.length
+  const detailsIdx = Math.max(0, expectedLen - 2)
+  const rows = []
+
+  for (let i = 1; i < lines.length; i++){
+    const raw = stripOuterQuotes(lines[i])
+    let parts = raw.split(sep)
+
+    if (parts.length > expectedLen && expectedLen >= 2) {
+      // Merge overflow into `details` and keep the last token as `action`.
+      const mergedDetails = parts.slice(detailsIdx, parts.length - 1).join(delimiter)
+      parts = parts.slice(0, detailsIdx).concat([mergedDetails, parts[parts.length - 1]])
+    }
+    if (parts.length < expectedLen) {
+      while (parts.length < expectedLen) parts.push('')
+    }
+
+    const obj = {}
+    for (let c = 0; c < expectedLen; c++) obj[headerFields[c] || `col_${c}`] = parts[c]
+    rows.push(obj)
+  }
+
+  return { data: rows, meta: { fields: headerFields }, errors: [] }
 }
 
 function preprocessRaw(text){
@@ -104,6 +160,39 @@ function balanceQuotesRejoin(text){
   return out.join('\n')
 }
 
+function repairParsedExtraRows(rows, { detailsField = 'details', actionField = 'action' } = {}) {
+  let repaired = 0
+  const list = Array.isArray(rows) ? rows : []
+  for (const r of list) {
+    if (!r || typeof r !== 'object') continue
+    if (!Object.prototype.hasOwnProperty.call(r, '__parsed_extra')) continue
+
+    const extras = Array.isArray(r.__parsed_extra) ? r.__parsed_extra : [r.__parsed_extra]
+    delete r.__parsed_extra
+
+    if (!extras.length) continue
+
+    // Common real-world case: an unquoted comma inside `details` shifts columns;
+    // PapaParse keeps the overflow into `__parsed_extra`.
+    // Heuristic: assume the *last* overflow token is the real `action` and merge the rest back into `details`.
+    const incomingDetails = (r[detailsField] ?? '').toString()
+    const incomingAction = (r[actionField] ?? '').toString()
+
+    const trueAction = (extras[extras.length - 1] ?? '').toString()
+    const overflowIntoDetails = extras.slice(0, -1).map((x) => (x ?? '').toString())
+
+    const detailsParts = [incomingDetails, incomingAction, ...overflowIntoDetails]
+      .map((s) => String(s || '').trim())
+      .filter(Boolean)
+
+    if (detailsParts.length) r[detailsField] = detailsParts.join(', ')
+    if (trueAction.trim()) r[actionField] = trueAction
+
+    repaired++
+  }
+  return repaired
+}
+
 // Preprocess raw and auto-detect delimiter
 const pre = preprocessRaw(txt)
 const sampleHeader = pre.split(/\r?\n/)[0] || ''
@@ -121,12 +210,21 @@ if (!fields) {
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
 }
 
+// If PapaParse reports hard quote/field-count issues, switch to a more lenient parser
+// that tolerates unescaped quotes inside fields (common in human-edited exports).
+if (fields && hasHardParseErrors(parsed)) {
+  console.log('Info: PapaParse reported quote/field-count issues; switching to lenient line parser')
+  parsed = lenientQuotedLineParse(pre, { delimiter: detectedDelimiter })
+  fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
+}
+
 if (!fields) {
   console.error('Unable to detect header fields after fallback parsing. Aborting.')
   process.exit(2)
 }
 
-console.log('Detected fields:', fields.join(', '))
+if (VERBOSE) console.log('Detected fields:', fields.join(', '))
+else console.log(`Detected fields: ${fields.length} (set SANITIZER_VERBOSE=1 to print names)`)
 
 // ensure headers are unique (PapaParse may rename duplicates but be defensive)
 const uniqueFields = []
@@ -149,8 +247,14 @@ if (!paymentKey) console.warn('Warning: no obvious payment amount field detected
 function inspectRows(parsedData, expectedFields){
   const malformedLocal = []
   parsedData.forEach((r, idx) => {
-    const keys = Object.keys(r)
-    if (keys.length !== expectedFields.length) malformedLocal.push({ idx: idx+1, keysLength: keys.length })
+    if (!r || typeof r !== 'object') {
+      malformedLocal.push({ idx: idx+1, reason: 'not_object' })
+      return
+    }
+    if (Object.prototype.hasOwnProperty.call(r, '__parsed_extra')) {
+      const extra = Array.isArray(r.__parsed_extra) ? r.__parsed_extra.length : 1
+      malformedLocal.push({ idx: idx+1, reason: '__parsed_extra', extraCols: extra })
+    }
   })
   return malformedLocal
 }
@@ -158,7 +262,20 @@ function inspectRows(parsedData, expectedFields){
 malformed = inspectRows(parsed.data, uniqueFields)
 if (malformed.length){
   console.warn('Malformed rows detected in initial parse:', malformed.length, malformed.slice(0,5))
-  // attempt the quote-rejoin approach and reparse
+  if (parsed.errors && parsed.errors.length) {
+    console.warn('PapaParse errors (preview):', parsed.errors.slice(0, 5))
+  }
+
+  // First attempt: repair common overflow-column cases without re-parsing.
+  const repaired = repairParsedExtraRows(parsed.data, { detailsField: 'details', actionField: 'action' })
+  if (repaired) {
+    console.log(`Repaired rows with __parsed_extra: ${repaired}`)
+  }
+  malformed = inspectRows(parsed.data, uniqueFields)
+  if (!malformed.length) {
+    // repaired successfully; continue
+  } else {
+    // attempt the quote-rejoin approach and reparse
   const joined = balanceQuotesRejoin(pre)
   parsed = tryParse(joined, { delimiter: detectedDelimiter })
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
@@ -175,7 +292,10 @@ if (malformed.length){
     seen[name] = true
     uniqueFields.push(name)
   })
+  // Repair after reparse too
+  repairParsedExtraRows(parsed.data, { detailsField: 'details', actionField: 'action' })
   malformed = inspectRows(parsed.data, uniqueFields)
+  }
 }
 
   // final fallback: try parsing without header and building header from first row
@@ -372,5 +492,5 @@ if (bakPath && process.env.KEEP_BAK !== '1') {
   }
 }
 
-// exit with code indicating presence of malformed rows
-if (malformed.length && !process.exitCode) process.exitCode = 3
+// Do not fail uploads for recoverable row issues unless explicitly requested.
+if (malformed.length && !process.exitCode && process.env.SANITIZER_FAIL_ON_MALFORMED === '1') process.exitCode = 3

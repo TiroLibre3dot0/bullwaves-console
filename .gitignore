@@ -3,6 +3,7 @@ dist/
 dev-dist/
 
 # Generated report artifacts / backups (keep local)
+*.bak
 public/*.bak
 public/*.csv.*.bak
 public/raw/
@@ -26,6 +27,7 @@ upload-server.*.log
 
 # Local build/debug artifacts
 build-log.txt
+_last_build_log.txt
 scripts/affiliatePayments2_coherence_report.mjs
 scripts/analyze_registrations_commissions_components.mjs
 scripts/debug_month_ok_2024_06.mjs

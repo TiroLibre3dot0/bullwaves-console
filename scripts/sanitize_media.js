@@ -12,9 +12,11 @@ const { replaceFileSync } = require('./replaceFileSync')
 
 const argv = process.argv.slice(2)
 const dryRun = argv.includes('--dry-run') || argv.includes('--dry')
-const src = argv.find(a => !a.startsWith('--')) || 'tmp_media.csv'
-const dest = path.join('public', 'Media Report.csv')
-const rawDir = path.join('public', 'raw')
+const projectRoot = path.join(__dirname, '..')
+const srcArg = argv.find(a => !a.startsWith('--')) || 'tmp_media.csv'
+const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
+const dest = path.join(projectRoot, 'public', 'Media Report.csv')
+const rawDir = path.join(projectRoot, 'public', 'raw')
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)
@@ -35,6 +37,9 @@ if (!dryRun) {
 }
 
 const normalizedHeader = h => String(h||'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')
+
+const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
+const debug = (...args) => { if (VERBOSE) console.log(...args) }
 
 function tryParse(text, opts = {}){
   return Papa.parse(text, Object.assign({ header: true, skipEmptyLines: true, quoteChar: '"', transformHeader: normalizedHeader }, opts))
@@ -72,6 +77,54 @@ function balanceQuotesRejoin(text){
   return out.join('\n')
 }
 
+function hasHardParseErrors(parsed){
+  const errs = parsed && Array.isArray(parsed.errors) ? parsed.errors : []
+  return errs.some(e => e && (
+    e.type === 'Quotes'
+    || e.code === 'InvalidQuotes'
+    || e.code === 'TooManyFields'
+  ))
+}
+
+function lenientQuotedLineParse(text, { delimiter }){
+  const lines = String(text || '').split(/\r?\n/).filter(l => String(l || '').trim() !== '')
+  if (!lines.length) return { data: [], meta: { fields: [] }, errors: [] }
+
+  const sep = `"${delimiter}"`
+  const stripOuterQuotes = (line) => {
+    let s = String(line || '')
+    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1)
+    s = s.replace(/\r$/, '')
+    if (s.startsWith('"')) s = s.slice(1)
+    if (s.endsWith('"')) s = s.slice(0, -1)
+    return s
+  }
+
+  const headerRaw = stripOuterQuotes(lines[0])
+  const headerFields = headerRaw.split(sep).map(normalizedHeader)
+  const expectedLen = headerFields.length
+
+  const rows = []
+  for (let i = 1; i < lines.length; i++){
+    const raw = stripOuterQuotes(lines[i])
+    let parts = raw.split(sep)
+    if (parts.length > expectedLen && expectedLen >= 1) {
+      const lastIdx = expectedLen - 1
+      const merged = parts.slice(lastIdx).join(delimiter)
+      parts = parts.slice(0, lastIdx).concat([merged])
+    }
+    if (parts.length < expectedLen) {
+      while (parts.length < expectedLen) parts.push('')
+    }
+
+    const obj = {}
+    for (let c = 0; c < expectedLen; c++) obj[headerFields[c] || `col_${c}`] = parts[c]
+    rows.push(obj)
+  }
+
+  return { data: rows, meta: { fields: headerFields }, errors: [] }
+}
+
 const pre = preprocessRaw(txt)
 const sampleHeader = pre.split(/\r?\n/)[0] || ''
 const detectedDelimiter = detectDelimiter(sampleHeader)
@@ -91,7 +144,8 @@ if (!fields){
   process.exit(2)
 }
 
-console.log('Detected fields:', fields.join(', '))
+if (VERBOSE) console.log('Detected fields:', fields.join(', '))
+else console.log(`Detected fields: ${fields.length} (set SANITIZER_VERBOSE=1 to print names)`)
 
 const uniqueFields = []
 const seen = {}
@@ -106,21 +160,31 @@ fields.forEach((f,i)=>{
   uniqueFields.push(name)
 })
 
-function inspectRows(parsedData, expectedFields){
+function inspectOverflowRows(parsedData){
   const malformedLocal = []
-  parsedData.forEach((r, idx) => {
-    const keys = Object.keys(r)
-    if (keys.length !== expectedFields.length) malformedLocal.push({ idx: idx+1, keysLength: keys.length })
-  })
+  const list = Array.isArray(parsedData) ? parsedData : []
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i]
+    if (r && typeof r === 'object' && Object.prototype.hasOwnProperty.call(r, '__parsed_extra')) {
+      const extra = Array.isArray(r.__parsed_extra) ? r.__parsed_extra.length : 1
+      malformedLocal.push({ idx: i + 1, reason: '__parsed_extra', extraCols: extra })
+    }
+  }
   return malformedLocal
 }
 
-let malformed = inspectRows(parsed.data, uniqueFields)
-if (malformed.length){
-  console.warn('Malformed rows detected in initial parse:', malformed.length, malformed.slice(0,5))
+let overflow = inspectOverflowRows(parsed.data)
+
+const WARN_OVERFLOW = process.env.SANITIZER_WARN_OVERFLOW === '1'
+const FAIL_ON_MALFORMED = process.env.SANITIZER_FAIL_ON_MALFORMED === '1'
+
+if (hasHardParseErrors(parsed) || overflow.length) {
+  debug('Debug: attempting quote-balanced rejoin fallback for media')
   const joined = balanceQuotesRejoin(pre)
   parsed = tryParse(joined, { delimiter: detectedDelimiter })
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
+
+  // rebuild uniqueFields from new fields
   uniqueFields.length = 0
   Object.keys(seen).forEach(k=>delete seen[k])
   fields.forEach((f,i)=>{
@@ -133,11 +197,33 @@ if (malformed.length){
     seen[name] = true
     uniqueFields.push(name)
   })
-  malformed = inspectRows(parsed.data, uniqueFields)
+
+  overflow = inspectOverflowRows(parsed.data)
 }
 
-if (malformed.length){
-  console.warn('Still malformed after rejoin; attempting parse without header as last resort')
+if (hasHardParseErrors(parsed) || overflow.length) {
+  console.log('Info: CSV had quoting/field-count issues; using lenient parser')
+  parsed = lenientQuotedLineParse(pre, { delimiter: detectedDelimiter })
+  fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
+
+  uniqueFields.length = 0
+  Object.keys(seen).forEach(k=>delete seen[k])
+  fields.forEach((f,i)=>{
+    let name = f || `col_${i}`
+    if (seen[name]){
+      let k = 1
+      while(seen[`${name}_${k}`]) k++
+      name = `${name}_${k}`
+    }
+    seen[name] = true
+    uniqueFields.push(name)
+  })
+
+  overflow = inspectOverflowRows(parsed.data)
+}
+
+if (overflow.length && process.env.SANITIZER_ALLOW_NOHEADER === '1') {
+  console.warn('Warning: overflow columns persist; attempting no-header parse (SANITIZER_ALLOW_NOHEADER=1)')
   const rawNoHeader = Papa.parse(txt, { header: false, skipEmptyLines: true, quoteChar: '"' })
   if (rawNoHeader && rawNoHeader.data && rawNoHeader.data.length>1){
     const headerRow = rawNoHeader.data[0]
@@ -149,7 +235,7 @@ if (malformed.length){
     })
     parsed = { data: rows, meta: { fields: genFields } }
     fields = genFields
-    malformed = inspectRows(parsed.data, genFields)
+    overflow = inspectOverflowRows(parsed.data)
   }
 }
 
@@ -167,7 +253,9 @@ parsed.data.forEach((r, idx) => {
 })
 
 console.log('Rows parsed:', cleanedRows.length)
-if (malformed.length) console.warn('Malformed rows (field count mismatch):', malformed.length, malformed.slice(0,5))
+if (overflow.length && (VERBOSE || WARN_OVERFLOW)) {
+  console.log('Info: Malformed rows (__parsed_extra / overflow cols):', overflow.length, overflow.slice(0, 5))
+}
 
 // For Media report we will dedupe before upserting.
 // IMPORTANT: `uid` coming from exports is often NOT stable between runs, so
@@ -358,7 +446,7 @@ if (dryRun){
   console.log(' New added:', addedCount)
   console.log(' Updated:', updatedCount)
   console.log(' Unchanged:', unchangedCount)
-  if (malformed.length) console.warn('Malformed rows detected:', malformed.length)
+  if (overflow.length && (VERBOSE || WARN_OVERFLOW)) console.log('Info: Malformed rows detected:', overflow.length)
   process.exit(0)
 }
 
@@ -398,4 +486,4 @@ try {
   process.exitCode = 4
 }
 
-if (malformed.length && !process.exitCode) process.exitCode = 3
+if (overflow.length && FAIL_ON_MALFORMED && !process.exitCode) process.exitCode = 3

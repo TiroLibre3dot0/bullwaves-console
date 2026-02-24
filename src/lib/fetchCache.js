@@ -18,8 +18,26 @@ export function withReportsVersion(path) {
   return `${encodedPath}${sep}v=${encodeURIComponent(String(v))}`
 }
 
-async function fetchTextUncached(url, { force = false } = {}) {
-  const resp = await fetch(url, { cache: force ? 'no-store' : 'default' })
+function makeCacheKey(url, headers) {
+  const base = String(url || '')
+  if (!headers) return base
+
+  // Keep it simple: stable enough for our limited use (mainly Accept).
+  try {
+    const HeadersCtor = globalThis?.Headers
+    const obj =
+      HeadersCtor && headers instanceof HeadersCtor
+        ? Object.fromEntries(headers.entries())
+        : headers
+    const entries = Object.entries(obj || {}).sort(([a], [b]) => a.localeCompare(b))
+    return `${base}@@headers=${JSON.stringify(entries)}`
+  } catch {
+    return `${base}@@headers=1`
+  }
+}
+
+async function fetchTextUncached(url, { force = false, headers } = {}) {
+  const resp = await fetch(url, { cache: force ? 'no-store' : 'default', headers })
   if (!resp.ok) {
     const err = new Error(`HTTP ${resp.status} while fetching ${url}`)
     err.status = resp.status
@@ -28,8 +46,8 @@ async function fetchTextUncached(url, { force = false } = {}) {
   return await resp.text()
 }
 
-export async function fetchTextCached(url, { force = false } = {}) {
-  const key = String(url || '')
+export async function fetchTextCached(url, { force = false, headers } = {}) {
+  const key = makeCacheKey(url, headers)
   if (!key) return ''
 
   if (!force && textCache.has(key)) {
@@ -37,7 +55,7 @@ export async function fetchTextCached(url, { force = false } = {}) {
     return cached instanceof Promise ? await cached : cached
   }
 
-  const p = fetchTextUncached(key, { force })
+  const p = fetchTextUncached(String(url || ''), { force, headers })
   textCache.set(key, p)
   try {
     const text = await p

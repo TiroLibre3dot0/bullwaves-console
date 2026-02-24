@@ -17,6 +17,7 @@ import UploadReportsPage from './pages/UploadReportsPage'
 import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
 import NotionBoard from './features/notion/NotionBoard'
 import RankingPage from './features/ranking/pages/RankingPage'
+import CreolabsPage from './features/creolabs/pages/CreolabsPage'
 import ConsoleHomePage from './pages/ConsoleHomePage'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
@@ -140,6 +141,7 @@ export default function AuthenticatedApp() {
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
       ranking: '/ranking',
+      creolabs: '/creolabs',
       fraud: '/fraud',
       orgChart: '/org-chart',
       supportUserCheck: '/support/user-check',
@@ -169,6 +171,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/affiliate')) return 'affiliate'
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
     if (pathname.startsWith('/ranking')) return 'ranking'
+    if (pathname.startsWith('/creolabs')) return 'creolabs'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
@@ -437,6 +440,7 @@ export default function AuthenticatedApp() {
       notion: 'notion',
       summary: 'summary',
       ranking: 'ranking',
+      creolabs: 'creolabs',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -506,6 +510,7 @@ export default function AuthenticatedApp() {
             {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
             {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
             {view === 'ranking' ? <RankingPage /> : null}
+            {view === 'creolabs' ? <CreolabsPage /> : null}
             {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
             {view === 'orgChart' ? <OrgChart /> : null}

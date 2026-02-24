@@ -19,10 +19,15 @@ const path = require('path')
 const Papa = require('papaparse')
 const { replaceFileSync } = require('./replaceFileSync')
 
-const src = process.argv[2] || 'tmp_comments.csv'
-const dest = path.join('public', 'comments.csv')
-const destLegacy = path.join('public', 'Comments Report.csv')
-const rawDir = path.join('public', 'raw')
+const projectRoot = path.join(__dirname, '..')
+const srcArg = process.argv[2] || 'tmp_comments.csv'
+const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
+const dest = path.join(projectRoot, 'public', 'comments.csv')
+const destLegacy = path.join(projectRoot, 'public', 'Comments Report.csv')
+const rawDir = path.join(projectRoot, 'public', 'raw')
+
+const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
+const debug = (...args) => { if (VERBOSE) console.log(...args) }
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)
@@ -105,6 +110,68 @@ function balanceQuotesRejoin(text) {
   return out.join('\n')
 }
 
+function hasHardParseErrors(parsed) {
+  const errs = parsed && Array.isArray(parsed.errors) ? parsed.errors : []
+  return errs.some(e => e && (
+    e.type === 'Quotes'
+    || e.code === 'InvalidQuotes'
+    || e.code === 'TooManyFields'
+  ))
+}
+
+function inspectOverflowRows(parsedData) {
+  const malformedLocal = []
+  const list = Array.isArray(parsedData) ? parsedData : []
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i]
+    if (r && typeof r === 'object' && Object.prototype.hasOwnProperty.call(r, '__parsed_extra')) {
+      const extra = Array.isArray(r.__parsed_extra) ? r.__parsed_extra.length : 1
+      malformedLocal.push({ idx: i + 1, reason: '__parsed_extra', extraCols: extra })
+    }
+  }
+  return malformedLocal
+}
+
+function lenientQuotedLineParse(text, { delimiter }) {
+  const lines = String(text || '').split(/\r?\n/).filter(l => String(l || '').trim() !== '')
+  if (!lines.length) return { data: [], meta: { fields: [] }, errors: [] }
+
+  const sep = `"${delimiter}"`
+  const stripOuterQuotes = (line) => {
+    let s = String(line || '')
+    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1)
+    s = s.replace(/\r$/, '')
+    if (s.startsWith('"')) s = s.slice(1)
+    if (s.endsWith('"')) s = s.slice(0, -1)
+    return s
+  }
+
+  const headerRaw = stripOuterQuotes(lines[0])
+  const headerFields = headerRaw.split(sep).map(normalizedHeader)
+  const expectedLen = headerFields.length
+
+  const rows = []
+  for (let i = 1; i < lines.length; i++) {
+    const raw = stripOuterQuotes(lines[i])
+    let parts = raw.split(sep)
+
+    if (parts.length > expectedLen && expectedLen >= 1) {
+      const lastIdx = expectedLen - 1
+      const merged = parts.slice(lastIdx).join(delimiter)
+      parts = parts.slice(0, lastIdx).concat([merged])
+    }
+    if (parts.length < expectedLen) {
+      while (parts.length < expectedLen) parts.push('')
+    }
+
+    const obj = {}
+    for (let c = 0; c < expectedLen; c++) obj[headerFields[c] || `col_${c}`] = parts[c]
+    rows.push(obj)
+  }
+
+  return { data: rows, meta: { fields: headerFields }, errors: [] }
+}
+
 function extractMove(commentRaw) {
   const comment = String(commentRaw || '')
   const lower = comment.toLowerCase()
@@ -167,11 +234,21 @@ console.log('Auto-detected delimiter:', JSON.stringify(detectedDelimiter))
 
 let parsed = tryParse(pre, { delimiter: detectedDelimiter })
 let fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
+let overflow = inspectOverflowRows(parsed.data)
 
 if (!fields) {
   const joined = balanceQuotesRejoin(pre)
   parsed = tryParse(joined, { delimiter: detectedDelimiter })
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
+  overflow = inspectOverflowRows(parsed.data)
+}
+
+if (!fields || hasHardParseErrors(parsed) || overflow.length) {
+  debug('Debug: attempting lenient parser fallback for comments')
+  console.log('Info: CSV had quoting/field-count issues; using lenient parser')
+  parsed = lenientQuotedLineParse(pre, { delimiter: detectedDelimiter })
+  fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : null
+  overflow = inspectOverflowRows(parsed.data)
 }
 
 if (!fields) {
@@ -179,7 +256,12 @@ if (!fields) {
   process.exit(2)
 }
 
-console.log('Detected fields:', fields.join(', '))
+if (overflow.length) {
+  console.warn('Malformed rows (__parsed_extra / overflow cols):', overflow.length, overflow.slice(0, 5))
+}
+
+if (VERBOSE) console.log('Detected fields:', fields.join(', '))
+else console.log(`Detected fields: ${fields.length} (set SANITIZER_VERBOSE=1 to print names)`)
 
 // Find the comment field
 const commentField = fields.find(f => f === 'comment' || String(f).includes('comment'))
@@ -235,7 +317,7 @@ if (fs.existsSync(dest)) {
     })
     existingRows = exParsed.data || []
   } catch (e) {
-    console.warn('Warning: failed to parse existing dest for dedupe:', e && e.message)
+      console.log('Info: failed to parse existing dest for dedupe; skipping dedupe:', e && e.message)
     existingRows = []
   }
 }
@@ -296,7 +378,7 @@ try {
   replaceFileSync(tmpLegacy, destLegacy)
   console.log('Wrote cleaned CSV to', destLegacy)
 } catch (e) {
-  console.warn('Warning: failed to write legacy comments report:', e && e.message)
+  console.log('Info: failed to write legacy comments report:', e && e.message)
   try {
     const tmpLegacy = destLegacy + '.tmp'
     if (fs.existsSync(tmpLegacy)) fs.unlinkSync(tmpLegacy)

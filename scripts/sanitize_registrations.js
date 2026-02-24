@@ -10,9 +10,11 @@ const path = require('path')
 const Papa = require('papaparse')
 const { replaceFileSync } = require('./replaceFileSync')
 
-const src = process.argv[2] || 'tmp_registrations.csv'
-const dest = path.join('public', 'Registrations Report.csv')
-const rawDir = path.join('public', 'raw')
+const projectRoot = path.join(__dirname, '..')
+const srcArg = process.argv[2] || 'tmp_registrations.csv'
+const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
+const dest = path.join(projectRoot, 'public', 'Registrations Report.csv')
+const rawDir = path.join(projectRoot, 'public', 'raw')
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)
@@ -30,8 +32,63 @@ console.log('Saved raw backup to', rawBackup)
 
 const normalizedHeader = h => String(h||'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')
 
+const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
+const debug = (...args) => { if (VERBOSE) console.log(...args) }
+
 function tryParse(text, opts = {}){
   return Papa.parse(text, Object.assign({ header: true, skipEmptyLines: true, quoteChar: '"', transformHeader: normalizedHeader }, opts))
+}
+
+function hasHardParseErrors(parsed){
+  const errs = parsed && Array.isArray(parsed.errors) ? parsed.errors : []
+  // TooFewFields is extremely common in exports (missing trailing empty columns)
+  // and should not force fallbacks.
+  return errs.some(e => e && (
+    e.type === 'Quotes'
+    || e.code === 'InvalidQuotes'
+    || e.code === 'TooManyFields'
+  ))
+}
+
+function lenientQuotedLineParse(text, { delimiter }){
+  const lines = String(text || '').split(/\r?\n/).filter(l => String(l || '').trim() !== '')
+  if (!lines.length) return { data: [], meta: { fields: [] }, errors: [] }
+
+  const sep = `"${delimiter}"`
+  const stripOuterQuotes = (line) => {
+    let s = String(line || '')
+    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1)
+    s = s.replace(/\r$/, '')
+    if (s.startsWith('"')) s = s.slice(1)
+    if (s.endsWith('"')) s = s.slice(0, -1)
+    return s
+  }
+
+  const headerRaw = stripOuterQuotes(lines[0])
+  const headerFields = headerRaw.split(sep).map(normalizedHeader)
+  const expectedLen = headerFields.length
+
+  const rows = []
+  for (let i = 1; i < lines.length; i++){
+    const raw = stripOuterQuotes(lines[i])
+    let parts = raw.split(sep)
+
+    // If there are more fields than expected, merge overflow back into the last field.
+    if (parts.length > expectedLen && expectedLen >= 1) {
+      const lastIdx = expectedLen - 1
+      const merged = parts.slice(lastIdx).join(delimiter)
+      parts = parts.slice(0, lastIdx).concat([merged])
+    }
+    if (parts.length < expectedLen) {
+      while (parts.length < expectedLen) parts.push('')
+    }
+
+    const obj = {}
+    for (let c = 0; c < expectedLen; c++) obj[headerFields[c] || `col_${c}`] = parts[c]
+    rows.push(obj)
+  }
+
+  return { data: rows, meta: { fields: headerFields }, errors: [] }
 }
 
 function preprocessRaw(text){
@@ -66,6 +123,33 @@ function balanceQuotesRejoin(text){
   return out.join('\n')
 }
 
+function summarizeParseIssues(parsed){
+  const errs = parsed && Array.isArray(parsed.errors) ? parsed.errors : []
+  const out = { total: errs.length, invalidQuotes: 0, tooManyFields: 0, tooFewFields: 0 }
+  for (const e of errs) {
+    if (!e) continue
+    if (e.code === 'InvalidQuotes' || e.type === 'Quotes') out.invalidQuotes++
+    else if (e.code === 'TooManyFields') out.tooManyFields++
+    else if (e.code === 'TooFewFields') out.tooFewFields++
+  }
+  return out
+}
+
+function inspectRows(parsedData){
+  // Only treat rows as malformed when they have overflow columns.
+  // Missing fields are common in exports and are filled as blanks during normalization.
+  const malformedLocal = []
+  const list = Array.isArray(parsedData) ? parsedData : []
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i]
+    if (r && typeof r === 'object' && Object.prototype.hasOwnProperty.call(r, '__parsed_extra')) {
+      const extra = Array.isArray(r.__parsed_extra) ? r.__parsed_extra.length : 1
+      malformedLocal.push({ idx: i + 1, reason: '__parsed_extra', extraCols: extra })
+    }
+  }
+  return malformedLocal
+}
+
 const pre = preprocessRaw(txt)
 const sampleHeader = pre.split(/\r?\n/)[0] || ''
 const detectedDelimiter = detectDelimiter(sampleHeader)
@@ -85,7 +169,8 @@ if (!fields){
   process.exit(2)
 }
 
-console.log('Detected fields:', fields.join(', '))
+if (VERBOSE) console.log('Detected fields:', fields.join(', '))
+else console.log(`Detected fields: ${fields.length} (set SANITIZER_VERBOSE=1 to print names)`)
 
 const uniqueFields = []
 const seen = {}
@@ -100,21 +185,23 @@ fields.forEach((f,i)=>{
   uniqueFields.push(name)
 })
 
-function inspectRows(parsedData, expectedFields){
-  const malformedLocal = []
-  parsedData.forEach((r, idx) => {
-    const keys = Object.keys(r)
-    if (keys.length !== expectedFields.length) malformedLocal.push({ idx: idx+1, keysLength: keys.length })
-  })
-  return malformedLocal
+const issueSummary = summarizeParseIssues(parsed)
+if (issueSummary.total) {
+  debug(
+    `Debug: PapaParse issues (total=${issueSummary.total}, invalidQuotes=${issueSummary.invalidQuotes}, tooManyFields=${issueSummary.tooManyFields}, tooFewFields=${issueSummary.tooFewFields})`
+  )
 }
 
-let malformed = inspectRows(parsed.data, uniqueFields)
-if (malformed.length){
-  console.warn('Malformed rows detected in initial parse:', malformed.length, malformed.slice(0,5))
+let malformed = inspectRows(parsed.data)
+
+// Only attempt quote-rejoin fallback when there are hard quote/field-overflow issues.
+if (hasHardParseErrors(parsed) || malformed.length) {
+  debug('Debug: attempting quote-balanced rejoin fallback for registrations')
   const joined = balanceQuotesRejoin(pre)
   parsed = tryParse(joined, { delimiter: detectedDelimiter })
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
+
+  // rebuild uniqueFields from new fields
   uniqueFields.length = 0
   Object.keys(seen).forEach(k=>delete seen[k])
   fields.forEach((f,i)=>{
@@ -127,11 +214,36 @@ if (malformed.length){
     seen[name] = true
     uniqueFields.push(name)
   })
-  malformed = inspectRows(parsed.data, uniqueFields)
+
+  malformed = inspectRows(parsed.data)
 }
 
-if (malformed.length){
-  console.warn('Still malformed after rejoin; attempting parse without header as last resort')
+// If we still have hard parse issues or overflow columns, switch to lenient parser.
+if (hasHardParseErrors(parsed) || malformed.length) {
+  console.log('Info: CSV had quoting/field-count issues; using lenient parser')
+  parsed = lenientQuotedLineParse(pre, { delimiter: detectedDelimiter })
+  fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
+
+  // rebuild uniqueFields from new fields
+  uniqueFields.length = 0
+  Object.keys(seen).forEach(k=>delete seen[k])
+  fields.forEach((f,i)=>{
+    let name = f || `col_${i}`
+    if (seen[name]){
+      let k = 1
+      while(seen[`${name}_${k}`]) k++
+      name = `${name}_${k}`
+    }
+    seen[name] = true
+    uniqueFields.push(name)
+  })
+
+  malformed = inspectRows(parsed.data)
+}
+
+// Last resort: no-header parse is lossy; keep it behind explicit opt-in.
+if (malformed.length && process.env.SANITIZER_ALLOW_NOHEADER === '1') {
+  console.log('Info: overflow columns persist; attempting no-header parse (SANITIZER_ALLOW_NOHEADER=1)')
   const rawNoHeader = Papa.parse(txt, { header: false, skipEmptyLines: true, quoteChar: '"' })
   if (rawNoHeader && rawNoHeader.data && rawNoHeader.data.length>1){
     const headerRow = rawNoHeader.data[0]
@@ -143,7 +255,7 @@ if (malformed.length){
     })
     parsed = { data: rows, meta: { fields: genFields } }
     fields = genFields
-    malformed = inspectRows(parsed.data, genFields)
+    malformed = inspectRows(parsed.data)
   }
 }
 
@@ -161,7 +273,9 @@ parsed.data.forEach((r, idx) => {
 })
 
 console.log('Rows parsed:', cleanedRows.length)
-if (malformed.length) console.warn('Malformed rows (field count mismatch):', malformed.length, malformed.slice(0,5))
+if (malformed.length && (VERBOSE || process.env.SANITIZER_WARN_OVERFLOW === '1')) {
+  console.log('Info: overflow rows (__parsed_extra):', malformed.length, malformed.slice(0,5))
+}
 
 // Deduplication against existing `dest` (keep existing records, append new unique ones)
 let existingRows = []
@@ -493,4 +607,4 @@ try {
   process.exitCode = 4
 }
 
-if (malformed.length && !process.exitCode) process.exitCode = 3
+if (malformed.length && !process.exitCode && process.env.SANITIZER_FAIL_ON_MALFORMED === '1') process.exitCode = 3

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 import { track } from '../utils/analytics'
 
@@ -11,6 +11,8 @@ export default function UploadReportsPage() {
   const [serverProgress, setServerProgress] = useState(0)
   const [status, setStatus] = useState('')
   const [resultText, setResultText] = useState('')
+  const [resultData, setResultData] = useState(null)
+  const [errorData, setErrorData] = useState(null)
   const [isUploading, setIsUploading] = useState(false)
 
   // Expose upload state globally so the app can guard navigation.
@@ -41,6 +43,8 @@ export default function UploadReportsPage() {
         if (typeof saved.serverProgress === 'number') setServerProgress(saved.serverProgress)
         if (typeof saved.status === 'string') setStatus(saved.status)
         if (typeof saved.resultText === 'string') setResultText(saved.resultText)
+        if (saved.resultData) setResultData(saved.resultData)
+        if (saved.errorData) setErrorData(saved.errorData)
       }
     } catch {
       // ignore
@@ -57,13 +61,15 @@ export default function UploadReportsPage() {
           serverProgress,
           status,
           resultText,
+          resultData,
+          errorData,
           savedAt: Date.now(),
         })
       )
     } catch {
       // ignore
     }
-  }, [reportType, uploadProgress, serverProgress, status, resultText])
+  }, [reportType, uploadProgress, serverProgress, status, resultText, resultData, errorData])
 
   useEffect(() => {
     track('page_view', { page: 'UploadReports', access: 'console' })
@@ -75,55 +81,476 @@ export default function UploadReportsPage() {
     return `${mb.toFixed(1)} MB`
   }, [file])
 
-  const formatResult = (data) => {
-    if (!data) return ''
-    const lines = []
+  const publicUrlFromAnyPath = (value) => {
+    const s = String(value || '').trim()
+    if (!s) return null
+    const norm = s.replace(/\\/g, '/')
+    const idx = norm.toLowerCase().lastIndexOf('/public/')
+    if (idx >= 0) {
+      const sub = norm.slice(idx + '/public'.length)
+      return sub.startsWith('/') ? sub : `/${sub}`
+    }
+    const starts =
+      norm.toLowerCase().startsWith('public/') || norm.toLowerCase().startsWith('public\\')
+    if (starts) {
+      const sub = norm.slice('public'.length).replace(/\\/g, '/')
+      return sub.startsWith('/') ? sub : `/${sub}`
+    }
+    return null
+  }
+
+  const responseLogHref = useMemo(() => {
+    const fromSuccess =
+      resultData && resultData.logFile ? publicUrlFromAnyPath(resultData.logFile) : null
+    if (fromSuccess) return fromSuccess
+    const errData = errorData && (errorData.data || errorData)
+    const fromError = errData && errData.logFile ? publicUrlFromAnyPath(errData.logFile) : null
+    return fromError || null
+  }, [resultData, errorData])
+
+  const renderKv = (label, value, { href } = {}) => {
+    const v = String(value || '').trim()
+    return (
+      <div
+        style={{
+          padding: 10,
+          borderRadius: 12,
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.06)',
+          minWidth: 0,
+        }}
+      >
+        <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 4 }}>{label}</div>
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'var(--text)', textDecoration: 'underline', wordBreak: 'break-all' }}
+          >
+            {v || t('upload.emptyDash')}
+          </a>
+        ) : (
+          <div style={{ color: 'var(--text)', fontSize: 13, wordBreak: 'break-word' }}>
+            {v || t('upload.emptyDash')}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  const renderMetric = (label, value) => (
+    <div
+      style={{
+        padding: '10px 12px',
+        borderRadius: 12,
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(255,255,255,0.06)',
+      }}
+    >
+      <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 2 }}>{label}</div>
+      <div style={{ color: 'var(--text)', fontSize: 18, fontWeight: 600 }}>{value}</div>
+    </div>
+  )
+
+  const renderResultCard = () => {
+    const data = resultData
+    if (!data) return null
+
     const typeLabel = data.type || reportType
-    lines.push(t('upload.result.ok'))
-    lines.push(`${t('upload.result.type')}: ${typeLabel}`)
-    if (data.dest) lines.push(`${t('upload.result.updated')}: ${data.dest}`)
-    if (data.rawBackup) lines.push(`${t('upload.result.rawBackup')}: ${data.rawBackup}`)
-    if (data.sanitizer) lines.push(`${t('upload.result.sanitizer')}: ${data.sanitizer}`)
+    const destUrl = publicUrlFromAnyPath(data.dest)
+    const rawUrl = publicUrlFromAnyPath(data.rawBackup)
+    const logUrl = publicUrlFromAnyPath(data.logFile)
 
-    const s = data.summary
-    if (
-      s &&
-      (typeof s.existing === 'number' ||
-        typeof s.added === 'number' ||
-        typeof s.duplicates === 'number')
-    ) {
-      lines.push('')
-      lines.push(`${t('upload.result.summary')}:`)
-      if (typeof s.existing === 'number')
-        lines.push(`- ${t('upload.result.summary.existing')}: ${s.existing}`)
-      if (typeof s.added === 'number')
-        lines.push(`- ${t('upload.result.summary.added')}: ${s.added}`)
-      if (typeof s.duplicates === 'number')
-        lines.push(`- ${t('upload.result.summary.duplicates')}: ${s.duplicates}`)
-      if (typeof s.affiliateUpdates === 'number')
-        lines.push(`- ${t('upload.result.summary.affiliateUpdates')}: ${s.affiliateUpdates}`)
-      if (typeof s.fieldUpdates === 'number')
-        lines.push(`- ${t('upload.result.summary.fieldUpdates')}: ${s.fieldUpdates}`)
-    }
+    const summary = data.summary || {}
+    const hasAnySummary =
+      typeof summary.existing === 'number' ||
+      typeof summary.added === 'number' ||
+      typeof summary.duplicates === 'number' ||
+      typeof summary.updated === 'number' ||
+      typeof summary.affiliateUpdates === 'number' ||
+      typeof summary.fieldUpdates === 'number'
 
-    // Append a short stdout tail for troubleshooting (kept compact)
-    const out = String(data.stdout || '').trim()
-    if (out) {
-      const outLines = out.split(/\r?\n/).filter(Boolean)
-      const tail = outLines.slice(-20).join('\n')
-      lines.push('')
-      lines.push(`${t('upload.result.lastLogs')}:`)
-      lines.push(tail)
-    }
+    const converted = data.normalized && data.normalized.converted
+    const stdoutText = String(data.stdout || '').trim()
+    const stderrText = String(data.stderr || '').trim()
 
-    const err = String(data.stderr || '').trim()
-    if (err) {
-      lines.push('')
-      lines.push(`${t('upload.result.warningsErrors')}:`)
-      lines.push(err)
-    }
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div
+            style={{
+              padding: '6px 10px',
+              borderRadius: 999,
+              fontSize: 12,
+              border: '1px solid rgba(255,255,255,0.10)',
+              background: 'rgba(34, 211, 238, 0.10)',
+              color: 'var(--text)',
+              fontWeight: 600,
+            }}
+          >
+            {t('upload.result.ok')}
+          </div>
+          {data.logsTruncated ? (
+            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+              {t('upload.result.logsSaved')}
+            </div>
+          ) : (
+            <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+              {t('upload.result.verboseMode')}
+            </div>
+          )}
+        </div>
 
-    return lines.join('\n')
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {renderKv(t('upload.result.type'), typeLabel)}
+          {data.dest ? renderKv(t('upload.result.updated'), data.dest, { href: destUrl }) : null}
+          {data.rawBackup
+            ? renderKv(t('upload.result.rawBackup'), data.rawBackup, { href: rawUrl })
+            : null}
+          {data.logFile
+            ? renderKv(t('upload.result.logFile'), data.logFile, { href: logUrl })
+            : null}
+          {data.sanitizer ? renderKv(t('upload.result.sanitizer'), data.sanitizer) : null}
+          {renderKv(
+            t('upload.result.converted'),
+            converted ? t('upload.result.yes') : t('upload.result.no')
+          )}
+          {converted && data.normalized && data.normalized.from
+            ? renderKv(t('upload.result.convertedFrom'), data.normalized.from)
+            : null}
+          {converted && data.normalized && data.normalized.sheetName
+            ? renderKv(t('upload.result.convertedSheet'), data.normalized.sheetName)
+            : null}
+        </div>
+
+        {hasAnySummary ? (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ color: 'var(--text)', fontWeight: 600, marginBottom: 8 }}>
+              {t('upload.result.summary')}
+            </div>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gap: 10,
+              }}
+            >
+              {typeof summary.existing === 'number'
+                ? renderMetric(t('upload.result.summary.existing'), summary.existing)
+                : null}
+              {typeof summary.added === 'number'
+                ? renderMetric(t('upload.result.summary.added'), summary.added)
+                : null}
+              {typeof summary.updated === 'number'
+                ? renderMetric(t('upload.result.summary.updated'), summary.updated)
+                : null}
+              {typeof summary.duplicates === 'number'
+                ? renderMetric(t('upload.result.summary.duplicates'), summary.duplicates)
+                : null}
+              {typeof summary.affiliateUpdates === 'number'
+                ? renderMetric(
+                    t('upload.result.summary.affiliateUpdates'),
+                    summary.affiliateUpdates
+                  )
+                : null}
+              {typeof summary.fieldUpdates === 'number'
+                ? renderMetric(t('upload.result.summary.fieldUpdates'), summary.fieldUpdates)
+                : null}
+            </div>
+          </div>
+        ) : null}
+
+        {data.postProcessing ? (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ color: 'var(--text)', fontWeight: 600, marginBottom: 8 }}>
+              {t('upload.result.postProcessing')}
+            </div>
+            <div
+              style={{
+                padding: 10,
+                borderRadius: 12,
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+                <div style={{ color: 'var(--muted)', fontSize: 12 }}>
+                  {t('upload.result.status')}
+                </div>
+                <div style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600 }}>
+                  {data.postProcessing.ok ? t('upload.result.ok') : t('upload.result.failed')}
+                </div>
+              </div>
+              {Array.isArray(data.postProcessing.results) && data.postProcessing.results.length ? (
+                <details>
+                  <summary style={{ cursor: 'pointer', color: 'var(--text)', fontSize: 13 }}>
+                    {t('upload.result.postProcessingDetails')}
+                  </summary>
+                  <div style={{ marginTop: 8, display: 'grid', gap: 8 }}>
+                    {data.postProcessing.results.map((r) => (
+                      <div
+                        key={r.script}
+                        style={{
+                          padding: 10,
+                          borderRadius: 12,
+                          background: 'rgba(255,255,255,0.02)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                        }}
+                      >
+                        <div style={{ color: 'var(--text)', fontWeight: 600, fontSize: 13 }}>
+                          {r.script}
+                        </div>
+                        {r.stdoutPreview ? (
+                          <pre
+                            style={{
+                              margin: '6px 0 0',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              fontSize: 12,
+                              color: 'var(--muted)',
+                            }}
+                          >
+                            {String(r.stdoutPreview).trim()}
+                          </pre>
+                        ) : null}
+                        {r.stderrPreview ? (
+                          <pre
+                            style={{
+                              margin: '6px 0 0',
+                              whiteSpace: 'pre-wrap',
+                              wordBreak: 'break-word',
+                              fontSize: 12,
+                            }}
+                          >
+                            {String(r.stderrPreview).trim()}
+                          </pre>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+              {!data.postProcessing.ok && data.postProcessing.error ? (
+                <div style={{ color: 'var(--muted)', fontSize: 12, marginTop: 8 }}>
+                  {String(data.postProcessing.error)}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {stdoutText || stderrText ? (
+          <div style={{ marginTop: 12 }}>
+            <details>
+              <summary
+                style={{ cursor: 'pointer', color: 'var(--text)', fontSize: 13, fontWeight: 600 }}
+              >
+                {t('upload.result.logs')}
+              </summary>
+              {stdoutText ? (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 6 }}>
+                    {t('upload.result.lastLogs')}
+                  </div>
+                  <pre
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    {stdoutText}
+                  </pre>
+                </div>
+              ) : null}
+              {stderrText ? (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 6 }}>
+                    {t('upload.result.warningsErrors')}
+                  </div>
+                  <pre
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    {stderrText}
+                  </pre>
+                </div>
+              ) : null}
+            </details>
+          </div>
+        ) : null}
+
+        <div style={{ marginTop: 12 }}>
+          <details>
+            <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: 12 }}>
+              {t('upload.result.rawJson')}
+            </summary>
+            <pre
+              style={{
+                margin: '8px 0 0',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontSize: 12,
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              {JSON.stringify(data, null, 2)}
+            </pre>
+          </details>
+        </div>
+      </div>
+    )
+  }
+
+  const renderErrorCard = () => {
+    const err = errorData
+    if (!err) return null
+
+    const title = err.message || err.error || t('upload.status.failed')
+    const code = err.code
+    const data = err.data || err
+    const logUrl = publicUrlFromAnyPath(data.logFile)
+    const rawUrl = publicUrlFromAnyPath(data.rawBackup)
+    const stdoutText = String(data.stdout || '').trim()
+    const stderrText = String(data.stderr || '').trim()
+
+    return (
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+          <div
+            style={{
+              padding: '6px 10px',
+              borderRadius: 999,
+              fontSize: 12,
+              border: '1px solid rgba(255,255,255,0.10)',
+              background: 'rgba(255,255,255,0.02)',
+              color: 'var(--text)',
+              fontWeight: 600,
+            }}
+          >
+            {t('upload.status.failed')}
+          </div>
+          <div style={{ color: 'var(--text)', fontSize: 13, fontWeight: 600 }}>{String(title)}</div>
+          {code ? <div style={{ color: 'var(--muted)', fontSize: 12 }}>({code})</div> : null}
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {data.type ? renderKv(t('upload.result.type'), data.type) : null}
+          {data.sanitizer ? renderKv(t('upload.result.sanitizer'), data.sanitizer) : null}
+          {data.rawBackup
+            ? renderKv(t('upload.result.rawBackup'), data.rawBackup, { href: rawUrl })
+            : null}
+          {data.logFile
+            ? renderKv(t('upload.result.logFile'), data.logFile, { href: logUrl })
+            : null}
+        </div>
+
+        {stdoutText || stderrText ? (
+          <div style={{ marginTop: 12 }}>
+            <details open>
+              <summary
+                style={{ cursor: 'pointer', color: 'var(--text)', fontSize: 13, fontWeight: 600 }}
+              >
+                {t('upload.result.logs')}
+              </summary>
+              {stdoutText ? (
+                <div style={{ marginTop: 8 }}>
+                  <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 6 }}>
+                    {t('upload.result.lastLogs')}
+                  </div>
+                  <pre
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    {stdoutText}
+                  </pre>
+                </div>
+              ) : null}
+              {stderrText ? (
+                <div style={{ marginTop: 10 }}>
+                  <div style={{ color: 'var(--muted)', fontSize: 12, marginBottom: 6 }}>
+                    {t('upload.result.warningsErrors')}
+                  </div>
+                  <pre
+                    style={{
+                      margin: 0,
+                      whiteSpace: 'pre-wrap',
+                      wordBreak: 'break-word',
+                      fontSize: 12,
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    {stderrText}
+                  </pre>
+                </div>
+              ) : null}
+            </details>
+          </div>
+        ) : null}
+
+        <div style={{ marginTop: 12 }}>
+          <details>
+            <summary style={{ cursor: 'pointer', color: 'var(--muted)', fontSize: 12 }}>
+              {t('upload.result.rawJson')}
+            </summary>
+            <pre
+              style={{
+                margin: '8px 0 0',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                fontSize: 12,
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              {JSON.stringify(err, null, 2)}
+            </pre>
+          </details>
+        </div>
+      </div>
+    )
   }
 
   const onSubmit = (e) => {
@@ -134,6 +561,8 @@ export default function UploadReportsPage() {
     setUploadProgress(0)
     setServerProgress(0)
     setResultText('')
+    setResultData(null)
+    setErrorData(null)
     setStatus(`${t('upload.status.uploadingPrefix')}: 0% (0 / ${sizeLabel})`)
 
     const fd = new FormData()
@@ -141,7 +570,7 @@ export default function UploadReportsPage() {
     // Keep backward compatibility: current upload server infers the sanitizer from the uploaded filename.
     // Override filename so the selected type is always respected even if the user's file is named differently.
     const lower = String(file && file.name ? file.name : '').toLowerCase()
-    const ext = lower.endsWith('.xlsx') ? '.xlsx' : lower.endsWith('.xls') ? '.xls' : '.csv'
+    const ext = lower.endsWith('.xlsx') ? '.xlsx' : '.csv'
     const forcedBase =
       reportType === 'registrations'
         ? 'Registrations Report'
@@ -203,12 +632,14 @@ export default function UploadReportsPage() {
             if (msg.message) setStatus(msg.message)
           } else if (msg.type === 'result') {
             sawTerminalMessage = true
-            setResultText(formatResult(msg.data || msg))
+            setResultData(msg.data || msg)
+            setResultText('')
           } else if (msg.type === 'error') {
             sawTerminalMessage = true
-            setResultText(JSON.stringify(msg, null, 2))
+            setErrorData(msg)
+            setResultText('')
           }
-        } catch (e) {
+        } catch {
           // ignore malformed partial lines
         }
       }
@@ -223,9 +654,18 @@ export default function UploadReportsPage() {
         try {
           const msg = JSON.parse(tail)
           sawTerminalMessage = true
-          if (msg.type === 'result') setResultText(formatResult(msg.data || msg))
-          else setResultText(JSON.stringify(msg, null, 2))
-        } catch (e) {
+          if (msg.type === 'result') {
+            setResultData(msg.data || msg)
+            setErrorData(null)
+            setResultText('')
+          } else if (msg.type === 'error') {
+            setErrorData(msg)
+            setResultData(null)
+            setResultText('')
+          } else {
+            setResultText(JSON.stringify(msg, null, 2))
+          }
+        } catch {
           // If server didn't stream JSON (or something went wrong), show raw response
           setResultText(xhr.responseText || '')
         }
@@ -292,7 +732,7 @@ export default function UploadReportsPage() {
             </select>
             <input
               type="file"
-              accept=".csv,.xlsx,.xls"
+              accept=".csv,.xlsx"
               disabled={isUploading}
               onChange={(e) => setFile((e.target.files && e.target.files[0]) || null)}
               style={{
@@ -368,22 +808,47 @@ export default function UploadReportsPage() {
       </div>
 
       <div className="card card-global">
-        <h3 style={{ marginBottom: 8 }}>{t('upload.response.title')}</h3>
-        <pre
+        <div
           style={{
-            margin: 0,
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            fontSize: 12,
-            background: 'rgba(255,255,255,0.02)',
-            border: '1px solid rgba(255,255,255,0.06)',
-            borderRadius: 12,
-            padding: 12,
-            minHeight: 90,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 10,
+            marginBottom: 8,
           }}
         >
-          {resultText || t('upload.emptyDash')}
-        </pre>
+          <h3 style={{ margin: 0 }}>{t('upload.response.title')}</h3>
+          {responseLogHref ? (
+            <a
+              href={responseLogHref}
+              target="_blank"
+              rel="noreferrer"
+              className="tab"
+              style={{ textDecoration: 'none' }}
+            >
+              {t('upload.response.openLog')}
+            </a>
+          ) : null}
+        </div>
+        {renderErrorCard()}
+        {renderResultCard()}
+        {!errorData && !resultData ? (
+          <pre
+            style={{
+              margin: 0,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              fontSize: 12,
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 12,
+              padding: 12,
+              minHeight: 90,
+            }}
+          >
+            {resultText || t('upload.emptyDash')}
+          </pre>
+        ) : null}
       </div>
     </div>
   )

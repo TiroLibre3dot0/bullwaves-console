@@ -20,6 +20,43 @@ const upload = multer({ storage })
 
 app.use(express.static(path.join(__dirname, '..', 'public')))
 
+function truncateTextTail(text, { maxLines = 80, maxChars = 12000 } = {}) {
+  const raw = String(text || '')
+  if (!raw) return ''
+  const lines = raw.split(/\r?\n/)
+  const tail = lines.slice(-maxLines).join('\n')
+  if (tail.length <= maxChars) return tail
+  return tail.slice(-maxChars)
+}
+
+function writeUploadLogFile({ rawDir, type, timestamp, uploadedName, rawBackup, sanitizer, stdout, stderr, exitCode }) {
+  const logName = `upload_log.${type}.${timestamp}.txt`
+  const logPath = path.join(rawDir, logName)
+  const header = [
+    `time: ${new Date(timestamp).toISOString()}`,
+    `type: ${type}`,
+    `file: ${uploadedName || ''}`,
+    `rawBackup: ${rawBackup || ''}`,
+    `sanitizer: ${sanitizer || ''}`,
+    `exitCode: ${exitCode ?? ''}`,
+    '',
+    '---- STDOUT ----',
+    String(stdout || ''),
+    '',
+    '---- STDERR ----',
+    String(stderr || ''),
+    '',
+  ].join('\n')
+
+  try {
+    fs.writeFileSync(logPath, header, 'utf8')
+  } catch (e) {
+    return { ok: false, error: e && e.message, logPath: null }
+  }
+
+  return { ok: true, logPath }
+}
+
 function safeBaseName(name) {
   const base = path.basename(String(name || 'upload'))
   return base.replace(/[^a-z0-9._-]+/gi, '_')
@@ -27,51 +64,93 @@ function safeBaseName(name) {
 
 function isExcelExt(ext) {
   const e = String(ext || '').toLowerCase()
-  return e === '.xlsx' || e === '.xls'
+  return e === '.xlsx'
 }
 
-function pickFirstNonEmptySheet(workbook) {
-  const names = (workbook && workbook.SheetNames) ? workbook.SheetNames : []
-  for (const name of names) {
-    const ws = workbook.Sheets && workbook.Sheets[name]
-    if (!ws) continue
-    try {
-      const rows = require('xlsx').utils.sheet_to_json(ws, { header: 1, blankrows: false })
-      if (rows && rows.length >= 1) return { name, ws }
-    } catch (e) {
-      // ignore and try next
-    }
+function csvEscape(value) {
+  const s = String(value ?? '')
+  if (!s) return ''
+  if (/[\r\n",]/.test(s)) return `"${s.replace(/"/g, '""')}"`
+  return s
+}
+
+function cellToString(value) {
+  if (value == null) return ''
+  if (value instanceof Date) return value.toISOString()
+  return String(value)
+}
+
+function rowsToCsv(rows) {
+  const list = Array.isArray(rows) ? rows : []
+  let maxCol = 0
+  for (const r of list) {
+    if (Array.isArray(r)) maxCol = Math.max(maxCol, r.length)
   }
-  const first = names[0]
-  return first ? { name: first, ws: workbook.Sheets[first] } : null
+
+  const lines = []
+  for (const r of list) {
+    if (!Array.isArray(r)) continue
+    const cols = []
+    for (let c = 0; c < maxCol; c += 1) {
+      cols.push(csvEscape(cellToString(r[c])))
+    }
+    if (cols.every((x) => x === '')) continue
+    lines.push(cols.join(','))
+  }
+  return lines.join('\n')
 }
 
-function ensureCsvForSanitizer({ uploadedPath, uploadedName }) {
+async function ensureCsvForSanitizer({ uploadedPath, uploadedName }) {
   const ext = path.extname(String(uploadedName || '')).toLowerCase()
+  if (ext === '.xls') {
+    const err = new Error('Unsupported Excel format: .xls. Please upload .xlsx or .csv')
+    err.code = 'xls_not_supported'
+    throw err
+  }
   if (!isExcelExt(ext)) {
     return { inputPath: uploadedPath, converted: false, rawExt: ext || '.csv', cleanup: null }
   }
 
-  let XLSX
+  let readXlsxFile
   try {
-    XLSX = require('xlsx')
+    readXlsxFile = require('read-excel-file/node')
   } catch (e) {
-    const err = new Error('Missing dependency: xlsx. Run `npm i` in Bullwaves_new.')
-    err.code = 'missing_xlsx'
+    const err = new Error('Missing dependency: read-excel-file. Run `npm i` in Bullwaves_new.')
+    err.code = 'missing_read_excel_file'
     throw err
   }
 
   const buf = fs.readFileSync(uploadedPath)
-  const wb = XLSX.read(buf, { type: 'buffer', cellDates: true })
-  const picked = pickFirstNonEmptySheet(wb)
-  if (!picked || !picked.ws) {
+  // List sheets first, then read the first non-empty sheet.
+  let sheets
+  try {
+    sheets = await readXlsxFile(buf, { getSheets: true })
+  } catch (e) {
+    sheets = null
+  }
+
+  const sheetList = Array.isArray(sheets) && sheets.length ? sheets : [{ name: 1 }]
+  let pickedName = null
+  let pickedRows = null
+  for (const s of sheetList) {
+    const sheetName = (s && s.name) ? s.name : 1
+    // eslint-disable-next-line no-await-in-loop
+    const rows = await readXlsxFile(buf, { sheet: sheetName })
+    if (Array.isArray(rows) && rows.length) {
+      pickedName = sheetName
+      pickedRows = rows
+      break
+    }
+  }
+
+  if (!pickedRows) {
     const err = new Error('No readable worksheet found in Excel file')
     err.code = 'xlsx_no_sheet'
     throw err
   }
 
-  const csv = XLSX.utils.sheet_to_csv(picked.ws, { blankrows: false })
-  const convertedName = `${Date.now()}-converted-${safeBaseName(uploadedName).replace(/\.(xlsx|xls)$/i, '')}.csv`
+  const csv = rowsToCsv(pickedRows)
+  const convertedName = `${Date.now()}-converted-${safeBaseName(uploadedName).replace(/\.(xlsx)$/i, '')}.csv`
   const convertedPath = path.join(uploadDir, convertedName)
   fs.writeFileSync(convertedPath, csv, 'utf8')
 
@@ -79,7 +158,7 @@ function ensureCsvForSanitizer({ uploadedPath, uploadedName }) {
     inputPath: convertedPath,
     converted: true,
     convertedFrom: ext,
-    sheetName: picked.name,
+    sheetName: String(pickedName || ''),
     rawExt: ext,
     cleanup: () => {
       try { fs.unlinkSync(convertedPath) } catch (e) { /* ignore */ }
@@ -156,9 +235,28 @@ async function runPostUploadGenerators(type, emit) {
   const results = []
   for (let i = 0; i < scripts.length; i += 1) {
     const scriptFile = scripts[i]
-    if (emit) emit(Math.min(99, 92 + i * 3), 'post_processing', `Generating ${path.basename(scriptFile)}…`)
-    // eslint-disable-next-line no-await-in-loop
-    const r = await runNodeScript(scriptFile, { cwd })
+    const pct = Math.min(99, 92 + i * 3)
+    const scriptName = path.basename(scriptFile)
+    if (emit) emit(pct, 'post_processing', `Generating ${scriptName}…`)
+
+    // Long-running scripts (notably fraud_monitor.js) can make the UI look stuck.
+    // Send periodic keep-alive progress messages while the script runs.
+    const startMs = Date.now()
+    let timer = null
+    if (emit) {
+      timer = setInterval(() => {
+        const elapsedS = Math.max(0, Math.round((Date.now() - startMs) / 1000))
+        emit(pct, 'post_processing', `Generating ${scriptName}… (${elapsedS}s)`)
+      }, 4000)
+    }
+
+    let r
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      r = await runNodeScript(scriptFile, { cwd })
+    } finally {
+      if (timer) clearInterval(timer)
+    }
     results.push({
       script: r.script,
       stdoutPreview: String(r.stdout || '').split(/\r?\n/).slice(0, 6).join('\n'),
@@ -223,19 +321,35 @@ function tryParseSummaryLine(line, current) {
   return current
 }
 
-function handleUpload(req, res) {
+function isVerboseRequest(req) {
+  try {
+    const q = req && req.query ? req.query.verbose : undefined
+    const b = req && req.body ? req.body.verbose : undefined
+    return String(q || b || '').trim() === '1'
+  } catch {
+    return false
+  }
+}
+
+const LOG_PREVIEW_OPTS = { maxLines: 25, maxChars: 5000 }
+const LOG_VERBOSE_OPTS = { maxLines: 400, maxChars: 120000 }
+
+async function handleUpload(req, res) {
   if (!req.file) return res.status(400).json({ error: 'no file' })
   const uploadedPath = req.file.path
   const uploadedName = req.file.originalname || ''
   const timestamp = Date.now()
 
+  const verbose = isVerboseRequest(req)
+
   const { type } = resolveUploadType(req, uploadedName)
 
   let normalized
   try {
-    normalized = ensureCsvForSanitizer({ uploadedPath, uploadedName })
+    normalized = await ensureCsvForSanitizer({ uploadedPath, uploadedName })
   } catch (e) {
-    return res.status(500).json({
+    const status = (e && e.code === 'xls_not_supported') ? 400 : 500
+    return res.status(status).json({
       error: 'xlsx_convert_failed',
       code: e && e.code,
       message: e && e.message,
@@ -253,16 +367,68 @@ function handleUpload(req, res) {
     ? 'sanitize_registrations.js'
     : (type === 'media' ? 'sanitize_media.js' : (type === 'comments' ? 'sanitize_comments.js' : 'sanitize_payments.js'))
   const cmd = `node "${path.join(__dirname, sanitizer)}" "${normalized.inputPath}"`
-  exec(cmd, { cwd: path.join(__dirname, '..') }, async (err, stdout, stderr) => {
+  exec(
+    cmd,
+    {
+      cwd: path.join(__dirname, '..'),
+      env: {
+        ...process.env,
+        ...(verbose ? { SANITIZER_VERBOSE: '1', SANITIZER_WARN_OVERFLOW: '1' } : null),
+      },
+    },
+    async (err, stdout, stderr) => {
     const out = stdout || ''
     const errOut = stderr || ''
     if (normalized && normalized.cleanup) normalized.cleanup()
+
+    const stdoutPreview = truncateTextTail(out, LOG_PREVIEW_OPTS)
+    const stderrPreview = truncateTextTail(errOut, LOG_PREVIEW_OPTS)
     if (err && err.code !== 0) {
       console.error('Upload processing failed for', req.file.originalname, 'sanitizer=', sanitizer, 'code=', err.code)
-      console.error('stdout:', out)
-      console.error('stderr:', errOut)
-      return res.status(500).json({ error: 'sanitizer_failed', code: err.code, stdout: out, stderr: errOut })
+      const logWrite = writeUploadLogFile({
+        rawDir,
+        type,
+        timestamp,
+        uploadedName: req.file.originalname,
+        rawBackup,
+        sanitizer,
+        stdout: out,
+        stderr: errOut,
+        exitCode: err.code,
+      })
+
+      // Keep UI response compact, even on failure. Full logs are in logFile.
+      return res.status(500).json({
+        error: 'sanitizer_failed',
+        code: err.code,
+        type,
+        rawBackup,
+        sanitizer,
+        logFile: logWrite && logWrite.ok ? logWrite.logPath : null,
+        logsTruncated: !verbose,
+        stdout: stdoutPreview,
+        stderr: stderrPreview,
+        ...(verbose
+          ? {
+              stdoutVerbose: truncateTextTail(out, LOG_VERBOSE_OPTS),
+              stderrVerbose: truncateTextTail(errOut, LOG_VERBOSE_OPTS),
+            }
+          : null),
+      })
     }
+
+    const logWrite = writeUploadLogFile({
+      rawDir,
+      type,
+      timestamp,
+      uploadedName: req.file.originalname,
+      rawBackup,
+      sanitizer,
+      stdout: out,
+      stderr: errOut,
+      exitCode: 0,
+    })
+
     // Log a concise terminal confirmation for the user
     console.log('--- Upload processed ---')
     console.log('file:', req.file.originalname)
@@ -273,8 +439,8 @@ function handleUpload(req, res) {
     const outLines = out.split(/\r?\n/).filter(Boolean)
     const preview = outLines.slice(0, 10).join('\n')
     console.log('sanitizer stdout preview:\n' + preview)
-    if (outLines.length > 10) console.log('... (output truncated, full output returned in response)')
-    if (errOut) console.warn('sanitizer stderr:\n', errOut)
+    if (outLines.length > 10) console.log('... (output truncated; full output saved to log file)')
+    if (errOut) console.warn('sanitizer stderr preview:\n' + truncateTextTail(errOut, LOG_PREVIEW_OPTS))
     let postProcessing = null
     try {
       postProcessing = await runPostUploadGenerators(type)
@@ -291,20 +457,31 @@ function handleUpload(req, res) {
       type,
       rawBackup,
       sanitizer,
+      logFile: logWrite && logWrite.ok ? logWrite.logPath : null,
       postProcessing,
       normalized: normalized && normalized.converted ? {
         converted: true,
         from: normalized.convertedFrom,
         sheetName: normalized.sheetName,
       } : { converted: false },
-      stdout: out,
-      stderr: errOut,
+      // Keep responses compact: return only a small tail preview.
+      logsTruncated: !verbose,
+      stdout: stdoutPreview,
+      stderr: stderrPreview,
+      ...(verbose
+        ? {
+            stdoutVerbose: truncateTextTail(out, LOG_VERBOSE_OPTS),
+            stderrVerbose: truncateTextTail(errOut, LOG_VERBOSE_OPTS),
+          }
+        : null),
     })
   })
 }
 
-function handleUploadStream(req, res) {
+async function handleUploadStream(req, res) {
   if (!req.file) return res.status(400).json({ error: 'no file' })
+
+  const verbose = isVerboseRequest(req)
 
   res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8')
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate')
@@ -326,7 +503,7 @@ function handleUploadStream(req, res) {
   writeNdjson(res, { type: 'progress', pct: 5, stage: 'received', message: 'Received file. Preparing…' })
 
   try {
-    normalized = ensureCsvForSanitizer({ uploadedPath, uploadedName })
+    normalized = await ensureCsvForSanitizer({ uploadedPath, uploadedName })
     if (normalized && normalized.converted) {
       writeNdjson(res, {
         type: 'progress',
@@ -357,6 +534,10 @@ function handleUploadStream(req, res) {
   const child = spawn('node', [path.join(__dirname, sanitizer), normalized.inputPath], {
     cwd: path.join(__dirname, '..'),
     windowsHide: true,
+    env: {
+      ...process.env,
+      ...(verbose ? { SANITIZER_VERBOSE: '1', SANITIZER_WARN_OVERFLOW: '1' } : null),
+    },
   })
 
   writeNdjson(res, { type: 'progress', pct: 15, stage: 'sanitizer_start', message: `Running ${sanitizer}…` })
@@ -408,10 +589,56 @@ function handleUploadStream(req, res) {
 
   child.on('close', (code) => {
     if (normalized && normalized.cleanup) normalized.cleanup()
+
+    const stdoutPreview = truncateTextTail(stdout, LOG_PREVIEW_OPTS)
+    const stderrPreview = truncateTextTail(stderr, LOG_PREVIEW_OPTS)
     if (code && code !== 0) {
-      writeNdjson(res, { type: 'error', message: 'sanitizer_failed', code, stdout, stderr })
+      const logWrite = writeUploadLogFile({
+        rawDir,
+        type,
+        timestamp,
+        uploadedName,
+        rawBackup,
+        sanitizer,
+        stdout,
+        stderr,
+        exitCode: code,
+      })
+
+      writeNdjson(res, {
+        type: 'error',
+        message: 'sanitizer_failed',
+        code,
+        data: {
+          type,
+          rawBackup,
+          sanitizer,
+          logFile: logWrite && logWrite.ok ? logWrite.logPath : null,
+          logsTruncated: !verbose,
+          stdout: stdoutPreview,
+          stderr: stderrPreview,
+          ...(verbose
+            ? {
+                stdoutVerbose: truncateTextTail(stdout, LOG_VERBOSE_OPTS),
+                stderrVerbose: truncateTextTail(stderr, LOG_VERBOSE_OPTS),
+              }
+            : null),
+        },
+      })
       return res.end()
     }
+
+    const logWrite = writeUploadLogFile({
+      rawDir,
+      type,
+      timestamp,
+      uploadedName,
+      rawBackup,
+      sanitizer,
+      stdout,
+      stderr,
+      exitCode: 0,
+    })
 
     ;(async () => {
       try {
@@ -429,6 +656,7 @@ function handleUploadStream(req, res) {
         type,
         dest,
         rawBackup,
+        logFile: logWrite && logWrite.ok ? logWrite.logPath : null,
         sanitizer,
         normalized: normalized && normalized.converted ? {
           converted: true,
@@ -436,8 +664,16 @@ function handleUploadStream(req, res) {
           sheetName: normalized.sheetName,
         } : { converted: false },
         summary,
-        stdout,
-        stderr,
+        // Keep responses compact for UI: only tail previews.
+        logsTruncated: !verbose,
+        stdout: stdoutPreview,
+        stderr: stderrPreview,
+        ...(verbose
+          ? {
+              stdoutVerbose: truncateTextTail(stdout, LOG_VERBOSE_OPTS),
+              stderrVerbose: truncateTextTail(stderr, LOG_VERBOSE_OPTS),
+            }
+          : null),
       },
     })
     res.end()

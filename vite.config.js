@@ -83,7 +83,7 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
-    strictPort: true,
+    strictPort: false,
     watch: {
       // Upload sanitizers rewrite these files; in dev we don't want Vite to full-reload the app.
       ignored: [
