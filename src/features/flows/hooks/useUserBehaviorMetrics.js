@@ -11,6 +11,15 @@ function toNumber(value) {
   return parseFloat(String(value || '').replace(/[^0-9\.-]/g, '')) || 0
 }
 
+function toNonNegativeInt(value) {
+  const n = toNumber(value)
+  if (!Number.isFinite(n)) return 0
+  if (n < 0) return 0
+  // Strict integer check: reject floats like 99.5 that typically indicate column shift.
+  if (Math.abs(n - Math.round(n)) > 1e-9) return 0
+  return Math.round(n)
+}
+
 function pickValue(row, keys) {
   for (const key of keys) {
     if (row && Object.prototype.hasOwnProperty.call(row, key)) return row[key]
@@ -82,7 +91,7 @@ export function computeDepositsCountFromRegistrationsRows(rows = []) {
   let depositsCount = 0
   ;(rows || []).forEach((row) => {
     depositsCount +=
-      toNumber(
+      toNonNegativeInt(
         pickValue(row, [
           'deposit_count',
           'Deposit Count',

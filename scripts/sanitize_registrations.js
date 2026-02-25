@@ -50,30 +50,37 @@ function hasHardParseErrors(parsed){
   ))
 }
 
-function lenientQuotedLineParse(text, { delimiter }){
-  const lines = String(text || '').split(/\r?\n/).filter(l => String(l || '').trim() !== '')
-  if (!lines.length) return { data: [], meta: { fields: [] }, errors: [] }
+function recordWiseParse(text, { delimiter }) {
+  const lines = String(text || '').split(/\r?\n/)
+  const nonEmpty = lines.filter((l) => String(l || '').trim() !== '')
+  if (!nonEmpty.length) return { data: [], meta: { fields: [] }, errors: [] }
 
-  const sep = `"${delimiter}"`
-  const stripOuterQuotes = (line) => {
-    let s = String(line || '')
-    if (s.charCodeAt(0) === 0xFEFF) s = s.slice(1)
-    s = s.replace(/\r$/, '')
-    if (s.startsWith('"')) s = s.slice(1)
-    if (s.endsWith('"')) s = s.slice(0, -1)
-    return s
-  }
-
-  const headerRaw = stripOuterQuotes(lines[0])
-  const headerFields = headerRaw.split(sep).map(normalizedHeader)
-  const expectedLen = headerFields.length
+  // Parse header as a single CSV record (no transformHeader here: we want raw field order).
+  const headerLine = nonEmpty[0]
+  const headerParsed = Papa.parse(headerLine, {
+    header: false,
+    skipEmptyLines: true,
+    delimiter,
+    quoteChar: '"',
+  })
+  const headerCells = (headerParsed && headerParsed.data && headerParsed.data[0]) || []
+  const fields = headerCells.map(normalizedHeader)
+  const expectedLen = fields.length
 
   const rows = []
-  for (let i = 1; i < lines.length; i++){
-    const raw = stripOuterQuotes(lines[i])
-    let parts = raw.split(sep)
+  let buf = ''
 
-    // If there are more fields than expected, merge overflow back into the last field.
+  const flush = (recordText) => {
+    const rec = Papa.parse(recordText, {
+      header: false,
+      skipEmptyLines: false,
+      delimiter,
+      quoteChar: '"',
+    })
+    const cells = (rec && rec.data && rec.data[0]) || []
+    if (!expectedLen) return
+
+    let parts = Array.isArray(cells) ? cells.slice() : []
     if (parts.length > expectedLen && expectedLen >= 1) {
       const lastIdx = expectedLen - 1
       const merged = parts.slice(lastIdx).join(delimiter)
@@ -84,11 +91,23 @@ function lenientQuotedLineParse(text, { delimiter }){
     }
 
     const obj = {}
-    for (let c = 0; c < expectedLen; c++) obj[headerFields[c] || `col_${c}`] = parts[c]
+    for (let c = 0; c < expectedLen; c++) obj[fields[c] || `col_${c}`] = parts[c]
     rows.push(obj)
   }
 
-  return { data: rows, meta: { fields: headerFields }, errors: [] }
+  // Consume data records (may span multiple lines if quotes are broken).
+  for (let i = 1; i < nonEmpty.length; i++) {
+    const line = nonEmpty[i]
+    buf = buf ? `${buf}\n${line}` : line
+    const q = (buf.match(/\"/g) || []).length
+    if (q % 2 === 0) {
+      flush(buf)
+      buf = ''
+    }
+  }
+  if (buf) flush(buf)
+
+  return { data: rows, meta: { fields }, errors: [] }
 }
 
 function preprocessRaw(text){
@@ -220,8 +239,8 @@ if (hasHardParseErrors(parsed) || malformed.length) {
 
 // If we still have hard parse issues or overflow columns, switch to lenient parser.
 if (hasHardParseErrors(parsed) || malformed.length) {
-  console.log('Info: CSV had quoting/field-count issues; using lenient parser')
-  parsed = lenientQuotedLineParse(pre, { delimiter: detectedDelimiter })
+  console.log('Info: CSV had quoting/field-count issues; using record-wise parser')
+  parsed = recordWiseParse(pre, { delimiter: detectedDelimiter })
   fields = (parsed.meta && parsed.meta.fields) ? parsed.meta.fields : fields
 
   // rebuild uniqueFields from new fields
@@ -270,6 +289,41 @@ parsed.data.forEach((r, idx) => {
     }
   })
   cleanedRows.push(obj)
+})
+
+function normalizeCommaPlaceholder(value) {
+  const t = String(value ?? '').trim()
+  return t === ',' ? '' : value
+}
+
+function normalizeNonNegativeIntString(value) {
+  const t = String(value ?? '').trim()
+  if (!t) return ''
+  const cleaned = t.replace(/,/g, '')
+  const n = Number.parseFloat(cleaned)
+  if (!Number.isFinite(n)) return ''
+  if (n < 0) return ''
+  if (Math.abs(n - Math.round(n)) > 1e-9) return ''
+  return String(Math.round(n))
+}
+
+// Some exports use a literal comma "," as a placeholder for missing values.
+// Normalize those to empty strings to avoid downstream ambiguity.
+const COMMA_PLACEHOLDER_FIELDS = [
+  'first_deposit',
+  'first_deposit_date',
+  'external_ftd_date',
+  'qualification_date',
+]
+
+cleanedRows.forEach((row) => {
+  if (!row || typeof row !== 'object') return
+  COMMA_PLACEHOLDER_FIELDS.forEach((f) => {
+    if (Object.prototype.hasOwnProperty.call(row, f)) row[f] = normalizeCommaPlaceholder(row[f])
+  })
+  if (Object.prototype.hasOwnProperty.call(row, 'deposit_count')) {
+    row.deposit_count = normalizeNonNegativeIntString(row.deposit_count)
+  }
 })
 
 console.log('Rows parsed:', cleanedRows.length)
@@ -525,6 +579,17 @@ if (updatesLog.length) {
 const finalFields = (existingFields && existingFields.length ? existingFields.slice() : uniqueFields.slice())
 uniqueFields.forEach(f => { if (!finalFields.includes(f)) finalFields.push(f) })
 const finalRows = existingRows.concat(toAdd)
+
+// Ensure output consistency across both existing and newly added rows.
+finalRows.forEach((row) => {
+  if (!row || typeof row !== 'object') return
+  COMMA_PLACEHOLDER_FIELDS.forEach((f) => {
+    if (Object.prototype.hasOwnProperty.call(row, f)) row[f] = normalizeCommaPlaceholder(row[f])
+  })
+  if (Object.prototype.hasOwnProperty.call(row, 'deposit_count')) {
+    row.deposit_count = normalizeNonNegativeIntString(row.deposit_count)
+  }
+})
 
 function parseAnyMDYorDMY(text) {
   const t = String(text || '').trim()

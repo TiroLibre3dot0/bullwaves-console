@@ -413,254 +413,329 @@ export default function FraudMonitoringDashboard() {
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
-        const rows = (res.data || []).map((r) => {
-          const normalized = {}
-          Object.keys(r).forEach((k) => {
-            const nk = String(k || '')
-              .trim()
-              .toLowerCase()
-              .replace(/\s+/g, '_')
-              .replace(/[^a-z0-9_]/g, '')
-            normalized[nk] = typeof r[k] === 'string' ? r[k].trim() : r[k]
+        try {
+          const parseRegistrationTs = (value) => {
+            const s = String(value ?? '').trim()
+            if (!s) return null
+            // MM/YYYY or M/YYYY
+            const mmyyyy = s.match(/^\s*(\d{1,2})\/(\d{4})\s*$/)
+            if (mmyyyy) {
+              const mo = Number(mmyyyy[1])
+              const y = Number(mmyyyy[2])
+              if (!isNaN(y) && mo >= 1 && mo <= 12) return Date.UTC(y, mo - 1, 1)
+            }
+            // YYYY-MM or YYYY/MM or YYYY-MM-DD
+            const ymd = s.match(/^\s*(\d{4})[\-\/](\d{1,2})(?:[\-\/](\d{1,2}))?\s*$/)
+            if (ymd) {
+              const y = Number(ymd[1])
+              const mo = Number(ymd[2])
+              const d = ymd[3] ? Number(ymd[3]) : 1
+              if (!isNaN(y) && !isNaN(mo) && mo >= 1 && mo <= 12 && !isNaN(d) && d >= 1 && d <= 31)
+                return Date.UTC(y, mo - 1, d)
+            }
+            const parsed = Date.parse(s)
+            if (!isNaN(parsed)) return parsed
+            return null
+          }
+
+          const rows = (res.data || []).map((r) => {
+            const normalized = {}
+            Object.keys(r).forEach((k) => {
+              const nk = String(k || '')
+                .trim()
+                .toLowerCase()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-z0-9_]/g, '')
+              normalized[nk] = typeof r[k] === 'string' ? r[k].trim() : r[k]
+            })
+
+            // precompute registration year for fast filtering
+            try {
+              const dateVal =
+                normalized['registration_date'] ||
+                normalized['registrationdate'] ||
+                normalized['reg_date'] ||
+                normalized['date'] ||
+                normalized['created_at'] ||
+                normalized['createdat'] ||
+                normalized['external_date'] ||
+                normalized['externaldate'] ||
+                ''
+              const parsed = parseRegistrationTs(dateVal)
+              if (parsed != null) {
+                normalized.__regYear = new Date(parsed).getUTCFullYear()
+                normalized.__regTs = parsed
+              }
+            } catch {
+              // ignore
+            }
+
+            return normalized
           })
 
-          // precompute registration year for fast filtering
-          try {
-            const dateVal =
-              normalized['registration_date'] ||
-              normalized['registrationdate'] ||
-              normalized['reg_date'] ||
-              normalized['date'] ||
-              normalized['created_at'] ||
-              normalized['createdat'] ||
-              ''
-            const s = String(dateVal || '').trim()
-            const parsed = Date.parse(s)
-            if (!isNaN(parsed)) normalized.__regYear = new Date(parsed).getUTCFullYear()
-          } catch {
-            // ignore
+          // detect possible keys
+          const acctKeys = [
+            'account_id',
+            'accountid',
+            'accountnumber',
+            'account',
+            'id',
+            'clientid',
+            // Registrations Report canonical columns
+            'user_id',
+            'userid',
+            'mt5_account',
+            'mt5account',
+          ]
+          const nameKeys = [
+            'fullname',
+            'full_name',
+            'name',
+            'client_name',
+            // Registrations Report canonical columns
+            'customername',
+            'customer_name',
+          ]
+          const depositCountKeys = [
+            'deposit_count',
+            'deposits_count',
+            'num_deposits',
+            'depositcount',
+          ]
+          const equityKeys = ['equity', 'balance', 'account_balance']
+          const profitKeys = ['profit', 'netprofit', 'pnl']
+          const lossKeys = ['loss', 'netloss']
+          const plKeys = ['net_pl', 'pl', 'profit_loss', 'profitloss']
+
+          const pickKey = (obj, candidates) =>
+            candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
+
+          const acctKey = rows.length ? pickKey(rows[0], acctKeys) : null
+          const nameKey = rows.length ? pickKey(rows[0], nameKeys) : null
+          const depositKey = rows.length ? pickKey(rows[0], depositCountKeys) : null
+          const equityKey = rows.length ? pickKey(rows[0], equityKeys) : null
+          const plKey = rows.length ? pickKey(rows[0], plKeys) : null
+          const profitKey = rows.length ? pickKey(rows[0], profitKeys) : null
+          const lossKey = rows.length ? pickKey(rows[0], lossKeys) : null
+          const affiliateKeys = [
+            'affiliate',
+            'affiliate_id',
+            'affiliateid',
+            'affiliate_code',
+            'affiliate_ref',
+          ]
+          const countryKeys = ['country', 'country_code', 'nation', 'paese']
+          const affiliateKey = rows.length ? pickKey(rows[0], affiliateKeys) : null
+          const countryKey = rows.length ? pickKey(rows[0], countryKeys) : null
+
+          const parseStrictNonNegInt = (v) => {
+            const s = String(v ?? '').trim()
+            if (!s) return 0
+            const cleaned = s.replace(/[^0-9\.-]/g, '')
+            const f = Number(cleaned)
+            if (!Number.isFinite(f)) return 0
+            const r = Math.round(f)
+            if (r < 0) return 0
+            // Accept only values that are effectively integers (e.g. 1, 1.0000)
+            if (Math.abs(f - r) > 1e-6) return 0
+            return r
           }
 
-          return normalized
-        })
-
-        // detect possible keys
-        const acctKeys = [
-          'account_id',
-          'accountid',
-          'accountnumber',
-          'account',
-          'id',
-          'clientid',
-          // Registrations Report canonical columns
-          'user_id',
-          'userid',
-          'mt5_account',
-          'mt5account',
-        ]
-        const nameKeys = [
-          'fullname',
-          'full_name',
-          'name',
-          'client_name',
-          // Registrations Report canonical columns
-          'customername',
-          'customer_name',
-        ]
-        const depositCountKeys = [
-          'deposit_count',
-          'deposits_count',
-          'num_deposits',
-          'deposits',
-          'depositcount',
-        ]
-        const equityKeys = ['equity', 'balance', 'account_balance']
-        const profitKeys = ['profit', 'netprofit', 'pnl']
-        const lossKeys = ['loss', 'netloss']
-
-        const pickKey = (obj, candidates) =>
-          candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
-
-        const acctKey = rows.length ? pickKey(rows[0], acctKeys) : null
-        const nameKey = rows.length ? pickKey(rows[0], nameKeys) : null
-        const depositKey = rows.length ? pickKey(rows[0], depositCountKeys) : null
-        const equityKey = rows.length ? pickKey(rows[0], equityKeys) : null
-        const profitKey = rows.length ? pickKey(rows[0], profitKeys) : null
-        const lossKey = rows.length ? pickKey(rows[0], lossKeys) : null
-        const affiliateKeys = [
-          'affiliate',
-          'affiliate_id',
-          'affiliateid',
-          'affiliate_code',
-          'affiliate_ref',
-        ]
-        const countryKeys = ['country', 'country_code', 'nation', 'paese']
-        const affiliateKey = rows.length ? pickKey(rows[0], affiliateKeys) : null
-        const countryKey = rows.length ? pickKey(rows[0], countryKeys) : null
-
-        const accounts = rows.map((r, idx) => {
-          const accountId = acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`
-          const holder = nameKey ? r[nameKey] || '—' : '—'
-          const depositCount = depositKey
-            ? Number(String(r[depositKey]).replace(/[^0-9\-\.]/g, '')) || 0
-            : 0
-          const equity = equityKey
-            ? Number(String(r[equityKey]).replace(/[^0-9\-\.]/g, '')) || 0
-            : 0
-          const profit = profitKey
-            ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0
-            : 0
-          const loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-          const affiliate = affiliateKey ? r[affiliateKey] || '' : ''
-          const country = countryKey ? r[countryKey] || '' : ''
-          return { accountId, holder, depositCount, equity, profit, loss, affiliate, country }
-        })
-        setCsvAccounts(accounts)
-        setCsvRawRows(rows)
-
-        // compute commission aggregates from normalized rows
-        const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
-        const commKeys = [
-          'commissions',
-          'affiliate_commissions',
-          'sub_affiliate_commissions',
-          'cpa_commission',
-          'cpl_commission',
-          'revshare_commission',
-          'other_commissions',
-        ]
-        const breakdown = {}
-        // compute per-key sums
-        commKeys.forEach((k) => {
-          breakdown[k] = rows.reduce((s, r) => s + parseNum(r[k]), 0)
-        })
-        // if `commissions` column exists treat it as authoritative total, otherwise sum breakdown
-        const hasCommissionsCol =
-          rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'commissions')
-        const commTotal = hasCommissionsCol
-          ? breakdown['commissions']
-          : Object.values(breakdown).reduce((s, v) => s + v, 0)
-
-        // compute average CPA across accounts that generated commissions (exclude zero-commission accounts)
-        let payingCount = 0
-        if (hasCommissionsCol) {
-          payingCount = rows.reduce((c, r) => c + (parseNum(r['commissions']) > 0 ? 1 : 0), 0)
-        } else {
-          payingCount = rows.reduce((c, r) => {
-            const rowSum = commKeys.reduce((s, k) => s + parseNum(r[k]), 0)
-            return c + (rowSum > 0 ? 1 : 0)
-          }, 0)
-        }
-        const avgCpaRegistrations = payingCount ? commTotal / payingCount : 0
-        setRegCommissionsSummary({
-          total: commTotal,
-          breakdown,
-          payingCount,
-          avgPerPayingAccount: avgCpaRegistrations,
-        })
-
-        // build registration time series (by registration date)
-        const regSeriesMap = {}
-        rows.forEach((r, idx) => {
-          const dateVal =
-            r['registration_date'] ||
-            r['registrationdate'] ||
-            r['reg_date'] ||
-            r['date'] ||
-            r['created_at'] ||
-            ''
-          const label = String(dateVal || '').trim() || 'unknown'
-          if (!regSeriesMap[label]) regSeriesMap[label] = 0
-          regSeriesMap[label] += 1
-        })
-        const rSeries = Object.keys(regSeriesMap).map((k) => ({ date: k, count: regSeriesMap[k] }))
-        const parsedR = rSeries.map((s) => {
-          const d = new Date(s.date)
-          if (!isNaN(d.getTime()))
-            return { ...s, _ts: d.getTime(), dateISO: d.toISOString().slice(0, 10) }
-          const alt = Date.parse(s.date)
-          if (!isNaN(alt))
-            return { ...s, _ts: alt, dateISO: new Date(alt).toISOString().slice(0, 10) }
-          return { ...s, _ts: null }
-        })
-        parsedR.sort((a, b) => (a._ts || 0) - (b._ts || 0))
-        setRegSeries(parsedR)
-
-        const totalAccounts = accounts.length
-        const uniqueAccountIds = new Set(accounts.map((a) => a.accountId)).size
-        const holders = {}
-        accounts.forEach((a) => {
-          holders[a.holder] = (holders[a.holder] || 0) + 1
-        })
-        const uniqueHolders = Object.keys(holders).length
-        const singleAccountHolders = Object.values(holders).filter((v) => v === 1).length
-        const multiAccountCount = Object.values(holders)
-          .filter((v) => v > 1)
-          .reduce((s, v) => s + v, 0)
-        const withDeposit = accounts.filter((a) => a.depositCount > 0).length
-
-        // deposit buckets (by count) size 5
-        const maxDeposits = Math.max(0, ...accounts.map((a) => a.depositCount))
-        const maxBucket = Math.ceil(maxDeposits / 5)
-        const buckets = {}
-        for (let i = 1; i <= Math.max(1, maxBucket); i++) buckets[i] = 0
-        accounts.forEach((a) => {
-          if (a.depositCount > 0) {
-            const idx = Math.floor((a.depositCount - 1) / 5) + 1
-            buckets[idx] = (buckets[idx] || 0) + 1
+          const cleanAccountId = (v) => {
+            const s = String(v ?? '').trim()
+            if (!s) return ''
+            // Remove CSV-escape artifacts like leading/trailing quotes from malformed rows
+            return s.replace(/^"+|"+$/g, '')
           }
-        })
-        const avgEquity = accounts.length
-          ? accounts.reduce((s, a) => s + (a.equity || 0), 0) / accounts.length
-          : 0
-        const avgProfit = accounts.length
-          ? accounts.reduce((s, a) => s + (a.profit || 0), 0) / accounts.length
-          : 0
-        const avgLoss = accounts.length
-          ? accounts.reduce((s, a) => s + (a.loss || 0), 0) / accounts.length
-          : 0
 
-        // deposit_count stats (total, max, min, avg)
-        const depositCounts = accounts.map((a) => Number(a.depositCount || 0))
-        const depositTotal = depositCounts.reduce((s, v) => s + v, 0)
+          const accounts = new Array(rows.length)
+          for (let idx = 0; idx < rows.length; idx++) {
+            const r = rows[idx]
+            const rawId = acctKey ? r[acctKey] : ''
+            const cleanedId = cleanAccountId(rawId)
+            const accountId = cleanedId || (acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`)
+            const holder = nameKey ? r[nameKey] || '—' : '—'
+            const depositCount = depositKey ? parseStrictNonNegInt(r[depositKey]) : 0
+            const equity = equityKey
+              ? Number(String(r[equityKey]).replace(/[^0-9\-\.]/g, '')) || 0
+              : 0
+            let profit = 0
+            let loss = 0
+            if (plKey) {
+              const pl = Number(String(r[plKey]).replace(/[^0-9\-\.]/g, '')) || 0
+              if (pl >= 0) profit = pl
+              else loss = Math.abs(pl)
+            } else {
+              profit = profitKey ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+              loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+            }
+            const affiliate = affiliateKey ? r[affiliateKey] || '' : ''
+            const country = countryKey ? r[countryKey] || '' : ''
+            accounts[idx] = {
+              accountId,
+              holder,
+              depositCount,
+              equity,
+              profit,
+              loss,
+              affiliate,
+              country,
+              __regYear: typeof r.__regYear === 'number' ? r.__regYear : undefined,
+              __regTs: typeof r.__regTs === 'number' ? r.__regTs : undefined,
+            }
+          }
+          setCsvAccounts(accounts)
+          setCsvRawRows(rows)
 
-        const depositMax = depositCounts.length ? Math.max(...depositCounts) : 0
-        const depositMin = depositCounts.length ? Math.min(...depositCounts) : 0
-        // average over accounts who deposited at least once
-        const depositors = depositCounts.filter((v) => Number(v) > 0)
-        const depositAvg = depositors.length ? depositTotal / depositors.length : 0
+          // compute commission aggregates from normalized rows
+          const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
+          const commKeys = [
+            'commissions',
+            'affiliate_commissions',
+            'sub_affiliate_commissions',
+            'cpa_commission',
+            'cpl_commission',
+            'revshare_commission',
+            'other_commissions',
+          ]
+          const breakdown = {}
+          // compute per-key sums
+          commKeys.forEach((k) => {
+            breakdown[k] = rows.reduce((s, r) => s + parseNum(r[k]), 0)
+          })
+          // if `commissions` column exists treat it as authoritative total, otherwise sum breakdown
+          const hasCommissionsCol =
+            rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'commissions')
+          const commTotal = hasCommissionsCol
+            ? breakdown['commissions']
+            : Object.values(breakdown).reduce((s, v) => s + v, 0)
 
-        const totalPL = accounts.reduce(
-          (s, a) => s + (Number(a.profit || 0) - Number(a.loss || 0)),
-          0
-        )
+          // compute average CPA across accounts that generated commissions (exclude zero-commission accounts)
+          let payingCount = 0
+          if (hasCommissionsCol) {
+            payingCount = rows.reduce((c, r) => c + (parseNum(r['commissions']) > 0 ? 1 : 0), 0)
+          } else {
+            payingCount = rows.reduce((c, r) => {
+              const rowSum = commKeys.reduce((s, k) => s + parseNum(r[k]), 0)
+              return c + (rowSum > 0 ? 1 : 0)
+            }, 0)
+          }
+          const avgCpaRegistrations = payingCount ? commTotal / payingCount : 0
+          setRegCommissionsSummary({
+            total: commTotal,
+            breakdown,
+            payingCount,
+            avgPerPayingAccount: avgCpaRegistrations,
+          })
 
-        const computedLosingRatio = mediaSummary.totalNetDeposits
-          ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100
-          : 0
-        setCsvRecap({
-          totalAccounts,
-          uniqueAccountIds,
-          uniqueHolders,
-          singleAccountHolders,
-          multiAccountCount,
-          withDeposit,
-          buckets,
-          avgEquity,
-          avgProfit,
-          avgLoss,
-          depositStats: { total: depositTotal, max: depositMax, min: depositMin, avg: depositAvg },
-          totalPL,
-          payingUsers: withDeposit,
-          losingUsersPercentage: computedLosingRatio,
-        })
-        setCsvLoaded(true)
+          // build registration time series by month using UNIQUE account IDs
+          // (raw row counts can be inflated by duplicates / malformed quoting)
+          const pad2 = (n) => String(n).padStart(2, '0')
+          const monthKeyFromTs = (ts) => {
+            const d = new Date(Number(ts))
+            if (isNaN(d.getTime())) return null
+            return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`
+          }
 
-        __bwFraudRegistrationsCache = {
-          url,
-          rows,
-          accounts,
-          recap: {
+          const monthToIds = new Map()
+          for (let i = 0; i < rows.length; i++) {
+            const r = rows[i]
+            const t = typeof r?.__regTs === 'number' ? r.__regTs : null
+            if (t == null) continue
+            const monthKey = monthKeyFromTs(t)
+            if (!monthKey) continue
+            const rawId = acctKey ? r[acctKey] : ''
+            const cleaned = cleanAccountId(rawId)
+            const id = cleaned || String(rawId ?? '').trim()
+            if (!id) continue
+            let set = monthToIds.get(monthKey)
+            if (!set) {
+              set = new Set()
+              monthToIds.set(monthKey, set)
+            }
+            set.add(id)
+          }
+
+          const parsedR = Array.from(monthToIds.entries())
+            .map(([key, set]) => {
+              const parts = key.split('-')
+              const y = Number(parts[0])
+              const mo = Number(parts[1])
+              const ts = !isNaN(y) && !isNaN(mo) ? Date.UTC(y, mo - 1, 1) : null
+              return { date: key, count: set.size, _ts: ts, dateISO: `${key}-01` }
+            })
+            .filter((s) => s._ts != null)
+            .sort((a, b) => (a._ts || 0) - (b._ts || 0))
+          setRegSeries(parsedR)
+
+          const totalAccounts = accounts.length
+          const accountIdSet = new Set()
+          const holderCounts = new Map()
+          let withDeposit = 0
+          let maxDeposits = 0
+          let equitySum = 0
+          let profitSum = 0
+          let lossSum = 0
+          let depositTotal = 0
+          let depositMax = 0
+          let depositMin = Infinity
+          let depositorsCount = 0
+          let totalPL = 0
+
+          for (const a of accounts) {
+            if (!a) continue
+            accountIdSet.add(a.accountId)
+            const holderKey = a.holder || '—'
+            holderCounts.set(holderKey, (holderCounts.get(holderKey) || 0) + 1)
+
+            const dep = Number(a.depositCount || 0)
+            if (dep > 0) withDeposit += 1
+            if (dep > maxDeposits) maxDeposits = dep
+            depositTotal += dep
+            if (dep > depositMax) depositMax = dep
+            if (dep < depositMin) depositMin = dep
+            if (dep > 0) depositorsCount += 1
+
+            const eq = Number(a.equity || 0)
+            const pr = Number(a.profit || 0)
+            const ls = Number(a.loss || 0)
+            equitySum += eq
+            profitSum += pr
+            lossSum += ls
+            totalPL += pr - ls
+          }
+
+          const uniqueAccountIds = accountIdSet.size
+          const uniqueHolders = holderCounts.size
+          let singleAccountHolders = 0
+          let multiAccountCount = 0
+          for (const v of holderCounts.values()) {
+            if (v === 1) singleAccountHolders += 1
+            else if (v > 1) multiAccountCount += v
+          }
+
+          // deposit buckets (by count) size 5
+          const maxBucket = Math.ceil(maxDeposits / 5)
+          const buckets = {}
+          for (let i = 1; i <= Math.max(1, maxBucket); i++) buckets[i] = 0
+          for (const a of accounts) {
+            const dep = Number(a?.depositCount || 0)
+            if (dep > 0) {
+              const idx = Math.floor((dep - 1) / 5) + 1
+              buckets[idx] = (buckets[idx] || 0) + 1
+            }
+          }
+
+          const avgEquity = totalAccounts ? equitySum / totalAccounts : 0
+          const avgProfit = totalAccounts ? profitSum / totalAccounts : 0
+          const avgLoss = totalAccounts ? lossSum / totalAccounts : 0
+          const safeDepositMin = depositMin === Infinity ? 0 : depositMin
+          const depositAvg = depositorsCount ? depositTotal / depositorsCount : 0
+
+          const computedLosingRatio = mediaSummary.totalNetDeposits
+            ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100
+            : 0
+          setCsvRecap({
             totalAccounts,
             uniqueAccountIds,
             uniqueHolders,
@@ -674,20 +749,52 @@ export default function FraudMonitoringDashboard() {
             depositStats: {
               total: depositTotal,
               max: depositMax,
-              min: depositMin,
+              min: safeDepositMin,
               avg: depositAvg,
             },
             totalPL,
             payingUsers: withDeposit,
             losingUsersPercentage: computedLosingRatio,
-          },
-          regCommissionsSummary: {
-            total: commTotal,
-            breakdown,
-            payingCount,
-            avgPerPayingAccount: avgCpaRegistrations,
-          },
-          regSeries: parsedR,
+          })
+          setCsvLoaded(true)
+
+          __bwFraudRegistrationsCache = {
+            url,
+            rows,
+            accounts,
+            recap: {
+              totalAccounts,
+              uniqueAccountIds,
+              uniqueHolders,
+              singleAccountHolders,
+              multiAccountCount,
+              withDeposit,
+              buckets,
+              avgEquity,
+              avgProfit,
+              avgLoss,
+              depositStats: {
+                total: depositTotal,
+                max: depositMax,
+                min: safeDepositMin,
+                avg: depositAvg,
+              },
+              totalPL,
+              payingUsers: withDeposit,
+              losingUsersPercentage: computedLosingRatio,
+            },
+            regCommissionsSummary: {
+              total: commTotal,
+              breakdown,
+              payingCount,
+              avgPerPayingAccount: avgCpaRegistrations,
+            },
+            regSeries: parsedR,
+          }
+        } catch (e) {
+          console.error('CSV compute error', e)
+          setCsvRecap(null)
+          setCsvLoaded(true)
         }
       },
       error: (err) => {
@@ -696,6 +803,15 @@ export default function FraudMonitoringDashboard() {
       },
     })
   }, [reportsVersionKey])
+
+  // Accounts used for KPI/case computations (respects yearFilter)
+  const accountsForAnalysis = useMemo(() => {
+    const list = Array.isArray(csvAccounts) ? csvAccounts : []
+    if (!yearFilter || yearFilter === 'all') return list
+    const y = Number(yearFilter)
+    if (isNaN(y)) return list
+    return list.filter((a) => (a && typeof a.__regYear === 'number' ? a.__regYear === y : false))
+  }, [csvAccounts, yearFilter])
 
   // load precomputed name+country groups (generated by scripts/fraud_monitor.js)
   useEffect(() => {
@@ -748,10 +864,10 @@ export default function FraudMonitoringDashboard() {
 
   // Lightweight, real data cases: only multi-account names (avoid 65k singletons).
   const multiAccountCases = useMemo(() => {
-    if (!csvAccounts || csvAccounts.length === 0) return []
+    if (!accountsForAnalysis || accountsForAnalysis.length === 0) return []
 
     const byName = new Map()
-    for (const a of csvAccounts) {
+    for (const a of accountsForAnalysis) {
       const key = normalizeHolderKey(a.holder)
       if (!key || key === '—') continue
       let g = byName.get(key)
@@ -840,14 +956,14 @@ export default function FraudMonitoringDashboard() {
         why: `Repeated name (${g.accountCount}x)`,
       }
     })
-  }, [csvAccounts, MIN_ACCOUNTS_FOR_CASE])
+  }, [accountsForAnalysis, MIN_ACCOUNTS_FOR_CASE])
 
   // Build clusters by holder name (multi-account groups)
   const clusters = useMemo(() => {
     if (!enableClusterCases) return []
-    if (!csvAccounts || csvAccounts.length === 0) return []
+    if (!accountsForAnalysis || accountsForAnalysis.length === 0) return []
     const map = {}
-    csvAccounts.forEach((a) => {
+    accountsForAnalysis.forEach((a) => {
       const name = (a.holder || '—').trim()
       if (!map[name])
         map[name] = {
@@ -908,7 +1024,7 @@ export default function FraudMonitoringDashboard() {
       (a, b) => (b.risk === 'HIGH') - (a.risk === 'HIGH') || b.accountCount - a.accountCount
     )
     return rows
-  }, [csvAccounts, enableClusterCases])
+  }, [accountsForAnalysis, enableClusterCases])
 
   // Cases derived from clusters (single source of truth)
   const derivedCases = useMemo(() => {
@@ -1055,24 +1171,40 @@ export default function FraudMonitoringDashboard() {
     if (!yearFilter || yearFilter === 'all') return []
     if (!filteredCsvRows || !filteredCsvRows.length) return []
     const rows = filteredCsvRows
-    const acctKeys = ['account_id', 'accountid', 'accountnumber', 'account', 'id', 'clientid']
-    const nameKeys = ['fullname', 'full_name', 'name', 'client_name', 'customername']
-    const depositCountKeys = [
-      'deposit_count',
-      'deposits_count',
-      'num_deposits',
-      'deposits',
-      'depositcount',
+    const acctKeys = [
+      'account_id',
+      'accountid',
+      'accountnumber',
+      'account',
+      'id',
+      'clientid',
+      // Registrations Report canonical columns
+      'user_id',
+      'userid',
+      'mt5_account',
+      'mt5account',
     ]
+    const nameKeys = [
+      'fullname',
+      'full_name',
+      'name',
+      'client_name',
+      // Registrations Report canonical columns
+      'customername',
+      'customer_name',
+    ]
+    const depositCountKeys = ['deposit_count', 'deposits_count', 'num_deposits', 'depositcount']
     const equityKeys = ['equity', 'balance', 'account_balance']
     const profitKeys = ['profit', 'netprofit', 'pnl']
     const lossKeys = ['loss', 'netloss']
+    const plKeys = ['net_pl', 'pl', 'profit_loss', 'profitloss']
     const pickKey = (obj, candidates) =>
       candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
     const acctKey = pickKey(rows[0], acctKeys)
     const nameKey = pickKey(rows[0], nameKeys)
     const depositKey = pickKey(rows[0], depositCountKeys)
     const equityKey = pickKey(rows[0], equityKeys)
+    const plKey = pickKey(rows[0], plKeys)
     const profitKey = pickKey(rows[0], profitKeys)
     const lossKey = pickKey(rows[0], lossKeys)
     const affiliateKeys = [
@@ -1085,15 +1217,41 @@ export default function FraudMonitoringDashboard() {
     const countryKeys = ['country', 'country_code', 'nation', 'paese']
     const affiliateKey = pickKey(rows[0], affiliateKeys)
     const countryKey = pickKey(rows[0], countryKeys)
+
+    const parseStrictNonNegInt = (v) => {
+      const s = String(v ?? '').trim()
+      if (!s) return 0
+      const cleaned = s.replace(/[^0-9\.-]/g, '')
+      const f = Number(cleaned)
+      if (!Number.isFinite(f)) return 0
+      const r = Math.round(f)
+      if (r < 0) return 0
+      if (Math.abs(f - r) > 1e-6) return 0
+      return r
+    }
+    const cleanAccountId = (v) => {
+      const s = String(v ?? '').trim()
+      if (!s) return ''
+      return s.replace(/^"+|"+$/g, '')
+    }
+
     const accounts = rows.map((r, idx) => {
-      const accountId = acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`
+      const rawId = acctKey ? r[acctKey] : ''
+      const cleanedId = cleanAccountId(rawId)
+      const accountId = cleanedId || (acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`)
       const holder = nameKey ? r[nameKey] || '—' : '—'
-      const depositCount = depositKey
-        ? Number(String(r[depositKey]).replace(/[^0-9\-\.]/g, '')) || 0
-        : 0
+      const depositCount = depositKey ? parseStrictNonNegInt(r[depositKey]) : 0
       const equity = equityKey ? Number(String(r[equityKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-      const profit = profitKey ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-      const loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+      let profit = 0
+      let loss = 0
+      if (plKey) {
+        const pl = Number(String(r[plKey]).replace(/[^0-9\-\.]/g, '')) || 0
+        if (pl >= 0) profit = pl
+        else loss = Math.abs(pl)
+      } else {
+        profit = profitKey ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+        loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+      }
       const affiliate = affiliateKey ? r[affiliateKey] || '' : ''
       const country = countryKey ? r[countryKey] || '' : ''
       return { accountId, holder, depositCount, equity, profit, loss, affiliate, country }
@@ -1105,43 +1263,67 @@ export default function FraudMonitoringDashboard() {
     if (!yearFilter || yearFilter === 'all') return null
     const accounts = filteredCsvAccounts
     const totalAccounts = accounts.length
-    const uniqueAccountIds = new Set(accounts.map((a) => a.accountId)).size
-    const holders = {}
-    accounts.forEach((a) => {
-      holders[a.holder] = (holders[a.holder] || 0) + 1
-    })
-    const uniqueHolders = Object.keys(holders).length
-    const singleAccountHolders = Object.values(holders).filter((v) => v === 1).length
-    const multiAccountCount = Object.values(holders)
-      .filter((v) => v > 1)
-      .reduce((s, v) => s + v, 0)
-    const withDeposit = accounts.filter((a) => a.depositCount > 0).length
-    const maxDeposits = Math.max(0, ...accounts.map((a) => a.depositCount))
+    const accountIdSet = new Set()
+    const holderCounts = new Map()
+    let withDeposit = 0
+    let maxDeposits = 0
+    let equitySum = 0
+    let profitSum = 0
+    let lossSum = 0
+    let depositTotal = 0
+    let depositMax = 0
+    let depositMin = Infinity
+    let depositorsCount = 0
+    let totalPL = 0
+
+    for (const a of accounts) {
+      if (!a) continue
+      accountIdSet.add(a.accountId)
+      const holderKey = a.holder || '—'
+      holderCounts.set(holderKey, (holderCounts.get(holderKey) || 0) + 1)
+
+      const dep = Number(a.depositCount || 0)
+      if (dep > 0) withDeposit += 1
+      if (dep > maxDeposits) maxDeposits = dep
+      depositTotal += dep
+      if (dep > depositMax) depositMax = dep
+      if (dep < depositMin) depositMin = dep
+      if (dep > 0) depositorsCount += 1
+
+      const eq = Number(a.equity || 0)
+      const pr = Number(a.profit || 0)
+      const ls = Number(a.loss || 0)
+      equitySum += eq
+      profitSum += pr
+      lossSum += ls
+      totalPL += pr - ls
+    }
+
+    const uniqueAccountIds = accountIdSet.size
+    const uniqueHolders = holderCounts.size
+    let singleAccountHolders = 0
+    let multiAccountCount = 0
+    for (const v of holderCounts.values()) {
+      if (v === 1) singleAccountHolders += 1
+      else if (v > 1) multiAccountCount += v
+    }
+
     const maxBucket = Math.ceil(maxDeposits / 5)
     const buckets = {}
     for (let i = 1; i <= Math.max(1, maxBucket); i++) buckets[i] = 0
-    accounts.forEach((a) => {
-      if (a.depositCount > 0) {
-        const idx = Math.floor((a.depositCount - 1) / 5) + 1
+    for (const a of accounts) {
+      const dep = Number(a?.depositCount || 0)
+      if (dep > 0) {
+        const idx = Math.floor((dep - 1) / 5) + 1
         buckets[idx] = (buckets[idx] || 0) + 1
       }
-    })
-    const avgEquity = accounts.length
-      ? accounts.reduce((s, a) => s + (a.equity || 0), 0) / accounts.length
-      : 0
-    const avgProfit = accounts.length
-      ? accounts.reduce((s, a) => s + (a.profit || 0), 0) / accounts.length
-      : 0
-    const avgLoss = accounts.length
-      ? accounts.reduce((s, a) => s + (a.loss || 0), 0) / accounts.length
-      : 0
-    const depositCounts = accounts.map((a) => Number(a.depositCount || 0))
-    const depositTotal = depositCounts.reduce((s, v) => s + v, 0)
-    const depositMax = depositCounts.length ? Math.max(...depositCounts) : 0
-    const depositMin = depositCounts.length ? Math.min(...depositCounts) : 0
-    const depositors = depositCounts.filter((v) => Number(v) > 0)
-    const depositAvg = depositors.length ? depositTotal / depositors.length : 0
-    const totalPL = accounts.reduce((s, a) => s + (Number(a.profit || 0) - Number(a.loss || 0)), 0)
+    }
+
+    const avgEquity = totalAccounts ? equitySum / totalAccounts : 0
+    const avgProfit = totalAccounts ? profitSum / totalAccounts : 0
+    const avgLoss = totalAccounts ? lossSum / totalAccounts : 0
+    const safeDepositMin = depositMin === Infinity ? 0 : depositMin
+    const depositAvg = depositorsCount ? depositTotal / depositorsCount : 0
     const losingUsersPercentage = mediaSummary.totalNetDeposits
       ? (mediaSummary.totalPL / mediaSummary.totalNetDeposits) * 100
       : 0
@@ -1156,7 +1338,12 @@ export default function FraudMonitoringDashboard() {
       avgEquity,
       avgProfit,
       avgLoss,
-      depositStats: { total: depositTotal, max: depositMax, min: depositMin, avg: depositAvg },
+      depositStats: {
+        total: depositTotal,
+        max: depositMax,
+        min: safeDepositMin,
+        avg: depositAvg,
+      },
       totalPL,
       payingUsers: withDeposit,
       losingUsersPercentage,
@@ -1166,6 +1353,65 @@ export default function FraudMonitoringDashboard() {
   // display recap depending on yearFilter
   const displayCsvRecap = yearFilter && yearFilter !== 'all' ? filteredCsvRecap : csvRecap
   const displayCsvAccounts = yearFilter && yearFilter !== 'all' ? filteredCsvAccounts : csvAccounts
+
+  // Comparable registrations count: unique account IDs within the same month-range as the Media report
+  // This avoids comparing Media month aggregates against the entire historical registrations export.
+  const comparableRegistrationsCount = useMemo(() => {
+    if (!mediaLoaded || !csvLoaded) return null
+    const m = filteredMediaData || []
+    if (!m.length) return null
+
+    let minTs = Infinity
+    let maxTs = -Infinity
+    for (const r of m) {
+      const t = typeof r?.__bwTs === 'number' ? r.__bwTs : null
+      if (t == null) continue
+      if (t < minTs) minTs = t
+      if (t > maxTs) maxTs = t
+    }
+    if (minTs === Infinity || maxTs === -Infinity) return null
+
+    // Month labels represent a whole month; include up to end-of-month (approx, inclusive)
+    const rangeStart = minTs
+    const rangeEnd = maxTs + 32 * 24 * 3600 * 1000
+
+    const rows = yearFilter && yearFilter !== 'all' ? filteredCsvRows || [] : csvRawRows || []
+    if (!rows.length) return 0
+
+    const cleanAccountId = (v) => {
+      const s = String(v ?? '').trim()
+      if (!s) return ''
+      return s.replace(/^"+|"+$/g, '')
+    }
+
+    const acctKeys = [
+      'account_id',
+      'accountid',
+      'accountnumber',
+      'account',
+      'id',
+      'clientid',
+      'user_id',
+      'userid',
+      'mt5_account',
+      'mt5account',
+    ]
+    const pickKey = (obj, candidates) =>
+      candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
+    const acctKey = rows.length ? pickKey(rows[0], acctKeys) : null
+
+    const ids = new Set()
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i]
+      const t = typeof r?.__regTs === 'number' ? r.__regTs : null
+      if (t == null || t < rangeStart || t > rangeEnd) continue
+      const rawId = acctKey ? r[acctKey] : ''
+      const cleaned = cleanAccountId(rawId)
+      const id = cleaned || String(rawId ?? '').trim()
+      if (id) ids.add(id)
+    }
+    return ids.size
+  }, [mediaLoaded, csvLoaded, filteredMediaData, csvRawRows, filteredCsvRows, yearFilter])
 
   // filtered commissions summary
   const filteredRegCommissionsSummary = useMemo(() => {
@@ -1695,8 +1941,16 @@ export default function FraudMonitoringDashboard() {
     const qftdRateEwma = ewma(qftdRates)
 
     // Historical max rates for caps
-    const histMaxFtdRate = Math.min(0.45, Math.max(...ftdRates) * 1.1)
-    const histMaxQftdRate = Math.min(0.9, Math.max(...qftdRates) * 1.1)
+    const maxOf = (arr) => {
+      let m = 0
+      for (let i = 0; i < arr.length; i++) {
+        const v = Number(arr[i] || 0)
+        if (v > m) m = v
+      }
+      return m
+    }
+    const histMaxFtdRate = Math.min(0.45, maxOf(ftdRates) * 1.1)
+    const histMaxQftdRate = Math.min(0.9, maxOf(qftdRates) * 1.1)
 
     const parseYYYYMMUtc = (yyyymm) => {
       const m = String(yyyymm || '')
@@ -2010,12 +2264,22 @@ export default function FraudMonitoringDashboard() {
     const proj =
       projInfo && projInfo.projected && projInfo.projected.length ? projInfo.projected : []
 
-    const maxRegs = Math.max(...series.map((s) => s.regsCum), ...proj.map((p) => p.regsCum), 1)
-    const maxRight = Math.max(
-      ...series.map((s) => Math.max(s.ftdCum, s.qftdCum)),
-      ...proj.map((p) => Math.max(p.ftdCum, p.qftdCum)),
-      1
-    )
+    let maxRegs = 1
+    let maxRight = 1
+    for (let i = 0; i < series.length; i++) {
+      const s = series[i]
+      const r = Number(s?.regsCum || 0)
+      if (r > maxRegs) maxRegs = r
+      const right = Math.max(Number(s?.ftdCum || 0), Number(s?.qftdCum || 0))
+      if (right > maxRight) maxRight = right
+    }
+    for (let i = 0; i < proj.length; i++) {
+      const p = proj[i]
+      const r = Number(p?.regsCum || 0)
+      if (r > maxRegs) maxRegs = r
+      const right = Math.max(Number(p?.ftdCum || 0), Number(p?.qftdCum || 0))
+      if (right > maxRight) maxRight = right
+    }
 
     const nice = (v) => {
       const exp = Math.pow(10, Math.floor(Math.log10(v)))
@@ -3153,10 +3417,10 @@ export default function FraudMonitoringDashboard() {
           </svg>
           <div>
             <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
-              Total registered accounts (app)
+              Unique registered accounts (app)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
-              {csvLoaded && displayCsvRecap ? displayCsvRecap.totalAccounts : '—'}
+              {csvLoaded && displayCsvRecap ? displayCsvRecap.uniqueAccountIds : '—'}
             </div>
           </div>
         </div>
@@ -3197,7 +3461,8 @@ export default function FraudMonitoringDashboard() {
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
               {mediaLoaded && csvLoaded && displayCsvRecap
                 ? Math.round(
-                    (mediaSummary.registrations || 0) - (displayCsvRecap.totalAccounts || 0)
+                    (mediaSummary.registrations || 0) -
+                      (comparableRegistrationsCount ?? displayCsvRecap.uniqueAccountIds ?? 0)
                   )
                 : '—'}
             </div>
@@ -3818,6 +4083,10 @@ export default function FraudMonitoringDashboard() {
           {hoverSource === 'Registration Gap' ? (
             <div>
               <div>Source: Media Report.csv & Registrations Report.csv</div>
+              <div style={{ marginTop: 4, fontSize: 11 }}>
+                Calculation: Media registrations (month-aggregated) − unique registrations within
+                the same Media month range.
+              </div>
             </div>
           ) : hoverSource === 'Avg CPA (paying accounts)' ? (
             <div>
