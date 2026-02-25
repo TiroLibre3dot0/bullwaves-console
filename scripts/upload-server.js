@@ -190,7 +190,7 @@ function writeNdjson(res, obj) {
   }
 }
 
-function runNodeScript(scriptFile, { cwd } = {}) {
+function runNodeScript(scriptFile, { cwd, timeoutMs } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn('node', [scriptFile], {
       cwd: cwd || process.cwd(),
@@ -202,16 +202,63 @@ function runNodeScript(scriptFile, { cwd } = {}) {
     child.stdout.on('data', (d) => (stdout += d.toString('utf8')))
     child.stderr.on('data', (d) => (stderr += d.toString('utf8')))
 
+    const killChild = () => {
+      try {
+        child.kill()
+      } catch {
+        /* ignore */
+      }
+
+      // Best-effort hard kill on Windows (terminate process tree).
+      if (process.platform === 'win32' && child.pid) {
+        try {
+          spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true })
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
+    let settled = false
+    let timer = null
+    const finish = (err, result) => {
+      if (settled) return
+      settled = true
+      if (timer) clearTimeout(timer)
+      if (err) reject(err)
+      else resolve(result)
+    }
+
+    child.on('error', (e) => {
+      const err = new Error(`Failed to start script: ${scriptFile}`)
+      err.code = 'spawn_error'
+      err.details = e && e.message
+      err.stdout = stdout
+      err.stderr = stderr
+      finish(err)
+    })
+
+    timer = timeoutMs
+      ? setTimeout(() => {
+          killChild()
+          const err = new Error(`Script timeout after ${Math.round(timeoutMs / 1000)}s: ${scriptFile}`)
+          err.code = 'timeout'
+          err.stdout = stdout
+          err.stderr = stderr
+          finish(err)
+        }, timeoutMs)
+      : null
+
     child.on('close', (code) => {
       if (code && code !== 0) {
         const err = new Error(`Script failed: ${scriptFile} (code=${code})`)
         err.code = code
         err.stdout = stdout
         err.stderr = stderr
-        reject(err)
+        finish(err)
         return
       }
-      resolve({ script: path.basename(scriptFile), stdout, stderr })
+      finish(null, { script: path.basename(scriptFile), stdout, stderr })
     })
   })
 }
@@ -253,7 +300,8 @@ async function runPostUploadGenerators(type, emit) {
     let r
     try {
       // eslint-disable-next-line no-await-in-loop
-      r = await runNodeScript(scriptFile, { cwd })
+      const timeoutMs = scriptName === 'fraud_monitor.js' ? 20 * 60 * 1000 : 10 * 60 * 1000
+      r = await runNodeScript(scriptFile, { cwd, timeoutMs })
     } finally {
       if (timer) clearInterval(timer)
     }
@@ -538,6 +586,25 @@ async function handleUploadStream(req, res) {
       ...process.env,
       ...(verbose ? { SANITIZER_VERBOSE: '1', SANITIZER_WARN_OVERFLOW: '1' } : null),
     },
+  })
+
+  child.on('error', (e) => {
+    try {
+      if (normalized && normalized.cleanup) normalized.cleanup()
+    } catch {
+      /* ignore */
+    }
+    writeNdjson(res, {
+      type: 'error',
+      message: 'sanitizer_spawn_failed',
+      details: e && e.message,
+      data: { type, rawBackup, sanitizer },
+    })
+    try {
+      res.end()
+    } catch {
+      /* ignore */
+    }
   })
 
   writeNdjson(res, { type: 'progress', pct: 15, stage: 'sanitizer_start', message: `Running ${sanitizer}…` })
