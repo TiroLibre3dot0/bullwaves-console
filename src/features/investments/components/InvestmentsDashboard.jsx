@@ -11,13 +11,19 @@ import {
   formatNumber,
   formatNumberShort,
   formatPercent,
+  formatPercentRounded,
 } from '../../../lib/formatters'
-import { useMediaPaymentsData } from '../../media-payments/hooks/useMediaPaymentsData'
+import { useCellxInvestmentsData } from '../../cellx/hooks/useCellxInvestmentsData'
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
+import { useCreolabsBreakdownData } from '../../creolabs/hooks/useCreolabsBreakdownData'
+import { loadAffiliateIndexById } from '../../ranking/services/rankingService'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import { useI18n } from '../../../i18n/I18nContext'
 import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
+import AffiliatePayoutUnifiedTable from './AffiliatePayoutUnifiedTable'
+import StickyMetricsTable from './StickyMetricsTable'
+import { formatMonthReference } from '../utils/formatMonthReference'
 
 const selectStyle = {
   minWidth: 180,
@@ -29,6 +35,8 @@ const selectStyle = {
 }
 const formatNumberFull = (value) => formatNumber(value)
 const FINANCE_CONFIRMED_KEY = 'affiliate-finance-confirmed'
+const INVESTMENTS_SOURCE_KEY = 'investments-data-source'
+const INVESTMENTS_VIEW_MODE_KEY = 'investments-view-mode'
 
 const roiPillStyle = (roi) => {
   const isPositive = Number(roi) > 0
@@ -70,18 +78,336 @@ const monthLabel = (locale, m) => {
   }
 }
 
+function PublicShareHero({ title, t, searchDraft, setSearchDraft, autoFocus, children }) {
+  return (
+    <div style={{ paddingTop: 18, paddingBottom: 6 }}>
+      <div style={{ maxWidth: 1800, width: '100%', margin: '0 auto', padding: '0 14px' }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 900, textAlign: 'center' }}>{title}</h1>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 14 }}>
+          <input
+            value={searchDraft}
+            onChange={(e) => setSearchDraft(e.target.value)}
+            autoFocus={autoFocus}
+            placeholder={t('investments.search.placeholder')}
+            aria-label={t('investments.search.aria')}
+            style={{
+              width: 'min(860px, 100%)',
+              padding: '14px 16px',
+              fontSize: 16,
+              fontWeight: 800,
+              borderRadius: 14,
+              outline: 'none',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'var(--text)',
+              border: '1px solid rgba(255,255,255,0.10)',
+            }}
+          />
+        </div>
+
+        {children ? <div style={{ marginTop: 12 }}>{children}</div> : null}
+      </div>
+    </div>
+  )
+}
+
+function PublicShareFiltersRow({
+  t,
+  availableYears,
+  selectedYear,
+  setSelectedYear,
+  selectedMonth,
+  setSelectedMonth,
+  monthOptions,
+  viewMode,
+  requestViewMode,
+  dataSource,
+  requestDataSource,
+  sourceDisabled = false,
+  sourceHint,
+}) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 10,
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+      }}
+    >
+      <YearSelector
+        availableYears={availableYears}
+        value={selectedYear}
+        onChange={(val) => {
+          setSelectedYear(val)
+          setSelectedMonth('all')
+        }}
+      />
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('investments.filters.month')}</span>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          style={{ ...selectStyle, minWidth: 160 }}
+        >
+          <option value="all">{t('investments.filters.allMonths')}</option>
+          {monthOptions.map((m) => (
+            <option key={m.value} value={m.value}>
+              {m.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <ModeControls
+        t={t}
+        viewMode={viewMode}
+        requestViewMode={requestViewMode}
+        dataSource={dataSource}
+        requestDataSource={requestDataSource}
+        sourceDisabled={sourceDisabled}
+        sourceHint={sourceHint}
+      />
+    </div>
+  )
+}
+
+function ModeControls({
+  t,
+  viewMode,
+  requestViewMode,
+  dataSource,
+  requestDataSource,
+  sourceDisabled = false,
+  sourceHint,
+}) {
+  const cellxpertLabel = t('investments.source.cellxpert')
+  const creolabsLabel = t('investments.source.creolabs')
+  const singleModeLabel = t('investments.viewMode.single')
+  const unifiedModeLabel = t('investments.viewMode.unified')
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <div
+        style={{
+          display: 'inline-flex',
+          gap: 8,
+          padding: 6,
+          borderRadius: 999,
+          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.02)',
+        }}
+        aria-label={t('investments.viewMode.aria')}
+      >
+        <button
+          type="button"
+          className={viewMode === 'single' ? 'btn' : 'btn secondary'}
+          onClick={() => requestViewMode('single')}
+          aria-pressed={viewMode === 'single'}
+          style={{ padding: '6px 10px', fontSize: 12, borderRadius: 999 }}
+        >
+          {singleModeLabel}
+        </button>
+        <button
+          type="button"
+          className={viewMode === 'unified' ? 'btn' : 'btn secondary'}
+          onClick={() => requestViewMode('unified')}
+          aria-pressed={viewMode === 'unified'}
+          style={{ padding: '6px 10px', fontSize: 12, borderRadius: 999 }}
+        >
+          {unifiedModeLabel}
+        </button>
+      </div>
+
+      <div
+        style={{
+          display: 'inline-flex',
+          gap: 8,
+          padding: 6,
+          borderRadius: 999,
+          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(255,255,255,0.02)',
+          ...(sourceDisabled ? { opacity: 0.65 } : null),
+        }}
+        aria-label={t('investments.filters.source')}
+        title={sourceHint}
+      >
+        <button
+          type="button"
+          className={dataSource === 'cellxpert' ? 'btn' : 'btn secondary'}
+          onClick={sourceDisabled ? undefined : () => requestDataSource('cellxpert')}
+          disabled={sourceDisabled}
+          aria-disabled={sourceDisabled ? 'true' : undefined}
+          style={{
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 800,
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            ...(dataSource === 'cellxpert'
+              ? {}
+              : {
+                  background: 'transparent',
+                  opacity: 0.85,
+                }),
+          }}
+        >
+          {cellxpertLabel}
+        </button>
+        <button
+          type="button"
+          className={dataSource === 'creolabs' ? 'btn' : 'btn secondary'}
+          onClick={sourceDisabled ? undefined : () => requestDataSource('creolabs')}
+          disabled={sourceDisabled}
+          aria-disabled={sourceDisabled ? 'true' : undefined}
+          style={{
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 800,
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            ...(dataSource === 'creolabs'
+              ? {}
+              : {
+                  background: 'transparent',
+                  opacity: 0.85,
+                }),
+          }}
+        >
+          {creolabsLabel}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function InvestmentsDashboard(props) {
   const {
     initialSelectedYear = 'all',
     initialSelectedMonth = 'all',
     initialSearch = '',
+    initialSource = '',
+    initialViewMode = '',
+    hideTimelineChart = false,
+    isPublicShare = false,
   } = props || {}
 
   const { t, locale } = useI18n()
-  const { payments, mediaRows, loading } = useMediaPaymentsData()
-  // Always show a loader briefly so users understand why the section takes time.
-  // This also allows the loader to paint before heavy ledger computations begin.
-  const [uiLoading, setUiLoading] = useState(true)
+
+  const [viewMode, setViewMode] = useState(() => {
+    const initial = String(initialViewMode || '').trim()
+    if (initial === 'single' || initial === 'unified') return initial
+    try {
+      const stored = String(localStorage.getItem(INVESTMENTS_VIEW_MODE_KEY) || '').trim()
+      if (stored === 'single' || stored === 'unified') return stored
+    } catch {
+      // ignore
+    }
+    return 'single'
+  })
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(INVESTMENTS_VIEW_MODE_KEY, viewMode)
+    } catch {
+      // ignore
+    }
+  }, [viewMode])
+
+  const [displayViewMode, setDisplayViewMode] = useState(viewMode)
+
+  const cellxpert = useCellxInvestmentsData({ includePayments: viewMode !== 'unified' })
+  const creolabs = useCreolabsBreakdownData()
+
+  useEffect(() => {
+    // Dev-only diagnostics to understand why CellX data might appear empty in share/unified.
+    try {
+      if (!import.meta?.env?.DEV) return
+    } catch {
+      return
+    }
+
+    const mediaCount = Array.isArray(cellxpert?.mediaRows) ? cellxpert.mediaRows.length : -1
+    const paymentsCount = Array.isArray(cellxpert?.payments) ? cellxpert.payments.length : -1
+
+    // Log only when the signature changes to avoid noisy spam.
+    const sig = `${viewMode}|${cellxpert?.loading}|${mediaCount}|${paymentsCount}|${cellxpert?.mediaSource}|${cellxpert?.paymentsSource}|${String(cellxpert?.error?.message || '')}`
+
+    if (window.__bw_cellx_sig === sig) return
+
+    window.__bw_cellx_sig = sig
+
+    const debug = {
+      viewMode,
+      loading: Boolean(cellxpert?.loading),
+      mediaRows: mediaCount,
+      payments: paymentsCount,
+      mediaSource: cellxpert?.mediaSource,
+      paymentsSource: cellxpert?.paymentsSource,
+      error: cellxpert?.error ? String(cellxpert.error?.message || cellxpert.error) : null,
+    }
+
+    window.__bw_cellx_debug = debug
+
+    console.warn('[Unified][CellX]', debug)
+  }, [
+    viewMode,
+    cellxpert?.loading,
+    cellxpert?.mediaRows?.length,
+    cellxpert?.payments?.length,
+    cellxpert?.mediaSource,
+    cellxpert?.paymentsSource,
+    cellxpert?.error,
+  ])
+
+  const [dataSource, setDataSource] = useState(() => {
+    const initial = String(initialSource || '').trim()
+    if (initial === 'cellxpert' || initial === 'creolabs') return initial
+    try {
+      const stored = String(localStorage.getItem(INVESTMENTS_SOURCE_KEY) || '').trim()
+      if (stored === 'cellxpert' || stored === 'creolabs') return stored
+    } catch {
+      // ignore
+    }
+    return 'cellxpert'
+  })
+
+  // Payments columns are shown for both sources.
+  // For Creolabs we reuse CellXpert payments as denominator for ROI (see InvestmentsDashboardContent).
+  const showCommissionColumns = true
+  const affiliateSummaryColSpan = (showCommissionColumns ? 11 : 9) + (isPublicShare ? 0 : 2)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(INVESTMENTS_SOURCE_KEY, dataSource)
+    } catch {
+      // ignore
+    }
+  }, [dataSource])
+
+  const [displaySource, setDisplaySource] = useState(dataSource)
+  const [softSwitchLoading, setSoftSwitchLoading] = useState(false)
+
+  const selectedActiveData = dataSource === 'creolabs' ? creolabs : cellxpert
+  const selectedLoading = Boolean(selectedActiveData?.loading)
+
+  const displayActiveData = displaySource === 'creolabs' ? creolabs : cellxpert
+  const { payments, mediaRows, loading } = displayActiveData
+
+  const [dataCache, setDataCache] = useState(() => ({
+    cellxpert: { payments: [], mediaRows: [] },
+    creolabs: { payments: [], mediaRows: [] },
+  }))
+
   const [selectedYear, setSelectedYear] = useState(initialSelectedYear || 'all')
   const [selectedMonth, setSelectedMonth] = useState(initialSelectedMonth || 'all')
   const [search, setSearch] = useState(initialSearch || '')
@@ -91,19 +417,111 @@ export default function InvestmentsDashboard(props) {
   const { setDataStatus } = useDataStatus()
 
   useEffect(() => {
-    let cancelled = false
-    setUiLoading(true)
+    if (cellxpert?.loading) return
+    setDataCache((prev) => ({
+      ...prev,
+      cellxpert: {
+        payments: Array.isArray(cellxpert?.payments) ? cellxpert.payments : [],
+        mediaRows: Array.isArray(cellxpert?.mediaRows) ? cellxpert.mediaRows : [],
+      },
+    }))
+  }, [
+    cellxpert?.loading,
+    cellxpert?.mediaSource,
+    cellxpert?.paymentsSource,
+    cellxpert?.mediaRows?.length,
+    cellxpert?.payments?.length,
+  ])
 
-    // Give the browser a chance to render the loader.
-    const id = window.setTimeout(() => {
-      if (!cancelled) setUiLoading(false)
-    }, 180)
+  useEffect(() => {
+    if (creolabs?.loading) return
+    setDataCache((prev) => ({
+      ...prev,
+      creolabs: {
+        payments: Array.isArray(creolabs?.payments) ? creolabs.payments : [],
+        mediaRows: Array.isArray(creolabs?.mediaRows) ? creolabs.mediaRows : [],
+      },
+    }))
+  }, [creolabs?.loading, creolabs?.mediaRows?.length, creolabs?.payments?.length])
 
-    return () => {
-      cancelled = true
-      window.clearTimeout(id)
+  useEffect(() => {
+    // When the newly selected source has finished loading, remove the overlay.
+    if (!selectedLoading && dataSource === displaySource) {
+      setSoftSwitchLoading(false)
     }
-  }, [selectedYear, selectedMonth, search])
+  }, [dataSource, displaySource, selectedLoading])
+
+  useEffect(() => {
+    // Clear the overlay after a view-mode transition completes and data is ready.
+    if (!softSwitchLoading) return
+    if (viewMode !== displayViewMode) return
+
+    if (displayViewMode === 'unified') {
+      if (Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)) return
+    } else {
+      if (selectedLoading) return
+      if (dataSource !== displaySource) return
+    }
+
+    const id = window.setTimeout(() => setSoftSwitchLoading(false), 0)
+    return () => window.clearTimeout(id)
+  }, [
+    softSwitchLoading,
+    viewMode,
+    displayViewMode,
+    cellxpert?.loading,
+    creolabs?.loading,
+    selectedLoading,
+    dataSource,
+    displaySource,
+  ])
+
+  const requestViewMode = (next) => {
+    if (next !== 'single' && next !== 'unified') return
+    if (next === viewMode) return
+
+    setViewMode(next)
+    setSoftSwitchLoading(true)
+
+    // Let the overlay paint before swapping the heavy subtree.
+    try {
+      window.requestAnimationFrame(() => setDisplayViewMode(next))
+    } catch {
+      window.setTimeout(() => setDisplayViewMode(next), 0)
+    }
+  }
+
+  const requestDataSource = (next) => {
+    if (next === dataSource) return
+    setDataSource(next)
+    setSoftSwitchLoading(true)
+
+    // Let the overlay paint before swapping the heavy dataset (ledger computations).
+    try {
+      window.requestAnimationFrame(() => setDisplaySource(next))
+    } catch {
+      // Fallback for environments without requestAnimationFrame.
+      window.setTimeout(() => setDisplaySource(next), 0)
+    }
+  }
+
+  const cached = dataCache[displaySource] || { payments: [], mediaRows: [] }
+  const shownPayments = loading ? cached.payments : payments
+  const shownMediaRows = loading ? cached.mediaRows : mediaRows
+  const shouldShowFullLoader = loading && !shownPayments?.length && !shownMediaRows?.length
+
+  const cellxCached = dataCache.cellxpert || { payments: [], mediaRows: [] }
+  const creolabsCached = dataCache.creolabs || { payments: [], mediaRows: [] }
+  const cellxShownPayments = cellxpert?.loading ? cellxCached.payments : cellxpert?.payments
+  const cellxShownMediaRows = cellxpert?.loading ? cellxCached.mediaRows : cellxpert?.mediaRows
+  const creoShownPayments = creolabs?.loading ? creolabsCached.payments : creolabs?.payments
+  const creoShownMediaRows = creolabs?.loading ? creolabsCached.mediaRows : creolabs?.mediaRows
+
+  const unifiedShouldShowFullLoader =
+    (Boolean(cellxpert?.loading) && !cellxShownPayments?.length && !cellxShownMediaRows?.length) ||
+    (Boolean(creolabs?.loading) && !creoShownPayments?.length && !creoShownMediaRows?.length)
+
+  const isViewModeTransitioning = viewMode !== displayViewMode
 
   useEffect(() => {
     try {
@@ -154,22 +572,62 @@ export default function InvestmentsDashboard(props) {
     loadDataStatus()
   }, [])
 
-  if (loading || uiLoading) {
+  if (viewMode === 'unified' ? unifiedShouldShowFullLoader : shouldShowFullLoader) {
     return <FullPageLoader progress={45} subtitle={t('investments.loader.data')} />
+  }
+
+  const commonProps = {
+    t,
+    locale,
+    isPublicShare,
+    selectedYear,
+    setSelectedYear,
+    selectedMonth,
+    setSelectedMonth,
+    search,
+    setSearch,
+    dataSource,
+    requestDataSource,
+    showCommissionColumns,
+    affiliateSummaryColSpan,
+    viewMode,
+    requestViewMode,
+    softSwitchLoading:
+      isViewModeTransitioning ||
+      (displayViewMode === 'unified'
+        ? Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)
+        : softSwitchLoading || dataSource !== displaySource || selectedLoading),
+    softSwitchLabel: isViewModeTransitioning
+      ? viewMode === 'unified'
+        ? t('investments.viewMode.unified')
+        : t('investments.viewMode.single')
+      : displayViewMode === 'unified'
+        ? t('investments.viewMode.unified')
+        : displaySource === 'creolabs'
+          ? t('investments.source.creolabs')
+          : t('investments.source.cellxpert'),
+    hideTimelineChart,
+  }
+
+  if (displayViewMode === 'unified') {
+    if (unifiedShouldShowFullLoader) return <FullPageLoader />
+    return (
+      <InvestmentsDashboardUnifiedContent
+        {...commonProps}
+        cellxPayments={cellxShownPayments}
+        cellxMediaRows={cellxShownMediaRows}
+        creolabsPayments={creoShownPayments}
+        creolabsMediaRows={creoShownMediaRows}
+      />
+    )
   }
 
   return (
     <InvestmentsDashboardContent
-      t={t}
-      locale={locale}
-      payments={payments}
-      mediaRows={mediaRows}
-      selectedYear={selectedYear}
-      setSelectedYear={setSelectedYear}
-      selectedMonth={selectedMonth}
-      setSelectedMonth={setSelectedMonth}
-      search={search}
-      setSearch={setSearch}
+      {...commonProps}
+      payments={shownPayments}
+      mediaRows={shownMediaRows}
+      cellxPaymentsForRoi={cellxShownPayments}
       showAllAffiliates={showAllAffiliates}
       setShowAllAffiliates={setShowAllAffiliates}
       expanded={expanded}
@@ -183,22 +641,211 @@ export default function InvestmentsDashboard(props) {
 function InvestmentsDashboardContent({
   t,
   locale,
+  isPublicShare,
   payments,
   mediaRows,
+  cellxPaymentsForRoi,
   selectedYear,
   setSelectedYear,
   selectedMonth,
   setSelectedMonth,
   search,
   setSearch,
+  dataSource,
+  requestDataSource,
+  showCommissionColumns,
+  affiliateSummaryColSpan,
+  viewMode,
+  requestViewMode,
+  softSwitchLoading,
+  softSwitchLabel,
   showAllAffiliates,
   setShowAllAffiliates,
   expanded,
   setExpanded,
   financeConfirmed,
   setFinanceConfirmed,
+  hideTimelineChart,
 }) {
-  const ledger = useAffiliateLedger({ mediaRows, payments, selectedYear, selectedMonth, search })
+  const [affiliateIndexById, setAffiliateIndexById] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const byId = await loadAffiliateIndexById({ force: false })
+        if (!cancelled) setAffiliateIndexById(byId)
+      } catch {
+        if (!cancelled) setAffiliateIndexById(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const [searchDraft, setSearchDraft] = useState(search)
+
+  useEffect(() => {
+    setSearchDraft(search)
+  }, [search])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setSearch(searchDraft)
+    }, 250)
+    return () => window.clearTimeout(id)
+  }, [searchDraft, setSearch])
+
+  const effectivePayments = useMemo(() => {
+    if (dataSource === 'creolabs') {
+      return Array.isArray(cellxPaymentsForRoi) ? cellxPaymentsForRoi : []
+    }
+    return Array.isArray(payments) ? payments : []
+  }, [dataSource, payments, cellxPaymentsForRoi])
+
+  const effectiveMediaRows = useMemo(() => {
+    const baseRows = Array.isArray(mediaRows) ? mediaRows : []
+    if (dataSource !== 'creolabs') return baseRows
+
+    // For Creolabs single-source view we want the same payments column as CellXpert.
+    // We therefore override the commission field per affiliate+month using CellXpert payments sums,
+    // so ROI (= netDeposits / commission - 1) uses these values as denominator.
+    const paymentsByAffMonth = new Map()
+    for (const p of effectivePayments) {
+      const affiliateId = String(p?.affiliateId || p?.affiliate || '—').trim() || '—'
+      const year = Number(p?.year)
+      const monthIndex = Number(p?.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) continue
+      const amount = Number(p?.amount)
+      if (!Number.isFinite(amount)) continue
+      const key = `${affiliateId}|${year}|${monthIndex}`
+      paymentsByAffMonth.set(key, (paymentsByAffMonth.get(key) || 0) + amount)
+    }
+
+    return baseRows.map((m) => {
+      const affiliateId = String(m?.affiliateId || m?.uid || m?.affiliate || '—').trim() || '—'
+      const year = Number(m?.year)
+      const monthIndex = Number(m?.monthIndex)
+      const payKey = `${affiliateId}|${year}|${monthIndex}`
+      const paymentSum = paymentsByAffMonth.get(payKey) || 0
+
+      return {
+        ...m,
+        affiliateId,
+        affiliateName:
+          String(m?.affiliateName || '').trim() || String(m?.affiliate || '').trim() || affiliateId,
+        uid: String(m?.uid || '').trim() || affiliateId,
+        commission: paymentSum,
+      }
+    })
+  }, [dataSource, mediaRows, effectivePayments])
+
+  const ledger = useAffiliateLedger({
+    mediaRows: effectiveMediaRows,
+    payments: effectivePayments,
+    selectedYear,
+    selectedMonth,
+    search,
+  })
+  const allTimeLedger = useAffiliateLedger({
+    mediaRows: effectiveMediaRows,
+    payments: effectivePayments,
+    selectedYear: 'all',
+    selectedMonth: 'all',
+    search,
+  })
+
+  const scopeLatestByAffiliate = useMemo(() => {
+    const map = new Map()
+    ledger.ledger.forEach((row) => {
+      const year = Number(row.year)
+      const monthIndex = Number(row.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
+      const score = year * 12 + monthIndex
+      const key = row.affiliateId
+      if (!map.has(key) || score > map.get(key).score) {
+        map.set(key, {
+          score,
+          month: row.month,
+          netDeposits: row.netDeposits,
+          commission: row.commissionTotal,
+          pl: row.pl,
+          roi: row.roi,
+        })
+      }
+    })
+    return map
+  }, [ledger.ledger])
+
+  const scopeLatestMonth = useMemo(() => {
+    let latest = null
+    let latestScore = -Infinity
+    ledger.ledger.forEach((row) => {
+      const year = Number(row.year)
+      const monthIndex = Number(row.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
+      const score = year * 12 + monthIndex
+      if (score > latestScore) {
+        latestScore = score
+        latest = row.month
+      }
+    })
+    return latest
+  }, [ledger.ledger])
+
+  const effectiveMonthKey = useMemo(() => {
+    const raw = String(selectedMonth || '').trim()
+    if (raw && raw !== 'all') return raw
+    return scopeLatestMonth || 'all'
+  }, [selectedMonth, scopeLatestMonth])
+
+  const monthRef = useMemo(
+    () => formatMonthReference(selectedYear, effectiveMonthKey),
+    [selectedYear, effectiveMonthKey]
+  )
+
+  const scopeMonthTotals = useMemo(() => {
+    const acc = { netDeposits: 0, commission: 0, pl: 0, roi: 0 }
+    if (!scopeLatestMonth) return acc
+    ledger.ledger.forEach((row) => {
+      if (row.month !== scopeLatestMonth) return
+      acc.netDeposits += Number(row.netDeposits) || 0
+      acc.commission += Number(row.commissionTotal) || 0
+      acc.pl += Number(row.pl) || 0
+    })
+    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+    return acc
+  }, [ledger.ledger, scopeLatestMonth])
+
+  const allTimeByAffiliate = useMemo(() => {
+    const map = new Map()
+    allTimeLedger.ledger.forEach((row) => {
+      const key = row.affiliateId
+      if (!map.has(key)) map.set(key, { netDeposits: 0, commission: 0, pl: 0, roi: 0 })
+      const acc = map.get(key)
+      acc.netDeposits += Number(row.netDeposits) || 0
+      acc.commission += Number(row.commissionTotal) || 0
+      acc.pl += Number(row.pl) || 0
+    })
+    map.forEach((acc) => {
+      acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+    })
+    return map
+  }, [allTimeLedger.ledger])
+
+  const allTimeVisibleTotals = useMemo(() => {
+    const acc = { netDeposits: 0, commission: 0, pl: 0, roi: 0 }
+    ledger.affiliateSummaries.forEach((a) => {
+      const entry = allTimeByAffiliate.get(a.affiliateId)
+      if (!entry) return
+      acc.netDeposits += entry.netDeposits
+      acc.commission += entry.commission
+      acc.pl += entry.pl
+    })
+    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+    return acc
+  }, [ledger.affiliateSummaries, allTimeByAffiliate])
 
   const availableYears = useMemo(() => {
     const set = new Set()
@@ -238,6 +885,8 @@ function InvestmentsDashboardContent({
       if (selectedYear && selectedYear !== 'all') params.set('year', String(selectedYear))
       if (selectedMonth && selectedMonth !== 'all') params.set('month', String(selectedMonth))
       if (search) params.set('search', String(search))
+      if (dataSource && dataSource !== 'cellxpert') params.set('source', String(dataSource))
+      params.set('mode', 'single')
       const qs = params.toString()
       const href = `${origin}/share/affiliate-payout-summary${qs ? `?${qs}` : ''}`
       window.open(href, '_blank', 'noopener,noreferrer')
@@ -248,227 +897,472 @@ function InvestmentsDashboardContent({
 
   return (
     <div className="w-full space-y-4">
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          paddingTop: 4,
-          marginTop: -4,
-          background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        <CardSection
+      {isPublicShare ? (
+        <PublicShareHero
           title={t('investments.header.title')}
-          subtitle={t('investments.header.subtitle')}
-          actions={
-            <FilterBar>
-              <YearSelector
-                availableYears={availableYears}
-                value={selectedYear}
-                onChange={(val) => {
-                  setSelectedYear(val)
-                  setSelectedMonth('all')
-                }}
-              />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>
-                  {t('investments.filters.month')}
-                </span>
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  style={{ ...selectStyle, minWidth: 160 }}
+          t={t}
+          searchDraft={searchDraft}
+          setSearchDraft={setSearchDraft}
+          autoFocus
+        >
+          <PublicShareFiltersRow
+            t={t}
+            availableYears={availableYears}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            monthOptions={monthOptions}
+            viewMode={viewMode}
+            requestViewMode={requestViewMode}
+            dataSource={dataSource}
+            requestDataSource={requestDataSource}
+          />
+        </PublicShareHero>
+      ) : null}
+
+      {!isPublicShare ? (
+        <div
+          style={{
+            position: 'sticky',
+            top: 0,
+            zIndex: 40,
+            paddingTop: 4,
+            marginTop: -4,
+            background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          <CardSection
+            title={t('investments.header.title')}
+            subtitle={t('investments.header.subtitle')}
+            actions={
+              <FilterBar>
+                <YearSelector
+                  availableYears={availableYears}
+                  value={selectedYear}
+                  onChange={(val) => {
+                    setSelectedYear(val)
+                    setSelectedMonth('all')
+                  }}
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                    {t('investments.filters.month')}
+                  </span>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    style={{ ...selectStyle, minWidth: 160 }}
+                  >
+                    <option value="all">{t('investments.filters.allMonths')}</option>
+                    {monthOptions.map((m) => (
+                      <option key={m.value} value={m.value}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <span
+                  style={{
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    padding: '4px 8px',
+                    borderRadius: 999,
+                    fontSize: 12,
+                    color: '#cbd5e1',
+                  }}
                 >
-                  <option value="all">{t('investments.filters.allMonths')}</option>
-                  {monthOptions.map((m) => (
-                    <option key={m.value} value={m.value}>
-                      {m.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  {t('investments.badge.monthlyRows', { count: ledger.ledger.length })}
+                </span>
+              </FilterBar>
+            }
+          />
+        </div>
+      ) : null}
+
+      {!isPublicShare ? (
+        <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
+          <ModeControls
+            t={t}
+            viewMode={viewMode}
+            requestViewMode={requestViewMode}
+            dataSource={dataSource}
+            requestDataSource={requestDataSource}
+          />
+        </div>
+      ) : null}
+
+      <div style={{ position: 'relative' }}>
+        {softSwitchLoading ? (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 30,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(9,16,28,0.55)',
+              borderRadius: 16,
+              pointerEvents: 'none',
+            }}
+            aria-label={t('investments.loader.data')}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 12px',
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.10)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'var(--text)',
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
               <span
                 style={{
-                  background: 'rgba(255,255,255,0.06)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  padding: '4px 8px',
-                  borderRadius: 999,
-                  fontSize: 12,
-                  color: '#cbd5e1',
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.35)',
+                  borderTopColor: 'rgba(255,255,255,0.95)',
+                  animation: 'spin 0.9s linear infinite',
                 }}
-              >
-                {t('investments.badge.monthlyRows', { count: ledger.ledger.length })}
+              />
+              <span>
+                {t('investments.loader.data')} · {softSwitchLabel}
               </span>
-            </FilterBar>
-          }
-        />
-      </div>
-
-      <>
-        <div
-          className="kpi-grid"
-          style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}
-        >
-          <KpiCard
-            label={t('investments.kpi.totalQftd')}
-            value={formatNumberShort(ledger.totals.totalQftd)}
-            helper={formatNumberFull(ledger.totals.totalQftd)}
-          />
-          <KpiCard
-            label={t('investments.kpi.avgCpa')}
-            value={formatEuro(ledger.totals.avgCpa)}
-            helper={formatEuroFull(ledger.totals.avgCpa)}
-          />
-          <KpiCard
-            label={t('investments.kpi.totalCommissions')}
-            value={formatEuro(ledger.totals.totalCommission)}
-            helper={formatEuroFull(ledger.totals.totalCommission)}
-          />
-          <KpiCard
-            label={t('investments.kpi.commissionPayable')}
-            value={formatEuro(ledger.totals.totalMarketingPayable)}
-            helper={formatEuroFull(ledger.totals.totalMarketingPayable)}
-            tone="#22c55e"
-          />
-          <KpiCard
-            label={t('investments.kpi.commissionsDeferred')}
-            value={formatEuro(ledger.totals.totalMarketingDeferred)}
-            helper={formatEuroFull(ledger.totals.totalMarketingDeferred)}
-            tone="#f97316"
-          />
-          <KpiCard
-            label={t('investments.kpi.roi')}
-            value={formatPercent(ledger.totals.totalRoi * 100, 2)}
-            helper={formatPercent(ledger.totals.totalRoi * 100, 4)}
-            tone={ledger.totals.totalRoi > 0 ? '#34d399' : '#f87171'}
-          />
-          <KpiCard
-            label={t('investments.kpi.paid')}
-            value={formatEuro(ledger.totals.totalPaid)}
-            helper={formatEuroFull(ledger.totals.totalPaid)}
-            tone="#38bdf8"
-          />
-        </div>
-
-        <div className="card card-global" style={{ minWidth: 320 }}>
-          <h3 style={{ marginBottom: 8 }}>{t('investments.section.payoutTimeline')}</h3>
-          <div style={{ height: 260 }}>
-            <PnLTrendChart
-              labels={ledger.timelineSeries.map((m) => m.label)}
-              series={[
-                {
-                  label: t('investments.kpi.paid'),
-                  data: ledger.timelineSeries.map((m) => m.paid),
-                  color: '#f97316',
-                },
-              ]}
-              formatValue={formatNumberShort}
-            />
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div className="card card-global">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-            <h3 style={{ marginBottom: 0, flex: 1 }}>
-              {t('investments.section.affiliatePayoutSummary')}
-            </h3>
-            <button className="btn" onClick={onShare} title={t('investments.share.title')}>
-              {t('investments.share.cta')}
-            </button>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
-              placeholder={t('investments.search.placeholder')}
-              aria-label={t('investments.search.aria')}
-            />
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <>
+          {!isPublicShare ? (
+            <div
+              className="kpi-grid"
+              style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}
+            >
+              <KpiCard
+                label={t('investments.kpi.totalQftd')}
+                value={formatNumberShort(ledger.totals.totalQftd)}
+                helper={formatNumberFull(ledger.totals.totalQftd)}
+              />
+              <KpiCard
+                label={t('investments.kpi.avgCpa')}
+                value={formatEuro(ledger.totals.avgCpa)}
+                helper={formatEuroFull(ledger.totals.avgCpa)}
+              />
+              <KpiCard
+                label={t('investments.kpi.totalCommissions')}
+                value={formatEuro(ledger.totals.totalCommission)}
+                helper={formatEuroFull(ledger.totals.totalCommission)}
+              />
+              <KpiCard
+                label={t('investments.kpi.commissionPayable')}
+                value={formatEuro(ledger.totals.totalMarketingPayable)}
+                helper={formatEuroFull(ledger.totals.totalMarketingPayable)}
+                tone="#22c55e"
+              />
+              <KpiCard
+                label={t('investments.kpi.commissionsDeferred')}
+                value={formatEuro(ledger.totals.totalMarketingDeferred)}
+                helper={formatEuroFull(ledger.totals.totalMarketingDeferred)}
+                tone="#f97316"
+              />
+              <KpiCard
+                label={t('investments.kpi.roi')}
+                value={formatPercent(ledger.totals.totalRoi * 100, 2)}
+                helper={formatPercent(ledger.totals.totalRoi * 100, 4)}
+                fullValue={t('investments.details.title.roiFormula')}
+                tone={ledger.totals.totalRoi > 0 ? '#34d399' : '#f87171'}
+              />
+              <KpiCard
+                label={t('investments.kpi.paid')}
+                value={formatEuro(
+                  dataSource === 'creolabs'
+                    ? ledger.totals.totalCommission
+                    : ledger.totals.totalPaid
+                )}
+                helper={formatEuroFull(
+                  dataSource === 'creolabs'
+                    ? ledger.totals.totalCommission
+                    : ledger.totals.totalPaid
+                )}
+                fullValue={
+                  dataSource === 'creolabs'
+                    ? t('investments.details.title.paidCreolabs')
+                    : undefined
+                }
+                tone="#38bdf8"
+              />
+            </div>
+          ) : null}
+
+          {!hideTimelineChart ? (
+            <div className="card card-global" style={{ minWidth: 320 }}>
+              <h3 style={{ marginBottom: 8 }}>{t('investments.section.payoutTimeline')}</h3>
+              <div style={{ height: 260 }}>
+                <PnLTrendChart
+                  labels={ledger.timelineSeries.map((m) => m.label)}
+                  series={[
+                    {
+                      label: t('investments.kpi.paid'),
+                      data: ledger.timelineSeries.map((m) => m.paid),
+                      color: '#f97316',
+                    },
+                  ]}
+                  formatValue={formatNumberShort}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <div className="card card-global">
+            {!isPublicShare ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+                <h3 style={{ marginBottom: 0, flex: 1 }}>
+                  {t('investments.section.affiliatePayoutSummary')}
+                </h3>
+                <button className="btn" onClick={onShare} title={t('investments.share.title')}>
+                  {t('investments.share.cta')}
+                </button>
+                <input
+                  value={searchDraft}
+                  onChange={(e) => setSearchDraft(e.target.value)}
+                  style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
+                  placeholder={t('investments.search.placeholder')}
+                  aria-label={t('investments.search.aria')}
+                />
+              </div>
+            ) : null}
+            <StickyMetricsTable className="table payout-summary-table" maxHeight="70vh">
+              <colgroup>
+                <col style={{ width: 260 }} />
+                <col style={{ width: 64 }} />
+
+                <col style={{ width: 132 }} />
+                <col style={{ width: 132 }} />
+
+                {showCommissionColumns ? <col style={{ width: 132 }} /> : null}
+                {showCommissionColumns ? <col style={{ width: 132 }} /> : null}
+
+                <col style={{ width: 132 }} />
+                <col style={{ width: 132 }} />
+
+                <col style={{ width: 112 }} />
+                <col style={{ width: 112 }} />
+
+                {!isPublicShare ? <col style={{ width: 160 }} /> : null}
+                {!isPublicShare ? <col style={{ width: 120 }} /> : null}
+                <col style={{ width: 140 }} />
+              </colgroup>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'right' }}>{t('dashboard.topAffiliates.table.rank')}</th>
-                  <th style={{ textAlign: 'left' }}>{t('investments.table.header.affiliate')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('investments.table.header.cpa')}</th>
-                  <th style={{ textAlign: 'right' }}>{t('investments.table.header.totalQftd')}</th>
+                  <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    Affiliate
+                  </th>
+                  <th rowSpan={2} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    Rank
+                  </th>
+
                   <th
-                    style={{ textAlign: 'right' }}
-                    title={t('investments.table.title.paidFiltered')}
+                    colSpan={2}
+                    className="payout-summary-group"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
                   >
-                    {t('investments.table.header.paidFiltered')}
+                    Net Deposits
                   </th>
-                  <th style={{ textAlign: 'right' }}>{t('investments.table.header.pl')}</th>
-                  <th style={{ textAlign: 'right' }}>
-                    {t('investments.table.header.currentMonthCommission')}
+
+                  {showCommissionColumns ? (
+                    <th
+                      colSpan={2}
+                      className="payout-summary-group payout-summary-group-sep"
+                      style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                      title="Commission (Payments)"
+                    >
+                      Commission
+                    </th>
+                  ) : null}
+
+                  <th
+                    colSpan={2}
+                    className="payout-summary-group payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                  >
+                    P&L
+                  </th>
+
+                  <th
+                    colSpan={2}
+                    className="payout-summary-group payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title="ROI = Net Deposits / Commission (Payments) - 1"
+                  >
+                    ROI
+                  </th>
+
+                  {!isPublicShare ? (
+                    <th rowSpan={2} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
+                      Finance Confirmed
+                    </th>
+                  ) : null}
+                  {!isPublicShare ? (
+                    <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                      Last Month
+                    </th>
+                  ) : null}
+                  <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    Details
+                  </th>
+                </tr>
+                <tr>
+                  <th
+                    className="payout-summary-sub"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title={`Totals for ${monthRef}`}
+                  >
+                    {monthRef}
                   </th>
                   <th
-                    style={{ textAlign: 'right' }}
-                    title={t('investments.details.title.roiFormula')}
+                    className="payout-summary-sub"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title="All-time totals"
                   >
-                    {t('investments.details.header.roi')}
+                    All Time
                   </th>
-                  <th style={{ textAlign: 'center' }}>
-                    {t('investments.table.header.financeConfirmed')}
+
+                  {showCommissionColumns ? (
+                    <>
+                      <th
+                        className="payout-summary-sub payout-summary-group-sep"
+                        style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                        title={`Totals for ${monthRef}`}
+                      >
+                        {monthRef}
+                      </th>
+                      <th
+                        className="payout-summary-sub"
+                        style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                        title="All-time totals"
+                      >
+                        All Time
+                      </th>
+                    </>
+                  ) : null}
+
+                  <th
+                    className="payout-summary-sub payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title={`Totals for ${monthRef}`}
+                  >
+                    {monthRef}
                   </th>
-                  <th style={{ textAlign: 'left' }}>{t('investments.table.header.lastMonth')}</th>
-                  <th style={{ textAlign: 'left' }}>{t('investments.table.header.details')}</th>
+                  <th
+                    className="payout-summary-sub"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title="All-time totals"
+                  >
+                    All Time
+                  </th>
+
+                  <th
+                    className="payout-summary-sub payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}`}
+                  >
+                    {monthRef}
+                  </th>
+                  <th
+                    className="payout-summary-sub"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title="ROI = Net Deposits / Commission (Payments) - 1\nAll Time"
+                  >
+                    All Time
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 600 }}>
+                  <td>Totals</td>
                   <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
-                  <td>{t('investments.table.row.totals')}</td>
                   <td
-                    style={{ textAlign: 'right', color: '#fbbf24' }}
+                    style={{ textAlign: 'right', color: '#38bdf8' }}
                     className="num"
-                    title={formatEuroFull(ledger.totals.avgCpa)}
+                    title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.netDeposits)}`}
                   >
-                    {formatEuro(ledger.totals.avgCpa)}
-                  </td>
-                  <td
-                    style={{ textAlign: 'right' }}
-                    className="num"
-                    title={formatNumberFull(ledger.totals.totalQftd)}
-                  >
-                    {formatNumberShort(ledger.totals.totalQftd)}
+                    {formatEuro(scopeMonthTotals.netDeposits)}
                   </td>
                   <td
                     style={{ textAlign: 'right', color: '#38bdf8' }}
                     className="num"
-                    title={formatEuroFull(ledger.totals.totalPaid)}
+                    title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.netDeposits)}`}
                   >
-                    {formatEuro(ledger.totals.totalPaid)}
+                    {formatEuro(allTimeVisibleTotals.netDeposits)}
+                  </td>
+                  {showCommissionColumns ? (
+                    <td
+                      style={{ textAlign: 'right' }}
+                      className="num payout-summary-group-sep"
+                      title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.commission)}`}
+                    >
+                      {formatEuro(scopeMonthTotals.commission)}
+                    </td>
+                  ) : null}
+                  {showCommissionColumns ? (
+                    <td
+                      style={{ textAlign: 'right' }}
+                      className="num"
+                      title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.commission)}`}
+                    >
+                      {formatEuro(allTimeVisibleTotals.commission)}
+                    </td>
+                  ) : null}
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: scopeMonthTotals.pl >= 0 ? '#34d399' : '#f87171',
+                    }}
+                    className="num payout-summary-group-sep"
+                    title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.pl)}`}
+                  >
+                    {formatEuro(scopeMonthTotals.pl)}
                   </td>
                   <td
                     style={{
                       textAlign: 'right',
-                      color: ledger.totals.totalPl >= 0 ? '#34d399' : '#f87171',
+                      color: allTimeVisibleTotals.pl >= 0 ? '#34d399' : '#f87171',
                     }}
                     className="num"
-                    title={formatEuroFull(ledger.totals.totalPl)}
+                    title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.pl)}`}
                   >
-                    {formatEuro(ledger.totals.totalPl)}
+                    {formatEuro(allTimeVisibleTotals.pl)}
                   </td>
                   <td
-                    style={{ textAlign: 'right', color: '#f97316' }}
-                    className="num"
-                    title={formatEuroFull(ledger.totals.totalCurrentMonthCommission)}
+                    style={{ textAlign: 'right' }}
+                    className="num payout-summary-group-sep"
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}\n${formatPercent(scopeMonthTotals.roi * 100, 4)}`}
                   >
-                    {formatEuro(ledger.totals.totalCurrentMonthCommission)}
+                    <span style={roiPillStyle(scopeMonthTotals.roi)}>
+                      {formatPercentRounded(scopeMonthTotals.roi * 100)}
+                    </span>
                   </td>
                   <td
                     style={{ textAlign: 'right' }}
                     className="num"
-                    title={formatPercent(ledger.totals.totalRoi * 100, 4)}
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nAll Time\n${formatPercent(allTimeVisibleTotals.roi * 100, 4)}`}
                   >
-                    <span style={roiPillStyle(ledger.totals.totalRoi)}>
-                      {formatPercent(ledger.totals.totalRoi * 100, 2)}
+                    <span style={roiPillStyle(allTimeVisibleTotals.roi)}>
+                      {formatPercentRounded(allTimeVisibleTotals.roi * 100)}
                     </span>
                   </td>
-                  <td style={{ textAlign: 'center', color: '#94a3b8' }}>—</td>
-                  <td>—</td>
+                  {!isPublicShare ? (
+                    <td style={{ textAlign: 'center', color: '#94a3b8' }}>—</td>
+                  ) : null}
+                  {!isPublicShare ? <td>—</td> : null}
                   <td></td>
                 </tr>
                 {(showAllAffiliates
@@ -477,66 +1371,117 @@ function InvestmentsDashboardContent({
                 ).map((a) => (
                   <React.Fragment key={a.affiliateId}>
                     <tr>
+                      <td title={String(a.affiliateId || '').trim() || undefined}>
+                        {(() => {
+                          const id = String(a.affiliateId || '').trim()
+                          const mappedName = affiliateIndexById?.[id]
+                          const name = (mappedName || a.affiliateName || '').trim()
+
+                          if (name && id && name !== id) return `${name} (${id})`
+                          return name || id || a.affiliateName
+                        })()}
+                      </td>
                       <td style={{ textAlign: 'right', color: '#94a3b8' }} className="num">
                         {a.rank}
-                      </td>
-                      <td>{a.affiliateName}</td>
-                      <td
-                        style={{ textAlign: 'right' }}
-                        className="num"
-                        title={formatEuroFull(a.cpa)}
-                      >
-                        {formatEuro(a.cpa)}
-                      </td>
-                      <td
-                        style={{ textAlign: 'right' }}
-                        className="num"
-                        title={formatNumberFull(a.totalQftd)}
-                      >
-                        {formatNumberShort(a.totalQftd)}
-                      </td>
-                      <td
-                        style={{ textAlign: 'right', color: '#38bdf8' }}
-                        className="num"
-                        title={formatEuroFull(a.totalPaid)}
-                      >
-                        {formatEuro(a.totalPaid)}
                       </td>
                       <td
                         style={{
                           textAlign: 'right',
-                          color: a.totalPl >= 0 ? '#34d399' : '#f87171',
+                          color: '#38bdf8',
                         }}
                         className="num"
-                        title={formatEuroFull(a.totalPl)}
+                        title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
                       >
-                        {formatEuro(a.totalPl)}
+                        {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
                       </td>
                       <td
-                        style={{ textAlign: 'right', color: '#f97316' }}
+                        style={{ textAlign: 'right', color: '#38bdf8' }}
                         className="num"
-                        title={formatEuroFull(a.currentMonthCommission)}
+                        title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
                       >
-                        {formatEuro(a.currentMonthCommission)}
+                        {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
+                      </td>
+                      {showCommissionColumns ? (
+                        <td
+                          style={{ textAlign: 'right' }}
+                          className="num payout-summary-group-sep"
+                          title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.commission || 0)}`}
+                        >
+                          {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.commission || 0)}
+                        </td>
+                      ) : null}
+                      {showCommissionColumns ? (
+                        <td
+                          style={{ textAlign: 'right' }}
+                          className="num"
+                          title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.commission || 0)}`}
+                        >
+                          {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.commission || 0)}
+                        </td>
+                      ) : null}
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color:
+                            (scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                              ? '#34d399'
+                              : '#f87171',
+                        }}
+                        className="num payout-summary-group-sep"
+                        title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                      >
+                        {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color:
+                            (allTimeByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                              ? '#34d399'
+                              : '#f87171',
+                        }}
+                        className="num"
+                        title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                      >
+                        {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}
+                      </td>
+                      <td
+                        style={{ textAlign: 'right' }}
+                        className="num payout-summary-group-sep"
+                        title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeMonthAffiliate')}\n${formatPercent((scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
+                      >
+                        <span
+                          style={roiPillStyle(scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0)}
+                        >
+                          {formatPercentRounded(
+                            (scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100
+                          )}
+                        </span>
                       </td>
                       <td
                         style={{ textAlign: 'right' }}
                         className="num"
-                        title={formatPercent(a.currentMonthRoi * 100, 4)}
+                        title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeEverAffiliate')}\n${formatPercent((allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
                       >
-                        <span style={roiPillStyle(a.currentMonthRoi)}>
-                          {formatPercent(a.currentMonthRoi * 100, 2)}
+                        <span style={roiPillStyle(allTimeByAffiliate.get(a.affiliateId)?.roi || 0)}>
+                          {formatPercentRounded(
+                            (allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100
+                          )}
                         </span>
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <input
-                          type="checkbox"
-                          checked={!!financeConfirmed[a.affiliateId]}
-                          onChange={() => toggleFinanceConfirmed(a.affiliateId)}
-                          title={t('investments.checkbox.title.financeConfirmed')}
-                        />
-                      </td>
-                      <td>{a.lastMonth ? monthLabel(locale, a.lastMonth) : '—'}</td>
+                      {!isPublicShare ? (
+                        <td style={{ textAlign: 'center' }}>
+                          <input
+                            type="checkbox"
+                            checked={!!financeConfirmed[a.affiliateId]}
+                            onChange={() => toggleFinanceConfirmed(a.affiliateId)}
+                            title={t('investments.checkbox.title.financeConfirmed')}
+                          />
+                        </td>
+                      ) : null}
+                      {!isPublicShare ? (
+                        <td>{a.lastMonth ? monthLabel(locale, a.lastMonth) : '—'}</td>
+                      ) : null}
                       <td>
                         <button className="btn" onClick={() => toggleExpand(a.affiliateId)}>
                           {expanded === a.affiliateId
@@ -547,7 +1492,7 @@ function InvestmentsDashboardContent({
                     </tr>
                     {expanded === a.affiliateId && (
                       <tr>
-                        <td colSpan={11}>
+                        <td colSpan={affiliateSummaryColSpan}>
                           <div
                             style={{
                               padding: '8px 12px',
@@ -699,7 +1644,7 @@ function InvestmentsDashboardContent({
                                           }}
                                         />
                                         <span style={roiPillStyle(r.roi)}>
-                                          {formatPercent(r.roi * 100, 2)}
+                                          {formatPercentRounded(r.roi * 100)}
                                         </span>
                                       </td>
                                       <td
@@ -756,7 +1701,7 @@ function InvestmentsDashboardContent({
                                       colSpan={16}
                                       style={{ textAlign: 'center', color: '#94a3b8' }}
                                     >
-                                      {t('investments.details.empty.noMonthlyRows')}
+                                      No monthly rows for this affiliate.
                                     </td>
                                   </tr>
                                 )}
@@ -770,13 +1715,16 @@ function InvestmentsDashboardContent({
                 ))}
                 {!ledger.affiliateSummaries.length && (
                   <tr>
-                    <td colSpan={11} style={{ textAlign: 'center', color: '#94a3b8' }}>
-                      {t('investments.table.empty.noAffiliates')}
+                    <td
+                      colSpan={affiliateSummaryColSpan}
+                      style={{ textAlign: 'center', color: '#94a3b8' }}
+                    >
+                      No affiliates found
                     </td>
                   </tr>
                 )}
               </tbody>
-            </table>
+            </StickyMetricsTable>
             {ledger.affiliateSummaries.length > 10 && (
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: 12 }}>
                 <button
@@ -791,8 +1739,413 @@ function InvestmentsDashboardContent({
               </div>
             )}
           </div>
+        </>
+      </div>
+    </div>
+  )
+}
+
+function InvestmentsDashboardUnifiedContent({
+  t,
+  locale,
+  isPublicShare,
+  cellxPayments,
+  cellxMediaRows,
+  creolabsPayments,
+  creolabsMediaRows,
+  selectedYear,
+  setSelectedYear,
+  selectedMonth,
+  setSelectedMonth,
+  search,
+  setSearch,
+  dataSource,
+  requestDataSource,
+  viewMode,
+  requestViewMode,
+  softSwitchLoading,
+  softSwitchLabel,
+}) {
+  const [affiliateIndexById, setAffiliateIndexById] = useState(null)
+  const [searchDraft, setSearchDraft] = useState(search)
+
+  const cellxpertLabel = t('investments.source.cellxpert')
+  const creolabsLabel = t('investments.source.creolabs')
+  const singleModeLabel = t('investments.viewMode.single')
+  const unifiedModeLabel = t('investments.viewMode.unified')
+  const unifiedHint = t('investments.unified.sourceDisabledHint')
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const byId = await loadAffiliateIndexById({ force: false })
+        if (!cancelled) setAffiliateIndexById(byId)
+      } catch {
+        if (!cancelled) setAffiliateIndexById(null)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    setSearchDraft(search)
+  }, [search])
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      setSearch(searchDraft)
+    }, 250)
+    return () => window.clearTimeout(id)
+  }, [searchDraft, setSearch])
+
+  const availableYears = useMemo(() => {
+    const set = new Set()
+    ;(cellxMediaRows || []).forEach(
+      (m) => Number.isFinite(Number(m.year)) && set.add(Number(m.year))
+    )
+    ;(creolabsMediaRows || []).forEach(
+      (m) => Number.isFinite(Number(m.year)) && set.add(Number(m.year))
+    )
+    ;(cellxPayments || []).forEach(
+      (p) => Number.isFinite(Number(p.year)) && set.add(Number(p.year))
+    )
+    ;(creolabsPayments || []).forEach(
+      (p) => Number.isFinite(Number(p.year)) && set.add(Number(p.year))
+    )
+    return Array.from(set).sort((a, b) => a - b)
+  }, [cellxMediaRows, creolabsMediaRows, cellxPayments, creolabsPayments])
+
+  const monthOptions = useMemo(() => {
+    const map = new Map()
+    const add = (row) => {
+      if (row == null) return
+      if (selectedYear !== 'all' && Number(row.year) !== Number(selectedYear)) return
+      const year = Number(row.year)
+      const monthIdx = Number(row.monthIndex)
+      if (!Number.isFinite(year) || !Number.isFinite(monthIdx) || monthIdx < 0) return
+      const key = `${year}-${String(monthIdx + 1).padStart(2, '0')}`
+      map.set(key, monthLabel(locale, key))
+    }
+    ;(cellxMediaRows || []).forEach(add)
+    ;(creolabsMediaRows || []).forEach(add)
+    ;(cellxPayments || []).forEach(add)
+    ;(creolabsPayments || []).forEach(add)
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.value.localeCompare(b.value))
+  }, [cellxMediaRows, creolabsMediaRows, cellxPayments, creolabsPayments, selectedYear, locale])
+
+  const onShare = () => {
+    try {
+      const origin = getPublicShareOrigin()
+      const params = new window.URLSearchParams()
+      if (selectedYear && selectedYear !== 'all') params.set('year', String(selectedYear))
+      if (selectedMonth && selectedMonth !== 'all') params.set('month', String(selectedMonth))
+      if (search) params.set('search', String(search))
+      // Keep source param only for backwards compatibility; unified ignores it.
+      if (dataSource && dataSource !== 'cellxpert') params.set('source', String(dataSource))
+      params.set('mode', 'unified')
+      const qs = params.toString()
+      const href = `${origin}/share/affiliate-payout-summary${qs ? `?${qs}` : ''}`
+      window.open(href, '_blank', 'noopener,noreferrer')
+    } catch (e) {
+      console.warn('Unable to open share link', e)
+    }
+  }
+
+  if (isPublicShare) {
+    return (
+      <div className="w-full space-y-4">
+        <PublicShareHero
+          title={t('investments.header.title')}
+          t={t}
+          searchDraft={searchDraft}
+          setSearchDraft={setSearchDraft}
+          autoFocus
+        >
+          <PublicShareFiltersRow
+            t={t}
+            availableYears={availableYears}
+            selectedYear={selectedYear}
+            setSelectedYear={setSelectedYear}
+            selectedMonth={selectedMonth}
+            setSelectedMonth={setSelectedMonth}
+            monthOptions={monthOptions}
+            viewMode={viewMode}
+            requestViewMode={requestViewMode}
+            dataSource={dataSource}
+            requestDataSource={requestDataSource}
+            sourceDisabled
+            sourceHint={unifiedHint}
+          />
+        </PublicShareHero>
+
+        <div style={{ padding: '0 14px' }}>
+          <div style={{ maxWidth: 1800, width: '100%', margin: '0 auto' }}>
+            <div className="card card-global">
+              <AffiliatePayoutUnifiedTable
+                t={t}
+                selectedYear={selectedYear}
+                selectedMonth={selectedMonth}
+                search={search}
+                cellxPayments={cellxPayments}
+                cellxMediaRows={cellxMediaRows}
+                creolabsPayments={creolabsPayments}
+                creolabsMediaRows={creolabsMediaRows}
+                affiliateIndexById={affiliateIndexById}
+              />
+            </div>
+          </div>
         </div>
-      </>
+      </div>
+    )
+  }
+
+  return (
+    <div className="w-full space-y-4">
+      <div
+        style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          paddingTop: 4,
+          marginTop: -4,
+          background: 'linear-gradient(180deg, rgba(9,16,28,0.96), rgba(9,16,28,0.85))',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <CardSection
+          title={t('investments.header.title')}
+          subtitle={t('investments.header.subtitle')}
+          actions={
+            <FilterBar>
+              <YearSelector
+                availableYears={availableYears}
+                value={selectedYear}
+                onChange={(val) => {
+                  setSelectedYear(val)
+                  setSelectedMonth('all')
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                  {t('investments.filters.month')}
+                </span>
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  style={{ ...selectStyle, minWidth: 160 }}
+                >
+                  <option value="all">{t('investments.filters.allMonths')}</option>
+                  {monthOptions.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  padding: '4px 8px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  color: '#cbd5e1',
+                }}
+                title={t('investments.viewMode.unified')}
+              >
+                {t('investments.viewMode.unified')}
+              </span>
+            </FilterBar>
+          }
+        />
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10 }}>
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: 8,
+              padding: 6,
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.02)',
+            }}
+            aria-label={t('investments.viewMode.aria')}
+          >
+            <button
+              type="button"
+              className={viewMode === 'single' ? 'btn' : 'btn secondary'}
+              onClick={() => requestViewMode('single')}
+              aria-pressed={viewMode === 'single'}
+              style={{ padding: '6px 10px', fontSize: 12, borderRadius: 999 }}
+            >
+              {singleModeLabel}
+            </button>
+            <button
+              type="button"
+              className={viewMode === 'unified' ? 'btn' : 'btn secondary'}
+              onClick={() => requestViewMode('unified')}
+              aria-pressed={viewMode === 'unified'}
+              style={{ padding: '6px 10px', fontSize: 12, borderRadius: 999 }}
+            >
+              {unifiedModeLabel}
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: 'inline-flex',
+              gap: 8,
+              padding: 6,
+              borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.08)',
+              background: 'rgba(255,255,255,0.02)',
+              opacity: 0.65,
+            }}
+            aria-label={t('investments.filters.source')}
+            title={unifiedHint}
+          >
+            <button
+              type="button"
+              className={dataSource === 'cellxpert' ? 'btn' : 'btn secondary'}
+              disabled
+              aria-disabled="true"
+              style={{
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                borderRadius: 999,
+                whiteSpace: 'nowrap',
+                ...(dataSource === 'cellxpert'
+                  ? {}
+                  : {
+                      background: 'transparent',
+                      opacity: 0.85,
+                    }),
+              }}
+            >
+              {cellxpertLabel}
+            </button>
+            <button
+              type="button"
+              className={dataSource === 'creolabs' ? 'btn' : 'btn secondary'}
+              disabled
+              aria-disabled="true"
+              style={{
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                borderRadius: 999,
+                whiteSpace: 'nowrap',
+                ...(dataSource === 'creolabs'
+                  ? {}
+                  : {
+                      background: 'transparent',
+                      opacity: 0.85,
+                    }),
+              }}
+            >
+              {creolabsLabel}
+            </button>
+          </div>
+
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontWeight: 700 }}>
+            {unifiedHint}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ position: 'relative' }}>
+        {softSwitchLoading ? (
+          <div
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 30,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              background: 'rgba(9,16,28,0.55)',
+              borderRadius: 16,
+              pointerEvents: 'none',
+            }}
+            aria-label={t('investments.loader.data')}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '10px 12px',
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.10)',
+                background: 'rgba(255,255,255,0.04)',
+                color: 'var(--text)',
+                fontSize: 13,
+                fontWeight: 700,
+              }}
+            >
+              <span
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.35)',
+                  borderTopColor: 'rgba(255,255,255,0.95)',
+                  animation: 'spin 0.9s linear infinite',
+                }}
+              />
+              <span>
+                {t('investments.loader.data')} · {softSwitchLabel}
+              </span>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="card card-global">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+            <h3 style={{ marginBottom: 0, flex: 1 }}>{t('investments.unified.title')}</h3>
+            {!isPublicShare ? (
+              <button className="btn" onClick={onShare} title={t('investments.share.title')}>
+                {t('investments.share.cta')}
+              </button>
+            ) : null}
+            <input
+              value={searchDraft}
+              onChange={(e) => setSearchDraft(e.target.value)}
+              style={{ ...selectStyle, minWidth: 200, background: 'rgba(255,255,255,0.04)' }}
+              placeholder={t('investments.search.placeholder')}
+              aria-label={t('investments.search.aria')}
+            />
+          </div>
+
+          <AffiliatePayoutUnifiedTable
+            t={t}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+            search={search}
+            cellxPayments={cellxPayments}
+            cellxMediaRows={cellxMediaRows}
+            creolabsPayments={creolabsPayments}
+            creolabsMediaRows={creolabsMediaRows}
+            affiliateIndexById={affiliateIndexById}
+          />
+        </div>
+      </div>
     </div>
   )
 }

@@ -134,6 +134,10 @@ export function useMediaReport() {
   return useCsvData(MEDIA_CANDIDATES, parseMediaRow)
 }
 
+export function useMediaReportCsv({ enabled = true } = {}) {
+  return useCsvData(MEDIA_CANDIDATES, parseMediaRow, { enabled })
+}
+
 function getReportsVersionKey() {
   try {
     return String(
@@ -224,6 +228,100 @@ export function useMediaReportWorker() {
           error: (err) => {
             if (runIdRef.current !== runId) return
             // Try next candidate if download/parse fails.
+            if (idx + 1 < MEDIA_CANDIDATES.length) {
+              tryCandidate(idx + 1)
+              return
+            }
+            setError(err)
+            setData([])
+            setSourcePath(null)
+            setLoading(false)
+          },
+        })
+      }
+
+      // force is kept for API parity; versioned URL cache-busts anyway.
+      void force
+      tryCandidate(0)
+    },
+    [versionKey]
+  )
+
+  useEffect(() => {
+    load(false)
+  }, [load])
+
+  return {
+    data,
+    loading,
+    error,
+    sourcePath,
+    reload: load,
+  }
+}
+
+// Non-worker PapaParse loader for Media Report.
+// Useful fallback when WebWorker parsing fails or the CSV contains tricky quoting/newlines.
+export function useMediaReportNoWorker() {
+  const [data, setData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [sourcePath, setSourcePath] = useState(null)
+  const [versionKey, setVersionKey] = useState(() => getReportsVersionKey())
+  const runIdRef = useRef(0)
+
+  useEffect(() => {
+    const sync = () => {
+      const next = getReportsVersionKey()
+      setVersionKey((prev) => (prev === next ? prev : next))
+    }
+
+    const onStorage = (e) => {
+      if (!e || e.key === 'bw_reports_version') sync()
+    }
+
+    window.addEventListener('bw-reports-updated', sync)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('bw-reports-updated', sync)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [])
+
+  const load = useCallback(
+    (force = false) => {
+      const runId = (runIdRef.current += 1)
+      setLoading(true)
+      setError(null)
+
+      const tryCandidate = (idx) => {
+        const rawPath = MEDIA_CANDIDATES[idx]
+        if (!rawPath) {
+          if (runIdRef.current === runId) {
+            setData([])
+            setSourcePath(null)
+            setLoading(false)
+          }
+          return
+        }
+
+        const url = buildAbsoluteVersionedUrl(rawPath)
+
+        Papa.parse(url, {
+          download: true,
+          worker: false,
+          header: true,
+          skipEmptyLines: true,
+          complete: (res) => {
+            if (runIdRef.current !== runId) return
+            const rows = Array.isArray(res.data) ? res.data : []
+            const mapped = rows.map(parseMediaRow)
+            setData(mapped)
+            setSourcePath(rawPath)
+            setLoading(false)
+          },
+          error: (err) => {
+            if (runIdRef.current !== runId) return
             if (idx + 1 < MEDIA_CANDIDATES.length) {
               tryCandidate(idx + 1)
               return
@@ -469,13 +567,53 @@ export function useMediaReportMonthlyTotalsWorker() {
   }
 }
 
-export function usePaymentsReport() {
-  return useCsvData(PAYMENT_CANDIDATES, parsePaymentRow)
+export function usePaymentsReport({ enabled = true } = {}) {
+  return useCsvData(PAYMENT_CANDIDATES, parsePaymentRow, { enabled })
 }
 
-export function useMediaPaymentsData() {
-  const media = useMediaReport()
-  const payments = usePaymentsReport()
+function useMediaReportSmart() {
+  const worker = useMediaReportWorker()
+  const [fallbackEnabled, setFallbackEnabled] = useState(false)
+  const fallback = useMediaReportNoWorker()
+
+  useEffect(() => {
+    if (fallbackEnabled) return
+    if (worker.loading) return
+    const hasRows = Array.isArray(worker.data) && worker.data.length > 0
+    if (worker.error || !hasRows) setFallbackEnabled(true)
+  }, [fallbackEnabled, worker.loading, worker.error, worker.data])
+
+  const active = fallbackEnabled ? fallback : worker
+
+  const reload = useCallback(() => {
+    try {
+      worker.reload(true)
+    } catch {
+      // ignore
+    }
+    if (fallbackEnabled) {
+      try {
+        fallback.reload(true)
+      } catch {
+        // ignore
+      }
+    }
+  }, [worker, fallback, fallbackEnabled])
+
+  return {
+    data: active.data,
+    loading: active.loading,
+    error: active.error,
+    sourcePath: active.sourcePath,
+    reload,
+    usingFallback: fallbackEnabled,
+  }
+}
+
+export function useMediaPaymentsData({ includePayments = true } = {}) {
+  // Media Report is typically the heaviest CSV: prefer worker parsing, but fall back if it fails.
+  const media = useMediaReportSmart()
+  const payments = usePaymentsReport({ enabled: includePayments })
 
   const monthOptions = useMemo(() => {
     const map = new Map()
@@ -495,13 +633,13 @@ export function useMediaPaymentsData() {
 
   const reload = useCallback(() => {
     media.reload()
-    payments.reload()
-  }, [media, payments])
+    if (includePayments) payments.reload()
+  }, [media, payments, includePayments])
 
   return {
     mediaRows: media.data,
     payments: payments.data,
-    loading: media.loading || payments.loading,
+    loading: includePayments ? media.loading || payments.loading : media.loading,
     error: media.error || payments.error,
     mediaSource: media.sourcePath,
     paymentsSource: payments.sourcePath,

@@ -11,6 +11,8 @@ function readQueryParams() {
       year: String(sp.get('year') || '').trim(),
       month: String(sp.get('month') || '').trim(),
       search: String(sp.get('search') || '').trim(),
+      source: String(sp.get('source') || '').trim(),
+      mode: String(sp.get('mode') || '').trim(),
     }
   } catch {
     return {}
@@ -31,6 +33,10 @@ export default function PublicAffiliatePayoutSummarySharePage() {
       initialSelectedYear={params.year || 'all'}
       initialSelectedMonth={params.month || 'all'}
       initialSearch={params.search || ''}
+      initialSource={params.source || ''}
+      initialViewMode={params.mode || ''}
+      hideTimelineChart
+      isPublicShare
     />
   )
 }

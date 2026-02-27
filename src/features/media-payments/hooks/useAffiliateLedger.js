@@ -25,10 +25,16 @@ export function useAffiliateLedger({
   negotiatedCpaOverrides = {},
 }) {
   return useMemo(() => {
+    const normalizeSearchHaystack = (row) => {
+      const name = String(row?.affiliateName || row?.affiliate || '').toLowerCase()
+      const id = String(row?.affiliateId || '').toLowerCase()
+      return `${name} ${id}`.trim()
+    }
+
     // Build monthly history per affiliate to derive dynamic CPA defaults from last 5 months.
     const monthlyHistory = new Map()
     mediaRows.forEach((m) => {
-      const aff = m.affiliate || '—'
+      const aff = m.affiliateId || m.affiliate || '—'
       const yearVal = Number(m.year)
       const monthVal = Number(m.monthIndex)
       if (!Number.isFinite(yearVal) || !Number.isFinite(monthVal)) return
@@ -62,9 +68,7 @@ export function useAffiliateLedger({
       const yearOk = selectedYear === 'all' ? true : Number(row.year) === Number(selectedYear)
       const rowMonthKey = toKey(row.year, row.monthIndex)
       const monthOk = selectedMonth === 'all' ? true : rowMonthKey === selectedMonth
-      const searchOk = search
-        ? (row.affiliate || '').toLowerCase().includes(search.toLowerCase())
-        : true
+      const searchOk = search ? normalizeSearchHaystack(row).includes(search.toLowerCase()) : true
       return yearOk && monthOk && searchOk
     }
 
@@ -72,12 +76,16 @@ export function useAffiliateLedger({
     const filteredPayments = payments.filter(matchesFilters)
 
     const affMonth = new Map()
-    const ensure = (affiliate, year, monthIndex) => {
-      const key = `${affiliate || '—'}|${year}|${monthIndex}`
+    const ensure = (affiliateId, affiliateName, year, monthIndex) => {
+      const safeId = affiliateId || '—'
+      const safeName = affiliateName || safeId || '—'
+      const key = `${safeId}|${year}|${monthIndex}`
       if (!affMonth.has(key)) {
         const override =
-          negotiatedCpaOverrides[affiliate] ?? negotiatedCpaOverrides[affiliate || '—']
-        const historicalAvg = getAvgCpaLast5Months(affiliate, year, monthIndex)
+          negotiatedCpaOverrides[safeId] ??
+          negotiatedCpaOverrides[safeName] ??
+          negotiatedCpaOverrides['—']
+        const historicalAvg = getAvgCpaLast5Months(safeId, year, monthIndex)
         const negotiatedCpa =
           Number(override) > 0
             ? Number(override)
@@ -85,8 +93,8 @@ export function useAffiliateLedger({
               ? historicalAvg
               : fallbackNegotiatedCpa
         affMonth.set(key, {
-          affiliateId: affiliate || '—',
-          affiliateName: affiliate || '—',
+          affiliateId: safeId,
+          affiliateName: safeName,
           month: toKey(year, monthIndex),
           monthIndex: Number(monthIndex),
           year: Number(year),
@@ -114,7 +122,9 @@ export function useAffiliateLedger({
     }
 
     filteredMedia.forEach((m) => {
-      const acc = ensure(m.affiliate, m.year, m.monthIndex)
+      const affiliateId = m.affiliateId || m.uid || m.affiliate || '—'
+      const affiliateName = m.affiliateName || m.affiliate || affiliateId || '—'
+      const acc = ensure(affiliateId, affiliateName, m.year, m.monthIndex)
       acc.registrations += cleanNumber(m.registrations)
       acc.ftd += cleanNumber(m.ftd)
       acc.qftd += cleanNumber(m.qftd)
@@ -126,7 +136,9 @@ export function useAffiliateLedger({
     })
 
     filteredPayments.forEach((p) => {
-      const acc = ensure(p.affiliate, p.year, p.monthIndex)
+      const affiliateId = p.affiliateId || p.affiliate || '—'
+      const affiliateName = p.affiliateName || p.affiliate || affiliateId || '—'
+      const acc = ensure(affiliateId, affiliateName, p.year, p.monthIndex)
       acc.totalPayments += cleanNumber(p.amount)
       acc.paidAmount += cleanNumber(p.amount)
       acc.numberOfPayments += 1

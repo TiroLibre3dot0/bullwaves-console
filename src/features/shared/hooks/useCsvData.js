@@ -5,7 +5,11 @@ const EMPTY_PATHS = []
 const IDENTITY_ROW = (r) => r
 
 // Generic CSV loader with fallback paths and optional row mapping
-export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) {
+export function useCsvData(
+  candidatePaths = EMPTY_PATHS,
+  mapRow = IDENTITY_ROW,
+  { enabled = true } = {}
+) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -13,6 +17,13 @@ export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) 
 
   const load = useCallback(
     async (force = false) => {
+      if (!enabled) {
+        setData([])
+        setSourcePath(null)
+        setError(null)
+        setLoading(false)
+        return
+      }
       setLoading(true)
       setError(null)
       try {
@@ -27,7 +38,7 @@ export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) 
         setLoading(false)
       }
     },
-    [candidatePaths, mapRow]
+    [candidatePaths, mapRow, enabled]
   )
 
   useEffect(() => {
@@ -37,6 +48,7 @@ export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) 
   // When uploads complete, `UploadReportsPage` bumps bw_reports_version and emits an event.
   // Refresh CSV-backed data automatically so dashboards reflect the new reports without manual reload.
   useEffect(() => {
+    if (!enabled) return
     const onReportsUpdated = () => {
       load(true)
     }
@@ -51,7 +63,7 @@ export function useCsvData(candidatePaths = EMPTY_PATHS, mapRow = IDENTITY_ROW) 
       window.removeEventListener('bw-reports-updated', onReportsUpdated)
       window.removeEventListener('storage', onStorage)
     }
-  }, [load])
+  }, [enabled, load])
 
   return { data, loading, error, sourcePath, reload: load }
 }

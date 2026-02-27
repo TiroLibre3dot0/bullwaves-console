@@ -518,6 +518,17 @@ body{font-family:"Inter", system-ui, -apple-system, 'Segoe UI', Roboto, Arial;ba
 .lang-select:focus{outline:none;border-color:rgba(34,211,238,0.45);box-shadow:0 10px 24px rgba(34,211,238,0.12)}
 
 select{background:rgba(255,255,255,0.04);color:var(--text);border:1px solid rgba(255,255,255,0.10);color-scheme:dark}
+
+/* Hide scrollbar while keeping scroll functionality (tables, unified/single views) */
+.scroll-container{
+  scrollbar-width:none; /* Firefox */
+  -ms-overflow-style:none; /* IE/legacy */
+}
+.scroll-container::-webkit-scrollbar{
+  display:none; /* Chrome/Edge/Safari */
+  width:0;
+  height:0;
+}
 select option, select optgroup{background:var(--card);color:var(--text)}
 
 .logo-tools-pop{position:absolute;left:0;top:48px;background:rgba(11,18,33,0.96);border:1px solid rgba(255,255,255,0.08);border-radius:10px;box-shadow:0 14px 32px rgba(0,0,0,0.35);padding:10px 12px;min-width:220px;z-index:80;backdrop-filter:blur(10px)}
@@ -935,6 +946,103 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 .table thead th:first-child,
 .table tbody td:first-child { width: 180px; }
 .table .month-col { width: 56px; }
+
+/* Shared sticky 2-row metrics header (works for 1-row headers too). */
+.table.sticky-metrics-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  --sticky-header-row1-h: 26px;
+  --sticky-header-row2-h: 26px;
+  --sticky-header-bg: rgb(9, 16, 28);
+}
+
+.table.sticky-metrics-table thead tr:nth-child(1) th {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--sticky-header-bg);
+}
+
+.table.sticky-metrics-table thead tr:nth-child(2) th {
+  position: sticky;
+  top: var(--sticky-header-row1-h);
+  z-index: 29;
+  background: var(--sticky-header-bg);
+}
+
+.table.sticky-metrics-table thead tr:nth-child(1) th:not([rowspan]) {
+  height: var(--sticky-header-row1-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: var(--sticky-header-row1-h);
+}
+
+.table.sticky-metrics-table thead tr:nth-child(2) th {
+  height: var(--sticky-header-row2-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: var(--sticky-header-row2-h);
+}
+
+.table.sticky-metrics-table thead th[rowspan="2"] {
+  height: calc(var(--sticky-header-row1-h) + var(--sticky-header-row2-h));
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: calc(var(--sticky-header-row1-h) + var(--sticky-header-row2-h));
+  z-index: 31;
+}
+
+/* Unified affiliate comparison table: denser base (no column-hover effects) */
+.table.payout-unified-table {
+  font-size: 12px;
+}
+
+.table.payout-unified-table th,
+.table.payout-unified-table td {
+  padding: 4px 6px;
+}
+
+.table.payout-unified-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.table.payout-unified-table thead th:first-child,
+.table.payout-unified-table tbody td:first-child {
+  width: auto;
+}
+
+/* Affiliate payout summary table: compact 2-level grouped header */
+.table.payout-summary-table.sticky-metrics-table {
+  --sticky-header-row1-h: 22px;
+  --sticky-header-row2-h: 22px;
+}
+
+.table.payout-summary-table th,
+.table.payout-summary-table td {
+  padding: 4px 6px;
+}
+
+.table.payout-summary-table thead th {
+  white-space: nowrap;
+}
+
+.table.payout-summary-table thead th.payout-summary-group {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(226, 232, 240, 0.92);
+  letter-spacing: 0.1px;
+}
+
+.table.payout-summary-table thead th.payout-summary-sub {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(148, 163, 184, 0.95);
+}
+
+/* Subtle separators only between metric groups (not between subcolumns). */
+.table.payout-summary-table .payout-summary-group-sep {
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
 
 /* Ranking table overrides (the first column is '#', not a wide label column) */
 .ranking-table thead th:first-child,

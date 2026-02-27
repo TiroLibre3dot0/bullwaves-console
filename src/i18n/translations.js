@@ -1273,8 +1273,33 @@ export const translations = {
     'investments.header.subtitle':
       'End-of-month affiliate costs based on Qualified FTD, CPA and ROI.',
     'investments.filters.month': 'Month',
+    'investments.filters.source': 'Source',
     'investments.filters.allMonths': 'All months',
     'investments.badge.monthlyRows': '{count} monthly rows',
+
+    'investments.source.cellxpert': 'Cellxpert',
+    'investments.source.creolabs': 'Creolabs',
+
+    'investments.viewMode.aria': 'View mode',
+    'investments.viewMode.single': 'Single Source',
+    'investments.viewMode.unified': 'Unified View',
+
+    'investments.unified.title': 'Unified View – Cellxpert vs Creolabs',
+    'investments.unified.sourceDisabledHint': 'Unified mode: both sources are active',
+    'investments.unified.focusDiscrepancies': 'Focus discrepancies',
+    'investments.unified.flaggedCount': '{flagged} flagged / {total}',
+    'investments.unified.showMore': 'Show more metrics',
+    'investments.unified.showLess': 'Show fewer metrics',
+    'investments.unified.showMoreTitle': 'Toggle additional metrics',
+    'investments.unified.sortHint': 'Tip: click headers to sort',
+    'investments.unified.cellx': 'CellX',
+    'investments.unified.creolabs': 'Creolabs',
+    'investments.unified.delta': 'Δ',
+    'investments.unified.sortCellx': 'Sort by CellX',
+    'investments.unified.sortCreolabs': 'Sort by Creolabs',
+    'investments.unified.sortDelta': 'Sort by delta / discrepancy',
+    'investments.unified.deltaNote':
+      'Δ = Creolabs − CellX (percent only). Percent diff uses CellX as baseline; when CellX is 0 and Creolabs > 0, % is shown as n/a and flagged.',
 
     'investments.kpi.totalQftd': 'Total QFTD',
     'investments.kpi.avgCpa': 'Avg CPA',
@@ -1294,6 +1319,14 @@ export const translations = {
     'investments.search.aria': 'Search affiliate',
 
     'investments.table.header.affiliate': 'Affiliate',
+    'investments.table.header.netDepositsMonth': 'Net dep (month)',
+    'investments.table.header.commissionsMonth': 'Comm (month)',
+    'investments.table.header.netDepositsEver': 'Net dep (ever)',
+    'investments.table.header.commissionsEver': 'Comm (ever)',
+    'investments.table.header.plMonth': 'P&L (month)',
+    'investments.table.header.plEver': 'P&L (ever)',
+    'investments.table.header.roiMonth': 'ROI (month)',
+    'investments.table.header.roiEver': 'ROI (ever)',
     'investments.table.header.cpa': 'CPA',
     'investments.table.header.totalQftd': 'Total QFTD',
     'investments.table.header.paidFiltered': 'Paid (filtered)',
@@ -1327,6 +1360,16 @@ export const translations = {
     'investments.details.header.details': 'Details',
 
     'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission − 1',
+    'investments.details.title.scopeMonthAffiliate':
+      'Month = latest available month for the affiliate',
+    'investments.details.title.scopeEverAffiliate':
+      'Ever = sum over all months for the affiliate (current filters)',
+    'investments.details.title.scopeMonthTotals':
+      'Month totals = sum over visible affiliates for the latest month',
+    'investments.details.title.scopeEverTotals':
+      'Ever totals = sum over all months for visible affiliates (current filters)',
+    'investments.details.title.paidCreolabs':
+      'Creolabs: Paid = cumulative commissions (no Payments Report available)',
     'investments.details.title.commExpected': 'Expected = commission from Media Report',
     'investments.details.title.commActual':
       'Actual uses ROI guardrail: if ROI >= 0.5 use expected, else Net Deposits / 1.5',
@@ -3584,8 +3627,34 @@ export const translations = {
     'investments.header.subtitle':
       'Costi affiliati a fine mese basati su QFTD qualificati, CPA e ROI.',
     'investments.filters.month': 'Mese',
+    'investments.filters.source': 'Fonte',
     'investments.filters.allMonths': 'Tutti i mesi',
     'investments.badge.monthlyRows': '{count} righe mensili',
+
+    'investments.source.cellxpert': 'Cellxpert',
+    'investments.source.creolabs': 'Creolabs',
+
+    'investments.viewMode.aria': 'Modalità vista',
+    'investments.viewMode.single': 'Sorgente singola',
+    'investments.viewMode.unified': 'Vista unificata',
+
+    'investments.unified.title': 'Vista unificata – Cellxpert vs Creolabs',
+    'investments.unified.sourceDisabledHint':
+      'Modalità unificata: entrambe le sorgenti sono attive',
+    'investments.unified.focusDiscrepancies': 'Mostra discrepanze',
+    'investments.unified.flaggedCount': '{flagged} segnalati / {total}',
+    'investments.unified.showMore': 'Mostra più metriche',
+    'investments.unified.showLess': 'Mostra meno metriche',
+    'investments.unified.showMoreTitle': 'Mostra/Nascondi metriche aggiuntive',
+    'investments.unified.sortHint': 'Tip: clicca le intestazioni per ordinare',
+    'investments.unified.cellx': 'CellX',
+    'investments.unified.creolabs': 'Creolabs',
+    'investments.unified.delta': 'Δ',
+    'investments.unified.sortCellx': 'Ordina per CellX',
+    'investments.unified.sortCreolabs': 'Ordina per Creolabs',
+    'investments.unified.sortDelta': 'Ordina per delta / discrepanza',
+    'investments.unified.deltaNote':
+      'Δ = Creolabs − CellX (solo %). La % usa CellX come base; se CellX è 0 e Creolabs > 0, la % è n/a e viene segnalata.',
 
     'investments.kpi.totalQftd': 'QFTD totali',
     'investments.kpi.avgCpa': 'CPA medio',
@@ -3605,6 +3674,14 @@ export const translations = {
     'investments.search.aria': 'Cerca affiliato',
 
     'investments.table.header.affiliate': 'Affiliato',
+    'investments.table.header.netDepositsMonth': 'Net dep mese',
+    'investments.table.header.commissionsMonth': 'Comm mese',
+    'investments.table.header.netDepositsEver': 'Net dep ever',
+    'investments.table.header.commissionsEver': 'Comm ever',
+    'investments.table.header.plMonth': 'P&L mese',
+    'investments.table.header.plEver': 'P&L ever',
+    'investments.table.header.roiMonth': 'ROI mese',
+    'investments.table.header.roiEver': 'ROI ever',
     'investments.table.header.cpa': 'CPA',
     'investments.table.header.totalQftd': 'QFTD totali',
     'investments.table.header.paidFiltered': 'Pagato (filtrato)',
@@ -3638,6 +3715,16 @@ export const translations = {
     'investments.details.header.details': 'Dettagli',
 
     'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione − 1',
+    'investments.details.title.scopeMonthAffiliate':
+      'Mese = ultimo mese disponibile per l’affiliato',
+    'investments.details.title.scopeEverAffiliate':
+      'Sempre = somma su tutti i mesi per l’affiliato (filtri correnti)',
+    'investments.details.title.scopeMonthTotals':
+      'Totali mese = somma sugli affiliati visibili per l’ultimo mese',
+    'investments.details.title.scopeEverTotals':
+      'Totali sempre = somma su tutti i mesi per gli affiliati visibili (filtri correnti)',
+    'investments.details.title.paidCreolabs':
+      'Creolabs: Paid = cumulato commissioni (Payments Report non disponibile)',
     'investments.details.title.commExpected': 'Attesa = commissione dal Media Report',
     'investments.details.title.commActual':
       'Reale usa una guardrail ROI: se ROI >= 0.5 usa l’attesa, altrimenti Depositi netti / 1.5',
@@ -5573,8 +5660,33 @@ export const translations = {
     'investments.header.subtitle':
       'Troškovi afilijata na kraju meseca na osnovu kvalifikovanih QFTD, CPA i ROI.',
     'investments.filters.month': 'Mesec',
+    'investments.filters.source': 'Izvor',
     'investments.filters.allMonths': 'Svi meseci',
     'investments.badge.monthlyRows': '{count} mesečnih redova',
+
+    'investments.source.cellxpert': 'Cellxpert',
+    'investments.source.creolabs': 'Creolabs',
+
+    'investments.viewMode.aria': 'Režim prikaza',
+    'investments.viewMode.single': 'Jedan izvor',
+    'investments.viewMode.unified': 'Ujedinjeni prikaz',
+
+    'investments.unified.title': 'Ujedinjeni prikaz – Cellxpert vs Creolabs',
+    'investments.unified.sourceDisabledHint': 'Ujedinjeni režim: oba izvora su aktivna',
+    'investments.unified.focusDiscrepancies': 'Fokus na odstupanja',
+    'investments.unified.flaggedCount': '{flagged} označeno / {total}',
+    'investments.unified.showMore': 'Prikaži više metrika',
+    'investments.unified.showLess': 'Prikaži manje metrika',
+    'investments.unified.showMoreTitle': 'Uključi dodatne metrike',
+    'investments.unified.sortHint': 'Savet: klikni zaglavlja za sortiranje',
+    'investments.unified.cellx': 'CellX',
+    'investments.unified.creolabs': 'Creolabs',
+    'investments.unified.delta': 'Δ',
+    'investments.unified.sortCellx': 'Sortiraj po CellX',
+    'investments.unified.sortCreolabs': 'Sortiraj po Creolabs',
+    'investments.unified.sortDelta': 'Sortiraj po delta / odstupanju',
+    'investments.unified.deltaNote':
+      'Δ = Creolabs − CellX (samo %). % koristi CellX kao osnovu; kada je CellX 0 i Creolabs > 0, % je n/a i označava se.',
 
     'investments.kpi.totalQftd': 'Ukupno QFTD',
     'investments.kpi.avgCpa': 'Prosečan CPA',
@@ -5594,6 +5706,14 @@ export const translations = {
     'investments.search.aria': 'Pretraži afilijata',
 
     'investments.table.header.affiliate': 'Afilijat',
+    'investments.table.header.netDepositsMonth': 'Neto dep (mesec)',
+    'investments.table.header.commissionsMonth': 'Prov (mesec)',
+    'investments.table.header.netDepositsEver': 'Neto dep (ukupno)',
+    'investments.table.header.commissionsEver': 'Prov (ukupno)',
+    'investments.table.header.plMonth': 'P&L (mesec)',
+    'investments.table.header.plEver': 'P&L (ukupno)',
+    'investments.table.header.roiMonth': 'ROI (mesec)',
+    'investments.table.header.roiEver': 'ROI (ukupno)',
     'investments.table.header.cpa': 'CPA',
     'investments.table.header.totalQftd': 'Ukupno QFTD',
     'investments.table.header.paidFiltered': 'Isplaćeno (filtrirano)',
@@ -5627,6 +5747,16 @@ export const translations = {
     'investments.details.header.details': 'Detalji',
 
     'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija − 1',
+    'investments.details.title.scopeMonthAffiliate':
+      'Mesec = poslednji dostupan mesec za afilijata',
+    'investments.details.title.scopeEverAffiliate':
+      'Ukupno = zbir svih meseci za afilijata (trenutni filteri)',
+    'investments.details.title.scopeMonthTotals':
+      'Totali mesec = zbir vidljivih afilijata za poslednji mesec',
+    'investments.details.title.scopeEverTotals':
+      'Totali ukupno = zbir svih meseci za vidljive afilijate (trenutni filteri)',
+    'investments.details.title.paidCreolabs':
+      'Creolabs: Paid = zbir provizija (nema Payments Report-a)',
     'investments.details.title.commExpected': 'Očekivano = provizija iz Media Report-a',
     'investments.details.title.commActual':
       'Stvarno koristi ROI guardrail: ako je ROI >= 0.5 koristi očekivano, inače Neto depoziti / 1.5',
