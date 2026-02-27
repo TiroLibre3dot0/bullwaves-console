@@ -12,6 +12,7 @@ export default function KpiCard({
 }) {
   const isSmall = size === 'sm'
   const [showTooltip, setShowTooltip] = useState(false)
+  const tooltipText = helper || fullValue
 
   return (
     <div
@@ -31,8 +32,9 @@ export default function KpiCard({
         {label}
       </div>
       <div
-        onMouseEnter={() => fullValue && setShowTooltip(true)}
+        onMouseEnter={() => tooltipText && setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
+        title={tooltipText || undefined}
         style={{
           fontSize: isSmall ? 18 : 20,
           fontWeight: 700,
@@ -43,7 +45,7 @@ export default function KpiCard({
         }}
       >
         {value}
-        {showTooltip && fullValue && (
+        {showTooltip && tooltipText && (
           <div
             style={{
               position: 'absolute',
@@ -64,7 +66,7 @@ export default function KpiCard({
               animation: 'fadeIn 0.15s ease-out',
             }}
           >
-            {fullValue}
+            {tooltipText}
             <div
               style={{
                 position: 'absolute',

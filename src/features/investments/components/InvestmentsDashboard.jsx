@@ -1630,10 +1630,7 @@ function InvestmentsDashboardContent({
                                           gap: 6,
                                         }}
                                         className="num"
-                                        title={formatNumber(r.roi, {
-                                          minimumFractionDigits: 4,
-                                          maximumFractionDigits: 4,
-                                        })}
+                                        title={`${t('investments.details.title.roiFormula')}\n${formatPercent(r.roi * 100, 4)}`}
                                       >
                                         <span
                                           style={{

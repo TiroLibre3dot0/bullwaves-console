@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react'
 
-import { formatEuro, formatPercentRounded } from '../../../lib/formatters'
+import {
+  formatEuro,
+  formatEuroFull,
+  formatPercent,
+  formatPercentRounded,
+} from '../../../lib/formatters'
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
 import StickyMetricsTable from './StickyMetricsTable'
 import { computeDelta, mergeAffiliateSources } from '../utils/mergeAffiliateSources'
@@ -138,6 +143,24 @@ function renderValue(metric, value) {
   return String(value)
 }
 
+function renderTitle(metric, value) {
+  if (value == null || !Number.isFinite(Number(value))) return undefined
+  if (metric.kind === 'eur') return formatEuroFull(Number(value) || 0)
+  if (metric.kind === 'pl') return formatEuroFull(Number(value) || 0)
+  if (metric.kind === 'roi') return formatPercent((Number(value) || 0) * 100, 4)
+  return String(value)
+}
+
+function renderDeltaTitle(metric, deltaRec) {
+  const { deltaPct, deltaPctIsNa } = deltaRec || {}
+  if (deltaPctIsNa) return 'n/a'
+  if (!Number.isFinite(Number(deltaPct))) return undefined
+
+  // deltaPct is already in percent units.
+  if (metric?.kind === 'roi') return formatPercent(Number(deltaPct) || 0, 4)
+  return formatPercent(Number(deltaPct) || 0, 4)
+}
+
 function renderDeltaCell(metric, deltaRec) {
   const { deltaAbs, deltaPct, deltaPctIsNa } = deltaRec || {}
   const tone = getDeltaTone({ deltaAbs, deltaPct, deltaPctIsNa })
@@ -147,6 +170,7 @@ function renderDeltaCell(metric, deltaRec) {
 
   return (
     <span
+      title={renderDeltaTitle(metric, deltaRec)}
       style={{
         ...pillBaseStyle,
         ...pillStyle,
@@ -742,6 +766,7 @@ export default function AffiliatePayoutUnifiedTable({
                       ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                       ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
                     }}
+                    title={renderTitle(m, totalsRow.cellx[m.key])}
                   >
                     {renderValue(m, totalsRow.cellx[m.key])}
                   </td>
@@ -753,6 +778,7 @@ export default function AffiliatePayoutUnifiedTable({
                           fontWeight: 800,
                           ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
                         }}
+                        title={renderTitle(m, totalsRow.creolabs[m.key])}
                       >
                         {renderValue(m, totalsRow.creolabs[m.key])}
                       </td>
@@ -803,6 +829,7 @@ export default function AffiliatePayoutUnifiedTable({
                           ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                           ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
                         }}
+                        title={renderTitle(m, r.cellx?.[m.key])}
                       >
                         {renderValue(m, r.cellx?.[m.key])}
                       </td>
@@ -813,6 +840,7 @@ export default function AffiliatePayoutUnifiedTable({
                               textAlign: 'right',
                               ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
                             }}
+                            title={renderTitle(m, r.creolabs?.[m.key])}
                           >
                             {renderValue(m, r.creolabs?.[m.key])}
                           </td>
