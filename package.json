@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "predev": "node scripts/generate_all_indexes.js",
+    "predev": "npm run verify:data",
     "check:data": "node scripts/checkDataAssets.mjs",
-    "prebuild": "npm run check:data && node scripts/generate_all_indexes.js",
+    "prebuild": "npm run check:data && npm run verify:data",
     "build": "vite build",
+    "build:raw": "vite build",
     "preview": "vite preview",
     "lint": "eslint src --ext .js,.jsx",
     "lint:fast": "eslint src --ext .js,.jsx --cache --cache-location .eslintcache",
@@ -26,6 +27,9 @@
     "generate:all-indexes": "node scripts/generate_all_indexes.js",
     "generate:fraud-patterns-index": "node scripts/generate_fraud_patterns_index.js",
     "generate:affiliate-kpi-index": "node scripts/generate_affiliate_kpi_index.js",
+    "verify:investments": "node scripts/verify_investments_artifacts.js",
+    "verify:data": "node scripts/verify_and_update_data.js",
+    "verify:pages": "npm run verify:data && npm run build:raw && node scripts/verify_pages.js --dist",
     "prepare": "husky"
   },
   "dependencies": {

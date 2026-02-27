@@ -34,6 +34,8 @@ run('generate_rankings_index.js')
 
 run('generate_creolabs_index.js')
 
+run('generate_cellx_affiliate_month.js')
+
 run('generate_share_org_people_index.mjs')
 
 // Generate meta LAST so it captures the freshest data mtimes and acts

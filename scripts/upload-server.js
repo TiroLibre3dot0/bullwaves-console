@@ -268,6 +268,9 @@ async function runPostUploadGenerators(type, emit) {
   const scripts = [
     path.join(__dirname, 'generate_reports_meta.js'),
     path.join(__dirname, 'generate_affiliate_index.js'),
+    // Investments dashboard relies on this precomputed artifact.
+    // It aggregates Media Report.csv into a lightweight CellX affiliate+month table.
+    ...(type === 'media' ? [path.join(__dirname, 'generate_cellx_affiliate_month.js')] : []),
     path.join(__dirname, 'generate_support_users_index.js'),
     path.join(__dirname, 'generate_fraud_patterns_index.js'),
     path.join(__dirname, 'generate_affiliate_kpi_index.js'),

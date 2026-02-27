@@ -17,11 +17,54 @@ const path = require('path')
 const ExcelJS = require('exceljs')
 
 const ROOT_DIR = path.join(__dirname, '..')
-const INPUT_PATH = path.join(ROOT_DIR, 'CREOLABS', 'creolabs breakdown.xlsx')
+const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
+const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'creolabs breakdown.xlsx')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'creolabs_index.json')
 const OUT_TABLE_PATH = path.join(ROOT_DIR, 'public', 'creolabs_clients_table.json')
+const OUT_AFF_MONTH_PATH = path.join(ROOT_DIR, 'public', 'creolabs_affiliate_month.json')
 
 const TOP_N = 50
+
+async function sleep(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function writeFileAtomicWithRetry(filePath, content, {
+  encoding = 'utf8',
+  retries = 6,
+  baseDelayMs = 80,
+} = {}) {
+  const dir = path.dirname(filePath)
+  fs.mkdirSync(dir, { recursive: true })
+
+  const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`
+  let lastErr = null
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      await fs.promises.writeFile(tmpPath, content, { encoding })
+      // rename is atomic on the same volume
+      await fs.promises.rename(tmpPath, filePath)
+      return
+    } catch (e) {
+      lastErr = e
+      try {
+        await fs.promises.unlink(tmpPath)
+      } catch {
+        // ignore
+      }
+
+      // Transient Windows locks often surface as UNKNOWN/EPERM/EBUSY.
+      const code = String(e?.code || '')
+      const transient = code === 'UNKNOWN' || code === 'EBUSY' || code === 'EPERM' || code === 'EACCES'
+      if (!transient || attempt === retries) break
+      const delay = baseDelayMs * Math.pow(2, attempt)
+      await sleep(delay)
+    }
+  }
+
+  throw lastErr
+}
 
 function asString(v) {
   if (v == null) return ''
@@ -61,6 +104,97 @@ function parseNumber(v) {
 function parseYearMonthId(v) {
   const s = asString(v).trim()
   return s
+}
+
+function fallbackPeriodIdFromDate(d) {
+  const date = d instanceof Date ? d : new Date()
+  const year = date.getFullYear()
+  const monNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const mon = monNames[date.getMonth()] || 'Jan'
+  return `${year}-${mon}`
+}
+
+function periodIdFromFilename(filePath) {
+  const base = path.basename(filePath || '')
+  const name = base.replace(/\.[^.]+$/, '')
+  const s = name.replace(/[_]+/g, ' ').replace(/\s+/g, ' ').trim()
+  if (!s) return null
+
+  const monNames = {
+    jan: 'Jan',
+    january: 'Jan',
+    feb: 'Feb',
+    february: 'Feb',
+    mar: 'Mar',
+    march: 'Mar',
+    apr: 'Apr',
+    april: 'Apr',
+    may: 'May',
+    jun: 'Jun',
+    june: 'Jun',
+    jul: 'Jul',
+    july: 'Jul',
+    aug: 'Aug',
+    august: 'Aug',
+    sep: 'Sep',
+    sept: 'Sep',
+    september: 'Sep',
+    oct: 'Oct',
+    october: 'Oct',
+    nov: 'Nov',
+    november: 'Nov',
+    dec: 'Dec',
+    december: 'Dec',
+  }
+
+  // Patterns like 2026-02 or 2026 02
+  const mNum = s.match(/(\d{4})\D{0,3}(0?[1-9]|1[0-2])\b/)
+  if (mNum) {
+    const year = Number(mNum[1])
+    const month = Number(mNum[2])
+    if (Number.isFinite(year) && Number.isFinite(month) && month >= 1 && month <= 12) {
+      const mon = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][month - 1]
+      return `${year}-${mon}`
+    }
+  }
+
+  // Patterns like Feb 2026 / February 2026
+  const mNameFirst = s.match(/\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\D{0,6}(\d{4})\b/i)
+  if (mNameFirst) {
+    const mon = monNames[String(mNameFirst[1]).toLowerCase()]
+    const year = Number(mNameFirst[2])
+    if (mon && Number.isFinite(year)) return `${year}-${mon}`
+  }
+
+  // Patterns like 2026 Feb / 2026 February
+  const mYearFirst = s.match(/\b(\d{4})\b\D{0,6}\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t|tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b/i)
+  if (mYearFirst) {
+    const year = Number(mYearFirst[1])
+    const mon = monNames[String(mYearFirst[2]).toLowerCase()]
+    if (mon && Number.isFinite(year)) return `${year}-${mon}`
+  }
+
+  return null
+}
+
+function listCreolabsInputs() {
+  if (!fs.existsSync(CREOLABS_DIR)) return []
+  const entries = fs.readdirSync(CREOLABS_DIR)
+  const xlsx = entries
+    .filter((n) => /\.xlsx$/i.test(n))
+    .filter((n) => !/^~\$/.test(n))
+    .map((n) => path.join(CREOLABS_DIR, n))
+    .filter((p) => {
+      try {
+        return fs.statSync(p).isFile()
+      } catch {
+        return false
+      }
+    })
+
+  if (xlsx.length) return xlsx.sort((a, b) => a.localeCompare(b))
+  if (fs.existsSync(DEFAULT_INPUT_PATH)) return [DEFAULT_INPUT_PATH]
+  return []
 }
 
 function monthSortKey(id) {
@@ -120,6 +254,7 @@ function serializeAggRow(periodId, r) {
     clientLogin: r.clientLogin,
     clientName: r.clientName,
     affiliateId: r.affiliateId,
+    user: r.user,
     country: r.country,
     brand: r.brand,
     deposit: r.deposit,
@@ -128,122 +263,221 @@ function serializeAggRow(periodId, r) {
     pl: r.pl,
     trades: r.trades,
     balance: r.balance,
+    commission: r.commission,
   }
 }
 
 async function main() {
-  if (!fs.existsSync(INPUT_PATH)) {
-    console.error(`[Creolabs] Missing input XLSX: ${INPUT_PATH}`)
-    process.exit(1)
-  }
-
   const nowIso = new Date().toISOString()
+  const inputFiles = listCreolabsInputs()
+  if (!inputFiles.length) {
+    // Treat Creolabs inputs as optional in multi-project environments.
+    // Write empty artifacts so builds/dev servers don't fail just because
+    // the XLSX isn't present on a given machine.
+    console.warn(`[Creolabs] No input XLSX files found under: ${CREOLABS_DIR}`)
+    console.warn(`[Creolabs] Writing empty artifacts (expected at least one .xlsx, e.g. ${DEFAULT_INPUT_PATH})`)
+
+    const emptySource = null
+    const emptyIndex = {
+      version: 1,
+      generatedAt: nowIso,
+      source: emptySource,
+      topN: TOP_N,
+      now: nowIso,
+      reportPeriods: [],
+      leaderboardOrder: [],
+      leaderboards: {},
+      stats: {
+        totalRows: 0,
+        dataRows: 0,
+        periods: 0,
+        inputFiles: 0,
+        derivedSnapshotDeltas: false,
+      },
+    }
+
+    const emptyTable = {
+      version: 1,
+      generatedAt: nowIso,
+      source: emptySource,
+      now: nowIso,
+      rows: [],
+      stats: {
+        totalRows: 0,
+        dataRows: 0,
+        periods: 0,
+        clientsRows: 0,
+        inputFiles: 0,
+      },
+    }
+
+    const emptyAffMonth = {
+      version: 1,
+      generatedAt: nowIso,
+      source: emptySource,
+      now: nowIso,
+      rows: [],
+      stats: {
+        totalRows: 0,
+        dataRows: 0,
+        periods: 0,
+        rows: 0,
+        inputFiles: 0,
+      },
+    }
+
+    fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true })
+    await writeFileAtomicWithRetry(OUT_PATH, JSON.stringify(emptyIndex, null, 2), { encoding: 'utf8' })
+    await writeFileAtomicWithRetry(OUT_TABLE_PATH, JSON.stringify(emptyTable), { encoding: 'utf8' })
+    await writeFileAtomicWithRetry(OUT_AFF_MONTH_PATH, JSON.stringify(emptyAffMonth), { encoding: 'utf8' })
+
+    console.log(`[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_PATH)} (periods=0)`)
+    console.log(`[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_TABLE_PATH)} (rows=0)`)
+    console.log(`[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_AFF_MONTH_PATH)} (rows=0)`)
+    return
+  }
 
   // periodId -> clientKey -> agg
   const aggByPeriod = new Map()
   const periodSet = new Set()
 
-  let headers = null
-  let headerToIdx = null
+  // If the worksheet provides an explicit period column, we treat values as already monthly.
+  // If it doesn't and we have multiple XLSX files (one per month snapshot), we can derive
+  // monthly deltas from cumulative snapshots.
+  let sawExplicitPeriod = false
+
   let totalRows = 0
   let dataRows = 0
 
-  const workbook = new ExcelJS.stream.xlsx.WorkbookReader(INPUT_PATH, {
-    entries: 'emit',
-    sharedStrings: 'cache',
-    styles: 'cache',
-    worksheets: 'emit',
-  })
+  for (const inputPath of inputFiles) {
+    let headers = null
+    let headerToIdx = null
 
-  for await (const worksheetReader of workbook) {
-    // Use the first sheet only.
-    for await (const row of worksheetReader) {
-      totalRows += 1
-      const values = Array.isArray(row.values) ? row.values.slice(1) : []
-
-      if (!headers) {
-        headers = values.map((v) => asString(v).trim())
-        headerToIdx = new Map(headers.map((h, i) => [normHeader(h), i]))
-        continue
-      }
-
-      const get = (name) => {
-        if (!headerToIdx) return ''
-        const idx = headerToIdx.get(normHeader(name))
-        return idx == null ? '' : values[idx]
-      }
-
-      const yearMonth = parseYearMonthId(get('Year Month'))
-      if (!yearMonth) continue
-
-      const clientId = pickTitleCase(get('Client ID'))
-      const clientLogin = pickTitleCase(get('Client LOGIN'))
-      const clientName = pickTitleCase(get('Client Name'))
-      const clientKey = getClientKey({ clientId, clientLogin, clientName })
-
-      const affiliateId = asString(get('Affiliate ID')).trim()
-      const country = asString(get('Country')).trim()
-      const brand = asString(get('Brand')).trim()
-
-      const deposit = parseNumber(get('$ Deposit'))
-      const wd = parseNumber(get('$ WD'))
-      const net = parseNumber(get('$ Net'))
-      const trades = Math.max(0, Math.floor(parseNumber(get('# Trades'))))
-
-      // Prefer explicit $ PL; else Closed+Open.
-      const plExplicit = parseNumber(get('$ PL'))
-      const closedPl = parseNumber(get('$ Closed PL'))
-      const openPl = parseNumber(get('$ Open PL'))
-      const pl = plExplicit || closedPl + openPl
-
-      const balance = parseNumber(get('$ Balance'))
-
-      periodSet.add(yearMonth)
-      dataRows += 1
-
-      let per = aggByPeriod.get(yearMonth)
-      if (!per) {
-        per = new Map()
-        aggByPeriod.set(yearMonth, per)
-      }
-
-      let agg = per.get(clientKey)
-      if (!agg) {
-        agg = {
-          clientId,
-          clientLogin,
-          clientName,
-          affiliateId,
-          country,
-          brand,
-          deposit: 0,
-          wd: 0,
-          net: 0,
-          pl: 0,
-          trades: 0,
-          balance: 0,
-        }
-        per.set(clientKey, agg)
-      }
-
-      // Keep most descriptive identity fields if present.
-      if (clientId !== '—' && agg.clientId === '—') agg.clientId = clientId
-      if (clientLogin !== '—' && agg.clientLogin === '—') agg.clientLogin = clientLogin
-      if (clientName !== '—' && agg.clientName === '—') agg.clientName = clientName
-      if (affiliateId && !agg.affiliateId) agg.affiliateId = affiliateId
-      if (country && !agg.country) agg.country = country
-      if (brand && !agg.brand) agg.brand = brand
-
-      agg.deposit += deposit
-      agg.wd += wd
-      agg.net += net
-      agg.pl += pl
-      agg.trades += trades
-      // Balance isn't additive, but summing is still a stable proxy; keep last non-zero.
-      if (balance) agg.balance = balance
+    let mtime = null
+    try {
+      mtime = fs.statSync(inputPath)?.mtime
+    } catch {
+      mtime = null
     }
+    const filePeriodFallback = periodIdFromFilename(inputPath) || fallbackPeriodIdFromDate(mtime || new Date())
 
-    break
+    const workbook = new ExcelJS.stream.xlsx.WorkbookReader(inputPath, {
+      entries: 'emit',
+      sharedStrings: 'cache',
+      styles: 'cache',
+      worksheets: 'emit',
+    })
+
+    for await (const worksheetReader of workbook) {
+      // Use the first sheet only.
+      for await (const row of worksheetReader) {
+        totalRows += 1
+        const values = Array.isArray(row.values) ? row.values.slice(1) : []
+
+        if (!headers) {
+          headers = values.map((v) => asString(v).trim())
+          headerToIdx = new Map(headers.map((h, i) => [normHeader(h), i]))
+          continue
+        }
+
+        const get = (name) => {
+          if (!headerToIdx) return ''
+          const idx = headerToIdx.get(normHeader(name))
+          return idx == null ? '' : values[idx]
+        }
+
+        // Newer Creolabs exports can omit the (Year Month) column (all-time snapshot).
+        // In that case, treat the whole file as a single synthetic period.
+        // Prefer inferring the period from the filename, falling back to file mtime.
+        const yearMonthRaw =
+          get('Year Month') ||
+          get('YearMonth') ||
+          get('Period') ||
+          get('Month') ||
+          get('Report Month')
+
+        const explicitPeriod = parseYearMonthId(yearMonthRaw)
+        if (explicitPeriod) sawExplicitPeriod = true
+        const yearMonth = explicitPeriod || filePeriodFallback
+
+        const clientId = pickTitleCase(get('Client ID'))
+        const clientLogin = pickTitleCase(get('Client LOGIN'))
+        const clientName = pickTitleCase(get('Client Name'))
+        const clientKey = getClientKey({ clientId, clientLogin, clientName })
+
+        const affiliateId = asString(get('Affiliate ID')).trim()
+        const user = asString(get('User')).trim()
+        const country = asString(get('Country')).trim()
+        const brand = asString(get('Brand')).trim()
+
+        // Cost/commission proxy coming from Creolabs breakdown.
+        // Column name in XLSX: 'LTV Commission'
+        const commission = parseNumber(get('LTV Commission'))
+
+        const deposit = parseNumber(get('$ Deposit'))
+        const wd = parseNumber(get('$ WD'))
+        const net = parseNumber(get('$ Net'))
+        const trades = Math.max(0, Math.floor(parseNumber(get('# Trades'))))
+
+        // Prefer explicit $ PL; else Closed+Open.
+        const plExplicit = parseNumber(get('$ PL'))
+        const closedPl = parseNumber(get('$ Closed PL'))
+        const openPl = parseNumber(get('$ Open PL'))
+        const pl = plExplicit || closedPl + openPl
+
+        const balance = parseNumber(get('$ Balance'))
+
+        periodSet.add(yearMonth)
+        dataRows += 1
+
+        let per = aggByPeriod.get(yearMonth)
+        if (!per) {
+          per = new Map()
+          aggByPeriod.set(yearMonth, per)
+        }
+
+        let agg = per.get(clientKey)
+        if (!agg) {
+          agg = {
+            clientId,
+            clientLogin,
+            clientName,
+            affiliateId,
+            user,
+            country,
+            brand,
+            deposit: 0,
+            wd: 0,
+            net: 0,
+            pl: 0,
+            trades: 0,
+            balance: 0,
+            commission: 0,
+          }
+          per.set(clientKey, agg)
+        }
+
+        // Keep most descriptive identity fields if present.
+        if (clientId !== '—' && agg.clientId === '—') agg.clientId = clientId
+        if (clientLogin !== '—' && agg.clientLogin === '—') agg.clientLogin = clientLogin
+        if (clientName !== '—' && agg.clientName === '—') agg.clientName = clientName
+        if (affiliateId && !agg.affiliateId) agg.affiliateId = affiliateId
+        if (user && !agg.user) agg.user = user
+        if (country && !agg.country) agg.country = country
+        if (brand && !agg.brand) agg.brand = brand
+
+        agg.deposit += deposit
+        agg.wd += wd
+        agg.net += net
+        agg.pl += pl
+        agg.trades += trades
+        agg.commission += commission
+        // Balance isn't additive, but summing is still a stable proxy; keep last non-zero.
+        if (balance) agg.balance = balance
+      }
+
+      break
+    }
   }
 
   const periods = [...periodSet]
@@ -259,6 +493,7 @@ async function main() {
   const leaderboardOrder = ['net', 'pl', 'deposit', 'trades']
   const leaderboards = {}
   const clientsTableRows = []
+  const affiliateMonthRows = []
 
   for (const periodId of periods) {
     const per = aggByPeriod.get(periodId)
@@ -270,6 +505,23 @@ async function main() {
 
     for (const r of list) {
       clientsTableRows.push(serializeAggRow(periodId, r))
+    }
+
+    // Pre-aggregate by affiliate/month to avoid shipping the huge clients table to pages
+    // (e.g. Unified view) that only need affiliate-level monthly metrics.
+    const byAffiliate = new Map()
+    for (const r of list) {
+      const affiliateId = String(r?.affiliateId || '—').trim() || '—'
+      if (!byAffiliate.has(affiliateId)) {
+        byAffiliate.set(affiliateId, { affiliateId, net: 0, pl: 0, commission: 0 })
+      }
+      const acc = byAffiliate.get(affiliateId)
+      acc.net += Number(r?.net || 0) || 0
+      acc.pl += Number(r?.pl || 0) || 0
+      acc.commission += Number(r?.commission || 0) || 0
+    }
+    for (const acc of byAffiliate.values()) {
+      affiliateMonthRows.push({ periodId, affiliateId: acc.affiliateId, net: acc.net, pl: acc.pl, commission: acc.commission })
     }
 
     const byNet = [...list].sort((a, b) => sortDescNumber(a.net, b.net)).slice(0, TOP_N)
@@ -289,10 +541,51 @@ async function main() {
     }
   }
 
+  const derivedSnapshotDeltas = !sawExplicitPeriod && inputFiles.length > 1 && periods.length > 1
+  if (derivedSnapshotDeltas) {
+    const periodIndex = new Map(periods.map((id, idx) => [id, idx]))
+    const byAffiliate = new Map()
+    for (const row of affiliateMonthRows) {
+      const affiliateId = String(row?.affiliateId || '—').trim() || '—'
+      if (!byAffiliate.has(affiliateId)) byAffiliate.set(affiliateId, [])
+      byAffiliate.get(affiliateId).push(row)
+    }
+
+    for (const rows of byAffiliate.values()) {
+      rows.sort((a, b) => {
+        const ia = periodIndex.get(a.periodId)
+        const ib = periodIndex.get(b.periodId)
+        if (ia != null && ib != null) return ia - ib
+        return String(a.periodId).localeCompare(String(b.periodId))
+      })
+
+      let prevNet = 0
+      let prevPl = 0
+      let prevCommission = 0
+
+      for (const r of rows) {
+        const curNet = Number(r?.net || 0) || 0
+        const curPl = Number(r?.pl || 0) || 0
+        const curCommission = Number(r?.commission || 0) || 0
+
+        r.net = curNet - prevNet
+        r.pl = curPl - prevPl
+        r.commission = curCommission - prevCommission
+
+        prevNet = curNet
+        prevPl = curPl
+        prevCommission = curCommission
+      }
+    }
+  }
+
   const out = {
     version: 1,
     generatedAt: nowIso,
-    source: 'CREOLABS/creolabs breakdown.xlsx',
+    source:
+      inputFiles.length === 1
+        ? `CREOLABS/${path.basename(inputFiles[0])}`
+        : inputFiles.map((p) => `CREOLABS/${path.basename(p)}`),
     topN: TOP_N,
     now: nowIso,
     reportPeriods,
@@ -302,17 +595,19 @@ async function main() {
       totalRows,
       dataRows,
       periods: periods.length,
+      inputFiles: inputFiles.length,
+      derivedSnapshotDeltas,
     },
   }
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true })
-  fs.writeFileSync(OUT_PATH, JSON.stringify(out, null, 2), 'utf8')
+  await writeFileAtomicWithRetry(OUT_PATH, JSON.stringify(out, null, 2), { encoding: 'utf8' })
   console.log(`[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_PATH)} (periods=${periods.length})`)
 
   const tableOut = {
     version: 1,
     generatedAt: nowIso,
-    source: 'CREOLABS/creolabs breakdown.xlsx',
+    source: out.source,
     now: nowIso,
     rows: clientsTableRows,
     stats: {
@@ -320,12 +615,33 @@ async function main() {
       dataRows,
       periods: periods.length,
       clientsRows: clientsTableRows.length,
+      inputFiles: inputFiles.length,
     },
   }
 
-  fs.writeFileSync(OUT_TABLE_PATH, JSON.stringify(tableOut), 'utf8')
+  await writeFileAtomicWithRetry(OUT_TABLE_PATH, JSON.stringify(tableOut), { encoding: 'utf8' })
   console.log(
     `[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_TABLE_PATH)} (rows=${clientsTableRows.length})`
+  )
+
+  const affMonthOut = {
+    version: 1,
+    generatedAt: nowIso,
+    source: out.source,
+    now: nowIso,
+    rows: affiliateMonthRows,
+    stats: {
+      totalRows,
+      dataRows,
+      periods: periods.length,
+      rows: affiliateMonthRows.length,
+      inputFiles: inputFiles.length,
+    },
+  }
+
+  await writeFileAtomicWithRetry(OUT_AFF_MONTH_PATH, JSON.stringify(affMonthOut), { encoding: 'utf8' })
+  console.log(
+    `[Creolabs] Wrote ${path.relative(ROOT_DIR, OUT_AFF_MONTH_PATH)} (rows=${affiliateMonthRows.length})`
   )
 }
 

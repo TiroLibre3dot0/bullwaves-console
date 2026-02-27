@@ -18,7 +18,52 @@ const regsFile = path.join(base, 'public', 'Registrations Report.csv')
 const paymentsFile = path.join(base, 'public', 'Payments Report.csv')
 const mediaFile = path.join(base, 'public', 'Media Report.csv')
 
-if (!fs.existsSync(regsFile)) { console.error('Registrations file missing:', regsFile); process.exit(2) }
+function writeEmptyArtifacts(reason) {
+  const summary = {
+    total_users: 0,
+    total_accounts: 0,
+    users_with_multiple_accounts: 0,
+    users_with_ftd: 0,
+    users_with_qftd: 0,
+    reason: reason || 'missing source',
+  }
+
+  const outPath = path.join(base, 'public', 'fraud_monitor_summary.json')
+  fs.writeFileSync(outPath, JSON.stringify({ summary, sample_multi_users: [] }, null, 2))
+  console.log('Wrote summary to', outPath)
+
+  const usersCsvPath = path.join(base, 'public', 'fraud_monitor_user_flags.csv')
+  fs.writeFileSync(usersCsvPath, Papa.unparse([]))
+  console.log('Wrote per-user CSV to', usersCsvPath)
+
+  const groupsOut = path.join(base, 'public', 'fraud_monitor_name_groups.json')
+  fs.writeFileSync(groupsOut, JSON.stringify({ total_name_country_groups: 0, multi_groups: 0, groups: [] }, null, 2))
+  console.log('Wrote name+country groups to', groupsOut)
+
+  const groupsCsvPath = path.join(base, 'public', 'fraud_monitor_name_groups.csv')
+  fs.writeFileSync(groupsCsvPath, Papa.unparse([]))
+  console.log('Wrote name+country groups CSV to', groupsCsvPath)
+
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"><title>Fraud Monitor Dashboard</title></head><body>
+<h1>Fraud Monitor Summary</h1>
+<pre id="summary"></pre>
+<p>${String(reason || '').replace(/</g, '&lt;')}</p>
+<script>
+fetch('/fraud_monitor_summary.json').then(r=>r.json()).then(s=>{
+  document.getElementById('summary').innerText = JSON.stringify(s.summary, null, 2)
+}).catch(e=>{document.getElementById('summary').innerText = 'Error loading data: '+e})
+</script>
+</body></html>`
+  fs.writeFileSync(path.join(base, 'public', 'fraud_dashboard.html'), html)
+  console.log('Wrote simple dashboard to public/fraud_dashboard.html')
+}
+
+if (!fs.existsSync(regsFile)) {
+  console.warn('Registrations file missing:', regsFile)
+  writeEmptyArtifacts('Registrations Report.csv missing')
+  process.exit(0)
+}
 const regs = readCsv(regsFile).map(r => toLowerKeys(r))
 const payments = fs.existsSync(paymentsFile) ? readCsv(paymentsFile).map(r => toLowerKeys(r)) : []
 const media = fs.existsSync(mediaFile) ? readCsv(mediaFile).map(r => toLowerKeys(r)) : []
