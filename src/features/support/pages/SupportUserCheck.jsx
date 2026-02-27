@@ -395,6 +395,32 @@ export default function SupportUserCheck({ shareConfig = null }) {
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
 
+  // If reports are re-uploaded while this page is open, invalidate the per-query
+  // cache so the next search reflects the new `support_users_index.json`.
+  useEffect(() => {
+    const onReportsUpdated = () => {
+      try {
+        cacheRef.current?.clear?.()
+      } catch {
+        // ignore
+      }
+
+      const trimmed = String(query || '').trim()
+      if (trimmed) runSearch(trimmed)
+    }
+
+    const onStorage = (e) => {
+      if (!e || e.key === 'bw_reports_version') onReportsUpdated()
+    }
+
+    window.addEventListener('bw-reports-updated', onReportsUpdated)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener('bw-reports-updated', onReportsUpdated)
+      window.removeEventListener('storage', onStorage)
+    }
+  }, [query])
+
   const [botCandidates, setBotCandidates] = useState([])
   const [botCandidatesLoading, setBotCandidatesLoading] = useState(false)
   const [botHoverIndex, setBotHoverIndex] = useState(null)
