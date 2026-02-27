@@ -58,3 +58,6 @@ public/support_users_index.json
 
 # Local build debug output
 build_debug.txt
+
+# Temporary generator logs
+tmp-*.log
