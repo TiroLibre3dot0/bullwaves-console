@@ -1513,13 +1513,27 @@ function readPositionCount(row) {
 }
 
 function computeAgeDaysFromRow(row, now) {
-  const regRaw = pickRowValue(row, [
-    'registrationdate',
-    'registration_date',
-    'externaldate',
-    'external_date',
-    'regdate',
-  ])
+  // IMPORTANT:
+  // Rows are typically normalized by loadCsvRows(): keys are lowercase alphanum
+  // (e.g. "registration_at" -> "registrationat", "registeredAt" -> "registeredat").
+  // The Support UI accepts several registration date variants; keep this aligned
+  // so bot/EA intensity (ageDays + positions/day) doesn't silently degrade.
+  const regRaw =
+    pickRowValueByPrefix(row, [
+      'registrationdate',
+      'regdate',
+      'externaldate',
+      'registered',
+      'registeredat',
+      'registrationat',
+    ]) ||
+    pickRowValue(row, [
+      // legacy / non-normalized fallbacks (defensive)
+      'registration_date',
+      'external_date',
+      'registeredAt',
+      'registration_at',
+    ])
   const dt = parseFlexibleDate(regRaw)
   if (!dt) return null
   const ms = (now || new Date()).getTime() - dt.getTime()
@@ -1540,8 +1554,11 @@ export function computeActivityIntelligence(row, now = new Date()) {
   // not volume and not lots. If the report doesn't provide it reliably, leave it unknown.
   const positions = readPositionCount(row)
   const ageDays = computeAgeDaysFromRow(row, now)
-  const safeAge = ageDays || 1
-  const positionsPerDay = positions != null && positions > 0 ? positions / safeAge : null
+  // If age is unknown, positions/day is unknown (do not assume 1 day).
+  const positionsPerDay =
+    positions != null && positions > 0 && ageDays != null && ageDays > 0
+      ? positions / ageDays
+      : null
 
   const totalDeposits = toNum(
     pickRowValue(row, ['totaldeposits', 'total_deposits', 'totaldeposit', 'total_deposit'])

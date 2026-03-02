@@ -394,6 +394,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
   const cacheRef = useRef(new Map())
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
+  const [botRefreshNonce, setBotRefreshNonce] = useState(0)
 
   // If reports are re-uploaded while this page is open, invalidate the per-query
   // cache so the next search reflects the new `support_users_index.json`.
@@ -404,6 +405,9 @@ export default function SupportUserCheck({ shareConfig = null }) {
       } catch {
         // ignore
       }
+
+      // Also refresh the default bot/EA triage list.
+      setBotRefreshNonce((x) => x + 1)
 
       const trimmed = String(query || '').trim()
       if (trimmed) runSearch(trimmed)
@@ -719,7 +723,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
         // ignore
       }
     }
-  }, [])
+  }, [botRefreshNonce])
 
   function compactDateLabel(s) {
     const raw = String(s || '').trim()
