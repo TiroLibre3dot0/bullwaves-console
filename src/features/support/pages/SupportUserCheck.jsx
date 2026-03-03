@@ -239,9 +239,6 @@ export default function SupportUserCheck({ shareConfig = null }) {
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
 
-  const [resultsFilter, setResultsFilter] = useState('all')
-  const [browseDays, setBrowseDays] = useState(14)
-
   // Avoid blocking initial render with heavy CSV work; show the UI immediately.
   const [initializing, setInitializing] = useState(false)
 
@@ -355,42 +352,6 @@ export default function SupportUserCheck({ shareConfig = null }) {
     () => (results || []).map((r) => ({ raw: r, mapped: getMapped(r) })),
     [results]
   )
-
-  const filteredResults = useMemo(() => {
-    if (!mappedResults || mappedResults.length === 0) return []
-    if (!resultsFilter || resultsFilter === 'all') return mappedResults
-
-    const hasFtd = (m) => {
-      if (!m) return false
-      const firstDeposit = String(m.firstDeposit || '').trim()
-      const depositCount = toNum(m.depositCount)
-      const totalDeposits = toNum(m.totalDeposits)
-      const netDeposits = toNum(m.netDeposits)
-      return Boolean(firstDeposit) || depositCount > 0 || totalDeposits > 0 || netDeposits > 0
-    }
-
-    const isQualified = (m) => {
-      if (!m) return false
-      const q = String(m.qualificationDate || '').trim()
-      return Boolean(q)
-    }
-
-    const hasRegistration = (m) => {
-      if (!m) return false
-      const r = String(m.regDate || '').trim()
-      return Boolean(r)
-    }
-
-    if (resultsFilter === 'registeredNoDeposit') {
-      return mappedResults.filter(({ mapped }) => hasRegistration(mapped) && !hasFtd(mapped))
-    }
-
-    if (resultsFilter === 'ftdNotQualified') {
-      return mappedResults.filter(({ mapped }) => hasFtd(mapped) && !isQualified(mapped))
-    }
-
-    return mappedResults
-  }, [mappedResults, resultsFilter])
   const cacheRef = useRef(new Map())
   const debounceRef = useRef(null)
   const [hoverIndex, setHoverIndex] = useState(null)
@@ -503,80 +464,6 @@ export default function SupportUserCheck({ shareConfig = null }) {
       window.open(href, '_blank', 'noopener,noreferrer')
     } catch {
       // ignore
-    }
-  }
-
-  const hasFtdFromRow = (row) => {
-    if (!row) return false
-    const firstDeposit = String(pickField(row, FIRST_DEPOSIT_KEYS) || '').trim()
-    const firstDepositDate = String(pickField(row, FIRST_DEPOSIT_DATE_KEYS) || '').trim()
-    const depositCount = toNum(pickField(row, DEPOSIT_COUNT_KEYS))
-    const totalDeposits = toNum(pickField(row, TOTAL_DEPOSITS_KEYS))
-    const netDeposits = toNum(pickField(row, NET_DEPOSITS_KEYS))
-    return (
-      Boolean(firstDeposit) ||
-      Boolean(firstDepositDate) ||
-      depositCount > 0 ||
-      totalDeposits > 0 ||
-      netDeposits > 0
-    )
-  }
-
-  const isQualifiedFromRow = (row) => {
-    if (!row) return false
-    const q = String(pickField(row, QUALIFY_KEYS) || '').trim()
-    return Boolean(q)
-  }
-
-  const hasRegistrationFromRow = (row) => {
-    if (!row) return false
-    const r = String(pickField(row, REGDATE_KEYS) || '').trim()
-    return Boolean(r)
-  }
-
-  const runBrowse = async (segment) => {
-    const nextSegment = segment || 'registeredNoDeposit'
-    const days = Number(browseDays) || 14
-
-    setLoading(true)
-    setSearched(true)
-    setSelectedRaw(null)
-    setResultsFilter(nextSegment)
-
-    try {
-      const rows = await loadCsvRows()
-      const now = Date.now()
-      const minTs = now - days * 24 * 60 * 60 * 1000
-
-      const candidates = []
-      for (const row of rows || []) {
-        const regStr = pickField(row, REGDATE_KEYS)
-        const regTs = parseDateToTs(regStr)
-        if (!regTs || regTs < minTs) continue
-
-        if (nextSegment === 'registeredNoDeposit') {
-          if (!hasRegistrationFromRow(row)) continue
-          if (hasFtdFromRow(row)) continue
-          candidates.push({ row, regTs })
-          continue
-        }
-
-        if (nextSegment === 'ftdNotQualified') {
-          if (!hasFtdFromRow(row)) continue
-          if (isQualifiedFromRow(row)) continue
-          candidates.push({ row, regTs })
-          continue
-        }
-      }
-
-      candidates.sort((a, b) => b.regTs - a.regTs)
-      const limited = candidates.slice(0, 500).map((c) => c.row)
-      setResults(limited)
-    } catch (err) {
-      console.error('Failed to build browse list', err)
-      setResults([])
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -1114,14 +1001,14 @@ export default function SupportUserCheck({ shareConfig = null }) {
 
   // sort mapped results by numeric total deposits (descending) to surface biggest depositors first
   const sortedResults = useMemo(() => {
-    if (!filteredResults || filteredResults.length === 0) return []
+    if (!mappedResults || mappedResults.length === 0) return []
     // create shallow copy and sort by mapped.depositNum (precomputed) falling back to parsed value
-    return filteredResults.slice().sort((a, b) => {
+    return mappedResults.slice().sort((a, b) => {
       const aNum = (a?.mapped?.depositNum ?? toNum(a?.mapped?.totalDeposits)) || 0
       const bNum = (b?.mapped?.depositNum ?? toNum(b?.mapped?.totalDeposits)) || 0
       return bNum - aNum
     })
-  }, [filteredResults])
+  }, [mappedResults])
 
   const resultsToShow = sortedResults.length > 0 ? sortedResults.slice(0, 15) : []
 
@@ -1355,70 +1242,6 @@ export default function SupportUserCheck({ shareConfig = null }) {
                   </div>
                 )}
 
-                {showHero && (
-                  <div
-                    style={{
-                      marginTop: 14,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 10,
-                      flexWrap: 'wrap',
-                      opacity: 0.95,
-                    }}
-                  >
-                    <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--muted)' }}>
-                      Liste retention
-                    </div>
-                    <select
-                      value={browseDays}
-                      onChange={(e) => setBrowseDays(Number(e.target.value) || 14)}
-                      style={{
-                        padding: '8px 10px',
-                        borderRadius: 10,
-                        border: '1px solid rgba(148,163,184,0.22)',
-                        background: 'rgba(2,6,23,0.35)',
-                        color: 'rgba(255,255,255,0.92)',
-                        fontSize: 12,
-                        fontWeight: 800,
-                        outline: 'none',
-                      }}
-                      aria-label="Retention timeframe"
-                    >
-                      <option value={7}>Ultimi 7 giorni</option>
-                      <option value={14}>Ultimi 14 giorni</option>
-                      <option value={30}>Ultimi 30 giorni</option>
-                      <option value={90}>Ultimi 90 giorni</option>
-                    </select>
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => runBrowse('registeredNoDeposit')}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 900,
-                      }}
-                    >
-                      Registrati · 0 depositi
-                    </button>
-                    <button
-                      type="button"
-                      className="btn secondary"
-                      onClick={() => runBrowse('ftdNotQualified')}
-                      style={{
-                        padding: '8px 12px',
-                        borderRadius: 999,
-                        fontSize: 12,
-                        fontWeight: 900,
-                      }}
-                    >
-                      FTD · non qualificati
-                    </button>
-                  </div>
-                )}
-
                 {/* secondary placeholder inside input - muted examples */}
                 {/* examples removed as secondary placeholder per request */}
               </div>
@@ -1648,127 +1471,110 @@ export default function SupportUserCheck({ shareConfig = null }) {
                               >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                   <div
-                                    style={{
-                                      width: 26,
-                                      height: 26,
-                                      borderRadius: 9,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontSize: 11,
-                                      fontWeight: 900,
-                                      color: 'rgba(255,255,255,0.8)',
-                                      background: 'rgba(148,163,184,0.10)',
-                                      border: '1px solid rgba(148,163,184,0.16)',
-                                    }}
-                                  >
-                                    {i + 1}
-                                  </div>
-                                  <span
                                     aria-hidden
                                     style={{
-                                      width: 8,
-                                      height: 8,
+                                      width: 10,
+                                      height: 10,
                                       borderRadius: 999,
                                       background: dot.color,
                                       boxShadow: dot.shadow,
-                                    }}
-                                    title={`${t('support.userCheck.botList.riskScore')}: ${Number(intel?.botScore || 0).toFixed(0)}`}
-                                  />
-                                </div>
-
-                                <div
-                                  style={{
-                                    minWidth: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 10,
-                                  }}
-                                >
-                                  <div
-                                    style={{
-                                      width: 34,
-                                      height: 34,
-                                      borderRadius: 12,
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontWeight: 900,
-                                      fontSize: 12,
-                                      color: '#fff',
-                                      background:
-                                        'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(2,6,23,0.15))',
-                                      border: '1px solid rgba(99,102,241,0.22)',
                                       flex: '0 0 auto',
                                     }}
+                                  />
+
+                                  <div
+                                    style={{
+                                      minWidth: 0,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 10,
+                                    }}
                                   >
-                                    {initialsFor(mapped)}
-                                  </div>
-                                  <div style={{ minWidth: 0 }}>
                                     <div
                                       style={{
+                                        width: 34,
+                                        height: 34,
+                                        borderRadius: 12,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: 8,
-                                        minWidth: 0,
+                                        justifyContent: 'center',
+                                        fontWeight: 900,
+                                        fontSize: 12,
+                                        color: '#fff',
+                                        background:
+                                          'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(2,6,23,0.15))',
+                                        border: '1px solid rgba(99,102,241,0.22)',
+                                        flex: '0 0 auto',
                                       }}
                                     >
+                                      {initialsFor(mapped)}
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
                                       <div
                                         style={{
-                                          fontWeight: 950,
-                                          fontSize: 13,
-                                          color: 'rgba(255,255,255,0.92)',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis',
-                                          whiteSpace: 'nowrap',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          gap: 8,
                                           minWidth: 0,
                                         }}
                                       >
-                                        {name}
+                                        <div
+                                          style={{
+                                            fontWeight: 950,
+                                            fontSize: 13,
+                                            color: 'rgba(255,255,255,0.92)',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            minWidth: 0,
+                                          }}
+                                        >
+                                          {name}
+                                        </div>
+                                        <span
+                                          style={{
+                                            fontSize: 10,
+                                            fontWeight: 950,
+                                            padding: '2px 8px',
+                                            borderRadius: 999,
+                                            border: isBot
+                                              ? '1px solid rgba(239,68,68,0.35)'
+                                              : '1px solid rgba(148,163,184,0.24)',
+                                            background: isBot
+                                              ? 'rgba(239,68,68,0.12)'
+                                              : 'rgba(148,163,184,0.10)',
+                                            color: isBot ? '#fecaca' : 'rgba(255,255,255,0.70)',
+                                            flex: '0 0 auto',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 0.35,
+                                          }}
+                                          title={
+                                            isBot
+                                              ? t('support.userCheck.botList.badge.botHint')
+                                              : t('support.userCheck.botList.badge.fillHint')
+                                          }
+                                        >
+                                          {isBot
+                                            ? t('support.userCheck.botList.badge.bot')
+                                            : t('support.userCheck.botList.badge.fill')}
+                                        </span>
                                       </div>
-                                      <span
+                                      <div
+                                        className="bot-top10-only-compact"
                                         style={{
-                                          fontSize: 10,
-                                          fontWeight: 950,
-                                          padding: '2px 8px',
-                                          borderRadius: 999,
-                                          border: isBot
-                                            ? '1px solid rgba(239,68,68,0.35)'
-                                            : '1px solid rgba(148,163,184,0.24)',
-                                          background: isBot
-                                            ? 'rgba(239,68,68,0.12)'
-                                            : 'rgba(148,163,184,0.10)',
-                                          color: isBot ? '#fecaca' : 'rgba(255,255,255,0.70)',
-                                          flex: '0 0 auto',
-                                          textTransform: 'uppercase',
-                                          letterSpacing: 0.35,
+                                          marginTop: 2,
+                                          color: 'rgba(255,255,255,0.55)',
+                                          fontSize: 11,
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
                                         }}
-                                        title={
-                                          isBot
-                                            ? t('support.userCheck.botList.badge.botHint')
-                                            : t('support.userCheck.botList.badge.fillHint')
-                                        }
                                       >
-                                        {isBot
-                                          ? t('support.userCheck.botList.badge.bot')
-                                          : t('support.userCheck.botList.badge.fill')}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="bot-top10-only-compact"
-                                      style={{
-                                        marginTop: 2,
-                                        color: 'rgba(255,255,255,0.55)',
-                                        fontSize: 11,
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      {affLabel !== '—'
-                                        ? affLabel
-                                        : t('support.details.noAffiliate')}
-                                      {regLabel && regLabel !== '—' ? ` · ${regLabel}` : ''}
+                                        {affLabel !== '—'
+                                          ? affLabel
+                                          : t('support.details.noAffiliate')}
+                                        {regLabel && regLabel !== '—' ? ` · ${regLabel}` : ''}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
@@ -1912,32 +1718,7 @@ export default function SupportUserCheck({ shareConfig = null }) {
                       marginBottom: 10,
                     }}
                   >
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}
-                    >
-                      <div style={{ fontSize: 12, fontWeight: 900, color: 'var(--muted)' }}>
-                        Filtro
-                      </div>
-                      <select
-                        value={resultsFilter}
-                        onChange={(e) => setResultsFilter(e.target.value)}
-                        style={{
-                          padding: '8px 10px',
-                          borderRadius: 10,
-                          border: '1px solid rgba(148,163,184,0.22)',
-                          background: 'rgba(2,6,23,0.35)',
-                          color: 'rgba(255,255,255,0.92)',
-                          fontSize: 12,
-                          fontWeight: 800,
-                          outline: 'none',
-                        }}
-                        aria-label="Results filter"
-                      >
-                        <option value="all">Tutti</option>
-                        <option value="registeredNoDeposit">Registrati, 0 depositi</option>
-                        <option value="ftdNotQualified">FTD, non qualificati</option>
-                      </select>
-                    </div>
+                    <div />
                     <div style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 800 }}>
                       {sortedResults.length.toLocaleString()} results
                     </div>
