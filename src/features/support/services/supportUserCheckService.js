@@ -81,6 +81,137 @@ function digitsOnly(s) {
   return d || ''
 }
 
+function stripOuterQuotes(value) {
+  if (value == null) return ''
+  let s = String(value)
+  // Strip BOM if present
+  if (s.charCodeAt(0) === 0xfeff) s = s.slice(1)
+  s = s.trim()
+  // Remove spurious surrounding quotes (common in malformed CSV exports)
+  s = s.replace(/^"+|"+$/g, '').trim()
+  return s
+}
+
+function rowNonEmptyScore(row) {
+  if (!row || typeof row !== 'object') return 0
+  let score = 0
+  for (const k of Object.keys(row)) {
+    if (k && String(k).startsWith('__')) continue
+    const v = row[k]
+    if (v !== undefined && v !== null && String(v).trim() !== '') score += 1
+  }
+  return score
+}
+
+function addIndex(map, key, idx) {
+  if (!map || !key) return
+  const prev = map[key]
+  if (prev === undefined) {
+    map[key] = idx
+    return
+  }
+  if (Array.isArray(prev)) {
+    prev.push(idx)
+    return
+  }
+  map[key] = [prev, idx]
+}
+
+function rebuildSupportSearchIndexRow(row) {
+  if (!row || typeof row !== 'object') return
+  row.__searchIndex = [
+    row.userid,
+    row.mt5account,
+    row.customername,
+    row.email,
+    row.customeremail,
+    row.affiliateid,
+    row.country,
+    row.status,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+}
+
+function sanitizeSupportRowInPlace(row) {
+  if (!row || typeof row !== 'object') return row
+  // Only normalize the fields that affect identity/search to keep this fast.
+  if (row.userid != null) row.userid = stripOuterQuotes(row.userid)
+  if (row.mt5account != null) row.mt5account = stripOuterQuotes(row.mt5account)
+  if (row.email != null) row.email = stripOuterQuotes(row.email)
+  if (row.customeremail != null) row.customeremail = stripOuterQuotes(row.customeremail)
+  if (row.customername != null) row.customername = stripOuterQuotes(row.customername)
+  if (row.affiliateid != null) row.affiliateid = stripOuterQuotes(row.affiliateid)
+
+  rebuildSupportSearchIndexRow(row)
+  return row
+}
+
+function buildSupportDedupKey(row) {
+  if (!row || typeof row !== 'object') return ''
+  const uid = stripOuterQuotes(row.userid || row.user_id || row.user || '')
+  const mt5 = stripOuterQuotes(row.mt5account || row.mt5 || '')
+  const email = stripOuterQuotes(row.email || row.customeremail || '')
+  const parts = [uid, mt5, email].map((x) =>
+    String(x || '')
+      .trim()
+      .toLowerCase()
+  )
+  const key = parts.join('|')
+  // Skip useless keys (no identity data)
+  if (!parts.some(Boolean)) return ''
+  return key
+}
+
+function sanitizeAndDedupSupportRows(rows) {
+  const order = []
+  const bestByKey = new Map()
+  const bestScoreByKey = new Map()
+
+  for (const r of rows || []) {
+    if (!r || typeof r !== 'object') continue
+    sanitizeSupportRowInPlace(r)
+    const key = buildSupportDedupKey(r)
+    if (!key) {
+      // Keep rows without identity as-is
+      order.push({ key: null, row: r })
+      continue
+    }
+    if (!bestByKey.has(key)) {
+      bestByKey.set(key, r)
+      bestScoreByKey.set(key, rowNonEmptyScore(r))
+      order.push({ key, row: null })
+      continue
+    }
+    const prevRow = bestByKey.get(key)
+    const prevScore = bestScoreByKey.get(key) || 0
+    const nextScore = rowNonEmptyScore(r)
+    // Prefer the row with more non-empty fields.
+    if (nextScore > prevScore) {
+      bestByKey.set(key, r)
+      bestScoreByKey.set(key, nextScore)
+    } else {
+      // Keep previous
+      bestByKey.set(key, prevRow)
+      bestScoreByKey.set(key, prevScore)
+    }
+  }
+
+  const out = []
+  for (const item of order) {
+    if (!item.key) {
+      out.push(item.row)
+      continue
+    }
+    const r = bestByKey.get(item.key)
+    if (r) out.push(r)
+    // Ensure we only push once per key (order may have duplicates if input had duplicates)
+    bestByKey.delete(item.key)
+  }
+  return out
+}
+
 function normalizeUserIdKey(v) {
   const digits = digitsOnly(v)
   return digits || ''
@@ -149,14 +280,27 @@ export async function loadCsvRows(force = false) {
   // Prefer precomputed index (fast path) to avoid heavy CSV parsing in the browser.
   const index = await tryLoadSupportUsersIndex(versionNow)
   if (index && Array.isArray(index.rows)) {
-    _cache = index.rows
+    // Defensive: sanitize + dedup to handle malformed exports (e.g. userid with a trailing quote)
+    // and to avoid showing duplicate rows in the UI.
+    _cache = sanitizeAndDedupSupportRows(index.rows)
     _parsedCount = _cache.length
     _firstRowKeys = Object.keys(_cache[0] || {})
 
-    // These maps store indices (number | number[]) to avoid duplicating row objects.
-    _idMap = index.byUserId || {}
-    _mt5Map = index.byMt5 || {}
-    _emailMap = index.byEmail || {}
+    // Rebuild maps locally (index maps may be stale after sanitization/dedup).
+    _idMap = {}
+    _mt5Map = {}
+    _emailMap = {}
+    for (let i = 0; i < _cache.length; i += 1) {
+      const r = _cache[i]
+      const uidKey = digitsOnly(stripOuterQuotes(r?.userid || r?.user_id || r?.user || ''))
+      if (uidKey) addIndex(_idMap, uidKey, i)
+
+      const mt5Key = digitsOnly(stripOuterQuotes(r?.mt5account || r?.mt5 || ''))
+      if (mt5Key) addIndex(_mt5Map, mt5Key, i)
+
+      const emailKey = normalizeForIndex(stripOuterQuotes(r?.email || r?.customeremail || ''))
+      if (emailKey) addIndex(_emailMap, emailKey, i)
+    }
 
     return _cache
   }
@@ -304,7 +448,8 @@ export function getFirstRowKeys() {
 export async function searchUsers(query) {
   if (!query && query !== 0) return []
   const rows = await loadCsvRows()
-  const qRaw = String(query).trim()
+  const qInput = String(query).trim()
+  const qRaw = stripOuterQuotes(qInput)
   const qNorm = normalizeForIndex(qRaw)
 
   if (/^\d+$/.test(qRaw)) {
@@ -314,8 +459,8 @@ export async function searchUsers(query) {
     if (exact.length) return Array.from(new Set(exact))
 
     return rows.filter((r) => {
-      const uidDigits = String(r.userid || r.user_id || r.user || '').replace(/\D/g, '')
-      const mt5Digits = String(r.mt5account || r.mt5 || '').replace(/\D/g, '')
+      const uidDigits = digitsOnly(stripOuterQuotes(r.userid || r.user_id || r.user || ''))
+      const mt5Digits = digitsOnly(stripOuterQuotes(r.mt5account || r.mt5 || ''))
       return uidDigits.includes(qRaw) || mt5Digits.includes(qRaw)
     })
   }
@@ -327,8 +472,8 @@ export async function searchUsers(query) {
       return Array.from(new Set(matches))
     }
     return rows.filter((r) => {
-      const e = String(r.email || r.customeremail || '')
-      return e.toLowerCase().includes(key)
+      const e = stripOuterQuotes(r.email || r.customeremail || '')
+      return String(e).toLowerCase().includes(key)
     })
   }
 

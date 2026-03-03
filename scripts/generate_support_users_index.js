@@ -44,6 +44,16 @@ function normalizeForIndex(value) {
   return String(value).replace(/\s+/g, ' ').trim().toLowerCase()
 }
 
+function stripOuterQuotes(value) {
+  if (value == null) return ''
+  let s = String(value)
+  if (s.charCodeAt(0) === 0xfeff) s = s.slice(1)
+  s = s.trim()
+  // Remove spurious surrounding quotes (malformed CSV exports)
+  s = s.replace(/^"+|"+$/g, '').trim()
+  return s
+}
+
 function digitsOnly(s) {
   if (s == null) return ''
   return String(s).replace(/\D+/g, '')
@@ -56,14 +66,35 @@ function isNonEmpty(v) {
 function pickFieldNormalized(row, candidates) {
   if (!row) return ''
   for (const k of candidates) {
-    if (isNonEmpty(row[k])) return String(row[k]).trim()
+    if (isNonEmpty(row[k])) return stripOuterQuotes(row[k])
     // Also check duplicate keys (e.g. "foo__2")
     for (let i = 2; i <= 6; i += 1) {
       const dk = `${k}__${i}`
-      if (isNonEmpty(row[dk])) return String(row[dk]).trim()
+      if (isNonEmpty(row[dk])) return stripOuterQuotes(row[dk])
     }
   }
   return ''
+}
+
+function rowNonEmptyScore(row) {
+  if (!row || typeof row !== 'object') return 0
+  let score = 0
+  for (const k of Object.keys(row)) {
+    if (k && String(k).startsWith('__')) continue
+    const v = row[k]
+    if (v !== undefined && v !== null && String(v).trim() !== '') score += 1
+  }
+  return score
+}
+
+function buildDedupKey(row) {
+  if (!row || typeof row !== 'object') return ''
+  const uid = stripOuterQuotes(row.userid || '')
+  const mt5 = stripOuterQuotes(row.mt5account || '')
+  const email = stripOuterQuotes(row.email || row.customeremail || '')
+  const parts = [uid, mt5, email].map((x) => String(x || '').trim().toLowerCase())
+  if (!parts.some(Boolean)) return ''
+  return parts.join('|')
 }
 
 function addIndex(map, key, idx) {
@@ -161,6 +192,10 @@ function main() {
   const byMt5 = {}
   const byEmail = {}
 
+  // Dedup map: key -> { row, score }
+  const bestByKey = new Map()
+  const order = []
+
   for (const rawRow of parsed.data || []) {
     const r = rowToNormalized(rawRow, headerPairs)
 
@@ -223,21 +258,49 @@ function main() {
       .join(' ')
       .toLowerCase()
 
-    const idx = rows.length
-    rows.push(outRow)
+    // Dedup: some exports contain the same user twice, one with a trailing quote in userid.
+    // Prefer the row with more non-empty fields.
+    const key = buildDedupKey(outRow)
+    if (!key) {
+      order.push({ key: null, row: outRow })
+      continue
+    }
+    const score = rowNonEmptyScore(outRow)
+    if (!bestByKey.has(key)) {
+      bestByKey.set(key, { row: outRow, score })
+      order.push({ key, row: null })
+      continue
+    }
+    const prev = bestByKey.get(key)
+    if (prev && score > (prev.score || 0)) bestByKey.set(key, { row: outRow, score })
+  }
 
+  // Materialize deduped rows in stable order
+  for (const item of order) {
+    if (!item.key) {
+      rows.push(item.row)
+      continue
+    }
+    const rec = bestByKey.get(item.key)
+    if (rec && rec.row) rows.push(rec.row)
+    bestByKey.delete(item.key)
+  }
+
+  // Build indices on the final deduped array
+  for (let i = 0; i < rows.length; i += 1) {
+    const outRow = rows[i]
     const uidKey = digitsOnly(outRow.userid)
-    if (uidKey) addIndex(byUserId, uidKey, idx)
+    if (uidKey) addIndex(byUserId, uidKey, i)
 
     const mt5Key = digitsOnly(outRow.mt5account)
-    if (mt5Key) addIndex(byMt5, mt5Key, idx)
+    if (mt5Key) addIndex(byMt5, mt5Key, i)
 
     const emailKey = normalizeForIndex(outRow.email)
-    if (emailKey) addIndex(byEmail, emailKey, idx)
+    if (emailKey) addIndex(byEmail, emailKey, i)
   }
 
   const out = {
-    version: 1,
+    version: 2,
     generatedAt: new Date().toISOString(),
     source: path.basename(inputPath),
     total: rows.length,
