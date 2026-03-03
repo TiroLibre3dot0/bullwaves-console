@@ -575,6 +575,10 @@ function useMediaReportSmart() {
   const worker = useMediaReportWorker()
   const [fallbackEnabled, setFallbackEnabled] = useState(false)
   const fallback = useMediaReportNoWorker()
+  const [cachedEnabled, setCachedEnabled] = useState(false)
+  // Final safety-net: cached fetch + robust CSV parser (handles tricky quoting/newlines).
+  // Enabled only when both PapaParse download modes fail or yield empty data.
+  const cached = useMediaReportCsv({ enabled: cachedEnabled })
 
   useEffect(() => {
     if (fallbackEnabled) return
@@ -583,7 +587,15 @@ function useMediaReportSmart() {
     if (worker.error || !hasRows) setFallbackEnabled(true)
   }, [fallbackEnabled, worker.loading, worker.error, worker.data])
 
-  const active = fallbackEnabled ? fallback : worker
+  useEffect(() => {
+    if (cachedEnabled) return
+    if (!fallbackEnabled) return
+    if (fallback.loading) return
+    const hasRows = Array.isArray(fallback.data) && fallback.data.length > 0
+    if (fallback.error || !hasRows) setCachedEnabled(true)
+  }, [cachedEnabled, fallbackEnabled, fallback.loading, fallback.error, fallback.data])
+
+  const active = cachedEnabled ? cached : fallbackEnabled ? fallback : worker
 
   const reload = useCallback(() => {
     try {
@@ -598,7 +610,14 @@ function useMediaReportSmart() {
         // ignore
       }
     }
-  }, [worker, fallback, fallbackEnabled])
+    if (cachedEnabled) {
+      try {
+        cached.reload(true)
+      } catch {
+        // ignore
+      }
+    }
+  }, [worker, fallback, cached, fallbackEnabled, cachedEnabled])
 
   return {
     data: active.data,
@@ -606,14 +625,31 @@ function useMediaReportSmart() {
     error: active.error,
     sourcePath: active.sourcePath,
     reload,
-    usingFallback: fallbackEnabled,
+    usingFallback: fallbackEnabled || cachedEnabled,
   }
 }
 
 export function useMediaPaymentsData({ includePayments = true } = {}) {
-  // Media Report is typically the heaviest CSV: prefer worker parsing, but fall back if it fails.
-  const media = useMediaReportSmart()
+  // Media Report is a critical input for affiliate analytics.
+  // Prefer the cached fetch + robust parser pipeline (handles quoted newlines + delimiter detection)
+  // to avoid silent failures that would zero out all KPIs.
+  const media = useMediaReportCsv({ enabled: true })
   const payments = usePaymentsReport({ enabled: includePayments })
+
+  // Safety net: if a previous session cached an empty Media Report parse, force-refresh once.
+  // This prevents the UI from showing all-zero KPIs while payments still load.
+  const forcedReloadRef = useRef(false)
+  useEffect(() => {
+    if (forcedReloadRef.current) return
+    if (media.loading) return
+    if (!Array.isArray(media.data) || media.data.length > 0) return
+    forcedReloadRef.current = true
+    try {
+      media.reload(true)
+    } catch {
+      // ignore
+    }
+  }, [media.loading, media.data, media.reload])
 
   const monthOptions = useMemo(() => {
     const map = new Map()

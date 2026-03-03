@@ -136,10 +136,15 @@ function totalsFromRows(rows, metricKey, source) {
 }
 
 function renderValue(metric, value) {
-  if (value == null || !Number.isFinite(Number(value))) return '—'
-  if (metric.kind === 'eur') return formatEuro(Number(value) || 0)
-  if (metric.kind === 'pl') return formatEuro(Number(value) || 0)
-  if (metric.kind === 'roi') return formatPercentRounded((Number(value) || 0) * 100)
+  if (value == null) return '—'
+  const n = Number(value)
+  if (!Number.isFinite(n)) {
+    if (Number.isNaN(n)) return 'n/a'
+    return '—'
+  }
+  if (metric.kind === 'eur') return formatEuro(n || 0)
+  if (metric.kind === 'pl') return formatEuro(n || 0)
+  if (metric.kind === 'roi') return formatPercentRounded((n || 0) * 100)
   return String(value)
 }
 
@@ -295,20 +300,68 @@ export default function AffiliatePayoutUnifiedTable({
   )
 
   const scopeLatestMonth = useMemo(() => {
-    let latest = null
-    let latestScore = -Infinity
-    const all = [...(cellxScopedRows || []), ...(creolabsScopedRows || [])]
-    all.forEach((row) => {
-      const year = Number(row?.year)
-      const monthIndex = Number(row?.monthIndex)
-      if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
-      const score = year * 12 + monthIndex
-      if (score > latestScore) {
-        latestScore = score
-        latest = row?.month
+    const pickLatest = (rows) => {
+      let latest = null
+      let latestScore = -Infinity
+      ;(rows || []).forEach((row) => {
+        const year = Number(row?.year)
+        const monthIndex = Number(row?.monthIndex)
+        if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
+        const score = year * 12 + monthIndex
+        if (score > latestScore) {
+          latestScore = score
+          latest = row?.month
+        }
+      })
+      return latest
+    }
+
+    // In unified mode, auto-picking the latest month across *either* source can choose a month
+    // that exists only for one source (e.g. Creolabs has Mar, CellX has up to Feb).
+    // That makes month-scoped columns look “misaligned”. Prefer the latest month common to both.
+    const byMonth = new Map()
+
+    const addRows = (rows, flag) => {
+      ;(rows || []).forEach((row) => {
+        const monthKey = String(row?.month || '').trim()
+        if (!monthKey) return
+        const year = Number(row?.year)
+        const monthIndex = Number(row?.monthIndex)
+        if (!Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
+        const score = year * 12 + monthIndex
+
+        const prev = byMonth.get(monthKey) || {
+          score: -Infinity,
+          hasCellx: false,
+          hasCreolabs: false,
+        }
+        const next = {
+          ...prev,
+          score: Math.max(prev.score, score),
+          hasCellx: prev.hasCellx || flag === 'cellx',
+          hasCreolabs: prev.hasCreolabs || flag === 'creolabs',
+        }
+        byMonth.set(monthKey, next)
+      })
+    }
+
+    addRows(cellxScopedRows, 'cellx')
+    addRows(creolabsScopedRows, 'creolabs')
+
+    let bestCommon = null
+    let bestCommonScore = -Infinity
+    byMonth.forEach((rec, monthKey) => {
+      if (!rec?.hasCellx || !rec?.hasCreolabs) return
+      if (Number(rec.score) > bestCommonScore) {
+        bestCommonScore = Number(rec.score)
+        bestCommon = monthKey
       }
     })
-    return latest
+
+    if (bestCommon) return bestCommon
+
+    // Fallback: if one source has no overlap (or is empty), still pick a deterministic latest month.
+    return pickLatest(cellxScopedRows) || pickLatest(creolabsScopedRows) || null
   }, [cellxScopedRows, creolabsScopedRows])
 
   const effectiveMonthKey = useMemo(() => {
@@ -411,20 +464,118 @@ export default function AffiliatePayoutUnifiedTable({
     [activeMetrics]
   )
 
+  // When reconciling two sources, summing "All Time" over different coverage windows produces
+  // misleading deltas (often ~-100%). To keep comparisons meaningful, restrict "All Time" to the
+  // months that exist in BOTH sources per affiliate.
+  const comparableAllTimeLedgers = useMemo(() => {
+    const cellxLedger = Array.isArray(cellxAllTimeLedger?.ledger) ? cellxAllTimeLedger.ledger : []
+    const creoLedger = Array.isArray(creolabsAllTimeLedger?.ledger)
+      ? creolabsAllTimeLedger.ledger
+      : []
+
+    const monthsByAffiliate = (rows) => {
+      const map = new Map()
+      for (const r of rows) {
+        const rawId = r?.affiliateId
+        const key = canonicalizeAffiliateId ? canonicalizeAffiliateId(rawId) : rawId
+        const monthKey = String(r?.month || '').trim()
+        if (!key || !monthKey) continue
+        if (!map.has(key)) map.set(key, new Set())
+        map.get(key).add(monthKey)
+      }
+      return map
+    }
+
+    const cellxMonths = monthsByAffiliate(cellxLedger)
+    const creoMonths = monthsByAffiliate(creoLedger)
+
+    const filterToCommon = (rows, otherMonthsMap) => {
+      const out = []
+      for (const r of rows) {
+        const rawId = r?.affiliateId
+        const key = canonicalizeAffiliateId ? canonicalizeAffiliateId(rawId) : rawId
+        const monthKey = String(r?.month || '').trim()
+        if (!key || !monthKey) continue
+        const set = otherMonthsMap.get(key)
+        if (set && set.has(monthKey)) out.push(r)
+      }
+      return out
+    }
+
+    return {
+      cellx: filterToCommon(cellxLedger, creoMonths),
+      creolabs: filterToCommon(creoLedger, cellxMonths),
+    }
+  }, [cellxAllTimeLedger, creolabsAllTimeLedger, canonicalizeAffiliateId])
+
   const cellxMetricsByAffiliate = useMemo(() => {
     const latest = buildLatestByAffiliate(cellxMonthScopedRows, canonicalizeAffiliateId)
-    const ever = buildAllTimeByAffiliate(cellxAllTimeLedger?.ledger || [], canonicalizeAffiliateId)
+    const ever = buildAllTimeByAffiliate(
+      comparableAllTimeLedgers?.cellx || [],
+      canonicalizeAffiliateId
+    )
     return normalizeMetricMaps({ latestByAffiliate: latest, allTimeByAffiliate: ever })
-  }, [cellxMonthScopedRows, cellxAllTimeLedger, canonicalizeAffiliateId])
+  }, [cellxMonthScopedRows, comparableAllTimeLedgers, canonicalizeAffiliateId])
 
   const creolabsMetricsByAffiliate = useMemo(() => {
     const latest = buildLatestByAffiliate(creolabsMonthScopedRows, canonicalizeAffiliateId)
     const ever = buildAllTimeByAffiliate(
-      creolabsAllTimeLedger?.ledger || [],
+      comparableAllTimeLedgers?.creolabs || [],
       canonicalizeAffiliateId
     )
     return normalizeMetricMaps({ latestByAffiliate: latest, allTimeByAffiliate: ever })
-  }, [creolabsMonthScopedRows, creolabsAllTimeLedger, canonicalizeAffiliateId])
+  }, [creolabsMonthScopedRows, comparableAllTimeLedgers, canonicalizeAffiliateId])
+
+  // Creolabs exports sometimes provide Net/Deposit/WD only for a subset of periods.
+  // When Net coverage is missing for a month, treating it as zero makes deltas look ~-100% everywhere.
+  // Detect month-level net coverage (sum abs(netDeposits) > 0) to mark those comparisons as n/a.
+  const creolabsNetCoverageMonths = useMemo(() => {
+    const ledger = Array.isArray(creolabsAllTimeLedger?.ledger) ? creolabsAllTimeLedger.ledger : []
+    const absByMonth = new Map()
+    for (const r of ledger) {
+      const monthKey = String(r?.month || '').trim()
+      if (!monthKey) continue
+      const v = Math.abs(Number(r?.netDeposits) || 0)
+      if (!v) continue
+      absByMonth.set(monthKey, (absByMonth.get(monthKey) || 0) + v)
+    }
+    const out = new Set()
+    absByMonth.forEach((sumAbs, monthKey) => {
+      if (Number(sumAbs) > 0) out.add(monthKey)
+    })
+    return out
+  }, [creolabsAllTimeLedger])
+
+  const netDepositsEverComparable = useMemo(() => {
+    const months = creolabsNetCoverageMonths
+    const cellxLedger = Array.isArray(cellxAllTimeLedger?.ledger) ? cellxAllTimeLedger.ledger : []
+    const creoLedger = Array.isArray(creolabsAllTimeLedger?.ledger)
+      ? creolabsAllTimeLedger.ledger
+      : []
+
+    const sumByAffiliate = (rows) => {
+      const map = new Map()
+      for (const r of rows) {
+        const monthKey = String(r?.month || '').trim()
+        if (!monthKey || !months.has(monthKey)) continue
+        const rawId = r?.affiliateId
+        const affiliateId = canonicalizeAffiliateId ? canonicalizeAffiliateId(rawId) : rawId
+        if (!affiliateId) continue
+        map.set(affiliateId, (map.get(affiliateId) || 0) + (Number(r?.netDeposits) || 0))
+      }
+      return map
+    }
+
+    return {
+      cellxByAffiliate: sumByAffiliate(cellxLedger),
+      creolabsByAffiliate: sumByAffiliate(creoLedger),
+    }
+  }, [
+    cellxAllTimeLedger,
+    creolabsAllTimeLedger,
+    creolabsNetCoverageMonths,
+    canonicalizeAffiliateId,
+  ])
 
   const merged = useMemo(() => {
     const base = mergeAffiliateSources({
@@ -455,6 +606,30 @@ export default function AffiliatePayoutUnifiedTable({
         cellx: { ...cellx, roiMonth: cellxRoiMonth, roiEver: cellxRoiEver },
         creolabs: { ...creolabs, roiMonth: creoRoiMonth, roiEver: creoRoiEver },
         delta: { ...(r.delta || {}) },
+      }
+
+      // Net deposits comparisons: if Creolabs has no net coverage for the selected month,
+      // mark the month metric as n/a (instead of showing a misleading -100% delta).
+      const monthKey = String(effectiveMonthKey || '').trim()
+      const monthHasNet =
+        monthKey && monthKey !== 'all' ? creolabsNetCoverageMonths.has(monthKey) : false
+      if (!monthHasNet) {
+        next.creolabs.netDepositsMonth = Number.NaN
+        next.delta.netDepositsMonth = { deltaAbs: null, deltaPct: null, deltaPctIsNa: true }
+      }
+
+      // For "All Time" net deposits, compare only across months where Creolabs net is actually present.
+      // This keeps the window consistent and avoids global ~-100% deltas when Creolabs net is absent historically.
+      const affKey = r?.affiliateId
+      const cellxNetEver = netDepositsEverComparable?.cellxByAffiliate?.get?.(affKey)
+      const creoNetEver = netDepositsEverComparable?.creolabsByAffiliate?.get?.(affKey)
+      if (cellxNetEver != null || creoNetEver != null) {
+        next.cellx.netDepositsEver = Number(cellxNetEver) || 0
+        next.creolabs.netDepositsEver = Number(creoNetEver) || 0
+        next.delta.netDepositsEver = computeDelta(
+          next.cellx.netDepositsEver,
+          next.creolabs.netDepositsEver
+        )
       }
 
       next.delta.roiMonth = computeDelta(next.cellx.roiMonth, next.creolabs.roiMonth)
@@ -554,8 +729,23 @@ export default function AffiliatePayoutUnifiedTable({
       totals.delta[k] = computeDelta(totals.cellx[k], totals.creolabs[k])
     }
 
+    const monthKey = String(effectiveMonthKey || '').trim()
+    const monthHasNet =
+      monthKey && monthKey !== 'all' ? creolabsNetCoverageMonths.has(monthKey) : false
+    if (!monthHasNet) {
+      totals.creolabs.netDepositsMonth = Number.NaN
+      totals.delta.netDepositsMonth = { deltaAbs: null, deltaPct: null, deltaPctIsNa: true }
+    }
+
     return totals
-  }, [merged, compareMetricKeys, focusDiscrepancies, flaggedByRow])
+  }, [
+    merged,
+    compareMetricKeys,
+    focusDiscrepancies,
+    flaggedByRow,
+    effectiveMonthKey,
+    creolabsNetCoverageMonths,
+  ])
 
   const flaggedCount = useMemo(() => {
     let count = 0

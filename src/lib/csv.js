@@ -1,4 +1,12 @@
+import Papa from 'papaparse'
+
 import { cleanNumber } from './formatters'
+
+function stripUtf8Bom(text = '') {
+  if (!text) return ''
+  const s = String(text)
+  return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s
+}
 
 export function splitCsvLine(line = '') {
   const out = []
@@ -25,19 +33,64 @@ export function splitCsvLine(line = '') {
 }
 
 export function parseCsv(text = '') {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
-  if (!lines.length) return []
-  const headers = splitCsvLine(lines[0]).map((h) => h.replace(/(^"|"$)/g, ''))
-  const rows = []
-  for (let i = 1; i < lines.length; i += 1) {
-    const cols = splitCsvLine(lines[i])
-    const row = {}
-    headers.forEach((h, idx) => {
-      row[h] = cols[idx] ?? ''
+  const raw = stripUtf8Bom(text)
+  if (!raw || !raw.trim()) return []
+
+  // Prefer a robust parser (supports quoted newlines, delimiter autodetect, etc.)
+  // Keep values as strings to match the previous behavior.
+  try {
+    const parsed = Papa.parse(raw, {
+      header: true,
+      skipEmptyLines: 'greedy',
+      dynamicTyping: false,
+      delimiter: '',
+      quoteChar: '"',
+      escapeChar: '"',
+      transformHeader: (h) => {
+        const s = stripUtf8Bom(h)
+        // Be conservative: remove surrounding quotes and trim.
+        return String(s || '')
+          .replace(/(^"|"$)/g, '')
+          .trim()
+      },
     })
-    rows.push(row)
+
+    const rows = Array.isArray(parsed.data) ? parsed.data : []
+    const cleaned = rows.filter((r) => {
+      if (!r || typeof r !== 'object') return false
+      // Drop totally-empty rows (common when CSV contains blank lines).
+      return Object.values(r).some((v) => String(v ?? '').trim() !== '')
+    })
+
+    // Surface parse issues in dev without breaking the UI.
+    if (import.meta?.env?.DEV) {
+      const errs = Array.isArray(parsed.errors) ? parsed.errors : []
+      if (errs.length) console.warn('CSV parse warnings:', errs.slice(0, 5))
+
+      const overflow = cleaned.filter((r) =>
+        Object.prototype.hasOwnProperty.call(r, '__parsed_extra')
+      )
+      if (overflow.length)
+        console.warn('CSV rows with overflow columns (__parsed_extra):', overflow.length)
+    }
+
+    return cleaned
+  } catch (e) {
+    // Fallback to the previous line-based parser for maximum resilience.
+    const lines = raw.split(/\r?\n/).filter((l) => l.trim().length > 0)
+    if (!lines.length) return []
+    const headers = splitCsvLine(lines[0]).map((h) => stripUtf8Bom(h).replace(/(^"|"$)/g, ''))
+    const rows = []
+    for (let i = 1; i < lines.length; i += 1) {
+      const cols = splitCsvLine(lines[i])
+      const row = {}
+      headers.forEach((h, idx) => {
+        row[h] = cols[idx] ?? ''
+      })
+      rows.push(row)
+    }
+    return rows
   }
-  return rows
 }
 
 const monthNames = [
