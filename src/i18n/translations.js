@@ -234,6 +234,7 @@ export const translations = {
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
     'sidebar.creolabs': 'Creolabs',
+    'sidebar.profitableRanking': 'Profitable Ranking',
 
     // Home
     'home.welcome.generic': 'Welcome back — ready to pick up where you left off?',
@@ -2560,6 +2561,7 @@ export const translations = {
     'sidebar.customEvents': 'Eventi custom',
     'sidebar.ranking': 'Ranking',
     'sidebar.creolabs': 'Creolabs',
+    'sidebar.profitableRanking': 'Profitable Ranking',
 
     // Home
     'home.welcome.generic': 'Bentornato — riprendiamo da dove avevi lasciato?',
@@ -4921,6 +4923,7 @@ export const translations = {
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
     'sidebar.creolabs': 'Creolabs',
+    'sidebar.profitableRanking': 'Profitable Ranking',
 
     // Home
     'home.welcome.generic': 'Dobrodošao nazad — nastavljamo gde si stao?',

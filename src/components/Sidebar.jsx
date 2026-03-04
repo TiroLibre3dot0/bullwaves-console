@@ -328,18 +328,6 @@ export default function Sidebar({
             </button>
 
             <button
-              disabled={disabled('ranking')}
-              type="button"
-              className={`sidebar-item sidebar-main tab ${view === 'ranking' ? 'active' : ''}`}
-              onClick={() => navigate('ranking')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="chart" />
-                <span>{t('sidebar.ranking')}</span>
-              </span>
-            </button>
-
-            <button
               disabled={disabled('creolabs')}
               type="button"
               className={`sidebar-item sidebar-main tab ${view === 'creolabs' ? 'active' : ''}`}
@@ -348,6 +336,18 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="chart" />
                 <span>{t('sidebar.creolabs')}</span>
+              </span>
+            </button>
+
+            <button
+              disabled={disabled('profitableRanking')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'profitableRanking' ? 'active' : ''}`}
+              onClick={() => navigate('profitableRanking')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.profitableRanking')}</span>
               </span>
             </button>
             <button

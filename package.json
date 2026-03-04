@@ -50,6 +50,7 @@
     "react-simple-maps": "^3.0.0",
     "reactflow": "^11.11.4",
     "read-excel-file": "^6.0.3",
+    "xlsx": "^0.18.5",
     "topojson-client": "^3.1.0",
     "userflow.js": "^2.13.0"
   },

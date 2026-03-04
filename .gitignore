@@ -61,3 +61,7 @@ build_debug.txt
 
 # Temporary generator logs
 tmp-*.log
+
+# Local XLSX sources (keep local, JSON artifact is versioned)
+CREOLABS/Traders Ranking Rewards.xlsx
+CREOLABS/~$*.xlsx

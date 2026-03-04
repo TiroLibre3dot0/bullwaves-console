@@ -22,14 +22,14 @@ const PublicProjectBoardSharePage = React.lazy(
 const PublicExecutionSharePage = React.lazy(
   () => import('./features/execution/pages/PublicExecutionSharePage')
 )
-const PublicRankingSharePage = React.lazy(
-  () => import('./features/ranking/pages/PublicRankingSharePage')
-)
 const PublicAffiliatePayoutSummarySharePage = React.lazy(
   () => import('./features/investments/pages/PublicAffiliatePayoutSummarySharePage')
 )
 const SupportUserCheckSharePage = React.lazy(
   () => import('./features/support/pages/SupportUserCheckSharePage')
+)
+const PublicProfitableRankingSharePage = React.lazy(
+  () => import('./pages/share/PublicProfitableRankingSharePage')
 )
 
 export default function App() {
@@ -94,7 +94,9 @@ export default function App() {
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
     if (p === '/share/support-user-check' || p.startsWith('/share/support-user-check/'))
       return 'support-user-check'
-    if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking'
+    if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking-removed'
+    if (p === '/share/profitable-ranking' || p.startsWith('/share/profitable-ranking/'))
+      return 'profitable-ranking'
     if (p === '/share/affiliate-payout-summary') return 'affiliate-payout-summary'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
@@ -196,10 +198,19 @@ export default function App() {
     )
   }
 
-  if (shareRoute === 'ranking') {
+  if (shareRoute === 'ranking-removed') {
+    if (typeof window !== 'undefined') {
+      window.location.replace('/retention/profitable-ranking')
+    }
+    return <FullPageLoader progress={20} subtitle={t('common.loading')} />
+  }
+
+  if (shareRoute === 'profitable-ranking') {
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    const token = parts[2] || ''
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
-        <PublicRankingSharePage />
+        <PublicProfitableRankingSharePage token={token} />
       </React.Suspense>
     )
   }

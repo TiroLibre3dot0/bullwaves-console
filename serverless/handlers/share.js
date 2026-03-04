@@ -226,6 +226,10 @@ async function routeShare(req, res, parts) {
     return handleShareTokenGet(req, res, 'exec', getTokenFrom(parts, 1))
   }
 
+  if (head === 'profitable-ranking' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'prank', getTokenFrom(parts, 1))
+  }
+
   if (head === 'weekly-map' && parts.length === 2) {
     return handleShareTokenGet(req, res, 'wmap', getTokenFrom(parts, 1))
   }
@@ -264,6 +268,10 @@ async function routeShare(req, res, parts) {
 
   if (head === 'create-execution') {
     return handleCreateShare(req, res, 'exec', 'exec', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-profitable-ranking') {
+    return handleCreateShare(req, res, 'profitable-ranking', 'prank', 60 * 60 * 24 * 90)
   }
 
   if (head === 'create-weekly-map') {

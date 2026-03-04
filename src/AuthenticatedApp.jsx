@@ -16,8 +16,8 @@ import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
 import UploadReportsPage from './pages/UploadReportsPage'
 import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
 import NotionBoard from './features/notion/NotionBoard'
-import RankingPage from './features/ranking/pages/RankingPage'
 import CreolabsPage from './features/creolabs/pages/CreolabsPage'
+import ProfitableRanking from './pages/Retention/ProfitableRanking'
 import ConsoleHomePage from './pages/ConsoleHomePage'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
@@ -140,8 +140,8 @@ export default function AuthenticatedApp() {
       executive: '/executive',
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
-      ranking: '/ranking',
       creolabs: '/creolabs',
+      profitableRanking: '/retention/profitable-ranking',
       fraud: '/fraud',
       orgChart: '/org-chart',
       supportUserCheck: '/support/user-check',
@@ -170,8 +170,10 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/analysis')) return 'affiliate'
     if (pathname.startsWith('/affiliate')) return 'affiliate'
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
-    if (pathname.startsWith('/ranking')) return 'ranking'
+    // Ranking section removed: keep legacy URLs working.
+    if (pathname.startsWith('/ranking')) return 'profitableRanking'
     if (pathname.startsWith('/creolabs')) return 'creolabs'
+    if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
@@ -183,6 +185,16 @@ export default function AuthenticatedApp() {
   }
 
   const [view, setView] = useState(() => pathToView(window.location.pathname))
+
+  // Redirect removed section URLs to the active page.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = window.location.pathname
+    if (p && p.startsWith('/ranking')) {
+      window.history.replaceState({ view: 'profitableRanking' }, '', routes.profitableRanking)
+      setView('profitableRanking')
+    }
+  }, [routes.profitableRanking])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -439,8 +451,8 @@ export default function AuthenticatedApp() {
       projectBoard: 'project-board',
       notion: 'notion',
       summary: 'summary',
-      ranking: 'ranking',
       creolabs: 'creolabs',
+      profitableRanking: 'retention-profitable-ranking',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
@@ -509,8 +521,8 @@ export default function AuthenticatedApp() {
             ) : null}
             {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
             {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
-            {view === 'ranking' ? <RankingPage /> : null}
             {view === 'creolabs' ? <CreolabsPage /> : null}
+            {view === 'profitableRanking' ? <ProfitableRanking /> : null}
             {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
             {view === 'orgChart' ? <OrgChart /> : null}
