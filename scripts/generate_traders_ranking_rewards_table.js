@@ -36,10 +36,52 @@ async function writeFileAtomicWithRetry(
   const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`
   let lastErr = null
 
+  async function commitTmpToDest() {
+    try {
+      await fs.promises.rename(tmpPath, filePath)
+      return
+    } catch (e) {
+      const code = String(e?.code || '')
+
+      // Cross-device rename fallback.
+      if (code === 'EXDEV') {
+        await fs.promises.copyFile(tmpPath, filePath)
+        await fs.promises.unlink(tmpPath)
+        return
+      }
+
+      // Windows can fail to rename over an existing destination (or if it's locked).
+      if (code === 'EPERM' || code === 'EACCES' || code === 'EEXIST') {
+        try {
+          await fs.promises.rm(filePath, { force: true })
+        } catch {
+          // ignore
+        }
+
+        // Try rename again after removing the destination.
+        try {
+          await fs.promises.rename(tmpPath, filePath)
+          return
+        } catch (e2) {
+          const code2 = String(e2?.code || '')
+          if (code2 === 'EPERM' || code2 === 'EACCES') {
+            // Last resort: overwrite via copy (not atomic, but unblocks builds).
+            await fs.promises.copyFile(tmpPath, filePath)
+            await fs.promises.unlink(tmpPath)
+            return
+          }
+          throw e2
+        }
+      }
+
+      throw e
+    }
+  }
+
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     try {
       await fs.promises.writeFile(tmpPath, content, { encoding })
-      await fs.promises.rename(tmpPath, filePath)
+      await commitTmpToDest()
       return
     } catch (e) {
       lastErr = e

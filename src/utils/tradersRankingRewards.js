@@ -23,6 +23,15 @@ const COLUMN_VARIANTS = {
   wd: ['wd', 'withdrawal', 'withdrawals'],
   net: ['net', 'net_deposit', 'netdeposit'],
 
+  deposit_count: [
+    'deposit_count',
+    'deposits_count',
+    'num_deposits',
+    'number_of_deposits',
+    '#deposits',
+    'deposits#',
+  ],
+
   client_timestamp: ['client_timestamp', 'clienttimestamp', 'timestamp', 'client_ts'],
   ltd_date: ['ltd_date', 'last_trade_date', 'lasttradedate'],
   ltt_date: ['ltt_date', 'last_transaction_date', 'lasttransactiondate'],
@@ -32,6 +41,12 @@ const COLUMN_VARIANTS = {
 
 function coerceString(v) {
   return String(v ?? '').trim()
+}
+
+function isBlankCell(v) {
+  if (v === null || v === undefined) return true
+  if (typeof v === 'string') return !v.trim()
+  return false
 }
 
 function parseDateSafe(v) {
@@ -104,8 +119,15 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
 
   const missingFields = required.filter((k) => !schema[k])
 
+  const hasDepositCountColumn =
+    Boolean(schema.deposit_count) ||
+    safeRows.some((row) =>
+      row && typeof row === 'object' ? row.depositCount != null || row.deposit_count != null : false
+    )
+
   const byClientId = new Map()
   const countriesSet = new Set()
+  const agentUsersSet = new Set()
 
   for (const row of safeRows) {
     const clientId = coerceString(row?.[schema.client_id] ?? row?.clientId ?? row?.client_id)
@@ -127,6 +149,7 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
           clientName: clientName || '',
           clientLogin: '',
           user: '',
+          agentUser: 'Unassigned',
           country: country || '',
 
           balance: 0,
@@ -142,6 +165,8 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
           totalWithdrawals: 0,
           netDeposit: 0,
 
+          ...(hasDepositCountColumn ? { depositCount: 0 } : {}),
+
           clientTimestamp: null,
           lastTradeDate: null,
           lastTransactionDate: null,
@@ -149,11 +174,23 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
           clientsP: 0,
         }
 
+    if (hasDepositCountColumn && !Number.isFinite(Number(next.depositCount))) {
+      next.depositCount = 0
+    }
+
     if (!next.affiliateId)
       next.affiliateId = coerceString(row?.[schema.affiliate_id] ?? row?.affiliateId)
     if (!next.clientLogin)
       next.clientLogin = coerceString(row?.[schema.client_login] ?? row?.clientLogin)
     if (!next.user) next.user = coerceString(row?.[schema.user] ?? row?.user)
+
+    const agentRaw = coerceString(row?.[schema.user] ?? row?.user ?? row?.User)
+    const agentUser = agentRaw || 'Unassigned'
+    if (agentUser && agentUser !== 'Unassigned') {
+      if (!next.agentUser || next.agentUser === 'Unassigned') next.agentUser = agentUser
+    } else if (!next.agentUser) {
+      next.agentUser = 'Unassigned'
+    }
 
     if (clientName && clientName.length > next.clientName.length) next.clientName = clientName
     if (country && !next.country) next.country = country
@@ -171,9 +208,33 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
     next.firstDeposit += parseNumberSafe(row?.[schema.ftd] ?? row?.firstDeposit ?? row?.ftd)
     next.redeposit += parseNumberSafe(row?.[schema.rdp] ?? row?.redeposit ?? row?.rdp)
 
-    next.totalDeposit += parseNumberSafe(row?.[schema.deposit] ?? row?.totalDeposit ?? row?.deposit)
-    next.totalWithdrawals += parseNumberSafe(row?.[schema.wd] ?? row?.totalWithdrawals ?? row?.wd)
-    next.netDeposit += parseNumberSafe(row?.[schema.net] ?? row?.netDeposit ?? row?.net)
+    const dep = parseNumberSafe(row?.[schema.deposit] ?? row?.totalDeposit ?? row?.deposit)
+    const wd = parseNumberSafe(row?.[schema.wd] ?? row?.totalWithdrawals ?? row?.wd)
+
+    // Net Deposit handling (raw-first, but no blanks):
+    // - If the dataset provides `net` for the row, use it.
+    // - If it's missing/blank (or the column is absent), derive net = deposit - withdrawals.
+    let netRow
+    if (schema.net) {
+      const rawNet = row?.[schema.net] ?? row?.netDeposit ?? row?.net
+      netRow = isBlankCell(rawNet) ? dep - wd : parseNumberSafe(rawNet)
+    } else {
+      const rawNet = row?.netDeposit ?? row?.net
+      netRow = isBlankCell(rawNet) ? dep - wd : parseNumberSafe(rawNet)
+    }
+
+    next.totalDeposit += dep
+    next.totalWithdrawals += wd
+    next.netDeposit += netRow
+
+    if (hasDepositCountColumn) {
+      next.depositCount += Math.floor(
+        Math.max(
+          0,
+          parseNumberSafe(row?.[schema.deposit_count] ?? row?.depositCount ?? row?.deposit_count)
+        )
+      )
+    }
 
     next.clientsP += Math.floor(
       Math.max(0, parseNumberSafe(row?.[schema.clients_p] ?? row?.clientsP ?? row?.clients_p))
@@ -189,27 +250,17 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
     next.lastTradeDate = pickMaxDate(next.lastTradeDate, ltd)
     next.lastTransactionDate = pickMaxDate(next.lastTransactionDate, ltt)
 
+    const finalAgent = coerceString(next.agentUser) || 'Unassigned'
+    next.agentUser = finalAgent
+    agentUsersSet.add(finalAgent)
+
     byClientId.set(clientId, next)
   }
 
   const clients = [...byClientId.values()]
 
-  // If Net is missing, attempt fallback net=deposit-withdrawals.
-  let hasNet = false
-  for (const c of clients) {
-    if (Math.abs(Number(c.netDeposit || 0)) > 1e-9) {
-      hasNet = true
-      break
-    }
-  }
-
-  if (!hasNet) {
-    for (const c of clients) {
-      c.netDeposit = Number(c.totalDeposit || 0) - Number(c.totalWithdrawals || 0)
-    }
-  }
-
   const countries = [...countriesSet].sort((a, b) => a.localeCompare(b))
+  const agentUsers = [...agentUsersSet].sort((a, b) => a.localeCompare(b))
 
   return {
     kind: 'traders-ranking-rewards',
@@ -218,6 +269,7 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
     rowCount: safeRows.length,
     clientCount: clients.length,
     countries,
+    agentUsers,
     clients,
   }
 }

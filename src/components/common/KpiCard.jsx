@@ -8,17 +8,27 @@ export default function KpiCard({
   tone = '#e2e8f0',
   align = 'left',
   size = 'md',
+  density = 'default',
   style,
 }) {
   const isSmall = size === 'sm'
+  const isCompact = density === 'compact'
   const [showTooltip, setShowTooltip] = useState(false)
   const tooltipText = helper || fullValue
+
+  const padding = isSmall ? (isCompact ? '6px 8px' : '8px 10px') : '12px 14px'
+
+  const labelFontSize = isSmall ? (isCompact ? 10 : 11) : 12
+  const labelMarginBottom = isSmall ? (isCompact ? 2 : 3) : 4
+  const valueFontSize = isSmall ? (isCompact ? 16 : 18) : 20
+  const helperFontSize = isSmall ? (isCompact ? 9 : 10) : 11
+  const helperMarginTop = isSmall ? (isCompact ? 0 : 1) : 2
 
   return (
     <div
       className="kpi-card"
       style={{
-        padding: isSmall ? '8px 10px' : '12px 14px',
+        padding,
         borderRadius: 12,
         background: 'rgba(15,23,42,0.85)',
         border: '1px solid rgba(255,255,255,0.06)',
@@ -28,7 +38,7 @@ export default function KpiCard({
         ...style,
       }}
     >
-      <div style={{ fontSize: isSmall ? 11 : 12, color: '#94a3b8', marginBottom: isSmall ? 3 : 4 }}>
+      <div style={{ fontSize: labelFontSize, color: '#94a3b8', marginBottom: labelMarginBottom }}>
         {label}
       </div>
       <div
@@ -36,7 +46,7 @@ export default function KpiCard({
         onMouseLeave={() => setShowTooltip(false)}
         title={tooltipText || undefined}
         style={{
-          fontSize: isSmall ? 18 : 20,
+          fontSize: valueFontSize,
           fontWeight: 700,
           color: tone,
           lineHeight: 1.1,
@@ -84,7 +94,7 @@ export default function KpiCard({
         )}
       </div>
       {helper ? (
-        <div style={{ fontSize: isSmall ? 10 : 11, color: '#94a3b8', marginTop: isSmall ? 1 : 2 }}>
+        <div style={{ fontSize: helperFontSize, color: '#94a3b8', marginTop: helperMarginTop }}>
           {helper}
         </div>
       ) : null}
