@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import KpiCard from '../../components/common/KpiCard'
+import FullPageLoader from '../../components/FullPageLoader'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
@@ -383,7 +384,6 @@ function Table({
   onPageSize,
   page,
   onPage,
-  isUpdating = false,
 }) {
   const safeColumns = Array.isArray(columns) ? columns : []
   const total = rows.length
@@ -454,13 +454,6 @@ function Table({
         </div>
 
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          {isUpdating ? (
-            <div className="ranking-inline-loader" role="status" aria-live="polite">
-              <span className="pill-dot dot-progress" aria-hidden="true" />
-              <span>Updating…</span>
-            </div>
-          ) : null}
-
           <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
             <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>Rows</span>
             <select
@@ -968,7 +961,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     if (!dataset) return
     setIsUpdating(true)
     if (updateTimerRef.current) clearTimeout(updateTimerRef.current)
-    updateTimerRef.current = setTimeout(() => setIsUpdating(false), 260)
+    updateTimerRef.current = setTimeout(() => setIsUpdating(false), 520)
   }
 
   const deferAfterUpdate = (fn) => {
@@ -1689,6 +1682,9 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     return 'Last 12 Months'
   }, [monthOptions, selectedMonthKey, selectedYear, timeframe])
 
+  const showOverlayLoader = Boolean(loading || isUpdating)
+  const overlaySubtitle = 'Loading…'
+
   return (
     <div
       ref={rootRef}
@@ -1696,6 +1692,20 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         headerCollapsed ? ' profitable-ranking-collapsed' : ''
       }`}
     >
+      {showOverlayLoader ? (
+        <div
+          className="logo-tools-backdrop"
+          role="status"
+          aria-live="polite"
+          aria-label={overlaySubtitle}
+          style={{ zIndex: 210, display: 'grid', placeItems: 'center', padding: 14 }}
+        >
+          <div style={{ width: 'min(420px, 92vw)' }}>
+            <FullPageLoader progress={45} subtitle={overlaySubtitle} minHeight="auto" />
+          </div>
+        </div>
+      ) : null}
+
       <div className="profitable-ranking-dashboard-content">
         <div className="profitable-ranking-fixed">
           <div className="profitable-ranking-collapsible profitable-ranking-collapsible--top">
@@ -2208,7 +2218,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               onSort={(colKey) => {
                 deferAfterUpdate(() => setSort(activeTab, colKey))
               }}
-              isUpdating={isUpdating}
               pageSize={pageSize}
               onPageSize={(n) => {
                 deferAfterUpdate(() => {
