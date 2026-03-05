@@ -317,6 +317,112 @@
   box-shadow: var(--shadow-glow);
 }
 
+/* Profitable Ranking: premium/compact button language (scoped) */
+.profitable-ranking-page .pill-tab {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0.1px;
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 90ms ease;
+}
+
+.profitable-ranking-page .pill-tab:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 60%, rgba(255, 255, 255, 0.14));
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 1px rgba(0, 54, 255, 0.10);
+  transform: translateY(-1px);
+}
+
+.profitable-ranking-page .pill-tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.profitable-ranking-page .pill-tab.active {
+  box-shadow: 0 0 0 1px rgba(0, 54, 255, 0.14), var(--shadow-glow);
+}
+
+.profitable-ranking-page .ranking-share-btn {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.profitable-ranking-page .ranking-share-btn:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: color-mix(in srgb, var(--accent-primary) 55%, rgba(255, 255, 255, 0.16));
+  box-shadow: 0 0 0 1px rgba(0, 54, 255, 0.12), var(--shadow-glow);
+}
+
+.profitable-ranking-page .ranking-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Profitable Ranking: layout under KPI cards */
+.profitable-ranking-page .ranking-controls {
+  margin-top: 16px;
+}
+
+.profitable-ranking-page .ranking-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.profitable-ranking-page .ranking-filters-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr minmax(320px, 2fr);
+  gap: 12px;
+  align-items: end;
+  padding: 12px 0 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.profitable-ranking-page .ranking-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.profitable-ranking-page .ranking-filter-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.profitable-ranking-page .ranking-filter-input {
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  height: 34px;
+}
+
+.profitable-ranking-page .ranking-filter-countries {
+  min-width: 340px;
+  width: 100%;
+  height: 38px;
+}
+
+@media (max-width: 980px) {
+  .profitable-ranking-page .ranking-filters-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .profitable-ranking-page .ranking-filter-field--countries {
+    grid-column: 1 / -1;
+  }
+  .profitable-ranking-page .ranking-filter-countries {
+    min-width: 0;
+  }
+}
+
 /* Grid background pattern */
 .grid-pattern {
   background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0);
@@ -1047,6 +1153,119 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 /* Ranking table overrides (the first column is '#', not a wide label column) */
 .ranking-table thead th:first-child,
 .ranking-table tbody td:first-child { width: 64px; }
+
+/* Ranking table usability: sticky header + frozen first 2 columns (Rank + Trader). */
+.ranking-table thead th {
+  white-space: nowrap;
+}
+
+.ranking-table .ranking-sticky-col {
+  position: sticky;
+}
+
+.ranking-table thead .ranking-sticky-col {
+  background: var(--sticky-header-bg);
+}
+
+.ranking-table tbody .ranking-sticky-col {
+  background: var(--bg-primary);
+}
+
+.ranking-table thead .ranking-sticky-col { z-index: 35; }
+.ranking-table tbody .ranking-sticky-col { z-index: 15; }
+
+.ranking-table .ranking-sticky-col-1 { left: 0; }
+.ranking-table .ranking-sticky-col-2 { left: 64px; }
+
+/* Clean frozen-columns separation (Rank + Trader) */
+.ranking-table .ranking-sticky-col-2 {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 10px 0 16px rgba(2, 6, 23, 0.28);
+}
+
+.ranking-table thead .ranking-sticky-col-2 {
+  z-index: 36;
+}
+
+.ranking-table tbody .ranking-sticky-col-2 {
+  z-index: 16;
+}
+
+/* Uniform rows while scrolling (avoid zebra noise); keep only subtle hover */
+.ranking-table tbody tr td {
+  background: transparent;
+}
+
+.ranking-table tbody tr:nth-child(even) td {
+  background: transparent;
+}
+
+.ranking-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ranking-table tbody tr:hover td.ranking-sticky-col {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Ranking table scroll: hide scrollbars but keep scroll functional */
+.ranking-table-scroll {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: min(560px, calc(100vh - 360px));
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Numeric cells: slightly smaller for denser scanning. */
+.ranking-table td.ranking-td-numeric {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ranking table: do not stretch to full container width (keeps columns tighter). */
+.table.ranking-table {
+  width: auto;
+  table-layout: auto;
+}
+
+/* Trader status badge (uses semantic theme tokens). */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.status-badge.status-success { color: var(--success); }
+.status-badge.status-info { color: var(--info); }
+.status-badge.status-warning { color: var(--warning); }
+.status-badge.status-muted { color: var(--text-muted); }
+
+/* Reward label chip (uses semantic theme tokens). */
+.reward-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.reward-chip.reward-success { color: var(--success); }
+.reward-chip.reward-info { color: var(--info); }
+.reward-chip.reward-warning { color: var(--warning); }
+.reward-chip.reward-muted { color: var(--text-muted); }
 
 /* Ranking page: cleaner header + controls layout */
 .ranking-header {

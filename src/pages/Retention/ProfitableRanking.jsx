@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import * as XLSX from 'xlsx'
 import KpiCard from '../../components/common/KpiCard'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
-import { readXlsxToRows } from '../../utils/retentionRanking'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
 
@@ -22,29 +20,10 @@ const eurFmt0 = new Intl.NumberFormat('en-GB', {
   maximumFractionDigits: 0,
 })
 
-const eurFmt2 = new Intl.NumberFormat('en-GB', {
-  style: 'currency',
-  currency: 'EUR',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
-const percentFmt2 = new Intl.NumberFormat('en-GB', {
-  style: 'percent',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
-
 function fmtMoney0(v) {
   const n = Number(v || 0)
   if (!Number.isFinite(n)) return '—'
   return eurFmt0.format(n)
-}
-
-function fmtMoney2(v) {
-  const n = Number(v || 0)
-  if (!Number.isFinite(n)) return '—'
-  return eurFmt2.format(n)
 }
 
 function fmtNum2(v) {
@@ -53,16 +32,120 @@ function fmtNum2(v) {
   return numberFmt2.format(n)
 }
 
-function fmtPct2(v) {
-  const n = Number(v)
-  if (!Number.isFinite(n)) return '—'
-  return percentFmt2.format(n)
-}
-
 function fmtInt(v) {
   const n = Math.floor(Number(v || 0))
   if (!Number.isFinite(n)) return '—'
   return numberFmt0.format(n)
+}
+
+function fmtDaysSuffix(v) {
+  const n = Math.floor(Number(v))
+  if (!Number.isFinite(n)) return '—'
+  return `${Math.max(0, n)}d`
+}
+
+function statusHelpText() {
+  return 'Activity classification based on trading frequency and recency.'
+}
+
+function statusBadgeClass(statusKey) {
+  if (statusKey === 'very_active') return 'status-success'
+  if (statusKey === 'active') return 'status-info'
+  if (statusKey === 'dormant') return 'status-warning'
+  return 'status-muted'
+}
+
+function StatusBadge({ statusKey, statusLabel }) {
+  const label = String(statusLabel || 'Inactive')
+  const cls = statusBadgeClass(String(statusKey || 'inactive'))
+  return (
+    <span className={`status-badge ${cls}`} title={statusHelpText()}>
+      {label}
+    </span>
+  )
+}
+
+function rewardLabelHelpText() {
+  return (
+    'Deterministic action label. ' +
+    'Very Active/Active: Send Reward if Net Deposit ≥ 1000 OR Total Deposit ≥ 1000, else Nurture. ' +
+    'Dormant: Winback if Net Deposit ≥ 1000 OR Total Deposit ≥ 1000, else Ignore. ' +
+    'Inactive: Winback if Net Deposit ≥ 3000, else Ignore.'
+  )
+}
+
+function rewardChipClass(label) {
+  const v = String(label || '').toLowerCase()
+  if (v === 'send reward') return 'reward-success'
+  if (v === 'nurture') return 'reward-info'
+  if (v === 'winback') return 'reward-warning'
+  return 'reward-muted'
+}
+
+function RewardChip({ label }) {
+  const text = String(label || '').trim() || '—'
+  const cls = rewardChipClass(text)
+  return (
+    <span className={`reward-chip ${cls}`} title={rewardLabelHelpText()}>
+      {text}
+    </span>
+  )
+}
+
+function rewardLabelColumn() {
+  return {
+    key: 'rewardLabel',
+    label: 'Reward Label',
+    help: rewardLabelHelpText(),
+    align: 'left',
+    width: 130,
+    render: (r) => <RewardChip label={r?.rewardLabel} />,
+  }
+}
+
+function statusReasonColumn() {
+  return {
+    key: 'statusReasonShort',
+    label: 'Status Reason',
+    help: 'Short explanation of why the trader received this activity status.',
+    align: 'left',
+    width: 180,
+    getTitle: (r) => String(r?.statusReasonFull || ''),
+    render: (r) => (
+      <div
+        style={{
+          maxWidth: 170,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {r?.statusReasonShort ? String(r.statusReasonShort) : '—'}
+      </div>
+    ),
+  }
+}
+
+function tradesPerDayColumn() {
+  return {
+    key: 'tradesPerDay',
+    label: 'Est. Trades/Day',
+    help: 'Estimated trades/day derived from Total Trades and days since first/last activity (approximation).',
+    align: 'right',
+    width: 105,
+    render: (r) => (Number.isFinite(Number(r?.tradesPerDay)) ? fmtNum2(r.tradesPerDay) : '—'),
+  }
+}
+
+function daysSinceLastTradeColumn() {
+  return {
+    key: 'daysSinceLastTradeSort',
+    label: 'Days Since Last Trade',
+    help: 'Today − Last Trade Date. Helps identify traders who recently stopped trading.',
+    align: 'right',
+    width: 150,
+    render: (r) => fmtDaysSuffix(r?.daysSinceLastTrade),
+  }
 }
 
 function medal(rank) {
@@ -72,167 +155,38 @@ function medal(rank) {
   return ''
 }
 
-function pad2(n) {
-  return String(n).padStart(2, '0')
-}
-
-function fmtDateYmd(v) {
-  const d = v instanceof Date ? v : v ? new Date(v) : null
-  if (!d || !Number.isFinite(d.getTime())) return '—'
-  const y = d.getUTCFullYear()
-  const m = d.getUTCMonth() + 1
-  const dd = d.getUTCDate()
-  return `${y}-${pad2(m)}-${pad2(dd)}`
-}
-
-function downloadBlob(blob, fileName) {
-  if (typeof window === 'undefined') return
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = fileName
-  a.style.display = 'none'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
-
-function toCsv(rows) {
-  const safeRows = Array.isArray(rows) ? rows : []
-  if (!safeRows.length) return ''
-
-  const headers = Object.keys(safeRows[0] || {})
-  const escape = (v) => {
-    const s = v == null ? '' : String(v)
-    if (/[\r\n",]/.test(s)) return `"${s.replace(/"/g, '""')}"`
-    return s
-  }
-
-  const lines = []
-  lines.push(headers.map(escape).join(','))
-  for (const r of safeRows) {
-    lines.push(headers.map((h) => escape(r?.[h])).join(','))
-  }
-  return lines.join('\n')
-}
-
-function buildLeaderboardExportRows({ tabKey, rows }) {
-  const safeRows = Array.isArray(rows) ? rows : []
-
-  return safeRows.map((r, idx) => {
-    const common = {
-      Rank: idx + 1,
-      'Client Name': r?.clientName || '',
-      Country: r?.country || '',
-    }
-
-    if (tabKey === 'most_active') {
-      return {
-        ...common,
-        'Total Trades': Number(r?.totalTrades || 0),
-        'Trades Per Month': Number(r?.tradesPerMonth || 0),
-        'Last Trade Date': fmtDateYmd(r?.lastTradeDate),
-        'Net Deposit': Number(r?.netDeposit || 0),
-      }
-    }
-
-    if (tabKey === 'top_performing') {
-      return {
-        ...common,
-        'Closed PL': Number(r?.closedPL || 0),
-        ROI: Number(r?.roi || 0),
-        'Total Trades': Number(r?.totalTrades || 0),
-        Equity: Number(r?.equity || 0),
-      }
-    }
-
-    if (tabKey === 'most_consistent') {
-      return {
-        ...common,
-        'Trades Per Month': Number(r?.tradesPerMonth || 0),
-        'Redeposit Ratio': Number(r?.redepositRatio || 0),
-        'Last Trade Date': fmtDateYmd(r?.lastTradeDate),
-        'Consistency Score': Number(r?.consistencyScore || 0),
-      }
-    }
-
-    if (tabKey === 'rising') {
-      return {
-        ...common,
-        'Last Trade Date': fmtDateYmd(r?.lastTradeDate),
-        'Trades Per Month': Number(r?.tradesPerMonth || 0),
-        'Momentum Score': Number(r?.momentumScore || 0),
-        Equity: Number(r?.equity || 0),
-      }
-    }
-
-    // best_reward
-    return {
-      ...common,
-      'Reward Score': Number(r?.rewardScore || 0),
-      'Total Trades': Number(r?.totalTrades || 0),
-      'Net Deposit': Number(r?.netDeposit || 0),
-      'Closed PL': Number(r?.closedPL || 0),
-      Equity: Number(r?.equity || 0),
-      'Last Trade Date': fmtDateYmd(r?.lastTradeDate),
-    }
-  })
-}
-
-function exportLeaderboardCsv({ tabKey, rows }) {
-  const stamp = new Date()
-  const ymd = `${stamp.getUTCFullYear()}-${pad2(stamp.getUTCMonth() + 1)}-${pad2(stamp.getUTCDate())}`
-  const base = `profitable-ranking_${String(tabKey || 'leaderboard')}_${ymd}`
-
-  const exportRows = buildLeaderboardExportRows({ tabKey, rows })
-  const csv = toCsv(exportRows)
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' })
-  return { blob, fileName: `${base}.csv` }
-}
-
-function exportLeaderboardExcel({ tabKey, tabLabel, rows }) {
-  const stamp = new Date()
-  const ymd = `${stamp.getUTCFullYear()}-${pad2(stamp.getUTCMonth() + 1)}-${pad2(stamp.getUTCDate())}`
-  const base = `profitable-ranking_${String(tabKey || 'leaderboard')}_${ymd}`
-
-  const exportRows = buildLeaderboardExportRows({ tabKey, rows })
-  const ws = XLSX.utils.json_to_sheet(exportRows)
-  const wb = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(
-    wb,
-    ws,
-    String(tabLabel || 'Leaderboard').slice(0, 31) || 'Leaderboard'
-  )
-  const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
-  const blob = new Blob([buf], {
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  })
-  return { blob, fileName: `${base}.xlsx` }
-}
-
-function sortByKey(list, { key, dir }) {
+function compareByKey(a, b, { key, dir } = {}) {
   const sign = dir === 'asc' ? 1 : -1
   const k = String(key || '')
+
+  const av = a?.[k]
+  const bv = b?.[k]
+
+  // Numeric first if possible
+  const an = Number(av)
+  const bn = Number(bv)
+  const bothNumeric = Number.isFinite(an) && Number.isFinite(bn)
+  if (bothNumeric) return (an - bn) * sign
+
+  const as = String(av ?? '').toLowerCase()
+  const bs = String(bv ?? '').toLowerCase()
+  if (as < bs) return -1 * sign
+  if (as > bs) return 1 * sign
+  return 0
+}
+
+function sortByKey(list, sortState, tieBreakers = []) {
   const copy = [...list]
-
+  const ties = Array.isArray(tieBreakers) ? tieBreakers : []
   copy.sort((a, b) => {
-    const av = a?.[k]
-    const bv = b?.[k]
-
-    // Numeric first if possible
-    const an = Number(av)
-    const bn = Number(bv)
-    const bothNumeric = Number.isFinite(an) && Number.isFinite(bn)
-    if (bothNumeric) return (an - bn) * sign
-
-    const as = String(av ?? '').toLowerCase()
-    const bs = String(bv ?? '').toLowerCase()
-    if (as < bs) return -1 * sign
-    if (as > bs) return 1 * sign
+    const primary = compareByKey(a, b, sortState)
+    if (primary) return primary
+    for (const t of ties) {
+      const cmp = compareByKey(a, b, t)
+      if (cmp) return cmp
+    }
     return 0
   })
-
   return copy
 }
 
@@ -255,9 +209,10 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
     if (page !== safePage) onPage(safePage)
   }, [onPage, page, safePage])
 
-  const SortTh = ({ label, colKey, align = 'right', width }) => {
+  const SortTh = ({ label, colKey, align = 'right', width, help }) => {
     const isActive = sortState.key === colKey
     const arrow = isActive ? (sortState.dir === 'asc' ? '▲' : '▼') : ''
+    const title = help ? `${help} • Click to sort` : 'Click to sort'
     return (
       <th
         onClick={() => onSort(colKey)}
@@ -267,7 +222,7 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
           textAlign: align,
           width,
         }}
-        title="Click to sort"
+        title={title}
       >
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           <span>{label}</span>
@@ -354,13 +309,27 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
         </div>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <table className="table payout-unified-table ranking-table">
+      <div className="ranking-table-scroll hide-scrollbar">
+        <table className="table payout-unified-table ranking-table sticky-metrics-table">
           <thead>
             <tr>
-              <th style={{ textAlign: 'left' }}>Rank</th>
-              <th style={{ textAlign: 'left', width: 240 }}>Trader</th>
-              <SortTh label="Country" colKey="country" align="left" width={150} />
+              <th className="ranking-sticky-col ranking-sticky-col-1" style={{ textAlign: 'left' }}>
+                Rank
+              </th>
+              <th
+                className="ranking-sticky-col ranking-sticky-col-2"
+                style={{ textAlign: 'left', width: 210 }}
+                title="Trader name (Client ID shown below)"
+              >
+                Trader
+              </th>
+              <SortTh
+                label="Country"
+                colKey="country"
+                align="left"
+                width={120}
+                help="Trader country from the report"
+              />
               {safeColumns.map((c) => (
                 <SortTh
                   key={String(c.key)}
@@ -368,6 +337,7 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
                   colKey={c.key}
                   align={c.align || 'right'}
                   width={c.width}
+                  help={c.help}
                 />
               ))}
             </tr>
@@ -378,13 +348,24 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
               const m = medal(rank)
               return (
                 <tr key={String(r.clientId || rank)}>
-                  <td style={{ textAlign: 'left', fontWeight: 800 }}>
+                  <td
+                    className="ranking-sticky-col ranking-sticky-col-1"
+                    style={{ textAlign: 'left', fontWeight: 800 }}
+                  >
                     <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
                       <span style={{ width: 18, display: 'inline-block' }}>{m}</span>
                       <span>{rank}</span>
                     </span>
                   </td>
-                  <td style={{ textAlign: 'left' }}>
+                  <td
+                    className="ranking-sticky-col ranking-sticky-col-2"
+                    style={{ textAlign: 'left' }}
+                    title={
+                      r.clientName || r.clientId
+                        ? `${String(r.clientName || '—')}\n${String(r.clientId || '')}`.trim()
+                        : undefined
+                    }
+                  >
                     <div style={{ fontWeight: 850, color: 'var(--text-primary)' }}>
                       {r.clientName || '—'}
                     </div>
@@ -393,11 +374,23 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
                     </div>
                   </td>
                   <td style={{ textAlign: 'left' }}>{r.country || '—'}</td>
-                  {safeColumns.map((c) => (
-                    <td key={String(c.key)} style={{ textAlign: c.align || 'right' }}>
-                      {typeof c.render === 'function' ? c.render(r) : String(r?.[c.key] ?? '—')}
-                    </td>
-                  ))}
+                  {safeColumns.map((c) =>
+                    (() => {
+                      const cellTitle =
+                        typeof c.getTitle === 'function' ? c.getTitle(r) : c.help || undefined
+                      const isNumeric = (c.align || 'right') === 'right'
+                      return (
+                        <td
+                          key={String(c.key)}
+                          className={isNumeric ? 'ranking-td-numeric' : undefined}
+                          style={{ textAlign: c.align || 'right' }}
+                          title={cellTitle || undefined}
+                        >
+                          {typeof c.render === 'function' ? c.render(r) : String(r?.[c.key] ?? '—')}
+                        </td>
+                      )
+                    })()
+                  )}
                 </tr>
               )
             })}
@@ -423,34 +416,51 @@ const TAB_CONFIGS = [
   {
     key: 'most_active',
     label: 'Most Active Traders',
+    tooltip: 'Sort: Total Trades DESC.',
     defaultSort: { key: 'totalTrades', dir: 'desc' },
     columns: [
       {
+        key: 'statusOrder',
+        label: 'Status',
+        help: 'Activity classification based on trading frequency and recency.',
+        align: 'left',
+        width: 120,
+        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+      },
+      statusReasonColumn(),
+      rewardLabelColumn(),
+      {
         key: 'totalTrades',
         label: 'Total Trades',
+        help: 'Total number of executed trades. Note: can be very high for algorithmic trading strategies (EAs).',
         align: 'right',
-        width: 120,
+        width: 110,
         render: (r) => fmtInt(r.totalTrades),
       },
       {
         key: 'tradesPerMonth',
-        label: 'Trades Per Month',
+        label: 'Est. Trades/Month',
+        help: 'Estimated trades/month derived from Total Trades and Active Months (approximation).',
         align: 'right',
-        width: 150,
+        width: 130,
         render: (r) => fmtNum2(r.tradesPerMonth),
       },
+      tradesPerDayColumn(),
+      daysSinceLastTradeColumn(),
       {
-        key: 'lastTradeDateMs',
-        label: 'Last Trade Date',
+        key: 'totalDeposit',
+        label: 'Total Deposit',
+        help: 'Total capital deposited by the trader, raw from source.',
         align: 'right',
-        width: 150,
-        render: (r) => fmtDateYmd(r.lastTradeDate),
+        width: 130,
+        render: (r) => fmtMoney0(r.totalDeposit),
       },
       {
         key: 'netDeposit',
         label: 'Net Deposit',
+        help: 'Raw from source when available. Derived as Deposit - Withdrawals when missing.',
         align: 'right',
-        width: 140,
+        width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
     ],
@@ -458,162 +468,255 @@ const TAB_CONFIGS = [
   {
     key: 'top_performing',
     label: 'Top Performing Traders',
+    tooltip: 'Sort: Closed PL DESC (only traders with Deposit ≥ 1000 and Trades ≥ 50).',
     defaultSort: { key: 'closedPL', dir: 'desc' },
     columns: [
       {
+        key: 'statusOrder',
+        label: 'Status',
+        help: 'Activity classification based on trading frequency and recency.',
+        align: 'left',
+        width: 120,
+        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+      },
+      statusReasonColumn(),
+      rewardLabelColumn(),
+      {
         key: 'closedPL',
         label: 'Closed PL',
+        help: 'Closed profit/loss from the report (higher is better).',
         align: 'right',
-        width: 140,
+        width: 130,
         render: (r) => fmtMoney0(r.closedPL),
       },
+      daysSinceLastTradeColumn(),
+      tradesPerDayColumn(),
       {
-        key: 'roi',
-        label: 'ROI',
+        key: 'totalDeposit',
+        label: 'Total Deposit',
+        help: 'Total capital deposited by the trader, raw from source.',
         align: 'right',
-        width: 90,
-        render: (r) => fmtPct2(r.roi),
+        width: 130,
+        render: (r) => fmtMoney0(r.totalDeposit),
+      },
+      {
+        key: 'netDeposit',
+        label: 'Net Deposit',
+        help: 'Raw from source when available. Derived as Deposit - Withdrawals when missing.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.netDeposit),
       },
       {
         key: 'totalTrades',
         label: 'Total Trades',
+        help: 'Total number of executed trades. Note: can be very high for algorithmic trading strategies (EAs).',
         align: 'right',
-        width: 120,
+        width: 110,
         render: (r) => fmtInt(r.totalTrades),
       },
       {
-        key: 'equity',
-        label: 'Equity',
+        key: 'tradesPerMonth',
+        label: 'Est. Trades/Month',
+        help: 'Estimated trades/month derived from Total Trades and Active Months (approximation).',
         align: 'right',
-        width: 140,
-        render: (r) => fmtMoney0(r.equity),
+        width: 130,
+        render: (r) => fmtNum2(r.tradesPerMonth),
       },
     ],
   },
   {
     key: 'most_consistent',
     label: 'Most Consistent Traders',
-    defaultSort: { key: 'consistencyScore', dir: 'desc' },
+    tooltip: 'Sort: Active Months DESC, then Est. Trades/Month DESC.',
+    defaultSort: { key: 'activeMonths', dir: 'desc' },
     columns: [
       {
-        key: 'tradesPerMonth',
-        label: 'Trades Per Month',
+        key: 'statusOrder',
+        label: 'Status',
+        help: 'Activity classification based on trading frequency and recency.',
+        align: 'left',
+        width: 120,
+        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+      },
+      statusReasonColumn(),
+      rewardLabelColumn(),
+      {
+        key: 'activeMonths',
+        label: 'Active Months',
+        help: 'Number of months observed since first activity date to today (approximation).',
         align: 'right',
-        width: 150,
+        width: 120,
+        render: (r) => fmtInt(r.activeMonths),
+      },
+      {
+        key: 'tradesPerMonth',
+        label: 'Est. Trades/Month',
+        help: 'Estimated trades/month derived from Total Trades and Active Months (approximation).',
+        align: 'right',
+        width: 130,
         render: (r) => fmtNum2(r.tradesPerMonth),
       },
+      daysSinceLastTradeColumn(),
+      tradesPerDayColumn(),
       {
-        key: 'redepositRatio',
-        label: 'Redeposit Ratio',
+        key: 'totalTrades',
+        label: 'Total Trades',
+        help: 'Total number of executed trades. Note: can be very high for algorithmic trading strategies (EAs).',
         align: 'right',
-        width: 150,
-        render: (r) => fmtNum2(r.redepositRatio),
+        width: 110,
+        render: (r) => fmtInt(r.totalTrades),
       },
       {
-        key: 'lastTradeDateMs',
-        label: 'Last Trade Date',
+        key: 'redeposit',
+        label: 'Redeposit',
+        help: 'Total redeposit amount from the report.',
         align: 'right',
-        width: 150,
-        render: (r) => fmtDateYmd(r.lastTradeDate),
+        width: 130,
+        render: (r) => fmtMoney0(r.redeposit),
       },
       {
-        key: 'consistencyScore',
-        label: 'Consistency Score',
+        key: 'totalDeposit',
+        label: 'Total Deposit',
+        help: 'Total capital deposited by the trader, raw from source.',
         align: 'right',
-        width: 160,
-        render: (r) => fmtNum2(r.consistencyScore),
+        width: 130,
+        render: (r) => fmtMoney0(r.totalDeposit),
+      },
+      {
+        key: 'netDeposit',
+        label: 'Net Deposit',
+        help: 'Raw from source when available. Derived as Deposit - Withdrawals when missing.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.netDeposit),
       },
     ],
   },
   {
     key: 'rising',
     label: 'Rising Traders',
-    defaultSort: { key: 'momentumScore', dir: 'desc' },
+    tooltip: 'Sort: Days Since Last Trade ASC, then Est. Trades/Month DESC.',
+    defaultSort: { key: 'daysSinceLastTradeSort', dir: 'asc' },
     columns: [
       {
-        key: 'lastTradeDateMs',
-        label: 'Last Trade Date',
-        align: 'right',
-        width: 150,
-        render: (r) => fmtDateYmd(r.lastTradeDate),
+        key: 'statusOrder',
+        label: 'Status',
+        help: 'Activity classification based on trading frequency and recency.',
+        align: 'left',
+        width: 120,
+        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
       },
+      statusReasonColumn(),
+      rewardLabelColumn(),
+      daysSinceLastTradeColumn(),
+      tradesPerDayColumn(),
       {
         key: 'tradesPerMonth',
-        label: 'Trades Per Month',
+        label: 'Est. Trades/Month',
+        help: 'Estimated trades/month derived from Total Trades and Active Months (approximation).',
         align: 'right',
-        width: 150,
+        width: 130,
         render: (r) => fmtNum2(r.tradesPerMonth),
       },
       {
-        key: 'momentumScore',
-        label: 'Momentum Score',
+        key: 'totalTrades',
+        label: 'Total Trades',
+        help: 'Total number of executed trades. Note: can be very high for algorithmic trading strategies (EAs).',
         align: 'right',
-        width: 160,
-        render: (r) => fmtNum2(r.momentumScore),
+        width: 110,
+        render: (r) => fmtInt(r.totalTrades),
       },
       {
-        key: 'equity',
-        label: 'Equity',
+        key: 'totalDeposit',
+        label: 'Total Deposit',
+        help: 'Total capital deposited by the trader, raw from source.',
         align: 'right',
-        width: 140,
-        render: (r) => fmtMoney0(r.equity),
+        width: 130,
+        render: (r) => fmtMoney0(r.totalDeposit),
+      },
+      {
+        key: 'netDeposit',
+        label: 'Net Deposit',
+        help: 'Raw from source when available. Derived as Deposit - Withdrawals when missing.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.netDeposit),
       },
     ],
   },
   {
     key: 'best_reward',
     label: 'Best Reward Candidates',
-    defaultSort: { key: 'rewardScore', dir: 'desc' },
+    tooltip:
+      'Sort: Status priority (Very Active → Active → Dormant → Inactive), then Net Deposit DESC, then Total Trades DESC.',
+    defaultSort: { key: 'statusOrder', dir: 'desc' },
     columns: [
       {
-        key: 'rewardScore',
-        label: 'Reward Score',
-        align: 'right',
+        key: 'statusOrder',
+        label: 'Status',
+        help: 'Activity classification based on trading frequency and recency.',
+        align: 'left',
         width: 120,
-        render: (r) => fmtNum2(r.rewardScore),
+        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
       },
+      statusReasonColumn(),
+      rewardLabelColumn(),
       {
         key: 'totalTrades',
         label: 'Total Trades',
+        help: 'Total number of executed trades. Note: can be very high for algorithmic trading strategies (EAs).',
         align: 'right',
-        width: 120,
+        width: 110,
         render: (r) => fmtInt(r.totalTrades),
+      },
+      {
+        key: 'tradesPerMonth',
+        label: 'Est. Trades/Month',
+        help: 'Estimated trades/month derived from Total Trades and Active Months (approximation).',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtNum2(r.tradesPerMonth),
+      },
+      tradesPerDayColumn(),
+      daysSinceLastTradeColumn(),
+      {
+        key: 'totalDeposit',
+        label: 'Total Deposit',
+        help: 'Total capital deposited by the trader, raw from source.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.totalDeposit),
       },
       {
         key: 'netDeposit',
         label: 'Net Deposit',
+        help: 'Raw from source when available. Derived as Deposit - Withdrawals when missing.',
         align: 'right',
-        width: 140,
+        width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
+      },
+      {
+        key: 'redeposit',
+        label: 'Redeposit',
+        help: 'Total redeposit amount from the report.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.redeposit),
       },
       {
         key: 'closedPL',
         label: 'Closed PL',
+        help: 'Closed profit/loss from the report (higher is better).',
         align: 'right',
-        width: 140,
+        width: 130,
         render: (r) => fmtMoney0(r.closedPL),
-      },
-      {
-        key: 'equity',
-        label: 'Equity',
-        align: 'right',
-        width: 140,
-        render: (r) => fmtMoney0(r.equity),
-      },
-      {
-        key: 'lastTradeDateMs',
-        label: 'Last Trade Date',
-        align: 'right',
-        width: 150,
-        render: (r) => fmtDateYmd(r.lastTradeDate),
       },
     ],
   },
 ]
 
 export default function ProfitableRanking({ publicMode = false, initialState = null } = {}) {
-  const fileRef = useRef(null)
-
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fileName, setFileName] = useState('')
@@ -812,6 +915,24 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
 
   const missingFields = dataset?.missingFields || []
 
+  const hasDepositCount = useMemo(() => {
+    const clients = dataset?.clients
+    if (!Array.isArray(clients) || !clients.length) return false
+    return clients.some((c) => Number.isFinite(Number(c?.depositCount)))
+  }, [dataset?.clients])
+
+  const tabConfigs = useMemo(() => {
+    return TAB_CONFIGS.map((t) => {
+      const safeCols = Array.isArray(t.columns) ? t.columns : []
+      const cols = safeCols.filter((c) => {
+        if (c?.requires === 'depositCount' && !hasDepositCount) return false
+        if (c?.excludes === 'depositCount' && hasDepositCount) return false
+        return true
+      })
+      return { ...t, columns: cols }
+    })
+  }, [hasDepositCount])
+
   const v1 = useMemo(() => {
     if (!dataset?.clients) return null
     return buildRankingsV1({
@@ -858,15 +979,34 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     }
   }, [v1?.summary])
 
-  const activeTabConfig = useMemo(
-    () => TAB_CONFIGS.find((t) => t.key === activeTab) || TAB_CONFIGS[0],
-    [activeTab]
-  )
+  const activeTabConfig = useMemo(() => {
+    const configs = Array.isArray(tabConfigs) && tabConfigs.length ? tabConfigs : TAB_CONFIGS
+    return configs.find((t) => t.key === activeTab) || configs[0]
+  }, [activeTab, tabConfigs])
 
   const sortedForDisplay = useMemo(() => {
-    const fallback = activeTabConfig?.defaultSort || { key: 'rewardScore', dir: 'desc' }
+    const fallback = activeTabConfig?.defaultSort || { key: 'totalTrades', dir: 'desc' }
     const s = sortByTab[activeTab] || fallback
-    return sortByKey(activeListWithSortKeys, s)
+    const tieBreakers = []
+
+    // Enforce the exact per-tab sorting rules even if the JS engine sort stability differs.
+    if (activeTab === 'top_performing' && s.key === 'closedPL' && s.dir === 'desc') {
+      tieBreakers.push({ key: 'totalTrades', dir: 'desc' })
+    }
+
+    if (activeTab === 'most_consistent' && s.key === 'activeMonths' && s.dir === 'desc') {
+      tieBreakers.push({ key: 'tradesPerMonth', dir: 'desc' })
+    }
+
+    if (activeTab === 'rising' && s.key === 'daysSinceLastTradeSort' && s.dir === 'asc') {
+      tieBreakers.push({ key: 'tradesPerMonth', dir: 'desc' })
+    }
+
+    if (activeTab === 'best_reward' && s.key === 'statusOrder' && s.dir === 'desc') {
+      tieBreakers.push({ key: 'netDeposit', dir: 'desc' }, { key: 'totalTrades', dir: 'desc' })
+    }
+
+    return sortByKey(activeListWithSortKeys, s, tieBreakers)
   }, [activeListWithSortKeys, activeTab, activeTabConfig, sortByTab])
 
   const setSort = (tabKey, colKey) => {
@@ -879,47 +1019,10 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     })
   }
 
-  const onFilePicked = async (file) => {
-    setError('')
-    setLoading(true)
-
-    try {
-      if (!file) throw new Error('No file selected')
-      setFileName(file.name || '')
-
-      const { rows, headers } = await readXlsxToRows(file, { sheetIndex: 0 })
-      const built = buildTradersRankingRewardsDataset({ rows, headers })
-      setDataset(built)
-
-      // Reset filters when data changes
-      setSelectedCountries([])
-      setMinDeposit(0)
-      setMinTrades(0)
-      setActivityRecencyDays(0)
-      setActiveTab('most_active')
-
-      setSortByTab(() => {
-        const out = {}
-        for (const t of TAB_CONFIGS) out[t.key] = t.defaultSort
-        return out
-      })
-      setPageByTab(() => {
-        const out = {}
-        for (const t of TAB_CONFIGS) out[t.key] = 1
-        return out
-      })
-    } catch (e) {
-      setDataset(null)
-      setError(e?.message || 'Unable to read XLSX')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const countryOptions = dataset?.countries || []
 
   return (
-    <div className="page-shell">
+    <div className="page-shell profitable-ranking-page">
       <header
         className="page-header ranking-header ranking-sticky-header"
         style={{ alignItems: 'stretch' }}
@@ -934,27 +1037,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
           </div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-            {!publicMode ? (
-              <>
-                <button
-                  type="button"
-                  className="pill-tab"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={loading}
-                  title="Load the Excel file"
-                >
-                  {fileName ? 'Replace XLSX' : 'Load XLSX'}
-                </button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".xlsx,.xls"
-                  style={{ display: 'none' }}
-                  onChange={(e) => onFilePicked(e.target.files?.[0] || null)}
-                />
-              </>
-            ) : null}
-
             {fileName ? (
               <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
                 {fileName}
@@ -964,7 +1046,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               </span>
             ) : (
               <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
-                Upload “Traders Ranking Rewards.xlsx” to start.
+                Data loads automatically when available.
               </span>
             )}
 
@@ -978,51 +1060,15 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-end' }}>
           {!publicMode ? (
-            <div
-              style={{
-                display: 'flex',
-                gap: 8,
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                justifyContent: 'flex-end',
-              }}
-            >
+            <div className="ranking-header-actions">
               <button
                 type="button"
-                className="pill-tab"
-                onClick={() => {
-                  const out = exportLeaderboardCsv({ tabKey: activeTab, rows: sortedForDisplay })
-                  downloadBlob(out.blob, out.fileName)
-                }}
-                disabled={loading || !dataset}
-                title="Export current leaderboard (CSV)"
-              >
-                Export CSV
-              </button>
-              <button
-                type="button"
-                className="pill-tab"
-                onClick={() => {
-                  const out = exportLeaderboardExcel({
-                    tabKey: activeTab,
-                    tabLabel: activeTabConfig?.label,
-                    rows: sortedForDisplay,
-                  })
-                  downloadBlob(out.blob, out.fileName)
-                }}
-                disabled={loading || !dataset}
-                title="Export current leaderboard (Excel)"
-              >
-                Export Excel
-              </button>
-              <button
-                type="button"
-                className="pill-tab"
+                className="pill-tab ranking-share-btn"
                 onClick={onShare}
-                disabled={loading}
-                title="Open public share view"
+                disabled={loading || !dataset}
+                title="Open the public page for this ranking (opens in a new tab and copies the link)"
               >
-                SHARE
+                Open Public Page
               </button>
             </div>
           ) : null}
@@ -1042,46 +1088,52 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
           </div>
 
           <div style={{ height: 1, width: '100%', background: 'rgba(255,255,255,0.06)' }} />
+        </div>
+      </header>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-              Min Deposit
-            </span>
+      <div className="ranking-controls">
+        <div className="ranking-tabs-row">
+          {tabConfigs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              className={`pill-tab${activeTab === t.key ? ' active' : ''}`}
+              onClick={() => setActiveTab(t.key)}
+              disabled={!dataset}
+              title={t.tooltip || ''}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="ranking-filters-grid">
+          <label className="ranking-filter-field">
+            <span className="ranking-filter-label">Min Deposit</span>
             <input
               type="number"
-              className="search-hero-input"
+              className="search-hero-input ranking-filter-input"
               value={minDeposit}
               onChange={(e) => setMinDeposit(Number(e.target.value || 0))}
-              style={{ width: 110, fontSize: 13, padding: '7px 10px', borderRadius: 10 }}
             />
+          </label>
 
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-              Min Trades
-            </span>
+          <label className="ranking-filter-field">
+            <span className="ranking-filter-label">Min Trades</span>
             <input
               type="number"
-              className="search-hero-input"
+              className="search-hero-input ranking-filter-input"
               value={minTrades}
               onChange={(e) => setMinTrades(Number(e.target.value || 0))}
-              style={{ width: 110, fontSize: 13, padding: '7px 10px', borderRadius: 10 }}
             />
+          </label>
 
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-              Activity Recency
-            </span>
+          <label className="ranking-filter-field">
+            <span className="ranking-filter-label">Activity Recency</span>
             <select
-              className="search-hero-input"
+              className="search-hero-input ranking-filter-input"
               value={String(activityRecencyDays)}
               onChange={(e) => setActivityRecencyDays(Number(e.target.value || 0))}
-              style={{ width: 160, fontSize: 13, padding: '7px 10px', borderRadius: 10 }}
               aria-label="Activity recency filter"
             >
               <option value="0">Any</option>
@@ -1090,20 +1142,10 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               <option value="90">Last 90 days</option>
               <option value="365">Last 12 months</option>
             </select>
-          </div>
+          </label>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-              Countries (Ctrl/Cmd+Click)
-            </span>
+          <label className="ranking-filter-field ranking-filter-field--countries">
+            <span className="ranking-filter-label">Countries (Ctrl/Cmd+Click)</span>
             <select
               multiple
               value={selectedCountries}
@@ -1114,14 +1156,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
                 }
                 setSelectedCountries(next)
               }}
-              className="search-hero-input"
-              style={{
-                width: 260,
-                fontSize: 13,
-                padding: '7px 10px',
-                borderRadius: 10,
-                height: 38,
-              }}
+              className="search-hero-input ranking-filter-input ranking-filter-countries"
               disabled={!countryOptions.length}
               aria-label="Country filter"
             >
@@ -1131,9 +1166,9 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
                 </option>
               ))}
             </select>
-          </div>
+          </label>
         </div>
-      </header>
+      </div>
 
       {error ? (
         <div
@@ -1173,32 +1208,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       ) : null}
 
       <div style={{ marginTop: 14 }}>
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-          }}
-        >
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            {TAB_CONFIGS.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                className={`pill-tab${activeTab === t.key ? ' active' : ''}`}
-                onClick={() => setActiveTab(t.key)}
-                disabled={!dataset}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}></div>
-        </div>
-
         {dataset ? (
           <Table
             rows={sortedForDisplay}
@@ -1219,19 +1228,18 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         ) : (
           <div
             style={{
-              marginTop: 14,
-              padding: '14px 12px',
+              padding: 14,
+              marginTop: 10,
               borderRadius: 12,
-              border: '1px solid rgba(255,255,255,0.06)',
               background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
               color: 'var(--text-muted)',
               fontWeight: 800,
             }}
           >
-            Load an XLSX file with the required columns to see leaderboards.
+            Data is not available.
           </div>
         )}
-
         {dataset && sortedForDisplay.length === 0 ? (
           <div
             style={{
