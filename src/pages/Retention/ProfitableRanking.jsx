@@ -59,12 +59,13 @@ function statusBadgeClass(statusKey) {
   return 'status-muted'
 }
 
-function StatusBadge({ statusKey, statusLabel }) {
+function StatusBadge({ statusKey, statusLabel, daysSinceLastTrade }) {
   const label = String(statusLabel || 'Inactive')
+  const daysText = fmtDaysSuffix(daysSinceLastTrade)
   const cls = statusBadgeClass(String(statusKey || 'inactive'))
   return (
     <span className={`status-badge ${cls}`} title={statusHelpText()}>
-      {label}
+      {label} ({daysText})
     </span>
   )
 }
@@ -375,16 +376,7 @@ function buildPeriodKey(year, month) {
   return `${y}-${String(m).padStart(2, '0')}`
 }
 
-function Table({
-  rows,
-  columns,
-  sortState,
-  onSort,
-  pageSize,
-  onPageSize,
-  page,
-  onPage,
-}) {
+function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, onPage }) {
   const safeColumns = Array.isArray(columns) ? columns : []
   const total = rows.length
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -651,7 +643,13 @@ const TAB_CONFIGS = [
         help: 'Activity classification based on trading frequency and recency.',
         align: 'left',
         width: 120,
-        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+        render: (r) => (
+          <StatusBadge
+            statusKey={r.statusKey}
+            statusLabel={r.statusLabel}
+            daysSinceLastTrade={r?.daysSinceLastTrade}
+          />
+        ),
       },
       statusReasonColumn(),
       rewardLabelColumn(),
@@ -704,7 +702,13 @@ const TAB_CONFIGS = [
         help: 'Activity classification based on trading frequency and recency.',
         align: 'left',
         width: 120,
-        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+        render: (r) => (
+          <StatusBadge
+            statusKey={r.statusKey}
+            statusLabel={r.statusLabel}
+            daysSinceLastTrade={r?.daysSinceLastTrade}
+          />
+        ),
       },
       statusReasonColumn(),
       rewardLabelColumn(),
@@ -765,7 +769,13 @@ const TAB_CONFIGS = [
         help: 'Activity classification based on trading frequency and recency.',
         align: 'left',
         width: 120,
-        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+        render: (r) => (
+          <StatusBadge
+            statusKey={r.statusKey}
+            statusLabel={r.statusLabel}
+            daysSinceLastTrade={r?.daysSinceLastTrade}
+          />
+        ),
       },
       statusReasonColumn(),
       rewardLabelColumn(),
@@ -834,7 +844,13 @@ const TAB_CONFIGS = [
         help: 'Activity classification based on trading frequency and recency.',
         align: 'left',
         width: 120,
-        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+        render: (r) => (
+          <StatusBadge
+            statusKey={r.statusKey}
+            statusLabel={r.statusLabel}
+            daysSinceLastTrade={r?.daysSinceLastTrade}
+          />
+        ),
       },
       statusReasonColumn(),
       rewardLabelColumn(),
@@ -887,7 +903,13 @@ const TAB_CONFIGS = [
         help: 'Activity classification based on trading frequency and recency.',
         align: 'left',
         width: 120,
-        render: (r) => <StatusBadge statusKey={r.statusKey} statusLabel={r.statusLabel} />,
+        render: (r) => (
+          <StatusBadge
+            statusKey={r.statusKey}
+            statusLabel={r.statusLabel}
+            daysSinceLastTrade={r?.daysSinceLastTrade}
+          />
+        ),
       },
       statusReasonColumn(),
       rewardLabelColumn(),
