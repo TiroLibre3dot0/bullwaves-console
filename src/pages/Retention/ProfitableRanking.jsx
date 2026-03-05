@@ -39,6 +39,7 @@ function fmtInt(v) {
 }
 
 function fmtDaysSuffix(v) {
+  if (v === null || v === undefined || v === '') return '—'
   const n = Math.floor(Number(v))
   if (!Number.isFinite(n)) return '—'
   const d = Math.max(0, n)
@@ -154,6 +155,130 @@ function statusReasonColumn() {
       </div>
     ),
   }
+}
+
+function toFiniteNumber(v, fallback = 0) {
+  const n = Number(v)
+  return Number.isFinite(n) ? n : fallback
+}
+
+function toFiniteInt(v, fallback = 0) {
+  const n = Math.floor(Number(v))
+  return Number.isFinite(n) ? n : fallback
+}
+
+function computeDaysSinceLastTrade(row) {
+  const raw = row?.recencyDays
+  if (raw === null || raw === undefined || raw === '') return null
+  const d = Number(raw)
+  if (!Number.isFinite(d)) return null
+  return Math.max(0, Math.floor(d))
+}
+
+function computeTradesPerDay(row) {
+  const tpm = toFiniteNumber(row?.tradesPerMonth, NaN)
+  if (Number.isFinite(tpm)) return Math.max(0, tpm) / 30
+
+  const trades = Math.max(0, toFiniteInt(row?.totalTrades, 0))
+  const months = Math.max(1, toFiniteInt(row?.activeMonths, 1))
+  return trades / (months * 30)
+}
+
+function classifyActivityStatus({ totalTrades, tradesPerMonth, daysSinceLastTrade } = {}) {
+  const trades = Math.max(0, toFiniteInt(totalTrades, 0))
+  const tpm = Math.max(0, toFiniteNumber(tradesPerMonth, 0))
+  const d = Number.isFinite(Number(daysSinceLastTrade))
+    ? Math.max(0, Math.floor(Number(daysSinceLastTrade)))
+    : null
+  const tpmText = Number.isFinite(tpm) ? tpm.toFixed(2) : '—'
+
+  if (trades <= 0) {
+    return {
+      statusKey: 'inactive',
+      statusLabel: 'Inactive',
+      statusOrder: 0,
+      statusReasonShort: 'No trades',
+      statusReasonFull: 'No trades recorded in the dataset for this trader.',
+    }
+  }
+
+  if (d == null) {
+    return {
+      statusKey: 'inactive',
+      statusLabel: 'Inactive',
+      statusOrder: 0,
+      statusReasonShort: 'No last-trade date',
+      statusReasonFull: 'No valid last-trade activity date was found for this trader.',
+    }
+  }
+
+  if (d <= 7 && tpm >= 20) {
+    return {
+      statusKey: 'very_active',
+      statusLabel: 'Very Active',
+      statusOrder: 3,
+      statusReasonShort: 'Recent + high frequency',
+      statusReasonFull: `Last trade ${d}d ago; avg ${tpmText} trades/month.`,
+    }
+  }
+
+  if (d <= 30 && tpm >= 5) {
+    return {
+      statusKey: 'active',
+      statusLabel: 'Active',
+      statusOrder: 2,
+      statusReasonShort: 'Recent activity',
+      statusReasonFull: `Last trade ${d}d ago; avg ${tpmText} trades/month.`,
+    }
+  }
+
+  if (d <= 90) {
+    return {
+      statusKey: 'dormant',
+      statusLabel: 'Dormant',
+      statusOrder: 1,
+      statusReasonShort: 'Not recently active',
+      statusReasonFull: `Last trade ${d}d ago; avg ${tpmText} trades/month.`,
+    }
+  }
+
+  return {
+    statusKey: 'inactive',
+    statusLabel: 'Inactive',
+    statusOrder: 0,
+    statusReasonShort: 'Long inactive',
+    statusReasonFull: `Last trade ${d}d ago; avg ${tpmText} trades/month.`,
+  }
+}
+
+function classifyRewardLabel({
+  statusKey,
+  totalDeposit,
+  netDeposit,
+  equity,
+  totalTrades,
+  tradesPerMonth,
+} = {}) {
+  const dep = toFiniteNumber(totalDeposit, 0)
+  const net = toFiniteNumber(netDeposit, 0)
+  const eq = toFiniteNumber(equity, 0)
+  const trades = Math.max(0, toFiniteInt(totalTrades, 0))
+  const tpm = Math.max(0, toFiniteNumber(tradesPerMonth, 0))
+
+  const valueSignal = Math.max(0, net) + Math.max(0, eq)
+  const highValue = valueSignal >= 1000 || dep >= 1000
+  const mediumValue = valueSignal >= 300 || dep >= 300
+
+  if (statusKey === 'very_active') {
+    return highValue || mediumValue ? 'Send reward' : 'Nurture'
+  }
+  if (statusKey === 'active') {
+    return highValue ? 'Send reward' : 'Nurture'
+  }
+  if (statusKey === 'dormant') {
+    return highValue || trades >= 100 || tpm >= 10 ? 'Winback' : 'Ignore'
+  }
+  return 'Ignore'
 }
 
 function tradesPerDayColumn() {
@@ -1452,7 +1577,36 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
             ? new Date(r.lastTradeDate).getTime()
             : 0
       const agentUser = agentByClientId.get(String(r?.clientId || '').trim()) || 'Unassigned'
-      return { ...r, agentUser, lastTradeDateMs: Number.isFinite(ms) ? ms : 0 }
+
+      const daysSinceLastTrade = computeDaysSinceLastTrade(r)
+      const daysSinceLastTradeSort = daysSinceLastTrade == null ? 999999 : daysSinceLastTrade
+      const tradesPerDay = computeTradesPerDay(r)
+
+      const status = classifyActivityStatus({
+        totalTrades: r?.totalTrades,
+        tradesPerMonth: r?.tradesPerMonth,
+        daysSinceLastTrade,
+      })
+
+      const rewardLabel = classifyRewardLabel({
+        statusKey: status.statusKey,
+        totalDeposit: r?.totalDeposit,
+        netDeposit: r?.netDeposit,
+        equity: r?.equity,
+        totalTrades: r?.totalTrades,
+        tradesPerMonth: r?.tradesPerMonth,
+      })
+
+      return {
+        ...r,
+        agentUser,
+        lastTradeDateMs: Number.isFinite(ms) ? ms : 0,
+        daysSinceLastTrade,
+        daysSinceLastTradeSort,
+        tradesPerDay,
+        ...status,
+        rewardLabel,
+      }
     })
   }, [activeList, agentByClientId])
 
