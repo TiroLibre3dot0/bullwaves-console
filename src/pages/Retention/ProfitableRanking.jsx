@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import KpiCard from '../../components/common/KpiCard'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
@@ -226,6 +226,29 @@ function clampInt(n, min, max) {
   return Math.max(min, Math.min(max, v))
 }
 
+function normalizeKeyName(k) {
+  return String(k || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function yearMonthIndex(y, m) {
+  return y * 12 + (m - 1)
+}
+
+function coerceInt(v) {
+  const n = Math.floor(Number(v))
+  return Number.isFinite(n) ? n : null
+}
+
+function buildPeriodKey(year, month) {
+  const y = Math.floor(Number(year))
+  const m = Math.floor(Number(month))
+  if (!Number.isFinite(y) || !Number.isFinite(m)) return ''
+  return `${y}-${String(m).padStart(2, '0')}`
+}
+
 function Table({
   rows,
   columns,
@@ -308,7 +331,7 @@ function Table({
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           {isUpdating ? (
             <div className="ranking-inline-loader" role="status" aria-live="polite">
-              <span className="ranking-inline-spinner" aria-hidden="true" />
+              <span className="pill-dot dot-progress" aria-hidden="true" />
               <span>Updating…</span>
             </div>
           ) : null}
@@ -938,17 +961,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const rawRows = artifact?.rows || []
   const rawHeaders = artifact?.headers || []
 
-  function normalizeKeyName(k) {
-    return String(k || '')
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, '')
-  }
-
-  function yearMonthIndex(y, m) {
-    return y * 12 + (m - 1)
-  }
-
   const periodConfig = useMemo(() => {
     const headers = Array.isArray(rawHeaders) ? rawHeaders : []
     const firstRow = Array.isArray(rawRows) && rawRows.length ? rawRows[0] : null
@@ -977,19 +989,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     return { yearCol, monthCol, periodCol }
   }, [rawHeaders, rawRows])
 
-  function coerceInt(v) {
-    const n = Math.floor(Number(v))
-    return Number.isFinite(n) ? n : null
-  }
-
-  function buildPeriodKey(year, month) {
-    const y = Math.floor(Number(year))
-    const m = Math.floor(Number(month))
-    if (!Number.isFinite(y) || !Number.isFinite(m)) return ''
-    return `${y}-${String(m).padStart(2, '0')}`
-  }
-
-  function parsePeriodValue(v) {
+  const parsePeriodValue = useCallback((v) => {
     if (v == null) return null
     const s = String(v).trim()
     if (!s) return null
@@ -1074,38 +1074,41 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     }
 
     return null
-  }
+  }, [])
 
-  function extractPeriod(row) {
-    const r = row && typeof row === 'object' ? row : null
-    if (!r) return null
+  const extractPeriod = useCallback(
+    (row) => {
+      const r = row && typeof row === 'object' ? row : null
+      if (!r) return null
 
-    // Prefer explicit year/month fields if present.
-    if (periodConfig.yearCol && periodConfig.monthCol) {
-      const y = coerceInt(r[periodConfig.yearCol])
-      const m = coerceInt(r[periodConfig.monthCol])
-      if (y && m && y > 1900 && y < 3000 && m >= 1 && m <= 12) {
-        const periodKey = buildPeriodKey(y, m)
-        const periodDate = new Date(Date.UTC(y, m - 1, 1))
-        return { periodKey, year: y, month: m, periodDate }
+      // Prefer explicit year/month fields if present.
+      if (periodConfig.yearCol && periodConfig.monthCol) {
+        const y = coerceInt(r[periodConfig.yearCol])
+        const m = coerceInt(r[periodConfig.monthCol])
+        if (y && m && y > 1900 && y < 3000 && m >= 1 && m <= 12) {
+          const periodKey = buildPeriodKey(y, m)
+          const periodDate = new Date(Date.UTC(y, m - 1, 1))
+          return { periodKey, year: y, month: m, periodDate }
+        }
       }
-    }
 
-    // Otherwise parse a period-like field.
-    const val = periodConfig.periodCol ? r[periodConfig.periodCol] : null
-    const parsed = parsePeriodValue(val)
-    if (!parsed) return null
-    const periodKey = buildPeriodKey(parsed.year, parsed.month)
-    const periodDate = new Date(Date.UTC(parsed.year, parsed.month - 1, 1))
-    return { periodKey, year: parsed.year, month: parsed.month, periodDate }
-  }
+      // Otherwise parse a period-like field.
+      const val = periodConfig.periodCol ? r[periodConfig.periodCol] : null
+      const parsed = parsePeriodValue(val)
+      if (!parsed) return null
+      const periodKey = buildPeriodKey(parsed.year, parsed.month)
+      const periodDate = new Date(Date.UTC(parsed.year, parsed.month - 1, 1))
+      return { periodKey, year: parsed.year, month: parsed.month, periodDate }
+    },
+    [parsePeriodValue, periodConfig]
+  )
 
   const periodAvailable = useMemo(() => {
     for (const r of rawRows) {
       if (extractPeriod(r)) return true
     }
     return false
-  }, [rawRows, periodConfig])
+  }, [extractPeriod, rawRows])
 
   useEffect(() => {
     if (periodAvailable) return
@@ -1122,7 +1125,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       if (p?.year) set.add(p.year)
     }
     return [...set].sort((a, b) => b - a)
-  }, [periodAvailable, rawRows, periodConfig])
+  }, [extractPeriod, periodAvailable, rawRows])
 
   const monthOptions = useMemo(() => {
     if (!periodAvailable) return []
@@ -1136,7 +1139,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       list.push(p.periodKey)
     }
     return list.sort((a, b) => (a < b ? 1 : a > b ? -1 : 0))
-  }, [periodAvailable, rawRows, periodConfig])
+  }, [extractPeriod, periodAvailable, rawRows])
 
   useEffect(() => {
     if (!yearOptions.length) return

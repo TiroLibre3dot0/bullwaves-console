@@ -64,7 +64,11 @@ function parseDateSafe(v) {
     return Number.isFinite(d.getTime()) ? d : null
   }
 
-  const s = String(v).trim()
+  const s0 = String(v).trim()
+  if (!s0) return null
+  if (s0 === '-' || s0 === '—') return null
+
+  const s = s0.replace(/\s+/g, ' ')
   if (!s) return null
 
   // ISO is the best case
@@ -72,6 +76,75 @@ function parseDateSafe(v) {
   if (Number.isFinite(msIso)) {
     const d = new Date(msIso)
     return Number.isFinite(d.getTime()) ? d : null
+  }
+
+  // Common XLSX-export format: 'YYYY-MM-DD HH:mm:ss' (not always parseable by Date.parse)
+  const mIsoLike = s.match(
+    /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+  )
+  if (mIsoLike) {
+    const y = Math.floor(Number(mIsoLike[1]))
+    const mo = Math.floor(Number(mIsoLike[2]))
+    const d0 = Math.floor(Number(mIsoLike[3]))
+    const hh = mIsoLike[4] != null ? Math.floor(Number(mIsoLike[4])) : 0
+    const mm = mIsoLike[5] != null ? Math.floor(Number(mIsoLike[5])) : 0
+    const ss = mIsoLike[6] != null ? Math.floor(Number(mIsoLike[6])) : 0
+    if (
+      Number.isFinite(y) &&
+      Number.isFinite(mo) &&
+      Number.isFinite(d0) &&
+      y > 1900 &&
+      y < 3000 &&
+      mo >= 1 &&
+      mo <= 12 &&
+      d0 >= 1 &&
+      d0 <= 31 &&
+      hh >= 0 &&
+      hh <= 23 &&
+      mm >= 0 &&
+      mm <= 59 &&
+      ss >= 0 &&
+      ss <= 59
+    ) {
+      const ms = Date.UTC(y, mo - 1, d0, hh, mm, ss)
+      const d = new Date(ms)
+      return Number.isFinite(d.getTime()) ? d : null
+    }
+  }
+
+  // Fallback: 'DD/MM/YYYY' or 'DD-MM-YYYY'
+  const mDmy = s.match(
+    /^(\d{1,2})[-\/\.](\d{1,2})[-\/\.](\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+  )
+  if (mDmy) {
+    const dd = Math.floor(Number(mDmy[1]))
+    const mo = Math.floor(Number(mDmy[2]))
+    let y = Math.floor(Number(mDmy[3]))
+    const hh = mDmy[4] != null ? Math.floor(Number(mDmy[4])) : 0
+    const mm = mDmy[5] != null ? Math.floor(Number(mDmy[5])) : 0
+    const ss = mDmy[6] != null ? Math.floor(Number(mDmy[6])) : 0
+    if (y >= 0 && y < 100) y = y + 2000
+    if (
+      Number.isFinite(y) &&
+      Number.isFinite(mo) &&
+      Number.isFinite(dd) &&
+      y > 1900 &&
+      y < 3000 &&
+      mo >= 1 &&
+      mo <= 12 &&
+      dd >= 1 &&
+      dd <= 31 &&
+      hh >= 0 &&
+      hh <= 23 &&
+      mm >= 0 &&
+      mm <= 59 &&
+      ss >= 0 &&
+      ss <= 59
+    ) {
+      const ms = Date.UTC(y, mo - 1, dd, hh, mm, ss)
+      const d = new Date(ms)
+      return Number.isFinite(d.getTime()) ? d : null
+    }
   }
 
   return null
@@ -247,7 +320,11 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
     const ltt = parseDateSafe(row?.[schema.ltt_date] ?? row?.lastTransactionDate ?? row?.ltt_date)
 
     next.clientTimestamp = pickMinDate(next.clientTimestamp, ts)
-    next.lastTradeDate = pickMaxDate(next.lastTradeDate, ltd)
+
+    // In some exports, the last-trade signal can be present in either ltd_date or ltt_date.
+    // Keep a strict max aggregation, but allow ltt_date to contribute to lastTradeDate.
+    const lastTradeCandidate = pickMaxDate(ltd, ltt)
+    next.lastTradeDate = pickMaxDate(next.lastTradeDate, lastTradeCandidate)
     next.lastTransactionDate = pickMaxDate(next.lastTransactionDate, ltt)
 
     const finalAgent = coerceString(next.agentUser) || 'Unassigned'
