@@ -305,6 +305,17 @@ function daysSinceLastTradeColumn() {
   }
 }
 
+function equityColumn() {
+  return {
+    key: 'equity',
+    label: 'Equity',
+    help: 'Current equity from the report (per trader).',
+    align: 'right',
+    width: 130,
+    render: (r) => fmtMoney0(r?.equity),
+  }
+}
+
 function medal(rank) {
   if (rank === 1) return '🥇'
   if (rank === 2) return '🥈'
@@ -687,6 +698,7 @@ const TAB_CONFIGS = [
         width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
+      equityColumn(),
     ],
   },
   {
@@ -738,6 +750,7 @@ const TAB_CONFIGS = [
         width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
+      equityColumn(),
       {
         key: 'totalTrades',
         label: 'Total Trades',
@@ -829,6 +842,7 @@ const TAB_CONFIGS = [
         width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
+      equityColumn(),
     ],
   },
   {
@@ -888,6 +902,7 @@ const TAB_CONFIGS = [
         width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
+      equityColumn(),
     ],
   },
   {
@@ -947,6 +962,7 @@ const TAB_CONFIGS = [
         width: 130,
         render: (r) => fmtMoney0(r.netDeposit),
       },
+      equityColumn(),
       {
         key: 'redeposit',
         label: 'Redeposit',
