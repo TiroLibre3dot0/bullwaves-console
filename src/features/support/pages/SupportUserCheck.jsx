@@ -1471,110 +1471,129 @@ export default function SupportUserCheck({ shareConfig = null }) {
                               >
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                   <div
+                                    style={{
+                                      width: 26,
+                                      height: 26,
+                                      borderRadius: 9,
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      fontSize: 11,
+                                      fontWeight: 900,
+                                      color: 'rgba(255,255,255,0.8)',
+                                      background: 'rgba(148,163,184,0.10)',
+                                      border: '1px solid rgba(148,163,184,0.16)',
+                                    }}
+                                    title={`Rank: ${i + 1}`}
+                                  >
+                                    {i + 1}
+                                  </div>
+                                  <span
                                     aria-hidden
                                     style={{
-                                      width: 10,
-                                      height: 10,
+                                      width: 8,
+                                      height: 8,
                                       borderRadius: 999,
                                       background: dot.color,
                                       boxShadow: dot.shadow,
                                       flex: '0 0 auto',
                                     }}
+                                    title={`${t('support.userCheck.botList.riskScore')}: ${Number(intel?.botScore || 0).toFixed(0)}`}
                                   />
+                                </div>
 
+                                <div
+                                  style={{
+                                    minWidth: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                  }}
+                                >
                                   <div
                                     style={{
-                                      minWidth: 0,
+                                      width: 34,
+                                      height: 34,
+                                      borderRadius: 12,
                                       display: 'flex',
                                       alignItems: 'center',
-                                      gap: 10,
+                                      justifyContent: 'center',
+                                      fontWeight: 900,
+                                      fontSize: 12,
+                                      color: '#fff',
+                                      background:
+                                        'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(2,6,23,0.15))',
+                                      border: '1px solid rgba(99,102,241,0.22)',
+                                      flex: '0 0 auto',
                                     }}
                                   >
+                                    {initialsFor(mapped)}
+                                  </div>
+                                  <div style={{ minWidth: 0 }}>
                                     <div
                                       style={{
-                                        width: 34,
-                                        height: 34,
-                                        borderRadius: 12,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontWeight: 900,
-                                        fontSize: 12,
-                                        color: '#fff',
-                                        background:
-                                          'linear-gradient(135deg, rgba(99,102,241,0.25), rgba(2,6,23,0.15))',
-                                        border: '1px solid rgba(99,102,241,0.22)',
-                                        flex: '0 0 auto',
+                                        gap: 8,
+                                        minWidth: 0,
                                       }}
                                     >
-                                      {initialsFor(mapped)}
-                                    </div>
-                                    <div style={{ minWidth: 0 }}>
                                       <div
                                         style={{
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          gap: 8,
-                                          minWidth: 0,
-                                        }}
-                                      >
-                                        <div
-                                          style={{
-                                            fontWeight: 950,
-                                            fontSize: 13,
-                                            color: 'rgba(255,255,255,0.92)',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis',
-                                            whiteSpace: 'nowrap',
-                                            minWidth: 0,
-                                          }}
-                                        >
-                                          {name}
-                                        </div>
-                                        <span
-                                          style={{
-                                            fontSize: 10,
-                                            fontWeight: 950,
-                                            padding: '2px 8px',
-                                            borderRadius: 999,
-                                            border: isBot
-                                              ? '1px solid rgba(239,68,68,0.35)'
-                                              : '1px solid rgba(148,163,184,0.24)',
-                                            background: isBot
-                                              ? 'rgba(239,68,68,0.12)'
-                                              : 'rgba(148,163,184,0.10)',
-                                            color: isBot ? '#fecaca' : 'rgba(255,255,255,0.70)',
-                                            flex: '0 0 auto',
-                                            textTransform: 'uppercase',
-                                            letterSpacing: 0.35,
-                                          }}
-                                          title={
-                                            isBot
-                                              ? t('support.userCheck.botList.badge.botHint')
-                                              : t('support.userCheck.botList.badge.fillHint')
-                                          }
-                                        >
-                                          {isBot
-                                            ? t('support.userCheck.botList.badge.bot')
-                                            : t('support.userCheck.botList.badge.fill')}
-                                        </span>
-                                      </div>
-                                      <div
-                                        className="bot-top10-only-compact"
-                                        style={{
-                                          marginTop: 2,
-                                          color: 'rgba(255,255,255,0.55)',
-                                          fontSize: 11,
+                                          fontWeight: 950,
+                                          fontSize: 13,
+                                          color: 'rgba(255,255,255,0.92)',
                                           overflow: 'hidden',
                                           textOverflow: 'ellipsis',
                                           whiteSpace: 'nowrap',
+                                          minWidth: 0,
                                         }}
                                       >
-                                        {affLabel !== '—'
-                                          ? affLabel
-                                          : t('support.details.noAffiliate')}
-                                        {regLabel && regLabel !== '—' ? ` · ${regLabel}` : ''}
+                                        {name}
                                       </div>
+                                      <span
+                                        style={{
+                                          fontSize: 10,
+                                          fontWeight: 950,
+                                          padding: '2px 8px',
+                                          borderRadius: 999,
+                                          border: isBot
+                                            ? '1px solid rgba(239,68,68,0.35)'
+                                            : '1px solid rgba(148,163,184,0.24)',
+                                          background: isBot
+                                            ? 'rgba(239,68,68,0.12)'
+                                            : 'rgba(148,163,184,0.10)',
+                                          color: isBot ? '#fecaca' : 'rgba(255,255,255,0.70)',
+                                          flex: '0 0 auto',
+                                          textTransform: 'uppercase',
+                                          letterSpacing: 0.35,
+                                        }}
+                                        title={
+                                          isBot
+                                            ? t('support.userCheck.botList.badge.botHint')
+                                            : t('support.userCheck.botList.badge.fillHint')
+                                        }
+                                      >
+                                        {isBot
+                                          ? t('support.userCheck.botList.badge.bot')
+                                          : t('support.userCheck.botList.badge.fill')}
+                                      </span>
+                                    </div>
+                                    <div
+                                      className="bot-top10-only-compact"
+                                      style={{
+                                        marginTop: 2,
+                                        color: 'rgba(255,255,255,0.55)',
+                                        fontSize: 11,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {affLabel !== '—'
+                                        ? affLabel
+                                        : t('support.details.noAffiliate')}
+                                      {regLabel && regLabel !== '—' ? ` · ${regLabel}` : ''}
                                     </div>
                                   </div>
                                 </div>

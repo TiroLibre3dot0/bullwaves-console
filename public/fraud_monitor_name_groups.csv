@@ -1,4 +1,9 @@
 name,country,count,members_user_ids,members_accounts
+alberto pizzichemi,italy,3,"bullwaves-1008879""|bullwaves-1008855""|bullwaves-1006358""",3013426|3013424|3013300
+lewis evans,united kingdom,5,"bullwaves-1006679""|bullwaves-500619|bullwaves-500619""|bullwaves-446530|bullwaves-446530""",3013334|1213114|1213114|1206177|1206177
+lucy chiddey,united kingdom,3,"bullwaves-1006394""|bullwaves-267589|bullwaves-267589""",3013302|935885|935885
+ben brewer,united kingdom,6,"bullwaves-1005928""|bullwaves-404129|bullwaves-404129""|bullwaves-384551|bullwaves-384551""|bullwaves-802792","3013284|1201051|1201051|951845|951845|,""12/15/2025 11:12:16"
+deen rakich,new zealand,3,"bullwaves-1004144""|bullwaves-183268|bullwaves-183268""",3013236|922078|922078
 catherine ozorio,australia,3,"bullwaves-1003089""|bullwaves-58523|bullwaves-58523""",3013197|903440|903440
 shaidyn nonoa-kopu,new zealand,4,"bullwaves-1003051""|bullwaves-303315|bullwaves-303315""|bullwaves-801358","3013195|941165|941165|,""12/15/2025 11:10:44"
 matthew jones,united kingdom,8,"bullwaves-1001911""|bullwaves-762892|bullwaves-762892""|bullwaves-629894|bullwaves-629894""|bullwaves-550347|bullwaves-550347""|bullwaves-804996","3013156|2000531|2000531|1309173|1309173|1219389|1219389|,""12/15/2025 11:14:29"
@@ -77,6 +82,7 @@ mohammed shah,united kingdom,7,"bullwaves-981278""|bullwaves-503984|bullwaves-50
 nicola prandini,italy,3,"bullwaves-981022""|bullwaves-152441|bullwaves-152441""",3012270|917228|917228
 saurabh goyal,australia,2,"bullwaves-981041""|bullwaves-963203","3012273|,""2/17/2026 16:45:12"
 connor williams,united kingdom,7,"bullwaves-980324""|bullwaves-980275""|bullwaves-980255""|bullwaves-460235|bullwaves-460235""|bullwaves-434273|bullwaves-434273""",3012247|3012243|3012242|1207928|1207928|1204619|1204619
+yok poh tey,singapore,2,"bullwaves-980295""|bullwaves-980286""",3012246|3012245
 alessandro lucci,italy,5,"bullwaves-979732""|bullwaves-638317|bullwaves-638317""|bullwaves-39653|bullwaves-39653""",2002937|1309897|1309897|901067|901067
 syed shah,united kingdom,9,"bullwaves-979425""|bullwaves-671350|bullwaves-671350""|bullwaves-278384|bullwaves-278384""|bullwaves-26207|bullwaves-26207""|moonance-2861|moonance-2861""","3012200|1313495|1313495|937412|937412|0|0|10492:4468,10493:1053595,10494:1053596|10492:4468,10493:1053595,10494:1053596"
 mukesh kumar,india,3,"bullwaves-978549""|bullwaves-897375|bullwaves-897375""",2002926|3008562|3008562
@@ -9550,7 +9556,7 @@ matthew oneill,united kingdom,2,"bullwaves-789534|bullwaves-789534""",2000848|20
 martin dawber,united kingdom,2,"bullwaves-789514|bullwaves-789514""",2000847|2000847
 nikolai borel,romania,2,"bullwaves-789475|bullwaves-789475""",3003380|3003380
 georgia michopoulou,greece,2,"bullwaves-789469|bullwaves-789469""",2000846|2000846
-syeda sara,india,3,"bullwaves-789402|bullwaves-789386|bullwaves-789386""",3003379|3003378|3003378
+syeda sara,india,4,"bullwaves-789402|bullwaves-789386|bullwaves-789386""|bullwaves-789402""",3003379|3003378|3003378|3003379
 shafii muhammed,nigeria,2,"bullwaves-789337|bullwaves-789337""",2000845|2000845
 kiprianos outos,greece,2,"bullwaves-789324|bullwaves-789324""",2000844|2000844
 muzammal asghar,united kingdom,2,"bullwaves-789316|bullwaves-789316""",3003377|3003377
@@ -20807,6 +20813,7 @@ sam durcan,united kingdom,2,"bullwaves-606132|bullwaves-606132""",1306719|130671
 hayder iqbal,united kingdom,2,"bullwaves-606136|bullwaves-606136""",1306720|1306720
 nicholas news,united kingdom,2,"bullwaves-606116|bullwaves-606116""",1306716|1306716
 george kirimi,united kingdom,2,"bullwaves-606130|bullwaves-606130""",1306718|1306718
+stephen corrigan,ireland,2,"bullwaves-606111|bullwaves-606111""",1306714|1306714
 rilley dudley,united kingdom,2,"bullwaves-606089|bullwaves-606089""",1306711|1306711
 zuhayr meah,united kingdom,2,"bullwaves-606098|bullwaves-606098""",1306712|1306712
 ranjit bains,united kingdom,2,"bullwaves-606100|bullwaves-606100""",1306713|1306713
@@ -22868,6 +22875,7 @@ callum cooley,united kingdom,2,"bullwaves-582462|bullwaves-582462""",1303653|130
 chirag lal,united kingdom,2,"bullwaves-582466|bullwaves-582466""",1303655|1303655
 sergiu herte,united kingdom,2,"bullwaves-582415|bullwaves-582415""",1303647|1303647
 alex mussell,united kingdom,2,"bullwaves-582367|bullwaves-582367""",1303644|1303644
+panagiotis tsoutsou,greece,2,"bullwaves-582363|bullwaves-582363""",1303643|1303643
 salman mohammed salman mohammed,united kingdom,2,"bullwaves-582361|bullwaves-582361""",1303642|1303642
 tom yoxall,united kingdom,2,"bullwaves-582392|bullwaves-582392""",1303645|1303645
 jagdeep dua,united kingdom,2,"bullwaves-582399|bullwaves-582399""",1303646|1303646
@@ -28695,6 +28703,7 @@ jack purdie,united kingdom,2,"bullwaves-507248|bullwaves-507248""",1214085|12140
 youssof alaawad,united kingdom,2,"bullwaves-507261|bullwaves-507261""",1214087|1214087
 mohamed raoutani,italy,2,"bullwaves-507255|bullwaves-507255""",1214086|1214086
 tim bremner,united kingdom,3,"bullwaves-507220|bullwaves-507220""|bullwaves-804393","1214083|1214083|,""12/15/2025 11:13:49"
+soul koni,greece,2,"bullwaves-507214|bullwaves-507214""",1214081|1214081
 tyler steenkamp,zimbabwe,2,"bullwaves-507204|bullwaves-507204""",1214080|1214080
 emilio pyanee,united kingdom,3,"bullwaves-507188|bullwaves-507188""|bullwaves-804392","1214077|1214077|,""12/15/2025 11:13:49"
 albert christiaan helfensteijn,spain,2,"bullwaves-507182|bullwaves-507182""",1214076|1214076
@@ -29239,7 +29248,6 @@ ian aston,united kingdom,2,"bullwaves-500655|bullwaves-500655""",1213121|1213121
 francois prinsloo,south africa,2,"bullwaves-500634|bullwaves-500634""",1213117|1213117
 john ford,united kingdom,3,"bullwaves-500641|bullwaves-500641""|bullwaves-804290","1213119|1213119|,""12/15/2025 11:13:41"
 andrei birladeanu,germany,2,"bullwaves-500628|bullwaves-500628""",1213115|1213115
-lewis evans,united kingdom,4,"bullwaves-500619|bullwaves-500619""|bullwaves-446530|bullwaves-446530""",1213114|1213114|1206177|1206177
 nelson carvalho,united kingdom,2,"bullwaves-500597|bullwaves-500597""",1213111|1213111
 david kulik,united kingdom,2,"bullwaves-500606|bullwaves-500606""",1213112|1213112
 connor potter,united kingdom,2,"bullwaves-500575|bullwaves-500575""",1213109|1213109
@@ -36954,7 +36962,6 @@ axel piazza,switzerland,4,"bullwaves-404179|bullwaves-404179""|bullwaves-330473|
 nkosana dube,south africa,2,"bullwaves-404188|bullwaves-404188""",1201056|1201056
 joel olakunle abraham,united arab emirates,2,"bullwaves-404165|bullwaves-404165""",1201054|1201054
 kian taberner,united kingdom,2,"bullwaves-404140|bullwaves-404140""",1201052|1201052
-ben brewer,united kingdom,5,"bullwaves-404129|bullwaves-404129""|bullwaves-384551|bullwaves-384551""|bullwaves-802792","1201051|1201051|951845|951845|,""12/15/2025 11:12:16"
 brian thomas,south africa,2,"bullwaves-404101|bullwaves-404101""",1201047|1201047
 rikki black,united kingdom,3,"bullwaves-404060|bullwaves-404060""|bullwaves-802791","1201045|1201045|,""12/15/2025 11:12:16"
 akhmad nadim,united kingdom,2,"bullwaves-404062|bullwaves-404062""",1201046|1201046
@@ -47484,7 +47491,6 @@ sam jackson,united kingdom,2,"bullwaves-267672|bullwaves-267672""",935901|935901
 awais waseem,united kingdom,2,"bullwaves-267643|bullwaves-267643""",935896|935896
 rojesh kc,australia,2,"bullwaves-267624|bullwaves-267624""",935893|935893
 thomas mccorley,united kingdom,2,"bullwaves-267618|bullwaves-267618""",935892|935892
-lucy chiddey,united kingdom,2,"bullwaves-267589|bullwaves-267589""",935885|935885
 mahmoud elgharabawy,united arab emirates,2,"bullwaves-267596|bullwaves-267596""",935887|935887
 iker maldonado,spain,2,"bullwaves-267587|bullwaves-267587""",935884|935884
 delroy toussaint,dominica,2,"bullwaves-267579|bullwaves-267579""",935882|935882
@@ -53590,7 +53596,7 @@ adriano castiglia,italy,4,"bullwaves-199543|bullwaves-199543""|bullwaves-199554|
 saverio costantino,italy,2,"bullwaves-199549|bullwaves-199549""",924786|924786
 bailey carter ingham,united kingdom,2,"bullwaves-199521|bullwaves-199521""",924783|924783
 thomas mccleary,united kingdom,2,"bullwaves-199515|bullwaves-199515""",924780|924780
-alex chifor,ireland,3,"bullwaves-199510|bullwaves-199506|bullwaves-199506""",924779|924778|924778
+alex chifor,ireland,4,"bullwaves-199510|bullwaves-199510""|bullwaves-199506|bullwaves-199506""",924779|924779|924778|924778
 kennedy munene,united kingdom,2,"bullwaves-199501|bullwaves-199501""",924777|924777
 chamberlain nlemoha,united kingdom,2,"bullwaves-199486|bullwaves-199486""",924776|924776
 wayne holt,united kingdom,2,"bullwaves-199479|bullwaves-199479""",924774|924774
@@ -55035,7 +55041,6 @@ bradley luka,australia,2,"bullwaves-183300|bullwaves-183300""",922083|922083
 dylan terrey,new zealand,2,"bullwaves-183287|bullwaves-183287""",922081|922081
 riccardo mironeasa,italy,3,"bullwaves-183291|bullwaves-183291""|bullwaves-800299","922082|922082|,""12/15/2025 11:09:38"
 austin mclaren,australia,5,"bullwaves-183275|bullwaves-183275""|bullwaves-182199|bullwaves-182199""|bullwaves-800298","922079|922079|921905|921905|,""12/15/2025 11:09:38"
-deen rakich,new zealand,2,"bullwaves-183268|bullwaves-183268""",922078|922078
 anger akoi,australia,4,"bullwaves-183258|bullwaves-183258""|bullwaves-182813|bullwaves-182813""",922077|922077|921978|921978
 anna mason,australia,2,"bullwaves-183250|bullwaves-183250""",922075|922075
 sri pillai,singapore,2,"bullwaves-183252|bullwaves-183252""",922076|922076
@@ -63210,7 +63215,7 @@ david facol,sweden,3,"bullwaves-72775|bullwaves-72775""|bullwaves-798910","90512
 mario cerqua,italy,3,"bullwaves-72763|bullwaves-72763""|bullwaves-798909","905123|905123,932084|,""12/15/2025 11:08:16"
 andra alessia rossi,italy,2,"bullwaves-72759|bullwaves-72759""",905122|905122
 jacopo battisti,italy,2,"bullwaves-72754|bullwaves-72754""",905121|905121
-daniele lorenzini,italy,5,"bullwaves-72746|bullwaves-72746""|bullwaves-16164|moonance-1353|moonance-1353""","905114|905114|0|5814:2972,5815:1037666,5816:1037667|5814:2972,5815:1037666,5816:1037667"
+daniele lorenzini,italy,6,"bullwaves-72746|bullwaves-72746""|bullwaves-16164|bullwaves-16164""|moonance-1353|moonance-1353""","905114|905114|0|0|5814:2972,5815:1037666,5816:1037667|5814:2972,5815:1037666,5816:1037667"
 francesco nappa,italy,2,"bullwaves-72743|bullwaves-72743""",905113|905113
 filip hunjet,croatia,2,"bullwaves-72735|bullwaves-72735""",905112|905112
 hala habib,australia,5,"bullwaves-72691|bullwaves-72691""|bullwaves-55391|bullwaves-55391""|bullwaves-798908","905105|905105|903069|903069|,""12/15/2025 11:08:16"
@@ -67102,6 +67107,7 @@ al-mastian surya ismail,malaysia,4,"bullwaves-25496|bullwaves-25496""|moonance-2
 taharul islam,bangladesh,4,"bullwaves-26209|bullwaves-26209""|moonance-2980|moonance-2980""","0|0|10868:4587,10869:1059256,10870:1059257|10868:4587,10869:1059256,10870:1059257"
 emmanuel ejiofor,united kingdom,4,"bullwaves-25650|bullwaves-25650""|moonance-2741|moonance-2741""","0|0|10105:4348,10106:1051894,10107:1051895|10105:4348,10106:1051894,10107:1051895"
 yousef bassam,united kingdom,4,"bullwaves-26286|bullwaves-26286""|moonance-1371|moonance-1371""","0|0|5872:1037845,5873:1037846,5874:2990|5872:1037845,5873:1037846,5874:2990"
+albin pettersson,sweden,2,"bullwaves-25477|bullwaves-25477""",0|0
 valerio torre,italy,4,"bullwaves-16666|bullwaves-16666""|moonance-553|moonance-553""","0|0|3063:1031883,3064:1919,3065:1920,3066:1921,3067:1031884|3063:1031883,3064:1919,3065:1920,3066:1921,3067:1031884"
 andrej pavlovets,canada,4,"bullwaves-25508|bullwaves-25508""|moonance-2033|moonance-2033""","0|0|7904:1043800,7905:3640,7906:1043801|7904:1043800,7905:3640,7906:1043801"
 muzammal rasheed,united arab emirates,2,"bullwaves-25997|bullwaves-25997""",0|0
@@ -67344,7 +67350,7 @@ andrea sapio,italy,4,"bullwaves-15581|bullwaves-15581""|moonance-2289|moonance-2
 andrea innocente,italy,4,"bullwaves-16563|bullwaves-16563""|moonance-720|moonance-720""","0|0|3847:2339,3848:1032933,3849:1032934|3847:2339,3848:1032933,3849:1032934"
 erwin haesler,switzerland,4,"bullwaves-16829|bullwaves-16829""|moonance-337|moonance-337""","0|0|1921:1268,1922:1269,1923:1270,1924:1029472,1925:1029473|1921:1268,1922:1269,1923:1270,1924:1029472,1925:1029473"
 david cotton,united kingdom,2,"bullwaves-25608|bullwaves-25608""",0|0
-osafanmen gift,nigeria,3,"bullwaves-26042|moonance-1288|moonance-1288""","0|5609:1037013,5610:1037014,5611:2907,5621:5013820|5609:1037013,5610:1037014,5611:2907,5621:5013820"
+osafanmen gift,nigeria,4,"bullwaves-26042|bullwaves-26042""|moonance-1288|moonance-1288""","0|0|5609:1037013,5610:1037014,5611:2907,5621:5013820|5609:1037013,5610:1037014,5611:2907,5621:5013820"
 arnold kabagema,denmark,2,"bullwaves-25529|bullwaves-25529""",0|0
 mattia auro verzanini,italy,4,"bullwaves-16244|bullwaves-16244""|moonance-1194|moonance-1194""","0|0|5316:2813,5317:1035943,5318:1035944|5316:2813,5317:1035943,5318:1035944"
 giulio diaddazio,italy,4,"bullwaves-16833|bullwaves-16833""|moonance-333|moonance-333""","0|0|1900:1256,1901:1257,1902:1258,1903:1029436,1904:1029437|1900:1256,1901:1257,1902:1258,1903:1029436,1904:1029437"
@@ -67484,6 +67490,7 @@ alexandru petrovici,ireland,4,"bullwaves-25488|bullwaves-25488""|moonance-2494|m
 cristian castagnanova,italy,4,"bullwaves-16407|bullwaves-16407""|moonance-946|moonance-946""","0|0|4544:2565,4545:1034101,4546:1034102|4544:2565,4545:1034101,4546:1034102"
 irshad mp,angola,4,"bullwaves-16691|bullwaves-16691""|moonance-513|moonance-513""","0|0|2854:1031429,2855:1798,2856:1799,2857:1800,2858:1031430,2859:5008223,2865:1031440,2866:1031441|2854:1031429,2855:1798,2856:1799,2857:1800,2858:1031430,2859:5008223,2865:1031440,2866:1031441"
 giuseppe moccia,italy,4,"bullwaves-16523|bullwaves-16523""|moonance-782|moonance-782""","0|0|4036:2401,4037:1033203,4038:1033204|4036:2401,4037:1033203,4038:1033204"
+sabrina perã²,italy,2,"bullwaves-16001|bullwaves-16001""",0|0
 hritesh barali,united arab emirates,4,"bullwaves-25738|bullwaves-25738""|moonance-2410|moonance-2410""","0|0|9079:4017,9080:1047535,9081:1047536|9079:4017,9080:1047535,9081:1047536"
 sebastiano gilardoni,italy,4,"bullwaves-16596|bullwaves-16596""|moonance-663|moonance-663""","0|0|3636:2250,3637:2251,3638:2252,3639:1032746,3640:1032747|3636:2250,3637:2251,3638:2252,3639:1032746,3640:1032747"
 michele lerro,italy,4,"bullwaves-16867|bullwaves-16867""|moonance-282|moonance-282""","0|0|1623:1102,1624:1103,1625:1104,1626:1026811,1627:1026812|1623:1102,1624:1103,1625:1104,1626:1026811,1627:1026812"
@@ -67741,7 +67748,7 @@ ludovico valenzano,italy,4,"bullwaves-16140|bullwaves-16140""|moonance-1390|moon
 joe diego,costa rica,4,"bullwaves-16857|bullwaves-16857""|moonance-301|moonance-301""","0|0|1729:1159,1730:1160,1731:1161,1732:1028880,1733:1028881|1729:1159,1730:1160,1731:1161,1732:1028880,1733:1028881"
 driss bout,netherlands,4,"bullwaves-16419|bullwaves-16419""|moonance-926|moonance-926""","0|0|4482:2545,4483:1034008,4484:1034009|4482:2545,4483:1034008,4484:1034009"
 andrea ratti,italy,4,"bullwaves-16421|bullwaves-16421""|moonance-921|moonance-921""","0|0|4467:2540,4468:1033969,4469:1033970|4467:2540,4468:1033969,4469:1033970"
-anastazia klimek elomar,italy,3,"bullwaves-15717|moonance-2023|moonance-2023""","0|7873:1043711,7874:1043712,7875:3630|7873:1043711,7874:1043712,7875:3630"
+anastazia klimek elomar,italy,4,"bullwaves-15717|bullwaves-15717""|moonance-2023|moonance-2023""","0|0|7873:1043711,7874:1043712,7875:3630|7873:1043711,7874:1043712,7875:3630"
 nicola catalano,italy,4,"bullwaves-15796|bullwaves-15796""|moonance-1877|moonance-1877""","0|0|7400:3485,7401:1041437,7402:1041438|7400:3485,7401:1041437,7402:1041438"
 alessandro natoli,italy,4,"bullwaves-16577|bullwaves-16577""|moonance-701|moonance-701""","0|0|3790:2320,3791:1032883,3792:1032884|3790:2320,3791:1032883,3792:1032884"
 niccolo lombardi,italy,4,"bullwaves-16721|bullwaves-16721""|moonance-469|moonance-469""","0|0|2623:1664,2624:1665,2625:1666,2626:1030959,2627:1030960|2623:1664,2624:1665,2625:1666,2626:1030959,2627:1030960"
@@ -68066,7 +68073,7 @@ soufiane naji,italy,4,"bullwaves-16131|bullwaves-16131""|moonance-1404|moonance-
 kwesi mensah,italy,4,"bullwaves-15660|bullwaves-15660""|moonance-2113|moonance-2113""","0|0|8157:3720,8158:1044719,8159:1044720|8157:3720,8158:1044719,8159:1044720"
 diego milani,spain,7,"bullwaves-15911|bullwaves-15911""|moonance-1748|moonance-1748""|moonance-1532|moonance-1532""|bullwaves-16055","0|0|7013:3356,7014:1041139,7015:1041140|7013:3356,7014:1041139,7015:1041140|6356:3143,6357:1040362,6358:1040363|6356:3143,6357:1040362,6358:1040363|,""8/16/2024 5:10:25"
 giovanni galante,italy,4,"bullwaves-16027|bullwaves-16027""|moonance-1570|moonance-1570""","0|0|6471:3181,6472:1040466,6473:1040467,6762:1040835|6471:3181,6472:1040466,6473:1040467,6762:1040835"
-angelo lucchese,italy,3,"bullwaves-25516|moonance-1415|moonance-1415""","0|6011:3034,6012:1038260,6013:1038261|6011:3034,6012:1038260,6013:1038261"
+angelo lucchese,italy,4,"bullwaves-25516|bullwaves-25516""|moonance-1415|moonance-1415""","0|0|6011:3034,6012:1038260,6013:1038261|6011:3034,6012:1038260,6013:1038261"
 edoardo filipp pettenati,italy,4,"bullwaves-16378|bullwaves-16378""|moonance-984|moonance-984""","0|0|4662:2603,4663:1034269,4664:1034270|4662:2603,4663:1034269,4664:1034270"
 nilesh devgirikar,india,4,"bullwaves-16683|bullwaves-16683""|moonance-525|moonance-525""","0|0|2918:1834,2919:1835,2920:1836,2921:1031652,2922:1031653,2923:5008495|2918:1834,2919:1835,2920:1836,2921:1031652,2922:1031653,2923:5008495"
 giuseppe mari,italy,4,"bullwaves-15973|bullwaves-15973""|moonance-1662|moonance-1662""","0|0|6753:3272,6754:1040821,6755:1040822|6753:3272,6754:1040821,6755:1040822"
@@ -68195,7 +68202,7 @@ mario oliviero,italy,4,"bullwaves-15547|bullwaves-15547""|moonance-2351|moonance
 stefano anedda,italy,4,"bullwaves-15588|bullwaves-15588""|moonance-2279|moonance-2279""","0|0|8673:1046587,8674:3886,8675:1046588|8673:1046587,8674:3886,8675:1046588"
 marco bellardi,italy,4,"bullwaves-15598|bullwaves-15598""|moonance-2260|moonance-2260""","0|0|8614:3867,8615:1046309,8616:1046310|8614:3867,8615:1046309,8616:1046310"
 matteo cosenza,italy,4,"bullwaves-15761|bullwaves-15761""|moonance-1930|moonance-1930""","0|0|7571:3537,7572:1041782,7573:1041783|7571:3537,7572:1041782,7573:1041783"
-alessandro barrafato,italy,3,"bullwaves-16315|moonance-1089|moonance-1089""","0|4987:2708,4988:1034816,4989:1034817|4987:2708,4988:1034816,4989:1034817"
+alessandro barrafato,italy,4,"bullwaves-16315|bullwaves-16315""|moonance-1089|moonance-1089""","0|0|4987:2708,4988:1034816,4989:1034817|4987:2708,4988:1034816,4989:1034817"
 filippo maria malerba,italy,4,"bullwaves-16389|bullwaves-16389""|moonance-972|moonance-972""","0|0|4623:2591,4624:1034184,4625:1034185|4623:2591,4624:1034184,4625:1034185"
 giulio notarnicola,italy,4,"bullwaves-16528|bullwaves-16528""|moonance-774|moonance-774""","0|0|4011:2393,4012:1033163,4013:1033164|4011:2393,4012:1033163,4013:1033164"
 bryan verweij,netherlands,2,"bullwaves-25572|bullwaves-25572""",0|0
@@ -68389,7 +68396,7 @@ matteo martina,italy,4,"bullwaves-16226|bullwaves-16226""|moonance-1230|moonance
 mattia mosca,italy,4,"bullwaves-16723|bullwaves-16723""|moonance-467|moonance-467""","0|0|2612:1658,2613:1659,2614:1660,2615:1030933,2616:1030934|2612:1658,2613:1659,2614:1660,2615:1030933,2616:1030934"
 lorenzo morotti,italy,4,"bullwaves-15825|bullwaves-15825""|moonance-1846|moonance-1846""","0|0|7307:3454,7308:1041355,7309:1041356|7307:3454,7308:1041355,7309:1041356"
 samuele spada,italy,4,"bullwaves-16147|bullwaves-16147""|moonance-1378|moonance-1378""","0|0|5894:2997,5895:1037906,5896:1037907|5894:2997,5895:1037906,5896:1037907"
-edmund chow,canada,3,"bullwaves-16778|moonance-396|moonance-396""","0|2234:1445,2235:1446,2236:1447,2237:1029923,2238:1029924|2234:1445,2235:1446,2236:1447,2237:1029923,2238:1029924"
+edmund chow,canada,4,"bullwaves-16778|bullwaves-16778""|moonance-396|moonance-396""","0|0|2234:1445,2235:1446,2236:1447,2237:1029923,2238:1029924|2234:1445,2235:1446,2236:1447,2237:1029923,2238:1029924"
 tobias burde,germany,4,"bullwaves-16812|bullwaves-16812""|moonance-358|moonance-358""","0|0|2024:1331,2025:1332,2026:1333,2027:1029658,2028:1029659|2024:1331,2025:1332,2026:1333,2027:1029658,2028:1029659"
 gabriele x,italy,4,"bullwaves-15760|bullwaves-15760""|moonance-1933|moonance-1933""","0|0|7580:1041799,7581:1041800,7582:3540|7580:1041799,7581:1041800,7582:3540"
 andrea vitiello,italy,4,"bullwaves-16614|bullwaves-16614""|moonance-628|moonance-628""","0|0|3449:2144,3450:2145,3451:2146,3452:1032566,3453:1032567|3449:2144,3450:2145,3451:2146,3452:1032566,3453:1032567"
@@ -68620,7 +68627,7 @@ gianni lin,italy,4,"bullwaves-15478|bullwaves-15478""|moonance-2451|moonance-245
 stefano epifani,italy,4,"bullwaves-15750|bullwaves-15750""|moonance-1951|moonance-1951""","0|0|7638:3558,7639:1042151,7640:1042152|7638:3558,7639:1042151,7640:1042152"
 paolo palladino,italy,4,"bullwaves-15419|bullwaves-15419""|moonance-2581|moonance-2581""","0|0|9614:4188,9615:1049827,9616:1049828|9614:4188,9615:1049827,9616:1049828"
 matteo ravizza,italy,4,"bullwaves-15467|bullwaves-15467""|moonance-2467|moonance-2467""","0|0|9254:4074,9255:1047929,9256:1047930|9254:4074,9255:1047929,9256:1047930"
-riccardo de rosa,italy,3,"bullwaves-15444|moonance-2511|moonance-2511""","0|9391:4118,9392:1048397,9393:1048398|9391:4118,9392:1048397,9393:1048398"
+riccardo de rosa,italy,4,"bullwaves-15444|bullwaves-15444""|moonance-2511|moonance-2511""","0|0|9391:4118,9392:1048397,9393:1048398|9391:4118,9392:1048397,9393:1048398"
 alessio fiorucci,italy,4,"bullwaves-15442|bullwaves-15442""|moonance-2513|moonance-2513""","0|0|9397:4120,9398:1048413,9399:1048414|9397:4120,9398:1048413,9399:1048414"
 ascanio divile grazioli,italy,4,"bullwaves-15357|bullwaves-15357""|moonance-2848|moonance-2848""","0|0|10451:4455,10452:1053408,10453:1053409|10451:4455,10452:1053408,10453:1053409"
 diego marinangeli,italy,4,"bullwaves-15514|bullwaves-15514""|moonance-2395|moonance-2395""","0|0|9034:4002,9035:1047425,9036:1047426|9034:4002,9035:1047425,9036:1047426"
