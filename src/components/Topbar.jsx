@@ -62,6 +62,19 @@ export default function Topbar({
   const [reportsMeta, setReportsMeta] = useState(null)
   const hasNav = Boolean(children)
 
+  const refreshConsole = () => {
+    if (typeof window === 'undefined') return
+    setShowTools(false)
+    setShowMobileMenu(false)
+    try {
+      const url = new URL(window.location.href)
+      url.searchParams.set('refresh', String(Date.now()))
+      window.location.replace(url.toString())
+    } catch {
+      window.location.reload()
+    }
+  }
+
   const isMobile = () => window.innerWidth <= 768
 
   // Calcola informazioni sui dati più recenti
@@ -366,6 +379,14 @@ export default function Topbar({
                   {t('app.admin')}
                 </button>
               )}
+              <button
+                type="button"
+                className="logout-btn"
+                onClick={refreshConsole}
+                title="Refresh console data"
+              >
+                Refresh
+              </button>
               <button type="button" className="logout-btn" onClick={logout}>
                 {t('app.logout')}
               </button>

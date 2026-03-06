@@ -1795,15 +1795,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
                   <div className="ranking-header-actions">
                     <button
                       type="button"
-                      className="pill-tab"
-                      onClick={() => loadFromConsoleArtifact({ silent: false })}
-                      disabled={loading}
-                      title="Reload data from traders_ranking_rewards_table.json"
-                    >
-                      Refresh
-                    </button>
-                    <button
-                      type="button"
                       className="pill-tab ranking-share-btn"
                       onClick={onShare}
                       disabled={loading || !dataset}
