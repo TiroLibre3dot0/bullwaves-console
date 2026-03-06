@@ -1046,41 +1046,49 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedMonthKey, setSelectedMonthKey] = useState('')
 
+  const loadReqRef = useRef(0)
+  const loadFromConsoleArtifact = useCallback(async ({ silent = false } = {}) => {
+    const reqId = (loadReqRef.current = loadReqRef.current + 1)
+
+    if (!silent) setError('')
+    setLoading(true)
+    try {
+      const ts = Date.now()
+      const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
+      const res = await fetch(`${baseUrl}traders_ranking_rewards_table.json?ts=${ts}`, {
+        cache: 'no-store',
+      })
+      if (!res.ok) throw new Error('Traders Ranking Rewards report not found in console assets')
+      const json = await res.json()
+      const rows = Array.isArray(json?.rows) ? json.rows : []
+      const headers = Array.isArray(json?.headers) ? json.headers : Object.keys(rows[0] || {})
+      if (loadReqRef.current !== reqId) return
+
+      setFileName('Traders Ranking Rewards.xlsx (auto)')
+      setArtifact({ rows, headers })
+    } catch (e) {
+      if (!silent) {
+        const msg = String(e?.message || '').trim() || 'Refresh failed'
+        setError(msg)
+      }
+    } finally {
+      if (loadReqRef.current === reqId) setLoading(false)
+    }
+  }, [])
+
   // Auto-load from console artifacts (generated from Creolabs XLSX) when available.
   // Browser apps cannot read arbitrary local project folders; fetching from `public/` is the safe way.
   useEffect(() => {
-    let cancelled = false
-
     const tryAutoLoad = async () => {
-      setError('')
-      setLoading(true)
-      try {
-        const ts = Date.now()
-        const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
-        const res = await fetch(`${baseUrl}traders_ranking_rewards_table.json?ts=${ts}`, {
-          cache: 'no-store',
-        })
-        if (!res.ok) throw new Error('Traders Ranking Rewards report not found in console assets')
-        const json = await res.json()
-        const rows = Array.isArray(json?.rows) ? json.rows : []
-        const headers = Array.isArray(json?.headers) ? json.headers : Object.keys(rows[0] || {})
-        if (cancelled) return
-
-        setFileName('Traders Ranking Rewards.xlsx (auto)')
-        setArtifact({ rows, headers })
-      } catch {
-        // Silent fallback: user can still upload an XLSX.
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+      await loadFromConsoleArtifact({ silent: true })
     }
 
     // Only auto-load if nothing is loaded yet.
     if (!artifact) tryAutoLoad()
     return () => {
-      cancelled = true
+      // no-op
     }
-  }, [artifact])
+  }, [artifact, loadFromConsoleArtifact])
 
   const todayRef = useRef(null)
   if (!todayRef.current) todayRef.current = new Date()
@@ -1785,6 +1793,15 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               >
                 {!publicMode ? (
                   <div className="ranking-header-actions">
+                    <button
+                      type="button"
+                      className="pill-tab"
+                      onClick={() => loadFromConsoleArtifact({ silent: false })}
+                      disabled={loading}
+                      title="Reload data from traders_ranking_rewards_table.json"
+                    >
+                      Refresh
+                    </button>
                     <button
                       type="button"
                       className="pill-tab ranking-share-btn"
