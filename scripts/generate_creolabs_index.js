@@ -192,8 +192,24 @@ function listCreolabsInputs() {
       }
     })
 
-  if (xlsx.length) return xlsx.sort((a, b) => a.localeCompare(b))
+  // The CREOLABS folder can contain other XLSX files (e.g. retention exports).
+  // Only ingest Creolabs breakdown exports to avoid inflating metrics.
+  const creolabsNamed = xlsx.filter((p) => /creolabs/i.test(path.basename(p)))
+  if (creolabsNamed.length) return creolabsNamed.sort((a, b) => a.localeCompare(b))
+
+  // Fallbacks:
+  // - If only one XLSX exists, assume it's the breakdown.
+  // - Otherwise, prefer the default filename if present.
+  if (xlsx.length === 1) return xlsx
   if (fs.existsSync(DEFAULT_INPUT_PATH)) return [DEFAULT_INPUT_PATH]
+
+  if (xlsx.length > 1) {
+    console.warn(
+      `[Creolabs] Multiple XLSX files found under ${CREOLABS_DIR} but none look like a Creolabs breakdown. ` +
+        `Ignored: ${xlsx.map((p) => path.basename(p)).join(', ')}`
+    )
+  }
+
   return []
 }
 
