@@ -34,7 +34,6 @@ const selectStyle = {
   padding: '8px 10px',
 }
 const formatNumberFull = (value) => formatNumber(value)
-const FINANCE_CONFIRMED_KEY = 'affiliate-finance-confirmed'
 const INVESTMENTS_SOURCE_KEY = 'investments-data-source'
 const INVESTMENTS_VIEW_MODE_KEY = 'investments-view-mode'
 
@@ -384,7 +383,6 @@ export default function InvestmentsDashboard(props) {
   // Payments columns are shown for both sources.
   // For Creolabs we reuse CellXpert payments as denominator for ROI (see InvestmentsDashboardContent).
   const showCommissionColumns = true
-  const affiliateSummaryColSpan = (showCommissionColumns ? 11 : 9) + (isPublicShare ? 0 : 2)
 
   useEffect(() => {
     try {
@@ -413,7 +411,6 @@ export default function InvestmentsDashboard(props) {
   const [search, setSearch] = useState(initialSearch || '')
   const [showAllAffiliates, setShowAllAffiliates] = useState(false)
   const [expanded, setExpanded] = useState(null)
-  const [financeConfirmed, setFinanceConfirmed] = useState({})
   const { setDataStatus } = useDataStatus()
 
   useEffect(() => {
@@ -523,26 +520,6 @@ export default function InvestmentsDashboard(props) {
 
   const isViewModeTransitioning = viewMode !== displayViewMode
 
-  useEffect(() => {
-    try {
-      const rawFinance = localStorage.getItem(FINANCE_CONFIRMED_KEY)
-      if (rawFinance) {
-        const parsed = JSON.parse(rawFinance)
-        if (parsed && typeof parsed === 'object') setFinanceConfirmed(parsed)
-      }
-    } catch (e) {
-      console.warn('Unable to load finance confirmations', e)
-    }
-  }, [])
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(FINANCE_CONFIRMED_KEY, JSON.stringify(financeConfirmed))
-    } catch (e) {
-      console.warn('Unable to persist finance confirmations', e)
-    }
-  }, [financeConfirmed])
-
   // Carica status dati
   useEffect(() => {
     async function loadDataStatus() {
@@ -589,7 +566,6 @@ export default function InvestmentsDashboard(props) {
     dataSource,
     requestDataSource,
     showCommissionColumns,
-    affiliateSummaryColSpan,
     viewMode,
     requestViewMode,
     softSwitchLoading:
@@ -632,8 +608,6 @@ export default function InvestmentsDashboard(props) {
       setShowAllAffiliates={setShowAllAffiliates}
       expanded={expanded}
       setExpanded={setExpanded}
-      financeConfirmed={financeConfirmed}
-      setFinanceConfirmed={setFinanceConfirmed}
     />
   )
 }
@@ -654,7 +628,6 @@ function InvestmentsDashboardContent({
   dataSource,
   requestDataSource,
   showCommissionColumns,
-  affiliateSummaryColSpan,
   viewMode,
   requestViewMode,
   softSwitchLoading,
@@ -663,8 +636,6 @@ function InvestmentsDashboardContent({
   setShowAllAffiliates,
   expanded,
   setExpanded,
-  financeConfirmed,
-  setFinanceConfirmed,
   hideTimelineChart,
 }) {
   const [affiliateIndexById, setAffiliateIndexById] = useState(null)
@@ -826,7 +797,6 @@ function InvestmentsDashboardContent({
     cols.push({ id: 'roiEver', label: 'ROI (All Time)', width: 112 })
 
     if (!isPublicShare) {
-      cols.push({ id: 'financeConfirmed', label: 'Finance Confirmed', width: 160 })
       cols.push({ id: 'lastMonth', label: 'Last Month', width: 120 })
     }
 
@@ -858,7 +828,6 @@ function InvestmentsDashboardContent({
   const singleLockedColumns = useMemo(() => {
     const locked = new Set(['affiliate', 'rank', 'details'])
     if (!isPublicShare) {
-      locked.add('financeConfirmed')
       locked.add('lastMonth')
     }
     return locked
@@ -869,32 +838,21 @@ function InvestmentsDashboardContent({
     return singleColumnVisibility?.[id] !== false
   }
 
-  const singleToggleColumnDefs = useMemo(
-    () => singleColumnDefs.filter((c) => !singleLockedColumns.has(c.id)),
-    [singleColumnDefs, singleLockedColumns]
-  )
-
-  const singleVisibleCount = useMemo(() => {
-    return singleToggleColumnDefs.reduce((acc, c) => acc + (isSingleVisible(c.id) ? 1 : 0), 0)
-  }, [singleToggleColumnDefs, singleColumnVisibility])
-
   const toggleSingleColumn = (id) => {
     setSingleColumnVisibility((prev) => {
       if (singleLockedColumns.has(id)) return prev
       const isCurrentlyVisible = prev?.[id] !== false
-      const visibleCount = singleToggleColumnDefs.reduce(
-        (acc, c) => acc + (prev?.[c.id] !== false ? 1 : 0),
-        0
-      )
-      if (isCurrentlyVisible && visibleCount <= 1) return prev
       return { ...prev, [id]: !isCurrentlyVisible }
     })
   }
 
-  const singleVisibleColSpan = useMemo(() => {
-    const n = singleColumnDefs.reduce((acc, c) => acc + (isSingleVisible(c.id) ? 1 : 0), 0)
-    return Math.max(1, n)
-  }, [singleColumnDefs, singleColumnVisibility])
+  const singleVisibleColSpan = useMemo(
+    () => Math.max(1, singleColumnDefs.length),
+    [singleColumnDefs]
+  )
+
+  const dimmedColumnStyle = { opacity: 0.25 }
+  const dimIfHidden = (id) => (isSingleVisible(id) ? {} : dimmedColumnStyle)
 
   // Details column is locked visible; keeping expanded rows safe.
 
@@ -966,10 +924,6 @@ function InvestmentsDashboardContent({
   }, [mediaRows, payments, selectedYear, locale])
 
   const toggleExpand = (aff) => setExpanded((prev) => (prev === aff ? null : aff))
-
-  const toggleFinanceConfirmed = (affiliateId) => {
-    setFinanceConfirmed((prev) => ({ ...prev, [affiliateId]: !prev[affiliateId] }))
-  }
 
   const onShare = () => {
     try {
@@ -1232,398 +1186,272 @@ function InvestmentsDashboardContent({
                 />
               </div>
             ) : null}
-            <div
-              style={{
-                display: 'flex',
-                flexWrap: 'wrap',
-                gap: 10,
-                marginBottom: 10,
-                padding: '8px 10px',
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background: 'rgba(255,255,255,0.03)',
-              }}
-              aria-label="Column visibility"
-            >
-              {singleToggleColumnDefs.map((c) => (
-                <label
-                  key={c.id}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 12,
-                    color: 'rgba(203,213,225,0.95)',
-                    userSelect: 'none',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                  title={c.label}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isSingleVisible(c.id)}
-                    disabled={isSingleVisible(c.id) && singleVisibleCount <= 1}
-                    onChange={() => toggleSingleColumn(c.id)}
-                  />
-                  <span>{c.label}</span>
-                </label>
-              ))}
-            </div>
             <StickyMetricsTable className="table payout-summary-table" maxHeight="70vh">
               <colgroup>
-                {singleColumnDefs.map((c) =>
-                  isSingleVisible(c.id) ? <col key={c.id} style={{ width: c.width }} /> : null
-                )}
+                {singleColumnDefs.map((c) => (
+                  <col key={c.id} style={{ width: c.width }} />
+                ))}
               </colgroup>
               <thead>
                 <tr>
-                  {isSingleVisible('affiliate') ? (
+                  <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    Affiliate
+                  </th>
+                  <th rowSpan={2} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    Rank
+                  </th>
+                  <th
+                    colSpan={2}
+                    className="payout-summary-group"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                  >
+                    Net Deposits
+                  </th>
+                  {showCommissionColumns ? (
+                    <th
+                      colSpan={2}
+                      className="payout-summary-group payout-summary-group-sep"
+                      style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                      title="Commission (Payments)"
+                    >
+                      Commission
+                    </th>
+                  ) : null}
+                  <th
+                    colSpan={2}
+                    className="payout-summary-group payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                  >
+                    P&L
+                  </th>
+                  <th
+                    colSpan={2}
+                    className="payout-summary-group payout-summary-group-sep"
+                    style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
+                    title="ROI = Net Deposits / Commission (Payments) - 1"
+                  >
+                    ROI
+                  </th>
+                  {!isPublicShare ? (
                     <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
-                      Affiliate
+                      Last Month
                     </th>
                   ) : null}
-                  {isSingleVisible('rank') ? (
-                    <th rowSpan={2} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                      Rank
-                    </th>
-                  ) : null}
-
-                  {(() => {
-                    const groupOrder = [
-                      'netDeposits',
-                      ...(showCommissionColumns ? ['commission'] : []),
-                      'pl',
-                      'roi',
-                    ]
-                    const groupCounts = {
-                      netDeposits:
-                        (isSingleVisible('netDepositsMonth') ? 1 : 0) +
-                        (isSingleVisible('netDepositsEver') ? 1 : 0),
-                      commission:
-                        (isSingleVisible('commissionMonth') ? 1 : 0) +
-                        (isSingleVisible('commissionEver') ? 1 : 0),
-                      pl:
-                        (isSingleVisible('plMonth') ? 1 : 0) + (isSingleVisible('plEver') ? 1 : 0),
-                      roi:
-                        (isSingleVisible('roiMonth') ? 1 : 0) +
-                        (isSingleVisible('roiEver') ? 1 : 0),
-                    }
-                    const hasPrev = (key) => {
-                      const idx = groupOrder.indexOf(key)
-                      if (idx <= 0) return false
-                      return groupOrder.slice(0, idx).some((k) => (groupCounts[k] || 0) > 0)
-                    }
-
-                    return (
-                      <>
-                        {groupCounts.netDeposits > 0 ? (
-                          <th
-                            colSpan={groupCounts.netDeposits}
-                            className="payout-summary-group"
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                          >
-                            Net Deposits
-                          </th>
-                        ) : null}
-
-                        {showCommissionColumns && groupCounts.commission > 0 ? (
-                          <th
-                            colSpan={groupCounts.commission}
-                            className={`payout-summary-group${hasPrev('commission') ? ' payout-summary-group-sep' : ''}`}
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                            title="Commission (Payments)"
-                          >
-                            Commission
-                          </th>
-                        ) : null}
-
-                        {groupCounts.pl > 0 ? (
-                          <th
-                            colSpan={groupCounts.pl}
-                            className={`payout-summary-group${hasPrev('pl') ? ' payout-summary-group-sep' : ''}`}
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                          >
-                            P&L
-                          </th>
-                        ) : null}
-
-                        {groupCounts.roi > 0 ? (
-                          <th
-                            colSpan={groupCounts.roi}
-                            className={`payout-summary-group${hasPrev('roi') ? ' payout-summary-group-sep' : ''}`}
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                            title="ROI = Net Deposits / Commission (Payments) - 1"
-                          >
-                            ROI
-                          </th>
-                        ) : null}
-
-                        {!isPublicShare && isSingleVisible('financeConfirmed') ? (
-                          <th rowSpan={2} style={{ textAlign: 'center', whiteSpace: 'nowrap' }}>
-                            Finance Confirmed
-                          </th>
-                        ) : null}
-                        {!isPublicShare && isSingleVisible('lastMonth') ? (
-                          <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
-                            Last Month
-                          </th>
-                        ) : null}
-
-                        {isSingleVisible('details') ? (
-                          <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
-                            Details
-                          </th>
-                        ) : null}
-                      </>
-                    )
-                  })()}
+                  <th rowSpan={2} style={{ textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    Details
+                  </th>
                 </tr>
                 <tr>
-                  {(() => {
-                    const groupOrder = [
-                      'netDeposits',
-                      ...(showCommissionColumns ? ['commission'] : []),
-                      'pl',
-                      'roi',
-                    ]
-                    const groupCounts = {
-                      netDeposits:
-                        (isSingleVisible('netDepositsMonth') ? 1 : 0) +
-                        (isSingleVisible('netDepositsEver') ? 1 : 0),
-                      commission:
-                        (isSingleVisible('commissionMonth') ? 1 : 0) +
-                        (isSingleVisible('commissionEver') ? 1 : 0),
-                      pl:
-                        (isSingleVisible('plMonth') ? 1 : 0) + (isSingleVisible('plEver') ? 1 : 0),
-                      roi:
-                        (isSingleVisible('roiMonth') ? 1 : 0) +
-                        (isSingleVisible('roiEver') ? 1 : 0),
-                    }
-                    const hasPrev = (key) => {
-                      const idx = groupOrder.indexOf(key)
-                      if (idx <= 0) return false
-                      return groupOrder.slice(0, idx).some((k) => (groupCounts[k] || 0) > 0)
-                    }
+                  <th
+                    className="payout-summary-sub"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('netDepositsMonth'),
+                    }}
+                    title={`Totals for ${monthRef}`}
+                    onClick={() => toggleSingleColumn('netDepositsMonth')}
+                  >
+                    {monthRef}
+                  </th>
+                  <th
+                    className="payout-summary-sub"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('netDepositsEver'),
+                    }}
+                    title="All-time totals"
+                    onClick={() => toggleSingleColumn('netDepositsEver')}
+                  >
+                    All Time
+                  </th>
 
-                    const renderMonthAll = (prefix, titlePrefix, firstSep) => {
-                      const monthKey = `${prefix}Month`
-                      const everKey = `${prefix}Ever`
-                      const firstKey = isSingleVisible(monthKey)
-                        ? monthKey
-                        : isSingleVisible(everKey)
-                          ? everKey
-                          : null
-                      const out = []
-                      if (isSingleVisible(monthKey)) {
-                        out.push(
-                          <th
-                            key={`${monthKey}-h`}
-                            className={`payout-summary-sub${firstSep && firstKey === monthKey ? ' payout-summary-group-sep' : ''}`}
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                            title={`${titlePrefix} ${monthRef}`}
-                          >
-                            {monthRef}
-                          </th>
-                        )
-                      }
-                      if (isSingleVisible(everKey)) {
-                        out.push(
-                          <th
-                            key={`${everKey}-h`}
-                            className={`payout-summary-sub${firstSep && firstKey === everKey ? ' payout-summary-group-sep' : ''}`}
-                            style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                            title="All-time totals"
-                          >
-                            All Time
-                          </th>
-                        )
-                      }
-                      return out
-                    }
+                  {showCommissionColumns ? (
+                    <>
+                      <th
+                        className="payout-summary-sub payout-summary-group-sep"
+                        style={{
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          ...dimIfHidden('commissionMonth'),
+                        }}
+                        title={`Totals for ${monthRef}`}
+                        onClick={() => toggleSingleColumn('commissionMonth')}
+                      >
+                        {monthRef}
+                      </th>
+                      <th
+                        className="payout-summary-sub"
+                        style={{
+                          textAlign: 'center',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                          userSelect: 'none',
+                          ...dimIfHidden('commissionEver'),
+                        }}
+                        title="All-time totals"
+                        onClick={() => toggleSingleColumn('commissionEver')}
+                      >
+                        All Time
+                      </th>
+                    </>
+                  ) : null}
 
-                    return (
-                      <>
-                        {groupCounts.netDeposits > 0
-                          ? renderMonthAll('netDeposits', 'Totals for', false)
-                          : null}
-                        {showCommissionColumns && groupCounts.commission > 0
-                          ? renderMonthAll('commission', 'Totals for', hasPrev('commission'))
-                          : null}
-                        {groupCounts.pl > 0
-                          ? renderMonthAll('pl', 'Totals for', hasPrev('pl'))
-                          : null}
-                        {groupCounts.roi > 0 ? (
-                          <>
-                            {isSingleVisible('roiMonth') ? (
-                              <th
-                                className={`payout-summary-sub${hasPrev('roi') ? ' payout-summary-group-sep' : ''}`}
-                                style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}`}
-                              >
-                                {monthRef}
-                              </th>
-                            ) : null}
-                            {isSingleVisible('roiEver') ? (
-                              <th
-                                className={`payout-summary-sub${!isSingleVisible('roiMonth') && hasPrev('roi') ? ' payout-summary-group-sep' : ''}`}
-                                style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                                title="ROI = Net Deposits / Commission (Payments) - 1\nAll Time"
-                              >
-                                All Time
-                              </th>
-                            ) : null}
-                          </>
-                        ) : null}
-                      </>
-                    )
-                  })()}
+                  <th
+                    className="payout-summary-sub payout-summary-group-sep"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('plMonth'),
+                    }}
+                    title={`Totals for ${monthRef}`}
+                    onClick={() => toggleSingleColumn('plMonth')}
+                  >
+                    {monthRef}
+                  </th>
+                  <th
+                    className="payout-summary-sub"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('plEver'),
+                    }}
+                    title="All-time totals"
+                    onClick={() => toggleSingleColumn('plEver')}
+                  >
+                    All Time
+                  </th>
+
+                  <th
+                    className="payout-summary-sub payout-summary-group-sep"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('roiMonth'),
+                    }}
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}`}
+                    onClick={() => toggleSingleColumn('roiMonth')}
+                  >
+                    {monthRef}
+                  </th>
+                  <th
+                    className="payout-summary-sub"
+                    style={{
+                      textAlign: 'center',
+                      whiteSpace: 'nowrap',
+                      cursor: 'pointer',
+                      userSelect: 'none',
+                      ...dimIfHidden('roiEver'),
+                    }}
+                    title="ROI = Net Deposits / Commission (Payments) - 1\nAll Time"
+                    onClick={() => toggleSingleColumn('roiEver')}
+                  >
+                    All Time
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 600 }}>
-                  {isSingleVisible('affiliate') ? <td>Totals</td> : null}
-                  {isSingleVisible('rank') ? (
-                    <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
-                  ) : null}
-                  {isSingleVisible('netDepositsMonth') ? (
-                    <td
-                      style={{ textAlign: 'right', color: '#38bdf8' }}
-                      className="num"
-                      title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.netDeposits)}`}
-                    >
-                      {formatEuro(scopeMonthTotals.netDeposits)}
-                    </td>
-                  ) : null}
-                  {isSingleVisible('netDepositsEver') ? (
-                    <td
-                      style={{ textAlign: 'right', color: '#38bdf8' }}
-                      className="num"
-                      title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.netDeposits)}`}
-                    >
-                      {formatEuro(allTimeVisibleTotals.netDeposits)}
-                    </td>
-                  ) : null}
+                  <td>Totals</td>
+                  <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: '#38bdf8',
+                      ...dimIfHidden('netDepositsMonth'),
+                    }}
+                    className="num"
+                    title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.netDeposits)}`}
+                  >
+                    {formatEuro(scopeMonthTotals.netDeposits)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: '#38bdf8',
+                      ...dimIfHidden('netDepositsEver'),
+                    }}
+                    className="num"
+                    title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.netDeposits)}`}
+                  >
+                    {formatEuro(allTimeVisibleTotals.netDeposits)}
+                  </td>
 
-                  {showCommissionColumns && isSingleVisible('commissionMonth') ? (
+                  {showCommissionColumns ? (
                     <td
-                      style={{ textAlign: 'right' }}
-                      className={`num${
-                        isSingleVisible('netDepositsMonth') || isSingleVisible('netDepositsEver')
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
+                      style={{ textAlign: 'right', ...dimIfHidden('commissionMonth') }}
+                      className="num payout-summary-group-sep"
                       title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.commission)}`}
                     >
                       {formatEuro(scopeMonthTotals.commission)}
                     </td>
                   ) : null}
-                  {showCommissionColumns && isSingleVisible('commissionEver') ? (
+                  {showCommissionColumns ? (
                     <td
-                      style={{ textAlign: 'right' }}
-                      className={`num${
-                        (isSingleVisible('netDepositsMonth') ||
-                          isSingleVisible('netDepositsEver')) &&
-                        !isSingleVisible('commissionMonth')
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
+                      style={{ textAlign: 'right', ...dimIfHidden('commissionEver') }}
+                      className="num"
                       title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.commission)}`}
                     >
                       {formatEuro(allTimeVisibleTotals.commission)}
                     </td>
                   ) : null}
 
-                  {isSingleVisible('plMonth') ? (
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        color: scopeMonthTotals.pl >= 0 ? '#34d399' : '#f87171',
-                      }}
-                      className={`num${
-                        isSingleVisible('netDepositsMonth') ||
-                        isSingleVisible('netDepositsEver') ||
-                        (showCommissionColumns &&
-                          (isSingleVisible('commissionMonth') || isSingleVisible('commissionEver')))
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
-                      title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.pl)}`}
-                    >
-                      {formatEuro(scopeMonthTotals.pl)}
-                    </td>
-                  ) : null}
-                  {isSingleVisible('plEver') ? (
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        color: allTimeVisibleTotals.pl >= 0 ? '#34d399' : '#f87171',
-                      }}
-                      className={`num${
-                        (isSingleVisible('netDepositsMonth') ||
-                          isSingleVisible('netDepositsEver') ||
-                          (showCommissionColumns &&
-                            (isSingleVisible('commissionMonth') ||
-                              isSingleVisible('commissionEver')))) &&
-                        !isSingleVisible('plMonth')
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
-                      title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.pl)}`}
-                    >
-                      {formatEuro(allTimeVisibleTotals.pl)}
-                    </td>
-                  ) : null}
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: scopeMonthTotals.pl >= 0 ? '#34d399' : '#f87171',
+                      ...dimIfHidden('plMonth'),
+                    }}
+                    className="num payout-summary-group-sep"
+                    title={`Totals for ${monthRef}\n${formatEuroFull(scopeMonthTotals.pl)}`}
+                  >
+                    {formatEuro(scopeMonthTotals.pl)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: allTimeVisibleTotals.pl >= 0 ? '#34d399' : '#f87171',
+                      ...dimIfHidden('plEver'),
+                    }}
+                    className="num"
+                    title={`All-time totals\n${formatEuroFull(allTimeVisibleTotals.pl)}`}
+                  >
+                    {formatEuro(allTimeVisibleTotals.pl)}
+                  </td>
 
-                  {isSingleVisible('roiMonth') ? (
-                    <td
-                      style={{ textAlign: 'right' }}
-                      className={`num${
-                        isSingleVisible('netDepositsMonth') ||
-                        isSingleVisible('netDepositsEver') ||
-                        (showCommissionColumns &&
-                          (isSingleVisible('commissionMonth') ||
-                            isSingleVisible('commissionEver'))) ||
-                        isSingleVisible('plMonth') ||
-                        isSingleVisible('plEver')
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
-                      title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}\n${formatPercent(scopeMonthTotals.roi * 100, 4)}`}
-                    >
-                      <span style={roiPillStyle(scopeMonthTotals.roi)}>
-                        {formatPercentRounded(scopeMonthTotals.roi * 100)}
-                      </span>
-                    </td>
-                  ) : null}
-                  {isSingleVisible('roiEver') ? (
-                    <td
-                      style={{ textAlign: 'right' }}
-                      className={`num${
-                        (isSingleVisible('netDepositsMonth') ||
-                          isSingleVisible('netDepositsEver') ||
-                          (showCommissionColumns &&
-                            (isSingleVisible('commissionMonth') ||
-                              isSingleVisible('commissionEver'))) ||
-                          isSingleVisible('plMonth') ||
-                          isSingleVisible('plEver')) &&
-                        !isSingleVisible('roiMonth')
-                          ? ' payout-summary-group-sep'
-                          : ''
-                      }`}
-                      title={`ROI = Net Deposits / Commission (Payments) - 1\nAll Time\n${formatPercent(allTimeVisibleTotals.roi * 100, 4)}`}
-                    >
-                      <span style={roiPillStyle(allTimeVisibleTotals.roi)}>
-                        {formatPercentRounded(allTimeVisibleTotals.roi * 100)}
-                      </span>
-                    </td>
-                  ) : null}
-
-                  {!isPublicShare && isSingleVisible('financeConfirmed') ? (
-                    <td style={{ textAlign: 'center', color: '#94a3b8' }}>—</td>
-                  ) : null}
-                  {!isPublicShare && isSingleVisible('lastMonth') ? <td>—</td> : null}
-                  {isSingleVisible('details') ? <td></td> : null}
+                  <td
+                    style={{ textAlign: 'right', ...dimIfHidden('roiMonth') }}
+                    className="num payout-summary-group-sep"
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}\n${formatPercent(scopeMonthTotals.roi * 100, 4)}`}
+                  >
+                    <span style={roiPillStyle(scopeMonthTotals.roi)}>
+                      {formatPercentRounded(scopeMonthTotals.roi * 100)}
+                    </span>
+                  </td>
+                  <td
+                    style={{ textAlign: 'right', ...dimIfHidden('roiEver') }}
+                    className="num"
+                    title={`ROI = Net Deposits / Commission (Payments) - 1\nAll Time\n${formatPercent(allTimeVisibleTotals.roi * 100, 4)}`}
+                  >
+                    <span style={roiPillStyle(allTimeVisibleTotals.roi)}>
+                      {formatPercentRounded(allTimeVisibleTotals.roi * 100)}
+                    </span>
+                  </td>
+                  {!isPublicShare ? <td>—</td> : null}
+                  <td></td>
                 </tr>
                 {(showAllAffiliates
                   ? ledger.affiliateSummaries
@@ -1631,195 +1459,124 @@ function InvestmentsDashboardContent({
                 ).map((a) => (
                   <React.Fragment key={a.affiliateId}>
                     <tr>
-                      {isSingleVisible('affiliate') ? (
-                        <td title={String(a.affiliateId || '').trim() || undefined}>
-                          {(() => {
-                            const id = String(a.affiliateId || '').trim()
-                            const mappedName = affiliateIndexById?.[id]
-                            const name = (mappedName || a.affiliateName || '').trim()
+                      <td title={String(a.affiliateId || '').trim() || undefined}>
+                        {(() => {
+                          const id = String(a.affiliateId || '').trim()
+                          const mappedName = affiliateIndexById?.[id]
+                          const name = (mappedName || a.affiliateName || '').trim()
 
-                            if (name && id && name !== id) return `${name} (${id})`
-                            return name || id || a.affiliateName
-                          })()}
-                        </td>
-                      ) : null}
-                      {isSingleVisible('rank') ? (
-                        <td style={{ textAlign: 'right', color: '#94a3b8' }} className="num">
-                          {a.rank}
-                        </td>
-                      ) : null}
-                      {isSingleVisible('netDepositsMonth') ? (
+                          if (name && id && name !== id) return `${name} (${id})`
+                          return name || id || a.affiliateName
+                        })()}
+                      </td>
+                      <td style={{ textAlign: 'right', color: '#94a3b8' }} className="num">
+                        {a.rank}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: '#38bdf8',
+                          ...dimIfHidden('netDepositsMonth'),
+                        }}
+                        className="num"
+                        title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
+                      >
+                        {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: '#38bdf8',
+                          ...dimIfHidden('netDepositsEver'),
+                        }}
+                        className="num"
+                        title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
+                      >
+                        {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
+                      </td>
+
+                      {showCommissionColumns ? (
                         <td
-                          style={{
-                            textAlign: 'right',
-                            color: '#38bdf8',
-                          }}
-                          className="num"
-                          title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
-                        >
-                          {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
-                        </td>
-                      ) : null}
-                      {isSingleVisible('netDepositsEver') ? (
-                        <td
-                          style={{ textAlign: 'right', color: '#38bdf8' }}
-                          className="num"
-                          title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}`}
-                        >
-                          {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.netDeposits || 0)}
-                        </td>
-                      ) : null}
-                      {showCommissionColumns && isSingleVisible('commissionMonth') ? (
-                        <td
-                          style={{ textAlign: 'right' }}
-                          className={`num${
-                            isSingleVisible('netDepositsMonth') ||
-                            isSingleVisible('netDepositsEver')
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
+                          style={{ textAlign: 'right', ...dimIfHidden('commissionMonth') }}
+                          className="num payout-summary-group-sep"
                           title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.commission || 0)}`}
                         >
                           {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.commission || 0)}
                         </td>
                       ) : null}
-                      {showCommissionColumns && isSingleVisible('commissionEver') ? (
+                      {showCommissionColumns ? (
                         <td
-                          style={{ textAlign: 'right' }}
-                          className={`num${
-                            (isSingleVisible('netDepositsMonth') ||
-                              isSingleVisible('netDepositsEver')) &&
-                            !isSingleVisible('commissionMonth')
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
+                          style={{ textAlign: 'right', ...dimIfHidden('commissionEver') }}
+                          className="num"
                           title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.commission || 0)}`}
                         >
                           {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.commission || 0)}
                         </td>
                       ) : null}
-                      {isSingleVisible('plMonth') ? (
-                        <td
-                          style={{
-                            textAlign: 'right',
-                            color:
-                              (scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
-                                ? '#34d399'
-                                : '#f87171',
-                          }}
-                          className={`num${
-                            isSingleVisible('netDepositsMonth') ||
-                            isSingleVisible('netDepositsEver') ||
-                            (showCommissionColumns &&
-                              (isSingleVisible('commissionMonth') ||
-                                isSingleVisible('commissionEver')))
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
-                          title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color:
+                            (scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                              ? '#34d399'
+                              : '#f87171',
+                          ...dimIfHidden('plMonth'),
+                        }}
+                        className="num payout-summary-group-sep"
+                        title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFull(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                      >
+                        {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color:
+                            (allTimeByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                              ? '#34d399'
+                              : '#f87171',
+                          ...dimIfHidden('plEver'),
+                        }}
+                        className="num"
+                        title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                      >
+                        {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}
+                      </td>
+
+                      <td
+                        style={{ textAlign: 'right', ...dimIfHidden('roiMonth') }}
+                        className="num payout-summary-group-sep"
+                        title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeMonthAffiliate')}\n${formatPercent((scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
+                      >
+                        <span
+                          style={roiPillStyle(scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0)}
                         >
-                          {formatEuro(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}
-                        </td>
-                      ) : null}
-                      {isSingleVisible('plEver') ? (
-                        <td
-                          style={{
-                            textAlign: 'right',
-                            color:
-                              (allTimeByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
-                                ? '#34d399'
-                                : '#f87171',
-                          }}
-                          className={`num${
-                            (isSingleVisible('netDepositsMonth') ||
-                              isSingleVisible('netDepositsEver') ||
-                              (showCommissionColumns &&
-                                (isSingleVisible('commissionMonth') ||
-                                  isSingleVisible('commissionEver')))) &&
-                            !isSingleVisible('plMonth')
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
-                          title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFull(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}`}
-                        >
-                          {formatEuro(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}
-                        </td>
-                      ) : null}
-                      {isSingleVisible('roiMonth') ? (
-                        <td
-                          style={{ textAlign: 'right' }}
-                          className={`num${
-                            isSingleVisible('netDepositsMonth') ||
-                            isSingleVisible('netDepositsEver') ||
-                            (showCommissionColumns &&
-                              (isSingleVisible('commissionMonth') ||
-                                isSingleVisible('commissionEver'))) ||
-                            isSingleVisible('plMonth') ||
-                            isSingleVisible('plEver')
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
-                          title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeMonthAffiliate')}\n${formatPercent((scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
-                        >
-                          <span
-                            style={roiPillStyle(
-                              scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0
-                            )}
-                          >
-                            {formatPercentRounded(
-                              (scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100
-                            )}
-                          </span>
-                        </td>
-                      ) : null}
-                      {isSingleVisible('roiEver') ? (
-                        <td
-                          style={{ textAlign: 'right' }}
-                          className={`num${
-                            (isSingleVisible('netDepositsMonth') ||
-                              isSingleVisible('netDepositsEver') ||
-                              (showCommissionColumns &&
-                                (isSingleVisible('commissionMonth') ||
-                                  isSingleVisible('commissionEver'))) ||
-                              isSingleVisible('plMonth') ||
-                              isSingleVisible('plEver')) &&
-                            !isSingleVisible('roiMonth')
-                              ? ' payout-summary-group-sep'
-                              : ''
-                          }`}
-                          title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeEverAffiliate')}\n${formatPercent((allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
-                        >
-                          <span
-                            style={roiPillStyle(allTimeByAffiliate.get(a.affiliateId)?.roi || 0)}
-                          >
-                            {formatPercentRounded(
-                              (allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100
-                            )}
-                          </span>
-                        </td>
-                      ) : null}
-                      {!isPublicShare && isSingleVisible('financeConfirmed') ? (
-                        <td style={{ textAlign: 'center' }}>
-                          <input
-                            type="checkbox"
-                            checked={!!financeConfirmed[a.affiliateId]}
-                            onChange={() => toggleFinanceConfirmed(a.affiliateId)}
-                            title={t('investments.checkbox.title.financeConfirmed')}
-                          />
-                        </td>
-                      ) : null}
-                      {!isPublicShare && isSingleVisible('lastMonth') ? (
+                          {formatPercentRounded(
+                            (scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0) * 100
+                          )}
+                        </span>
+                      </td>
+                      <td
+                        style={{ textAlign: 'right', ...dimIfHidden('roiEver') }}
+                        className="num"
+                        title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeEverAffiliate')}\n${formatPercent((allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100, 4)}`}
+                      >
+                        <span style={roiPillStyle(allTimeByAffiliate.get(a.affiliateId)?.roi || 0)}>
+                          {formatPercentRounded(
+                            (allTimeByAffiliate.get(a.affiliateId)?.roi || 0) * 100
+                          )}
+                        </span>
+                      </td>
+                      {!isPublicShare ? (
                         <td>{a.lastMonth ? monthLabel(locale, a.lastMonth) : '—'}</td>
                       ) : null}
-                      {isSingleVisible('details') ? (
-                        <td>
-                          <button className="btn" onClick={() => toggleExpand(a.affiliateId)}>
-                            {expanded === a.affiliateId
-                              ? t('common.hide')
-                              : t('investments.button.details')}
-                          </button>
-                        </td>
-                      ) : null}
+                      <td>
+                        <button className="btn" onClick={() => toggleExpand(a.affiliateId)}>
+                          {expanded === a.affiliateId
+                            ? t('common.hide')
+                            : t('investments.button.details')}
+                        </button>
+                      </td>
                     </tr>
                     {expanded === a.affiliateId && isSingleVisible('details') && (
                       <tr>

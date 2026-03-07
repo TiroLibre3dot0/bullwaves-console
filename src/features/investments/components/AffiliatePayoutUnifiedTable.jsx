@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
   formatEuro,
@@ -503,49 +503,38 @@ export default function AffiliatePayoutUnifiedTable({
     return unifiedColumnVisibility?.[id] !== false
   }
 
-  const unifiedToggleColumns = useMemo(
-    () => unifiedColumns.filter((c) => !unifiedLockedColumns.has(c.id)),
-    [unifiedColumns, unifiedLockedColumns]
-  )
-
-  const unifiedVisibleCount = useMemo(() => {
-    return unifiedToggleColumns.reduce((acc, c) => acc + (isUnifiedVisible(c.id) ? 1 : 0), 0)
-  }, [unifiedToggleColumns, unifiedColumnVisibility])
-
   const toggleUnifiedColumn = (id) => {
     setUnifiedColumnVisibility((prev) => {
       if (unifiedLockedColumns.has(id)) return prev
       const isCurrentlyVisible = prev?.[id] !== false
-      const visibleCount = unifiedToggleColumns.reduce(
-        (acc, c) => acc + (prev?.[c.id] !== false ? 1 : 0),
-        0
-      )
-      if (isCurrentlyVisible && visibleCount <= 1) return prev
       return { ...prev, [id]: !isCurrentlyVisible }
     })
   }
 
-  const visibleActiveMetrics = useMemo(() => {
-    return activeMetrics
-      .map((m) => {
-        const cellx = isUnifiedVisible(`${m.key}|cellx`)
-        const creolabs = m.layout === 'compare' ? isUnifiedVisible(`${m.key}|creolabs`) : false
-        const delta = m.layout === 'compare' ? isUnifiedVisible(`${m.key}|delta`) : false
-        const colSpan = (cellx ? 1 : 0) + (creolabs ? 1 : 0) + (delta ? 1 : 0)
-        return { ...m, __vis: { cellx, creolabs, delta }, __colSpan: colSpan }
-      })
-      .filter((m) => m.__colSpan > 0)
-  }, [activeMetrics, unifiedColumnVisibility])
+  const unifiedTotalColumns = Math.max(1, unifiedColumns.length)
 
-  const unifiedFixedColumnsCount =
-    (isUnifiedVisible('affiliate') ? 1 : 0) + (isUnifiedVisible('rank') ? 1 : 0)
+  const dimmedColumnStyle = { opacity: 0.25 }
+  const dimIfHidden = (id) => (isUnifiedVisible(id) ? {} : dimmedColumnStyle)
 
-  const unifiedMetricColumnsCount = useMemo(
-    () => visibleActiveMetrics.reduce((acc, m) => acc + (m.__colSpan || 0), 0),
-    [visibleActiveMetrics]
-  )
-
-  const unifiedTotalColumns = Math.max(1, unifiedFixedColumnsCount + unifiedMetricColumnsCount)
+  const headerClickTimersRef = useRef({})
+  const scheduleHeaderClick = (key, cb) => {
+    const timers = headerClickTimersRef.current
+    if (timers[key]) {
+      window.clearTimeout(timers[key])
+      delete timers[key]
+    }
+    timers[key] = window.setTimeout(() => {
+      delete timers[key]
+      cb()
+    }, 250)
+  }
+  const cancelHeaderClick = (key) => {
+    const timers = headerClickTimersRef.current
+    if (timers[key]) {
+      window.clearTimeout(timers[key])
+      delete timers[key]
+    }
+  }
 
   // When reconciling two sources, summing "All Time" over different coverage windows produces
   // misleading deltas (often ~-100%). To keep comparisons meaningful, restrict "All Time" to the
@@ -950,127 +939,109 @@ export default function AffiliatePayoutUnifiedTable({
         </span>
         <span style={{ flex: 1 }} />
         <span style={{ fontSize: 12, color: 'rgba(148,163,184,0.95)' }}>
-          Click a header to sort
+          Double-click a header to sort
         </span>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 10,
-          marginBottom: 10,
-          padding: '8px 10px',
-          borderRadius: 12,
-          border: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(255,255,255,0.03)',
-        }}
-        aria-label="Column visibility"
-      >
-        {unifiedToggleColumns.map((c) => (
-          <label
-            key={c.id}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontSize: 12,
-              color: 'rgba(203,213,225,0.95)',
-              userSelect: 'none',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
-            title={c.label}
-          >
-            <input
-              type="checkbox"
-              checked={isUnifiedVisible(c.id)}
-              disabled={isUnifiedVisible(c.id) && unifiedVisibleCount <= 1}
-              onChange={() => toggleUnifiedColumn(c.id)}
-            />
-            <span>{c.label}</span>
-          </label>
-        ))}
       </div>
 
       <StickyMetricsTable className="table payout-unified-table">
         <thead>
           <tr>
-            {isUnifiedVisible('affiliate') ? (
-              <th
-                rowSpan={2}
-                style={{
-                  textAlign: 'left',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Affiliate
-              </th>
-            ) : null}
-            {isUnifiedVisible('rank') ? (
-              <th
-                rowSpan={2}
-                style={{
-                  textAlign: 'right',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                #
-              </th>
-            ) : null}
-            {visibleActiveMetrics.map((m) => (
+            <th
+              rowSpan={2}
+              style={{
+                textAlign: 'left',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Affiliate
+            </th>
+            <th
+              rowSpan={2}
+              style={{
+                textAlign: 'right',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              #
+            </th>
+            {activeMetrics.map((m) => (
               <th
                 key={m.key}
-                colSpan={m.__colSpan}
+                colSpan={m.layout === 'compare' ? 3 : 1}
                 style={{
                   ...groupHeaderStyle,
                   ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                   ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
                 }}
                 title={m.title}
-                onClick={() => toggleSort(`${m.key}|${defaultSortSideForMetric(m)}`)}
+                onDoubleClick={() => toggleSort(`${m.key}|${defaultSortSideForMetric(m)}`)}
               >
                 {m.label}
               </th>
             ))}
           </tr>
           <tr>
-            {visibleActiveMetrics.map((m) => {
+            {activeMetrics.map((m) => {
               return (
                 <React.Fragment key={`${m.key}-sub`}>
-                  {m.__vis.cellx ? (
+                  <th
+                    style={{
+                      ...subHeaderStyle,
+                      ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
+                      ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                      ...dimIfHidden(`${m.key}|cellx`),
+                    }}
+                    title="Click to fade, double-click to sort"
+                    onClick={() =>
+                      scheduleHeaderClick(`${m.key}|cellx`, () =>
+                        toggleUnifiedColumn(`${m.key}|cellx`)
+                      )
+                    }
+                    onDoubleClick={() => {
+                      cancelHeaderClick(`${m.key}|cellx`)
+                      toggleSort(`${m.key}|cellx`)
+                    }}
+                  >
+                    CellXpert
+                  </th>
+                  {m.layout === 'compare' ? (
                     <th
                       style={{
                         ...subHeaderStyle,
-                        ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                         ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                        ...dimIfHidden(`${m.key}|creolabs`),
                       }}
-                      title="Sort by CellXpert"
-                      onClick={() => toggleSort(`${m.key}|cellx`)}
-                    >
-                      CellXpert
-                    </th>
-                  ) : null}
-                  {m.layout === 'compare' && m.__vis.creolabs ? (
-                    <th
-                      style={{
-                        ...subHeaderStyle,
-                        ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                      title="Click to fade, double-click to sort"
+                      onClick={() =>
+                        scheduleHeaderClick(`${m.key}|creolabs`, () =>
+                          toggleUnifiedColumn(`${m.key}|creolabs`)
+                        )
+                      }
+                      onDoubleClick={() => {
+                        cancelHeaderClick(`${m.key}|creolabs`)
+                        toggleSort(`${m.key}|creolabs`)
                       }}
-                      title="Sort by Creolabs"
-                      onClick={() => toggleSort(`${m.key}|creolabs`)}
                     >
                       Creolabs
                     </th>
                   ) : null}
-                  {m.layout === 'compare' && m.__vis.delta ? (
+                  {m.layout === 'compare' ? (
                     <th
                       style={{
                         ...subHeaderStyle,
                         ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                        ...dimIfHidden(`${m.key}|delta`),
                       }}
-                      title="Sort by Delta"
-                      onClick={() => toggleSort(`${m.key}|delta`)}
+                      title="Click to fade, double-click to sort"
+                      onClick={() =>
+                        scheduleHeaderClick(`${m.key}|delta`, () =>
+                          toggleUnifiedColumn(`${m.key}|delta`)
+                        )
+                      }
+                      onDoubleClick={() => {
+                        cancelHeaderClick(`${m.key}|delta`)
+                        toggleSort(`${m.key}|delta`)
+                      }}
                     >
                       Delta
                     </th>
@@ -1083,44 +1054,41 @@ export default function AffiliatePayoutUnifiedTable({
         <tbody>
           {hasAnyRows ? (
             <tr style={{ background: 'rgba(255,255,255,0.03)' }}>
-              {isUnifiedVisible('affiliate') ? (
-                <td style={{ textAlign: 'left', fontWeight: 900 }}>Totals</td>
-              ) : null}
-              {isUnifiedVisible('rank') ? (
-                <td style={{ textAlign: 'right', fontWeight: 800 }}>—</td>
-              ) : null}
-              {visibleActiveMetrics.map((m) => (
+              <td style={{ textAlign: 'left', fontWeight: 900 }}>Totals</td>
+              <td style={{ textAlign: 'right', fontWeight: 800 }}>—</td>
+              {activeMetrics.map((m) => (
                 <React.Fragment key={`tot-${m.key}`}>
-                  {m.__vis.cellx ? (
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      fontWeight: 800,
+                      ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
+                      ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                      ...dimIfHidden(`${m.key}|cellx`),
+                    }}
+                    title={renderTitle(m, totalsRow.cellx[m.key])}
+                  >
+                    {renderValue(m, totalsRow.cellx[m.key])}
+                  </td>
+                  {m.layout === 'compare' ? (
                     <td
                       style={{
                         textAlign: 'right',
                         fontWeight: 800,
-                        ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                         ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
-                      }}
-                      title={renderTitle(m, totalsRow.cellx[m.key])}
-                    >
-                      {renderValue(m, totalsRow.cellx[m.key])}
-                    </td>
-                  ) : null}
-                  {m.layout === 'compare' && m.__vis.creolabs ? (
-                    <td
-                      style={{
-                        textAlign: 'right',
-                        fontWeight: 800,
-                        ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                        ...dimIfHidden(`${m.key}|creolabs`),
                       }}
                       title={renderTitle(m, totalsRow.creolabs[m.key])}
                     >
                       {renderValue(m, totalsRow.creolabs[m.key])}
                     </td>
                   ) : null}
-                  {m.layout === 'compare' && m.__vis.delta ? (
+                  {m.layout === 'compare' ? (
                     <td
                       style={{
                         textAlign: 'right',
                         ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                        ...dimIfHidden(`${m.key}|delta`),
                       }}
                     >
                       {renderDeltaCell(m, totalsRow.delta[m.key])}
@@ -1153,42 +1121,39 @@ export default function AffiliatePayoutUnifiedTable({
                   key={r.affiliateId}
                   style={isFlagged ? { outline: '1px solid rgba(249,115,22,0.16)' } : undefined}
                 >
-                  {isUnifiedVisible('affiliate') ? (
-                    <td style={{ textAlign: 'left', fontWeight: 800 }}>{label}</td>
-                  ) : null}
-                  {isUnifiedVisible('rank') ? (
-                    <td style={{ textAlign: 'right' }}>{idx + 1}</td>
-                  ) : null}
-                  {visibleActiveMetrics.map((m) => (
+                  <td style={{ textAlign: 'left', fontWeight: 800 }}>{label}</td>
+                  <td style={{ textAlign: 'right' }}>{idx + 1}</td>
+                  {activeMetrics.map((m) => (
                     <React.Fragment key={`${r.affiliateId}-${m.key}`}>
-                      {m.__vis.cellx ? (
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
+                          ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                          ...dimIfHidden(`${m.key}|cellx`),
+                        }}
+                        title={renderTitle(m, r.cellx?.[m.key])}
+                      >
+                        {renderValue(m, r.cellx?.[m.key])}
+                      </td>
+                      {m.layout === 'compare' ? (
                         <td
                           style={{
                             textAlign: 'right',
-                            ...(m.key === 'paymentsEver' ? paymentsDividerStyle : null),
                             ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
-                          }}
-                          title={renderTitle(m, r.cellx?.[m.key])}
-                        >
-                          {renderValue(m, r.cellx?.[m.key])}
-                        </td>
-                      ) : null}
-                      {m.layout === 'compare' && m.__vis.creolabs ? (
-                        <td
-                          style={{
-                            textAlign: 'right',
-                            ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                            ...dimIfHidden(`${m.key}|creolabs`),
                           }}
                           title={renderTitle(m, r.creolabs?.[m.key])}
                         >
                           {renderValue(m, r.creolabs?.[m.key])}
                         </td>
                       ) : null}
-                      {m.layout === 'compare' && m.__vis.delta ? (
+                      {m.layout === 'compare' ? (
                         <td
                           style={{
                             textAlign: 'right',
                             ...(m.key === 'netDepositsMonth' ? afterPaymentsStyle : null),
+                            ...dimIfHidden(`${m.key}|delta`),
                           }}
                         >
                           {renderDeltaCell(m, r.delta?.[m.key])}
