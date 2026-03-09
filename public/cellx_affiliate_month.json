@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-09T16:13:29.455Z",
+  "generatedAt": "2026-03-09T16:55:50.178Z",
   "source": "Media Report.csv",
   "rows": [
     {
@@ -527,15 +527,6 @@
     {
       "affiliateId": "1584",
       "affiliateName": "startbusinessonlinecom",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "1608",
-      "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -1155,15 +1146,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "2263",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "2332",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -1452,15 +1434,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "2759",
-      "affiliateName": "forexchurch",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 3000,
-      "pl": 0
-    },
-    {
       "affiliateId": "2781",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -1578,15 +1551,6 @@
       "pl": -1103.2236
     },
     {
-      "affiliateId": "2940",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 1373,
-      "commission": 5200,
-      "pl": 506.649
-    },
-    {
       "affiliateId": "2946",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -1684,15 +1648,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "312",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 2261,
-      "commission": 2400,
-      "pl": 181.0412
     },
     {
       "affiliateId": "3120",
@@ -1900,15 +1855,6 @@
       "netDeposits": 250,
       "commission": 0,
       "pl": -17.05
-    },
-    {
-      "affiliateId": "3410",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": -71.04
     },
     {
       "affiliateId": "3435",
@@ -2451,6 +2397,15 @@
       "pl": -23.7194
     },
     {
+      "affiliateId": "35592",
+      "affiliateName": "tradeandshare",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 0,
+      "commission": 1950,
+      "pl": 153.0493
+    },
+    {
       "affiliateId": "35596",
       "affiliateName": "Robert",
       "year": 2026,
@@ -2577,15 +2532,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "3579",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "35799",
       "affiliateName": "junji5",
       "year": 2026,
@@ -2619,6 +2565,24 @@
       "monthIndex": 2,
       "netDeposits": 0,
       "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35829",
+      "affiliateName": "koskos8",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 3634,
+      "commission": 7600,
+      "pl": 616.6502
+    },
+    {
+      "affiliateId": "35835",
+      "affiliateName": "forexchurch",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 0,
+      "commission": 3000,
       "pl": 0
     },
     {
@@ -3000,15 +2964,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "3989",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "4000",
       "affiliateName": "Lauren444",
       "year": 2026,
@@ -3189,15 +3144,6 @@
       "pl": 2568.2419
     },
     {
-      "affiliateId": "527",
-      "affiliateName": "tradeandshare",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 1950,
-      "pl": 153.0493
-    },
-    {
       "affiliateId": "624",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -3317,15 +3263,6 @@
     {
       "affiliateId": "883",
       "affiliateName": "CentralBrokers1",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "895",
-      "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -4163,15 +4100,6 @@
     {
       "affiliateId": "1589",
       "affiliateName": "toptrades",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "1590",
-      "affiliateName": "tradeandshare",
       "year": 2026,
       "monthIndex": 1,
       "netDeposits": 0,
@@ -5034,26 +4962,8 @@
       "pl": 0
     },
     {
-      "affiliateId": "2043",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "2048",
       "affiliateName": "paolo.alberti@arteliagroup.com",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "2070",
-      "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 1,
       "netDeposits": 0,
@@ -5419,15 +5329,6 @@
       "netDeposits": 1800,
       "commission": 0,
       "pl": -275.25
-    },
-    {
-      "affiliateId": "235",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 2184,
-      "commission": 1200,
-      "pl": -261.2641
     },
     {
       "affiliateId": "2362",
@@ -6195,15 +6096,6 @@
       "pl": -62.44
     },
     {
-      "affiliateId": "306",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 2245,
-      "commission": 1200,
-      "pl": 1171.0054
-    },
-    {
       "affiliateId": "3066",
       "affiliateName": "TUnion",
       "year": 2026,
@@ -6454,15 +6346,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "3232",
-      "affiliateName": "tradeandshare",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 5310,
-      "commission": 3900,
-      "pl": 332.5371
     },
     {
       "affiliateId": "3244",
@@ -7131,6 +7014,15 @@
       "pl": 873.0809
     },
     {
+      "affiliateId": "35592",
+      "affiliateName": "tradeandshare",
+      "year": 2026,
+      "monthIndex": 1,
+      "netDeposits": 5310,
+      "commission": 3900,
+      "pl": 332.5371
+    },
+    {
       "affiliateId": "35596",
       "affiliateName": "Robert",
       "year": 2026,
@@ -7354,6 +7246,15 @@
       "netDeposits": 0,
       "commission": 3000,
       "pl": 0
+    },
+    {
+      "affiliateId": "35829",
+      "affiliateName": "koskos8",
+      "year": 2026,
+      "monthIndex": 1,
+      "netDeposits": 4929,
+      "commission": 3400,
+      "pl": 983.4913
     },
     {
       "affiliateId": "3586",
@@ -8166,15 +8067,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "4003",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "4009",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -8425,15 +8317,6 @@
       "netDeposits": 2000,
       "commission": 0,
       "pl": 1990.05
-    },
-    {
-      "affiliateId": "654",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 500,
-      "commission": 1000,
-      "pl": 73.75
     },
     {
       "affiliateId": "689",
@@ -11046,15 +10929,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "3097",
-      "affiliateName": "koskos8",
-      "year": 2026,
-      "monthIndex": 0,
-      "netDeposits": 1772,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "3116",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -12151,6 +12025,15 @@
       "netDeposits": 1769,
       "commission": 0,
       "pl": 1093.9275
+    },
+    {
+      "affiliateId": "35829",
+      "affiliateName": "koskos8",
+      "year": 2026,
+      "monthIndex": 0,
+      "netDeposits": 1772,
+      "commission": 0,
+      "pl": 0
     },
     {
       "affiliateId": "3585",
@@ -23745,15 +23628,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "19358",
-      "affiliateName": "tradeandshare",
-      "year": 2025,
-      "monthIndex": 9,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "19403",
       "affiliateName": "Default Affiliate",
       "year": 2025,
@@ -24305,15 +24179,6 @@
     {
       "affiliateId": "22011",
       "affiliateName": "dailyforex",
-      "year": 2025,
-      "monthIndex": 9,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "22080",
-      "affiliateName": "tradeandshare",
       "year": 2025,
       "monthIndex": 9,
       "netDeposits": 0,
@@ -25372,6 +25237,15 @@
       "netDeposits": 5466,
       "commission": 3410.8999999999996,
       "pl": 973.3140000000001
+    },
+    {
+      "affiliateId": "35592",
+      "affiliateName": "tradeandshare",
+      "year": 2025,
+      "monthIndex": 9,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
     },
     {
       "affiliateId": "35596",
