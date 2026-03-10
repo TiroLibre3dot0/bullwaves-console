@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { track, trackPublicShareOpen } from '../../utils/analytics'
 
 function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
@@ -60,6 +60,118 @@ function HLine({ className = '' }) {
   return <div className={`h-px bg-slate-500/35 ${className}`} aria-hidden="true" />
 }
 
+function SpotlightAreaConnections({ containerRef, areaRefs, spotlight }) {
+  const [segments, setSegments] = useState([])
+  const [canvas, setCanvas] = useState({ w: 0, h: 0 })
+
+  useEffect(() => {
+    let raf = 0
+
+    const compute = () => {
+      if (!spotlight?.relatedAreaIdMap) {
+        setSegments([])
+        setCanvas({ w: 0, h: 0 })
+        return
+      }
+
+      const containerEl = containerRef?.current
+      if (!containerEl) {
+        setSegments([])
+        setCanvas({ w: 0, h: 0 })
+        return
+      }
+
+      const relatedAreaIds = Object.keys(spotlight.relatedAreaIdMap).filter(
+        (k) => spotlight.relatedAreaIdMap?.[k]
+      )
+
+      if (relatedAreaIds.length < 2) {
+        setSegments([])
+        setCanvas({ w: 0, h: 0 })
+        return
+      }
+
+      const containerRect = containerEl.getBoundingClientRect()
+      const w = Math.max(1, Math.round(containerRect.width || 0))
+      const h = Math.max(1, Math.round(containerRect.height || 0))
+      setCanvas({ w, h })
+      const points = []
+      for (const areaId of relatedAreaIds) {
+        const ref = areaRefs?.[areaId]
+        const el = ref?.current || containerEl.querySelector(`[data-macro-area-id="${areaId}"]`)
+        if (!el) continue
+        const rect = el.getBoundingClientRect()
+        points.push({
+          areaId,
+          x: rect.left + rect.width / 2 - containerRect.left,
+          y: rect.top + Math.min(22, rect.height * 0.18) - containerRect.top,
+        })
+      }
+
+      if (points.length < 2) {
+        setSegments([])
+        return
+      }
+
+      const next = []
+      for (let i = 0; i < points.length; i++) {
+        for (let j = i + 1; j < points.length; j++) {
+          next.push({
+            key: `${points[i].areaId}__${points[j].areaId}`,
+            x1: points[i].x,
+            y1: points[i].y,
+            x2: points[j].x,
+            y2: points[j].y,
+          })
+        }
+      }
+      setSegments(next)
+    }
+
+    const schedule = () => {
+      if (raf) cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(compute)
+    }
+
+    schedule()
+    window.addEventListener('resize', schedule)
+    window.addEventListener('scroll', schedule, true)
+    return () => {
+      if (raf) cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+      window.removeEventListener('scroll', schedule, true)
+    }
+  }, [containerRef, areaRefs, spotlight])
+
+  if (!segments.length) return null
+
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 z-10 block text-brand-400"
+      width={canvas.w || undefined}
+      height={canvas.h || undefined}
+      viewBox={canvas.w && canvas.h ? `0 0 ${canvas.w} ${canvas.h}` : undefined}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      {segments.map((s) => (
+        <line
+          key={s.key}
+          x1={s.x1}
+          y1={s.y1}
+          x2={s.x2}
+          y2={s.y2}
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeDasharray="6 6"
+          strokeOpacity="0.9"
+          strokeLinecap="round"
+        />
+      ))}
+    </svg>
+  )
+}
+
 function SubCard({
   title,
   lines = [],
@@ -67,14 +179,38 @@ function SubCard({
   headBadgeClass = 'border-slate-300/25 text-slate-200/80 bg-slate-950/20',
   people = [],
   showPeople = false,
+  areaId,
+  nodeId,
+  spotlight,
+  onSpotlight,
+  onClearSpotlight,
 }) {
   const filtered = (lines || []).filter(Boolean)
   const safePeople = (people || []).filter((p) => p && p.name && p.title)
   const useDenseGrid = safePeople.length >= 9
   const isCustomerSupport = title === 'Customer Support'
   const useSupportGrid = isCustomerSupport && safePeople.length >= 6
+
+  const isActive = Boolean(spotlight)
+  const isNodeRelated = isActive && nodeId && spotlight?.relatedNodeIdMap?.[nodeId]
+  const isAreaRelated = isActive && areaId && spotlight?.relatedAreaIdMap?.[areaId]
+  const shouldDim = isActive && !isNodeRelated && !isAreaRelated
+  const shouldRing = isActive && (isNodeRelated || (isAreaRelated && spotlight?.kind === 'area'))
   return (
-    <div className={`bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal`}>
+    <div
+      className={
+        `bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal transition-opacity ` +
+        (shouldDim ? 'opacity-30 ' : 'opacity-100 ') +
+        (shouldRing ? 'ring-2 ring-brand-400/50 ' : '') +
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50'
+      }
+      tabIndex={0}
+      onMouseEnter={() => onSpotlight?.({ kind: 'function', areaId, nodeId, label: title })}
+      onMouseLeave={() => onClearSpotlight?.()}
+      onFocus={() => onSpotlight?.({ kind: 'function', areaId, nodeId, label: title })}
+      onBlur={() => onClearSpotlight?.()}
+      aria-label={title}
+    >
       <div className="text-xs text-slate-200 font-semibold leading-snug">{title}</div>
       {filtered.length ? (
         <div className="mt-1 space-y-0.5">
@@ -122,6 +258,14 @@ function SubCard({
                     (isFacilitator ? ' border-dashed border-brand-400' : '')
                   )
                 })()}
+                onMouseEnter={() =>
+                  onSpotlight?.({
+                    kind: 'person',
+                    person: p,
+                    hostAreaId: areaId,
+                    hostNodeId: nodeId,
+                  })
+                }
               >
                 {(() => {
                   const fp = formatPersonText(p, { maxTitleLen: 26 })
@@ -175,7 +319,7 @@ function SubCard({
   )
 }
 
-function SalesSupportFacilitatorBridge({ people = [] }) {
+function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, onClearSpotlight }) {
   const safe = (people || []).filter((p) => p && p.name && p.title)
   if (!safe.length) return null
 
@@ -183,8 +327,20 @@ function SalesSupportFacilitatorBridge({ people = [] }) {
   const a = two[0] || null
   const b = two[1] || null
 
+  const isActive = Boolean(spotlight)
+  const bridgeRelated =
+    !isActive ||
+    spotlight?.highlightBridge ||
+    spotlight?.relatedNodeIdMap?.sales ||
+    spotlight?.relatedNodeIdMap?.['customer-support']
+  const dimClass = isActive && !bridgeRelated ? 'opacity-30' : 'opacity-100'
+
   return (
-    <div className="relative w-full">
+    <div
+      className={`relative w-full transition-opacity ${dimClass}`}
+      onMouseEnter={() => onSpotlight?.({ kind: 'bridge' })}
+      onMouseLeave={() => onClearSpotlight?.()}
+    >
       <div className="border-t border-dashed border-brand-400" />
       <div className="absolute left-2 -top-3 text-[10px] text-brand-200 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400">
         Customer Support
@@ -198,8 +354,21 @@ function SalesSupportFacilitatorBridge({ people = [] }) {
           {a
             ? (() => {
                 const fp = formatPersonText(a, { maxTitleLen: 28 })
+                const isHighlighted =
+                  isActive &&
+                  (spotlight?.kind === 'bridge' ||
+                    spotlight?.personNameKey === normalizeKey(a?.name))
                 return (
-                  <div className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2">
+                  <div
+                    className={
+                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
+                      (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
+                    }
+                    tabIndex={0}
+                    onMouseEnter={() => onSpotlight?.({ kind: 'person', person: a })}
+                    onFocus={() => onSpotlight?.({ kind: 'person', person: a })}
+                    onBlur={() => onClearSpotlight?.()}
+                  >
                     <div
                       className="text-[11px] font-semibold text-slate-100 leading-snug"
                       title={fp.displayName}
@@ -235,8 +404,21 @@ function SalesSupportFacilitatorBridge({ people = [] }) {
           {b
             ? (() => {
                 const fp = formatPersonText(b, { maxTitleLen: 28 })
+                const isHighlighted =
+                  isActive &&
+                  (spotlight?.kind === 'bridge' ||
+                    spotlight?.personNameKey === normalizeKey(b?.name))
                 return (
-                  <div className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2">
+                  <div
+                    className={
+                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
+                      (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
+                    }
+                    tabIndex={0}
+                    onMouseEnter={() => onSpotlight?.({ kind: 'person', person: b })}
+                    onFocus={() => onSpotlight?.({ kind: 'person', person: b })}
+                    onBlur={() => onClearSpotlight?.()}
+                  >
                     <div
                       className="text-[11px] font-semibold text-slate-100 leading-snug"
                       title={fp.displayName}
@@ -441,6 +623,15 @@ function normalizeKey(s) {
     .toLowerCase()
 }
 
+function makeIdMap(ids) {
+  const out = Object.create(null)
+  for (const id of ids || []) {
+    if (!id) continue
+    out[id] = true
+  }
+  return out
+}
+
 const EXPLICIT_HEADS_BY_NODE = {
   // Confirmed department heads
   sales: ['orlin simovonyan'],
@@ -598,6 +789,9 @@ export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
   const [peoplePayload, setPeoplePayload] = useState(null)
   const [peopleLoadError, setPeopleLoadError] = useState(null)
+  const [spotlight, setSpotlight] = useState(null)
+  const pillarsWrapRef = useRef(null)
+  const macroAreaRefs = useRef(Object.create(null))
 
   useEffect(() => {
     track('page_view', { page: 'ShareOrgChartTrueTree', access: 'public' })
@@ -617,6 +811,84 @@ export default function ShareOrgChartTrueTree() {
   const macroAreas = (macroGroup?.children || []).slice(0, 4)
 
   const publicNodeLookup = useMemo(() => buildPublicNodeLabelLookup(ORG_TREE), [])
+
+  const setSpotlightFromPayload = (payload) => {
+    if (!payload) {
+      setSpotlight(null)
+      return
+    }
+
+    if (payload.kind === 'function') {
+      const nodeId = payload.nodeId
+      const areaId = payload.areaId
+      setSpotlight({
+        kind: 'function',
+        label: payload.label || '',
+        relatedNodeIdMap: makeIdMap([nodeId]),
+        relatedAreaIdMap: makeIdMap([areaId]),
+        highlightBridge: false,
+      })
+      return
+    }
+
+    if (payload.kind === 'area') {
+      const areaId = payload.areaId
+      setSpotlight({
+        kind: 'area',
+        label: payload.label || '',
+        relatedNodeIdMap: makeIdMap([]),
+        relatedAreaIdMap: makeIdMap([areaId]),
+        highlightBridge: false,
+      })
+      return
+    }
+
+    if (payload.kind === 'bridge') {
+      setSpotlight({
+        kind: 'bridge',
+        label: payload.label || 'Sales ↔ Customer Support',
+        relatedNodeIdMap: makeIdMap(['sales', 'customer-support']),
+        relatedAreaIdMap: makeIdMap([
+          publicNodeLookup.get(normalizeKey('sales'))?.areaId,
+          publicNodeLookup.get(normalizeKey('customer-support'))?.areaId,
+        ]),
+        highlightBridge: true,
+      })
+      return
+    }
+
+    if (payload.kind === 'person' && payload.person) {
+      const person = payload.person
+      const personNameKey = normalizeKey(person?.name)
+      const relatedNodeIds = []
+      const relatedAreaIds = []
+
+      if (payload.hostNodeId) relatedNodeIds.push(payload.hostNodeId)
+      if (payload.hostAreaId) relatedAreaIds.push(payload.hostAreaId)
+
+      const targets = Array.isArray(person?.facilitatorFor) ? person.facilitatorFor : []
+      for (const t of targets) {
+        const hit = publicNodeLookup.get(normalizeKey(t))
+        if (hit?.nodeId) relatedNodeIds.push(hit.nodeId)
+        if (hit?.areaId) relatedAreaIds.push(hit.areaId)
+      }
+
+      const bridgeTargets = new Set(relatedNodeIds.map((x) => normalizeKey(x)))
+      const highlightBridge = bridgeTargets.has('sales') && bridgeTargets.has('customer-support')
+
+      setSpotlight({
+        kind: 'person',
+        label: String(person?.name || ''),
+        personNameKey,
+        relatedNodeIdMap: makeIdMap(Array.from(new Set(relatedNodeIds.filter(Boolean)))),
+        relatedAreaIdMap: makeIdMap(Array.from(new Set(relatedAreaIds.filter(Boolean)))),
+        highlightBridge,
+      })
+      return
+    }
+
+    setSpotlight(null)
+  }
 
   useEffect(() => {
     if (mode !== VIEW_MODES.people) return
@@ -1075,33 +1347,73 @@ export default function ShareOrgChartTrueTree() {
               </div>
 
               {/* Pillar hubs (responsive: 1 → 2 → 4) */}
-              <div
-                className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 2xl:gap-6"
-                style={{ alignItems: 'start' }}
-              >
-                {macroAreasPopulated.map((area) => (
-                  <MacroAreaColumn
-                    key={area.id}
-                    area={area}
-                    facilitators={facilitatorsByArea?.[area.id] || []}
-                  />
-                ))}
+              <div ref={pillarsWrapRef} className="relative mt-3">
+                <div
+                  className="relative z-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 2xl:gap-6"
+                  style={{ alignItems: 'start' }}
+                >
+                  {macroAreasPopulated.map((area) => {
+                    const areaRef =
+                      macroAreaRefs.current[area.id] ||
+                      (macroAreaRefs.current[area.id] = React.createRef())
+                    return (
+                      <MacroAreaColumn
+                        key={area.id}
+                        area={area}
+                        facilitators={facilitatorsByArea?.[area.id] || []}
+                        spotlight={spotlight}
+                        onSpotlight={setSpotlightFromPayload}
+                        onClearSpotlight={() => setSpotlight(null)}
+                        containerRef={areaRef}
+                      />
+                    )
+                  })}
+                </div>
+
+                <SpotlightAreaConnections
+                  containerRef={pillarsWrapRef}
+                  areaRefs={macroAreaRefs.current}
+                  spotlight={spotlight}
+                />
               </div>
 
               {/* Sales ↔ Support bridge (compact for <xl) */}
               {showPeople && salesSupportBridgeFacilitators.length ? (
                 <div className="mt-6 xl:hidden">
-                  <div className="rounded-2xl border border-slate-800/60 bg-slate-900/20 px-4 py-3">
+                  <div
+                    className="rounded-2xl border border-slate-800/60 bg-slate-900/20 px-4 py-3"
+                    onMouseEnter={() => setSpotlightFromPayload({ kind: 'bridge' })}
+                    onMouseLeave={() => setSpotlight(null)}
+                  >
                     <div className="text-[10px] font-semibold text-slate-400">
                       Sales ↔ Customer Support facilitators
                     </div>
                     <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
                       {salesSupportBridgeFacilitators.slice(0, 2).map((p) => {
                         const fp = formatPersonText(p, { maxTitleLen: 28 })
+                        const isActive = Boolean(spotlight)
+                        const isRelated =
+                          !isActive ||
+                          spotlight?.highlightBridge ||
+                          spotlight?.personNameKey === normalizeKey(p?.name) ||
+                          spotlight?.relatedNodeIdMap?.sales ||
+                          spotlight?.relatedNodeIdMap?.['customer-support']
+                        const isHighlighted =
+                          isActive &&
+                          (spotlight?.kind === 'bridge' ||
+                            spotlight?.personNameKey === normalizeKey(p?.name))
                         return (
                           <div
                             key={`bridge-compact-${p.name}-${p.title}`}
-                            className="min-w-0 rounded-xl border border-dashed border-brand-400 bg-slate-950/50 px-3 py-2"
+                            className={
+                              'min-w-0 rounded-xl border border-dashed border-brand-400 bg-slate-950/50 px-3 py-2 transition-opacity ' +
+                              (isActive && !isRelated ? 'opacity-30 ' : 'opacity-100 ') +
+                              (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
+                            }
+                            onMouseEnter={() =>
+                              setSpotlightFromPayload({ kind: 'person', person: p })
+                            }
+                            onMouseLeave={() => setSpotlight(null)}
                           >
                             <div
                               className="text-[11px] font-semibold text-slate-100 leading-snug"
@@ -1129,7 +1441,12 @@ export default function ShareOrgChartTrueTree() {
               <div className="mt-8 hidden xl:grid grid-cols-4 gap-6 items-center">
                 <div className="col-span-2">
                   {showPeople ? (
-                    <SalesSupportFacilitatorBridge people={salesSupportBridgeFacilitators} />
+                    <SalesSupportFacilitatorBridge
+                      people={salesSupportBridgeFacilitators}
+                      spotlight={spotlight}
+                      onSpotlight={setSpotlightFromPayload}
+                      onClearSpotlight={() => setSpotlight(null)}
+                    />
                   ) : null}
                 </div>
                 <div className="col-span-2">
@@ -1241,10 +1558,18 @@ function MacroIcon({ kind, className = '' }) {
   )
 }
 
-function MacroAreaColumn({ area, facilitators = [] }) {
+function MacroAreaColumn({
+  area,
+  facilitators = [],
+  spotlight,
+  onSpotlight,
+  onClearSpotlight,
+  containerRef,
+}) {
   if (!area) return null
   const safeAreaPeople = (area.people || []).filter((p) => p && p.name && p.title)
   const safeFacilitators = (facilitators || []).filter((p) => p && p.name && p.title)
+  const [collapsedClusters, setCollapsedClusters] = useState(() => Object.create(null))
   const accent =
     area.id === 'operations'
       ? ACCENTS.operations
@@ -1293,7 +1618,7 @@ function MacroAreaColumn({ area, facilitators = [] }) {
   ]
 
   return (
-    <div className="flex flex-col min-w-0">
+    <div ref={containerRef} data-macro-area-id={area.id} className="flex flex-col min-w-0">
       <Card
         title={
           <div className="flex items-center gap-2">
@@ -1317,10 +1642,30 @@ function MacroAreaColumn({ area, facilitators = [] }) {
                       const fp = formatPersonText(p, { maxTitleLen: 26 })
                       const targets = Array.isArray(p.facilitatorFor) ? p.facilitatorFor : []
                       const targetsText = targets.length ? `→ ${targets.join(' · ')}` : ''
+                      const isActive = Boolean(spotlight)
+                      const isAreaRelated =
+                        !isActive || (area?.id && spotlight?.relatedAreaIdMap?.[area.id])
+                      const isPersonHighlighted =
+                        isActive && spotlight?.personNameKey === normalizeKey(p?.name)
+                      const shouldDim = isActive && !isAreaRelated && !isPersonHighlighted
+                      const shouldRing =
+                        isActive &&
+                        (isPersonHighlighted ||
+                          (spotlight?.kind === 'area' &&
+                            area?.id &&
+                            spotlight?.relatedAreaIdMap?.[area.id]))
                       return (
                         <div
                           key={`fac-${area.id}-${p.name}-${p.title}`}
-                          className="rounded-xl border border-dashed border-brand-400 bg-slate-950/30 px-3 py-2"
+                          className={
+                            'rounded-xl border border-dashed border-brand-400 bg-slate-950/30 px-3 py-2 transition-opacity ' +
+                            (shouldDim ? 'opacity-30 ' : 'opacity-100 ') +
+                            (shouldRing ? 'ring-2 ring-brand-400/50 ' : '')
+                          }
+                          onMouseEnter={() =>
+                            onSpotlight?.({ kind: 'person', person: p, hostAreaId: area.id })
+                          }
+                          onMouseLeave={() => onClearSpotlight?.()}
                         >
                           <div className="text-[11px] leading-snug font-semibold text-slate-100">
                             <span title={fp.displayName}>{fp.displayName}</span>
@@ -1353,15 +1698,33 @@ function MacroAreaColumn({ area, facilitators = [] }) {
                   {safeAreaPeople.map((p) =>
                     (() => {
                       const fp = formatPersonText(p, { maxTitleLen: 26 })
+                      const isActive = Boolean(spotlight)
+                      const isAreaRelated =
+                        !isActive || (area?.id && spotlight?.relatedAreaIdMap?.[area.id])
+                      const isPersonHighlighted =
+                        isActive && spotlight?.personNameKey === normalizeKey(p?.name)
+                      const shouldDim = isActive && !isAreaRelated && !isPersonHighlighted
+                      const shouldRing =
+                        isActive &&
+                        (isPersonHighlighted ||
+                          (spotlight?.kind === 'area' &&
+                            area?.id &&
+                            spotlight?.relatedAreaIdMap?.[area.id]))
                       return (
                         <div
                           key={`${area.id}-${p.name}-${p.title}`}
                           className={
-                            'rounded-xl border px-3 py-2 ' +
+                            'rounded-xl border px-3 py-2 transition-opacity ' +
                             (p.isHead
                               ? 'border-slate-700/70 bg-slate-950/45'
-                              : 'border-slate-800/60 bg-slate-950/30')
+                              : 'border-slate-800/60 bg-slate-950/30') +
+                            (shouldDim ? ' opacity-30' : '') +
+                            (shouldRing ? ' ring-2 ring-brand-400/50' : '')
                           }
+                          onMouseEnter={() =>
+                            onSpotlight?.({ kind: 'person', person: p, hostAreaId: area.id })
+                          }
+                          onMouseLeave={() => onClearSpotlight?.()}
                         >
                           <div
                             className={
@@ -1409,28 +1772,61 @@ function MacroAreaColumn({ area, facilitators = [] }) {
                   .map((id) => childrenById.get(id))
                   .filter(Boolean)
                 if (!fnNodes.length) return null
+
+                const clusterKey = normalizeKey(cluster.label)
+                const isCollapsed = Boolean(collapsedClusters?.[clusterKey])
+                const clusterGridId = `${area.id}-cluster-${clusterKey || 'default'}`
                 return (
                   <div key={`${area.id}-${cluster.label}`}>
-                    <div className="text-[10px] font-semibold text-slate-400">{cluster.label}</div>
-                    <div
-                      className={
-                        fnNodes.length === 1
-                          ? 'mt-2 grid grid-cols-1 gap-2'
-                          : 'mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-2'
-                      }
-                    >
-                      {fnNodes.map((fn) => (
-                        <SubCard
-                          key={`${area.id}-${fn.id}`}
-                          title={fn.label}
-                          lines={getNodeLines(fn)}
-                          borderClass={border}
-                          headBadgeClass={headBadgeClass}
-                          people={fn.people || []}
-                          showPeople={Boolean(fn.showPeople)}
-                        />
-                      ))}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-[10px] font-semibold text-slate-400">
+                        {cluster.label}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCollapsedClusters((prev) => ({
+                            ...(prev || Object.create(null)),
+                            [clusterKey]: !prev?.[clusterKey],
+                          }))
+                        }
+                        className="text-[10px] font-semibold text-slate-400 hover:text-slate-200 rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5"
+                        aria-expanded={!isCollapsed}
+                        aria-controls={clusterGridId}
+                      >
+                        {isCollapsed ? 'Expand' : 'Collapse'}
+                      </button>
                     </div>
+
+                    {!isCollapsed ? (
+                      <div
+                        id={clusterGridId}
+                        className={
+                          fnNodes.length === 1
+                            ? 'mt-2 grid grid-cols-1 gap-2'
+                            : 'mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-2'
+                        }
+                      >
+                        {fnNodes.map((fn) => (
+                          <SubCard
+                            key={`${area.id}-${fn.id}`}
+                            title={fn.label}
+                            lines={getNodeLines(fn)}
+                            borderClass={border}
+                            headBadgeClass={headBadgeClass}
+                            people={fn.people || []}
+                            showPeople={Boolean(fn.showPeople)}
+                            areaId={area.id}
+                            nodeId={fn.id}
+                            spotlight={spotlight}
+                            onSpotlight={onSpotlight}
+                            onClearSpotlight={onClearSpotlight}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div id={clusterGridId} className="sr-only" aria-hidden="true" />
+                    )}
                   </div>
                 )
               })}
