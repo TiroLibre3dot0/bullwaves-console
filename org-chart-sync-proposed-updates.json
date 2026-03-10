@@ -1,0 +1,690 @@
+{
+  "generatedAt": "2026-03-09T18:38:45.252Z",
+  "orgSource": "src/pages/orgChartData.js",
+  "csvSource": "Organigramma/Bullwaves Active Employees 2026 - Sheet1.csv",
+  "proposedUpdates": [
+    {
+      "matchKind": "email",
+      "confidence": 1,
+      "sectionId": "management-team",
+      "orgMeta": {
+        "sectionId": "management-team",
+        "sectionTitle": "Management Team",
+        "roleIndex": 1
+      },
+      "org": {
+        "name": "Francesco Ceccarini",
+        "title": "Shareholder",
+        "division": "Operations",
+        "department": "Operations",
+        "region": "Israel",
+        "email": "francesco@bullwaves.com",
+        "focus": "Operations",
+        "duties": "CRM/softphone/livechat issues, emergency topics, withdrawals, crypto deposits."
+      },
+      "csv": {
+        "name": "Francesco Ceccarini",
+        "title": "Shareholder",
+        "division": "Shareholder",
+        "department": "Shareholder",
+        "region": "Italy",
+        "email": "francesco@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "division",
+          "org": "Operations",
+          "csv": "Shareholder"
+        },
+        {
+          "field": "department",
+          "org": "Operations",
+          "csv": "Shareholder"
+        },
+        {
+          "field": "region",
+          "org": "Israel",
+          "csv": "Italy"
+        }
+      ],
+      "reason": "email match"
+    },
+    {
+      "matchKind": "email",
+      "confidence": 1,
+      "sectionId": "dealing",
+      "orgMeta": {
+        "sectionId": "dealing",
+        "sectionTitle": "Dealing Desk / PSP / Risk",
+        "roleIndex": 1
+      },
+      "org": {
+        "name": "Chris Psomas",
+        "title": "Head of Operations (Trading & Dealing)",
+        "division": "Trading & Dealing",
+        "department": "Dealing",
+        "region": "Cyprus",
+        "email": "chris.psomas@bullwaves.com",
+        "focus": "Dealing operations",
+        "duties": "FXCubic, Nullpoint, Netshop, MT5 configuration, risk monitoring, profitability."
+      },
+      "csv": {
+        "name": "Chris Psomas",
+        "title": "Head of Operations",
+        "division": "Trading & Dealing",
+        "department": "Dealing",
+        "region": "Cyprus",
+        "email": "chris.psomas@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "title",
+          "org": "Head of Operations (Trading & Dealing)",
+          "csv": "Head of Operations"
+        }
+      ],
+      "reason": "email match"
+    },
+    {
+      "matchKind": "email",
+      "confidence": 1,
+      "sectionId": "business-development",
+      "orgMeta": {
+        "sectionId": "business-development",
+        "sectionTitle": "Business Development / Sales",
+        "roleIndex": 5
+      },
+      "org": {
+        "name": "Ghassan Zaghdoud",
+        "title": "Head of MENA",
+        "division": "Acquisition",
+        "department": "Sales - Dubai",
+        "region": "Dubai",
+        "email": "ghassan.z@bullwaves.com",
+        "focus": "Sales - Dubai",
+        "duties": "Sales leadership for MENA/Dubai."
+      },
+      "csv": {
+        "name": "Ghassan Zaghdoud",
+        "title": "Head of MENA",
+        "division": "Acquisition",
+        "department": "BDM - Dubai",
+        "region": "Dubai",
+        "email": "ghassan.z@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "department",
+          "org": "Sales - Dubai",
+          "csv": "BDM - Dubai"
+        }
+      ],
+      "reason": "email match"
+    },
+    {
+      "matchKind": "email",
+      "confidence": 1,
+      "sectionId": "support-team",
+      "orgMeta": {
+        "sectionId": "support-team",
+        "sectionTitle": "Support Team",
+        "roleIndex": 10
+      },
+      "org": {
+        "name": "Nevena Planic",
+        "title": "Hybrid - operation & support",
+        "division": "Technology",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "nevena.planic@bullwaves.com",
+        "focus": "Hybrid ops/support (systems)",
+        "duties": "User provisioning, system operations, internal tooling support."
+      },
+      "csv": {
+        "name": "Nevena Planic",
+        "title": "Support Agent",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "nevena.planic@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "title",
+          "org": "Hybrid - operation & support",
+          "csv": "Support Agent"
+        },
+        {
+          "field": "division",
+          "org": "Technology",
+          "csv": "Operations"
+        }
+      ],
+      "reason": "email match"
+    },
+    {
+      "matchKind": "name",
+      "confidence": 0.98,
+      "sectionId": "support-team",
+      "orgMeta": {
+        "sectionId": "support-team",
+        "sectionTitle": "Support Team",
+        "roleIndex": 2
+      },
+      "org": {
+        "name": "Sonja Djuric",
+        "title": "Support Team",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "sonja.djuric@bullwaves.com",
+        "focus": "Forex",
+        "duties": "Forex tickets, WhatsApp support, KYC, Trustpilot, livechat, DEFI Slack, PSP issues, incoming calls."
+      },
+      "csv": {
+        "name": "Sonja Djuric",
+        "title": "Support Team",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "sonja.djruric@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "email",
+          "org": "sonja.djuric@bullwaves.com",
+          "csv": "sonja.djruric@bullwaves.com"
+        }
+      ],
+      "reason": "unique exact name match"
+    },
+    {
+      "matchKind": "name",
+      "confidence": 0.98,
+      "sectionId": "support-team",
+      "orgMeta": {
+        "sectionId": "support-team",
+        "sectionTitle": "Support Team",
+        "roleIndex": 8
+      },
+      "org": {
+        "name": "Tamara Aramovic",
+        "title": "Support Team",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "tamara.aramovic@bullwaves.com",
+        "focus": "Support",
+        "duties": "Support tickets and WA groups."
+      },
+      "csv": {
+        "name": "Tamara Aramovic",
+        "title": "Support Team",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "tamara.avramovic@bullwaves.com"
+      },
+      "changedFields": [
+        {
+          "field": "email",
+          "org": "tamara.aramovic@bullwaves.com",
+          "csv": "tamara.avramovic@bullwaves.com"
+        }
+      ],
+      "reason": "unique exact name match"
+    }
+  ],
+  "proposedAdds": [],
+  "candidateRemovals": [
+    {
+      "sectionId": "marketing",
+      "name": "Daniel Taddei",
+      "title": "Marketing Lead",
+      "email": "",
+      "classification": "uncertain / manual review needed"
+    },
+    {
+      "sectionId": "compliance",
+      "name": "Terina",
+      "title": "Compliance Officer",
+      "email": "",
+      "classification": "uncertain / manual review needed"
+    }
+  ],
+  "confirmedDuplicates": [
+    {
+      "sectionId": "management-team",
+      "name": "Filippo De Rosa",
+      "title": "Non Executive Director",
+      "email": "filippo@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    },
+    {
+      "sectionId": "support-team",
+      "name": "Tamara Popovic Yakimov",
+      "title": "Head of Support",
+      "email": "tamara@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    },
+    {
+      "sectionId": "operations",
+      "name": "Paolo Vullo",
+      "title": "Head of Operations",
+      "email": "paolo.v@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    },
+    {
+      "sectionId": "affiliation",
+      "name": "Stefan Popovski",
+      "title": "Shareholder / Affiliation Lead",
+      "email": "partners@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    },
+    {
+      "sectionId": "payments",
+      "name": "Tamara Popovic Yakimov",
+      "title": "Head of Support / PSP Oversight",
+      "email": "tamara@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    },
+    {
+      "sectionId": "dealing",
+      "name": "Renato Pezzi",
+      "title": "Shareholder (Dealing & PSPs)",
+      "email": "renato@bullwaves.com",
+      "classification": "confirmed by CSV (duplicate/multi-role entry) — preserve"
+    }
+  ],
+  "ambiguities": [
+    {
+      "kind": "email-collision-in-org",
+      "email": "renato@bullwaves.com",
+      "generic": false,
+      "csv": {
+        "name": "Renato Pezzi",
+        "title": "Shareholder",
+        "division": "Shareholder",
+        "department": "Shareholder",
+        "region": "Italy",
+        "email": "renato@bullwaves.com"
+      },
+      "orgCandidates": [
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Italy",
+          "email": "renato@bullwaves.com",
+          "focus": "Dealing & PSPs",
+          "duties": "Trading issues, abusers, payouts, PSP problems.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder (Dealing & PSPs)",
+          "division": "Shareholder",
+          "department": "Dealing",
+          "region": "Italy",
+          "email": "renato@bullwaves.com",
+          "focus": "Dealing leadership",
+          "duties": "Trading issues, abusers, payouts, PSP problems.",
+          "sectionId": "dealing"
+        }
+      ]
+    },
+    {
+      "kind": "email-collision-in-org",
+      "email": "partners@bullwaves.com",
+      "generic": true,
+      "csv": {
+        "name": "Stefan Popovski",
+        "title": "Shareholder",
+        "division": "Shareholder",
+        "department": "Shareholder",
+        "region": "Dubai",
+        "email": "partners@bullwaves.com"
+      },
+      "orgCandidates": [
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Dubai",
+          "email": "partners@bullwaves.com",
+          "focus": "Affiliation",
+          "duties": "Affiliate strategy and partner oversight.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder / Affiliation Lead",
+          "division": "Shareholder",
+          "department": "Affiliate Manager",
+          "region": "Dubai",
+          "email": "partners@bullwaves.com",
+          "focus": "Affiliation lead",
+          "duties": "Tracking issues, affiliate questions, partner WhatsApp groups, KPI monitoring.",
+          "sectionId": "affiliation"
+        }
+      ]
+    },
+    {
+      "kind": "email-collision-in-org",
+      "email": "tamara@bullwaves.com",
+      "generic": false,
+      "csv": {
+        "name": "Tamara Popovic Yakimov",
+        "title": "Head of Support",
+        "division": "Operations",
+        "department": "Support Team",
+        "region": "Serbia",
+        "email": "tamara@bullwaves.com"
+      },
+      "orgCandidates": [
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "Support / Operations",
+          "duties": "Team funding, KYC approval, CRM management, PSP/Banking issues; Support leadership.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "Leadership",
+          "duties": "Leads support; PSP/banking issues, team funding, KYC approval, CRM management.",
+          "sectionId": "support-team"
+        },
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support / PSP Oversight",
+          "division": "Operations",
+          "department": "PSP",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "PSP oversight",
+          "duties": "PSP applications, reconciliation, chargebacks, PSP management.",
+          "sectionId": "payments"
+        }
+      ]
+    },
+    {
+      "kind": "email-collision-in-org",
+      "email": "paolo.v@bullwaves.com",
+      "generic": false,
+      "csv": {
+        "name": "Paolo Vullo",
+        "title": "Head of Operations",
+        "division": "Operations",
+        "department": "Operations",
+        "region": "Italy",
+        "email": "paolo.v@bullwaves.com"
+      },
+      "orgCandidates": [
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Italy",
+          "email": "paolo.v@bullwaves.com",
+          "focus": "Operations",
+          "duties": "Operations leadership and coordination.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Italy",
+          "email": "paolo.v@bullwaves.com",
+          "focus": "Ops leadership",
+          "duties": "Operational oversight and coordination.",
+          "sectionId": "operations"
+        }
+      ]
+    }
+  ],
+  "emailCollisions": [
+    {
+      "email": "affiliates@bullwaves.com",
+      "csv": [
+        {
+          "name": "Emanuele Braha",
+          "title": "COO",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Israel",
+          "email": "affiliates@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Emanuele Braha",
+          "title": "COO",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Israel",
+          "email": "affiliates@bullwaves.com",
+          "focus": "Operations leadership",
+          "duties": "Sales & Support oversight; monitoring performance, weekly catch-ups; Italian affiliates.",
+          "sectionId": "management-team"
+        }
+      ],
+      "generic": true
+    },
+    {
+      "email": "filippo@bullwaves.com",
+      "csv": [
+        {
+          "name": "Filippo",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Italy",
+          "email": "filippo@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Filippo",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Italy",
+          "email": "filippo@bullwaves.com",
+          "focus": "Governance",
+          "duties": "Shareholder governance.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Filippo De Rosa",
+          "title": "Non Executive Director",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "",
+          "email": "filippo@bullwaves.com",
+          "focus": "Non-Executive Director",
+          "duties": "Strategic oversight and governance.",
+          "sectionId": "management-team"
+        }
+      ],
+      "generic": false
+    },
+    {
+      "email": "renato@bullwaves.com",
+      "csv": [
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Italy",
+          "email": "renato@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Italy",
+          "email": "renato@bullwaves.com",
+          "focus": "Dealing & PSPs",
+          "duties": "Trading issues, abusers, payouts, PSP problems.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Renato Pezzi",
+          "title": "Shareholder (Dealing & PSPs)",
+          "division": "Shareholder",
+          "department": "Dealing",
+          "region": "Italy",
+          "email": "renato@bullwaves.com",
+          "focus": "Dealing leadership",
+          "duties": "Trading issues, abusers, payouts, PSP problems.",
+          "sectionId": "dealing"
+        }
+      ],
+      "generic": false
+    },
+    {
+      "email": "partners@bullwaves.com",
+      "csv": [
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Dubai",
+          "email": "partners@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder",
+          "division": "Shareholder",
+          "department": "Shareholder",
+          "region": "Dubai",
+          "email": "partners@bullwaves.com",
+          "focus": "Affiliation",
+          "duties": "Affiliate strategy and partner oversight.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Stefan Popovski",
+          "title": "Shareholder / Affiliation Lead",
+          "division": "Shareholder",
+          "department": "Affiliate Manager",
+          "region": "Dubai",
+          "email": "partners@bullwaves.com",
+          "focus": "Affiliation lead",
+          "duties": "Tracking issues, affiliate questions, partner WhatsApp groups, KPI monitoring.",
+          "sectionId": "affiliation"
+        }
+      ],
+      "generic": true
+    },
+    {
+      "email": "tamara@bullwaves.com",
+      "csv": [
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "Support / Operations",
+          "duties": "Team funding, KYC approval, CRM management, PSP/Banking issues; Support leadership.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support",
+          "division": "Operations",
+          "department": "Support Team",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "Leadership",
+          "duties": "Leads support; PSP/banking issues, team funding, KYC approval, CRM management.",
+          "sectionId": "support-team"
+        },
+        {
+          "name": "Tamara Popovic Yakimov",
+          "title": "Head of Support / PSP Oversight",
+          "division": "Operations",
+          "department": "PSP",
+          "region": "Serbia",
+          "email": "tamara@bullwaves.com",
+          "focus": "PSP oversight",
+          "duties": "PSP applications, reconciliation, chargebacks, PSP management.",
+          "sectionId": "payments"
+        }
+      ],
+      "generic": false
+    },
+    {
+      "email": "paolo.v@bullwaves.com",
+      "csv": [
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Italy",
+          "email": "paolo.v@bullwaves.com"
+        }
+      ],
+      "org": [
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Italy",
+          "email": "paolo.v@bullwaves.com",
+          "focus": "Operations",
+          "duties": "Operations leadership and coordination.",
+          "sectionId": "management-team"
+        },
+        {
+          "name": "Paolo Vullo",
+          "title": "Head of Operations",
+          "division": "Operations",
+          "department": "Operations",
+          "region": "Italy",
+          "email": "paolo.v@bullwaves.com",
+          "focus": "Ops leadership",
+          "duties": "Operational oversight and coordination.",
+          "sectionId": "operations"
+        }
+      ],
+      "generic": false
+    }
+  ]
+}

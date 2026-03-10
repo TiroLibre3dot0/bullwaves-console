@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-01-26T16:05:06.713Z",
+  "generatedAt": "2026-03-09T21:23:23.752Z",
   "source": "src/pages/orgChartData.js",
   "sections": [
     {
@@ -46,7 +46,12 @@
           "name": "Tamara Popovic Yakimov",
           "title": "Head of Support",
           "division": "Operations",
-          "department": "Support Team"
+          "department": "Support Team",
+          "crossTeamRole": "Facilitator",
+          "facilitatorFor": [
+            "Sales",
+            "Customer Support"
+          ]
         },
         {
           "name": "Paolo Vullo",
@@ -124,7 +129,12 @@
           "name": "Tamara Popovic Yakimov",
           "title": "Head of Support",
           "division": "Operations",
-          "department": "Support Team"
+          "department": "Support Team",
+          "crossTeamRole": "Facilitator",
+          "facilitatorFor": [
+            "Sales",
+            "Customer Support"
+          ]
         },
         {
           "name": "Nevena Milosavljevic",
@@ -139,7 +149,7 @@
           "department": "Support Team"
         },
         {
-          "name": "Natalija Stefanovic",
+          "name": "Natalia Stefanovic",
           "title": "Support Team",
           "division": "Operations",
           "department": "Support Team"
@@ -187,6 +197,18 @@
           "department": "Support Team"
         },
         {
+          "name": "Milenko Vukosavljevic",
+          "title": "Support Agent",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
+          "name": "Irena Stipinovic",
+          "title": "Support Agent",
+          "division": "Operations",
+          "department": "Support Team"
+        },
+        {
           "name": "DEFI Creators",
           "title": "24/7 Livechat (Slack)",
           "division": "Support",
@@ -217,6 +239,12 @@
           "department": "HR"
         },
         {
+          "name": "Mariem Ben Yattou",
+          "title": "Customer Relations Officer",
+          "division": "Operations",
+          "department": "Trustpilot"
+        },
+        {
           "name": "Operations Scope",
           "title": "Scope (Area Layer)",
           "division": "Operations",
@@ -230,9 +258,14 @@
       "roles": [
         {
           "name": "Roberta Jovanovic",
-          "title": "Business Development Coordinator",
+          "title": "Sales Coordinator",
           "division": "Acquisition",
-          "department": "Sales - Conversion"
+          "department": "Sales - Conversion",
+          "crossTeamRole": "Facilitator",
+          "facilitatorFor": [
+            "Sales",
+            "Customer Support"
+          ]
         },
         {
           "name": "Jake Morgan",
@@ -248,7 +281,7 @@
         },
         {
           "name": "Orlin Simovonyan",
-          "title": "Business Development Coordinator",
+          "title": "Sales Manager",
           "division": "Acquisition",
           "department": "Sales - Retention"
         },
@@ -263,6 +296,36 @@
           "title": "Head of MENA",
           "division": "Acquisition",
           "department": "Sales - Dubai"
+        },
+        {
+          "name": "Ziba Yazdanfar",
+          "title": "Business Development Manager - Dubai",
+          "division": "Acquisition",
+          "department": "BDM - Dubai"
+        },
+        {
+          "name": "Mohammed Fayiz Abdurahiman",
+          "title": "Business Development Manager - Dubai",
+          "division": "Acquisition",
+          "department": "BDM - Dubai"
+        },
+        {
+          "name": "Hashem Jalajel",
+          "title": "Business Development Manager",
+          "division": "Acquisition",
+          "department": "BDM"
+        },
+        {
+          "name": "Omar Saeed",
+          "title": "Business Development Manager - Dubai",
+          "division": "Acquisition",
+          "department": "BDM - Dubai"
+        },
+        {
+          "name": "Uros Radic",
+          "title": "Sales Manager",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
         }
       ]
     },
@@ -293,6 +356,12 @@
           "title": "Affiliate Marketing Manager",
           "division": "Acquisition",
           "department": "Affiliate Manager"
+        },
+        {
+          "name": "Kenneath Gamayon",
+          "title": "Affiliate Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
         }
       ]
     },
@@ -311,6 +380,12 @@
           "title": "Creators",
           "division": "Support",
           "department": "Support Team"
+        },
+        {
+          "name": "Alexander O'Neil",
+          "title": "Content Analyst",
+          "division": "Marketing",
+          "department": "Marketing"
         }
       ]
     },
@@ -346,11 +421,22 @@
           "name": "Tamara Popovic Yakimov",
           "title": "Head of Support / PSP Oversight",
           "division": "Operations",
-          "department": "PSP"
+          "department": "PSP",
+          "crossTeamRole": "Facilitator",
+          "facilitatorFor": [
+            "Sales",
+            "Customer Support"
+          ]
         },
         {
           "name": "Konstantina Zafeiropoulou",
           "title": "PSP Specialist",
+          "division": "Finance",
+          "department": "PSP"
+        },
+        {
+          "name": "Maria Loizou",
+          "title": "Banking & Reconciliation Officer",
           "division": "Finance",
           "department": "PSP"
         }

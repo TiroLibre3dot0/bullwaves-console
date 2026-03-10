@@ -11,6 +11,8 @@ This script extracts ONLY the minimal fields needed for mapping and display:
 - role.title
 - role.division
 - role.department
+ - role.crossTeamRole (optional)
+ - role.facilitatorFor (optional)
 
 Output:
 - public/share/org-chart-people.json
@@ -101,6 +103,8 @@ function sanitizeSections(sections) {
             title: r.title,
             division: r.division,
             department: r.department,
+            crossTeamRole: r.crossTeamRole,
+            facilitatorFor: r.facilitatorFor,
           })),
       }
     })

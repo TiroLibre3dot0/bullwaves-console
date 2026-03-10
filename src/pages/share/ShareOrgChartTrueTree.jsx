@@ -19,22 +19,28 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
           (isSm
             ? 'text-sm font-semibold text-slate-100'
             : 'text-base font-semibold text-slate-100') +
-          ' whitespace-normal break-words leading-snug'
+          ' min-w-0 whitespace-normal break-normal leading-snug tracking-tight'
         }
+        title={typeof title === 'string' ? title : undefined}
       >
         {title}
       </div>
       {lines.length ? (
         <div className={isSm ? 'mt-1 space-y-0.5' : 'mt-2 space-y-1'}>
-          {lines.map((l) => (
+          {lines.map((l, idx) => (
             <div
-              key={`${title}-${l}`}
+              key={
+                typeof l === 'string'
+                  ? `${idx}-${l}`
+                  : `${idx}-${String(l?.text || l?.title || '')}`
+              }
               className={
                 (isSm ? 'text-xs text-slate-300' : 'text-sm text-slate-300') +
-                ' whitespace-normal break-words leading-snug'
+                ' min-w-0 whitespace-normal break-normal leading-snug'
               }
+              title={typeof l === 'object' && l ? l.title : undefined}
             >
-              {l}
+              {typeof l === 'string' ? l : l.text}
             </div>
           ))}
         </div>
@@ -64,10 +70,11 @@ function SubCard({
 }) {
   const filtered = (lines || []).filter(Boolean)
   const safePeople = (people || []).filter((p) => p && p.name && p.title)
+  const useDenseGrid = safePeople.length >= 9
+  const isCustomerSupport = title === 'Customer Support'
+  const useSupportGrid = isCustomerSupport && safePeople.length >= 6
   return (
-    <div
-      className={`bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal break-words`}
-    >
+    <div className={`bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal`}>
       <div className="text-xs text-slate-200 font-semibold leading-snug">{title}</div>
       {filtered.length ? (
         <div className="mt-1 space-y-0.5">
@@ -88,38 +95,75 @@ function SubCard({
         aria-hidden={!showPeople}
       >
         {safePeople.length ? (
-          <div className="space-y-1">
+          <div
+            className={
+              useSupportGrid
+                ? 'grid gap-2 grid-cols-2 lg:grid-cols-3'
+                : useDenseGrid
+                  ? 'grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(12rem,1fr))]'
+                  : 'space-y-1'
+            }
+          >
             {safePeople.map((p) => (
               <div
                 key={`${title}-${p.name}-${p.title}`}
-                className={
-                  'rounded-lg border px-2.5 py-2 ' +
-                  (p.isHead
-                    ? 'border-slate-600/55 bg-slate-950/45'
-                    : 'border-slate-700/40 bg-slate-950/30')
-                }
+                className={(() => {
+                  const isFacilitator =
+                    Boolean(p.isFacilitator) ||
+                    Boolean(p.crossTeamRole) ||
+                    (Array.isArray(p.facilitatorFor) && p.facilitatorFor.length > 0)
+
+                  return (
+                    'min-w-0 rounded-lg border ' +
+                    (isCustomerSupport ? 'px-2 py-1.5 ' : 'px-2.5 py-2 ') +
+                    (p.isHead
+                      ? 'border-slate-600/55 bg-slate-950/45'
+                      : 'border-slate-700/40 bg-slate-950/30') +
+                    (isFacilitator ? ' border-dashed' : '')
+                  )
+                })()}
               >
-                <div
-                  className={
-                    'text-[11px] leading-snug ' +
-                    (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
-                  }
-                >
-                  {p.name}
-                </div>
-                <div className="text-[10px] text-slate-400 leading-snug flex items-center gap-1.5">
-                  <span>{p.title}</span>
-                  {p.isHead ? (
-                    <span
-                      className={
-                        'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
-                        headBadgeClass
-                      }
-                    >
-                      Head
-                    </span>
-                  ) : null}
-                </div>
+                {(() => {
+                  const fp = formatPersonText(p, { maxTitleLen: 26 })
+                  return (
+                    <>
+                      <div
+                        className={
+                          'text-[11px] leading-snug ' +
+                          (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
+                        }
+                        title={fp.displayName}
+                      >
+                        {fp.displayName}
+                      </div>
+                      <div
+                        className={
+                          (isCustomerSupport ? 'mt-0.5 text-[10px] ' : 'mt-0.5 text-[11px] ') +
+                          'text-slate-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0'
+                        }
+                      >
+                        <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                          {fp.shortenedTitle || fp.fullTitle}
+                        </span>
+                        {p.isHead ? (
+                          <span
+                            className={
+                              'inline-flex items-center whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
+                              headBadgeClass
+                            }
+                          >
+                            Head
+                          </span>
+                        ) : null}
+                        {p.isFacilitator ? (
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                            Facilitator
+                          </span>
+                        ) : null}
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             ))}
           </div>
@@ -127,6 +171,103 @@ function SubCard({
           <div className="text-[10px] text-slate-500">No people mapped</div>
         )}
       </div>
+    </div>
+  )
+}
+
+function SalesSupportFacilitatorBridge({ people = [] }) {
+  const safe = (people || []).filter((p) => p && p.name && p.title)
+  if (!safe.length) return null
+
+  return (
+    <div className="relative w-full">
+      <div className="border-t border-dashed border-brand-400/70" />
+      <div className="absolute left-2 -top-3 text-[10px] text-brand-200/80 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400/45">
+        Customer Support
+      </div>
+      <div className="absolute right-2 -top-3 text-[10px] text-brand-200/80 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400/45">
+        Sales
+      </div>
+
+      <div className="absolute left-1/2 -translate-x-1/2 -top-7">
+        {(() => {
+          const two = safe.slice(0, 2)
+          const a = two[0] || null
+          const b = two[1] || null
+          return (
+            <div className="flex items-stretch gap-8">
+              {a
+                ? (() => {
+                    const fp = formatPersonText(a, { maxTitleLen: 28 })
+                    return (
+                      <div
+                        key={`bridge-${a.name}-${a.title}`}
+                        className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400/50 bg-slate-950/70 px-3 py-2"
+                      >
+                        <div
+                          className="text-[11px] font-semibold text-slate-100 leading-snug"
+                          title={fp.displayName}
+                        >
+                          {fp.displayName}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                          <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                            {fp.shortenedTitle || fp.fullTitle}
+                          </span>
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                            Facilitator
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()
+                : null}
+
+              {a && b ? (
+                <div className="flex flex-col items-center justify-center px-1">
+                  <div className="text-[9px] font-semibold tracking-wide text-brand-200/80 bg-slate-950/60 px-2 py-0.5 rounded-full border border-dashed border-brand-400/45 whitespace-nowrap">
+                    Interaction ↔
+                  </div>
+                  <div className="mt-1 flex items-center">
+                    <div className="w-10 border-t border-dashed border-brand-400/65" />
+                    <div className="mx-1 h-2 w-2 rounded-full bg-brand-400/75" />
+                    <div className="w-10 border-t border-dashed border-brand-400/65" />
+                  </div>
+                </div>
+              ) : null}
+
+              {b
+                ? (() => {
+                    const fp = formatPersonText(b, { maxTitleLen: 28 })
+                    return (
+                      <div
+                        key={`bridge-${b.name}-${b.title}`}
+                        className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400/50 bg-slate-950/70 px-3 py-2"
+                      >
+                        <div
+                          className="text-[11px] font-semibold text-slate-100 leading-snug"
+                          title={fp.displayName}
+                        >
+                          {fp.displayName}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                          <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                            {fp.shortenedTitle || fp.fullTitle}
+                          </span>
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                            Facilitator
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })()
+                : null}
+            </div>
+          )
+        })()}
+      </div>
+
+      <div className="h-10" aria-hidden="true" />
     </div>
   )
 }
@@ -193,7 +334,6 @@ const ORG_TREE = {
             { id: 'sales', label: 'Sales', type: 'function' },
             { id: 'retention', label: 'Retention', type: 'function' },
             { id: 'affiliates-ib', label: 'Affiliates & IB', type: 'function' },
-            { id: 'partners', label: 'Partners', type: 'function' },
             { id: 'performance', label: 'Performance Channels', type: 'function' },
             { id: 'mena', label: 'MENA', type: 'function' },
           ],
@@ -231,6 +371,79 @@ const VIEW_MODES = {
   people: 'people',
 }
 
+const TITLE_ABBREVIATIONS = [
+  // phrases first
+  { re: /\bBusiness\s+Development\b/gi, to: 'Biz Dev' },
+  { re: /\bCustomer\s+Relations\b/gi, to: 'Customer Rel.' },
+  { re: /\bSenior\s+Controller\b/gi, to: 'Sr Controller' },
+  // single words
+  { re: /\bBusiness\b/gi, to: 'Biz' },
+  { re: /\bDevelopment\b/gi, to: 'Dev' },
+  { re: /\bManager\b/gi, to: 'Mgr' },
+  { re: /\bCoordinator\b/gi, to: 'Coord' },
+  { re: /\bOperations\b/gi, to: 'Ops' },
+  { re: /\bAdministration\b/gi, to: 'Admin' },
+  { re: /\bRecruitment\b/gi, to: 'Recruit.' },
+  { re: /\bCompliance\b/gi, to: 'Compl.' },
+  { re: /\bSpecialist\b/gi, to: 'Spec.' },
+  { re: /\bReconciliation\b/gi, to: 'Reconc.' },
+  { re: /\bProvisioning\b/gi, to: 'Provision.' },
+  { re: /\bMarketing\b/gi, to: 'Mktg' },
+]
+
+function abbreviateJobTitle(fullTitle) {
+  let out = String(fullTitle || '').trim()
+  for (const { re, to } of TITLE_ABBREVIATIONS) out = out.replace(re, to)
+  out = out.replace(/\s{2,}/g, ' ')
+  return out
+}
+
+function shortenJobTitleIfNeeded(fullTitle, { maxLen = 28 } = {}) {
+  const t = String(fullTitle || '').trim()
+  if (!t) return ''
+  if (t.length <= maxLen) return t
+  const abbreviated = abbreviateJobTitle(t)
+  if (abbreviated.length <= maxLen) return abbreviated
+  // If still long, keep abbreviated version (wraps) but avoid extremes
+  return abbreviated
+}
+
+function formatPersonText(person, { maxTitleLen = 28 } = {}) {
+  const displayName = String(person?.name || '').trim()
+  const fullTitle = String(person?.title || '').trim()
+  const shortenedTitle = shortenJobTitleIfNeeded(fullTitle, { maxLen: maxTitleLen })
+  return {
+    displayName,
+    fullTitle,
+    shortenedTitle,
+    titleTooltip:
+      shortenedTitle && fullTitle && shortenedTitle !== fullTitle ? fullTitle : undefined,
+  }
+}
+
+const HUB_CLUSTERS = {
+  operations: [
+    {
+      label: 'Core Ops',
+      fnIds: ['business-ops', 'payments', 'reporting', 'platforms-tools'],
+    },
+    { label: 'Enablement', fnIds: ['tech-ops', 'marketing-ops'] },
+    { label: 'Support', fnIds: ['customer-support'] },
+  ],
+  revenue: [
+    { label: 'Sales & Retention', fnIds: ['sales', 'retention', 'mena'] },
+    { label: 'Channels', fnIds: ['affiliates-ib', 'performance'] },
+  ],
+  'trading-risk': [
+    { label: 'Trading', fnIds: ['dealing', 'prop'] },
+    { label: 'Risk & Platforms', fnIds: ['risk', 'mt5'] },
+  ],
+  corporate: [
+    { label: 'Finance', fnIds: ['accounting'] },
+    { label: 'People & Compliance', fnIds: ['hr-recruiting', 'compliance-legal'] },
+  ],
+}
+
 function normalizeKey(s) {
   return String(s || '')
     .trim()
@@ -239,7 +452,7 @@ function normalizeKey(s) {
 
 const EXPLICIT_HEADS_BY_NODE = {
   // Confirmed department heads
-  sales: ['roberta jovanovic'],
+  sales: ['orlin simovonyan'],
   accounting: ['rodoula xenofontos'],
 
   // Area/sub-area heads
@@ -310,6 +523,10 @@ function mapInternalRoleToPublicNode(sectionId, role) {
   if (name === 'daniel taddei') {
     return { kind: 'node', nodeId: 'marketing-ops' }
   }
+  if (name === 'orlin simovonyan' || name === 'orlin savov') {
+    // Requested: Orlin is the Sales Manager (show under Sales for board clarity)
+    return { kind: 'node', nodeId: 'sales' }
+  }
 
   // Governance / Founders (kept at top of public chart)
   if (
@@ -370,6 +587,22 @@ function getNodeLines(node) {
   return lines.filter(Boolean)
 }
 
+function buildPublicNodeLabelLookup(tree) {
+  const out = new Map()
+  const macroGroup = tree?.children?.find((c) => c?.id === 'macro-areas')
+  for (const macro of macroGroup?.children || []) {
+    const areaId = macro?.id
+    for (const fn of macro?.children || []) {
+      const labelKey = normalizeKey(fn?.label)
+      if (labelKey) out.set(labelKey, { nodeId: fn?.id, areaId })
+
+      const idKey = normalizeKey(fn?.id)
+      if (idKey) out.set(idKey, { nodeId: fn?.id, areaId })
+    }
+  }
+  return out
+}
+
 export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
   const [peoplePayload, setPeoplePayload] = useState(null)
@@ -391,6 +624,8 @@ export default function ShareOrgChartTrueTree() {
   const governance = ORG_TREE.children.find((c) => c.id === 'governance')
   const macroGroup = ORG_TREE.children.find((c) => c.id === 'macro-areas')
   const macroAreas = (macroGroup?.children || []).slice(0, 4)
+
+  const publicNodeLookup = useMemo(() => buildPublicNodeLabelLookup(ORG_TREE), [])
 
   useEffect(() => {
     if (mode !== VIEW_MODES.people) return
@@ -422,6 +657,39 @@ export default function ShareOrgChartTrueTree() {
     const byNode = {}
     const byArea = {}
     const governancePeople = []
+    const facilitators = []
+
+    // Pass 1: detect facilitators across ALL occurrences of the same person.
+    const facilitatorNames = new Set()
+    const facilitatorMetaByName = new Map()
+
+    for (const section of peoplePayload?.sections || []) {
+      const sectionId = section?.id
+      for (const role of section?.roles || []) {
+        if (!isInternalRoleEligible(sectionId, role)) continue
+
+        const name = String(role.name || '').trim()
+        const nk = normalizeKey(name)
+        const crossTeamRole = String(role.crossTeamRole || '').trim()
+        const facilitatorFor = Array.isArray(role.facilitatorFor)
+          ? role.facilitatorFor.filter(Boolean)
+          : []
+
+        const isFacilitator =
+          normalizeKey(crossTeamRole) === 'facilitator' || facilitatorFor.length > 0
+        if (!isFacilitator) continue
+
+        facilitatorNames.add(nk)
+        const prev = facilitatorMetaByName.get(nk) || { crossTeamRole: '', facilitatorFor: [] }
+        const mergedFor = Array.from(new Set([...(prev.facilitatorFor || []), ...facilitatorFor]))
+        facilitatorMetaByName.set(nk, {
+          crossTeamRole: prev.crossTeamRole || crossTeamRole,
+          facilitatorFor: mergedFor,
+        })
+      }
+    }
+
+    // Pass 2: map each person once into the public structure.
     const seenByName = new Set()
 
     for (const section of peoplePayload?.sections || []) {
@@ -435,12 +703,42 @@ export default function ShareOrgChartTrueTree() {
         if (nk === 'ivana jelic') roleTitle = 'Tech Operations (Systems)'
         if (nk === 'nevena planic') roleTitle = 'Tech Operations (User Provisioning)'
 
-        const dedupeKey = nk
-        if (seenByName.has(dedupeKey)) continue
-        seenByName.add(dedupeKey)
+        if (seenByName.has(nk)) continue
+        seenByName.add(nk)
 
         const mapped = mapInternalRoleToPublicNode(sectionId, role)
-        const person = { name, title: roleTitle }
+        const facilitatorMeta = facilitatorMetaByName.get(nk)
+        const isFacilitator = facilitatorNames.has(nk)
+
+        const person = {
+          name,
+          title: roleTitle,
+          crossTeamRole: facilitatorMeta?.crossTeamRole ? facilitatorMeta.crossTeamRole : undefined,
+          facilitatorFor: facilitatorMeta?.facilitatorFor?.length
+            ? facilitatorMeta.facilitatorFor
+            : undefined,
+          isFacilitator,
+        }
+
+        if (person.isFacilitator) {
+          // Fallback placement for facilitators without explicit targets.
+          let fallbackAreaId = null
+          if (mapped?.kind === 'area' && mapped?.areaId) fallbackAreaId = mapped.areaId
+          if (!fallbackAreaId && mapped?.kind === 'node' && mapped?.nodeId) {
+            fallbackAreaId = publicNodeLookup.get(normalizeKey(mapped.nodeId))?.areaId || null
+          }
+          if (!fallbackAreaId && mapped?.kind === 'node' && Array.isArray(mapped?.nodeIds)) {
+            const firstId = mapped.nodeIds.find(Boolean)
+            if (firstId)
+              fallbackAreaId = publicNodeLookup.get(normalizeKey(firstId))?.areaId || null
+          }
+
+          facilitators.push({
+            ...person,
+            facilitatorFallbackAreaId: fallbackAreaId || undefined,
+          })
+          continue
+        }
 
         if (mapped?.alsoGovernance) {
           const nkGov = normalizeKey(person.name)
@@ -462,7 +760,8 @@ export default function ShareOrgChartTrueTree() {
           const areaId = mapped.areaId
           if (areaId) {
             if (!byArea[areaId]) byArea[areaId] = []
-            byArea[areaId].push({ ...person, isHead: isHeadForNode(areaId, person) })
+            const withHead = { ...person, isHead: isHeadForNode(areaId, person) }
+            byArea[areaId].push(withHead)
           }
           continue
         }
@@ -474,14 +773,16 @@ export default function ShareOrgChartTrueTree() {
           for (const id of nodeIds) {
             if (!id) continue
             if (!byNode[id]) byNode[id] = []
-            byNode[id].push({ ...person, isHead: isHeadForNode(id, person) })
+            const withHead = { ...person, isHead: isHeadForNode(id, person) }
+            byNode[id].push(withHead)
           }
           continue
         }
 
         if (!nodeId) continue
         if (!byNode[nodeId]) byNode[nodeId] = []
-        byNode[nodeId].push({ ...person, isHead: isHeadForNode(nodeId, person) })
+        const withHead = { ...person, isHead: isHeadForNode(nodeId, person) }
+        byNode[nodeId].push(withHead)
       }
     }
 
@@ -489,9 +790,95 @@ export default function ShareOrgChartTrueTree() {
     for (const k of Object.keys(byNode)) byNode[k].sort(sortPeople)
     for (const k of Object.keys(byArea)) byArea[k].sort(sortPeople)
     governancePeople.sort((a, b) => a.name.localeCompare(b.name))
+    facilitators.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
 
-    return { byNode, byArea, governancePeople }
-  }, [peoplePayload])
+    return { byNode, byArea, governancePeople, facilitators }
+  }, [peoplePayload, publicNodeLookup])
+
+  const salesSupportBridgeFacilitators = useMemo(() => {
+    const list = (peopleIndex.facilitators || []).filter((p) => p && p.name && p.title)
+    const out = []
+    const seen = new Set()
+
+    for (const p of list) {
+      const targets = Array.isArray(p.facilitatorFor) ? p.facilitatorFor : []
+      const hasSales = targets.some((t) => normalizeKey(t) === 'sales')
+      const hasSupport = targets.some((t) => normalizeKey(t) === 'customer support')
+      if (!hasSales || !hasSupport) continue
+
+      const k = `${normalizeKey(p.name)}|${normalizeKey(p.title)}`
+      if (seen.has(k)) continue
+      seen.add(k)
+      out.push(p)
+    }
+
+    out.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
+    return out
+  }, [peopleIndex.facilitators])
+
+  const salesSupportBridgeFacilitatorKeys = useMemo(() => {
+    const s = new Set()
+    for (const p of salesSupportBridgeFacilitators || []) {
+      if (!p?.name || !p?.title) continue
+      s.add(`${normalizeKey(p.name)}|${normalizeKey(p.title)}`)
+    }
+    return s
+  }, [salesSupportBridgeFacilitators])
+
+  const paoloVulloPerson = useMemo(() => {
+    const pools = [
+      ...(peopleIndex.byNode?.['business-ops'] || []),
+      ...(peopleIndex.byNode?.reporting || []),
+      ...(peopleIndex.byNode?.['platforms-tools'] || []),
+    ]
+
+    return pools.find((p) => normalizeKey(p?.name) === 'paolo vullo') || null
+  }, [peopleIndex.byNode])
+
+  const facilitatorsByArea = useMemo(() => {
+    const out = {
+      operations: [],
+      revenue: [],
+      'trading-risk': [],
+      corporate: [],
+    }
+
+    const seen = new Set()
+
+    for (const p of peopleIndex.facilitators || []) {
+      if (!p?.name || !p?.title) continue
+      if (
+        salesSupportBridgeFacilitatorKeys.has(`${normalizeKey(p.name)}|${normalizeKey(p.title)}`)
+      ) {
+        continue
+      }
+
+      const targets = Array.isArray(p.facilitatorFor) ? p.facilitatorFor : []
+      const areaIds = new Set()
+      for (const t of targets) {
+        const hit = publicNodeLookup.get(normalizeKey(t))
+        if (hit?.areaId) areaIds.add(hit.areaId)
+      }
+
+      if (!areaIds.size && p.facilitatorFallbackAreaId) {
+        areaIds.add(p.facilitatorFallbackAreaId)
+      }
+
+      for (const areaId of areaIds) {
+        if (!out[areaId]) continue
+        const key = `${areaId}|${normalizeKey(p.name)}|${normalizeKey(p.title)}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        out[areaId].push(p)
+      }
+    }
+
+    for (const k of Object.keys(out)) {
+      out[k].sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
+    }
+
+    return out
+  }, [peopleIndex.facilitators, publicNodeLookup, salesSupportBridgeFacilitatorKeys])
 
   const showPeople = mode === VIEW_MODES.people
   const isPeopleLoading = showPeople && !peoplePayload && !peopleLoadError
@@ -521,11 +908,6 @@ export default function ShareOrgChartTrueTree() {
     return (macroAreas || []).map(attach)
   }, [macroAreas, peopleIndex, showPeople])
 
-  const ops = macroAreasPopulated.find((a) => a?.id === 'operations')
-  const revenue = macroAreasPopulated.find((a) => a?.id === 'revenue')
-  const trading = macroAreasPopulated.find((a) => a?.id === 'trading-risk')
-  const corporate = macroAreasPopulated.find((a) => a?.id === 'corporate')
-
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
       {/* Fixed logo top-left */}
@@ -533,7 +915,7 @@ export default function ShareOrgChartTrueTree() {
         <img src="/Logo.png" alt="Bullwaves" className="h-7 w-auto opacity-95" />
       </a>
 
-      <div className="mx-auto max-w-[90rem] px-4 md:px-6 pt-10 pb-6">
+      <div className="mx-auto max-w-[140rem] px-3 sm:px-4 md:px-6 2xl:px-10 pt-10 pb-6">
         <header className="flex flex-col items-center text-center">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
@@ -569,6 +951,23 @@ export default function ShareOrgChartTrueTree() {
               People
             </button>
           </div>
+
+          {mode === VIEW_MODES.people ? (
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-400">
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/25 text-slate-200/80 bg-slate-950/20">
+                  Head
+                </span>
+                <span>Operational head</span>
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                  Facilitator
+                </span>
+                <span>Cross-team coordination</span>
+              </span>
+            </div>
+          ) : null}
 
           {showPeople ? (
             <p className="mt-2 text-xs text-slate-500">
@@ -637,12 +1036,20 @@ export default function ShareOrgChartTrueTree() {
                       : governancePeopleToShow
                     ).map((p, idx) => (
                       <div key={`gov-card-${idx}-${p.name}-${p.title}`} className="min-w-0">
-                        <Card
-                          title={p.name}
-                          lines={p.title ? [p.title] : []}
-                          accentDotClass={ACCENTS.governance}
-                          size="md"
-                        />
+                        {(() => {
+                          const fp = formatPersonText(p, { maxTitleLen: 30 })
+                          const line = fp.shortenedTitle
+                            ? [{ text: fp.shortenedTitle, title: fp.titleTooltip }]
+                            : []
+                          return (
+                            <Card
+                              title={fp.displayName}
+                              lines={p.title ? line : []}
+                              accentDotClass={ACCENTS.governance}
+                              size="md"
+                            />
+                          )
+                        })()}
                       </div>
                     ))
                   : governanceSeatsToShow.map((seat) => (
@@ -663,48 +1070,102 @@ export default function ShareOrgChartTrueTree() {
             </div>
 
             {/* LEVEL 2 — MACRO AREAS (ONLY 4) */}
-            <div className="w-full max-w-[90rem]">
-              <div
-                className="grid gap-6"
-                style={{
-                  gridTemplateColumns: 'repeat(1, minmax(0, 1fr))',
-                }}
-              >
-                {/* mobile layout */}
-                <div className="grid grid-cols-1 gap-6 lg:hidden">
-                  {macroAreasPopulated.map((area) => (
-                    <MacroAreaColumn key={area.id} area={area} />
+            <div className="w-full max-w-[140rem]">
+              {/* Structure spine only on very large screens (4 pillars in one row) */}
+              <div className="hidden xl:block">
+                <HLine className="w-full" />
+                <div className="grid grid-cols-4 gap-6">
+                  {macroAreasPopulated.map((a) => (
+                    <div key={`macro-stub-${a.id}`} className="flex justify-center">
+                      <VLine h={18} />
+                    </div>
                   ))}
                 </div>
+              </div>
 
-                {/* desktop layout */}
-                <div className="hidden lg:block">
-                  <HLine className="w-full" />
-                  <div className="grid grid-cols-4 gap-6">
-                    {macroAreasPopulated.map((a) => (
-                      <div key={`macro-stub-${a.id}`} className="flex justify-center">
-                        <VLine h={18} />
-                      </div>
-                    ))}
+              {/* Pillar hubs (responsive: 1 → 2 → 4) */}
+              <div
+                className="mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 2xl:gap-6"
+                style={{ alignItems: 'start' }}
+              >
+                {macroAreasPopulated.map((area) => (
+                  <MacroAreaColumn
+                    key={area.id}
+                    area={area}
+                    facilitators={facilitatorsByArea?.[area.id] || []}
+                  />
+                ))}
+              </div>
+
+              {/* Sales ↔ Support bridge (compact for <xl) */}
+              {showPeople && salesSupportBridgeFacilitators.length ? (
+                <div className="mt-6 xl:hidden">
+                  <div className="rounded-2xl border border-slate-800/60 bg-slate-900/20 px-4 py-3">
+                    <div className="text-[10px] font-semibold text-slate-400">
+                      Sales ↔ Customer Support facilitators
+                    </div>
+                    <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+                      {salesSupportBridgeFacilitators.slice(0, 2).map((p) => {
+                        const fp = formatPersonText(p, { maxTitleLen: 28 })
+                        return (
+                          <div
+                            key={`bridge-compact-${p.name}-${p.title}`}
+                            className="min-w-0 rounded-xl border border-dashed border-brand-400/45 bg-slate-950/50 px-3 py-2"
+                          >
+                            <div
+                              className="text-[11px] font-semibold text-slate-100 leading-snug"
+                              title={fp.displayName}
+                            >
+                              {fp.displayName}
+                            </div>
+                            <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                              <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                                {fp.shortenedTitle || fp.fullTitle}
+                              </span>
+                              <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                                Facilitator
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
+                </div>
+              ) : null}
 
-                  <div className="grid grid-cols-4 gap-6 mt-3" style={{ alignItems: 'start' }}>
-                    <MacroAreaColumn area={ops} />
-                    <MacroAreaColumn area={revenue} />
-                    <MacroAreaColumn area={trading} />
-                    <MacroAreaColumn area={corporate} />
-                  </div>
-
-                  {/* Operations as Servant Organization (Agile Model) — enablement line (NOT reporting) */}
-                  <div className="mt-8 grid grid-cols-4 gap-6 items-center">
-                    <div />
-                    <div className="col-span-3">
-                      <div className="relative w-full">
-                        <div className="border-t border-dashed border-slate-500/35" />
-                        <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
-                          Operations as a Servant Organization (Agile Model)
-                        </div>
-                      </div>
+              {/* Facilitation line label (NOT reporting). Keep only when pillars are in one row. */}
+              <div className="mt-8 hidden xl:grid grid-cols-4 gap-6 items-center">
+                <div className="col-span-2">
+                  {showPeople ? (
+                    <SalesSupportFacilitatorBridge people={salesSupportBridgeFacilitators} />
+                  ) : null}
+                </div>
+                <div className="col-span-2">
+                  <div className="relative w-full">
+                    <div className="border-t border-dashed border-brand-400/65" />
+                    {showPeople && paoloVulloPerson
+                      ? (() => {
+                          const fp = formatPersonText(paoloVulloPerson, { maxTitleLen: 32 })
+                          return (
+                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400/45 bg-slate-950/70 px-3 py-2">
+                              <div
+                                className="text-[11px] font-semibold text-slate-100 leading-snug"
+                                title={fp.displayName}
+                              >
+                                {fp.displayName}
+                              </div>
+                              <div className="mt-0.5 text-[11px] text-slate-400 leading-snug min-w-0">
+                                <span className="min-w-0 break-normal" title={fp.titleTooltip}>
+                                  {fp.shortenedTitle || fp.fullTitle}
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        })()
+                      : null}
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400/40 bg-slate-950/70 text-[11px] text-slate-300">
+                      Operations as a Servant Organization (Agile Model)
                     </div>
                   </div>
                 </div>
@@ -789,9 +1250,10 @@ function MacroIcon({ kind, className = '' }) {
   )
 }
 
-function MacroAreaColumn({ area }) {
+function MacroAreaColumn({ area, facilitators = [] }) {
   if (!area) return null
   const safeAreaPeople = (area.people || []).filter((p) => p && p.name && p.title)
+  const safeFacilitators = (facilitators || []).filter((p) => p && p.name && p.title)
   const accent =
     area.id === 'operations'
       ? ACCENTS.operations
@@ -828,6 +1290,17 @@ function MacroAreaColumn({ area }) {
           ? 'border-amber-300/25 text-amber-200/80 bg-amber-950/20'
           : 'border-emerald-300/25 text-emerald-200/80 bg-emerald-950/20'
 
+  const childrenById = new Map()
+  for (const fn of area.children || []) {
+    if (fn?.id) childrenById.set(fn.id, fn)
+  }
+  const clusters = HUB_CLUSTERS[area.id] || [
+    {
+      label: 'Teams',
+      fnIds: (area.children || []).map((c) => c?.id).filter(Boolean),
+    },
+  ]
+
   return (
     <div className="flex flex-col min-w-0">
       <Card
@@ -843,83 +1316,137 @@ function MacroAreaColumn({ area }) {
         accentDotClass={accent}
         size="md"
         extra={
-          area.showPeople ? (
+          <div>
+            {area.showPeople && safeFacilitators.length ? (
+              <div className="mt-2">
+                <div className="text-[10px] font-semibold text-slate-400">Facilitators</div>
+                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+                  {safeFacilitators.map((p) =>
+                    (() => {
+                      const fp = formatPersonText(p, { maxTitleLen: 26 })
+                      const targets = Array.isArray(p.facilitatorFor) ? p.facilitatorFor : []
+                      const targetsText = targets.length ? `→ ${targets.join(' · ')}` : ''
+                      return (
+                        <div
+                          key={`fac-${area.id}-${p.name}-${p.title}`}
+                          className="rounded-xl border border-dashed border-slate-800/60 bg-slate-950/30 px-3 py-2"
+                        >
+                          <div className="text-[11px] leading-snug font-semibold text-slate-100">
+                            <span title={fp.displayName}>{fp.displayName}</span>
+                          </div>
+                          <div className="text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                            <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                              {fp.shortenedTitle || fp.fullTitle}
+                            </span>
+                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                              Facilitator
+                            </span>
+                            {targetsText ? (
+                              <span className="text-[9px] text-slate-500 break-normal">
+                                {targetsText}
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      )
+                    })()
+                  )}
+                </div>
+              </div>
+            ) : null}
+
+            {area.showPeople && safeAreaPeople.length ? (
+              <div className={(safeFacilitators.length ? 'mt-4 ' : 'mt-2 ') + 'space-y-1'}>
+                <div className="text-[10px] font-semibold text-slate-400">Key roles</div>
+                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+                  {safeAreaPeople.map((p) =>
+                    (() => {
+                      const fp = formatPersonText(p, { maxTitleLen: 26 })
+                      return (
+                        <div
+                          key={`${area.id}-${p.name}-${p.title}`}
+                          className={
+                            'rounded-xl border px-3 py-2 ' +
+                            (p.isHead
+                              ? 'border-slate-700/70 bg-slate-950/45'
+                              : 'border-slate-800/60 bg-slate-950/30')
+                          }
+                        >
+                          <div
+                            className={
+                              'text-[11px] leading-snug ' +
+                              (p.isHead
+                                ? 'font-bold text-slate-100'
+                                : 'font-semibold text-slate-100')
+                            }
+                            title={fp.displayName}
+                          >
+                            {fp.displayName}
+                          </div>
+                          <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0">
+                            <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                              {fp.shortenedTitle || fp.fullTitle}
+                            </span>
+                            {p.isHead ? (
+                              <span
+                                className={
+                                  'inline-flex items-center whitespace-nowrap rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
+                                  headBadgeClass
+                                }
+                              >
+                                Head
+                              </span>
+                            ) : null}
+                          </div>
+                        </div>
+                      )
+                    })()
+                  )}
+                </div>
+              </div>
+            ) : null}
+
             <div
               className={
-                'transition-all duration-300 ease-out overflow-hidden ' +
-                (area.showPeople ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0')
+                (area.showPeople && (safeAreaPeople.length || safeFacilitators.length)
+                  ? 'mt-5 '
+                  : 'mt-2 ') + 'space-y-4'
               }
             >
-              {safeAreaPeople.length ? (
-                <div className="mt-2 space-y-1">
-                  {safeAreaPeople.map((p) => (
+              {clusters.map((cluster) => {
+                const fnNodes = (cluster.fnIds || [])
+                  .map((id) => childrenById.get(id))
+                  .filter(Boolean)
+                if (!fnNodes.length) return null
+                return (
+                  <div key={`${area.id}-${cluster.label}`}>
+                    <div className="text-[10px] font-semibold text-slate-400">{cluster.label}</div>
                     <div
-                      key={`${area.id}-${p.name}-${p.title}`}
                       className={
-                        'rounded-xl border px-3 py-2 ' +
-                        (p.isHead
-                          ? 'border-slate-700/70 bg-slate-950/45'
-                          : 'border-slate-800/60 bg-slate-950/30')
+                        fnNodes.length === 1
+                          ? 'mt-2 grid grid-cols-1 gap-2'
+                          : 'mt-2 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-2'
                       }
                     >
-                      <div
-                        className={
-                          'text-[11px] leading-snug ' +
-                          (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
-                        }
-                      >
-                        {p.name}
-                      </div>
-                      <div className="text-[10px] text-slate-400 leading-snug flex items-center gap-1.5">
-                        <span>{p.title}</span>
-                        {p.isHead ? (
-                          <span
-                            className={
-                              'inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide ' +
-                              headBadgeClass
-                            }
-                          >
-                            Head
-                          </span>
-                        ) : null}
-                      </div>
+                      {fnNodes.map((fn) => (
+                        <SubCard
+                          key={`${area.id}-${fn.id}`}
+                          title={fn.label}
+                          lines={getNodeLines(fn)}
+                          borderClass={border}
+                          headBadgeClass={headBadgeClass}
+                          people={fn.people || []}
+                          showPeople={Boolean(fn.showPeople)}
+                        />
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : null}
+                  </div>
+                )
+              })}
             </div>
-          ) : null
+          </div>
         }
       />
-
-      <div className="mt-4 flex justify-center">
-        <VLine h={16} className="bg-slate-500/30" />
-      </div>
-
-      <div className="relative">
-        <div
-          className="hidden lg:block absolute left-4 top-2 bottom-2 w-px bg-slate-500/20"
-          aria-hidden="true"
-        />
-        <div className="grid grid-cols-1 gap-3 pl-8">
-          {(area.children || []).map((fn) => (
-            <div key={fn.id} className="relative">
-              <div
-                className="hidden lg:block absolute -left-4 top-3 w-4 h-px bg-slate-500/25"
-                aria-hidden="true"
-              />
-              <SubCard
-                title={fn.label}
-                lines={getNodeLines(fn)}
-                borderClass={border}
-                headBadgeClass={headBadgeClass}
-                people={fn.people || []}
-                showPeople={Boolean(fn.showPeople)}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   )
 }
