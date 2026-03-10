@@ -119,7 +119,7 @@ function SubCard({
                     (p.isHead
                       ? 'border-slate-600/55 bg-slate-950/45'
                       : 'border-slate-700/40 bg-slate-950/30') +
-                    (isFacilitator ? ' border-dashed' : '')
+                    (isFacilitator ? ' border-dashed border-brand-400' : '')
                   )
                 })()}
               >
@@ -156,7 +156,7 @@ function SubCard({
                           </span>
                         ) : null}
                         {p.isFacilitator ? (
-                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
                             Facilitator
                           </span>
                         ) : null}
@@ -179,92 +179,83 @@ function SalesSupportFacilitatorBridge({ people = [] }) {
   const safe = (people || []).filter((p) => p && p.name && p.title)
   if (!safe.length) return null
 
+  const two = safe.slice(0, 2)
+  const a = two[0] || null
+  const b = two[1] || null
+
   return (
     <div className="relative w-full">
-      <div className="border-t border-dashed border-brand-400/70" />
-      <div className="absolute left-2 -top-3 text-[10px] text-brand-200/80 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400/45">
+      <div className="border-t border-dashed border-brand-400" />
+      <div className="absolute left-2 -top-3 text-[10px] text-brand-200 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400">
         Customer Support
       </div>
-      <div className="absolute right-2 -top-3 text-[10px] text-brand-200/80 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400/45">
+      <div className="absolute right-2 -top-3 text-[10px] text-brand-200 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400">
         Sales
       </div>
 
       <div className="absolute left-1/2 -translate-x-1/2 -top-7">
-        {(() => {
-          const two = safe.slice(0, 2)
-          const a = two[0] || null
-          const b = two[1] || null
-          return (
-            <div className="flex items-stretch gap-8">
-              {a
-                ? (() => {
-                    const fp = formatPersonText(a, { maxTitleLen: 28 })
-                    return (
-                      <div
-                        key={`bridge-${a.name}-${a.title}`}
-                        className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400/50 bg-slate-950/70 px-3 py-2"
-                      >
-                        <div
-                          className="text-[11px] font-semibold text-slate-100 leading-snug"
-                          title={fp.displayName}
-                        >
-                          {fp.displayName}
-                        </div>
-                        <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
-                          <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
-                            {fp.shortenedTitle || fp.fullTitle}
-                          </span>
-                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
-                            Facilitator
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })()
-                : null}
-
-              {a && b ? (
-                <div className="flex flex-col items-center justify-center px-1">
-                  <div className="text-[9px] font-semibold tracking-wide text-brand-200/80 bg-slate-950/60 px-2 py-0.5 rounded-full border border-dashed border-brand-400/45 whitespace-nowrap">
-                    Interaction ↔
+        <div className="flex items-stretch gap-8">
+          {a
+            ? (() => {
+                const fp = formatPersonText(a, { maxTitleLen: 28 })
+                return (
+                  <div className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2">
+                    <div
+                      className="text-[11px] font-semibold text-slate-100 leading-snug"
+                      title={fp.displayName}
+                    >
+                      {fp.displayName}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                        {fp.shortenedTitle || fp.fullTitle}
+                      </span>
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
+                        Facilitator
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-1 flex items-center">
-                    <div className="w-10 border-t border-dashed border-brand-400/65" />
-                    <div className="mx-1 h-2 w-2 rounded-full bg-brand-400/75" />
-                    <div className="w-10 border-t border-dashed border-brand-400/65" />
-                  </div>
-                </div>
-              ) : null}
+                )
+              })()
+            : null}
 
-              {b
-                ? (() => {
-                    const fp = formatPersonText(b, { maxTitleLen: 28 })
-                    return (
-                      <div
-                        key={`bridge-${b.name}-${b.title}`}
-                        className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400/50 bg-slate-950/70 px-3 py-2"
-                      >
-                        <div
-                          className="text-[11px] font-semibold text-slate-100 leading-snug"
-                          title={fp.displayName}
-                        >
-                          {fp.displayName}
-                        </div>
-                        <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
-                          <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
-                            {fp.shortenedTitle || fp.fullTitle}
-                          </span>
-                          <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
-                            Facilitator
-                          </span>
-                        </div>
-                      </div>
-                    )
-                  })()
-                : null}
+          {a && b ? (
+            <div className="flex flex-col items-center justify-center px-1">
+              <div className="text-[9px] font-semibold tracking-wide text-brand-200 bg-slate-950/60 px-2 py-0.5 rounded-full border border-dashed border-brand-400 whitespace-nowrap">
+                Interaction ↔
+              </div>
+              <div className="mt-1 flex items-center">
+                <div className="w-10 border-t border-dashed border-brand-400" />
+                <div className="mx-1 h-2 w-2 rounded-full bg-brand-400" />
+                <div className="w-10 border-t border-dashed border-brand-400" />
+              </div>
             </div>
-          )
-        })()}
+          ) : null}
+
+          {b
+            ? (() => {
+                const fp = formatPersonText(b, { maxTitleLen: 28 })
+                return (
+                  <div className="min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2">
+                    <div
+                      className="text-[11px] font-semibold text-slate-100 leading-snug"
+                      title={fp.displayName}
+                    >
+                      {fp.displayName}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                      <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
+                        {fp.shortenedTitle || fp.fullTitle}
+                      </span>
+                      <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
+                        Facilitator
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()
+            : null}
+        </div>
       </div>
 
       <div className="h-10" aria-hidden="true" />
@@ -961,7 +952,7 @@ export default function ShareOrgChartTrueTree() {
                 <span>Operational head</span>
               </span>
               <span className="inline-flex items-center gap-1">
-                <span className="inline-flex items-center rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                <span className="inline-flex items-center rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
                   Facilitator
                 </span>
                 <span>Cross-team coordination</span>
@@ -1110,7 +1101,7 @@ export default function ShareOrgChartTrueTree() {
                         return (
                           <div
                             key={`bridge-compact-${p.name}-${p.title}`}
-                            className="min-w-0 rounded-xl border border-dashed border-brand-400/45 bg-slate-950/50 px-3 py-2"
+                            className="min-w-0 rounded-xl border border-dashed border-brand-400 bg-slate-950/50 px-3 py-2"
                           >
                             <div
                               className="text-[11px] font-semibold text-slate-100 leading-snug"
@@ -1122,7 +1113,7 @@ export default function ShareOrgChartTrueTree() {
                               <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                                 {fp.shortenedTitle || fp.fullTitle}
                               </span>
-                              <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                              <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
                                 Facilitator
                               </span>
                             </div>
@@ -1143,12 +1134,12 @@ export default function ShareOrgChartTrueTree() {
                 </div>
                 <div className="col-span-2">
                   <div className="relative w-full">
-                    <div className="border-t border-dashed border-brand-400/65" />
+                    <div className="border-t border-dashed border-brand-400" />
                     {showPeople && paoloVulloPerson
                       ? (() => {
                           const fp = formatPersonText(paoloVulloPerson, { maxTitleLen: 32 })
                           return (
-                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400/45 bg-slate-950/70 px-3 py-2">
+                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400 bg-slate-950/70 px-3 py-2">
                               <div
                                 className="text-[11px] font-semibold text-slate-100 leading-snug"
                                 title={fp.displayName}
@@ -1164,7 +1155,7 @@ export default function ShareOrgChartTrueTree() {
                           )
                         })()
                       : null}
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400/40 bg-slate-950/70 text-[11px] text-slate-300">
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400 bg-slate-950/70 text-[11px] text-slate-300">
                       Operations as a Servant Organization (Agile Model)
                     </div>
                   </div>
@@ -1329,7 +1320,7 @@ function MacroAreaColumn({ area, facilitators = [] }) {
                       return (
                         <div
                           key={`fac-${area.id}-${p.name}-${p.title}`}
-                          className="rounded-xl border border-dashed border-slate-800/60 bg-slate-950/30 px-3 py-2"
+                          className="rounded-xl border border-dashed border-brand-400 bg-slate-950/30 px-3 py-2"
                         >
                           <div className="text-[11px] leading-snug font-semibold text-slate-100">
                             <span title={fp.displayName}>{fp.displayName}</span>
@@ -1338,7 +1329,7 @@ function MacroAreaColumn({ area, facilitators = [] }) {
                             <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                               {fp.shortenedTitle || fp.fullTitle}
                             </span>
-                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/20 text-slate-200/70 bg-slate-950/20">
+                            <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
                               Facilitator
                             </span>
                             {targetsText ? (
