@@ -2,6 +2,9 @@ node_modules/
 dist/
 dev-dist/
 
+# Local/generated artifacts (keep out of Vite publicDir to avoid bloating dist/)
+artifacts/
+
 # Generated report artifacts / backups (keep local)
 *.bak
 public/*.bak

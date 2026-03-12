@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "predev": "npm run verify:data",
+    "clean:dist": "node scripts/clean_dist.js",
     "check:data": "node scripts/checkDataAssets.mjs",
     "prebuild": "npm run check:data && npm run verify:data",
     "build": "vite build",

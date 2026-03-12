@@ -1,27 +1,29 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 
+import FullPageLoader from './components/FullPageLoader'
 import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
-import OrgChart from './pages/OrgChart'
-import ExecutionHubPage from './features/execution/ExecutionHubPage'
-import FlowsPage from './features/flows/FlowsPage'
-import ExecutiveSuite from './features/executive/pages/ExecutiveSuite'
-import AffiliateHub from './features/affiliate/pages/AffiliateHub'
-import ProfitAnalysisPage from './pages/ProfitAnalysisPage'
-import CommentsAnalysisPage from './pages/CommentsAnalysisPage'
-import FraudMonitoringDashboard from './components/FraudMonitoringDashboard'
-import MarketingPlanExecutionPage from './features/marketing-plan/pages/MarketingPlanExecutionPage'
-import SupportUserCheck from './features/support/pages/SupportUserCheck'
-import CustomEventsPage from './features/analytics/pages/CustomEventsPage'
-import UploadReportsPage from './pages/UploadReportsPage'
-import TraderPointsSimulatorPage from './features/traderPointsSimulator/TraderPointsSimulatorPage'
-import NotionBoard from './features/notion/NotionBoard'
-import CreolabsPage from './features/creolabs/pages/CreolabsPage'
-import ProfitableRanking from './pages/Retention/ProfitableRanking'
-import ConsoleHomePage from './pages/ConsoleHomePage'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
-import AdminPanel from './components/AdminPanel'
+
+const OrgChart = lazy(() => import('./pages/OrgChart'))
+const ExecutionHubPage = lazy(() => import('./features/execution/ExecutionHubPage'))
+const FlowsPage = lazy(() => import('./features/flows/FlowsPage'))
+const ExecutiveSuite = lazy(() => import('./features/executive/pages/ExecutiveSuite'))
+const AffiliateHub = lazy(() => import('./features/affiliate/pages/AffiliateHub'))
+const ProfitAnalysisPage = lazy(() => import('./pages/ProfitAnalysisPage'))
+const CommentsAnalysisPage = lazy(() => import('./pages/CommentsAnalysisPage'))
+const FraudMonitoringDashboard = lazy(() => import('./components/FraudMonitoringDashboard'))
+const SupportUserCheck = lazy(() => import('./features/support/pages/SupportUserCheck'))
+const CustomEventsPage = lazy(() => import('./features/analytics/pages/CustomEventsPage'))
+const UploadReportsPage = lazy(() => import('./pages/UploadReportsPage'))
+const TraderPointsSimulatorPage = lazy(
+  () => import('./features/traderPointsSimulator/TraderPointsSimulatorPage')
+)
+const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
+const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
+const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
+const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
 
@@ -134,13 +136,11 @@ export default function AuthenticatedApp() {
       commandCenter: '/command-center',
       storiesKanban: '/stories-kanban',
       projectBoard: '/project-board',
-      marketingPlan: '/marketing-plan',
       overview: '/overview',
       flows: '/flows',
       executive: '/executive',
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
-      creolabs: '/creolabs',
       profitableRanking: '/retention/profitable-ranking',
       fraud: '/fraud',
       orgChart: '/org-chart',
@@ -160,7 +160,6 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/command-center')) return 'commandCenter'
     if (pathname.startsWith('/stories-kanban')) return 'storiesKanban'
     if (pathname.startsWith('/project-board')) return 'projectBoard'
-    if (pathname.startsWith('/marketing-plan')) return 'marketingPlan'
     if (pathname.startsWith('/roadmap')) return 'projectBoard'
     if (pathname.startsWith('/weekly-map')) return 'projectBoard'
     if (pathname.startsWith('/weekly-execution-history')) return 'projectBoard'
@@ -172,7 +171,6 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
     // Ranking section removed: keep legacy URLs working.
     if (pathname.startsWith('/ranking')) return 'profitableRanking'
-    if (pathname.startsWith('/creolabs')) return 'creolabs'
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
@@ -194,7 +192,15 @@ export default function AuthenticatedApp() {
       window.history.replaceState({ view: 'profitableRanking' }, '', routes.profitableRanking)
       setView('profitableRanking')
     }
-  }, [routes.profitableRanking])
+    if (p && p.startsWith('/creolabs')) {
+      window.history.replaceState({ view: 'overview' }, '', routes.overview)
+      setView('overview')
+    }
+    if (p && p.startsWith('/marketing-plan')) {
+      window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+      setView('commandCenter')
+    }
+  }, [routes.commandCenter, routes.overview, routes.profitableRanking])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -447,11 +453,9 @@ export default function AuthenticatedApp() {
       affiliate: 'affiliate',
       executive: 'executive',
       fraud: 'fraud-monitoring',
-      marketingPlan: 'marketing-plan',
       projectBoard: 'project-board',
       notion: 'notion',
       summary: 'summary',
-      creolabs: 'creolabs',
       profitableRanking: 'retention-profitable-ranking',
       orgChart: 'org-chart',
       supportUserCheck: 'support-user-check',
@@ -492,45 +496,44 @@ export default function AuthenticatedApp() {
         </aside>
         <main className="dashboard-content">
           <div className="dashboard-inner">
-            {view === 'home' ? (
-              <ConsoleHomePage
-                user={user}
-                supportOnly={isRestrictedUser}
-                allowedViews={restrictedAllowedViews}
-                onNavigate={navigate}
-              />
-            ) : null}
+            <Suspense fallback={<FullPageLoader progress={20} minHeight="60vh" />}>
+              {view === 'home' ? (
+                <ConsoleHomePage
+                  user={user}
+                  supportOnly={isRestrictedUser}
+                  allowedViews={restrictedAllowedViews}
+                  onNavigate={navigate}
+                />
+              ) : null}
 
-            {['commandCenter', 'storiesKanban', 'projectBoard'].includes(view) ? (
-              <ExecutionHubPage
-                activeTab={view}
-                onChangeTab={(nextTab) => navigate(nextTab)}
-                showLanguageSelect={false}
-              />
-            ) : null}
+              {['commandCenter', 'storiesKanban', 'projectBoard'].includes(view) ? (
+                <ExecutionHubPage
+                  activeTab={view}
+                  onChangeTab={(nextTab) => navigate(nextTab)}
+                  showLanguageSelect={false}
+                />
+              ) : null}
 
-            {view === 'marketingPlan' ? <MarketingPlanExecutionPage /> : null}
+              {view === 'overview' ? <ProfitAnalysisPage /> : null}
+              {view === 'flows' ? <FlowsPage /> : null}
+              {view === 'executive' ? (
+                <ExecutiveSuite section={executiveSection} onSectionChange={setExecutiveSection} />
+              ) : null}
+              {view === 'affiliate' ? (
+                <AffiliateHub section={affiliateSection} onSectionChange={setAffiliateSection} />
+              ) : null}
+              {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
+              {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
+              {view === 'profitableRanking' ? <ProfitableRanking /> : null}
+              {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
-            {view === 'overview' ? <ProfitAnalysisPage /> : null}
-            {view === 'flows' ? <FlowsPage /> : null}
-            {view === 'executive' ? (
-              <ExecutiveSuite section={executiveSection} onSectionChange={setExecutiveSection} />
-            ) : null}
-            {view === 'affiliate' ? (
-              <AffiliateHub section={affiliateSection} onSectionChange={setAffiliateSection} />
-            ) : null}
-            {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
-            {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
-            {view === 'creolabs' ? <CreolabsPage /> : null}
-            {view === 'profitableRanking' ? <ProfitableRanking /> : null}
-            {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
-
-            {view === 'orgChart' ? <OrgChart /> : null}
-            {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
-            {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
-            {view === 'upload' ? <UploadReportsPage /> : null}
-            {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}
-            {view === 'admin' ? <AdminPanel /> : null}
+              {view === 'orgChart' ? <OrgChart /> : null}
+              {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
+              {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
+              {view === 'upload' ? <UploadReportsPage /> : null}
+              {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}
+              {view === 'admin' ? <AdminPanel /> : null}
+            </Suspense>
           </div>
         </main>
       </div>

@@ -3,7 +3,7 @@ Robust Payments CSV importer
 
 Goals:
 - Accept raw CSV files as-is (user copy/paste or downloads) without requiring manual edits.
-- Always keep the original raw file (saved under `public/raw/` with timestamp).
+- Always keep the original raw file (saved under `artifacts/raw/` with timestamp).
 - Attempt multiple parsing strategies with fallbacks (direct parse, quote-balanced rejoin) and produce a cleaned, standardized CSV used by the app at `public/Payments Report.csv`.
 - Report parsing diagnostics (detected headers, rows parsed, malformed rows) and exit non-zero if there are unrecoverable issues.
 
@@ -21,7 +21,7 @@ const projectRoot = path.join(__dirname, '..')
 const srcArg = process.argv[2] || 'tmp_paste.csv'
 const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
 const dest = path.join(projectRoot, 'public', 'Payments Report.csv')
-const rawDir = path.join(projectRoot, 'public', 'raw')
+const rawDir = path.join(projectRoot, 'artifacts', 'raw')
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)

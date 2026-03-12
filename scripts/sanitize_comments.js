@@ -9,7 +9,7 @@ Goal:
   - from_affiliate_id
   - to_affiliate_id
 - Write cleaned CSV to `public/comments.csv`
-- Save raw backup under `public/raw/`
+- Save raw backup under `artifacts/raw/`
 
 Usage:
   node scripts/sanitize_comments.js <sourceCsvPath>
@@ -24,7 +24,7 @@ const srcArg = process.argv[2] || 'tmp_comments.csv'
 const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
 const dest = path.join(projectRoot, 'public', 'comments.csv')
 const destLegacy = path.join(projectRoot, 'public', 'Comments Report.csv')
-const rawDir = path.join(projectRoot, 'public', 'raw')
+const rawDir = path.join(projectRoot, 'artifacts', 'raw')
 
 const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
 const debug = (...args) => { if (VERBOSE) console.log(...args) }

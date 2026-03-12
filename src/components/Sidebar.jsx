@@ -225,17 +225,6 @@ export default function Sidebar({
                 <span>{t('sidebar.commandCenter')}</span>
               </span>
             </button>
-            <button
-              disabled={disabled('marketingPlan')}
-              type="button"
-              className={`sidebar-item sidebar-main tab ${view === 'marketingPlan' ? 'active' : ''}`}
-              onClick={() => navigate('marketingPlan')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="layout" />
-                <span>{t('sidebar.marketingPlan')}</span>
-              </span>
-            </button>
 
             <button
               disabled={disabled('flows')}
@@ -324,18 +313,6 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="layers" />
                 <span>{t('sidebar.traderPoints')}</span>
-              </span>
-            </button>
-
-            <button
-              disabled={disabled('creolabs')}
-              type="button"
-              className={`sidebar-item sidebar-main tab ${view === 'creolabs' ? 'active' : ''}`}
-              onClick={() => navigate('creolabs')}
-            >
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                <Icon name="chart" />
-                <span>{t('sidebar.creolabs')}</span>
               </span>
             </button>
 

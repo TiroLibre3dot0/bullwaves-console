@@ -2,7 +2,7 @@
 Simple Registrations CSV sanitizer based on payments sanitizer.
 Usage:
   node scripts/sanitize_registrations.js <sourceCsvPath>
-Writes cleaned CSV to `public/Registrations Report.csv` and saves raw backup under `public/raw/`.
+Writes cleaned CSV to `public/Registrations Report.csv` and saves raw backup under `artifacts/raw/`.
 */
 
 const fs = require('fs')
@@ -14,7 +14,7 @@ const projectRoot = path.join(__dirname, '..')
 const srcArg = process.argv[2] || 'tmp_registrations.csv'
 const src = path.isAbsolute(srcArg) ? srcArg : path.join(projectRoot, srcArg)
 const dest = path.join(projectRoot, 'public', 'Registrations Report.csv')
-const rawDir = path.join(projectRoot, 'public', 'raw')
+const rawDir = path.join(projectRoot, 'artifacts', 'raw')
 
 if (!fs.existsSync(src)) {
   console.error('Source file not found:', src)

@@ -95,6 +95,7 @@ export default defineConfig({
         '**/public/fraud_monitor_*.json',
         '**/public/fraud_monitor_*.csv',
         '**/public/raw/**',
+        '**/artifacts/**',
         '**/uploads/**',
       ],
     },

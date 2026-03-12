@@ -75,8 +75,9 @@ export default function FraudMonitoringDashboard() {
   const [csvLoaded, setCsvLoaded] = useState(false)
   const [csvRecap, setCsvRecap] = useState(null)
   const [csvAccounts, setCsvAccounts] = useState([])
-  const [csvRawRows, setCsvRawRows] = useState([])
   const [regCommissionsSummary, setRegCommissionsSummary] = useState(null)
+  const [regCommissionsByYear, setRegCommissionsByYear] = useState(null)
+  const [regIndex, setRegIndex] = useState(null)
   const [hoverSource, setHoverSource] = useState(null)
   const [hoverXY, setHoverXY] = useState(null)
   const [ftdUpliftFeb, setFtdUpliftFeb] = useState(5)
@@ -399,9 +400,10 @@ export default function FraudMonitoringDashboard() {
 
     if (__bwFraudRegistrationsCache && __bwFraudRegistrationsCache.url === url) {
       setCsvAccounts(__bwFraudRegistrationsCache.accounts || [])
-      setCsvRawRows(__bwFraudRegistrationsCache.rows || [])
       setCsvRecap(__bwFraudRegistrationsCache.recap || null)
       setRegCommissionsSummary(__bwFraudRegistrationsCache.regCommissionsSummary || null)
+      setRegCommissionsByYear(__bwFraudRegistrationsCache.regCommissionsByYear || null)
+      setRegIndex(__bwFraudRegistrationsCache.regIndex || null)
       setRegSeries(__bwFraudRegistrationsCache.regSeries || [])
       setCsvLoaded(true)
       return
@@ -414,6 +416,13 @@ export default function FraudMonitoringDashboard() {
       skipEmptyLines: true,
       complete: (res) => {
         try {
+          const normalizeKey = (k) =>
+            String(k || '')
+              .trim()
+              .toLowerCase()
+              .replace(/\s+/g, '_')
+              .replace(/[^a-z0-9_]/g, '')
+
           const parseRegistrationTs = (value) => {
             const s = String(value ?? '').trim()
             if (!s) return null
@@ -438,42 +447,23 @@ export default function FraudMonitoringDashboard() {
             return null
           }
 
-          const rows = (res.data || []).map((r) => {
-            const normalized = {}
-            Object.keys(r).forEach((k) => {
-              const nk = String(k || '')
-                .trim()
-                .toLowerCase()
-                .replace(/\s+/g, '_')
-                .replace(/[^a-z0-9_]/g, '')
-              normalized[nk] = typeof r[k] === 'string' ? r[k].trim() : r[k]
-            })
+          const fields =
+            (res && res.meta && Array.isArray(res.meta.fields) && res.meta.fields) ||
+            (res && Array.isArray(res.data) && res.data.length ? Object.keys(res.data[0]) : [])
 
-            // precompute registration year for fast filtering
-            try {
-              const dateVal =
-                normalized['registration_date'] ||
-                normalized['registrationdate'] ||
-                normalized['reg_date'] ||
-                normalized['date'] ||
-                normalized['created_at'] ||
-                normalized['createdat'] ||
-                normalized['external_date'] ||
-                normalized['externaldate'] ||
-                ''
-              const parsed = parseRegistrationTs(dateVal)
-              if (parsed != null) {
-                normalized.__regYear = new Date(parsed).getUTCFullYear()
-                normalized.__regTs = parsed
-              }
-            } catch {
-              // ignore
-            }
+          const normToOrig = new Map()
+          for (const f of fields) {
+            const nk = normalizeKey(f)
+            if (nk && !normToOrig.has(nk)) normToOrig.set(nk, f)
+          }
 
-            return normalized
-          })
+          const pickNormKey = (candidates) => candidates.find((k) => normToOrig.has(k)) || null
+          const get = (row, normKey) => {
+            const orig = normToOrig.get(normKey)
+            return orig ? row?.[orig] : ''
+          }
 
-          // detect possible keys
+          // detect possible keys (normalized)
           const acctKeys = [
             'account_id',
             'accountid',
@@ -496,6 +486,16 @@ export default function FraudMonitoringDashboard() {
             'customername',
             'customer_name',
           ]
+          const dateKeys = [
+            'registration_date',
+            'registrationdate',
+            'reg_date',
+            'date',
+            'created_at',
+            'createdat',
+            'external_date',
+            'externaldate',
+          ]
           const depositCountKeys = [
             'deposit_count',
             'deposits_count',
@@ -506,17 +506,6 @@ export default function FraudMonitoringDashboard() {
           const profitKeys = ['profit', 'netprofit', 'pnl']
           const lossKeys = ['loss', 'netloss']
           const plKeys = ['net_pl', 'pl', 'profit_loss', 'profitloss']
-
-          const pickKey = (obj, candidates) =>
-            candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
-
-          const acctKey = rows.length ? pickKey(rows[0], acctKeys) : null
-          const nameKey = rows.length ? pickKey(rows[0], nameKeys) : null
-          const depositKey = rows.length ? pickKey(rows[0], depositCountKeys) : null
-          const equityKey = rows.length ? pickKey(rows[0], equityKeys) : null
-          const plKey = rows.length ? pickKey(rows[0], plKeys) : null
-          const profitKey = rows.length ? pickKey(rows[0], profitKeys) : null
-          const lossKey = rows.length ? pickKey(rows[0], lossKeys) : null
           const affiliateKeys = [
             'affiliate',
             'affiliate_id',
@@ -525,8 +514,29 @@ export default function FraudMonitoringDashboard() {
             'affiliate_ref',
           ]
           const countryKeys = ['country', 'country_code', 'nation', 'paese']
-          const affiliateKey = rows.length ? pickKey(rows[0], affiliateKeys) : null
-          const countryKey = rows.length ? pickKey(rows[0], countryKeys) : null
+          const commKeys = [
+            'commissions',
+            'affiliate_commissions',
+            'sub_affiliate_commissions',
+            'cpa_commission',
+            'cpl_commission',
+            'revshare_commission',
+            'other_commissions',
+          ]
+
+          const acctKey = pickNormKey(acctKeys)
+          const nameKey = pickNormKey(nameKeys)
+          const dateKey = pickNormKey(dateKeys)
+          const depositKey = pickNormKey(depositCountKeys)
+          const equityKey = pickNormKey(equityKeys)
+          const plKey = pickNormKey(plKeys)
+          const profitKey = pickNormKey(profitKeys)
+          const lossKey = pickNormKey(lossKeys)
+          const affiliateKey = pickNormKey(affiliateKeys)
+          const countryKey = pickNormKey(countryKeys)
+
+          const commKeysFound = commKeys.filter((k) => normToOrig.has(k))
+          const hasCommissionsCol = normToOrig.has('commissions')
 
           const parseStrictNonNegInt = (v) => {
             const s = String(v ?? '').trim()
@@ -548,29 +558,52 @@ export default function FraudMonitoringDashboard() {
             return s.replace(/^"+|"+$/g, '')
           }
 
-          const accounts = new Array(rows.length)
-          for (let idx = 0; idx < rows.length; idx++) {
-            const r = rows[idx]
-            const rawId = acctKey ? r[acctKey] : ''
+          const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
+          const breakdown = Object.create(null)
+          commKeys.forEach((k) => {
+            breakdown[k] = 0
+          })
+          const perYearAgg = Object.create(null)
+          const regIdToTs = new Map()
+
+          const data = Array.isArray(res.data) ? res.data : []
+          const accounts = new Array(data.length)
+
+          for (let idx = 0; idx < data.length; idx++) {
+            const row = data[idx]
+
+            const rawId = acctKey ? get(row, acctKey) : ''
             const cleanedId = cleanAccountId(rawId)
-            const accountId = cleanedId || (acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`)
-            const holder = nameKey ? r[nameKey] || '—' : '—'
-            const depositCount = depositKey ? parseStrictNonNegInt(r[depositKey]) : 0
+            const fallbackId = String(rawId ?? '').trim()
+            const accountId = cleanedId || fallbackId || `row-${idx}`
+
+            const holder = nameKey ? String(get(row, nameKey) || '').trim() || '—' : '—'
+
+            const dateVal = dateKey ? get(row, dateKey) : ''
+            const regTs = parseRegistrationTs(dateVal)
+            const regYear = regTs != null ? new Date(regTs).getUTCFullYear() : undefined
+
+            const depositCount = depositKey ? parseStrictNonNegInt(get(row, depositKey)) : 0
             const equity = equityKey
-              ? Number(String(r[equityKey]).replace(/[^0-9\-\.]/g, '')) || 0
+              ? Number(String(get(row, equityKey)).replace(/[^0-9\-\.]/g, '')) || 0
               : 0
+
             let profit = 0
             let loss = 0
             if (plKey) {
-              const pl = Number(String(r[plKey]).replace(/[^0-9\-\.]/g, '')) || 0
+              const pl = Number(String(get(row, plKey)).replace(/[^0-9\-\.]/g, '')) || 0
               if (pl >= 0) profit = pl
               else loss = Math.abs(pl)
             } else {
-              profit = profitKey ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-              loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
+              profit = profitKey
+                ? Number(String(get(row, profitKey)).replace(/[^0-9\-\.]/g, '')) || 0
+                : 0
+              loss = lossKey ? Number(String(get(row, lossKey)).replace(/[^0-9\-\.]/g, '')) || 0 : 0
             }
-            const affiliate = affiliateKey ? r[affiliateKey] || '' : ''
-            const country = countryKey ? r[countryKey] || '' : ''
+
+            const affiliate = affiliateKey ? String(get(row, affiliateKey) || '').trim() : ''
+            const country = countryKey ? String(get(row, countryKey) || '').trim() : ''
+
             accounts[idx] = {
               accountId,
               holder,
@@ -580,53 +613,93 @@ export default function FraudMonitoringDashboard() {
               loss,
               affiliate,
               country,
-              __regYear: typeof r.__regYear === 'number' ? r.__regYear : undefined,
-              __regTs: typeof r.__regTs === 'number' ? r.__regTs : undefined,
+              __regYear: typeof regYear === 'number' ? regYear : undefined,
+              __regTs: typeof regTs === 'number' ? regTs : undefined,
+            }
+
+            // Index unique account IDs by earliest registration timestamp.
+            // Prefer skipping synthetic IDs derived from row index.
+            if (regTs != null) {
+              const idForIndex = cleanedId || fallbackId
+              if (idForIndex) {
+                const prev = regIdToTs.get(idForIndex)
+                if (prev == null || regTs < prev) regIdToTs.set(idForIndex, regTs)
+              }
+            }
+
+            // Commissions aggregates (keep semantics based on raw rows)
+            let rowSum = 0
+            for (const k of commKeysFound) {
+              const v = parseNum(get(row, k))
+              breakdown[k] += v
+              rowSum += v
+            }
+
+            if (typeof regYear === 'number') {
+              const key = String(regYear)
+              let yAgg = perYearAgg[key]
+              if (!yAgg) {
+                const yBreak = Object.create(null)
+                commKeys.forEach((k) => {
+                  yBreak[k] = 0
+                })
+                yAgg = { breakdown: yBreak, payingCount: 0 }
+                perYearAgg[key] = yAgg
+              }
+              for (const k of commKeysFound) {
+                yAgg.breakdown[k] += parseNum(get(row, k))
+              }
+              if (hasCommissionsCol) {
+                const c = parseNum(get(row, 'commissions'))
+                if (c > 0) yAgg.payingCount += 1
+              } else {
+                if (rowSum > 0) yAgg.payingCount += 1
+              }
             }
           }
-          setCsvAccounts(accounts)
-          setCsvRawRows(rows)
 
-          // compute commission aggregates from normalized rows
-          const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
-          const commKeys = [
-            'commissions',
-            'affiliate_commissions',
-            'sub_affiliate_commissions',
-            'cpa_commission',
-            'cpl_commission',
-            'revshare_commission',
-            'other_commissions',
-          ]
-          const breakdown = {}
-          // compute per-key sums
-          commKeys.forEach((k) => {
-            breakdown[k] = rows.reduce((s, r) => s + parseNum(r[k]), 0)
-          })
-          // if `commissions` column exists treat it as authoritative total, otherwise sum breakdown
-          const hasCommissionsCol =
-            rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'commissions')
+          setCsvAccounts(accounts)
+
           const commTotal = hasCommissionsCol
             ? breakdown['commissions']
             : Object.values(breakdown).reduce((s, v) => s + v, 0)
 
-          // compute average CPA across accounts that generated commissions (exclude zero-commission accounts)
           let payingCount = 0
           if (hasCommissionsCol) {
-            payingCount = rows.reduce((c, r) => c + (parseNum(r['commissions']) > 0 ? 1 : 0), 0)
+            payingCount = data.reduce(
+              (c, row) => c + (parseNum(get(row, 'commissions')) > 0 ? 1 : 0),
+              0
+            )
           } else {
-            payingCount = rows.reduce((c, r) => {
-              const rowSum = commKeys.reduce((s, k) => s + parseNum(r[k]), 0)
-              return c + (rowSum > 0 ? 1 : 0)
+            payingCount = data.reduce((c, row) => {
+              const sum = commKeysFound.reduce((s, k) => s + parseNum(get(row, k)), 0)
+              return c + (sum > 0 ? 1 : 0)
             }, 0)
           }
           const avgCpaRegistrations = payingCount ? commTotal / payingCount : 0
-          setRegCommissionsSummary({
+          const allRegCommissions = {
             total: commTotal,
             breakdown,
             payingCount,
             avgPerPayingAccount: avgCpaRegistrations,
-          })
+          }
+          setRegCommissionsSummary(allRegCommissions)
+
+          const perYearSummary = Object.create(null)
+          for (const [year, agg] of Object.entries(perYearAgg)) {
+            const yBreakdown = agg.breakdown || Object.create(null)
+            const total = hasCommissionsCol
+              ? yBreakdown['commissions'] || 0
+              : Object.values(yBreakdown).reduce((s, v) => s + (Number(v) || 0), 0)
+            const yPaying = Number(agg.payingCount || 0)
+            perYearSummary[year] = {
+              total,
+              breakdown: yBreakdown,
+              payingCount: yPaying,
+              avgPerPayingAccount: yPaying ? total / yPaying : 0,
+            }
+          }
+          setRegCommissionsByYear(perYearSummary)
 
           // build registration time series by month using UNIQUE account IDs
           // (raw row counts can be inflated by duplicates / malformed quoting)
@@ -637,36 +710,38 @@ export default function FraudMonitoringDashboard() {
             return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}`
           }
 
-          const monthToIds = new Map()
-          for (let i = 0; i < rows.length; i++) {
-            const r = rows[i]
-            const t = typeof r?.__regTs === 'number' ? r.__regTs : null
-            if (t == null) continue
-            const monthKey = monthKeyFromTs(t)
+          const monthToCount = new Map()
+          for (const ts of regIdToTs.values()) {
+            const monthKey = monthKeyFromTs(ts)
             if (!monthKey) continue
-            const rawId = acctKey ? r[acctKey] : ''
-            const cleaned = cleanAccountId(rawId)
-            const id = cleaned || String(rawId ?? '').trim()
-            if (!id) continue
-            let set = monthToIds.get(monthKey)
-            if (!set) {
-              set = new Set()
-              monthToIds.set(monthKey, set)
-            }
-            set.add(id)
+            monthToCount.set(monthKey, (monthToCount.get(monthKey) || 0) + 1)
           }
 
-          const parsedR = Array.from(monthToIds.entries())
-            .map(([key, set]) => {
+          const parsedR = Array.from(monthToCount.entries())
+            .map(([key, count]) => {
               const parts = key.split('-')
               const y = Number(parts[0])
               const mo = Number(parts[1])
               const ts = !isNaN(y) && !isNaN(mo) ? Date.UTC(y, mo - 1, 1) : null
-              return { date: key, count: set.size, _ts: ts, dateISO: `${key}-01` }
+              return { date: key, count: Number(count) || 0, _ts: ts, dateISO: `${key}-01` }
             })
             .filter((s) => s._ts != null)
             .sort((a, b) => (a._ts || 0) - (b._ts || 0))
           setRegSeries(parsedR)
+
+          // Index registration timestamps for fast comparable-count queries
+          const allTs = []
+          const byYear = Object.create(null)
+          for (const ts of regIdToTs.values()) {
+            if (typeof ts !== 'number') continue
+            allTs.push(ts)
+            const y = new Date(ts).getUTCFullYear()
+            const key = String(y)
+            if (!byYear[key]) byYear[key] = []
+            byYear[key].push(ts)
+          }
+          const computedRegIndex = { allTs, byYear }
+          setRegIndex(computedRegIndex)
 
           const totalAccounts = accounts.length
           const accountIdSet = new Set()
@@ -760,7 +835,6 @@ export default function FraudMonitoringDashboard() {
 
           __bwFraudRegistrationsCache = {
             url,
-            rows,
             accounts,
             recap: {
               totalAccounts,
@@ -789,6 +863,8 @@ export default function FraudMonitoringDashboard() {
               payingCount,
               avgPerPayingAccount: avgCpaRegistrations,
             },
+            regCommissionsByYear: perYearSummary,
+            regIndex: computedRegIndex,
             regSeries: parsedR,
           }
         } catch (e) {
@@ -1155,113 +1231,9 @@ export default function FraudMonitoringDashboard() {
     return mediaData.filter((r) => (r && typeof r.__bwYear === 'number' ? r.__bwYear === y : false))
   }, [mediaData, yearFilter])
 
-  // filtered registration rows based on yearFilter
-  const filteredCsvRows = useMemo(() => {
-    if (!csvRawRows || !csvRawRows.length) return []
-    if (!yearFilter || yearFilter === 'all') return csvRawRows
-    const y = Number(yearFilter)
-    if (isNaN(y)) return csvRawRows
-    return csvRawRows.filter((r) =>
-      r && typeof r.__regYear === 'number' ? r.__regYear === y : false
-    )
-  }, [csvRawRows, yearFilter])
-
-  // build filtered csv accounts and recap from filtered rows so Year influences all aggregates
-  const filteredCsvAccounts = useMemo(() => {
-    if (!yearFilter || yearFilter === 'all') return []
-    if (!filteredCsvRows || !filteredCsvRows.length) return []
-    const rows = filteredCsvRows
-    const acctKeys = [
-      'account_id',
-      'accountid',
-      'accountnumber',
-      'account',
-      'id',
-      'clientid',
-      // Registrations Report canonical columns
-      'user_id',
-      'userid',
-      'mt5_account',
-      'mt5account',
-    ]
-    const nameKeys = [
-      'fullname',
-      'full_name',
-      'name',
-      'client_name',
-      // Registrations Report canonical columns
-      'customername',
-      'customer_name',
-    ]
-    const depositCountKeys = ['deposit_count', 'deposits_count', 'num_deposits', 'depositcount']
-    const equityKeys = ['equity', 'balance', 'account_balance']
-    const profitKeys = ['profit', 'netprofit', 'pnl']
-    const lossKeys = ['loss', 'netloss']
-    const plKeys = ['net_pl', 'pl', 'profit_loss', 'profitloss']
-    const pickKey = (obj, candidates) =>
-      candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
-    const acctKey = pickKey(rows[0], acctKeys)
-    const nameKey = pickKey(rows[0], nameKeys)
-    const depositKey = pickKey(rows[0], depositCountKeys)
-    const equityKey = pickKey(rows[0], equityKeys)
-    const plKey = pickKey(rows[0], plKeys)
-    const profitKey = pickKey(rows[0], profitKeys)
-    const lossKey = pickKey(rows[0], lossKeys)
-    const affiliateKeys = [
-      'affiliate',
-      'affiliate_id',
-      'affiliateid',
-      'affiliate_code',
-      'affiliate_ref',
-    ]
-    const countryKeys = ['country', 'country_code', 'nation', 'paese']
-    const affiliateKey = pickKey(rows[0], affiliateKeys)
-    const countryKey = pickKey(rows[0], countryKeys)
-
-    const parseStrictNonNegInt = (v) => {
-      const s = String(v ?? '').trim()
-      if (!s) return 0
-      const cleaned = s.replace(/[^0-9\.-]/g, '')
-      const f = Number(cleaned)
-      if (!Number.isFinite(f)) return 0
-      const r = Math.round(f)
-      if (r < 0) return 0
-      if (Math.abs(f - r) > 1e-6) return 0
-      return r
-    }
-    const cleanAccountId = (v) => {
-      const s = String(v ?? '').trim()
-      if (!s) return ''
-      return s.replace(/^"+|"+$/g, '')
-    }
-
-    const accounts = rows.map((r, idx) => {
-      const rawId = acctKey ? r[acctKey] : ''
-      const cleanedId = cleanAccountId(rawId)
-      const accountId = cleanedId || (acctKey ? r[acctKey] || `row-${idx}` : `row-${idx}`)
-      const holder = nameKey ? r[nameKey] || '—' : '—'
-      const depositCount = depositKey ? parseStrictNonNegInt(r[depositKey]) : 0
-      const equity = equityKey ? Number(String(r[equityKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-      let profit = 0
-      let loss = 0
-      if (plKey) {
-        const pl = Number(String(r[plKey]).replace(/[^0-9\-\.]/g, '')) || 0
-        if (pl >= 0) profit = pl
-        else loss = Math.abs(pl)
-      } else {
-        profit = profitKey ? Number(String(r[profitKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-        loss = lossKey ? Number(String(r[lossKey]).replace(/[^0-9\-\.]/g, '')) || 0 : 0
-      }
-      const affiliate = affiliateKey ? r[affiliateKey] || '' : ''
-      const country = countryKey ? r[countryKey] || '' : ''
-      return { accountId, holder, depositCount, equity, profit, loss, affiliate, country }
-    })
-    return accounts
-  }, [filteredCsvRows, yearFilter])
-
   const filteredCsvRecap = useMemo(() => {
     if (!yearFilter || yearFilter === 'all') return null
-    const accounts = filteredCsvAccounts
+    const accounts = accountsForAnalysis
     const totalAccounts = accounts.length
     const accountIdSet = new Set()
     const holderCounts = new Map()
@@ -1348,11 +1320,11 @@ export default function FraudMonitoringDashboard() {
       payingUsers: withDeposit,
       losingUsersPercentage,
     }
-  }, [filteredCsvAccounts, mediaSummary, yearFilter])
+  }, [accountsForAnalysis, mediaSummary, yearFilter])
 
   // display recap depending on yearFilter
   const displayCsvRecap = yearFilter && yearFilter !== 'all' ? filteredCsvRecap : csvRecap
-  const displayCsvAccounts = yearFilter && yearFilter !== 'all' ? filteredCsvAccounts : csvAccounts
+  const displayCsvAccounts = accountsForAnalysis
 
   // Comparable registrations count: unique account IDs within the same month-range as the Media report
   // This avoids comparing Media month aggregates against the entire historical registrations export.
@@ -1375,84 +1347,36 @@ export default function FraudMonitoringDashboard() {
     const rangeStart = minTs
     const rangeEnd = maxTs + 32 * 24 * 3600 * 1000
 
-    const rows = yearFilter && yearFilter !== 'all' ? filteredCsvRows || [] : csvRawRows || []
-    if (!rows.length) return 0
+    const idx = regIndex
+    if (!idx) return 0
 
-    const cleanAccountId = (v) => {
-      const s = String(v ?? '').trim()
-      if (!s) return ''
-      return s.replace(/^"+|"+$/g, '')
+    let tsList = Array.isArray(idx.allTs) ? idx.allTs : []
+    if (yearFilter && yearFilter !== 'all') {
+      const y = Number(yearFilter)
+      if (!isNaN(y)) {
+        const byYear = idx.byYear || {}
+        const list = byYear[String(y)]
+        tsList = Array.isArray(list) ? list : []
+      }
     }
 
-    const acctKeys = [
-      'account_id',
-      'accountid',
-      'accountnumber',
-      'account',
-      'id',
-      'clientid',
-      'user_id',
-      'userid',
-      'mt5_account',
-      'mt5account',
-    ]
-    const pickKey = (obj, candidates) =>
-      candidates.find((k) => Object.prototype.hasOwnProperty.call(obj, k))
-    const acctKey = rows.length ? pickKey(rows[0], acctKeys) : null
-
-    const ids = new Set()
-    for (let i = 0; i < rows.length; i++) {
-      const r = rows[i]
-      const t = typeof r?.__regTs === 'number' ? r.__regTs : null
-      if (t == null || t < rangeStart || t > rangeEnd) continue
-      const rawId = acctKey ? r[acctKey] : ''
-      const cleaned = cleanAccountId(rawId)
-      const id = cleaned || String(rawId ?? '').trim()
-      if (id) ids.add(id)
+    let count = 0
+    for (const ts of tsList) {
+      if (typeof ts !== 'number') continue
+      if (ts >= rangeStart && ts <= rangeEnd) count += 1
     }
-    return ids.size
-  }, [mediaLoaded, csvLoaded, filteredMediaData, csvRawRows, filteredCsvRows, yearFilter])
+    return count
+  }, [mediaLoaded, csvLoaded, filteredMediaData, regIndex, yearFilter])
 
   // filtered commissions summary
   const filteredRegCommissionsSummary = useMemo(() => {
     if (!yearFilter || yearFilter === 'all') return null
-    if (!filteredCsvRows || !filteredCsvRows.length) return null
-    const rows = filteredCsvRows
-    const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
-    const commKeys = [
-      'commissions',
-      'affiliate_commissions',
-      'sub_affiliate_commissions',
-      'cpa_commission',
-      'cpl_commission',
-      'revshare_commission',
-      'other_commissions',
-    ]
-    const breakdown = {}
-    // compute per-key sums
-    commKeys.forEach((k) => {
-      breakdown[k] = rows.reduce((s, r) => s + parseNum(r[k]), 0)
-    })
-    // if `commissions` column exists treat it as authoritative total, otherwise sum breakdown
-    const hasCommissionsCol =
-      rows.length && Object.prototype.hasOwnProperty.call(rows[0], 'commissions')
-    const commTotal = hasCommissionsCol
-      ? breakdown['commissions']
-      : Object.values(breakdown).reduce((s, v) => s + v, 0)
-
-    // compute average CPA across accounts that generated commissions (exclude zero-commission accounts)
-    let payingCount = 0
-    if (hasCommissionsCol) {
-      payingCount = rows.reduce((c, r) => c + (parseNum(r['commissions']) > 0 ? 1 : 0), 0)
-    } else {
-      payingCount = rows.reduce((c, r) => {
-        const rowSum = commKeys.reduce((s, k) => s + parseNum(r[k]), 0)
-        return c + (rowSum > 0 ? 1 : 0)
-      }, 0)
-    }
-    const avgCpaRegistrations = payingCount ? commTotal / payingCount : 0
-    return { total: commTotal, breakdown, payingCount, avgPerPayingAccount: avgCpaRegistrations }
-  }, [filteredCsvRows, yearFilter])
+    const y = Number(yearFilter)
+    if (isNaN(y)) return null
+    const m = regCommissionsByYear || null
+    if (!m) return null
+    return m[String(y)] || null
+  }, [regCommissionsByYear, yearFilter])
 
   const displayRegCommissionsSummary =
     yearFilter && yearFilter !== 'all' ? filteredRegCommissionsSummary : regCommissionsSummary

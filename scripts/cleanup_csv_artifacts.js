@@ -6,7 +6,8 @@ Default mode is DRY-RUN (prints what would be deleted).
 Targets (conservative):
 - Root tmp_*.csv
 - uploads/_stream_*.csv (smoke tests)
-- public/raw/*_raw.*.csv and public/raw/*duplicates.*.csv
+- artifacts/raw/*_raw.*.csv and artifacts/raw/*duplicates.*.csv
+- public/raw/*_raw.*.csv and public/raw/*duplicates.*.csv (legacy)
 - public/*.bak (only the auto backups created by sanitizers)
 
 It does NOT touch canonical reports:
@@ -103,28 +104,36 @@ function main() {
     }
   }
 
-  // 3) public/raw backups and duplicates (keep newest few, delete older than DAYS)
-  const rawDir = path.join(repoRoot, 'public', 'raw')
-  const rawFilesAllCsv = listFiles(rawDir).filter(f => /\.csv$/i.test(f.name))
-  const rawFiles = (ALL_BACKUPS || PURGE_RAW)
-    ? rawFilesAllCsv
-    : rawFilesAllCsv.filter(f => /(_raw\.|duplicates\.)/i.test(f.name))
+  // 3) raw backups and duplicates (keep newest few, delete older than DAYS)
+  // New location: artifacts/raw (keeps backups out of Vite publicDir to avoid bloating dist/)
+  // Legacy location: public/raw
+  const rawDirs = [
+    { label: 'artifacts/raw', dir: path.join(repoRoot, 'artifacts', 'raw') },
+    { label: 'public/raw', dir: path.join(repoRoot, 'public', 'raw') },
+  ]
 
-  const byPrefix = new Map()
-  for (const f of rawFiles) {
-    const prefix = f.name.split('.')[0] // payments_raw / registrations_raw / registrations_duplicates / media_raw
-    if (!byPrefix.has(prefix)) byPrefix.set(prefix, [])
-    byPrefix.get(prefix).push(f)
-  }
+  for (const { label, dir } of rawDirs) {
+    const rawFilesAllCsv = listFiles(dir).filter(f => /\.csv$/i.test(f.name))
+    const rawFiles = (ALL_BACKUPS || PURGE_RAW)
+      ? rawFilesAllCsv
+      : rawFilesAllCsv.filter(f => /(_raw\.|duplicates\.)/i.test(f.name))
 
-  for (const [prefix, files] of byPrefix.entries()) {
-    const del = pickOld(
-      files,
-      KEEP_RAW,
-      cutoffMs,
-      () => `public/raw ${prefix} (keep ${KEEP_RAW}, older than ${DAYS}d)`
-    )
-    targets.push(...del)
+    const byPrefix = new Map()
+    for (const f of rawFiles) {
+      const prefix = f.name.split('.')[0] // payments_raw / registrations_raw / registrations_duplicates / media_raw
+      if (!byPrefix.has(prefix)) byPrefix.set(prefix, [])
+      byPrefix.get(prefix).push(f)
+    }
+
+    for (const [prefix, files] of byPrefix.entries()) {
+      const del = pickOld(
+        files,
+        KEEP_RAW,
+        cutoffMs,
+        () => `${label} ${prefix} (keep ${KEEP_RAW}, older than ${DAYS}d)`
+      )
+      targets.push(...del)
+    }
   }
 
   // 4) public/*.bak (keep newest KEEP_BAK, delete older than DAYS)
