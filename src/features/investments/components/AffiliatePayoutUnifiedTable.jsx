@@ -572,6 +572,19 @@ export default function AffiliatePayoutUnifiedTable({
     return unifiedColumnVisibility?.[id] !== false
   }
 
+  const isUnifiedVisibleEffective = (id) => {
+    const key = String(id || '')
+    if (!key) return false
+    if (!key.endsWith('|delta')) return isUnifiedVisible(key)
+
+    // Rule: if a metric column is hidden, the delta for that metric must disappear too.
+    // Delta is only meaningful when BOTH sources are visible.
+    const metricKey = key.slice(0, -'|delta'.length)
+    const baseVisible =
+      isUnifiedVisible(`${metricKey}|cellx`) && isUnifiedVisible(`${metricKey}|creolabs`)
+    return baseVisible && isUnifiedVisible(key)
+  }
+
   const toggleUnifiedColumn = (id) => {
     setUnifiedColumnVisibility((prev) => {
       if (unifiedLockedColumns.has(id)) return prev
@@ -586,7 +599,7 @@ export default function AffiliatePayoutUnifiedTable({
 
   const unifiedVisibleColumnsCount = Math.max(
     1,
-    unifiedColumns.reduce((acc, c) => acc + (isUnifiedVisible(c.id) ? 1 : 0), 0)
+    unifiedColumns.reduce((acc, c) => acc + (isUnifiedVisibleEffective(c.id) ? 1 : 0), 0)
   )
 
   const deltaColumnCellStyle = {
@@ -1177,7 +1190,7 @@ export default function AffiliatePayoutUnifiedTable({
 
   const defaultSortSideForMetric = (m) => {
     if (m.layout === 'compare') {
-      if (isUnifiedVisible(`${m.key}|delta`)) return 'delta'
+      if (isUnifiedVisibleEffective(`${m.key}|delta`)) return 'delta'
       if (isUnifiedVisible(`${m.key}|cellx`)) return 'cellx'
       if (isUnifiedVisible(`${m.key}|creolabs`)) return 'creolabs'
       return 'delta'
@@ -1252,7 +1265,7 @@ export default function AffiliatePayoutUnifiedTable({
                 m.layout === 'compare'
                   ? (isUnifiedVisible(`${m.key}|cellx`) ? 1 : 0) +
                     (isUnifiedVisible(`${m.key}|creolabs`) ? 1 : 0) +
-                    (isUnifiedVisible(`${m.key}|delta`) ? 1 : 0)
+                    (isUnifiedVisibleEffective(`${m.key}|delta`) ? 1 : 0)
                   : isUnifiedVisible(`${m.key}|cellx`)
                     ? 1
                     : 0
@@ -1279,7 +1292,8 @@ export default function AffiliatePayoutUnifiedTable({
             {activeMetrics.map((m) => {
               const showCellx = isUnifiedVisible(`${m.key}|cellx`)
               const showCreolabs = m.layout === 'compare' && isUnifiedVisible(`${m.key}|creolabs`)
-              const showDelta = m.layout === 'compare' && isUnifiedVisible(`${m.key}|delta`)
+              const showDelta =
+                m.layout === 'compare' && isUnifiedVisibleEffective(`${m.key}|delta`)
 
               if (!showCellx && !showCreolabs && !showDelta) return null
               return (
@@ -1359,7 +1373,8 @@ export default function AffiliatePayoutUnifiedTable({
               {activeMetrics.map((m) => {
                 const showCellx = isUnifiedVisible(`${m.key}|cellx`)
                 const showCreolabs = m.layout === 'compare' && isUnifiedVisible(`${m.key}|creolabs`)
-                const showDelta = m.layout === 'compare' && isUnifiedVisible(`${m.key}|delta`)
+                const showDelta =
+                  m.layout === 'compare' && isUnifiedVisibleEffective(`${m.key}|delta`)
                 if (!showCellx && !showCreolabs && !showDelta) return null
                 return (
                   <React.Fragment key={`tot-${m.key}`}>
@@ -1433,7 +1448,8 @@ export default function AffiliatePayoutUnifiedTable({
                     const showCellx = isUnifiedVisible(`${m.key}|cellx`)
                     const showCreolabs =
                       m.layout === 'compare' && isUnifiedVisible(`${m.key}|creolabs`)
-                    const showDelta = m.layout === 'compare' && isUnifiedVisible(`${m.key}|delta`)
+                    const showDelta =
+                      m.layout === 'compare' && isUnifiedVisibleEffective(`${m.key}|delta`)
                     if (!showCellx && !showCreolabs && !showDelta) return null
 
                     return (
