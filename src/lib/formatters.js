@@ -1,25 +1,25 @@
 const defaultNumberFormat = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
-});
+})
 
 export function formatNumber(value, opts) {
-  const num = Number(value || 0);
-  if (!opts) return defaultNumberFormat.format(num);
-  const formatter = new Intl.NumberFormat('en-GB', opts);
-  return formatter.format(num);
+  const num = Number(value || 0)
+  if (!opts) return defaultNumberFormat.format(num)
+  const formatter = new Intl.NumberFormat('en-GB', opts)
+  return formatter.format(num)
 }
 
 export function formatNumberShort(value) {
-  const num = Number(value || 0);
-  const abs = Math.abs(num);
-  if (abs >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (abs >= 1000) return `${Math.round(num / 1000)}K`;
-  return defaultNumberFormat.format(Math.round(num));
+  const num = Number(value || 0)
+  const abs = Math.abs(num)
+  if (abs >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
+  if (abs >= 1000) return `${Math.round(num / 1000)}K`
+  return defaultNumberFormat.format(Math.round(num))
 }
 
 export function formatEuro(value) {
-  return `€${formatNumberShort(value)}`;
+  return `€${formatNumberShort(value)}`
 }
 
 const euroFullFormatter = new Intl.NumberFormat('en-GB', {
@@ -27,54 +27,69 @@ const euroFullFormatter = new Intl.NumberFormat('en-GB', {
   currency: 'EUR',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
-});
+})
+
+const euroFullNoDecimalsFormatter = new Intl.NumberFormat('en-GB', {
+  style: 'currency',
+  currency: 'EUR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+})
 
 export function formatEuroFull(value) {
-  return euroFullFormatter.format(Number(value || 0));
+  return euroFullFormatter.format(Number(value || 0))
+}
+
+export function formatEuroFullNoDecimals(value) {
+  return euroFullNoDecimalsFormatter.format(Number(value || 0))
 }
 
 export function formatPercent(value, digits = 1) {
-  return `${Number(value || 0).toFixed(digits)}%`;
+  return `${Number(value || 0).toFixed(digits)}%`
 }
 
 export function formatPercentRounded(value) {
-  return `${Math.round(Number(value || 0))}%`;
+  return `${Math.round(Number(value || 0))}%`
 }
 
 export function cleanNumber(value) {
-  if (value === null || value === undefined) return 0;
-  const str = String(value).replace(/[$,]/g, '').trim();
-  if (!str) return 0;
-  const num = Number(str);
-  return Number.isNaN(num) ? 0 : num;
+  if (value === null || value === undefined) return 0
+  const str = String(value).replace(/[$,]/g, '').trim()
+  if (!str) return 0
+  const num = Number(str)
+  return Number.isNaN(num) ? 0 : num
 }
 
 export function cleanPercent(value) {
-  if (value === null || value === undefined) return 0;
-  const str = String(value).replace(/%/g, '').trim();
-  const num = Number(str);
-  return Number.isNaN(num) ? 0 : num;
+  if (value === null || value === undefined) return 0
+  const str = String(value).replace(/%/g, '').trim()
+  const num = Number(str)
+  return Number.isNaN(num) ? 0 : num
 }
 
 export function normalizeKey(str = '') {
-  return str.trim().toLowerCase();
+  return str.trim().toLowerCase()
 }
 
 // New helper for normalizing affiliate names
 export function normalizeAffiliateName(name) {
-  if (!name || typeof name !== 'string') return '';
-  return name.trim().toLowerCase().replace(/\s+/g, ' ').replace(/[^a-z0-9 ]/g, '');
+  if (!name || typeof name !== 'string') return ''
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[^a-z0-9 ]/g, '')
 }
 
 // Normalize affiliate key: lowercase, trim, replace multiple spaces with single, remove spaces/underscores/hyphens, keep only [a-z0-9]
 export function normalizeAffiliateKey(str) {
-  if (!str || typeof str !== 'string') return '';
+  if (!str || typeof str !== 'string') return ''
   return str
     .toLowerCase()
     .trim()
     .replace(/\s+/g, ' ')
     .replace(/[ \-_]/g, '')
-    .replace(/[^a-z0-9]/g, '');
+    .replace(/[^a-z0-9]/g, '')
 }
 
 export const formatters = {
@@ -82,11 +97,12 @@ export const formatters = {
   formatNumberShort,
   formatEuro,
   formatEuroFull,
+  formatEuroFullNoDecimals,
   formatPercent,
   formatPercentRounded,
   cleanNumber,
   cleanPercent,
   normalizeKey,
-};
+}
 
-export default formatters;
+export default formatters
