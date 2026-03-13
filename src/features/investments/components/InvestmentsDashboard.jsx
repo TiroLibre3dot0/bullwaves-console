@@ -36,8 +36,9 @@ const formatNumberFull = (value) => formatNumber(value)
 const INVESTMENTS_SOURCE_KEY = 'investments-data-source'
 const INVESTMENTS_VIEW_MODE_KEY = 'investments-view-mode'
 
-const roiPillStyle = (roi) => {
-  const isPositive = Number(roi) > 0
+const roiPillStyleRatio = (roiRatio) => {
+  const ratio = Number(roiRatio)
+  const isGood = Number.isFinite(ratio) ? ratio >= 1.5 : false
   return {
     display: 'inline-block',
     padding: '3px 10px',
@@ -45,9 +46,9 @@ const roiPillStyle = (roi) => {
     fontSize: 12,
     fontWeight: 700,
     letterSpacing: 0.2,
-    border: `1px solid ${isPositive ? 'rgba(52,211,153,0.35)' : 'rgba(248,113,113,0.35)'}`,
-    background: isPositive ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)',
-    color: isPositive ? '#34d399' : '#f87171',
+    border: `1px solid ${isGood ? 'rgba(52,211,153,0.35)' : 'rgba(248,113,113,0.35)'}`,
+    background: isGood ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)',
+    color: isGood ? '#34d399' : '#f87171',
   }
 }
 const toIntlLocale = (locale) => {
@@ -216,8 +217,13 @@ function ModeControls({
   sourceDisabled = false,
   sourceHint,
 }) {
+  const effectiveSource =
+    viewMode === 'unified' && dataSource !== 'cellxpert' && dataSource !== 'creolabs'
+      ? 'cellxpert'
+      : dataSource
   const cellxpertLabel = t('investments.source.cellxpert')
   const creolabsLabel = t('investments.source.creolabs')
+  const mixedLabel = t('investments.source.mixed')
   const singleModeLabel = t('investments.viewMode.single')
   const unifiedModeLabel = t('investments.viewMode.unified')
 
@@ -275,9 +281,33 @@ function ModeControls({
         aria-label={t('investments.filters.source')}
         title={sourceHint}
       >
+        {viewMode === 'single' ? (
+          <button
+            type="button"
+            className={effectiveSource === 'mixed' ? 'btn' : 'btn secondary'}
+            onClick={sourceDisabled ? undefined : () => requestDataSource('mixed')}
+            disabled={sourceDisabled}
+            aria-disabled={sourceDisabled ? 'true' : undefined}
+            style={{
+              padding: '6px 12px',
+              fontSize: 12,
+              fontWeight: 800,
+              borderRadius: 999,
+              whiteSpace: 'nowrap',
+              ...(effectiveSource === 'mixed'
+                ? {}
+                : {
+                    background: 'transparent',
+                    opacity: 0.85,
+                  }),
+            }}
+          >
+            {mixedLabel}
+          </button>
+        ) : null}
         <button
           type="button"
-          className={dataSource === 'cellxpert' ? 'btn' : 'btn secondary'}
+          className={effectiveSource === 'cellxpert' ? 'btn' : 'btn secondary'}
           onClick={sourceDisabled ? undefined : () => requestDataSource('cellxpert')}
           disabled={sourceDisabled}
           aria-disabled={sourceDisabled ? 'true' : undefined}
@@ -287,7 +317,7 @@ function ModeControls({
             fontWeight: 800,
             borderRadius: 999,
             whiteSpace: 'nowrap',
-            ...(dataSource === 'cellxpert'
+            ...(effectiveSource === 'cellxpert'
               ? {}
               : {
                   background: 'transparent',
@@ -299,7 +329,7 @@ function ModeControls({
         </button>
         <button
           type="button"
-          className={dataSource === 'creolabs' ? 'btn' : 'btn secondary'}
+          className={effectiveSource === 'creolabs' ? 'btn' : 'btn secondary'}
           onClick={sourceDisabled ? undefined : () => requestDataSource('creolabs')}
           disabled={sourceDisabled}
           aria-disabled={sourceDisabled ? 'true' : undefined}
@@ -309,7 +339,7 @@ function ModeControls({
             fontWeight: 800,
             borderRadius: 999,
             whiteSpace: 'nowrap',
-            ...(dataSource === 'creolabs'
+            ...(effectiveSource === 'creolabs'
               ? {}
               : {
                   background: 'transparent',
@@ -340,6 +370,9 @@ export default function InvestmentsDashboard(props) {
   const [viewMode, setViewMode] = useState(() => {
     const initial = String(initialViewMode || '').trim()
     if (initial === 'single' || initial === 'unified') return initial
+
+    if (isPublicShare) return 'single'
+
     try {
       const stored = String(localStorage.getItem(INVESTMENTS_VIEW_MODE_KEY) || '').trim()
       if (stored === 'single' || stored === 'unified') return stored
@@ -350,6 +383,7 @@ export default function InvestmentsDashboard(props) {
   })
 
   useEffect(() => {
+    if (isPublicShare) return
     try {
       localStorage.setItem(INVESTMENTS_VIEW_MODE_KEY, viewMode)
     } catch {
@@ -405,14 +439,17 @@ export default function InvestmentsDashboard(props) {
 
   const [dataSource, setDataSource] = useState(() => {
     const initial = String(initialSource || '').trim()
-    if (initial === 'cellxpert' || initial === 'creolabs') return initial
+    if (initial === 'cellxpert' || initial === 'creolabs' || initial === 'mixed') return initial
+
+    if (isPublicShare) return 'mixed'
+
     try {
       const stored = String(localStorage.getItem(INVESTMENTS_SOURCE_KEY) || '').trim()
-      if (stored === 'cellxpert' || stored === 'creolabs') return stored
+      if (stored === 'cellxpert' || stored === 'creolabs' || stored === 'mixed') return stored
     } catch {
       // ignore
     }
-    return 'cellxpert'
+    return 'mixed'
   })
 
   // Payments columns are shown for both sources.
@@ -420,6 +457,7 @@ export default function InvestmentsDashboard(props) {
   const showCommissionColumns = true
 
   useEffect(() => {
+    if (isPublicShare) return
     try {
       localStorage.setItem(INVESTMENTS_SOURCE_KEY, dataSource)
     } catch {
@@ -434,7 +472,9 @@ export default function InvestmentsDashboard(props) {
     viewMode === 'unified' ||
     displayViewMode === 'unified' ||
     dataSource === 'creolabs' ||
-    displaySource === 'creolabs'
+    displaySource === 'creolabs' ||
+    dataSource === 'mixed' ||
+    displaySource === 'mixed'
 
   const [creolabsClientRows, setCreolabsClientRows] = useState([])
   const [creolabsClientsLoading, setCreolabsClientsLoading] = useState(false)
@@ -471,10 +511,17 @@ export default function InvestmentsDashboard(props) {
   }, [shouldLoadCreolabsClients])
 
   const selectedActiveData = dataSource === 'creolabs' ? creolabs : cellxpert
-  const selectedLoading = Boolean(selectedActiveData?.loading)
+  const selectedLoading =
+    dataSource === 'mixed'
+      ? Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)
+      : Boolean(selectedActiveData?.loading)
 
   const displayActiveData = displaySource === 'creolabs' ? creolabs : cellxpert
-  const { payments, mediaRows, loading } = displayActiveData
+  const { payments, mediaRows, loading: rawLoading } = displayActiveData
+  const loading =
+    displaySource === 'mixed'
+      ? Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)
+      : Boolean(rawLoading)
 
   const [dataCache, setDataCache] = useState(() => ({
     cellxpert: { payments: [], mediaRows: [] },
@@ -564,6 +611,7 @@ export default function InvestmentsDashboard(props) {
   }
 
   const requestDataSource = (next) => {
+    if (next !== 'cellxpert' && next !== 'creolabs' && next !== 'mixed') return
     if (next === dataSource) return
     setDataSource(next)
     setSoftSwitchLoading(true)
@@ -577,7 +625,8 @@ export default function InvestmentsDashboard(props) {
     }
   }
 
-  const cached = dataCache[displaySource] || { payments: [], mediaRows: [] }
+  const cacheKey = displaySource === 'mixed' ? 'cellxpert' : displaySource
+  const cached = dataCache[cacheKey] || { payments: [], mediaRows: [] }
   const shownPayments = loading ? cached.payments : payments
   const shownMediaRows = loading ? cached.mediaRows : mediaRows
   const shouldShowFullLoader = loading && !shownPayments?.length && !shownMediaRows?.length
@@ -654,9 +703,11 @@ export default function InvestmentsDashboard(props) {
         : t('investments.viewMode.single')
       : displayViewMode === 'unified'
         ? t('investments.viewMode.unified')
-        : displaySource === 'creolabs'
-          ? t('investments.source.creolabs')
-          : t('investments.source.cellxpert'),
+        : displaySource === 'mixed'
+          ? t('investments.source.mixed')
+          : displaySource === 'creolabs'
+            ? t('investments.source.creolabs')
+            : t('investments.source.cellxpert'),
     hideTimelineChart,
     creolabsClientRows,
     creolabsClientsLoading,
@@ -681,6 +732,7 @@ export default function InvestmentsDashboard(props) {
       payments={shownPayments}
       mediaRows={shownMediaRows}
       cellxPaymentsForRoi={cellxShownPayments}
+      creolabsMediaRowsForMixed={creoShownMediaRows}
       showAllAffiliates={showAllAffiliates}
       setShowAllAffiliates={setShowAllAffiliates}
       expanded={expanded}
@@ -696,6 +748,7 @@ function InvestmentsDashboardContent({
   payments,
   mediaRows,
   cellxPaymentsForRoi,
+  creolabsMediaRowsForMixed,
   selectedYear,
   setSelectedYear,
   selectedMonth,
@@ -717,6 +770,10 @@ function InvestmentsDashboardContent({
   creolabsClientRows,
 }) {
   const [affiliateIndexById, setAffiliateIndexById] = useState(null)
+  const isMixed = dataSource === 'mixed'
+
+  const cellxSourceSuffix = isMixed ? ` (${t('investments.source.cellxpert')})` : ''
+  const creolabsSourceSuffix = isMixed ? ` (${t('investments.source.creolabs')})` : ''
 
   useEffect(() => {
     let cancelled = false
@@ -747,7 +804,7 @@ function InvestmentsDashboardContent({
   }, [searchDraft, setSearch])
 
   const effectivePayments = useMemo(() => {
-    if (dataSource === 'creolabs') {
+    if (dataSource === 'creolabs' || dataSource === 'mixed') {
       return Array.isArray(cellxPaymentsForRoi) ? cellxPaymentsForRoi : []
     }
     return Array.isArray(payments) ? payments : []
@@ -759,7 +816,7 @@ function InvestmentsDashboardContent({
 
     // For Creolabs single-source view we want the same payments column as CellXpert.
     // We therefore override the commission field per affiliate+month using CellXpert payments sums,
-    // so ROI (= netDeposits / commission - 1) uses these values as denominator.
+    // so ROI (= netDeposits / commission) uses these values as denominator.
     const paymentsByAffMonth = new Map()
     for (const p of effectivePayments) {
       const affiliateId = String(p?.affiliateId || p?.affiliate || '—').trim() || '—'
@@ -805,6 +862,23 @@ function InvestmentsDashboardContent({
     search,
   })
 
+  const mixedPlLedger = useAffiliateLedger({
+    mediaRows: isMixed && Array.isArray(creolabsMediaRowsForMixed) ? creolabsMediaRowsForMixed : [],
+    payments: [],
+    selectedYear,
+    selectedMonth,
+    // Mixed search filters on the Cellx (primary) dataset; avoid losing Creolabs P&L lookups.
+    search: '',
+  })
+
+  const mixedPlAllTimeLedger = useAffiliateLedger({
+    mediaRows: isMixed && Array.isArray(creolabsMediaRowsForMixed) ? creolabsMediaRowsForMixed : [],
+    payments: [],
+    selectedYear: 'all',
+    selectedMonth: 'all',
+    search: '',
+  })
+
   const scopeLatestByAffiliate = useMemo(() => {
     const map = new Map()
     ledger.ledger.forEach((row) => {
@@ -816,6 +890,8 @@ function InvestmentsDashboardContent({
       if (!map.has(key) || score > map.get(key).score) {
         map.set(key, {
           score,
+          year,
+          monthIndex,
           month: row.month,
           netDeposits: row.netDeposits,
           commission: row.commissionTotal,
@@ -896,8 +972,40 @@ function InvestmentsDashboardContent({
     }
   }, [affiliateIndexById, ledger?.affiliateSummaries])
 
+  const mixedPlByAffiliateMonth = useMemo(() => {
+    const out = new Map()
+    if (!isMixed) return out
+    ;(mixedPlLedger?.ledger || []).forEach((row) => {
+      const rawId = row?.affiliateId
+      const id = canonicalizeAffiliateId
+        ? canonicalizeAffiliateId(rawId)
+        : String(rawId || '').trim() || '—'
+      const year = Number(row?.year)
+      const monthIndex = Number(row?.monthIndex)
+      if (!id || !Number.isFinite(year) || !Number.isFinite(monthIndex) || monthIndex < 0) return
+      const key = `${id}|${year}|${monthIndex}`
+      out.set(key, Number(row?.pl) || 0)
+    })
+
+    return out
+  }, [isMixed, mixedPlLedger?.ledger, canonicalizeAffiliateId])
+
+  const mixedPlAllTimeByAffiliate = useMemo(() => {
+    const out = new Map()
+    if (!isMixed) return out
+    ;(mixedPlAllTimeLedger?.ledger || []).forEach((row) => {
+      const rawId = row?.affiliateId
+      const id = canonicalizeAffiliateId
+        ? canonicalizeAffiliateId(rawId)
+        : String(rawId || '').trim() || '—'
+      if (!id) return
+      out.set(id, (out.get(id) || 0) + (Number(row?.pl) || 0))
+    })
+    return out
+  }, [isMixed, mixedPlAllTimeLedger?.ledger, canonicalizeAffiliateId])
+
   const creolabsBalance = useMemo(() => {
-    if (dataSource !== 'creolabs') {
+    if (dataSource !== 'creolabs' && dataSource !== 'mixed') {
       return {
         available: false,
         wantMonth: null,
@@ -1047,28 +1155,66 @@ function InvestmentsDashboardContent({
     }
   }, [dataSource, creolabsClientRows, effectiveMonthKey, canonicalizeAffiliateId])
 
+  const roiFormulaTitle = useMemo(() => {
+    return t('investments.details.title.roiFormula')
+  }, [t])
+
+  const formatRoiCell = (value) => {
+    if (!Number.isFinite(Number(value))) return '—'
+    return formatRoiRatio(value, 2)
+  }
+
+  const formatRoiCellFull = (value) => {
+    if (!Number.isFinite(Number(value))) return '—'
+    return formatRoiRatio(value, 4)
+  }
+
   const singleColumnDefs = useMemo(() => {
     const cols = [
       { id: 'affiliate', label: 'Affiliate', width: 260 },
       { id: 'rank', label: 'Rank', width: 64 },
 
-      { id: 'netDepositsMonth', label: `Net Deposits (${monthRef})`, width: 132 },
-      { id: 'netDepositsEver', label: 'Net Deposits (All Time)', width: 132 },
+      {
+        id: 'netDepositsMonth',
+        label: `Net Deposits (${monthRef})${cellxSourceSuffix}`,
+        width: 132,
+      },
+      {
+        id: 'netDepositsEver',
+        label: `Net Deposits (All Time)${cellxSourceSuffix}`,
+        width: 132,
+      },
     ]
 
     if (showCommissionColumns) {
-      cols.push({ id: 'commissionMonth', label: `Commission (${monthRef})`, width: 132 })
-      cols.push({ id: 'commissionEver', label: 'Commission (All Time)', width: 132 })
+      cols.push({
+        id: 'commissionMonth',
+        label: `Commission (${monthRef})${cellxSourceSuffix}`,
+        width: 132,
+      })
+      cols.push({
+        id: 'commissionEver',
+        label: `Commission (All Time)${cellxSourceSuffix}`,
+        width: 132,
+      })
     }
 
-    cols.push({ id: 'plMonth', label: `P&L (${monthRef})`, width: 132 })
-    cols.push({ id: 'plEver', label: 'P&L (All Time)', width: 132 })
+    cols.push({ id: 'plMonth', label: `P&L (${monthRef})${creolabsSourceSuffix}`, width: 132 })
+    cols.push({ id: 'plEver', label: `P&L (All Time)${creolabsSourceSuffix}`, width: 132 })
 
-    cols.push({ id: 'roiMonth', label: `ROI (${monthRef})`, width: 112 })
-    cols.push({ id: 'roiEver', label: 'ROI (All Time)', width: 112 })
+    cols.push({ id: 'roiMonth', label: `ROI (${monthRef})${cellxSourceSuffix}`, width: 112 })
+    cols.push({ id: 'roiEver', label: `ROI (All Time)${cellxSourceSuffix}`, width: 112 })
 
-    cols.push({ id: 'balanceMonth', label: `Balance (${monthRef})`, width: 150 })
-    cols.push({ id: 'balanceEver', label: 'Balance (Historic AVG)', width: 150 })
+    cols.push({
+      id: 'balanceMonth',
+      label: `Balance (${monthRef})${creolabsSourceSuffix}`,
+      width: 150,
+    })
+    cols.push({
+      id: 'balanceEver',
+      label: `Balance (Historic AVG)${creolabsSourceSuffix}`,
+      width: 150,
+    })
 
     if (!isPublicShare) {
       cols.push({ id: 'lastMonth', label: 'Last Month', width: 120 })
@@ -1077,7 +1223,7 @@ function InvestmentsDashboardContent({
     cols.push({ id: 'details', label: 'Details', width: 140 })
 
     return cols
-  }, [monthRef, showCommissionColumns, isPublicShare])
+  }, [monthRef, showCommissionColumns, isPublicShare, cellxSourceSuffix, creolabsSourceSuffix])
 
   const singleDefaultVisibility = useMemo(() => {
     const out = {}
@@ -1136,11 +1282,20 @@ function InvestmentsDashboardContent({
       if (row.month !== scopeLatestMonth) return
       acc.netDeposits += Number(row.netDeposits) || 0
       acc.commission += Number(row.commissionTotal) || 0
-      acc.pl += Number(row.pl) || 0
+      if (isMixed) {
+        const canonicalId = canonicalizeAffiliateId
+          ? canonicalizeAffiliateId(row?.affiliateId)
+          : String(row?.affiliateId || '').trim() || '—'
+        const key = `${canonicalId}|${Number(row.year)}|${Number(row.monthIndex)}`
+        acc.pl += Number(mixedPlByAffiliateMonth.get(key)) || 0
+      } else {
+        acc.pl += Number(row.pl) || 0
+      }
     })
-    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+
+    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission : Number.NaN
     return acc
-  }, [ledger.ledger, scopeLatestMonth])
+  }, [ledger.ledger, scopeLatestMonth, isMixed, mixedPlByAffiliateMonth, canonicalizeAffiliateId])
 
   const allTimeByAffiliate = useMemo(() => {
     const map = new Map()
@@ -1153,7 +1308,7 @@ function InvestmentsDashboardContent({
       acc.pl += Number(row.pl) || 0
     })
     map.forEach((acc) => {
-      acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+      acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission : Number.NaN
     })
     return map
   }, [allTimeLedger.ledger])
@@ -1165,11 +1320,25 @@ function InvestmentsDashboardContent({
       if (!entry) return
       acc.netDeposits += entry.netDeposits
       acc.commission += entry.commission
-      acc.pl += entry.pl
+      if (isMixed) {
+        const canonicalId = canonicalizeAffiliateId
+          ? canonicalizeAffiliateId(a?.affiliateId)
+          : String(a?.affiliateId || '').trim() || '—'
+        acc.pl += Number(mixedPlAllTimeByAffiliate.get(canonicalId)) || 0
+      } else {
+        acc.pl += entry.pl
+      }
     })
-    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission - 1 : 0
+
+    acc.roi = acc.commission > 0 ? acc.netDeposits / acc.commission : Number.NaN
     return acc
-  }, [ledger.affiliateSummaries, allTimeByAffiliate])
+  }, [
+    ledger.affiliateSummaries,
+    allTimeByAffiliate,
+    isMixed,
+    mixedPlAllTimeByAffiliate,
+    canonicalizeAffiliateId,
+  ])
 
   const balanceTotals = useMemo(() => {
     if (!creolabsBalance.available) {
@@ -1416,10 +1585,14 @@ function InvestmentsDashboardContent({
               />
               <KpiCard
                 label={t('investments.kpi.roi')}
-                value={formatRoiRatio(ledger.totals.totalRoi, 2)}
-                helper={formatRoiRatio(ledger.totals.totalRoi, 4)}
-                fullValue={t('investments.details.title.roiFormula')}
-                tone={ledger.totals.totalRoi > 0 ? '#34d399' : '#f87171'}
+                value={formatRoiCell(ledger.totals.totalRoi)}
+                helper={formatRoiCellFull(ledger.totals.totalRoi)}
+                fullValue={roiFormulaTitle}
+                tone={(() => {
+                  const v = ledger.totals.totalRoi
+                  if (!Number.isFinite(Number(v))) return '#f87171'
+                  return Number(v) >= 1.5 ? '#34d399' : '#f87171'
+                })()}
               />
               <KpiCard
                 label={t('investments.kpi.paid')}
@@ -1515,7 +1688,7 @@ function InvestmentsDashboardContent({
                         className="payout-summary-group"
                         style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
                       >
-                        Net Deposits
+                        {`Net Deposits${cellxSourceSuffix}`}
                       </th>
                     )
                   })()}
@@ -1530,9 +1703,13 @@ function InvestmentsDashboardContent({
                             colSpan={span}
                             className="payout-summary-group payout-summary-group-sep"
                             style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                            title="Commission (Payments)"
+                            title={
+                              dataSource === 'creolabs'
+                                ? 'Commission (from CellX Payments)'
+                                : 'Commission (from CellX Media Report)'
+                            }
                           >
-                            Commission
+                            {`Commission${cellxSourceSuffix}`}
                           </th>
                         )
                       })()
@@ -1547,7 +1724,7 @@ function InvestmentsDashboardContent({
                         className="payout-summary-group payout-summary-group-sep"
                         style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
                       >
-                        P&L
+                        {`P&L${creolabsSourceSuffix}`}
                       </th>
                     )
                   })()}
@@ -1560,9 +1737,9 @@ function InvestmentsDashboardContent({
                         colSpan={span}
                         className="payout-summary-group payout-summary-group-sep"
                         style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
-                        title="ROI = Net Deposits / Commission (Payments) - 1"
+                        title={roiFormulaTitle}
                       >
-                        ROI
+                        {`ROI${cellxSourceSuffix}`}
                       </th>
                     )
                   })()}
@@ -1578,7 +1755,7 @@ function InvestmentsDashboardContent({
                         style={{ textAlign: 'center', whiteSpace: 'nowrap' }}
                         title="Balance (per month) = SUM(max client balances). Balance (Historic AVG) = average of monthly snapshots."
                       >
-                        Balance
+                        {`Balance${creolabsSourceSuffix}`}
                       </th>
                     )
                   })()}
@@ -1700,7 +1877,7 @@ function InvestmentsDashboardContent({
                         cursor: 'pointer',
                         userSelect: 'none',
                       }}
-                      title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}\nClick to hide`}
+                      title={`${roiFormulaTitle}\nTotals for ${monthRef}\nClick to hide`}
                       onClick={() => toggleSingleColumn('roiMonth')}
                     >
                       {monthRef}
@@ -1717,7 +1894,7 @@ function InvestmentsDashboardContent({
                         cursor: 'pointer',
                         userSelect: 'none',
                       }}
-                      title="ROI = Net Deposits / Commission (Payments) - 1\nAll Time\nClick to hide"
+                      title={`${roiFormulaTitle}\nAll Time\nClick to hide`}
                       onClick={() => toggleSingleColumn('roiEver')}
                     >
                       All Time
@@ -1837,22 +2014,30 @@ function InvestmentsDashboardContent({
                     <td
                       style={{ textAlign: 'right' }}
                       className="num payout-summary-group-sep"
-                      title={`ROI = Net Deposits / Commission (Payments) - 1\nTotals for ${monthRef}\n${formatRoiRatio(scopeMonthTotals.roi, 4)}`}
+                      title={`${roiFormulaTitle}\nTotals for ${monthRef}\n${formatRoiCellFull(scopeMonthTotals.roi)}`}
                     >
-                      <span style={roiPillStyle(scopeMonthTotals.roi)}>
-                        {formatRoiRatio(scopeMonthTotals.roi, 2)}
-                      </span>
+                      {Number.isFinite(Number(scopeMonthTotals.roi)) ? (
+                        <span style={roiPillStyleRatio(scopeMonthTotals.roi)}>
+                          {formatRoiCell(scopeMonthTotals.roi)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                   ) : null}
                   {isSingleVisible('roiEver') ? (
                     <td
                       style={{ textAlign: 'right' }}
                       className={`num${!isSingleVisible('roiMonth') ? ' payout-summary-group-sep' : ''}`}
-                      title={`ROI = Net Deposits / Commission (Payments) - 1\nAll Time\n${formatRoiRatio(allTimeVisibleTotals.roi, 4)}`}
+                      title={`${roiFormulaTitle}\nAll Time\n${formatRoiCellFull(allTimeVisibleTotals.roi)}`}
                     >
-                      <span style={roiPillStyle(allTimeVisibleTotals.roi)}>
-                        {formatRoiRatio(allTimeVisibleTotals.roi, 2)}
-                      </span>
+                      {Number.isFinite(Number(allTimeVisibleTotals.roi)) ? (
+                        <span style={roiPillStyleRatio(allTimeVisibleTotals.roi)}>
+                          {formatRoiCell(allTimeVisibleTotals.roi)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </td>
                   ) : null}
 
@@ -1968,16 +2153,50 @@ function InvestmentsDashboardContent({
                         <td
                           style={{
                             textAlign: 'right',
-                            color:
-                              (scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
-                                ? '#34d399'
-                                : '#f87171',
+                            color: (() => {
+                              if (!isMixed) {
+                                return (scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                                  ? '#34d399'
+                                  : '#f87171'
+                              }
+
+                              const latest = scopeLatestByAffiliate.get(a.affiliateId)
+                              if (!latest) return '#94a3b8'
+                              const canonicalId = canonicalizeAffiliateId
+                                ? canonicalizeAffiliateId(a?.affiliateId)
+                                : String(a?.affiliateId || '').trim() || '—'
+                              const key = `${canonicalId}|${Number(latest.year)}|${Number(latest.monthIndex)}`
+                              const v = Number(mixedPlByAffiliateMonth.get(key)) || 0
+                              return v >= 0 ? '#34d399' : '#f87171'
+                            })(),
                           }}
                           className="num payout-summary-group-sep"
-                          title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFullNoDecimals(scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                          title={`${t('investments.details.title.scopeMonthAffiliate')}\n${formatEuroFullNoDecimals(
+                            (() => {
+                              if (!isMixed)
+                                return scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0
+                              const latest = scopeLatestByAffiliate.get(a.affiliateId)
+                              if (!latest) return 0
+                              const canonicalId = canonicalizeAffiliateId
+                                ? canonicalizeAffiliateId(a?.affiliateId)
+                                : String(a?.affiliateId || '').trim() || '—'
+                              const key = `${canonicalId}|${Number(latest.year)}|${Number(latest.monthIndex)}`
+                              return Number(mixedPlByAffiliateMonth.get(key)) || 0
+                            })()
+                          )}`}
                         >
                           {formatEuroFullNoDecimals(
-                            scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0
+                            (() => {
+                              if (!isMixed)
+                                return scopeLatestByAffiliate.get(a.affiliateId)?.pl || 0
+                              const latest = scopeLatestByAffiliate.get(a.affiliateId)
+                              if (!latest) return 0
+                              const canonicalId = canonicalizeAffiliateId
+                                ? canonicalizeAffiliateId(a?.affiliateId)
+                                : String(a?.affiliateId || '').trim() || '—'
+                              const key = `${canonicalId}|${Number(latest.year)}|${Number(latest.monthIndex)}`
+                              return Number(mixedPlByAffiliateMonth.get(key)) || 0
+                            })()
                           )}
                         </td>
                       ) : null}
@@ -1985,15 +2204,43 @@ function InvestmentsDashboardContent({
                         <td
                           style={{
                             textAlign: 'right',
-                            color:
-                              (allTimeByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
-                                ? '#34d399'
-                                : '#f87171',
+                            color: (() => {
+                              if (!isMixed) {
+                                return (allTimeByAffiliate.get(a.affiliateId)?.pl || 0) >= 0
+                                  ? '#34d399'
+                                  : '#f87171'
+                              }
+                              const canonicalId = canonicalizeAffiliateId
+                                ? canonicalizeAffiliateId(a?.affiliateId)
+                                : String(a?.affiliateId || '').trim() || '—'
+                              const v = Number(mixedPlAllTimeByAffiliate.get(canonicalId)) || 0
+                              return v >= 0 ? '#34d399' : '#f87171'
+                            })(),
                           }}
                           className={`num${!isSingleVisible('plMonth') ? ' payout-summary-group-sep' : ''}`}
-                          title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFullNoDecimals(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}`}
+                          title={`${t('investments.details.title.scopeEverAffiliate')}\n${formatEuroFullNoDecimals(
+                            isMixed
+                              ? Number(
+                                  mixedPlAllTimeByAffiliate.get(
+                                    canonicalizeAffiliateId
+                                      ? canonicalizeAffiliateId(a?.affiliateId)
+                                      : String(a?.affiliateId || '').trim() || '—'
+                                  )
+                                ) || 0
+                              : allTimeByAffiliate.get(a.affiliateId)?.pl || 0
+                          )}`}
                         >
-                          {formatEuroFullNoDecimals(allTimeByAffiliate.get(a.affiliateId)?.pl || 0)}
+                          {formatEuroFullNoDecimals(
+                            isMixed
+                              ? Number(
+                                  mixedPlAllTimeByAffiliate.get(
+                                    canonicalizeAffiliateId
+                                      ? canonicalizeAffiliateId(a?.affiliateId)
+                                      : String(a?.affiliateId || '').trim() || '—'
+                                  )
+                                ) || 0
+                              : allTimeByAffiliate.get(a.affiliateId)?.pl || 0
+                          )}
                         </td>
                       ) : null}
 
@@ -2001,28 +2248,44 @@ function InvestmentsDashboardContent({
                         <td
                           style={{ textAlign: 'right' }}
                           className="num payout-summary-group-sep"
-                          title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeMonthAffiliate')}\n${formatRoiRatio(scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0, 4)}`}
+                          title={`${roiFormulaTitle}\n${t('investments.details.title.scopeMonthAffiliate')}\n${formatRoiCellFull(
+                            (() => {
+                              const latest = scopeLatestByAffiliate.get(a.affiliateId)
+                              if (!latest) return Number.NaN
+                              return latest.roi
+                            })()
+                          )}`}
                         >
-                          <span
-                            style={roiPillStyle(
-                              scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0
-                            )}
-                          >
-                            {formatRoiRatio(scopeLatestByAffiliate.get(a.affiliateId)?.roi || 0, 2)}
-                          </span>
+                          {(() => {
+                            const latest = scopeLatestByAffiliate.get(a.affiliateId)
+                            const v = latest ? latest.roi : Number.NaN
+
+                            if (!Number.isFinite(Number(v))) return '—'
+
+                            return <span style={roiPillStyleRatio(v)}>{formatRoiCell(v)}</span>
+                          })()}
                         </td>
                       ) : null}
                       {isSingleVisible('roiEver') ? (
                         <td
                           style={{ textAlign: 'right' }}
                           className={`num${!isSingleVisible('roiMonth') ? ' payout-summary-group-sep' : ''}`}
-                          title={`${t('investments.details.title.roiFormula')}\n${t('investments.details.title.scopeEverAffiliate')}\n${formatRoiRatio(allTimeByAffiliate.get(a.affiliateId)?.roi || 0, 4)}`}
+                          title={`${roiFormulaTitle}\n${t('investments.details.title.scopeEverAffiliate')}\n${formatRoiCellFull(
+                            (() => {
+                              const entry = allTimeByAffiliate.get(a.affiliateId)
+                              if (!entry) return Number.NaN
+                              return entry.roi
+                            })()
+                          )}`}
                         >
-                          <span
-                            style={roiPillStyle(allTimeByAffiliate.get(a.affiliateId)?.roi || 0)}
-                          >
-                            {formatRoiRatio(allTimeByAffiliate.get(a.affiliateId)?.roi || 0, 2)}
-                          </span>
+                          {(() => {
+                            const entry = allTimeByAffiliate.get(a.affiliateId)
+                            const v = entry ? entry.roi : Number.NaN
+
+                            if (!Number.isFinite(Number(v))) return '—'
+
+                            return <span style={roiPillStyleRatio(v)}>{formatRoiCell(v)}</span>
+                          })()}
                         </td>
                       ) : null}
 
@@ -2116,19 +2379,16 @@ function InvestmentsDashboardContent({
                                     {t('investments.details.header.qftd')}
                                   </th>
                                   <th style={{ textAlign: 'right' }}>
-                                    {t('investments.details.header.netDeposits')}
+                                    {`${t('investments.details.header.netDeposits')}${cellxSourceSuffix}`}
                                   </th>
                                   <th style={{ textAlign: 'right' }}>
-                                    {t('investments.details.header.commissions')}
+                                    {`${t('investments.details.header.commissions')}${cellxSourceSuffix}`}
                                   </th>
                                   <th style={{ textAlign: 'right' }}>
-                                    {t('investments.details.header.pl')}
+                                    {`${t('investments.details.header.pl')}${creolabsSourceSuffix}`}
                                   </th>
-                                  <th
-                                    style={{ textAlign: 'right' }}
-                                    title={t('investments.details.title.roiFormula')}
-                                  >
-                                    {t('investments.details.header.roi')}
+                                  <th style={{ textAlign: 'right' }} title={roiFormulaTitle}>
+                                    {`${t('investments.details.header.roi')}${cellxSourceSuffix}`}
                                   </th>
                                   <th style={{ textAlign: 'right' }}>
                                     {t('investments.details.header.cpa')}
@@ -2218,7 +2478,16 @@ function InvestmentsDashboardContent({
                                         className="num"
                                         title={formatEuroFullNoDecimals(r.pl)}
                                       >
-                                        {formatEuroFullNoDecimals(r.pl)}
+                                        {formatEuroFullNoDecimals(
+                                          (() => {
+                                            if (!isMixed) return r.pl
+                                            const canonicalId = canonicalizeAffiliateId
+                                              ? canonicalizeAffiliateId(r?.affiliateId)
+                                              : String(r?.affiliateId || '').trim() || '—'
+                                            const key = `${canonicalId}|${Number(r.year)}|${Number(r.monthIndex)}`
+                                            return Number(mixedPlByAffiliateMonth.get(key)) || 0
+                                          })()
+                                        )}
                                       </td>
                                       <td
                                         style={{
@@ -2229,19 +2498,35 @@ function InvestmentsDashboardContent({
                                           gap: 6,
                                         }}
                                         className="num"
-                                        title={`${t('investments.details.title.roiFormula')}\n${formatRoiRatio(r.roi, 4)}`}
+                                        title={`${roiFormulaTitle}\n${formatRoiCellFull(r.roi)}`}
                                       >
-                                        <span
-                                          style={{
-                                            width: 10,
-                                            height: 10,
-                                            borderRadius: '50%',
-                                            background: r.roi > 0 ? '#22c55e' : '#ef4444',
-                                          }}
-                                        />
-                                        <span style={roiPillStyle(r.roi)}>
-                                          {formatRoiRatio(r.roi, 2)}
-                                        </span>
+                                        {(() => {
+                                          const v = r.roi
+                                          const good =
+                                            Number.isFinite(Number(v)) && Number(v) >= 1.5
+
+                                          return (
+                                            <>
+                                              <span
+                                                style={{
+                                                  width: 10,
+                                                  height: 10,
+                                                  borderRadius: '50%',
+                                                  background: good ? '#22c55e' : '#ef4444',
+                                                }}
+                                              />
+                                              {Number.isFinite(Number(v)) ? (
+                                                <span style={roiPillStyleRatio(v)}>
+                                                  {formatRoiCell(v)}
+                                                </span>
+                                              ) : (
+                                                <span style={{ color: '#94a3b8', fontWeight: 700 }}>
+                                                  —
+                                                </span>
+                                              )}
+                                            </>
+                                          )
+                                        })()}
                                       </td>
                                       <td
                                         style={{ textAlign: 'right' }}

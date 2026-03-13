@@ -245,6 +245,15 @@ export const translations = {
     'home.action.commandCenter': 'Operations view: tasks, executions, and daily tracking.',
     'home.action.dashboard': 'High-level KPIs and performance overview.',
     'home.action.userCheck': 'Support tool: user checks and investigation flow.',
+    'home.action.tasks': 'Task board: plan, execute, review.',
+    'home.action.flows': 'User journey flows and conversion checkpoints.',
+    'home.action.executiveSuite': 'Executive insights: summary and deep-dive views.',
+    'home.action.affiliateHub': 'Affiliate performance: analysis, cohorts, and payments.',
+    'home.action.fraud': 'User behavior monitoring: risks, anomalies, signals.',
+    'home.action.traderPoints': 'Simulator: points, thresholds, and scenarios.',
+    'home.action.profitableRanking': 'Retention ranking and cohort snapshots.',
+    'home.action.orgChart': 'Org chart and access reference.',
+    'home.action.upload': 'Upload reports and regenerate data indexes.',
 
     'home.preview.commandCenter.1': 'Tasks',
     'home.preview.commandCenter.2': 'Executions',
@@ -1280,6 +1289,7 @@ export const translations = {
 
     'investments.source.cellxpert': 'Cellxpert',
     'investments.source.creolabs': 'Creolabs',
+    'investments.source.mixed': 'Mixed',
 
     'investments.viewMode.aria': 'View mode',
     'investments.viewMode.single': 'Single Source',
@@ -1360,7 +1370,8 @@ export const translations = {
     'investments.details.header.paymentDate': 'Payment date',
     'investments.details.header.details': 'Details',
 
-    'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission − 1',
+    'investments.details.title.roiFormula': 'ROI = Net Deposits / Commission',
+    'investments.details.title.roiFormulaRatio': 'ROI = Net Deposits / Commission',
     'investments.details.title.scopeMonthAffiliate':
       'Month = latest available month for the affiliate',
     'investments.details.title.scopeEverAffiliate':
@@ -1373,7 +1384,7 @@ export const translations = {
       'Creolabs: Paid = cumulative commissions (no Payments Report available)',
     'investments.details.title.commExpected': 'Expected = commission from Media Report',
     'investments.details.title.commActual':
-      'Actual uses ROI guardrail: if ROI >= 0.5 use expected, else Net Deposits / 1.5',
+      'Actual uses ROI guardrail: if ROI >= 1.5 use expected, else Net Deposits / 1.5',
     'investments.details.title.commPayable': 'Payable = min(expected, actual)',
     'investments.details.title.commDeferred': 'Deferred = expected − payable',
     'investments.details.empty.noMonthlyRows': 'No monthly rows.',
@@ -2573,6 +2584,15 @@ export const translations = {
     'home.action.commandCenter': 'Vista operativa: task, esecuzioni e tracking giornaliero.',
     'home.action.dashboard': 'KPI principali e overview delle performance.',
     'home.action.userCheck': 'Strumento Support: controlli utente e flusso di investigazione.',
+    'home.action.tasks': 'Bacheca task: pianifica, esegui, revisiona.',
+    'home.action.flows': 'Flussi del journey utente e conversion checkpoints.',
+    'home.action.executiveSuite': 'Insight Executive: summary e viste di dettaglio.',
+    'home.action.affiliateHub': 'Performance Affiliate: analysis, cohort e payments.',
+    'home.action.fraud': 'User behavior: rischi, anomalie e segnali.',
+    'home.action.traderPoints': 'Simulatore: punti, soglie e scenari.',
+    'home.action.profitableRanking': 'Ranking retention e snapshot cohort.',
+    'home.action.orgChart': 'Org chart e reference accessi.',
+    'home.action.upload': 'Upload report e rigenerazione indici dati.',
 
     'home.preview.commandCenter.1': 'Task',
     'home.preview.commandCenter.2': 'Esecuzioni',
@@ -3716,7 +3736,8 @@ export const translations = {
     'investments.details.header.paymentDate': 'Data pagamento',
     'investments.details.header.details': 'Dettagli',
 
-    'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione − 1',
+    'investments.details.title.roiFormula': 'ROI = Depositi netti / Commissione',
+    'investments.details.title.roiFormulaRatio': 'ROI = Depositi netti / Commissione',
     'investments.details.title.scopeMonthAffiliate':
       'Mese = ultimo mese disponibile per l’affiliato',
     'investments.details.title.scopeEverAffiliate':
@@ -3729,7 +3750,7 @@ export const translations = {
       'Creolabs: Paid = cumulato commissioni (Payments Report non disponibile)',
     'investments.details.title.commExpected': 'Attesa = commissione dal Media Report',
     'investments.details.title.commActual':
-      'Reale usa una guardrail ROI: se ROI >= 0.5 usa l’attesa, altrimenti Depositi netti / 1.5',
+      'Reale usa una guardrail ROI: se ROI >= 1.5 usa l’attesa, altrimenti Depositi netti / 1.5',
     'investments.details.title.commPayable': 'Pagabile = min(attesa, reale)',
     'investments.details.title.commDeferred': 'Differita = attesa − pagabile',
     'investments.details.empty.noMonthlyRows': 'Nessuna riga mensile.',
@@ -5669,6 +5690,7 @@ export const translations = {
 
     'investments.source.cellxpert': 'Cellxpert',
     'investments.source.creolabs': 'Creolabs',
+    'investments.source.mixed': 'Mešano',
 
     'investments.viewMode.aria': 'Režim prikaza',
     'investments.viewMode.single': 'Jedan izvor',
@@ -5749,7 +5771,8 @@ export const translations = {
     'investments.details.header.paymentDate': 'Datum isplate',
     'investments.details.header.details': 'Detalji',
 
-    'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija − 1',
+    'investments.details.title.roiFormula': 'ROI = Neto depoziti / Provizija',
+    'investments.details.title.roiFormulaRatio': 'ROI = Neto depoziti / Provizija',
     'investments.details.title.scopeMonthAffiliate':
       'Mesec = poslednji dostupan mesec za afilijata',
     'investments.details.title.scopeEverAffiliate':
@@ -5762,7 +5785,7 @@ export const translations = {
       'Creolabs: Paid = zbir provizija (nema Payments Report-a)',
     'investments.details.title.commExpected': 'Očekivano = provizija iz Media Report-a',
     'investments.details.title.commActual':
-      'Stvarno koristi ROI guardrail: ako je ROI >= 0.5 koristi očekivano, inače Neto depoziti / 1.5',
+      'Stvarno koristi ROI guardrail: ako je ROI >= 1.5 koristi očekivano, inače Neto depoziti / 1.5',
     'investments.details.title.commPayable': 'Isplativo = min(očekivano, stvarno)',
     'investments.details.title.commDeferred': 'Odloženo = očekivano − isplativo',
     'investments.details.empty.noMonthlyRows': 'Nema mesečnih redova.',

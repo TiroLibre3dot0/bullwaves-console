@@ -452,17 +452,17 @@ export default function AffiliatePayoutUnifiedTable({
     () => [
       {
         key: 'paymentsMonth',
-        label: `Payments (CellXpert) (${monthRef})`,
+        label: `Commission (CellXpert) (${monthRef})`,
         kind: 'eur',
         layout: 'cellxOnly',
-        title: `Payments used for ROI denominator — ${monthRef}`,
+        title: `Commission used for ROI denominator — ${monthRef}`,
       },
       {
         key: 'paymentsEver',
-        label: 'Payments (CellXpert) (All Time)',
+        label: 'Commission (CellXpert) (All Time)',
         kind: 'eur',
         layout: 'cellxOnly',
-        title: 'Payments used for ROI denominator — All Time',
+        title: 'Commission used for ROI denominator — All Time',
       },
       {
         key: 'netDepositsMonth',
@@ -497,14 +497,14 @@ export default function AffiliatePayoutUnifiedTable({
         label: `ROI (${monthRef})`,
         kind: 'roi',
         layout: 'compare',
-        title: `ROI = P&L / CellX Payments\nPer affiliate — ${monthRef}`,
+        title: `ROI = Net Deposits / Commission\nPer affiliate — ${monthRef}`,
       },
       {
         key: 'roiEver',
         label: 'ROI (All Time)',
         kind: 'roi',
         layout: 'compare',
-        title: 'ROI = P&L / CellX Payments\nPer affiliate — All Time',
+        title: 'ROI = Net Deposits / Commission\nPer affiliate — All Time',
       },
       {
         key: 'balanceMonth',
@@ -919,20 +919,17 @@ export default function AffiliatePayoutUnifiedTable({
       const paymentsMonth = Number(cellx.paymentsMonth) || 0
       const paymentsEver = Number(cellx.paymentsEver) || 0
 
-      const cellxPlMonth = Number(cellx.plMonth) || 0
-      const cellxPlEver = Number(cellx.plEver) || 0
-      const creoPlMonth = Number(creolabs.plMonth) || 0
-      const creoPlEver = Number(creolabs.plEver) || 0
-
-      const cellxRoiMonth = paymentsMonth > 0 ? cellxPlMonth / paymentsMonth : 0
-      const creoRoiMonth = paymentsMonth > 0 ? creoPlMonth / paymentsMonth : 0
-      const cellxRoiEver = paymentsEver > 0 ? cellxPlEver / paymentsEver : 0
-      const creoRoiEver = paymentsEver > 0 ? creoPlEver / paymentsEver : 0
+      const calcRoi = (net, denom) => {
+        const n = Number(net)
+        const d = Number(denom)
+        if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return Number.NaN
+        return n / d
+      }
 
       const next = {
         ...r,
-        cellx: { ...cellx, roiMonth: cellxRoiMonth, roiEver: cellxRoiEver },
-        creolabs: { ...creolabs, roiMonth: creoRoiMonth, roiEver: creoRoiEver },
+        cellx: { ...cellx },
+        creolabs: { ...creolabs },
         delta: { ...(r.delta || {}) },
       }
 
@@ -960,8 +957,18 @@ export default function AffiliatePayoutUnifiedTable({
         )
       }
 
+      next.cellx.roiMonth = calcRoi(next.cellx.netDepositsMonth, paymentsMonth)
+      next.creolabs.roiMonth = calcRoi(next.creolabs.netDepositsMonth, paymentsMonth)
+      next.cellx.roiEver = calcRoi(next.cellx.netDepositsEver, paymentsEver)
+      next.creolabs.roiEver = calcRoi(next.creolabs.netDepositsEver, paymentsEver)
+
       next.delta.roiMonth = computeDelta(next.cellx.roiMonth, next.creolabs.roiMonth)
       next.delta.roiEver = computeDelta(next.cellx.roiEver, next.creolabs.roiEver)
+
+      if (!monthHasNet) {
+        next.creolabs.roiMonth = Number.NaN
+        next.delta.roiMonth = { deltaAbs: null, deltaPct: null, deltaPctIsNa: true }
+      }
 
       // Balance is not available in CellX artifacts: keep the cell values as "—" and
       // avoid treating the delta as a discrepancy (so rows don't get flagged).
@@ -1069,14 +1076,17 @@ export default function AffiliatePayoutUnifiedTable({
       totals.cellx.balanceEver = Number.NaN
     }
 
-    totals.cellx.roiMonth =
-      totals.cellx.paymentsMonth > 0 ? totals.cellx.plMonth / totals.cellx.paymentsMonth : 0
-    totals.creolabs.roiMonth =
-      totals.cellx.paymentsMonth > 0 ? totals.creolabs.plMonth / totals.cellx.paymentsMonth : 0
-    totals.cellx.roiEver =
-      totals.cellx.paymentsEver > 0 ? totals.cellx.plEver / totals.cellx.paymentsEver : 0
-    totals.creolabs.roiEver =
-      totals.cellx.paymentsEver > 0 ? totals.creolabs.plEver / totals.cellx.paymentsEver : 0
+    const calcRoi = (net, denom) => {
+      const n = Number(net)
+      const d = Number(denom)
+      if (!Number.isFinite(n) || !Number.isFinite(d) || d <= 0) return Number.NaN
+      return n / d
+    }
+
+    totals.cellx.roiMonth = calcRoi(totals.cellx.netDepositsMonth, totals.cellx.paymentsMonth)
+    totals.creolabs.roiMonth = calcRoi(totals.creolabs.netDepositsMonth, totals.cellx.paymentsMonth)
+    totals.cellx.roiEver = calcRoi(totals.cellx.netDepositsEver, totals.cellx.paymentsEver)
+    totals.creolabs.roiEver = calcRoi(totals.creolabs.netDepositsEver, totals.cellx.paymentsEver)
 
     for (const k of compareMetricKeys) {
       totals.delta[k] = computeDelta(totals.cellx[k], totals.creolabs[k])
@@ -1100,6 +1110,8 @@ export default function AffiliatePayoutUnifiedTable({
     if (!monthHasNet) {
       totals.creolabs.netDepositsMonth = Number.NaN
       totals.delta.netDepositsMonth = { deltaAbs: null, deltaPct: null, deltaPctIsNa: true }
+      totals.creolabs.roiMonth = Number.NaN
+      totals.delta.roiMonth = { deltaAbs: null, deltaPct: null, deltaPctIsNa: true }
     }
 
     return totals

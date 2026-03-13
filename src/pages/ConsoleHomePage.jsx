@@ -57,6 +57,105 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
   const name = String(user?.name || '').trim()
   const welcome = name ? t('home.welcome.personal', { name }) : t('home.welcome.generic')
 
+  const sectionCards = [
+    {
+      key: 'commandCenter',
+      title: t('sidebar.commandCenter'),
+      desc: t('home.action.commandCenter'),
+      kicker: t('sidebar.projectManagement'),
+      emoji: '🧭',
+      tone: 'accent',
+    },
+    {
+      key: 'projectBoard',
+      title: t('sidebar.projectBoard'),
+      desc: t('home.action.tasks'),
+      kicker: t('sidebar.projectManagement'),
+      emoji: '✅',
+      tone: 'accent',
+    },
+    {
+      key: 'flows',
+      title: t('sidebar.flows'),
+      desc: t('home.action.flows'),
+      kicker: t('sidebar.projectManagement'),
+      emoji: '🧬',
+      tone: 'info',
+    },
+    {
+      key: 'overview',
+      title: t('sidebar.overview'),
+      desc: t('home.action.dashboard'),
+      kicker: t('sidebar.dashboard'),
+      emoji: '📈',
+      tone: 'accent',
+    },
+    {
+      key: 'executive',
+      title: t('sidebar.executiveSuite'),
+      desc: t('home.action.executiveSuite'),
+      kicker: t('sidebar.dashboard'),
+      emoji: '🧠',
+      tone: 'success',
+    },
+    {
+      key: 'affiliate',
+      title: t('sidebar.affiliate'),
+      desc: t('home.action.affiliateHub'),
+      kicker: t('sidebar.affiliate'),
+      emoji: '🤝',
+      tone: 'warning',
+    },
+    {
+      key: 'fraud',
+      title: t('sidebar.fraud'),
+      desc: t('home.action.fraud'),
+      kicker: t('sidebar.dashboard'),
+      emoji: '🛡️',
+      tone: 'danger',
+    },
+    {
+      key: 'traderPointsSimulator',
+      title: t('sidebar.traderPoints'),
+      desc: t('home.action.traderPoints'),
+      kicker: t('sidebar.dashboard'),
+      emoji: '🎯',
+      tone: 'info',
+    },
+    {
+      key: 'profitableRanking',
+      title: t('sidebar.profitableRanking'),
+      desc: t('home.action.profitableRanking'),
+      kicker: t('sidebar.dashboard'),
+      emoji: '🏅',
+      tone: 'success',
+    },
+    {
+      key: 'supportUserCheck',
+      title: t('sidebar.supportUserCheck'),
+      desc: t('home.action.userCheck'),
+      kicker: t('sidebar.support'),
+      emoji: '🎧',
+      tone: 'warning',
+    },
+    {
+      key: 'orgChart',
+      title: t('sidebar.orgChart'),
+      desc: t('home.action.orgChart'),
+      kicker: t('sidebar.ops'),
+      emoji: '🧩',
+      tone: 'accent',
+    },
+    {
+      key: 'upload',
+      title: t('sidebar.upload'),
+      desc: t('home.action.upload'),
+      kicker: t('sidebar.ops'),
+      emoji: '⬆️',
+      tone: 'accent',
+    },
+  ]
+
   return (
     <div className="console-home">
       <div className="console-home__inner">
@@ -74,53 +173,25 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
         <div className="console-home__sectionLabel">{t('home.quickActions.title')}</div>
 
         <div className="card-columns console-home__actions" role="list">
-          <button
-            type="button"
-            className="card card-global console-home__action"
-            onClick={() => go('commandCenter')}
-            disabled={!canGo('commandCenter')}
-            role="listitem"
-          >
-            <h3 className="console-home__actionTitle">{t('sidebar.commandCenter')}</h3>
-            <div className="console-home__actionDesc">{t('home.action.commandCenter')}</div>
-            <div className="console-home__preview" aria-hidden="true">
-              <span className="console-home__previewPill">{t('home.preview.commandCenter.1')}</span>
-              <span className="console-home__previewPill">{t('home.preview.commandCenter.2')}</span>
-              <span className="console-home__previewPill">{t('home.preview.commandCenter.3')}</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className="card card-global console-home__action"
-            onClick={() => go('overview')}
-            disabled={!canGo('overview')}
-            role="listitem"
-          >
-            <h3 className="console-home__actionTitle">{t('sidebar.dashboard')}</h3>
-            <div className="console-home__actionDesc">{t('home.action.dashboard')}</div>
-            <div className="console-home__preview" aria-hidden="true">
-              <span className="console-home__previewPill">{t('home.preview.dashboard.1')}</span>
-              <span className="console-home__previewPill">{t('home.preview.dashboard.2')}</span>
-              <span className="console-home__previewPill">{t('home.preview.dashboard.3')}</span>
-            </div>
-          </button>
-
-          <button
-            type="button"
-            className="card card-global console-home__action"
-            onClick={() => go('supportUserCheck')}
-            disabled={!canGo('supportUserCheck')}
-            role="listitem"
-          >
-            <h3 className="console-home__actionTitle">{t('sidebar.supportUserCheck')}</h3>
-            <div className="console-home__actionDesc">{t('home.action.userCheck')}</div>
-            <div className="console-home__preview" aria-hidden="true">
-              <span className="console-home__previewPill">{t('home.preview.userCheck.1')}</span>
-              <span className="console-home__previewPill">{t('home.preview.userCheck.2')}</span>
-              <span className="console-home__previewPill">{t('home.preview.userCheck.3')}</span>
-            </div>
-          </button>
+          {sectionCards.map((card) => (
+            <button
+              key={card.key}
+              type="button"
+              className={`card card-global console-home__action console-home__action--${card.tone}`}
+              onClick={() => go(card.key)}
+              disabled={!canGo(card.key)}
+              role="listitem"
+            >
+              <div className="console-home__actionTop">
+                <div className="console-home__actionEmoji" aria-hidden="true">
+                  {card.emoji}
+                </div>
+                <div className="console-home__actionKicker">{card.kicker}</div>
+              </div>
+              <h3 className="console-home__actionTitle">{card.title}</h3>
+              <div className="console-home__actionDesc">{card.desc}</div>
+            </button>
+          ))}
         </div>
 
         {supportOnly ? (

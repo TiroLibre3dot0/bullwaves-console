@@ -149,17 +149,15 @@ export function useAffiliateLedger({
 
     affMonth.forEach((entry) => {
       entry.details = Array.from(new Set(entry.details)).filter(Boolean)
-      // ROI definition (as requested): ROI = netDeposits / commission - 1
-      // Keep the payout-guardrail logic based on the underlying ratio (netDeposits / commission).
+      // ROI definition (as requested): ROI = netDeposits / commission
       const roiRatio =
-        entry.commissionTotal > 0 ? entry.netDeposits / Math.max(entry.commissionTotal, 1) : 0
-      const roiValue = entry.commissionTotal > 0 ? roiRatio - 1 : 0
-      entry.roi = roiValue
+        entry.commissionTotal > 0 ? entry.netDeposits / entry.commissionTotal : Number.NaN
+      entry.roi = roiRatio
 
       // Use the commission reported in Media Report as the expected amount.
       entry.marketingExpected = entry.commissionTotal
-      // Guardrail threshold: keep the same economic threshold (ratio >= 1.5) expressed in ROI terms.
-      const marketingActual = roiValue >= 0.5 ? entry.marketingExpected : entry.netDeposits / 1.5
+      // Guardrail threshold: ROI ratio >= 1.5
+      const marketingActual = roiRatio >= 1.5 ? entry.marketingExpected : entry.netDeposits / 1.5
       entry.marketingActual = marketingActual
       entry.marketingPayable = Math.min(entry.marketingExpected, marketingActual)
       entry.marketingDeferred = Math.max(entry.marketingExpected - entry.marketingPayable, 0)
@@ -259,7 +257,7 @@ export function useAffiliateLedger({
 
     totals.avgCpa = totals.totalQftd > 0 ? totals.totalCommission / totals.totalQftd : 0
     totals.totalRoi =
-      totals.totalCommission > 0 ? totals.totalNetDeposits / totals.totalCommission - 1 : 0
+      totals.totalCommission > 0 ? totals.totalNetDeposits / totals.totalCommission : Number.NaN
 
     const timeline = new Map()
     ledger.forEach((r) => {
