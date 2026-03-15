@@ -186,12 +186,14 @@ export const translations = {
     'tasksBoard.share.copyPrompt': 'Copy the link:',
     'tasksBoard.importedFromStories': 'Imported from Stories Kanban: {story}',
 
+    'tasksBoard.status.strategic': 'Strategic',
     'tasksBoard.status.backlog': 'Backlog',
     'tasksBoard.status.planned': 'Planned',
     'tasksBoard.status.executing': 'Executing',
     'tasksBoard.status.reviewQa': 'Review & QA',
     'tasksBoard.status.blocked': 'Blocked',
     'tasksBoard.status.done': 'Done',
+    'tasksBoard.status.nextPriorities': 'Next Priorities',
 
     'tasksBoard.categories.growth': 'Growth',
     'tasksBoard.categories.retention': 'Retention',
@@ -2526,12 +2528,14 @@ export const translations = {
     'tasksBoard.share.copyPrompt': 'Copia il link:',
     'tasksBoard.importedFromStories': 'Importato da Stories Kanban: {story}',
 
+    'tasksBoard.status.strategic': 'Strategic',
     'tasksBoard.status.backlog': 'Backlog',
     'tasksBoard.status.planned': 'Pianificato',
     'tasksBoard.status.executing': 'In esecuzione',
     'tasksBoard.status.reviewQa': 'Review & QA',
     'tasksBoard.status.blocked': 'Bloccato',
     'tasksBoard.status.done': 'Fatto',
+    'tasksBoard.status.nextPriorities': 'Prossime priorità',
 
     'tasksBoard.categories.growth': 'Growth',
     'tasksBoard.categories.retention': 'Retention',
@@ -4898,12 +4902,14 @@ export const translations = {
     'tasksBoard.share.copyPrompt': 'Kopiraj link:',
     'tasksBoard.importedFromStories': 'Uvezeno iz Stories Kanban: {story}',
 
+    'tasksBoard.status.strategic': 'Strategic',
     'tasksBoard.status.backlog': 'Backlog',
     'tasksBoard.status.planned': 'Planirano',
     'tasksBoard.status.executing': 'Izvršavanje',
     'tasksBoard.status.reviewQa': 'Review & QA',
     'tasksBoard.status.blocked': 'Blokirano',
     'tasksBoard.status.done': 'Završeno',
+    'tasksBoard.status.nextPriorities': 'Sledeći prioriteti',
 
     'tasksBoard.categories.growth': 'Rast',
     'tasksBoard.categories.retention': 'Retencija',

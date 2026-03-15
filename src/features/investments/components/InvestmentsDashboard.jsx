@@ -227,6 +227,17 @@ function ModeControls({
   const singleModeLabel = t('investments.viewMode.single')
   const unifiedModeLabel = t('investments.viewMode.unified')
 
+  const onMixedClick = () => {
+    if (viewMode === 'unified') {
+      requestDataSource('mixed')
+      requestViewMode('single')
+      return
+    }
+
+    if (sourceDisabled) return
+    requestDataSource('mixed')
+  }
+
   return (
     <div
       style={{
@@ -281,30 +292,29 @@ function ModeControls({
         aria-label={t('investments.filters.source')}
         title={sourceHint}
       >
-        {viewMode === 'single' ? (
-          <button
-            type="button"
-            className={effectiveSource === 'mixed' ? 'btn' : 'btn secondary'}
-            onClick={sourceDisabled ? undefined : () => requestDataSource('mixed')}
-            disabled={sourceDisabled}
-            aria-disabled={sourceDisabled ? 'true' : undefined}
-            style={{
-              padding: '6px 12px',
-              fontSize: 12,
-              fontWeight: 800,
-              borderRadius: 999,
-              whiteSpace: 'nowrap',
-              ...(effectiveSource === 'mixed'
-                ? {}
-                : {
-                    background: 'transparent',
-                    opacity: 0.85,
-                  }),
-            }}
-          >
-            {mixedLabel}
-          </button>
-        ) : null}
+        <button
+          type="button"
+          className={viewMode === 'single' && effectiveSource === 'mixed' ? 'btn' : 'btn secondary'}
+          onClick={onMixedClick}
+          disabled={viewMode === 'single' && sourceDisabled}
+          aria-disabled={viewMode === 'single' && sourceDisabled ? 'true' : undefined}
+          style={{
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 800,
+            borderRadius: 999,
+            whiteSpace: 'nowrap',
+            ...(viewMode === 'single' && effectiveSource === 'mixed'
+              ? {}
+              : {
+                  background: 'transparent',
+                  opacity: 0.85,
+                }),
+          }}
+          title={viewMode === 'unified' ? t('investments.viewMode.single') : sourceHint}
+        >
+          {mixedLabel}
+        </button>
         <button
           type="button"
           className={effectiveSource === 'cellxpert' ? 'btn' : 'btn secondary'}
@@ -2651,11 +2661,17 @@ function InvestmentsDashboardUnifiedContent({
   const [affiliateIndexById, setAffiliateIndexById] = useState(null)
   const [searchDraft, setSearchDraft] = useState(search)
 
+  const mixedLabel = t('investments.source.mixed')
   const cellxpertLabel = t('investments.source.cellxpert')
   const creolabsLabel = t('investments.source.creolabs')
   const singleModeLabel = t('investments.viewMode.single')
   const unifiedModeLabel = t('investments.viewMode.unified')
   const unifiedHint = t('investments.unified.sourceDisabledHint')
+
+  const switchToMixedSingle = () => {
+    requestDataSource('mixed')
+    requestViewMode('single')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -2902,6 +2918,23 @@ function InvestmentsDashboardUnifiedContent({
             aria-label={t('investments.filters.source')}
             title={unifiedHint}
           >
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={switchToMixedSingle}
+              style={{
+                padding: '6px 12px',
+                fontSize: 12,
+                fontWeight: 800,
+                borderRadius: 999,
+                whiteSpace: 'nowrap',
+                background: 'transparent',
+                opacity: 0.9,
+              }}
+              title={t('investments.viewMode.single')}
+            >
+              {mixedLabel}
+            </button>
             <button
               type="button"
               className={dataSource === 'cellxpert' ? 'btn' : 'btn secondary'}

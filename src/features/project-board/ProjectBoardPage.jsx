@@ -5,7 +5,7 @@ import TaskSidebar from '../../components/sidebars/TaskSidebar'
 import { useI18n } from '../../i18n/I18nContext'
 import { buildBoardTasksFromStories, mergeTasksById } from './storyTasksImport'
 
-const STATUSES = ['Backlog', 'Planned', 'Executing', 'Review & QA', 'Blocked', 'Done']
+const STATUSES = ['Strategic', 'Backlog', 'Executing', 'Review & QA', 'Done', 'Next Priorities']
 
 const STRATEGIC_CATEGORIES = {
   'Growth & Acquisition': { color: '#10b981', labelKey: 'tasksBoard.categories.growth' }, // emerald
@@ -613,57 +613,64 @@ function generatePrioritizedSubtasks(story, locale) {
 }
 
 const TASK_SEEDS = [
+  // STRATEGIC
+  {
+    id: 'pb_strat_ops_architecture',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Strategic',
+    title:
+      'Define Bullwaves operational architecture (CRM, trading platform, automation, data layer)',
+    summary: 'Single reference architecture and operating model for systems + data.',
+  },
+  {
+    id: 'pb_strat_cross_team_workflows',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Ops',
+    status: 'Strategic',
+    title: 'Structure coordinated workflows across Sales, Support, Marketing and CRM',
+    summary: 'Clear handoffs, owners, and shared operational cadence.',
+  },
+  {
+    id: 'pb_strat_retention_infra',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'CRM & Automation',
+    status: 'Strategic',
+    title: 'Consolidate retention & automation infrastructure',
+    summary: 'Unify segmentation, journeys, triggers, and measurement loops.',
+  },
+  {
+    id: 'pb_strat_ecosystem_alignment',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Strategic',
+    title:
+      'Align operational ecosystem across Skale, Solitics, CreoLabs, Voiso, Convrs and Cellxpert',
+    summary: 'One operational ecosystem: consistent identifiers, events, and ownership.',
+  },
+  {
+    id: 'pb_strat_affiliate_partner_infra',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Strategic',
+    title: 'Strengthen affiliate & partner integration infrastructure',
+    summary: 'Reliable reporting, payout logic, and partner ops readiness.',
+  },
+
+  // BACKLOG
   {
     id: 'pb_acq_channels',
     strategicCategory: 'Growth & Acquisition',
     impactLevel: 'High',
     owner: 'Marketing',
     status: 'Backlog',
-    icon: 'megaphone',
-    i18n: {
-      en: {
-        title: 'Optimize Acquisition Channels for Scalable Growth',
-        strategicObjective:
-          'Build a scalable acquisition engine that delivers high-quality leads at optimal cost',
-        problemSolved:
-          'Current acquisition is fragmented and lacks systematic testing/scaling framework',
-        expectedBusinessImpact:
-          '30% increase in qualified leads, 25% reduction in CAC, foundation for 2x revenue growth',
-        kpiOrMetric: 'Qualified leads per month, CAC, conversion rate from lead to client',
-        taskBreakdown: [
-          'Audit all current acquisition channels and performance metrics',
-          'Implement structured test → kill → scale framework for new channels',
-          'Set up advanced tracking and attribution for all touchpoints',
-          'Optimize internal traffic flows for maximum conversion efficiency',
-          'Establish partnerships with high-quality media sources',
-        ],
-        description:
-          'Traffic is easy to unlock — media agencies are constantly looking to monetize. The key is structuring acquisition channels properly, not chasing random volume.\n\nFocus on:\n\nDirect sources (e.g. investing.com): understand delivery model, lead quality and scalability.\n\nIndirect sources: media buying & affiliates, with fast test → kill → scale logic and strict tracking.\n\nIn parallel, structure internal traffic flows to maximize conversion efficiency and LTV.',
-        summary: 'Direct + indirect traffic sources, fast testing, strict tracking.',
-        notes: '',
-      },
-      it: {
-        title: 'Ottimizzare i canali di acquisizione per una crescita scalabile',
-        strategicObjective:
-          'Costruire un motore di acquisizione scalabile che generi lead di qualità al costo ottimale',
-        problemSolved:
-          'L’acquisizione attuale è frammentata e manca di un framework sistematico di test/scaling',
-        expectedBusinessImpact:
-          'Aumento del 30% dei lead qualificati, riduzione del 25% del CAC, base per raddoppiare i ricavi',
-        kpiOrMetric: 'Lead qualificati/mese, CAC, tasso di conversione lead → cliente',
-        taskBreakdown: [
-          'Audit di tutti i canali di acquisizione attuali e delle performance',
-          'Implementare framework test → kill → scale per nuovi canali',
-          'Impostare tracking avanzato e attribuzione su tutti i touchpoint',
-          'Ottimizzare i flussi di traffico interni per massimizzare conversione e LTV',
-          'Stabilire partnership con fonti media di alta qualità',
-        ],
-        description:
-          'Sbloccare traffico è relativamente facile: le agenzie media cercano continuamente di monetizzare. La chiave è strutturare correttamente i canali di acquisizione, non inseguire volume casuale.\n\nFocus su:\n\nFonti dirette (es. investing.com): capire modello di delivery, qualità lead e scalabilità.\n\nFonti indirette: media buying e affiliate, con logica veloce test → kill → scale e tracking rigoroso.\n\nIn parallelo, strutturare i flussi interni per massimizzare efficienza di conversione e LTV.',
-        summary: 'Traffico diretto + indiretto, test rapidi, tracking rigoroso.',
-        notes: '',
-      },
-    },
+    title: 'Optimise acquisition channels for scalable growth',
+    summary: 'Direct + indirect sources, fast testing, strict tracking.',
   },
   {
     id: 'pb_upsell_forex_am',
@@ -671,886 +678,8 @@ const TASK_SEEDS = [
     impactLevel: 'High',
     owner: 'Sales',
     status: 'Backlog',
-    icon: 'briefcase',
-    i18n: {
-      en: {
-        title: 'Systematize Client Upsell Flows to Forex & Account Management',
-        strategicObjective:
-          'Convert existing prop clients into higher-value forex traders and account management clients',
-        problemSolved:
-          'Warm traffic from prop clients is not being systematically monetized through upsells',
-        expectedBusinessImpact:
-          '40% increase in average client LTV, 25% improvement in monetization efficiency',
-        kpiOrMetric:
-          'Upsell conversion rate, average LTV per client segment, monthly recurring revenue from upsells',
-        taskBreakdown: [
-          'Map current client journey from prop trading to potential upsells',
-          'Design automated upsell triggers based on trading behavior and performance',
-          'Create compelling value propositions for forex trading and account management',
-          'Implement A/B testing for upsell messaging and timing',
-          'Set up tracking and analytics for upsell funnel performance',
-        ],
-        description:
-          'Prop clients are already warm traffic. We should build a structured upsell flow to convert them into:\n\nForex traders\n\nAccount management clients\n\nGoal:\n\nIncrease LTV\n\nImprove monetization efficiency\n\nLeverage existing traffic at near-zero acquisition cost',
-        summary: 'Systematize upsell of warm internal traffic.',
-        notes: '',
-      },
-      it: {
-        title: 'Sistematizzare gli upsell verso Forex e Account Management',
-        strategicObjective:
-          'Convertire i clienti prop esistenti in trader forex e clienti di account management a maggiore valore',
-        problemSolved:
-          'Il traffico caldo dei clienti prop non viene monetizzato in modo sistematico tramite upsell',
-        expectedBusinessImpact:
-          'Aumento del 40% dell’LTV medio, miglioramento del 25% dell’efficienza di monetizzazione',
-        kpiOrMetric:
-          'Tasso di conversione upsell, LTV medio per segmento, ricavi ricorrenti mensili da upsell',
-        taskBreakdown: [
-          'Mappare il journey attuale dal prop trading agli upsell',
-          'Progettare trigger automatici in base a comportamento e performance',
-          'Creare value proposition convincenti per forex e account management',
-          'Implementare A/B test su messaggi e timing di upsell',
-          'Impostare tracking e analytics del funnel di upsell',
-        ],
-        description:
-          'I clienti prop sono già traffico caldo. Serve un flusso di upsell strutturato per convertirli in:\n\nTrader forex\n\nClienti di account management\n\nObiettivo:\n\nAumentare LTV\n\nMigliorare efficienza di monetizzazione\n\nSfruttare traffico esistente a costo di acquisizione quasi zero',
-        summary: 'Upsell strutturato sul traffico interno caldo.',
-        notes: '',
-      },
-    },
-  },
-  {
-    id: 'pb_premium_channels',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'Medium',
-    owner: 'CRM & Automation',
-    status: 'Executing',
-    icon: 'messages',
-    i18n: {
-      en: {
-        title: 'Centralize Premium Client Communication Channels',
-        strategicObjective:
-          'Create unified premium support and booking experience across all channels',
-        problemSolved:
-          'Client communication is fragmented across multiple platforms with inconsistent experience',
-        expectedBusinessImpact:
-          '50% reduction in support response time, 30% increase in client satisfaction scores',
-        kpiOrMetric: 'Average response time, client satisfaction NPS, booking conversion rate',
-        taskBreakdown: [
-          'Evaluate and select unified communication platform (convrs.io)',
-          'Integrate WhatsApp, Telegram, and Discord channels',
-          'Design structured flows for support tickets and call booking',
-          'Implement automated routing based on client tier and issue type',
-          'Create standardized response templates and escalation procedures',
-        ],
-        description:
-          'Test and implement convrs.io integration to centralize:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObjectives:\n\nPremium support channel\n\nDirect call booking with sales or market analyst\n\nStructured post-registration engagement\n\nOnly after validating this layer, evaluate additional integrations with Solitics if needed.\nOrlin has a key role in designing flows, automation logic and segmentation.',
-        summary: 'Centralize WhatsApp, Telegram and Discord for premium flows and call booking.',
-        notes:
-          'Status: executing. WhatsApp Business Platform tested and first user accounts created. Facebook verification for Bullwaves is still pending (external dependency). Next: call with convrs.io to deep-dive how the platform works end-to-end; then Orlin will act as primary owner / point of contact for day-to-day tool management. Support contact: Regine (convrs.io).',
-      },
-      it: {
-        title: 'Centralizzare i canali di comunicazione per clienti premium',
-        strategicObjective:
-          'Creare un’esperienza unificata di supporto premium e prenotazione call su tutti i canali',
-        problemSolved:
-          'La comunicazione con i clienti è frammentata su più piattaforme con un’esperienza incoerente',
-        expectedBusinessImpact:
-          'Riduzione del 50% dei tempi di risposta, +30% nei punteggi di soddisfazione cliente',
-        kpiOrMetric: 'Tempo medio di risposta, NPS soddisfazione, conversione prenotazione call',
-        taskBreakdown: [
-          'Valutare e scegliere la piattaforma unificata (convrs.io)',
-          'Integrare WhatsApp, Telegram e Discord',
-          'Progettare flussi strutturati per ticket supporto e booking call',
-          'Implementare routing automatico per tier cliente e tipo di issue',
-          'Creare template standard e procedure di escalation',
-        ],
-        description:
-          'Testare e implementare l’integrazione convrs.io per centralizzare:\n\nWhatsApp\n\nTelegram\n\nDiscord\n\nObiettivi:\n\nCanale premium di supporto\n\nPrenotazione call diretta con sales o market analyst\n\nEngagement strutturato post-registrazione\n\nSolo dopo aver validato questo layer, valutare eventuali integrazioni aggiuntive con Solitics.\nOrlin ha un ruolo chiave nel design dei flussi, logica di automazione e segmentazione.',
-        summary: 'Centralizzazione canali premium e booking call.',
-        notes:
-          'Status: executing. WhatsApp Business Platform testato e create le prime utenze. Verifica Bullwaves da Facebook ancora in attesa (dipendenza esterna). Prossimo step: call con convrs.io per capire meglio il funzionamento end-to-end; poi Orlin prenderà ownership come referente principale per la gestione operativa del tool. Supporto: Regine (convrs.io).',
-      },
-    },
-  },
-  {
-    id: 'pb_skale_test_env',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'High',
-    owner: 'Tech',
-    status: 'Executing',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Skale Test Environment Setup (New UI)',
-        strategicObjective:
-          'Provision and validate a Skale test environment to safely test and iterate on the new UI layer',
-        problemSolved:
-          'Without a ready Skale test environment we cannot run end-to-end validation of the new UI against real flows',
-        expectedBusinessImpact:
-          'Unblocks UI delivery and reduces integration risk by enabling structured E2E testing before production',
-        kpiOrMetric: 'Test environment ready, E2E smoke tests passing, critical flows validated',
-        taskBreakdown: [
-          'Confirm Skale test environment provisioning status',
-          'Validate access + connectivity (accounts, auth, wallet)',
-          'Run E2E smoke tests on the new UI (auth → account → wallet)',
-          'Document gaps/blockers and align fixes with Skale',
-        ],
-        description:
-          'Skale requested MT5 credentials to provision the test environment — credentials already provided. We are currently waiting for the environment to be ready.\n\nNext: once the environment is live, apply our code and run end-to-end UI tests on Skale.',
-        summary: 'MT5 creds sent; waiting env; then apply code + test UI.',
-        notes:
-          'Status: executing. MT5 credentials already provided to Skale. Waiting for test environment readiness; then apply our code and validate E2E flows.',
-      },
-      it: {
-        title: 'Setup ambiente di test Skale (nuova UI)',
-        strategicObjective:
-          'Provisionare e validare un ambiente di test Skale per testare in sicurezza la nuova UI',
-        problemSolved:
-          'Senza un ambiente di test Skale pronto non possiamo fare validazione end-to-end della nuova UI sui flussi reali',
-        expectedBusinessImpact:
-          'Sblocca la delivery della UI e riduce il rischio di integrazione abilitando test E2E strutturati prima della produzione',
-        kpiOrMetric: 'Ambiente di test pronto, smoke test E2E ok, flussi critici validati',
-        taskBreakdown: [
-          'Confermare lo stato di provisioning ambiente test Skale',
-          'Validare accesso + connettività (account, auth, wallet)',
-          'Eseguire smoke test E2E sulla nuova UI (auth → account → wallet)',
-          'Documentare gap/blocchi e allineare fix con Skale',
-        ],
-        description:
-          'Skale ha richiesto le credenziali MT5 per provisionare l’ambiente di test — credenziali già fornite. In questo momento stiamo aspettando che l’ambiente sia pronto.\n\nProssimo step: appena l’ambiente è live, applicare il nostro codice e fare test end-to-end della UI su Skale.',
-        summary: 'Credenziali MT5 inviate; attesa ambiente; poi codice + test UI.',
-        notes:
-          'Status: executing. Credenziali MT5 già inviate a Skale. In attesa dell’ambiente di test; poi applicare il nostro codice e validare i flussi E2E.',
-      },
-    },
-  },
-  {
-    id: 'pb_voiso_skale_integration',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'High',
-    owner: 'Tech',
-    status: 'Review & QA',
-    icon: 'messages',
-    i18n: {
-      en: {
-        title: 'Voiso ↔ Skale Integration (Calling + Ops)',
-        strategicObjective:
-          'Integrate Voiso with Skale so calling workflows and operational signals are consistent and trackable',
-        problemSolved:
-          'Voiso calling activity and Skale operational events are not yet integrated, causing manual work and blind spots',
-        expectedBusinessImpact:
-          'Faster agent workflows, better attribution/monitoring, fewer operational gaps during rollout',
-        kpiOrMetric:
-          'Integration live, call events synced, automated routing working, error rate under threshold',
-        taskBreakdown: [
-          'Confirm scope: required Voiso events + Skale endpoints/fields',
-          'Implement event mapping + webhook (or polling) integration',
-          'Backfill / reconcile identifiers (user, account, lead, agent)',
-          'Add monitoring + retry / dead-letter handling',
-          'Run end-to-end validation with real test accounts and sign off',
-        ],
-        description:
-          'Execute the Voiso ↔ Skale integration so we can track calling outcomes and operational signals end-to-end.\n\nFocus on:\n\nEvent mapping + IDs\n\nReliability (retries + monitoring)\n\nE2E validation\n\nThis needs to be closed tomorrow.',
-        summary: 'Voiso + Skale integration to remove manual ops gaps.',
-        notes:
-          'Status: review & QA. Priority: validate end-to-end and sign off ASAP (target: tomorrow).',
-      },
-      it: {
-        title: 'Integrazione Voiso ↔ Skale (Calling + Ops)',
-        strategicObjective:
-          'Integrare Voiso con Skale per rendere coerenti e tracciabili i flussi di calling e i segnali operativi',
-        problemSolved:
-          'Le attività di calling su Voiso e gli eventi operativi su Skale non sono integrati: oggi serve lavoro manuale e si creano blind spot',
-        expectedBusinessImpact:
-          'Workflow agent più veloce, migliore attribuzione/monitoraggio, meno gap operativi durante il rollout',
-        kpiOrMetric:
-          'Integrazione live, eventi chiamata sincronizzati, routing automatizzato ok, error rate sotto soglia',
-        taskBreakdown: [
-          'Confermare scope: eventi Voiso richiesti + endpoint/campi Skale',
-          'Implementare mapping eventi + integrazione webhook (o polling)',
-          'Allineare identificativi (user, account, lead, agent) e riconciliazione',
-          'Aggiungere monitoring + retry / dead-letter handling',
-          'Validazione end-to-end con account di test e sign-off',
-        ],
-        description:
-          'Eseguire l’integrazione Voiso ↔ Skale per tracciare end-to-end esiti di calling e segnali operativi.\n\nFocus su:\n\nMapping eventi + ID\n\nAffidabilità (retry + monitoring)\n\nValidazione E2E\n\nDa chiudere domani.',
-        summary: 'Integrazione Voiso + Skale per chiudere i gap operativi manuali.',
-        notes:
-          'Status: review & QA. Priorità: validazione end-to-end e sign-off ASAP (target: domani).',
-      },
-    },
-  },
-  {
-    id: 'pb_cellxpert_escail_data_alignment',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'High',
-    owner: 'CRM & Automation',
-    status: 'Executing',
-    icon: 'broadcast',
-    i18n: {
-      en: {
-        title: 'Cellxpert ↔ Escail Data Alignment (Slack loop)',
-        strategicObjective:
-          'Align data fields and event semantics between Cellxpert and Escail to ensure consistent reporting and operations',
-        problemSolved:
-          'There is an open Slack loop on mismatched / unclear data alignment between Cellxpert and Escail',
-        expectedBusinessImpact:
-          'Removes inconsistencies, prevents wrong decisions, and unblocks downstream automation/reporting',
-        kpiOrMetric:
-          'Field map agreed, discrepancies closed, sync validated, stakeholders sign-off',
-        taskBreakdown: [
-          'Collect the Slack thread details + list current mismatches',
-          'Define canonical field map (IDs, timestamps, statuses, ownership)',
-          'Implement mapping / transform layer (or update ETL) accordingly',
-          'Validate on sample users and recent production days',
-          'Document final mapping + close the Slack loop',
-        ],
-        description:
-          'Close the open Slack loop by aligning Cellxpert ↔ Escail data.\n\nDeliverable:\n\nOne canonical field map + validated sync.\n\nThis needs to be resolved tomorrow.',
-        summary: 'Resolve Cellxpert/Escail mismatch and close Slack loop.',
-        notes:
-          'Status: executing. Action: close alignment loop and confirm with stakeholders (target: tomorrow).',
-      },
-      it: {
-        title: 'Allineamento dati Cellxpert ↔ Escail (loop Slack)',
-        strategicObjective:
-          'Allineare campi e semantica eventi tra Cellxpert ed Escail per avere reporting e operatività coerenti',
-        problemSolved:
-          'C’è un loop aperto su Slack per mismatch / ambiguità nell’allineamento dati tra Cellxpert ed Escail',
-        expectedBusinessImpact:
-          'Rimuove inconsistenze, evita decisioni errate e sblocca automazioni/reporting downstream',
-        kpiOrMetric:
-          'Field map concordata, discrepanze chiuse, sync validata, sign-off stakeholder',
-        taskBreakdown: [
-          'Recuperare dettagli del thread Slack + lista mismatch attuali',
-          'Definire field map canonica (ID, timestamp, status, ownership)',
-          'Implementare mapping/transform (o aggiornare ETL) di conseguenza',
-          'Validare su utenti campione e giorni recenti',
-          'Documentare mapping finale + chiudere il loop su Slack',
-        ],
-        description:
-          'Chiudere il loop su Slack allineando i dati Cellxpert ↔ Escail.\n\nDeliverable:\n\nUna field map canonica + sync validata.\n\nDa risolvere domani.',
-        summary: 'Risolvi mismatch Cellxpert/Escail e chiudi loop Slack.',
-        notes:
-          'Status: executing. Azione: chiudere allineamento e confermare con stakeholder (target: domani).',
-      },
-    },
-  },
-  {
-    id: 'pb_support_user_check_release',
-    strategicCategory: 'Operations & Compliance',
-    impactLevel: 'High',
-    owner: 'Dan',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Support User Check tool — released to Support',
-        strategicObjective:
-          'Give Support a fast, reliable internal tool to inspect users and resolve cases without manual report digging',
-        problemSolved:
-          'Support workflows were slow and inconsistent due to scattered data and manual checks',
-        expectedBusinessImpact:
-          'Faster case resolution, fewer escalations, and better operational visibility for day-to-day support',
-        kpiOrMetric: 'Time-to-resolution, escalation rate, Support adoption',
-        taskBreakdown: [
-          'Ship the tool in the console',
-          'Validate access and permissions',
-          'Roll out to Support team and collect feedback',
-          'Ship v2 enhancements (Position Count, withdrawals, affiliate moves)',
-          'Confirm rollout with Support stakeholders (review with Emanuele) and capture micro-backlog',
-        ],
-        description:
-          'Released Support User Check and it is already actively used by the Support team. Delivery included v2 enhancements (Position Count, withdrawals, affiliate moves) and a rollout review with Support stakeholders to confirm adoption and capture follow-ups.',
-        summary: 'Released and in active use by Support.',
-        notes:
-          'Completed: designed + implemented, integrated into workflow, released and adopted by Support (v2 rollout confirmed; micro-backlog captured).',
-      },
-      it: {
-        title: 'Support User Check — rilasciato al team Supporto',
-        strategicObjective:
-          'Dare al Supporto uno strumento veloce e affidabile per verificare utenti e risolvere casi senza controlli manuali',
-        problemSolved:
-          'I flussi Support erano lenti e incoerenti per dati sparsi e verifiche manuali',
-        expectedBusinessImpact:
-          'Riduzione tempi di risoluzione, meno escalation, maggiore visibilità operativa nel day-to-day',
-        kpiOrMetric: 'Time-to-resolution, tasso escalation, adozione tool',
-        taskBreakdown: [
-          'Rilasciare il tool nella console',
-          'Validare accessi e permessi',
-          'Rollout al team Supporto e raccolta feedback',
-          'Rilasciare migliorie v2 (Position Count, withdrawals, affiliate moves)',
-          'Confermare rollout con stakeholder Support (review con Emanuele) e raccogliere micro-backlog',
-        ],
-        description:
-          'Support User Check è stato rilasciato ed è già utilizzato dal team di supporto. La delivery includeva anche migliorie v2 (Position Count, withdrawals, affiliate moves) e una review del rollout con gli stakeholder Support per confermare l’adozione e raccogliere follow-up.',
-        summary: 'Rilasciato e in uso dal Supporto.',
-        notes:
-          'Completato: progettato + implementato, integrato nel workflow, rilasciato e adottato dal Supporto (rollout v2 confermato; micro-backlog raccolto).',
-      },
-    },
-  },
-  {
-    id: 'pb_affiliate_console_analytics',
-    strategicCategory: 'Partnerships & Affiliates',
-    impactLevel: 'High',
-    owner: 'Dan',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Affiliate analytics console — data processing + insights',
-        strategicObjective:
-          'Centralize processed affiliate data and analyses into a single console for faster decisions and partner ops',
-        problemSolved:
-          'Affiliate performance and economics were hard to read and required manual report stitching',
-        expectedBusinessImpact:
-          'Better partner decisions, faster anomaly detection, and clearer payout/ROI visibility',
-        kpiOrMetric: 'Time to produce reports, partner ROI visibility, anomaly detection time',
-        taskBreakdown: [
-          'Process key reports into consolidated datasets',
-          'Build the console views for affiliate analysis',
-          'Validate calculations and publish to internal users',
-          'Baseline analysis of Media/Registration/Payment reports',
-          'Internal processing console shipped for repeatable outputs',
-          'Initial affiliate KPI set extracted and shared internally',
-        ],
-        description:
-          'Console with processed data and affiliate analyses is already completed and has been available internally for some time. Work included baseline analysis of Media/Registration/Payment reports, building an internal processing console for repeatable outputs, and extracting initial affiliate KPIs for internal visibility.',
-        summary: 'Affiliate analytics console completed.',
-        notes:
-          'Completed: console exists with processed affiliate analysis data (reports analyzed, internal processing baseline shipped, initial KPI extraction shared).',
-      },
-      it: {
-        title: 'Console analisi affiliati — dati elaborati + insight',
-        strategicObjective:
-          'Centralizzare dati elaborati e analisi affiliati in una console unica per decisioni più rapide',
-        problemSolved:
-          'Le performance affiliate e l’economia erano difficili da leggere e richiedevano unione manuale report',
-        expectedBusinessImpact:
-          'Migliori decisioni partner, rilevazione anomalie più veloce, visibilità payout/ROI più chiara',
-        kpiOrMetric: 'Tempo produzione report, visibilità ROI partner, tempo rilevazione anomalie',
-        taskBreakdown: [
-          'Elaborare i report chiave in dataset consolidati',
-          'Costruire le viste console per l’analisi affiliati',
-          'Validare calcoli e pubblicare per uso interno',
-          'Analisi baseline dei report Media/Registrazioni/Pagamenti',
-          'Console di processing interna per output ripetibili',
-          'Set KPI affiliate iniziale estratto e condiviso internamente',
-        ],
-        description:
-          'La console con i dati elaborati e le analisi degli affiliati è già completata e disponibile internamente da tempo. Il lavoro includeva analisi baseline dei report Media/Registrazioni/Pagamenti, costruzione di una console di processing interna per output ripetibili ed estrazione dei KPI affiliate iniziali per visibilità interna.',
-        summary: 'Console affiliate completata.',
-        notes:
-          'Completato: console disponibile con analisi affiliati (report analizzati, processing baseline, KPI iniziali condivisi).',
-      },
-    },
-  },
-  {
-    id: 'pb_solitics_product_overview_1',
-    strategicCategory: 'Retention & Monetization',
-    impactLevel: 'High',
-    owner: 'Paolo / Solitics',
-    status: 'Done',
-    icon: 'messages',
-    i18n: {
-      en: {
-        title: 'Solitics Product Overview #1 — data flow & segmentation',
-        strategicObjective:
-          'Complete onboarding fundamentals: data model, event flow, attributes, and segmentation mechanics',
-        problemSolved:
-          'Without a shared understanding of Solitics data/segmentation, journeys and automation cannot be executed reliably',
-        expectedBusinessImpact:
-          'Clear segmentation strategy and data requirements, enabling faster journey activation with fewer rework cycles',
-        kpiOrMetric: 'Overview completed, segmentation approach agreed, next steps defined',
-        taskBreakdown: [
-          'Review Solitics data model + aggregation tables',
-          'Confirm event-based ingestion (member/transaction/frontend)',
-          'Align on attributes + event handling rules',
-          'Validate segmentation creation + syncing behavior',
-        ],
-        description:
-          'Completed Product Overview #1 with Solitics. Key outcomes: data model overview, event-based data flow, attributes/event handling for segmentation, and segment creation/syncing behavior.',
-        summary: 'Solitics onboarding overview #1 completed.',
-        notes: 'Done: Product Overview #1 completed with Solitics.',
-      },
-      it: {
-        title: 'Solitics Product Overview #1 — data flow & segmentazione',
-        strategicObjective:
-          'Completare le basi onboarding: data model, flusso eventi, attributi e meccaniche di segmentazione',
-        problemSolved:
-          'Senza una comprensione condivisa di dati/segmentazione Solitics, journey e automazioni non possono essere eseguiti in modo affidabile',
-        expectedBusinessImpact:
-          'Strategia di segmentazione e requisiti dati chiari, abilitando attivazione più rapida dei journey con meno rework',
-        kpiOrMetric: 'Overview completata, approccio segmentazione concordato, next step definiti',
-        taskBreakdown: [
-          'Rivedere data model Solitics + tabelle di aggregazione',
-          'Confermare ingestion a eventi (member/transaction/frontend)',
-          'Allineare regole su attributi + handling eventi',
-          'Validare creazione segmenti + comportamento di syncing',
-        ],
-        description:
-          'Completato Product Overview #1 con Solitics. Outcome: overview data model, data flow ad eventi, attributi/handling eventi per segmentazione, creazione segmenti e syncing.',
-        summary: 'Overview onboarding Solitics #1 completata.',
-        notes: 'Done: Product Overview #1 completato con Solitics.',
-      },
-    },
-  },
-  {
-    id: 'pb_history_mt_web_integration',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'High',
-    owner: 'Tech',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'MetaTrader Web integration — completed',
-        strategicObjective: 'Enable web-based trading access through MetaTrader Web integration',
-        problemSolved: 'Without MetaTrader Web integration, web trading access is limited',
-        expectedBusinessImpact: 'Better client UX and broader accessibility for trading flows',
-        kpiOrMetric: 'Integration live, webtrader accessible, critical flows validated',
-        taskBreakdown: ['Complete integration', 'Validate critical flows', 'Publish access'],
-        description: 'Completed MetaTrader Web integration.',
-        summary: 'MetaTrader Web integration completed.',
-        notes: 'URL: https://portal.bullwaves.com/custom/webtrader',
-      },
-      it: {
-        title: 'Integrazione MetaTrader Web — completata',
-        strategicObjective: 'Abilitare accesso al trading via web con integrazione MetaTrader Web',
-        problemSolved: 'Senza integrazione MetaTrader Web, l’accesso al trading via web è limitato',
-        expectedBusinessImpact: 'UX cliente migliore e maggiore accessibilità ai flussi di trading',
-        kpiOrMetric: 'Integrazione live, webtrader accessibile, flussi critici validati',
-        taskBreakdown: ['Completare integrazione', 'Validare flussi critici', 'Pubblicare accesso'],
-        description: 'Completata integrazione MetaTrader Web.',
-        summary: 'Integrazione MetaTrader Web completata.',
-        notes: 'URL: https://portal.bullwaves.com/custom/webtrader',
-      },
-    },
-  },
-  {
-    id: 'pb_history_social_trading_integration',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'High',
-    owner: 'Tech',
-    status: 'Done',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Social Trading integration — completed',
-        strategicObjective: 'Enable social trading experience through Brokeree integration',
-        problemSolved:
-          'Social trading required a complete integration layer to be usable in production',
-        expectedBusinessImpact:
-          'Expanded product offering and improved engagement options for clients',
-        kpiOrMetric: 'Integration live, key flows validated, stable operation',
-        taskBreakdown: ['Complete integration', 'Resolve critical issues', 'Validate end-to-end'],
-        description: 'Completed Social Trading integration.',
-        summary: 'Social Trading integration completed.',
-        notes: 'URL: https://portal.bullwaves.com/brokeree-social-trading-three',
-      },
-      it: {
-        title: 'Integrazione Social Trading — completata',
-        strategicObjective: 'Abilitare esperienza di social trading tramite integrazione Brokeree',
-        problemSolved:
-          'Il social trading richiedeva un layer di integrazione completo per uso in produzione',
-        expectedBusinessImpact:
-          'Offerta prodotto ampliata e maggiori opzioni di engagement per i clienti',
-        kpiOrMetric: 'Integrazione live, flussi chiave validati, operatività stabile',
-        taskBreakdown: [
-          'Completare integrazione',
-          'Risolvere issue critiche',
-          'Validare end-to-end',
-        ],
-        description: 'Completata integrazione Social Trading.',
-        summary: 'Integrazione Social Trading completata.',
-        notes: 'URL: https://portal.bullwaves.com/brokeree-social-trading-three',
-      },
-    },
-  },
-  {
-    id: 'pb_history_scale_brokeree_coordination',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'Medium',
-    owner: 'Tech',
-    status: 'Done',
-    icon: 'briefcase',
-    i18n: {
-      en: {
-        title: 'Scale + Brokeree coordination — integration complexities resolved',
-        strategicObjective:
-          'Coordinate vendors to resolve integration complexities and unblock delivery',
-        problemSolved:
-          'Cross-vendor integration issues required direct coordination to reach resolution',
-        expectedBusinessImpact:
-          'Reduced integration risk and faster delivery for trading-related integrations',
-        kpiOrMetric: 'Blockers closed, integration stable, stakeholders aligned',
-        taskBreakdown: ['Collect blockers', 'Coordinate calls', 'Confirm resolutions in writing'],
-        description: 'Coordinated with Scale and Brokeree to resolve integration complexities.',
-        summary: 'Vendor coordination completed.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Coordinamento Scale + Brokeree — complessità integrazione risolte',
-        strategicObjective:
-          'Coordinare i vendor per risolvere complessità di integrazione e sbloccare la delivery',
-        problemSolved:
-          'Issue cross-vendor richiedevano coordinamento diretto per arrivare a una risoluzione',
-        expectedBusinessImpact:
-          'Meno rischio di integrazione e delivery più veloce per integrazioni trading',
-        kpiOrMetric: 'Blocchi chiusi, integrazione stabile, stakeholder allineati',
-        taskBreakdown: [
-          'Raccogliere blocchi',
-          'Coordinare call',
-          'Confermare risoluzioni per iscritto',
-        ],
-        description: 'Coordinati Scale e Brokeree per risolvere complessità di integrazione.',
-        summary: 'Coordinamento vendor completato.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_history_solitics_kickoff_onboarding',
-    strategicCategory: 'Retention & Monetization',
-    impactLevel: 'High',
-    owner: 'Paolo / Solitics',
-    status: 'Done',
-    icon: 'messages',
-    i18n: {
-      en: {
-        title: 'Solitics kick-off — onboarding activated',
-        strategicObjective:
-          'Kick off Solitics engagement and activate onboarding with clear owners and cadence',
-        problemSolved:
-          'Onboarding without activation/cadence tends to stall and creates unclear ownership',
-        expectedBusinessImpact:
-          'Faster time-to-value for retention/journey setup and clearer execution rhythm',
-        kpiOrMetric: 'Kick-off completed, onboarding active, next steps owned',
-        taskBreakdown: ['Run kick-off', 'Agree on cadence', 'Activate onboarding execution'],
-        description: 'Solitics kick-off completed; onboarding activated.',
-        summary: 'Solitics kick-off completed.',
-        notes: 'URL: https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      },
-      it: {
-        title: 'Kick-off Solitics — onboarding attivato',
-        strategicObjective: 'Avviare Solitics e attivare onboarding con ownership chiara e cadenza',
-        problemSolved:
-          'Un onboarding senza attivazione/cadenza tende a bloccarsi e crea ownership ambigua',
-        expectedBusinessImpact:
-          'Time-to-value più veloce per retention/journey e ritmo di esecuzione più chiaro',
-        kpiOrMetric: 'Kick-off completato, onboarding attivo, next step in ownership',
-        taskBreakdown: ['Eseguire kick-off', 'Concordare cadenza', 'Attivare onboarding'],
-        description: 'Kick-off Solitics completato; onboarding attivato.',
-        summary: 'Kick-off Solitics completato.',
-        notes: 'URL: https://solitics-ltd.monday.com/boards/5089697723/views/41153755',
-      },
-    },
-  },
-  {
-    id: 'pb_history_retention_alignment',
-    strategicCategory: 'Retention & Monetization',
-    impactLevel: 'Medium',
-    owner: 'Ops',
-    status: 'Done',
-    icon: 'messages',
-    i18n: {
-      en: {
-        title: 'Retention alignment — owners + next steps defined',
-        strategicObjective:
-          'Align stakeholders on retention scope, owners, and concrete next steps',
-        problemSolved: 'Retention efforts drift when ownership and next actions are not explicit',
-        expectedBusinessImpact: 'Cleaner execution and fewer coordination delays',
-        kpiOrMetric: 'Owners assigned, next steps written, follow-up cadence set',
-        taskBreakdown: ['Align scope', 'Assign owners', 'Write next steps'],
-        description: 'Retention alignment completed; owners and next steps defined.',
-        summary: 'Retention alignment completed.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Allineamento retention — owner + next step definiti',
-        strategicObjective:
-          'Allineare stakeholder su scope retention, ownership e next step concreti',
-        problemSolved:
-          'Le iniziative retention deragliano se ownership e azioni non sono esplicite',
-        expectedBusinessImpact: 'Esecuzione più pulita e meno ritardi di coordinamento',
-        kpiOrMetric: 'Owner assegnati, next step scritti, cadenza follow-up definita',
-        taskBreakdown: ['Allineare scope', 'Assegnare owner', 'Scrivere next step'],
-        description: 'Allineamento retention completato; owner e next step definiti.',
-        summary: 'Allineamento retention completato.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_history_compliance_sync',
-    strategicCategory: 'Operations & Compliance',
-    impactLevel: 'Medium',
-    owner: 'Compliance',
-    status: 'Done',
-    icon: 'payments',
-    i18n: {
-      en: {
-        title: 'Compliance sync — risk scoring + KYC improvements',
-        strategicObjective:
-          'Align compliance stakeholders on risk scoring and KYC improvements status',
-        problemSolved:
-          'Compliance execution requires shared definitions and alignment to avoid inconsistent handling',
-        expectedBusinessImpact: 'Fewer compliance gaps and faster escalation decisions',
-        kpiOrMetric: 'Sync completed, definitions aligned, next steps captured',
-        taskBreakdown: ['Run sync', 'Align definitions', 'Capture next steps'],
-        description: 'Compliance sync completed (risk scoring + KYC improvements).',
-        summary: 'Compliance sync completed.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Sync compliance — risk scoring + miglioramenti KYC',
-        strategicObjective:
-          'Allineare stakeholder compliance su stato risk scoring e miglioramenti KYC',
-        problemSolved:
-          'L’esecuzione compliance richiede definizioni condivise per evitare handling incoerente',
-        expectedBusinessImpact: 'Meno gap compliance e decisioni escalation più rapide',
-        kpiOrMetric: 'Sync completata, definizioni allineate, next step raccolti',
-        taskBreakdown: ['Eseguire sync', 'Allineare definizioni', 'Raccogliere next step'],
-        description: 'Sync compliance completata (risk scoring + miglioramenti KYC).',
-        summary: 'Sync compliance completata.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_history_trading_platform_overview',
-    strategicCategory: 'Platform & Infrastructure',
-    impactLevel: 'Low',
-    owner: 'Ops',
-    status: 'Done',
-    icon: 'briefcase',
-    i18n: {
-      en: {
-        title: 'Trading platform overview — shared',
-        strategicObjective:
-          'Share a clear overview of the trading platform to align stakeholders quickly',
-        problemSolved:
-          'Stakeholders need a shared baseline for platform capabilities and current state',
-        expectedBusinessImpact: 'Less misalignment and faster integration/ops decisions',
-        kpiOrMetric: 'Overview shared, stakeholders aligned',
-        taskBreakdown: ['Prepare overview', 'Share via email', 'Capture questions'],
-        description: 'Trading platform overview shared via email.',
-        summary: 'Trading platform overview shared.',
-        notes: 'URL: https://trading-platform-self-two.vercel.app/trade',
-      },
-      it: {
-        title: 'Overview piattaforma trading — condivisa',
-        strategicObjective:
-          'Condividere un’overview chiara della piattaforma trading per allineare rapidamente gli stakeholder',
-        problemSolved: 'Serve una baseline condivisa su capacità e stato della piattaforma',
-        expectedBusinessImpact: 'Meno misalignment e decisioni integrazione/ops più rapide',
-        kpiOrMetric: 'Overview condivisa, stakeholder allineati',
-        taskBreakdown: ['Preparare overview', 'Condividere via email', 'Raccogliere domande'],
-        description: 'Overview piattaforma trading condivisa via email.',
-        summary: 'Overview piattaforma trading condivisa.',
-        notes: 'URL: https://trading-platform-self-two.vercel.app/trade',
-      },
-    },
-  },
-  {
-    id: 'pb_history_first_month_invoice',
-    strategicCategory: 'Operations & Compliance',
-    impactLevel: 'Low',
-    owner: 'Ops',
-    status: 'Done',
-    icon: 'payments',
-    i18n: {
-      en: {
-        title: 'First month invoice — issued and sent',
-        strategicObjective: 'Complete first-month invoicing as part of operational readiness',
-        problemSolved: 'Invoicing must be executed on time to avoid operational debt',
-        expectedBusinessImpact: 'Clean ops baseline and fewer admin follow-ups',
-        kpiOrMetric: 'Invoice issued and sent',
-        taskBreakdown: ['Issue invoice', 'Send to counterparties', 'Archive reference'],
-        description: 'First month invoice issued and sent.',
-        summary: 'Invoice issued and sent.',
-        notes: 'Done (from Weekly Execution History).',
-      },
-      it: {
-        title: 'Prima fattura mese — emessa e inviata',
-        strategicObjective:
-          'Completare la fatturazione del primo mese come parte della readiness operativa',
-        problemSolved: 'La fatturazione va eseguita on-time per evitare debito operativo',
-        expectedBusinessImpact: 'Baseline ops pulita e meno follow-up amministrativi',
-        kpiOrMetric: 'Fattura emessa e inviata',
-        taskBreakdown: ['Emettere fattura', 'Inviare ai referenti', 'Archiviare riferimento'],
-        description: 'Prima fattura mese emessa e inviata.',
-        summary: 'Fattura emessa e inviata.',
-        notes: 'Done (da Weekly Execution History).',
-      },
-    },
-  },
-  {
-    id: 'pb_affiliate_monthly_payments_rework',
-    strategicCategory: 'Partnerships & Affiliates',
-    impactLevel: 'High',
-    owner: 'Dan',
-    status: 'Executing',
-    icon: 'plus',
-    i18n: {
-      en: {
-        title: 'Revisit monthly affiliate payments calculation',
-        strategicObjective:
-          'Make monthly affiliate payout calculations consistent, auditable, and aligned with current rules and edge-cases',
-        problemSolved:
-          'Current monthly payout calculation logic needs revision to reduce mismatches, rework, and disputes',
-        expectedBusinessImpact:
-          'Lower payout errors, faster monthly runs, clearer audit trail for partner disputes',
-        kpiOrMetric: 'Payout Error Rate (PER), time to produce monthly payout, dispute count',
-        taskBreakdown: [
-          'Review current monthly payout logic and edge cases',
-          'Align rules + tiers and define single source of truth',
-          'Validate against agreed sample cases and historical months',
-          'Ship updated calculation + report outputs',
-        ],
-        description:
-          'Ongoing: revisiting the monthly affiliate payments calculation to ensure correctness and auditability. Next: confirm rules, validate samples, then ship updated logic.',
-        summary: 'Rework monthly affiliate payout calculation.',
-        notes: 'Status: executing. Focus on correctness + audit trail.',
-      },
-      it: {
-        title: 'Rivisitazione calcolo pagamenti mensili affiliati',
-        strategicObjective:
-          'Rendere il calcolo payout affiliate mensile coerente, auditabile e allineato alle regole attuali',
-        problemSolved:
-          'La logica di calcolo dei pagamenti mensili richiede revisione per ridurre mismatch, rework e contestazioni',
-        expectedBusinessImpact:
-          'Meno errori payout, run mensile più veloce, audit trail chiaro per dispute con i partner',
-        kpiOrMetric:
-          'Tasso errori payout (PER), tempo produzione payout mensile, numero contestazioni',
-        taskBreakdown: [
-          'Rivedere logica attuale e casi limite',
-          'Allineare regole + tier e definire single source of truth',
-          'Validare su casi campione concordati e mesi storici',
-          'Rilasciare calcolo aggiornato + output report',
-        ],
-        description:
-          'Ongoing: revisione del calcolo dei pagamenti mensili affiliati per garantire correttezza e auditabilità. Prossimo step: confermare regole, validare campioni, poi rilasciare la logica aggiornata.',
-        summary: 'Rework calcolo payout affiliate mensile.',
-        notes: 'Status: executing. Focus su correttezza + audit trail.',
-      },
-    },
-  },
-  {
-    id: 'pb_market_intel',
-    strategicCategory: 'Retention & Monetization',
-    impactLevel: 'Medium',
-    owner: 'CRM & Automation',
-    status: 'Review & QA',
-    icon: 'broadcast',
-    i18n: {
-      en: {
-        title: 'Automate Market Intelligence Distribution',
-        strategicObjective:
-          'Deliver personalized market insights to increase client engagement and retention',
-        problemSolved:
-          'Market analysis and news are distributed manually with inconsistent reach and timing',
-        expectedBusinessImpact: '35% increase in client engagement, 20% reduction in churn rate',
-        kpiOrMetric: 'Client engagement rate, content open rates, retention rate by segment',
-        taskBreakdown: [
-          'Demo calls completed with Autochartist and Trading Central (evaluation)',
-          'Comparison email sent to the Board → await decision on tool selection',
-          'Design content calendar for market analysis and news distribution',
-          'Set up automated segmentation for personalized content delivery',
-          'Integrate market data feeds for real-time insights',
-          'Create A/B testing framework for content and messaging',
-          'Implement engagement tracking and optimization loops',
-        ],
-        description:
-          'Automate distribution of market analysis and news through WhatsApp and other messaging channels.\n\nObjectives:\n\nIncrease engagement\n\nImprove retention\n\nReduce manual workload\n\nStandardize communication quality\n\nIntegration with Solitics to be evaluated only after convrs.io setup is stable.',
-        summary: 'Automated market insights and news via messaging channels.',
-        notes:
-          'Status: executing (evaluation phase). Demo calls completed with Autochartist and Trading Central. A comparison email has been sent to the Board; waiting for a decision on which tool to select. Next: once selected, define scope + integration approach and move into implementation planning.',
-      },
-      it: {
-        title: 'Automatizzare la distribuzione di market intelligence',
-        strategicObjective:
-          'Inviare insight di mercato personalizzati per aumentare engagement e retention',
-        problemSolved:
-          'Analisi di mercato e news sono distribuite manualmente con copertura e timing incoerenti',
-        expectedBusinessImpact: '+35% engagement cliente, -20% churn',
-        kpiOrMetric: 'Tasso engagement, open rate contenuti, retention per segmento',
-        taskBreakdown: [
-          'Demo call completate con Autochartist e Trading Central (fase valutazione)',
-          'Mail di comparazione inviata al Board → in attesa decisione sul tool da selezionare',
-          'Progettare calendario contenuti per analisi e news',
-          'Impostare segmentazione automatica per contenuti personalizzati',
-          'Integrare feed dati di mercato per insight real-time',
-          'Creare framework A/B test per contenuto e messaggi',
-          'Implementare tracking engagement e loop di ottimizzazione',
-        ],
-        description:
-          'Automatizzare la distribuzione di analisi di mercato e news tramite WhatsApp e altri canali di messaggistica.\n\nObiettivi:\n\nAumentare engagement\n\nMigliorare retention\n\nRidurre lavoro manuale\n\nStandardizzare la qualità della comunicazione\n\nValutare l’integrazione con Solitics solo dopo che convrs.io è stabile.',
-        summary: 'Insight e news automatizzati via messaggistica.',
-        notes:
-          'Status: executing (fase valutazione). Demo call completate con Autochartist e Trading Central. Mail di comparazione inviata al Board; in attesa della decisione su quale tool selezionare. Prossimo step: una volta scelto, definire scope + approccio integrazione e passare al planning implementativo.',
-      },
-    },
-  },
-  {
-    id: 'pb_ifx_expo_feb_2026',
-    strategicCategory: 'Partnerships & Affiliates',
-    impactLevel: 'Medium',
-    owner: 'Marketing',
-    status: 'Executing',
-    icon: 'briefcase',
-    i18n: {
-      en: {
-        title: 'IFX Expo — 10–12 February (2026)',
-        strategicObjective:
-          'Use IFX Expo to accelerate partnerships and business development through structured meetings and follow-ups',
-        problemSolved:
-          'Without a structured plan, expo attendance risks becoming untracked networking with low conversion into real pipeline',
-        expectedBusinessImpact:
-          'Increase qualified partner conversations, speed up BD cycles, and convert top meetings into actionable next steps',
-        kpiOrMetric:
-          'Number of meetings booked, qualified leads, follow-ups completed, partnerships progressed post-event',
-        taskBreakdown: [
-          'Confirm attendance logistics (passes, travel, agenda)',
-          'Prepare pitch deck + one-pager + offer positioning',
-          'Create target partner list and pre-book meetings (10–12 Feb)',
-          'Meetings: Trading Central, Autochartist, Skale, Solitics, convrs.io',
-          'Run meetings on-site and capture notes/next steps consistently',
-          'Post-event follow-ups + pipeline tracking within 72h',
-        ],
-        description:
-          'Plan and execute IFX Expo attendance during 10–12 February.\n\nPlanned meetings:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nGoals:\n\nPartnership discovery\n\nBD meetings and introductions\n\nClear follow-up actions and pipeline tracking after the event.',
-        summary: 'Expo plan + meetings + follow-up pipeline.',
-        notes:
-          'Status: executing. Event window: 10–12 February (IFX Expo). Meetings scheduled with Trading Central, Autochartist, Skale, Solitics, convrs.io.',
-      },
-      it: {
-        title: 'IFX Expo — 10–12 Febbraio (2026)',
-        strategicObjective:
-          'Usare IFX Expo per accelerare partnership e sviluppo business con meeting pianificati e follow-up strutturati',
-        problemSolved:
-          'Senza un piano strutturato, la presenza in fiera rischia di rimanere networking non tracciato e con bassa conversione in pipeline',
-        expectedBusinessImpact:
-          'Aumentare conversazioni qualificate con partner, velocizzare cicli BD e trasformare i meeting migliori in next step concreti',
-        kpiOrMetric:
-          'Numero meeting prenotati, lead qualificati, follow-up completati, partnership avanzate post-evento',
-        taskBreakdown: [
-          'Confermare logistica (pass, viaggio, agenda)',
-          'Preparare pitch deck + one-pager + posizionamento offerta',
-          'Definire lista target e pre-book dei meeting (10–12 Feb)',
-          'Meeting: Trading Central, Autochartist, Skale, Solitics, convrs.io',
-          'Eseguire meeting on-site e tracciare note/next step in modo consistente',
-          'Follow-up post-evento + tracking pipeline entro 72h',
-        ],
-        description:
-          "Pianificare ed eseguire la presenza a IFX Expo dal 10 al 12 Febbraio.\n\nMeeting pianificati:\n\nTrading Central\n\nAutochartist\n\nSkale\n\nSolitics\n\nconvrs.io\n\nObiettivi:\n\nScouting partnership\n\nMeeting BD e introduzioni\n\nAzioni di follow-up chiare e tracking pipeline dopo l'evento.",
-        summary: 'Piano expo + meeting + pipeline follow-up.',
-        notes:
-          'Status: executing. Finestra evento: 10–12 Febbraio (IFX Expo). Meeting pianificati con Trading Central, Autochartist, Skale, Solitics, convrs.io.',
-      },
-    },
+    title: 'Systematise upsell flows toward Forex / Account Management',
+    summary: 'Convert warm internal traffic into higher-value segments.',
   },
   {
     id: 'pb_outreach_opt',
@@ -1558,47 +687,8 @@ const TASK_SEEDS = [
     impactLevel: 'Medium',
     owner: 'Sales',
     status: 'Backlog',
-    icon: 'search',
-    i18n: {
-      en: {
-        title: 'Optimize Outreach Performance and Conversion',
-        strategicObjective: 'Improve outreach effectiveness through data-driven optimization',
-        problemSolved: 'Outreach efforts lack systematic measurement and optimization framework',
-        expectedBusinessImpact:
-          '40% increase in outreach conversion rate, 25% improvement in lead quality',
-        kpiOrMetric: 'Response rate, conversion rate, cost per qualified lead',
-        taskBreakdown: [
-          'Implement comprehensive tracking for all outreach activities',
-          'Analyze current performance across all channels and scripts',
-          'A/B test messaging, timing, and targeting strategies',
-          'Develop predictive models for lead scoring and prioritization',
-          'Create automated optimization loops for ongoing improvement',
-        ],
-        description:
-          'Review Kommo activity:\n\nMessage volume\n\nResponse rate\n\nFeedback quality\n\nConversion impact\n\nGoal:\n\nUnderstand real performance\n\nOptimize scripts\n\nImprove targeting\n\nIncrease conversion efficiency',
-        summary: 'Measure effectiveness of current outreach.',
-        notes: '',
-      },
-      it: {
-        title: 'Ottimizzare performance e conversione dell’outreach',
-        strategicObjective: 'Migliorare l’efficacia dell’outreach con ottimizzazione data-driven',
-        problemSolved:
-          'Le attività di outreach mancano di un framework sistematico di misurazione e ottimizzazione',
-        expectedBusinessImpact: '+40% conversione outreach, +25% qualità lead',
-        kpiOrMetric: 'Response rate, conversion rate, costo per lead qualificato',
-        taskBreakdown: [
-          'Implementare tracking completo per tutte le attività di outreach',
-          'Analizzare performance attuali su canali e script',
-          'A/B test su messaggi, timing e targeting',
-          'Sviluppare modelli predittivi per lead scoring e priorità',
-          'Creare loop di ottimizzazione automatizzati',
-        ],
-        description:
-          'Review attività Kommo:\n\nVolume messaggi\n\nResponse rate\n\nQualità feedback\n\nImpatto conversione\n\nObiettivo:\n\nCapire performance reali\n\nOttimizzare script\n\nMigliorare targeting\n\nAumentare efficienza di conversione',
-        summary: 'Misurare e ottimizzare l’outreach attuale.',
-        notes: '',
-      },
-    },
+    title: 'Improve outreach performance and conversion',
+    summary: 'Measurement, scripts optimisation, targeting, conversion loops.',
   },
   {
     id: 'pb_withdraw_automation',
@@ -1606,53 +696,253 @@ const TASK_SEEDS = [
     impactLevel: 'High',
     owner: 'Payments & Compliance',
     status: 'Backlog',
-    icon: 'payments',
-    i18n: {
-      en: {
-        title: 'Implement Automated Withdrawal Systems',
-        strategicObjective:
-          'Eliminate manual withdrawal processing to improve client experience and operational efficiency',
-        problemSolved:
-          'Manual withdrawal processing creates delays, errors, and high operational costs',
-        expectedBusinessImpact:
-          '90% reduction in withdrawal processing time, 60% decrease in support tickets, major UX improvement',
-        kpiOrMetric:
-          'Average withdrawal processing time, support ticket volume, client satisfaction',
-        taskBreakdown: [
-          'Select and integrate card withdrawal providers (BridgerPay + SolidPayments)',
-          'Implement instant card withdrawal functionality',
-          'Set up crypto withdrawal automation (Skale + Uniwire)',
-          'Create comprehensive testing and failover procedures',
-          'Develop client communication and support processes for automated withdrawals',
-        ],
-        description:
-          'Implement automated withdrawals:\n\nCard withdrawals — BridgerPay + SolidPayments\n\nInstant credit to clients\n\nNo banking fees\n\nStrong UX improvement\n\nSignificant support workload reduction\n\nCrypto withdrawals — Skale + Uniwire\n\nInstant payouts\n\nMassive operational efficiency\n\nMajor time saving for support and finance teams\n\nThis is a must-have and deal-breaker priority.',
-        summary: 'Full automation of card and crypto withdrawals.',
-        notes: '',
-      },
-      it: {
-        title: 'Implementare sistemi di prelievo automatizzati',
-        strategicObjective:
-          'Eliminare la gestione manuale dei prelievi per migliorare UX cliente ed efficienza operativa',
-        problemSolved:
-          'La gestione manuale dei prelievi crea ritardi, errori e alti costi operativi',
-        expectedBusinessImpact:
-          '-90% tempo di processing prelievi, -60% ticket supporto, grande miglioramento UX',
-        kpiOrMetric:
-          'Tempo medio processing prelievi, volume ticket supporto, soddisfazione cliente',
-        taskBreakdown: [
-          'Selezionare e integrare provider prelievi carta (BridgerPay + SolidPayments)',
-          'Implementare prelievo carta istantaneo',
-          'Impostare automazione prelievi crypto (Skale + Uniwire)',
-          'Creare procedure complete di test e failover',
-          'Definire comunicazione cliente e processi supporto per prelievi automatizzati',
-        ],
-        description:
-          'Implementare prelievi automatizzati:\n\nPrelievi carta — BridgerPay + SolidPayments\n\nAccredito istantaneo ai clienti\n\nZero fee bancarie\n\nForte miglioramento UX\n\nRiduzione significativa carico support\n\nPrelievi crypto — Skale + Uniwire\n\nPagamenti istantanei\n\nEnorme efficienza operativa\n\nGrande risparmio di tempo per support e finance\n\nPriorità must-have / deal-breaker.',
-        summary: 'Automazione completa prelievi carta e crypto.',
-        notes: '',
-      },
-    },
+    title: 'Implement automated withdrawal systems',
+    summary: 'Automate card + crypto withdrawals to reduce ops load and improve UX.',
+  },
+  {
+    id: 'pb_trading_data_visibility_sales',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'Sales',
+    status: 'Backlog',
+    title: 'Improve trading data visibility for Sales',
+    summary: 'Make the key trading/account signals usable in day-to-day sales workflows.',
+  },
+  {
+    id: 'pb_agent_performance_dashboards',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'Medium',
+    owner: 'Ops',
+    status: 'Backlog',
+    title: 'Structure agent performance dashboards',
+    summary: 'KPIs, attribution, pipeline and daily operational visibility for agents.',
+  },
+  {
+    id: 'pb_onboarding_pipeline_opt',
+    strategicCategory: 'Growth & Acquisition',
+    impactLevel: 'Medium',
+    owner: 'CRM & Automation',
+    status: 'Backlog',
+    title: 'Optimise user onboarding pipeline',
+    summary: 'Reduce drop-off with structured onboarding stages and automated nudges.',
+  },
+  {
+    id: 'pb_affiliate_reporting_automation',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'Medium',
+    owner: 'Dan',
+    status: 'Backlog',
+    title: 'Automate affiliate reporting',
+    summary: 'Standardised reporting, repeatable runs, fewer manual stitches.',
+  },
+
+  // EXECUTING
+  {
+    id: 'pb_premium_channels',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'CRM & Automation',
+    status: 'Executing',
+    title: 'Centralise communication channels for premium clients',
+    summary: 'Convrs setup for WhatsApp/Telegram/Discord premium flows + booking.',
+  },
+  {
+    id: 'pb_skale_test_env',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Executing',
+    title: 'Set up Skale testing environment (new UI)',
+    summary: 'Provision, validate access, then run E2E smoke tests on the new UI.',
+  },
+  {
+    id: 'pb_cellxpert_escail_data_alignment',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'CRM & Automation',
+    status: 'Executing',
+    title: 'Align Cellxpert ↔ Skale data',
+    summary: 'Canonical field map and validated sync (IDs, events, timestamps, ownership).',
+  },
+  {
+    id: 'pb_affiliate_monthly_payments_rework',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Executing',
+    title: 'Review monthly affiliate payment calculation',
+    summary: 'Make payout calculation consistent, auditable, and aligned to current rules.',
+  },
+  {
+    id: 'pb_ops_data_distribution_sales_support',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Ops',
+    status: 'Executing',
+    title: 'Improve operational data distribution to Sales and Support',
+    summary: 'Operational signals delivered consistently (dashboards, views, and routines).',
+  },
+
+  // REVIEW & QA
+  {
+    id: 'pb_voiso_skale_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Review & QA',
+    title: 'Voiso ↔ Skale integration (calling + ops workflow)',
+    summary: 'Validate end-to-end and sign off: events, identifiers, reliability.',
+  },
+  {
+    id: 'pb_market_intel',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'Medium',
+    owner: 'CRM & Automation',
+    status: 'Review & QA',
+    title: 'Automate market intelligence distribution',
+    summary: 'Automated market insights/news distribution via messaging channels.',
+  },
+
+  // DONE
+  {
+    id: 'pb_solitics_onboarding_completed',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'Paolo / Solitics',
+    status: 'Done',
+    title:
+      'Solitics onboarding completed: platform setup, onboarding sessions, data flow design, segmentation setup, workflow preparation',
+    summary: 'One consolidated onboarding delivery completed and documented.',
+  },
+  {
+    id: 'pb_affiliate_console_analytics',
+    strategicCategory: 'Partnerships & Affiliates',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Done',
+    title: 'Affiliate analysis console: processed data and operational insights',
+    summary: 'Affiliate datasets + analysis views shipped for repeatable internal outputs.',
+  },
+  {
+    id: 'pb_support_user_check_release',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Dan',
+    status: 'Done',
+    title: 'Support User Check released to Support team',
+    summary: 'Support tool shipped and adopted for day-to-day case handling.',
+  },
+  {
+    id: 'pb_history_mt_web_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Done',
+    title: 'MetaTrader Web integration completed',
+    summary: 'Webtrader access enabled and validated on critical flows.',
+  },
+  {
+    id: 'pb_history_social_trading_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Done',
+    title: 'Social Trading integration completed',
+    summary: 'Brokeree social trading integration delivered and stabilised.',
+  },
+  {
+    id: 'pb_history_scale_brokeree_coordination',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'Tech',
+    status: 'Done',
+    title: 'Skale + Brokeree integration coordination completed',
+    summary: 'Cross-vendor blockers resolved and delivery unblocked.',
+  },
+  {
+    id: 'pb_history_retention_alignment',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'Medium',
+    owner: 'Ops',
+    status: 'Done',
+    title: 'Retention alignment completed with owners and next steps defined',
+    summary: 'Scope aligned, owners assigned, cadence defined.',
+  },
+  {
+    id: 'pb_history_compliance_sync',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'Medium',
+    owner: 'Compliance',
+    status: 'Done',
+    title: 'Compliance sync completed including risk scoring and KYC improvements',
+    summary: 'Shared definitions and next steps captured.',
+  },
+  {
+    id: 'pb_history_trading_platform_overview',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Low',
+    owner: 'Ops',
+    status: 'Done',
+    title: 'Trading platform operational overview shared',
+    summary: 'Baseline shared to align stakeholders and accelerate ops decisions.',
+  },
+
+  // NEXT PRIORITIES
+  {
+    id: 'pb_next_activate_solitics_retention_workflows',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'CRM & Automation',
+    status: 'Next Priorities',
+    title: 'Activate Solitics retention workflows',
+    summary: 'Move from setup to live journeys with measurable impact.',
+  },
+  {
+    id: 'pb_next_optimize_skale_crm_usage',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'Medium',
+    owner: 'CRM & Automation',
+    status: 'Next Priorities',
+    title: 'Optimise Skale CRM usage',
+    summary: 'Make the CRM layer operationally consistent and adoption-ready.',
+  },
+  {
+    id: 'pb_next_improve_data_integration',
+    strategicCategory: 'Platform & Infrastructure',
+    impactLevel: 'High',
+    owner: 'Tech',
+    status: 'Next Priorities',
+    title: 'Improve data integration across platforms',
+    summary: 'Unify identifiers, events and reporting semantics.',
+  },
+  {
+    id: 'pb_next_automate_retention_reengagement',
+    strategicCategory: 'Retention & Monetization',
+    impactLevel: 'High',
+    owner: 'CRM & Automation',
+    status: 'Next Priorities',
+    title: 'Automate retention and re-engagement processes',
+    summary: 'Lifecycle automation with tracking and optimisation loops.',
+  },
+  {
+    id: 'pb_next_improve_sales_support_tools',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Ops',
+    status: 'Next Priorities',
+    title: 'Improve operational tools for Sales and Support',
+    summary: 'More self-serve visibility, fewer manual checks, faster workflows.',
+  },
+  {
+    id: 'pb_next_philippines_agents_activation',
+    strategicCategory: 'Operations & Compliance',
+    impactLevel: 'High',
+    owner: 'Ops',
+    status: 'Next Priorities',
+    title:
+      'Philippines agents activation: define action areas, tool stack, and contact lists (starts Mon 16)',
+    summary:
+      'Initial onboarding + agreements completed; define scope, tools to use, and target users to contact for week 1 execution.',
   },
 ]
 
@@ -2257,12 +1547,12 @@ export default function ProjectBoardPage({
       >
         {STATUSES.map((status) => {
           const columnTitles = {
+            Strategic: t('tasksBoard.status.strategic'),
             Backlog: t('tasksBoard.status.backlog'),
-            Planned: t('tasksBoard.status.planned'),
             Executing: t('tasksBoard.status.executing'),
             'Review & QA': t('tasksBoard.status.reviewQa'),
-            Blocked: t('tasksBoard.status.blocked'),
             Done: t('tasksBoard.status.done'),
+            'Next Priorities': t('tasksBoard.status.nextPriorities'),
           }
           const list = grouped[status] || []
           return (
