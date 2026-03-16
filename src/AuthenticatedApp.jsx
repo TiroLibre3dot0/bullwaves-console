@@ -20,6 +20,9 @@ const UploadReportsPage = lazy(() => import('./pages/UploadReportsPage'))
 const TraderPointsSimulatorPage = lazy(
   () => import('./features/traderPointsSimulator/TraderPointsSimulatorPage')
 )
+const PlatformUsageBillingPage = lazy(
+  () => import('./features/platform-usage/pages/PlatformUsageBillingPage')
+)
 const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
 const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
@@ -144,6 +147,7 @@ export default function AuthenticatedApp() {
       profitableRanking: '/retention/profitable-ranking',
       fraud: '/fraud',
       orgChart: '/org-chart',
+      platformUsageBilling: '/platform-usage-billing',
       supportUserCheck: '/support/user-check',
       customEvents: '/custom-events',
       upload: '/upload',
@@ -174,6 +178,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
+    if (pathname.startsWith('/platform-usage-billing')) return 'platformUsageBilling'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
@@ -458,6 +463,7 @@ export default function AuthenticatedApp() {
       summary: 'summary',
       profitableRanking: 'retention-profitable-ranking',
       orgChart: 'org-chart',
+      platformUsageBilling: 'platform-usage-billing',
       supportUserCheck: 'support-user-check',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
@@ -528,6 +534,7 @@ export default function AuthenticatedApp() {
               {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
               {view === 'orgChart' ? <OrgChart /> : null}
+              {view === 'platformUsageBilling' ? <PlatformUsageBillingPage /> : null}
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}

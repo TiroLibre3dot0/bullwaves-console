@@ -472,6 +472,18 @@ export default function Sidebar({
                 <span>{t('sidebar.orgChart')}</span>
               </span>
             </button>
+
+            <button
+              disabled={disabled('platformUsageBilling')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'platformUsageBilling' ? 'active' : ''}`}
+              onClick={() => navigate('platformUsageBilling')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="card" />
+                <span>{t('sidebar.platformUsageBilling')}</span>
+              </span>
+            </button>
             <button
               disabled={disabled('customEvents')}
               type="button"
