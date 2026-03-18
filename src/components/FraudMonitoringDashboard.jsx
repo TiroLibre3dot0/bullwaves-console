@@ -433,6 +433,37 @@ export default function FraudMonitoringDashboard() {
               const y = Number(mmyyyy[2])
               if (!isNaN(y) && mo >= 1 && mo <= 12) return Date.UTC(y, mo - 1, 1)
             }
+            // M/D/YYYY [HH:mm[:ss]] (Registrations Report common export)
+            const mdy = s.match(
+              /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2})(?::(\d{2}))(?::(\d{2}))?)?\s*$/
+            )
+            if (mdy) {
+              const mo = Number(mdy[1])
+              const d = Number(mdy[2])
+              const y = Number(mdy[3])
+              const hh = mdy[4] ? Number(mdy[4]) : 0
+              const mm = mdy[5] ? Number(mdy[5]) : 0
+              const ss = mdy[6] ? Number(mdy[6]) : 0
+              if (
+                !isNaN(y) &&
+                mo >= 1 &&
+                mo <= 12 &&
+                !isNaN(d) &&
+                d >= 1 &&
+                d <= 31 &&
+                !isNaN(hh) &&
+                hh >= 0 &&
+                hh <= 23 &&
+                !isNaN(mm) &&
+                mm >= 0 &&
+                mm <= 59 &&
+                !isNaN(ss) &&
+                ss >= 0 &&
+                ss <= 59
+              ) {
+                return Date.UTC(y, mo - 1, d, hh, mm, ss)
+              }
+            }
             // YYYY-MM or YYYY/MM or YYYY-MM-DD
             const ymd = s.match(/^\s*(\d{4})[\-\/](\d{1,2})(?:[\-\/](\d{1,2}))?\s*$/)
             if (ymd) {
@@ -526,7 +557,12 @@ export default function FraudMonitoringDashboard() {
 
           const acctKey = pickNormKey(acctKeys)
           const nameKey = pickNormKey(nameKeys)
-          const dateKey = pickNormKey(dateKeys)
+          // IMPORTANT: when Registrations Report has `registration_date`, treat it as the
+          // authoritative registration timestamp (matches console totals). `external_date`
+          // is often present but can represent a different system/event and may shift year counts.
+          const dateKeysFound = normToOrig.has('registration_date')
+            ? ['registration_date']
+            : dateKeys.filter((k) => normToOrig.has(k))
           const depositKey = pickNormKey(depositCountKeys)
           const equityKey = pickNormKey(equityKeys)
           const plKey = pickNormKey(plKeys)
@@ -559,12 +595,20 @@ export default function FraudMonitoringDashboard() {
           }
 
           const parseNum = (v) => Number(String(v || '').replace(/[^0-9\.-]/g, '')) || 0
+          const getFirstNonEmpty = (row, normKeys) => {
+            for (const nk of normKeys) {
+              const v = get(row, nk)
+              if (String(v ?? '').trim()) return v
+            }
+            return ''
+          }
           const breakdown = Object.create(null)
           commKeys.forEach((k) => {
             breakdown[k] = 0
           })
           const perYearAgg = Object.create(null)
           const regIdToTs = new Map()
+          const allIndexIds = new Set()
 
           const data = Array.isArray(res.data) ? res.data : []
           const accounts = new Array(data.length)
@@ -579,7 +623,7 @@ export default function FraudMonitoringDashboard() {
 
             const holder = nameKey ? String(get(row, nameKey) || '').trim() || '—' : '—'
 
-            const dateVal = dateKey ? get(row, dateKey) : ''
+            const dateVal = dateKeysFound.length ? getFirstNonEmpty(row, dateKeysFound) : ''
             const regTs = parseRegistrationTs(dateVal)
             const regYear = regTs != null ? new Date(regTs).getUTCFullYear() : undefined
 
@@ -619,8 +663,9 @@ export default function FraudMonitoringDashboard() {
 
             // Index unique account IDs by earliest registration timestamp.
             // Prefer skipping synthetic IDs derived from row index.
+            const idForIndex = cleanedId || fallbackId
+            if (idForIndex) allIndexIds.add(idForIndex)
             if (regTs != null) {
-              const idForIndex = cleanedId || fallbackId
               if (idForIndex) {
                 const prev = regIdToTs.get(idForIndex)
                 if (prev == null || regTs < prev) regIdToTs.set(idForIndex, regTs)
@@ -732,15 +777,29 @@ export default function FraudMonitoringDashboard() {
           // Index registration timestamps for fast comparable-count queries
           const allTs = []
           const byYear = Object.create(null)
+          let minTs = null
+          let maxTs = null
           for (const ts of regIdToTs.values()) {
             if (typeof ts !== 'number') continue
             allTs.push(ts)
+            if (minTs == null || ts < minTs) minTs = ts
+            if (maxTs == null || ts > maxTs) maxTs = ts
             const y = new Date(ts).getUTCFullYear()
             const key = String(y)
             if (!byYear[key]) byYear[key] = []
             byYear[key].push(ts)
           }
-          const computedRegIndex = { allTs, byYear }
+          const totalUniqueIds = allIndexIds.size
+          const uniqueIdsWithDate = regIdToTs.size
+          const missingNoDateCount = Math.max(0, totalUniqueIds - uniqueIdsWithDate)
+          const computedRegIndex = {
+            allTs,
+            byYear,
+            minTs,
+            maxTs,
+            totalUniqueIds,
+            missingNoDateCount,
+          }
           setRegIndex(computedRegIndex)
 
           const totalAccounts = accounts.length
@@ -1343,9 +1402,21 @@ export default function FraudMonitoringDashboard() {
     }
     if (minTs === Infinity || maxTs === -Infinity) return null
 
-    // Month labels represent a whole month; include up to end-of-month (approx, inclusive)
-    const rangeStart = minTs
-    const rangeEnd = maxTs + 32 * 24 * 3600 * 1000
+    // Month labels represent a whole month; use whole-month boundaries (UTC)
+    const toUtcMonthStart = (ts) => {
+      const d = new Date(Number(ts))
+      if (isNaN(d.getTime())) return null
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)
+    }
+    const toUtcMonthEnd = (ts) => {
+      const d = new Date(Number(ts))
+      if (isNaN(d.getTime())) return null
+      return Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0, 23, 59, 59, 999)
+    }
+
+    const rangeStart = toUtcMonthStart(minTs)
+    const rangeEnd = toUtcMonthEnd(maxTs)
+    if (rangeStart == null || rangeEnd == null) return null
 
     const idx = regIndex
     if (!idx) return 0
@@ -1365,6 +1436,26 @@ export default function FraudMonitoringDashboard() {
       if (typeof ts !== 'number') continue
       if (ts >= rangeStart && ts <= rangeEnd) count += 1
     }
+
+    // If we're looking at the all-years view, and the Media range fully covers the span of
+    // *dated* registrations, we can safely include unique IDs that have no parseable date.
+    // Otherwise we'd risk attributing undated accounts to a narrower range.
+    const idxMin = typeof idx.minTs === 'number' ? idx.minTs : null
+    const idxMax = typeof idx.maxTs === 'number' ? idx.maxTs : null
+    const canIncludeUndated =
+      (!yearFilter || yearFilter === 'all') &&
+      idxMin != null &&
+      idxMax != null &&
+      idxMin >= rangeStart &&
+      idxMax <= rangeEnd
+
+    if (canIncludeUndated) {
+      const total = Number(idx.totalUniqueIds)
+      if (Number.isFinite(total) && total > 0) return Math.round(total)
+      const missing = Number(idx.missingNoDateCount || 0)
+      return count + (Number.isFinite(missing) ? missing : 0)
+    }
+
     return count
   }, [mediaLoaded, csvLoaded, filteredMediaData, regIndex, yearFilter])
 

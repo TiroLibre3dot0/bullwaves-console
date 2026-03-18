@@ -271,6 +271,8 @@ async function runPostUploadGenerators(type, emit) {
     // Investments dashboard relies on this precomputed artifact.
     // It aggregates Media Report.csv into a lightweight CellX affiliate+month table.
     ...(type === 'media' ? [path.join(__dirname, 'generate_cellx_affiliate_month.js')] : []),
+    // Rankings rely on Registrations Report.csv; keep them in sync after registrations uploads.
+    ...(type === 'registrations' ? [path.join(__dirname, 'generate_rankings_index.js')] : []),
     path.join(__dirname, 'generate_support_users_index.js'),
     path.join(__dirname, 'generate_fraud_patterns_index.js'),
     path.join(__dirname, 'generate_affiliate_kpi_index.js'),

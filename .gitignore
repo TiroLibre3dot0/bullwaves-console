@@ -13,6 +13,10 @@ public/raw/
 
 # Local debug scripts
 scripts/roi_debug.js
+scripts/__pycache__/
+__pycache__/
+*.pyc
+scripts/debug_registration_gap.py
 node_modules
 dist
 .env.local
@@ -68,3 +72,6 @@ tmp-*.log
 # Local XLSX sources (keep local, JSON artifact is versioned)
 CREOLABS/Traders Ranking Rewards.xlsx
 CREOLABS/~$*.xlsx
+
+# Local invoice/provider spreadsheets
+Invoice providers/*.xlsx

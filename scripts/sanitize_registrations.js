@@ -35,6 +35,19 @@ const normalizedHeader = h => String(h||'').trim().toLowerCase().replace(/\s+/g,
 const VERBOSE = process.env.SANITIZER_VERBOSE === '1'
 const debug = (...args) => { if (VERBOSE) console.log(...args) }
 
+// Safety toggle:
+// - authoritative (default): treat base dates from the latest export as source-of-truth
+// - max: keep the latest (max) date seen historically (previous behavior)
+const BASE_DATE_MERGE_STRATEGY = String(process.env.SANITIZER_BASE_DATE_MERGE || 'authoritative')
+  .trim()
+  .toLowerCase()
+const AUTHORITATIVE_BASE_DATES = BASE_DATE_MERGE_STRATEGY !== 'max'
+console.log(
+  'Base date merge strategy:',
+  AUTHORITATIVE_BASE_DATES ? 'authoritative' : 'max',
+  '(set SANITIZER_BASE_DATE_MERGE=max to rollback)'
+)
+
 function tryParse(text, opts = {}){
   return Papa.parse(text, Object.assign({ header: true, skipEmptyLines: true, quoteChar: '"', transformHeader: normalizedHeader }, opts))
 }
@@ -115,8 +128,16 @@ function preprocessRaw(text){
   return lines.map(l=>{
     if (!l) return l
     l = l.replace(/;{1,}\s*$/g, '')
-    if (/^".*"$/.test(l) && l.indexOf('""') !== -1){
-      l = l.slice(1,-1).replace(/""/g, '"')
+    // Some broken exports wrap an entire CSV record as a single quoted string and escape quotes inside it.
+    // A normal CSV record also starts/ends with quotes, so we must NOT strip quotes for standard rows.
+    // Heuristic: only dequote if it looks like a *single* quoted field (i.e. doesn't contain the usual field separators).
+    if (
+      /^".*"$/.test(l)
+      && l.includes('""')
+      && !l.includes('","')
+      && !l.includes('";"')
+    ) {
+      l = l.slice(1, -1).replace(/""/g, '"')
     }
     return l
   }).join('\n')
@@ -438,6 +459,13 @@ const OVERWRITE_IF_PRESENT_FIELDS = new Set([
   'other_commissions',
 ])
 
+// Date merge strategy:
+// - registration/external dates: optionally treat the latest export as authoritative (it may fix older wrong values)
+// - lifecycle dates (FTD/qualification/etc): keep the max to avoid regressions from partial/older uploads
+const DATE_AUTHORITATIVE_FIELDS = AUTHORITATIVE_BASE_DATES
+  ? new Set(['external_date', 'registration_date'])
+  : new Set()
+
 // For date-like fields we should keep the latest value (avoid regressions
 // when an upload contains older rows for the same account).
 const DATE_MAX_FIELDS = new Set([
@@ -474,6 +502,28 @@ function mergeIncomingIntoTarget(targetRow, incomingRow, keyValueForLog) {
     const existingVal = norm(targetRow[f])
     const shouldOverwrite = OVERWRITE_IF_PRESENT_FIELDS.has(f)
     if (shouldOverwrite) {
+      if (DATE_AUTHORITATIVE_FIELDS.has(f)) {
+        const incomingMs = parseDateMs(incomingVal)
+        if (!incomingMs) return
+
+        const existingMs = existingVal ? parseDateMs(existingVal) : 0
+        // If both parse to the same instant, keep the existing formatting to reduce churn.
+        if (existingMs && existingMs === incomingMs) return
+
+        if (incomingVal !== existingVal) {
+          targetRow[f] = incomingVal
+          changed = true
+          updatesLog.push({
+            key_field: keyField,
+            key_value: keyValueForLog || '',
+            field: f,
+            old_value: existingVal,
+            new_value: incomingVal,
+          })
+        }
+        return
+      }
+
       if (existingVal && DATE_MAX_FIELDS.has(f)) {
         const existingMs = parseDateMs(existingVal)
         const incomingMs = parseDateMs(incomingVal)
