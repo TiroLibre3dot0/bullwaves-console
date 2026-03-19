@@ -54,6 +54,30 @@ function stripOuterQuotes(value) {
   return s
 }
 
+function normalizeLooseToken(value) {
+  let s = stripOuterQuotes(value)
+  // Some malformed rows leak delimiter fragments into the value (e.g. ,"2/16/2026 ...).
+  // Drop only leading delimiter noise; keep the rest untouched.
+  s = s.replace(/^[,;\s]+/, '')
+  s = s.replace(/^"+|"+$/g, '').trim()
+  return s
+}
+
+function normalizeMt5Account(value) {
+  const s = normalizeLooseToken(value)
+  if (!s) return ''
+
+  // Date/time-like artifacts are not valid MT5 accounts.
+  if (/[/:]/.test(s)) return ''
+
+  const digits = digitsOnly(s)
+  if (digits && digits.length >= 5 && digits.length <= 12) return digits
+
+  // Fallback: keep cleaned value only if it doesn't look like delimiter noise.
+  if (/[",;]/.test(s)) return ''
+  return s
+}
+
 function digitsOnly(s) {
   if (s == null) return ''
   return String(s).replace(/\D+/g, '')
@@ -66,11 +90,11 @@ function isNonEmpty(v) {
 function pickFieldNormalized(row, candidates) {
   if (!row) return ''
   for (const k of candidates) {
-    if (isNonEmpty(row[k])) return stripOuterQuotes(row[k])
+    if (isNonEmpty(row[k])) return normalizeLooseToken(row[k])
     // Also check duplicate keys (e.g. "foo__2")
     for (let i = 2; i <= 6; i += 1) {
       const dk = `${k}__${i}`
-      if (isNonEmpty(row[dk])) return stripOuterQuotes(row[dk])
+      if (isNonEmpty(row[dk])) return normalizeLooseToken(row[dk])
     }
   }
   return ''
@@ -203,7 +227,7 @@ function main() {
     const outRow = {
       customername: pickFieldNormalized(r, ['customername', 'name', 'fullname']),
       userid: pickFieldNormalized(r, ['userid', 'user', 'user_id']),
-      mt5account: pickFieldNormalized(r, ['mt5account', 'mt5', 'mt5_account']),
+      mt5account: normalizeMt5Account(pickFieldNormalized(r, ['mt5account', 'mt5', 'mt5_account'])),
       registrationdate: pickFieldNormalized(r, [
         'registrationdate',
         'regdate',

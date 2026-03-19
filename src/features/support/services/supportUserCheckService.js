@@ -92,6 +92,30 @@ function stripOuterQuotes(value) {
   return s
 }
 
+function normalizeLooseToken(value) {
+  let s = stripOuterQuotes(value)
+  // Some malformed rows leak delimiter fragments into values (e.g. ,"2/16/2026 ...).
+  // Strip only leading artifacts to preserve the original payload as much as possible.
+  s = s.replace(/^[,;\s]+/, '')
+  s = s.replace(/^"+|"+$/g, '').trim()
+  return s
+}
+
+function normalizeMt5Account(value) {
+  const s = normalizeLooseToken(value)
+  if (!s) return ''
+
+  // Date/time-like artifacts are not valid MT5 account ids.
+  if (/[/:]/.test(s)) return ''
+
+  const digits = digitsOnly(s)
+  if (digits && digits.length >= 5 && digits.length <= 12) return digits
+
+  // Keep cleaned fallback only if it's not obviously noisy punctuation.
+  if (/[",;]/.test(s)) return ''
+  return s
+}
+
 function rowNonEmptyScore(row) {
   if (!row || typeof row !== 'object') return 0
   let score = 0
@@ -137,12 +161,17 @@ function rebuildSupportSearchIndexRow(row) {
 function sanitizeSupportRowInPlace(row) {
   if (!row || typeof row !== 'object') return row
   // Only normalize the fields that affect identity/search to keep this fast.
-  if (row.userid != null) row.userid = stripOuterQuotes(row.userid)
-  if (row.mt5account != null) row.mt5account = stripOuterQuotes(row.mt5account)
-  if (row.email != null) row.email = stripOuterQuotes(row.email)
-  if (row.customeremail != null) row.customeremail = stripOuterQuotes(row.customeremail)
-  if (row.customername != null) row.customername = stripOuterQuotes(row.customername)
-  if (row.affiliateid != null) row.affiliateid = stripOuterQuotes(row.affiliateid)
+  if (row.userid != null) row.userid = normalizeLooseToken(row.userid)
+  if (row.user_id != null) row.user_id = normalizeLooseToken(row.user_id)
+  if (row.mt5account != null) row.mt5account = normalizeMt5Account(row.mt5account)
+  if (row.mt5 != null) row.mt5 = normalizeMt5Account(row.mt5)
+  if (row.email != null) row.email = normalizeLooseToken(row.email)
+  if (row.customeremail != null) row.customeremail = normalizeLooseToken(row.customeremail)
+  if (row.customername != null) row.customername = normalizeLooseToken(row.customername)
+  if (row.affiliateid != null) row.affiliateid = normalizeLooseToken(row.affiliateid)
+  if (row.country != null) row.country = normalizeLooseToken(row.country)
+  if (row.status != null) row.status = normalizeLooseToken(row.status)
+  if (row.registrationdate != null) row.registrationdate = normalizeLooseToken(row.registrationdate)
 
   rebuildSupportSearchIndexRow(row)
   return row
@@ -247,7 +276,7 @@ async function tryLoadSupportUsersIndex(versionNow) {
     const url = versionNow
       ? `${SUPPORT_USERS_INDEX_URL}?v=${encodeURIComponent(versionNow)}`
       : SUPPORT_USERS_INDEX_URL
-    const res = await fetch(url)
+    const res = await fetch(url, { cache: 'no-store' })
     if (!res || !res.ok) return null
 
     const text = await res.text()
@@ -316,7 +345,7 @@ export async function loadCsvRows(force = false) {
   let res = null
   for (const p of candidatePaths) {
     const url = versionNow ? `${p}?v=${encodeURIComponent(versionNow)}` : p
-    const r = await fetch(encodeURI(url))
+    const r = await fetch(encodeURI(url), { cache: 'no-store' })
     if (r && r.ok) {
       res = r
       break
@@ -390,23 +419,7 @@ export async function loadCsvRows(force = false) {
       const v = rawRow[origKey] == null ? '' : String(rawRow[origKey]).trim()
       row[k] = v
     }
-
-    // Keep the search index small: this is the hot path during typing.
-    // (Building an index over every cell of 80k rows is expensive.)
-    const idx = [
-      row.userid,
-      row.mt5account,
-      row.customername,
-      row.email,
-      row.customeremail,
-      row.affiliateid,
-      row.country,
-      row.status,
-    ]
-      .filter(Boolean)
-      .join(' ')
-      .toLowerCase()
-    row.__searchIndex = idx
+    sanitizeSupportRowInPlace(row)
     return row
   })
 
