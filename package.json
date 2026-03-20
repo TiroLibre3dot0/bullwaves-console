@@ -28,6 +28,7 @@
     "generate:all-indexes": "node scripts/generate_all_indexes.js",
     "generate:fraud-patterns-index": "node scripts/generate_fraud_patterns_index.js",
     "generate:affiliate-kpi-index": "node scripts/generate_affiliate_kpi_index.js",
+    "generate:trustpilot-guidance": "node scripts/generate_trustpilot_guidance.js",
     "org:sync-report": "node scripts/org_chart_sync_report.mjs",
     "org:sync-apply-preview": "node scripts/org_chart_sync_apply_preview.mjs",
     "verify:investments": "node scripts/verify_investments_artifacts.js",

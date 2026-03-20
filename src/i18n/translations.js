@@ -807,6 +807,7 @@ export const translations = {
     'sidebar.weeklyExecutionHistory': 'Weekly Execution History',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'User check tool',
+    'sidebar.trustpilotGuide': 'Trustpilot Guide',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History
@@ -3242,6 +3243,7 @@ export const translations = {
     'sidebar.weeklyExecutionHistory': 'Storico esecuzione settimanale',
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'User check tool',
+    'sidebar.trustpilotGuide': 'Guida Trustpilot',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History
@@ -5380,6 +5382,7 @@ export const translations = {
     'sidebar.weeklyExecutionHistory': 'Nedeljna istorija izvršenja',
     'sidebar.orgChart': 'Org chart',
     'sidebar.supportUserCheck': 'User check tool',
+    'sidebar.trustpilotGuide': 'Trustpilot vodič',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History

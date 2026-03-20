@@ -15,6 +15,7 @@ const ProfitAnalysisPage = lazy(() => import('./pages/ProfitAnalysisPage'))
 const CommentsAnalysisPage = lazy(() => import('./pages/CommentsAnalysisPage'))
 const FraudMonitoringDashboard = lazy(() => import('./components/FraudMonitoringDashboard'))
 const SupportUserCheck = lazy(() => import('./features/support/pages/SupportUserCheck'))
+const TrustpilotGuidePage = lazy(() => import('./features/trustpilot/pages/TrustpilotGuidePage'))
 const CustomEventsPage = lazy(() => import('./features/analytics/pages/CustomEventsPage'))
 const UploadReportsPage = lazy(() => import('./pages/UploadReportsPage'))
 const TraderPointsSimulatorPage = lazy(
@@ -87,8 +88,9 @@ export default function AuthenticatedApp() {
 
   const restrictedAllowedViews = useMemo(() => {
     // Support can upload reports; BD/Sales should not.
-    if (isSupportOnly) return new Set(['home', 'supportUserCheck', 'orgChart', 'upload'])
-    return new Set(['home', 'supportUserCheck', 'orgChart'])
+    if (isSupportOnly)
+      return new Set(['home', 'supportUserCheck', 'trustpilotGuide', 'orgChart', 'upload'])
+    return new Set(['home', 'supportUserCheck', 'trustpilotGuide', 'orgChart'])
   }, [isSupportOnly])
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -149,6 +151,7 @@ export default function AuthenticatedApp() {
       orgChart: '/org-chart',
       platformUsageBilling: '/platform-usage-billing',
       supportUserCheck: '/support/user-check',
+      trustpilotGuide: '/trustpilot-guide',
       customEvents: '/custom-events',
       upload: '/upload',
       notion: '/notion',
@@ -180,6 +183,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/platform-usage-billing')) return 'platformUsageBilling'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
+    if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
     if (pathname.startsWith('/notion')) return 'notion'
@@ -254,6 +258,10 @@ export default function AuthenticatedApp() {
       if (isRestrictedUser) {
         if (nextPath.startsWith('/support/user-check')) {
           setView('supportUserCheck')
+          return
+        }
+        if (nextPath.startsWith('/trustpilot-guide')) {
+          setView('trustpilotGuide')
           return
         }
         if (nextPath.startsWith('/org-chart')) {
@@ -465,6 +473,7 @@ export default function AuthenticatedApp() {
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
       supportUserCheck: 'support-user-check',
+      trustpilotGuide: 'trustpilot-guide',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
       admin: 'admin-panel',
@@ -536,6 +545,7 @@ export default function AuthenticatedApp() {
               {view === 'orgChart' ? <OrgChart /> : null}
               {view === 'platformUsageBilling' ? <PlatformUsageBillingPage /> : null}
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
+              {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}
               {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}

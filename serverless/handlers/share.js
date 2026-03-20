@@ -226,6 +226,10 @@ async function routeShare(req, res, parts) {
     return handleShareTokenGet(req, res, 'exec', getTokenFrom(parts, 1))
   }
 
+  if (head === 'trustpilot-guide' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'tpguide', getTokenFrom(parts, 1))
+  }
+
   if (head === 'profitable-ranking' && parts.length === 2) {
     return handleShareTokenGet(req, res, 'prank', getTokenFrom(parts, 1))
   }
@@ -268,6 +272,10 @@ async function routeShare(req, res, parts) {
 
   if (head === 'create-execution') {
     return handleCreateShare(req, res, 'exec', 'exec', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-trustpilot-guide') {
+    return handleCreateShare(req, res, 'tpguide', 'tpguide', 60 * 60 * 24 * 90)
   }
 
   if (head === 'create-profitable-ranking') {

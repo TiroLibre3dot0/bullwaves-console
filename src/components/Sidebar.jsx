@@ -193,7 +193,7 @@ export default function Sidebar({
     const allowed =
       allowedViews && typeof allowedViews.has === 'function'
         ? allowedViews
-        : new Set(['supportUserCheck', 'orgChart', 'upload'])
+        : new Set(['supportUserCheck', 'trustpilotGuide', 'orgChart', 'upload'])
     return !allowed.has(key)
   }
 
@@ -440,6 +440,18 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="search" />
                 <span>{t('sidebar.supportUserCheck')}</span>
+              </span>
+            </button>
+
+            <button
+              disabled={disabled('trustpilotGuide')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'trustpilotGuide' ? 'active' : ''}`}
+              onClick={() => navigate('trustpilotGuide')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chart" />
+                <span>{t('sidebar.trustpilotGuide')}</span>
               </span>
             </button>
           </>

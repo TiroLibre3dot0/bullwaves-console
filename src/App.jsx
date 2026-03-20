@@ -28,6 +28,9 @@ const PublicAffiliatePayoutSummarySharePage = React.lazy(
 const SupportUserCheckSharePage = React.lazy(
   () => import('./features/support/pages/SupportUserCheckSharePage')
 )
+const PublicTrustpilotGuideSharePage = React.lazy(
+  () => import('./features/trustpilot/pages/PublicTrustpilotGuideSharePage')
+)
 const PublicProfitableRankingSharePage = React.lazy(
   () => import('./pages/share/PublicProfitableRankingSharePage')
 )
@@ -94,6 +97,8 @@ export default function App() {
     if (p.startsWith('/share/support-botlist')) return 'support-botlist'
     if (p === '/share/support-user-check' || p.startsWith('/share/support-user-check/'))
       return 'support-user-check'
+    if (p === '/share/trustpilot-guide' || p.startsWith('/share/trustpilot-guide/'))
+      return 'trustpilot-guide'
     if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking-removed'
     if (p === '/share/profitable-ranking' || p.startsWith('/share/profitable-ranking/'))
       return 'profitable-ranking'
@@ -143,6 +148,16 @@ export default function App() {
           <SupportUserCheckSharePage token={token} />
         </React.Suspense>
       </RequireAuth>
+    )
+  }
+
+  if (shareRoute === 'trustpilot-guide') {
+    const parts = window.location.pathname.split('/').filter(Boolean)
+    const token = parts[2] || ''
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicTrustpilotGuideSharePage token={token} />
+      </React.Suspense>
     )
   }
 

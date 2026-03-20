@@ -260,6 +260,15 @@ export default function SupportUserCheck({ shareConfig = null }) {
     inputRef.current?.focus()
   }, [])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new window.URLSearchParams(window.location.search || '')
+    const seed = String(params.get('q') || params.get('user') || '').trim()
+    if (!seed) return
+    setQuery(seed)
+    runSearch(seed)
+  }, [])
+
   // Carica dati iniziali per status
   useEffect(() => {
     if (import.meta.env.DEV) console.log('Loading initial data for status')

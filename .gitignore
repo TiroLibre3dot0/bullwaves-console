@@ -77,4 +77,4 @@ CREOLABS/~$*.xlsx
 Invoice providers/*.xlsx
 
 # Local Trustpilot exports
-Trustpilot/
+/Trustpilot/
