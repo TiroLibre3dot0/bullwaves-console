@@ -122,6 +122,16 @@ const UI_TEXT = {
       openTrustpilot: 'Open review on Trustpilot',
       noRows: 'No review matches active filters.',
       noChecklist: 'No checklist available.',
+      trackingTitle: 'Operational tracking',
+      contactedTitle: 'Contacted',
+      contactChannelTitle: 'Contact channel',
+      contactOutcomeTitle: 'Contact outcome',
+      clientSentimentTitle: 'Client sentiment',
+      mainIssueTitle: 'Main issue',
+      actionTakenTitle: 'Action taken',
+      reviewStatusTitle: 'Review status',
+      followUpNeededTitle: 'Follow-up needed',
+      additionalNotesTitle: 'Additional notes',
     },
     template: {
       template_manual_review_hold:
@@ -139,6 +149,24 @@ const UI_TEXT = {
       contactSuffix: 'Reference contacts: WhatsApp support | support email | live chat.',
     },
     footerReadOnly: 'View generated from CSV: no changes are saved in this tool.',
+    dailyNotice: {
+      title: 'Daily updates snapshot ({date})',
+      subtitle: 'Automatic summary from the latest review day in the source sheet.',
+      rows: 'Rows updated',
+      contacted: 'Already contacted',
+      pending: 'Needs follow-up',
+      completed: 'Closed/reviewed',
+      hide: 'Hide for today',
+    },
+    notifications: {
+      title: 'Notifications',
+      buttonAria: 'Open notifications',
+      empty: 'No notifications to read.',
+      markRead: 'Mark as read',
+      read: 'Read',
+      unread: 'Unread',
+      dailyTitle: 'Daily updates for {date}',
+    },
     modal: {
       title: 'Creolabs client profile',
       userId: 'User ID: {userId}',
@@ -310,6 +338,16 @@ const UI_TEXT = {
       openTrustpilot: 'Apri review su Trustpilot',
       noRows: 'Nessuna review corrisponde ai filtri attivi.',
       noChecklist: 'Nessuna checklist disponibile.',
+      trackingTitle: 'Tracking operativo',
+      contactedTitle: 'Contattato',
+      contactChannelTitle: 'Canale di contatto',
+      contactOutcomeTitle: 'Esito contatto',
+      clientSentimentTitle: 'Sentiment cliente',
+      mainIssueTitle: 'Issue principale',
+      actionTakenTitle: 'Azione eseguita',
+      reviewStatusTitle: 'Stato review',
+      followUpNeededTitle: 'Follow-up necessario',
+      additionalNotesTitle: 'Note aggiuntive',
     },
     template: {
       template_manual_review_hold:
@@ -327,6 +365,24 @@ const UI_TEXT = {
       contactSuffix: 'Contatti di riferimento: supporto WhatsApp | email supporto | live chat.',
     },
     footerReadOnly: 'Vista generata da CSV: nessuna modifica viene salvata in questo tool.',
+    dailyNotice: {
+      title: 'Snapshot aggiornamenti giornalieri ({date})',
+      subtitle: 'Riepilogo automatico del giorno review piu recente nel foglio sorgente.',
+      rows: 'Righe aggiornate',
+      contacted: 'Gia contattati',
+      pending: 'Richiedono follow-up',
+      completed: 'Chiuse/revisionate',
+      hide: 'Nascondi per oggi',
+    },
+    notifications: {
+      title: 'Notifiche',
+      buttonAria: 'Apri notifiche',
+      empty: 'Nessuna notifica da leggere.',
+      markRead: 'Segna come letta',
+      read: 'Letta',
+      unread: 'Da leggere',
+      dailyTitle: 'Aggiornamenti giornalieri del {date}',
+    },
     modal: {
       title: 'Profilo cliente Creolabs',
       userId: 'User ID: {userId}',
@@ -461,13 +517,55 @@ function formatRatingStars(starValue, txt) {
   return `${full}${empty} (${value}/5${lowestTag})`
 }
 
-function hasFollowUpDone(statusValue, notesValue) {
+function parseReviewDate(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return null
+  const ts = Date.parse(raw)
+  if (!Number.isFinite(ts)) return null
+  const d = new Date(ts)
+  return Number.isNaN(d.getTime()) ? null : d
+}
+
+function toDateKey(value) {
+  const d = value instanceof Date ? value : parseReviewDate(value)
+  if (!d) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function isTruthyFlag(value) {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .trim()
+  if (!normalized) return false
+  return (
+    normalized === 'yes' ||
+    normalized === 'y' ||
+    normalized === 'true' ||
+    normalized === 'si' ||
+    normalized === 's'
+  )
+}
+
+function hasFollowUpDone(
+  statusValue,
+  notesValue,
+  reviewStatusValue,
+  followUpNeededValue,
+  contactedValue
+) {
   const notes = String(notesValue || '').trim()
   if (notes) return true
+  if (isTruthyFlag(contactedValue) && !isTruthyFlag(followUpNeededValue)) return true
   const status = String(statusValue || '')
     .toLowerCase()
     .trim()
-  if (!status) return false
+  const reviewStatus = String(reviewStatusValue || '')
+    .toLowerCase()
+    .trim()
+  if (!status && !reviewStatus) return false
   const hints = [
     'reviewed',
     'replied',
@@ -480,7 +578,7 @@ function hasFollowUpDone(statusValue, notesValue) {
     'completato',
     'gestito',
   ]
-  return hints.some((hint) => status.includes(hint))
+  return hints.some((hint) => status.includes(hint) || reviewStatus.includes(hint))
 }
 
 function managerFromCreolabsRow(row) {
@@ -941,11 +1039,35 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
   const selectedFollowUp = useMemo(() => {
     const followUpNotes = String(selected?.followupNotes || '').trim()
     const followUpStatus = String(selected?.status || '').trim()
+    const reviewStatus = String(selected?.reviewStatus || '').trim()
+    const followUpNeeded = String(selected?.followUpNeeded || '').trim()
+    const contacted = String(selected?.contacted || '').trim()
+    const contactChannel = String(selected?.contactChannel || '').trim()
+    const contactOutcome = String(selected?.contactOutcome || '').trim()
+    const clientSentiment = String(selected?.clientSentiment || '').trim()
+    const mainIssue = String(selected?.mainIssue || '').trim()
+    const actionTaken = String(selected?.actionTaken || '').trim()
+    const additionalNotes = String(selected?.additionalNotes || '').trim()
     const assignedTo = String(selected?.assignedTo || '').trim()
-    const hasFollowUp = hasFollowUpDone(followUpStatus, followUpNotes)
+    const hasFollowUp = hasFollowUpDone(
+      followUpStatus,
+      followUpNotes,
+      reviewStatus,
+      followUpNeeded,
+      contacted
+    )
     return {
       followUpNotes,
       followUpStatus,
+      reviewStatus,
+      followUpNeeded,
+      contacted,
+      contactChannel,
+      contactOutcome,
+      clientSentiment,
+      mainIssue,
+      actionTaken,
+      additionalNotes,
       assignedTo,
       hasFollowUp,
     }
@@ -1456,6 +1578,58 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                       title={txt.detail.followUpNotesTitle}
                       value={selectedFollowUp.followUpNotes || txt.detail.followUpNotesEmpty}
                     />
+
+                    <div style={{ marginTop: 10 }}>
+                      <div
+                        style={{ color: '#cbd5e1', fontSize: 12, fontWeight: 700, marginBottom: 6 }}
+                      >
+                        {txt.detail.trackingTitle}
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                          gap: 8,
+                        }}
+                      >
+                        <Section
+                          title={txt.detail.contactedTitle}
+                          value={selectedFollowUp.contacted || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.contactChannelTitle}
+                          value={selectedFollowUp.contactChannel || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.contactOutcomeTitle}
+                          value={selectedFollowUp.contactOutcome || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.clientSentimentTitle}
+                          value={selectedFollowUp.clientSentiment || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.mainIssueTitle}
+                          value={selectedFollowUp.mainIssue || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.actionTakenTitle}
+                          value={selectedFollowUp.actionTaken || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.reviewStatusTitle}
+                          value={selectedFollowUp.reviewStatus || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.followUpNeededTitle}
+                          value={selectedFollowUp.followUpNeeded || txt.modal.noValue}
+                        />
+                        <Section
+                          title={txt.detail.additionalNotesTitle}
+                          value={selectedFollowUp.additionalNotes || txt.modal.noValue}
+                        />
+                      </div>
+                    </div>
                   </div>
 
                   <h3 style={{ margin: '0 0 8px', color: '#e5e7eb' }}>

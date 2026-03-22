@@ -10,6 +10,10 @@ Input:
 - public/support_users_index.json (optional, for identity/trading context)
 - public/Registrations Report.csv (optional, used as fallback for identity lookup)
 
+Optional remote source:
+- TRUSTPILOT_SOURCE_URL=<Google Sheet URL or direct CSV URL>
+- TRUSTPILOT_SOURCE_MODE=remote-first|remote-only|local-only
+
 Output:
 - public/trustpilot_guidance.json
 - artifacts/raw/trustpilot_guidance_report.json
@@ -49,12 +53,125 @@ function toNumber(value) {
 function parseCsv(pathname) {
   if (!fs.existsSync(pathname)) return []
   const raw = fs.readFileSync(pathname, 'utf8')
+  return parseCsvRaw(raw)
+}
+
+function parseCsvRaw(raw) {
   const parsed = Papa.parse(raw, {
     header: true,
     skipEmptyLines: true,
     dynamicTyping: false,
   })
   return Array.isArray(parsed.data) ? parsed.data : []
+}
+
+function normalizeHttpUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (/^https?:\/\//i.test(raw)) return raw
+  return ''
+}
+
+function toGoogleSheetsCsvExportUrl(inputUrl) {
+  const source = normalizeHttpUrl(inputUrl)
+  if (!source) return ''
+
+  let parsed
+  try {
+    parsed = new URL(source)
+  } catch {
+    return source
+  }
+
+  const isGoogleHost = /(^|\.)docs\.google\.com$/i.test(parsed.hostname)
+  if (!isGoogleHost) return source
+
+  const pathMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^/]+)/i)
+  if (!pathMatch) return source
+
+  const sheetId = pathMatch[1]
+  let gid = parsed.searchParams.get('gid') || ''
+
+  if (!gid && parsed.hash) {
+    const hm = String(parsed.hash).match(/gid=(\d+)/i)
+    if (hm) gid = hm[1]
+  }
+
+  const out = new URL(`https://docs.google.com/spreadsheets/d/${sheetId}/export`)
+  out.searchParams.set('format', 'csv')
+  if (gid) out.searchParams.set('gid', gid)
+  return out.toString()
+}
+
+async function fetchText(url) {
+  const source = normalizeHttpUrl(url)
+  if (!source) throw new Error('Invalid remote URL')
+
+  if (typeof fetch === 'function') {
+    const res = await fetch(source, {
+      method: 'GET',
+      headers: { Accept: 'text/csv,text/plain;q=0.9,*/*;q=0.8' },
+    })
+    if (!res.ok) throw new Error(`Remote source HTTP ${res.status}`)
+    return await res.text()
+  }
+
+  throw new Error('Global fetch is not available in this Node runtime')
+}
+
+function resolveSourceMode(rawMode, hasRemote) {
+  const mode = normalizeKey(rawMode)
+  if (mode === 'remote-only') return 'remote-only'
+  if (mode === 'local-only') return 'local-only'
+  if (mode === 'remote-first') return 'remote-first'
+  return hasRemote ? 'remote-first' : 'local-only'
+}
+
+async function loadTrustpilotRows() {
+  const sourceUrlRaw = normalizeText(process.env.TRUSTPILOT_SOURCE_URL)
+  const remoteUrl = toGoogleSheetsCsvExportUrl(sourceUrlRaw)
+  const sourceMode = resolveSourceMode(process.env.TRUSTPILOT_SOURCE_MODE, Boolean(remoteUrl))
+
+  let remoteError = ''
+
+  if (remoteUrl && sourceMode !== 'local-only') {
+    try {
+      const remoteRaw = await fetchText(remoteUrl)
+      const remoteRows = parseCsvRaw(remoteRaw)
+      if (!remoteRows.length) {
+        throw new Error('Remote source returned 0 data rows')
+      }
+
+      return {
+        rows: remoteRows,
+        sourceKind: 'remote',
+        sourceRef: remoteUrl,
+        sourceOriginalUrl: sourceUrlRaw || remoteUrl,
+        remoteError: null,
+      }
+    } catch (e) {
+      remoteError = String(e?.message || e || 'Unknown remote source error')
+      if (sourceMode === 'remote-only') {
+        throw new Error(`Remote source failed in remote-only mode: ${remoteError}`)
+      }
+    }
+  }
+
+  if (fs.existsSync(TRUSTPILOT_PATH)) {
+    return {
+      rows: parseCsv(TRUSTPILOT_PATH),
+      sourceKind: 'local',
+      sourceRef: TRUSTPILOT_PATH,
+      sourceOriginalUrl: sourceUrlRaw || null,
+      remoteError: remoteError || null,
+    }
+  }
+
+  if (remoteError) {
+    throw new Error(`Local fallback not found and remote source failed: ${remoteError}`)
+  }
+
+  throw new Error(`Trustpilot CSV not found: ${TRUSTPILOT_PATH}`)
 }
 
 function readJson(pathname, fallback) {
@@ -69,9 +186,9 @@ function readJson(pathname, fallback) {
 function pick(row, candidates) {
   if (!row) return ''
   const map = {}
-  for (const k of Object.keys(row)) map[k.toLowerCase()] = k
+  for (const k of Object.keys(row)) map[normalizeKey(k)] = k
   for (const c of candidates) {
-    const mk = map[String(c).toLowerCase()]
+    const mk = map[normalizeKey(c)]
     if (!mk) continue
     const v = normalizeText(row[mk])
     if (v) return v
@@ -125,11 +242,71 @@ function inferMatchStatus(supportCandidates, registrationIds) {
   return 'unmatched'
 }
 
-function classifyAction({ priority, matchStatus, stars, issueType, actionNeeded, summary }) {
+function classifyAction({
+  priority,
+  matchStatus,
+  stars,
+  issueType,
+  actionNeeded,
+  summary,
+  contacted,
+  contactOutcome,
+  clientSentiment,
+  reviewStatus,
+  followUpNeeded,
+}) {
   const reasons = []
   const issue = normalizeKey(issueType)
   const action = normalizeKey(actionNeeded)
   const text = `${normalizeKey(summary)} ${action} ${issue}`
+
+  const contactedKey = normalizeKey(contacted)
+  const contactOutcomeKey = normalizeKey(contactOutcome)
+  const clientSentimentKey = normalizeKey(clientSentiment)
+  const reviewStatusKey = normalizeKey(reviewStatus)
+  const followUpNeededKey = normalizeKey(followUpNeeded)
+
+  const hasDirectTouch =
+    contactedKey.includes('yes') ||
+    contactedKey.includes('si') ||
+    contactedKey.includes('true') ||
+    contactOutcomeKey.includes('reached') ||
+    contactOutcomeKey.includes('contact') ||
+    contactOutcomeKey.includes('resolved') ||
+    contactOutcomeKey.includes('done') ||
+    contactOutcomeKey.includes('closed')
+
+  const isClosedLike =
+    reviewStatusKey.includes('closed') ||
+    reviewStatusKey.includes('done') ||
+    reviewStatusKey.includes('resolved') ||
+    reviewStatusKey.includes('replied') ||
+    reviewStatusKey.includes('reviewed')
+
+  const followUpBlocked =
+    followUpNeededKey.includes('yes') ||
+    followUpNeededKey.includes('si') ||
+    followUpNeededKey.includes('urgent') ||
+    reviewStatusKey.includes('pending') ||
+    reviewStatusKey.includes('escalat')
+
+  if (hasDirectTouch && isClosedLike && !followUpBlocked) {
+    reasons.push('already_followed_up')
+    reasons.push('status_closed_like')
+    return { recommendedAction: 'no_contact', reasons }
+  }
+
+  if (followUpBlocked && (priority === 'high' || reviewStatusKey.includes('escalat'))) {
+    reasons.push('followup_needed')
+    reasons.push('status_requires_review')
+    return { recommendedAction: 'manual_review', reasons }
+  }
+
+  if (hasDirectTouch && clientSentimentKey.includes('positive') && !followUpBlocked) {
+    reasons.push('contact_already_done')
+    reasons.push('positive_sentiment')
+    return { recommendedAction: 'no_contact', reasons }
+  }
 
   if (
     text.includes('legal') ||
@@ -223,13 +400,9 @@ function summarize(rows) {
   return out
 }
 
-function main() {
-  if (!fs.existsSync(TRUSTPILOT_PATH)) {
-    console.error('Trustpilot CSV not found:', TRUSTPILOT_PATH)
-    process.exit(1)
-  }
-
-  const trustRows = parseCsv(TRUSTPILOT_PATH)
+async function main() {
+  const trustpilotDataset = await loadTrustpilotRows()
+  const trustRows = trustpilotDataset.rows
   const supportBlob = readJson(SUPPORT_INDEX_PATH, { rows: [] })
   const supportRows = Array.isArray(supportBlob?.rows) ? supportBlob.rows : []
   const regRows = parseCsv(REGISTRATIONS_PATH)
@@ -248,7 +421,16 @@ function main() {
     const status = pick(row, ['Status'])
     const trustpilotLink = pick(row, ['Trustpilot Link', 'Link'])
     const dateReviewed = pick(row, ['Date Reviewed'])
-    const followupNotes = pick(row, ['Follow-up Notes'])
+    const contacted = pick(row, ['Contacted'])
+    const contactChannel = pick(row, ['Contact Channel'])
+    const contactOutcome = pick(row, ['Contact Outcome'])
+    const clientSentiment = pick(row, ['Client Sentiment'])
+    const mainIssue = pick(row, ['Main Issue'])
+    const actionTaken = pick(row, ['Action Taken'])
+    const reviewStatus = pick(row, ['Review Status'])
+    const followUpNeeded = pick(row, ['Follow-up Needed'])
+    const additionalNotes = pick(row, ['Additional Notes'])
+    const followupNotes = pick(row, ['Follow-up Notes', 'Additional Notes'])
     const potentialLead = pick(row, ['Potential Lead'])
     const country = pick(row, ['Country'])
     const starRatingRaw = pick(row, ['Star Rating'])
@@ -267,6 +449,11 @@ function main() {
       issueType,
       actionNeeded,
       summary: reviewSummary,
+      contacted,
+      contactOutcome,
+      clientSentiment,
+      reviewStatus,
+      followUpNeeded,
     })
 
     const matchedUserIds = []
@@ -310,6 +497,15 @@ function main() {
       reviewSummary,
       actionNeeded,
       followupNotes,
+      contacted,
+      contactChannel,
+      contactOutcome,
+      clientSentiment,
+      mainIssue,
+      actionTaken,
+      reviewStatus,
+      followUpNeeded,
+      additionalNotes,
 
       matchStatus,
       matchedUserIds,
@@ -329,7 +525,13 @@ function main() {
     version: 1,
     generatedAt,
     source: {
-      trustpilotCsv: path.relative(ROOT, TRUSTPILOT_PATH),
+      trustpilotSourceKind: trustpilotDataset.sourceKind,
+      trustpilotCsv:
+        trustpilotDataset.sourceKind === 'local' ? path.relative(ROOT, TRUSTPILOT_PATH) : null,
+      trustpilotRemoteUrl:
+        trustpilotDataset.sourceKind === 'remote' ? trustpilotDataset.sourceRef : null,
+      trustpilotOriginalUrl: trustpilotDataset.sourceOriginalUrl,
+      trustpilotRemoteFallbackError: trustpilotDataset.remoteError,
       supportIndex: fs.existsSync(SUPPORT_INDEX_PATH)
         ? path.relative(ROOT, SUPPORT_INDEX_PATH)
         : null,
@@ -345,6 +547,12 @@ function main() {
     generatedAt,
     summary,
     diagnostics: {
+      trustpilotSourceKind: trustpilotDataset.sourceKind,
+      trustpilotSourceRef:
+        trustpilotDataset.sourceKind === 'local'
+          ? path.relative(ROOT, TRUSTPILOT_PATH)
+          : trustpilotDataset.sourceRef,
+      trustpilotRemoteFallbackError: trustpilotDataset.remoteError,
       trustpilotRows: trustRows.length,
       supportRows: supportRows.length,
       registrationRows: regRows.length,
@@ -357,8 +565,17 @@ function main() {
   fs.writeFileSync(OUT_GUIDE_PATH, JSON.stringify(guideOut, null, 2), 'utf8')
   fs.writeFileSync(OUT_REPORT_PATH, JSON.stringify(reportOut, null, 2), 'utf8')
 
+  console.log(
+    `Trustpilot source: ${trustpilotDataset.sourceKind} (${trustpilotDataset.sourceKind === 'local' ? path.relative(ROOT, TRUSTPILOT_PATH) : trustpilotDataset.sourceRef})`
+  )
+  if (trustpilotDataset.remoteError) {
+    console.warn(`Remote source fallback note: ${trustpilotDataset.remoteError}`)
+  }
   console.log(`Wrote ${path.relative(ROOT, OUT_GUIDE_PATH)}`)
   console.log(`Wrote ${path.relative(ROOT, OUT_REPORT_PATH)}`)
 }
 
-main()
+main().catch((e) => {
+  console.error('Failed to generate trustpilot guidance:', e?.message || e)
+  process.exit(1)
+})

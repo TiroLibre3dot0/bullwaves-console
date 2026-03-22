@@ -13,6 +13,7 @@ public/raw/
 
 # Local debug scripts
 scripts/roi_debug.js
+scripts/trustpilot_sync.config.json
 scripts/__pycache__/
 __pycache__/
 *.pyc

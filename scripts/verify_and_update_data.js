@@ -121,6 +121,7 @@ function main() {
   const sourceFraud = path.join(PUBLIC, 'Fraud Report.csv')
   const sourceChargebacks = path.join(PUBLIC, 'Chargebacks Report.csv')
   const sourceComments = path.join(PUBLIC, 'comments.csv')
+  const sourceTrustpilot = path.join(ROOT, 'Trustpilot', 'TrustPilot Review Tracker.csv')
 
   const creolabsInputs = fs.existsSync(CREOLABS_DIR)
     ? fs
@@ -137,6 +138,7 @@ function main() {
     reportsMeta: path.join(PUBLIC, 'reports_meta.json'),
     affiliateIndex: path.join(PUBLIC, 'affiliate_index.json'),
     supportUsersIndex: path.join(PUBLIC, 'support_users_index.json'),
+    trustpilotGuidance: path.join(PUBLIC, 'trustpilot_guidance.json'),
     fraudPatternsIndex: path.join(PUBLIC, 'fraud_patterns_index.json'),
     affiliateKpiIndex: path.join(PUBLIC, 'affiliate_kpi_index.json'),
     rankingsIndex: path.join(PUBLIC, 'rankings_index.json'),
@@ -179,6 +181,12 @@ function main() {
   const checks = [
     { artifact: artifacts.affiliateIndex, sources: [sourcePayments], name: 'affiliate_index.json' },
     { artifact: artifacts.supportUsersIndex, sources: [sourceRegistrations], name: 'support_users_index.json' },
+    {
+      artifact: artifacts.trustpilotGuidance,
+      sources: [sourceTrustpilot, sourceRegistrations],
+      name: 'trustpilot_guidance.json',
+      optional: true,
+    },
     { artifact: artifacts.affiliateKpiIndex, sources: [sourcePayments, sourceKpi], name: 'affiliate_kpi_index.json' },
     { artifact: artifacts.fraudPatternsIndex, sources: [sourceFraud, sourceChargebacks], name: 'fraud_patterns_index.json' },
     { artifact: artifacts.rankingsIndex, sources: [sourceRegistrations], name: 'rankings_index.json' },
@@ -257,6 +265,7 @@ function main() {
     const genScripts = [
       { p: 'generate_affiliate_index.js', label: 'Generate affiliate index' },
       { p: 'generate_support_users_index.js', label: 'Generate support users index' },
+      { p: 'generate_trustpilot_guidance.js', label: 'Generate trustpilot guidance' },
       { p: 'generate_fraud_patterns_index.js', label: 'Generate fraud patterns index' },
       { p: 'generate_affiliate_kpi_index.js', label: 'Generate affiliate KPI index' },
       { p: 'generate_rankings_index.js', label: 'Generate rankings index' },
