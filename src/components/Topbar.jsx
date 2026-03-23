@@ -10,18 +10,62 @@ import DataInfoModal from './DataInfoModal'
 function parseReviewDate(input) {
   const str = String(input || '').trim()
   if (!str) return null
+
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:\D.*)?$/)
+  if (isoMatch) {
+    const year = Number(isoMatch[1])
+    const month = Number(isoMatch[2])
+    const day = Number(isoMatch[3])
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const d = new Date(year, month - 1, day)
+      if (
+        !Number.isNaN(d.getTime()) &&
+        d.getFullYear() === year &&
+        d.getMonth() === month - 1 &&
+        d.getDate() === day
+      ) {
+        return d
+      }
+    }
+  }
+
+  const match = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})(?:\D.*)?$/)
+  if (match) {
+    const a = Number(match[1])
+    const b = Number(match[2])
+    let year = Number(match[3])
+    if (year < 100) year += 2000
+
+    let day = a
+    let month = b
+    if (a <= 12 && b > 12) {
+      day = b
+      month = a
+    } else if (a > 12 && b <= 12) {
+      day = a
+      month = b
+    } else {
+      // Ambiguous formats default to D/M/Y for this dataset.
+      day = a
+      month = b
+    }
+
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+      const d = new Date(year, month - 1, day)
+      if (
+        !Number.isNaN(d.getTime()) &&
+        d.getFullYear() === year &&
+        d.getMonth() === month - 1 &&
+        d.getDate() === day
+      ) {
+        return d
+      }
+    }
+  }
+
   const direct = new Date(str)
   if (!Number.isNaN(direct.getTime())) return direct
 
-  const match = str.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/)
-  if (match) {
-    const day = Number(match[1])
-    const month = Number(match[2])
-    let year = Number(match[3])
-    if (year < 100) year += 2000
-    const d = new Date(year, month - 1, day)
-    if (!Number.isNaN(d.getTime())) return d
-  }
   return null
 }
 
@@ -835,14 +879,19 @@ export default function Topbar({
                       {notificationItems.length ? (
                         notificationItems.map((item) => {
                           const isRead = Boolean(notificationReadById?.[item.id])
+                          const hasChanges = updateSummary?.changedFields > 0
                           return (
                             <div
                               key={item.id}
                               style={{
-                                border: '1px solid #1f2937',
+                                border: hasChanges ? '1px solid #f59e0b' : '1px solid #1f2937',
                                 borderRadius: 10,
                                 padding: 10,
-                                background: isRead ? '#0f172a' : 'rgba(30, 64, 175, 0.16)',
+                                background: hasChanges
+                                  ? 'linear-gradient(180deg, rgba(245,158,11,0.16), rgba(30,41,59,0.9))'
+                                  : isRead
+                                    ? '#0f172a'
+                                    : 'rgba(30, 64, 175, 0.16)',
                               }}
                             >
                               <div
@@ -875,9 +924,9 @@ export default function Topbar({
                               <div
                                 style={{
                                   marginTop: 6,
-                                  color: '#f8fafc',
+                                  color: hasChanges ? '#fde68a' : '#f8fafc',
                                   fontSize: 12,
-                                  fontWeight: 700,
+                                  fontWeight: 800,
                                 }}
                               >
                                 {item.summaryLine}
@@ -891,7 +940,14 @@ export default function Topbar({
                                     const label =
                                       notificationsText.fieldLabels?.[h.field] || h.field || 'Field'
                                     return (
-                                      <div key={`${h.reviewLine}-${h.field}-${idx}`}>
+                                      <div
+                                        key={`${h.reviewLine}-${h.field}-${idx}`}
+                                        style={{
+                                          marginBottom: 4,
+                                          borderLeft: '3px solid #f59e0b',
+                                          paddingLeft: 6,
+                                        }}
+                                      >
                                         {`#${h.reviewLine} · ${label}: ${compactValue(h.before)} -> ${compactValue(h.after)}`}
                                       </div>
                                     )
@@ -901,40 +957,42 @@ export default function Topbar({
                               <div style={{ marginTop: 6, color: '#cbd5e1', fontSize: 12 }}>
                                 {item.stats.join(' | ')}
                               </div>
-                              <button
-                                type="button"
-                                onClick={openTrustpilotGuide}
-                                style={{
-                                  marginTop: 8,
-                                  border: '1px solid #334155',
-                                  background: '#0b1220',
-                                  color: '#e2e8f0',
-                                  borderRadius: 8,
-                                  padding: '5px 8px',
-                                  fontSize: 11,
-                                  cursor: 'pointer',
-                                }}
+                              <div
+                                style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}
                               >
-                                {notificationsText.ctaOpenGuide}
-                              </button>
-                              {!isRead ? (
                                 <button
                                   type="button"
-                                  onClick={() => markNotificationRead(item.id)}
+                                  onClick={openTrustpilotGuide}
                                   style={{
-                                    marginTop: 8,
-                                    border: '1px solid #1e40af',
-                                    background: '#0f172a',
-                                    color: '#bfdbfe',
+                                    border: '1px solid #334155',
+                                    background: '#0b1220',
+                                    color: '#e2e8f0',
                                     borderRadius: 8,
                                     padding: '5px 8px',
                                     fontSize: 11,
                                     cursor: 'pointer',
                                   }}
                                 >
-                                  {notificationsText.markRead}
+                                  {notificationsText.ctaOpenGuide}
                                 </button>
-                              ) : null}
+                                {!isRead ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => markNotificationRead(item.id)}
+                                    style={{
+                                      border: '1px solid #1e40af',
+                                      background: '#0f172a',
+                                      color: '#bfdbfe',
+                                      borderRadius: 8,
+                                      padding: '5px 8px',
+                                      fontSize: 11,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {notificationsText.markRead}
+                                  </button>
+                                ) : null}
+                              </div>
                             </div>
                           )
                         })

@@ -10,9 +10,10 @@ const UI_TEXT = {
     title: 'Trustpilot Guide',
     subtitle:
       'Read-only mode: the tool suggests what to do for each review, without saving changes.',
-    readOnlyBadge: 'READ-ONLY DECISION SUPPORT',
-    publicBadge: 'PUBLIC SHARED VIEW',
-    shareCta: 'Share (public link)',
+    readOnlyBadge: '',
+    publicBadge: '',
+    shareCta: 'Public page',
+    shareCtaLoading: 'Generating link...',
     shareUnavailable: 'Public share is not available in this environment.',
     loadingGuide: 'Loading Trustpilot guide...',
     missingGuide:
@@ -226,9 +227,10 @@ const UI_TEXT = {
     title: 'Guida Trustpilot',
     subtitle:
       'Modalita sola lettura: il tool suggerisce cosa fare su ogni review, senza salvare modifiche.',
-    readOnlyBadge: 'SUPPORTO DECISIONALE IN SOLA LETTURA',
-    publicBadge: 'VISTA PUBBLICA CONDIVISA',
-    shareCta: 'Condividi (link pubblico)',
+    readOnlyBadge: '',
+    publicBadge: '',
+    shareCta: 'Public page',
+    shareCtaLoading: 'Generazione link...',
     shareUnavailable: 'Condivisione pubblica non disponibile in questo ambiente.',
     loadingGuide: 'Caricamento guida Trustpilot...',
     missingGuide:
@@ -904,6 +906,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
   const [profileError, setProfileError] = useState('')
   const [profileTargetUserId, setProfileTargetUserId] = useState('')
   const [profileData, setProfileData] = useState(null)
+  const [isSharing, setIsSharing] = useState(false)
   const profileRequestRef = useRef(0)
   const creolabsIndexRef = useRef(null)
 
@@ -1218,7 +1221,25 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
   }
 
   async function createPublicLink() {
-    if (publicMode) return
+    if (publicMode || isSharing) return
+
+    setIsSharing(true)
+
+    let pendingWindow = null
+    try {
+      pendingWindow = window.open('', '_blank')
+      if (pendingWindow && pendingWindow.document) {
+        pendingWindow.document.title = txt.shareCtaLoading
+        pendingWindow.document.body.style.background = '#070b14'
+        pendingWindow.document.body.style.color = '#e2e8f0'
+        pendingWindow.document.body.style.fontFamily =
+          'system-ui, -apple-system, Segoe UI, sans-serif'
+        pendingWindow.document.body.style.padding = '16px'
+        pendingWindow.document.body.innerText = txt.shareCtaLoading
+      }
+    } catch {
+      pendingWindow = null
+    }
 
     const payload = {
       k: 'tpguide',
@@ -1244,7 +1265,13 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
       else throw new Error(data?.error || data?.message || 'share-not-available')
     } catch {
       if (!isLocalhost) {
+        try {
+          if (pendingWindow && !pendingWindow.closed) pendingWindow.close()
+        } catch {
+          // ignore
+        }
         window.alert(txt.shareUnavailable)
+        setIsSharing(false)
         return
       }
 
@@ -1275,9 +1302,15 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
       : `${shareOrigin}/share/trustpilot-guide/${encodeURIComponent(token)}`
 
     try {
-      window.open(href, '_blank', 'noopener,noreferrer')
+      if (pendingWindow && !pendingWindow.closed) {
+        pendingWindow.location.href = href
+      } else {
+        window.open(href, '_blank', 'noopener,noreferrer')
+      }
     } catch {
       // ignore
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -1299,13 +1332,11 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
             <p style={{ margin: '4px 0 0', color: '#9ca3af', fontSize: 13 }}>{txt.subtitle}</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ color: '#93c5fd', fontSize: 12, fontWeight: 700 }}>
-              {publicMode ? txt.publicBadge : txt.readOnlyBadge}
-            </div>
             {!publicMode ? (
               <button
                 type="button"
                 onClick={createPublicLink}
+                disabled={isSharing}
                 style={{
                   padding: '6px 10px',
                   borderRadius: 8,
@@ -1314,11 +1345,12 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                   background: 'rgba(59,130,246,0.14)',
                   border: '1px solid rgba(59,130,246,0.30)',
                   color: '#e2e8f0',
-                  cursor: 'pointer',
+                  cursor: isSharing ? 'wait' : 'pointer',
+                  opacity: isSharing ? 0.75 : 1,
                   whiteSpace: 'nowrap',
                 }}
               >
-                {txt.shareCta}
+                {isSharing ? txt.shareCtaLoading : txt.shareCta}
               </button>
             ) : null}
           </div>

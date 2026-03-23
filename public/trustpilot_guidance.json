@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-03-22T21:15:00.903Z",
+  "generatedAt": "2026-03-23T06:04:07.761Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -46,7 +46,7 @@
       "actionNeeded": "Investigate account management practices, ensure advisors provide transparent risk disclosures, review commission and swap policies, and provide guidance to prevent misleading recommendations.",
       "followupNotes": "",
       "contacted": "",
-      "contactChannel": "Whatsapp",
+      "contactChannel": "",
       "contactOutcome": "",
       "clientSentiment": "",
       "mainIssue": "",
@@ -233,7 +233,7 @@
       "actionNeeded": "Empathized with Lead about his loss of tradings and advise to have limits",
       "followupNotes": "",
       "contacted": "",
-      "contactChannel": "Call",
+      "contactChannel": "",
       "contactOutcome": "",
       "clientSentiment": "",
       "mainIssue": "",
