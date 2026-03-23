@@ -496,12 +496,17 @@ export default function Topbar({
           return
         }
 
-        const latestMs = Math.max(...datedRows.map((x) => x.date.getTime()))
+        const today = new Date()
+        today.setHours(23, 59, 59, 999)
+        const eligibleRows = datedRows.filter((x) => x.date.getTime() <= today.getTime())
+        const referenceRows = eligibleRows.length ? eligibleRows : datedRows
+
+        const latestMs = Math.max(...referenceRows.map((x) => x.date.getTime()))
         const latestDate = new Date(latestMs)
         const dateKey = toDateKey(latestDate)
-        const rowsOnLatestDay = datedRows
+        const rowsOnLatestDay = referenceRows
+          .filter((x) => toDateKey(x.date) === dateKey)
           .map((x) => x.row)
-          .filter((row) => toDateKey(row?.dateReviewed) === dateKey)
 
         const contactedCount = rowsOnLatestDay.filter((row) => isTruthyFlag(row?.contacted)).length
         const pendingCount = rowsOnLatestDay.filter((row) => {
@@ -535,7 +540,7 @@ export default function Topbar({
         setDailyUpdate({
           dateKey,
           notificationId,
-          dateLabel: latestDate.toLocaleDateString(locale === 'it' ? 'it-IT' : 'en-US'),
+          dateLabel: latestDate.toLocaleDateString(locale === 'it' ? 'it-IT' : 'en-GB'),
           rows: rowsOnLatestDay.length,
           contactedCount,
           pendingCount,
