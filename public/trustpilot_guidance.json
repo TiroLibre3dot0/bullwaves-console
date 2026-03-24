@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-03-23T07:35:21.096Z",
+  "generatedAt": "2026-03-24T16:33:28.648Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -11,20 +11,20 @@
     "registrationsCsv": "public\\Registrations Report.csv"
   },
   "summary": {
-    "total": 692,
+    "total": 694,
     "byMatchStatus": {
       "exact": 118,
       "candidate": 57,
-      "unmatched": 517
+      "unmatched": 519
     },
     "byPriority": {
-      "high": 154,
+      "high": 156,
       "medium": 104,
       "low": 434
     },
     "byRecommendedAction": {
       "direct_contact": 44,
-      "public_reply": 644,
+      "public_reply": 646,
       "no_contact": 0,
       "manual_review": 4
     }
@@ -29489,6 +29489,84 @@
       "trustpilotLink": "https://www.trustpilot.com/reviews/69bbcd199985e368dc16f4df",
       "reviewSummary": "Alleged unfair account suspension and denied payout",
       "actionNeeded": "Review account history, rule application, and communication timeline and provide clear, documented explanation of alleged rule breaches",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "unmatched",
+      "matchedUserIds": [],
+      "priorityLevel": "high",
+      "recommendedAction": "public_reply",
+      "reasonCodes": [
+        "trustpilot_only_case"
+      ],
+      "templateKey": "template_public_recovery",
+      "checklist": [
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
+      ],
+      "tradingContext": null
+    },
+    {
+      "reviewLine": 694,
+      "reviewerName": "Matthew",
+      "country": "Canada",
+      "starRating": 1,
+      "issueType": "Withdrawal",
+      "category": "Complaint",
+      "potentialLead": "No",
+      "assignedTo": "Santi",
+      "status": "Pending",
+      "dateReviewed": "",
+      "trustpilotLink": "https://it.trustpilot.com/reviews/69c0f7cc3b2a9bab377ccfdf",
+      "reviewSummary": "User accuses platform of unreliability and financial loss",
+      "actionNeeded": "Review withdrawal case and address complaint appropriately",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "unmatched",
+      "matchedUserIds": [],
+      "priorityLevel": "high",
+      "recommendedAction": "public_reply",
+      "reasonCodes": [
+        "trustpilot_only_case"
+      ],
+      "templateKey": "template_public_recovery",
+      "checklist": [
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
+      ],
+      "tradingContext": null
+    },
+    {
+      "reviewLine": 695,
+      "reviewerName": "Neo",
+      "country": "France",
+      "starRating": 1,
+      "issueType": "Withdrawal",
+      "category": "Complaint",
+      "potentialLead": "No",
+      "assignedTo": "Santi",
+      "status": "Pending",
+      "dateReviewed": "",
+      "trustpilotLink": "https://it.trustpilot.com/reviews/69c14bf691e393fa47cf8283",
+      "reviewSummary": "Review summary: User",
+      "actionNeeded": "Review withdrawal records, investigate allegations, and handle as a high-risk reputational complaint",
       "followupNotes": "",
       "contacted": "",
       "contactChannel": "",

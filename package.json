@@ -48,6 +48,7 @@
     "d3-scale-chromatic": "^3.1.0",
     "d3-selection": "^3.0.0",
     "d3-transition": "^3.0.1",
+    "dotenv": "^17.3.1",
     "express": "^4.22.1",
     "lz-string": "^1.5.0",
     "multer": "^1.4.5-lts.1",
@@ -58,9 +59,9 @@
     "react-simple-maps": "^3.0.0",
     "reactflow": "^11.11.4",
     "read-excel-file": "^6.0.3",
-    "xlsx": "^0.18.5",
     "topojson-client": "^3.1.0",
-    "userflow.js": "^2.13.0"
+    "userflow.js": "^2.13.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.3",
