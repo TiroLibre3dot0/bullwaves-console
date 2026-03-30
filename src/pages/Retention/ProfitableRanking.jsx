@@ -6,7 +6,9 @@ import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRew
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
 
 function derivedStatusFormula(statusName) {
-  const v = String(statusName || '').trim().toLowerCase()
+  const v = String(statusName || '')
+    .trim()
+    .toLowerCase()
   if (v === 'very active') return 'daysSinceLastTrade <= 7 AND Avg Trades / Month >= 20'
   if (v === 'active') return 'daysSinceLastTrade <= 30 AND Avg Trades / Month >= 5'
   if (v === 'inactive') {
@@ -50,105 +52,110 @@ function RankingSpecsModal({
       aria-modal={standalone ? undefined : 'true'}
       aria-labelledby="ranking-specs-modal-title"
     >
-        <div className="modal-header profitable-ranking-specs-modal__header">
-          <div>
-            <p className="page-label" style={{ marginBottom: 4 }}>
-              Retention
-            </p>
-            <h2 id="ranking-specs-modal-title" style={{ margin: 0, fontSize: 22 }}>
-              Exclusive Segment Specifications
-            </h2>
-            <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
-              Priority-based exclusive assignment for Solitics retention campaigns.
-            </p>
-          </div>
-
-          {!standalone ? (
-            <button
-              type="button"
-              className="pill-tab"
-              onClick={onClose}
-              aria-label="Close ranking specifications"
-            >
-              Close
-            </button>
-          ) : null}
+      <div className="modal-header profitable-ranking-specs-modal__header">
+        <div>
+          <p className="page-label" style={{ marginBottom: 4 }}>
+            Retention
+          </p>
+          <h2 id="ranking-specs-modal-title" style={{ margin: 0, fontSize: 22 }}>
+            Exclusive Segment Specifications
+          </h2>
+          <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
+            Priority-based exclusive assignment for Solitics retention campaigns.
+          </p>
         </div>
 
-        <div className="profitable-ranking-specs-kpis">
-          <div className="profitable-ranking-specs-kpi">
-            <span className="profitable-ranking-specs-kpi__label">Total population</span>
-            <span className="profitable-ranking-specs-kpi__value">{fmtInt(totalPopulation)}</span>
-          </div>
-          <div className="profitable-ranking-specs-kpi profitable-ranking-specs-kpi--accent">
-            <span className="profitable-ranking-specs-kpi__label">Coverage</span>
-            <span className="profitable-ranking-specs-kpi__value">{fmtNum2(coveragePct)}%</span>
-          </div>
-          <div className="profitable-ranking-specs-kpi">
-            <span className="profitable-ranking-specs-kpi__label">Unassigned</span>
-            <span className="profitable-ranking-specs-kpi__value">{fmtInt(unassignedCount)}</span>
-          </div>
-        </div>
+        {!standalone ? (
+          <button
+            type="button"
+            className="pill-tab"
+            onClick={onClose}
+            aria-label="Close ranking specifications"
+          >
+            Close
+          </button>
+        ) : null}
+      </div>
 
-        <div className="profitable-ranking-specs-modal__table-wrap">
-          <table className="profitable-ranking-specs-table">
-            <thead>
-              {typeof onShareTable === 'function' ? (
-                <tr className="profitable-ranking-specs-table__share-row">
-                  <th colSpan={6}>
-                    <div className="profitable-ranking-specs-table__share-inner">
-                      <span className="profitable-ranking-specs-table__share-label">
-                        Public sharing link for this table only
-                      </span>
-                      <button
-                        type="button"
-                        className="pill-tab ranking-share-btn"
-                        onClick={onShareTable}
-                        disabled={Boolean(shareDisabled)}
-                        title="Open and copy the public link for this segment table"
-                      >
-                        Share Segment Table Link
-                      </button>
-                    </div>
-                  </th>
-                </tr>
-              ) : null}
-              <tr>
-                <th>Segment</th>
-                <th>Solitics Status</th>
-                <th>Derived Status</th>
-                <th>Goal</th>
-                <th>Exact Rules</th>
-                <th>Members</th>
+      <div className="profitable-ranking-specs-kpis">
+        <div className="profitable-ranking-specs-kpi">
+          <span className="profitable-ranking-specs-kpi__label">Total population</span>
+          <span className="profitable-ranking-specs-kpi__value">{fmtInt(totalPopulation)}</span>
+        </div>
+        <div className="profitable-ranking-specs-kpi profitable-ranking-specs-kpi--accent">
+          <span className="profitable-ranking-specs-kpi__label">Coverage</span>
+          <span className="profitable-ranking-specs-kpi__value">{fmtNum2(coveragePct)}%</span>
+        </div>
+        <div className="profitable-ranking-specs-kpi">
+          <span className="profitable-ranking-specs-kpi__label">Unassigned</span>
+          <span className="profitable-ranking-specs-kpi__value">{fmtInt(unassignedCount)}</span>
+        </div>
+      </div>
+
+      <div className="profitable-ranking-specs-modal__table-wrap">
+        <table className="profitable-ranking-specs-table">
+          <thead>
+            {typeof onShareTable === 'function' ? (
+              <tr className="profitable-ranking-specs-table__share-row">
+                <th colSpan={6}>
+                  <div className="profitable-ranking-specs-table__share-inner">
+                    <span className="profitable-ranking-specs-table__share-label">
+                      Public sharing link for this table only
+                    </span>
+                    <button
+                      type="button"
+                      className="pill-tab ranking-share-btn"
+                      onClick={onShareTable}
+                      disabled={Boolean(shareDisabled)}
+                      title="Open and copy the public link for this segment table"
+                    >
+                      Share Segment Table Link
+                    </button>
+                  </div>
+                </th>
               </tr>
-            </thead>
-            <tbody>
-              {safeRows.map((row) => {
-                const rowCount = Number(row?.memberCount || 0)
-                const sharePct = totalPopulation > 0 ? (rowCount / totalPopulation) * 100 : 0
-                const isUnassigned = row.key === 'unassigned'
-                const rulesList = Array.isArray(row?.rulesList)
-                  ? row.rulesList
-                  : String(row?.rules || '')
-                      .split(';')
-                      .map((item) => item.trim())
-                      .filter((item) => Boolean(item))
-                const soliticsStatuses = Array.isArray(row?.statusBuckets?.soliticsStatuses)
-                  ? row.statusBuckets.soliticsStatuses
-                  : []
-                const derivedStatuses = Array.isArray(row?.statusBuckets?.derivedStatuses)
-                  ? row.statusBuckets.derivedStatuses
-                  : []
-                const derivedStatusFormulas = derivedStatuses
-                  .map((statusName) => derivedStatusFormula(statusName))
-                  .filter((formula) => Boolean(formula))
-                return (
-                <tr key={row.key} className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : ''}>
+            ) : null}
+            <tr>
+              <th>Segment</th>
+              <th>Solitics Status</th>
+              <th>Derived Status</th>
+              <th>Goal</th>
+              <th>Exact Rules</th>
+              <th>Members</th>
+            </tr>
+          </thead>
+          <tbody>
+            {safeRows.map((row) => {
+              const rowCount = Number(row?.memberCount || 0)
+              const sharePct = totalPopulation > 0 ? (rowCount / totalPopulation) * 100 : 0
+              const isUnassigned = row.key === 'unassigned'
+              const rulesList = Array.isArray(row?.rulesList)
+                ? row.rulesList
+                : String(row?.rules || '')
+                    .split(';')
+                    .map((item) => item.trim())
+                    .filter((item) => Boolean(item))
+              const soliticsStatuses = Array.isArray(row?.statusBuckets?.soliticsStatuses)
+                ? row.statusBuckets.soliticsStatuses
+                : []
+              const derivedStatuses = Array.isArray(row?.statusBuckets?.derivedStatuses)
+                ? row.statusBuckets.derivedStatuses
+                : []
+              const derivedStatusFormulas = derivedStatuses
+                .map((statusName) => derivedStatusFormula(statusName))
+                .filter((formula) => Boolean(formula))
+              return (
+                <tr
+                  key={row.key}
+                  className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : ''}
+                >
                   <td>
                     <div className="profitable-ranking-specs-table__rank-cell">
                       <div className="profitable-ranking-specs-table__rank-name">{row.label}</div>
                       <div className="profitable-ranking-specs-table__meta-row">
-                        <span className="profitable-ranking-specs-table__group-pill">{row.group}</span>
+                        <span className="profitable-ranking-specs-table__group-pill">
+                          {row.group}
+                        </span>
                       </div>
                     </div>
                   </td>
@@ -202,7 +209,10 @@ function RankingSpecsModal({
                   <td>
                     <ul className="profitable-ranking-specs-table__rules-list">
                       {rulesList.map((rule, idx) => (
-                        <li key={`${row.key}-rule-${idx}`} className="profitable-ranking-specs-table__rules-item">
+                        <li
+                          key={`${row.key}-rule-${idx}`}
+                          className="profitable-ranking-specs-table__rules-item"
+                        >
                           {rule}
                         </li>
                       ))}
@@ -210,16 +220,20 @@ function RankingSpecsModal({
                   </td>
                   <td>
                     <div className="profitable-ranking-specs-table__members-cell">
-                      <div className="profitable-ranking-specs-table__count">{fmtInt(row.memberCount)}</div>
-                      <div className="profitable-ranking-specs-table__share">{fmtNum2(sharePct)}%</div>
+                      <div className="profitable-ranking-specs-table__count">
+                        {fmtInt(row.memberCount)}
+                      </div>
+                      <div className="profitable-ranking-specs-table__share">
+                        {fmtNum2(sharePct)}%
+                      </div>
                     </div>
                   </td>
                 </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 
@@ -1263,7 +1277,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 2,
     goal: 'Retain high-value engaged traders before churn risk increases.',
     statusBuckets: buildStatusBuckets(['active', 'dormant']),
-    rules: 'status IN (Active, Dormant); netDepositedCapital >= 3,000; totalTrades >= 50; 7 <= daysSinceLastTrade <= 60',
+    rules:
+      'status IN (Active, Dormant); netDepositedCapital >= 3,000; totalTrades >= 50; 7 <= daysSinceLastTrade <= 60',
     rulesList: [
       'status IN (Active, Dormant)',
       'netDepositedCapital >= 3,000',
@@ -1313,7 +1328,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 4,
     goal: 'Nurture stable medium-high engagement behavior over time.',
     statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant']),
-    rules: 'status IN (Very Active, Active, Dormant); activeMonths >= 3; avgTradesPerMonth >= 30; daysSinceLastTrade <= 60',
+    rules:
+      'status IN (Very Active, Active, Dormant); activeMonths >= 3; avgTradesPerMonth >= 30; daysSinceLastTrade <= 60',
     rulesList: [
       'status IN (Very Active, Active, Dormant)',
       'activeMonths >= 3',
@@ -1338,7 +1354,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 5,
     goal: 'Accelerate onboarding momentum for early-stage active traders.',
     statusBuckets: buildStatusBuckets(['very_active', 'active']),
-    rules: 'status IN (Very Active, Active); daysSinceLastTrade <= 7; avgTradesPerMonth >= 50; activeMonths <= 3',
+    rules:
+      'status IN (Very Active, Active); daysSinceLastTrade <= 7; avgTradesPerMonth >= 50; activeMonths <= 3',
     rulesList: [
       'status IN (Very Active, Active)',
       'daysSinceLastTrade <= 7',
@@ -1363,7 +1380,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 6,
     goal: 'Grow medium-activity users toward top engagement tiers.',
     statusBuckets: buildStatusBuckets(['active', 'dormant']),
-    rules: 'status IN (Active, Dormant); avgTradesPerMonth >= 15; daysSinceLastTrade <= 45; netDepositedCapital >= 1,000',
+    rules:
+      'status IN (Active, Dormant); avgTradesPerMonth >= 15; daysSinceLastTrade <= 45; netDepositedCapital >= 1,000',
     rulesList: [
       'status IN (Active, Dormant)',
       'avgTradesPerMonth >= 15',
@@ -1388,7 +1406,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 7,
     goal: 'Win back historically valuable traders with declining recency.',
     statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
-    rules: 'status IN (Dormant, Inactive); totalTrades >= 30; netDepositedCapital >= 1,500; 60 < daysSinceLastTrade <= 180',
+    rules:
+      'status IN (Dormant, Inactive); totalTrades >= 30; netDepositedCapital >= 1,500; 60 < daysSinceLastTrade <= 180',
     rulesList: [
       'status IN (Dormant, Inactive)',
       'totalTrades >= 30',
@@ -1414,7 +1433,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     priority: 8,
     goal: 'Onboard newer traders with activation and first-value journeys.',
     statusBuckets: buildStatusBuckets([]),
-    rules: 'activeMonths <= 3; totalTrades BETWEEN 5 AND 49; daysSinceLastTrade <= 30; totalDeposit >= 500',
+    rules:
+      'activeMonths <= 3; totalTrades BETWEEN 5 AND 49; daysSinceLastTrade <= 30; totalDeposit >= 500',
     rulesList: [
       'activeMonths <= 3',
       '5 <= totalTrades <= 49',
@@ -1860,14 +1880,19 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   )
   const [showRankingSpecsModal, setShowRankingSpecsModal] = useState(false)
   const [publicSegmentsStandalone] = useState(() => {
-    if (!publicMode || typeof window === 'undefined') return false
-    const view = new URLSearchParams(window.location.search).get('view')
+    if (!publicMode) return false
+
+    const fromSharedState = String(initialState?.sv || '').toLowerCase() === 'segments'
+    if (fromSharedState) return true
+
+    if (typeof window === 'undefined') return false
+    const view = new window.URLSearchParams(window.location.search).get('view')
     return String(view || '').toLowerCase() === 'segments'
   })
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    const view = new URLSearchParams(window.location.search).get('view')
+    const view = new window.URLSearchParams(window.location.search).get('view')
     if (String(view || '').toLowerCase() === 'segments') setShowRankingSpecsModal(true)
   }, [])
 
@@ -1897,6 +1922,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         r: Number(activityRecencyDays) || 0,
         c: Array.isArray(selectedCountries) ? selectedCountries : [],
         tab: String(activeTab || ''),
+        sv: 'segments',
       },
     }
 
@@ -2349,7 +2375,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               <div
                 style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}
               >
-
                 <div
                   style={{
                     display: 'grid',
