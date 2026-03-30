@@ -1967,10 +1967,9 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       }
     }
 
-    const isKvToken = token.startsWith('share_') && !token.startsWith('share_local_')
-    const hrefBase = isKvToken
-      ? `${shareOrigin}/s/${encodeURIComponent(token)}`
-      : `${shareOrigin}/share/profitable-ranking/${encodeURIComponent(token)}`
+    // Always use the full profitable-ranking share route here so `view=segments`
+    // is preserved end-to-end without depending on short-link redirect behavior.
+    const hrefBase = `${shareOrigin}/share/profitable-ranking/${encodeURIComponent(token)}`
 
     let href = hrefBase
     try {

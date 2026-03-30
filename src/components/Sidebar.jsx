@@ -158,6 +158,17 @@ function Icon({ name, size = 16 }) {
           <path d="M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       )
+    case 'chat':
+      return (
+        <svg {...common} aria-hidden="true">
+          <path
+            d="M5 6h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-4 3v-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )
     default:
       return null
   }
@@ -327,6 +338,18 @@ export default function Sidebar({
                 <span>{t('sidebar.profitableRanking')}</span>
               </span>
             </button>
+
+            <button
+              disabled={disabled('salesAgentsMonitor')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'salesAgentsMonitor' ? 'active' : ''}`}
+              onClick={() => navigate('salesAgentsMonitor')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="users" />
+                <span>{t('sidebar.salesAgentsMonitor')}</span>
+              </span>
+            </button>
             <button
               disabled={disabled('fraud')}
               type="button"
@@ -452,6 +475,18 @@ export default function Sidebar({
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
                 <Icon name="chart" />
                 <span>{t('sidebar.trustpilotGuide')}</span>
+              </span>
+            </button>
+
+            <button
+              disabled={disabled('whatsappTemplates')}
+              type="button"
+              className={`sidebar-item sidebar-main tab ${view === 'whatsappTemplates' ? 'active' : ''}`}
+              onClick={() => navigate('whatsappTemplates')}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Icon name="chat" />
+                <span>{t('sidebar.whatsappTemplates')}</span>
               </span>
             </button>
           </>

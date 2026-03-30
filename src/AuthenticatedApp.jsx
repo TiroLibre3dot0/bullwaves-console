@@ -16,6 +16,9 @@ const CommentsAnalysisPage = lazy(() => import('./pages/CommentsAnalysisPage'))
 const FraudMonitoringDashboard = lazy(() => import('./components/FraudMonitoringDashboard'))
 const SupportUserCheck = lazy(() => import('./features/support/pages/SupportUserCheck'))
 const TrustpilotGuidePage = lazy(() => import('./features/trustpilot/pages/TrustpilotGuidePage'))
+const WhatsAppTemplatesPage = lazy(
+  () => import('./features/whatsapp-templates/pages/WhatsAppTemplatesPage')
+)
 const CustomEventsPage = lazy(() => import('./features/analytics/pages/CustomEventsPage'))
 const UploadReportsPage = lazy(() => import('./pages/UploadReportsPage'))
 const TraderPointsSimulatorPage = lazy(
@@ -26,6 +29,7 @@ const PlatformUsageBillingPage = lazy(
 )
 const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
 const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
+const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonitor'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
@@ -147,11 +151,13 @@ export default function AuthenticatedApp() {
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
       profitableRanking: '/retention/profitable-ranking',
+      salesAgentsMonitor: '/retention/sales-agents-monitor',
       fraud: '/fraud',
       orgChart: '/org-chart',
       platformUsageBilling: '/platform-usage-billing',
       supportUserCheck: '/support/user-check',
       trustpilotGuide: '/trustpilot-guide',
+      whatsappTemplates: '/whatsapp-templates',
       customEvents: '/custom-events',
       upload: '/upload',
       notion: '/notion',
@@ -179,11 +185,13 @@ export default function AuthenticatedApp() {
     // Ranking section removed: keep legacy URLs working.
     if (pathname.startsWith('/ranking')) return 'profitableRanking'
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
+    if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/platform-usage-billing')) return 'platformUsageBilling'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
+    if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
     if (pathname.startsWith('/notion')) return 'notion'
@@ -470,10 +478,12 @@ export default function AuthenticatedApp() {
       notion: 'notion',
       summary: 'summary',
       profitableRanking: 'retention-profitable-ranking',
+      salesAgentsMonitor: 'retention-sales-agents-monitor',
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
       supportUserCheck: 'support-user-check',
       trustpilotGuide: 'trustpilot-guide',
+      whatsappTemplates: 'whatsapp-templates',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
       admin: 'admin-panel',
@@ -540,12 +550,14 @@ export default function AuthenticatedApp() {
               {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
               {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
               {view === 'profitableRanking' ? <ProfitableRanking /> : null}
+              {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
               {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
               {view === 'orgChart' ? <OrgChart /> : null}
               {view === 'platformUsageBilling' ? <PlatformUsageBillingPage /> : null}
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
+              {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}
               {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}

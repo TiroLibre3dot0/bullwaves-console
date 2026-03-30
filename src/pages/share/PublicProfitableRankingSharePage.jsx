@@ -50,6 +50,7 @@ function buildInitialStateFromPayload(payload) {
       ? s.c.map((x) => String(x || '').trim()).filter(Boolean)
       : [],
     activeTab: validTabs.has(tab) ? tab : 'most_active',
+    sv: String(s.sv || '').trim().toLowerCase(),
   }
 }
 
