@@ -1,6 +1,7 @@
 const { routeAnalytics } = require('./handlers/analytics')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
+const { routeConvrs } = require('./handlers/convrs')
 
 function json(res, status, payload, headers) {
   res.statusCode = status
@@ -48,6 +49,10 @@ async function routeApi(req, res) {
 
   if (scope === 's') {
     return routeShort(req, res, parts.slice(1))
+  }
+
+  if (scope === 'convrs') {
+    return routeConvrs(req, res, parts.slice(1))
   }
 
   return json(res, 404, { ok: false, error: 'Not found' })

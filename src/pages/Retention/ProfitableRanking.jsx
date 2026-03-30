@@ -5,6 +5,241 @@ import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
 
+function derivedStatusFormula(statusName) {
+  const v = String(statusName || '').trim().toLowerCase()
+  if (v === 'very active') return 'daysSinceLastTrade <= 7 AND Avg Trades / Month >= 20'
+  if (v === 'active') return 'daysSinceLastTrade <= 30 AND Avg Trades / Month >= 5'
+  if (v === 'inactive') {
+    return 'totalTrades <= 0 OR missing last-trade date OR daysSinceLastTrade > 90'
+  }
+  return ''
+}
+
+function RankingSpecsModal({
+  isOpen,
+  onClose,
+  rows,
+  onShareTable,
+  shareDisabled,
+  standalone = false,
+}) {
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') onClose?.()
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  const safeRows = Array.isArray(rows) ? rows : []
+  const unassignedRow = safeRows.find((row) => row.key === 'unassigned') || null
+  const totalPopulation = safeRows.reduce((acc, row) => acc + Number(row?.memberCount || 0), 0)
+  const unassignedCount = Number(unassignedRow?.memberCount || 0)
+  const coveredCount = Math.max(0, totalPopulation - unassignedCount)
+  const coveragePct = totalPopulation > 0 ? (coveredCount / totalPopulation) * 100 : 0
+
+  const card = (
+    <div
+      className={`modal-card profitable-ranking-specs-modal${standalone ? ' profitable-ranking-specs-modal--standalone' : ''}`}
+      role="dialog"
+      aria-modal={standalone ? undefined : 'true'}
+      aria-labelledby="ranking-specs-modal-title"
+    >
+        <div className="modal-header profitable-ranking-specs-modal__header">
+          <div>
+            <p className="page-label" style={{ marginBottom: 4 }}>
+              Retention
+            </p>
+            <h2 id="ranking-specs-modal-title" style={{ margin: 0, fontSize: 22 }}>
+              Exclusive Segment Specifications
+            </h2>
+            <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
+              Priority-based exclusive assignment for Solitics retention campaigns.
+            </p>
+          </div>
+
+          {!standalone ? (
+            <button
+              type="button"
+              className="pill-tab"
+              onClick={onClose}
+              aria-label="Close ranking specifications"
+            >
+              Close
+            </button>
+          ) : null}
+        </div>
+
+        <div className="profitable-ranking-specs-kpis">
+          <div className="profitable-ranking-specs-kpi">
+            <span className="profitable-ranking-specs-kpi__label">Total population</span>
+            <span className="profitable-ranking-specs-kpi__value">{fmtInt(totalPopulation)}</span>
+          </div>
+          <div className="profitable-ranking-specs-kpi profitable-ranking-specs-kpi--accent">
+            <span className="profitable-ranking-specs-kpi__label">Coverage</span>
+            <span className="profitable-ranking-specs-kpi__value">{fmtNum2(coveragePct)}%</span>
+          </div>
+          <div className="profitable-ranking-specs-kpi">
+            <span className="profitable-ranking-specs-kpi__label">Unassigned</span>
+            <span className="profitable-ranking-specs-kpi__value">{fmtInt(unassignedCount)}</span>
+          </div>
+        </div>
+
+        <div className="profitable-ranking-specs-modal__table-wrap">
+          <table className="profitable-ranking-specs-table">
+            <thead>
+              {typeof onShareTable === 'function' ? (
+                <tr className="profitable-ranking-specs-table__share-row">
+                  <th colSpan={6}>
+                    <div className="profitable-ranking-specs-table__share-inner">
+                      <span className="profitable-ranking-specs-table__share-label">
+                        Public sharing link for this table only
+                      </span>
+                      <button
+                        type="button"
+                        className="pill-tab ranking-share-btn"
+                        onClick={onShareTable}
+                        disabled={Boolean(shareDisabled)}
+                        title="Open and copy the public link for this segment table"
+                      >
+                        Share Segment Table Link
+                      </button>
+                    </div>
+                  </th>
+                </tr>
+              ) : null}
+              <tr>
+                <th>Segment</th>
+                <th>Solitics Status</th>
+                <th>Derived Status</th>
+                <th>Goal</th>
+                <th>Exact Rules</th>
+                <th>Members</th>
+              </tr>
+            </thead>
+            <tbody>
+              {safeRows.map((row) => {
+                const rowCount = Number(row?.memberCount || 0)
+                const sharePct = totalPopulation > 0 ? (rowCount / totalPopulation) * 100 : 0
+                const isUnassigned = row.key === 'unassigned'
+                const rulesList = Array.isArray(row?.rulesList)
+                  ? row.rulesList
+                  : String(row?.rules || '')
+                      .split(';')
+                      .map((item) => item.trim())
+                      .filter((item) => Boolean(item))
+                const soliticsStatuses = Array.isArray(row?.statusBuckets?.soliticsStatuses)
+                  ? row.statusBuckets.soliticsStatuses
+                  : []
+                const derivedStatuses = Array.isArray(row?.statusBuckets?.derivedStatuses)
+                  ? row.statusBuckets.derivedStatuses
+                  : []
+                const derivedStatusFormulas = derivedStatuses
+                  .map((statusName) => derivedStatusFormula(statusName))
+                  .filter((formula) => Boolean(formula))
+                return (
+                <tr key={row.key} className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : ''}>
+                  <td>
+                    <div className="profitable-ranking-specs-table__rank-cell">
+                      <div className="profitable-ranking-specs-table__rank-name">{row.label}</div>
+                      <div className="profitable-ranking-specs-table__meta-row">
+                        <span className="profitable-ranking-specs-table__group-pill">{row.group}</span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="profitable-ranking-specs-table__status-pills">
+                      {soliticsStatuses.length ? (
+                        soliticsStatuses.map((statusName) => (
+                          <span
+                            key={`${row.key}-solitics-${statusName}`}
+                            className="profitable-ranking-specs-table__status-pill profitable-ranking-specs-table__status-pill--solitics"
+                          >
+                            {statusName}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="profitable-ranking-specs-table__status-empty">None</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="profitable-ranking-specs-table__status-pills">
+                      {derivedStatuses.length ? (
+                        derivedStatuses.map((statusName) => (
+                          <span
+                            key={`${row.key}-derived-${statusName}`}
+                            className="profitable-ranking-specs-table__status-pill profitable-ranking-specs-table__status-pill--derived"
+                          >
+                            {statusName}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="profitable-ranking-specs-table__status-empty">None</span>
+                      )}
+                    </div>
+                    {derivedStatusFormulas.length ? (
+                      <ul className="profitable-ranking-specs-table__status-formulas">
+                        {derivedStatusFormulas.map((formula, idx) => (
+                          <li
+                            key={`${row.key}-derived-formula-${idx}`}
+                            className="profitable-ranking-specs-table__status-formula-item"
+                          >
+                            {formula}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </td>
+                  <td>
+                    <div className="profitable-ranking-specs-table__goal">{row.goal}</div>
+                  </td>
+                  <td>
+                    <ul className="profitable-ranking-specs-table__rules-list">
+                      {rulesList.map((rule, idx) => (
+                        <li key={`${row.key}-rule-${idx}`} className="profitable-ranking-specs-table__rules-item">
+                          {rule}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td>
+                    <div className="profitable-ranking-specs-table__members-cell">
+                      <div className="profitable-ranking-specs-table__count">{fmtInt(row.memberCount)}</div>
+                      <div className="profitable-ranking-specs-table__share">{fmtNum2(sharePct)}%</div>
+                    </div>
+                  </td>
+                </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+    </div>
+  )
+
+  if (standalone) {
+    return <div className="profitable-ranking-specs-standalone">{card}</div>
+  }
+
+  return (
+    <div
+      className="modal-backdrop"
+      role="presentation"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose?.()
+      }}
+    >
+      {card}
+    </div>
+  )
+}
+
 const numberFmt0 = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
@@ -983,6 +1218,224 @@ const TAB_CONFIGS = [
   },
 ]
 
+const SOLITICS_NATIVE_STATUS_KEYS = new Set(['dormant'])
+
+function statusLabelFromKey(key) {
+  if (key === 'very_active') return 'Very Active'
+  if (key === 'active') return 'Active'
+  if (key === 'dormant') return 'Dormant'
+  if (key === 'inactive') return 'Inactive'
+  return String(key)
+}
+
+function buildStatusBuckets(statusKeys) {
+  const keys = Array.isArray(statusKeys) ? statusKeys : []
+
+  return {
+    soliticsStatuses: keys
+      .filter((key) => SOLITICS_NATIVE_STATUS_KEYS.has(key))
+      .map((key) => statusLabelFromKey(key)),
+    derivedStatuses: keys
+      .filter((key) => !SOLITICS_NATIVE_STATUS_KEYS.has(key))
+      .map((key) => statusLabelFromKey(key)),
+  }
+}
+
+const EXCLUSIVE_SEGMENT_CONFIGS = [
+  {
+    key: 'top_performing',
+    label: 'Top Performing Traders',
+    group: 'Retention',
+    priority: 1,
+    goal: 'Protect and upsell profitable high-value traders.',
+    statusBuckets: buildStatusBuckets([]),
+    rules: 'closedPL > 0; totalTrades >= 50; totalDeposit >= 1,000',
+    rulesList: ['closedPL > 0', 'totalTrades >= 50', 'totalDeposit >= 1,000'],
+    matches: ({ metric }) =>
+      Number(metric?.closedPL || 0) > 0 &&
+      Number(metric?.totalTrades || 0) >= 50 &&
+      Number(metric?.totalDeposit || 0) >= 1000,
+  },
+  {
+    key: 'reward_candidates',
+    label: 'Reward Candidates',
+    group: 'Retention',
+    priority: 2,
+    goal: 'Retain high-value engaged traders before churn risk increases.',
+    statusBuckets: buildStatusBuckets(['active', 'dormant']),
+    rules: 'status IN (Active, Dormant); netDepositedCapital >= 3,000; totalTrades >= 50; 7 <= daysSinceLastTrade <= 60',
+    rulesList: [
+      'status IN (Active, Dormant)',
+      'netDepositedCapital >= 3,000',
+      'totalTrades >= 50',
+      '7 <= daysSinceLastTrade <= 60',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      const netDepositedCapital = Number(metric?.netDeposit || 0)
+      return (
+        (statusKey === 'active' || statusKey === 'dormant') &&
+        netDepositedCapital >= 3000 &&
+        Number(metric?.totalTrades || 0) >= 50 &&
+        Number.isFinite(d) &&
+        d >= 7 &&
+        d <= 60
+      )
+    },
+  },
+  {
+    key: 'most_active',
+    label: 'Most Active Traders',
+    group: 'Activation',
+    priority: 3,
+    goal: 'Target hyper-active traders for frequency-based campaigns.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active']),
+    rules: 'status IN (Very Active, Active); avgTradesPerMonth >= 100; daysSinceLastTrade <= 14',
+    rulesList: [
+      'status IN (Very Active, Active)',
+      'avgTradesPerMonth >= 100',
+      'daysSinceLastTrade <= 14',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'very_active' || statusKey === 'active') &&
+        Number.isFinite(d) &&
+        d <= 14 &&
+        Number(metric?.tradesPerMonth || 0) >= 100
+      )
+    },
+  },
+  {
+    key: 'most_consistent',
+    label: 'Most Consistent Traders',
+    group: 'Retention',
+    priority: 4,
+    goal: 'Nurture stable medium-high engagement behavior over time.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant']),
+    rules: 'status IN (Very Active, Active, Dormant); activeMonths >= 3; avgTradesPerMonth >= 30; daysSinceLastTrade <= 60',
+    rulesList: [
+      'status IN (Very Active, Active, Dormant)',
+      'activeMonths >= 3',
+      'avgTradesPerMonth >= 30',
+      'daysSinceLastTrade <= 60',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'very_active' || statusKey === 'active' || statusKey === 'dormant') &&
+        Number(metric?.activeMonths || 0) >= 3 &&
+        Number(metric?.tradesPerMonth || 0) >= 30 &&
+        Number.isFinite(d) &&
+        d <= 60
+      )
+    },
+  },
+  {
+    key: 'rising',
+    label: 'Rising Traders',
+    group: 'Activation',
+    priority: 5,
+    goal: 'Accelerate onboarding momentum for early-stage active traders.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active']),
+    rules: 'status IN (Very Active, Active); daysSinceLastTrade <= 7; avgTradesPerMonth >= 50; activeMonths <= 3',
+    rulesList: [
+      'status IN (Very Active, Active)',
+      'daysSinceLastTrade <= 7',
+      'avgTradesPerMonth >= 50',
+      'activeMonths <= 3',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'very_active' || statusKey === 'active') &&
+        Number.isFinite(d) &&
+        d <= 7 &&
+        Number(metric?.tradesPerMonth || 0) >= 50 &&
+        Number(metric?.activeMonths || 0) <= 3
+      )
+    },
+  },
+  {
+    key: 'engaged_builders',
+    label: 'Engaged Builders',
+    group: 'Activation',
+    priority: 6,
+    goal: 'Grow medium-activity users toward top engagement tiers.',
+    statusBuckets: buildStatusBuckets(['active', 'dormant']),
+    rules: 'status IN (Active, Dormant); avgTradesPerMonth >= 15; daysSinceLastTrade <= 45; netDepositedCapital >= 1,000',
+    rulesList: [
+      'status IN (Active, Dormant)',
+      'avgTradesPerMonth >= 15',
+      'daysSinceLastTrade <= 45',
+      'netDepositedCapital >= 1,000',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'active' || statusKey === 'dormant') &&
+        Number(metric?.tradesPerMonth || 0) >= 15 &&
+        Number.isFinite(d) &&
+        d <= 45 &&
+        Number(metric?.netDeposit || 0) >= 1000
+      )
+    },
+  },
+  {
+    key: 'at_risk_value',
+    label: 'At-Risk Value Traders',
+    group: 'Winback',
+    priority: 7,
+    goal: 'Win back historically valuable traders with declining recency.',
+    statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
+    rules: 'status IN (Dormant, Inactive); totalTrades >= 30; netDepositedCapital >= 1,500; 60 < daysSinceLastTrade <= 180',
+    rulesList: [
+      'status IN (Dormant, Inactive)',
+      'totalTrades >= 30',
+      'netDepositedCapital >= 1,500',
+      '60 < daysSinceLastTrade <= 180',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'dormant' || statusKey === 'inactive') &&
+        Number(metric?.totalTrades || 0) >= 30 &&
+        Number(metric?.netDeposit || 0) >= 1500 &&
+        Number.isFinite(d) &&
+        d > 60 &&
+        d <= 180
+      )
+    },
+  },
+  {
+    key: 'early_stage',
+    label: 'Early-Stage Traders',
+    group: 'Activation',
+    priority: 8,
+    goal: 'Onboard newer traders with activation and first-value journeys.',
+    statusBuckets: buildStatusBuckets([]),
+    rules: 'activeMonths <= 3; totalTrades BETWEEN 5 AND 49; daysSinceLastTrade <= 30; totalDeposit >= 500',
+    rulesList: [
+      'activeMonths <= 3',
+      '5 <= totalTrades <= 49',
+      'daysSinceLastTrade <= 30',
+      'totalDeposit >= 500',
+    ],
+    matches: ({ metric }) => {
+      const d = Number(metric?.recencyDays)
+      const trades = Number(metric?.totalTrades || 0)
+      return (
+        Number(metric?.activeMonths || 0) <= 3 &&
+        trades >= 5 &&
+        trades <= 49 &&
+        Number.isFinite(d) &&
+        d <= 30 &&
+        Number(metric?.totalDeposit || 0) >= 500
+      )
+    },
+  },
+]
+
 export default function ProfitableRanking({ publicMode = false, initialState = null } = {}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -1405,6 +1858,18 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       ? String(initialState.activeTab)
       : 'most_active'
   )
+  const [showRankingSpecsModal, setShowRankingSpecsModal] = useState(false)
+  const [publicSegmentsStandalone] = useState(() => {
+    if (!publicMode || typeof window === 'undefined') return false
+    const view = new URLSearchParams(window.location.search).get('view')
+    return String(view || '').toLowerCase() === 'segments'
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const view = new URLSearchParams(window.location.search).get('view')
+    if (String(view || '').toLowerCase() === 'segments') setShowRankingSpecsModal(true)
+  }, [])
 
   const [sortByTab, setSortByTab] = useState(() => {
     const out = {}
@@ -1419,7 +1884,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   })
   const [pageSize, setPageSize] = useState(50)
 
-  const onShare = async () => {
+  const onShareSegmentsTable = async () => {
     if (typeof window === 'undefined') return
 
     const payload = {
@@ -1477,9 +1942,18 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     }
 
     const isKvToken = token.startsWith('share_') && !token.startsWith('share_local_')
-    const href = isKvToken
+    const hrefBase = isKvToken
       ? `${shareOrigin}/s/${encodeURIComponent(token)}`
       : `${shareOrigin}/share/profitable-ranking/${encodeURIComponent(token)}`
+
+    let href = hrefBase
+    try {
+      const u = new URL(hrefBase)
+      u.searchParams.set('view', 'segments')
+      href = u.toString()
+    } catch {
+      href = `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}view=segments`
+    }
 
     // Open in a new tab only. Never navigate away from this page.
     let opened = false
@@ -1664,6 +2138,63 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     return configs.find((t) => t.key === activeTab) || configs[0]
   }, [activeTab, tabConfigs])
 
+  const rankingSpecsRows = useMemo(() => {
+    const metrics = Array.isArray(v1?.metrics) ? v1.metrics : []
+    const allClientIds = new Set(
+      metrics
+        .map((metric) => String(metric?.clientId || '').trim())
+        .filter((clientId) => Boolean(clientId))
+    )
+    const assignedClientIds = new Set()
+
+    const rows = EXCLUSIVE_SEGMENT_CONFIGS.map((segment) => {
+      let memberCount = 0
+
+      for (const metric of metrics) {
+        const clientId = String(metric?.clientId || '').trim()
+        if (!clientId || assignedClientIds.has(clientId)) continue
+
+        const daysSinceLastTrade = computeDaysSinceLastTrade(metric)
+        const status = classifyActivityStatus({
+          totalTrades: metric?.totalTrades,
+          tradesPerMonth: metric?.tradesPerMonth,
+          daysSinceLastTrade,
+        })
+
+        if (!segment.matches({ metric, statusKey: status.statusKey, daysSinceLastTrade })) continue
+        assignedClientIds.add(clientId)
+        memberCount += 1
+      }
+
+      return {
+        key: segment.key,
+        label: segment.label,
+        group: segment.group,
+        priority: segment.priority,
+        goal: segment.goal,
+        statusBuckets: segment.statusBuckets,
+        rules: segment.rules,
+        rulesList: segment.rulesList,
+        memberCount,
+      }
+    })
+
+    const unassignedCount = Math.max(0, allClientIds.size - assignedClientIds.size)
+    rows.push({
+      key: 'unassigned',
+      label: 'Unassigned',
+      group: 'Coverage Gap',
+      priority: 'N/A',
+      goal: 'Identify traders not covered by current Solitics retention segments.',
+      statusBuckets: buildStatusBuckets([]),
+      rules: 'NOT matched by priorities 1-8',
+      rulesList: ['NOT matched by priorities 1-8'],
+      memberCount: unassignedCount,
+    })
+
+    return rows
+  }, [v1?.metrics])
+
   const sortedForDisplay = useMemo(() => {
     const fallback = activeTabConfig?.defaultSort || { key: 'totalTrades', dir: 'desc' }
     const s = sortByTab[activeTab] || fallback
@@ -1731,6 +2262,19 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const showOverlayLoader = Boolean(loading || isUpdating)
   const overlaySubtitle = 'Loading…'
 
+  if (publicSegmentsStandalone) {
+    return (
+      <RankingSpecsModal
+        isOpen
+        onClose={null}
+        rows={rankingSpecsRows}
+        onShareTable={null}
+        shareDisabled
+        standalone
+      />
+    )
+  }
+
   return (
     <div
       ref={rootRef}
@@ -1780,6 +2324,20 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
                     </span>
                   )}
 
+                  <button
+                    type="button"
+                    className="profitable-ranking-specs-trigger"
+                    onClick={() => setShowRankingSpecsModal(true)}
+                    disabled={!dataset}
+                    title="Open exclusive segment specifications"
+                    aria-label="Open exclusive segment specifications"
+                  >
+                    <span className="profitable-ranking-specs-trigger__icon" aria-hidden="true">
+                      i
+                    </span>
+                    <span>Segment specs</span>
+                  </button>
+
                   {loading ? (
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
                       Reading…
@@ -1791,19 +2349,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
               <div
                 style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}
               >
-                {!publicMode ? (
-                  <div className="ranking-header-actions">
-                    <button
-                      type="button"
-                      className="pill-tab ranking-share-btn"
-                      onClick={onShare}
-                      disabled={loading || !dataset}
-                      title="Open the public page for this ranking (opens in a new tab and copies the link)"
-                    >
-                      Open Public Page
-                    </button>
-                  </div>
-                ) : null}
 
                 <div
                   style={{
@@ -2292,6 +2837,14 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
           )}
         </div>
       </div>
+
+      <RankingSpecsModal
+        isOpen={showRankingSpecsModal}
+        onClose={() => setShowRankingSpecsModal(false)}
+        rows={rankingSpecsRows}
+        onShareTable={!publicMode ? onShareSegmentsTable : null}
+        shareDisabled={publicMode || loading || !dataset}
+      />
     </div>
   )
 }

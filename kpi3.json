@@ -1,0 +1,17 @@
+{
+  "key": "tpl-reengagement-soft",
+  "templateId": "tpl-reengagement-soft",
+  "templateName": "dormant_account",
+  "sent": 5,
+  "delivered": 4,
+  "read": 2,
+  "replies": 1,
+  "failed": 0,
+  "pending": 0,
+  "lastAck": 1,
+  "lastEventAt": "2026-03-24T07:39:31.116Z",
+  "updatedAt": "2026-03-24T07:39:31.116Z",
+  "replyRate": 20,
+  "deliveryRate": 80,
+  "readRate": 40
+}

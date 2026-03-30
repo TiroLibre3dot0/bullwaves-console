@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-03-24T16:33:28.648Z",
+  "generatedAt": "2026-03-30T15:03:13.113Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -11,20 +11,20 @@
     "registrationsCsv": "public\\Registrations Report.csv"
   },
   "summary": {
-    "total": 694,
+    "total": 696,
     "byMatchStatus": {
-      "exact": 118,
+      "exact": 120,
       "candidate": 57,
       "unmatched": 519
     },
     "byPriority": {
-      "high": 156,
-      "medium": 104,
-      "low": 434
+      "high": 155,
+      "medium": 105,
+      "low": 436
     },
     "byRecommendedAction": {
-      "direct_contact": 44,
-      "public_reply": 646,
+      "direct_contact": 45,
+      "public_reply": 647,
       "no_contact": 0,
       "manual_review": 4
     }
@@ -4831,9 +4831,9 @@
         "totaldeposits": "18,379.2648",
         "netdeposits": "4,226.67",
         "withdrawals": "14,152.59",
-        "volume": "848,400.0000",
-        "lots": "84.84",
-        "pl": "13,820.8816",
+        "volume": "848,600.0000",
+        "lots": "84.86",
+        "pl": "13,828.8963",
         "status": "New",
         "country": "United Kingdom"
       }
@@ -4963,9 +4963,9 @@
         "totaldeposits": "18,379.2648",
         "netdeposits": "4,226.67",
         "withdrawals": "14,152.59",
-        "volume": "848,400.0000",
-        "lots": "84.84",
-        "pl": "13,820.8816",
+        "volume": "848,600.0000",
+        "lots": "84.86",
+        "pl": "13,828.8963",
         "status": "New",
         "country": "United Kingdom"
       }
@@ -9941,9 +9941,9 @@
         "totaldeposits": "13,950.0000",
         "netdeposits": "13,950.00",
         "withdrawals": "0.00",
-        "volume": "1,727,200.0000",
-        "lots": "172.72",
-        "pl": "13,535.0800",
+        "volume": "1,742,200.0000",
+        "lots": "174.22",
+        "pl": "13,635.8300",
         "status": "New",
         "country": "New Zealand"
       }
@@ -10435,12 +10435,12 @@
       "tradingContext": {
         "userid": "bullwaves-650083",
         "mt5account": "1311176",
-        "totaldeposits": "1,000.0000",
-        "netdeposits": "1,000.00",
+        "totaldeposits": "1,500.0000",
+        "netdeposits": "1,500.00",
         "withdrawals": "0.00",
-        "volume": "22,800.0000",
-        "lots": "2.28",
-        "pl": "1,002.0700",
+        "volume": "27,600.0000",
+        "lots": "2.76",
+        "pl": "1,041.1200",
         "status": "New",
         "country": "United Kingdom"
       }
@@ -15497,9 +15497,9 @@
         "totaldeposits": "24,500.0000",
         "netdeposits": "1,541.82",
         "withdrawals": "22,958.18",
-        "volume": "821,111,800.0000",
-        "lots": "82111.18",
-        "pl": "284.2700",
+        "volume": "821,112,800.0000",
+        "lots": "82111.28",
+        "pl": "1,611.7700",
         "status": "Dormant",
         "country": "United Kingdom"
       }
@@ -19188,9 +19188,9 @@
         "totaldeposits": "11,067.0000",
         "netdeposits": "10,949.17",
         "withdrawals": "117.83",
-        "volume": "2,999,800.0000",
-        "lots": "299.98",
-        "pl": "10,219.2000",
+        "volume": "3,002,100.0000",
+        "lots": "300.21",
+        "pl": "10,254.3700",
         "status": "New",
         "country": "Australia"
       }
@@ -21378,9 +21378,9 @@
         "totaldeposits": "2,214.0600",
         "netdeposits": "2,214.06",
         "withdrawals": "0.00",
-        "volume": "218,000.0000",
-        "lots": "21.8",
-        "pl": "1,767.9908",
+        "volume": "229,600.0000",
+        "lots": "22.96",
+        "pl": "1,792.1998",
         "status": "New",
         "country": "Spain"
       }
@@ -26473,12 +26473,12 @@
       "tradingContext": {
         "userid": "bullwaves-595452",
         "mt5account": "1305298",
-        "totaldeposits": "46,467.1699",
-        "netdeposits": "31,222.79",
+        "totaldeposits": "51,258.0799",
+        "netdeposits": "36,013.70",
         "withdrawals": "15,244.38",
-        "volume": "4,737,400.0000",
-        "lots": "473.74",
-        "pl": "35,052.5525",
+        "volume": "5,376,900.0000",
+        "lots": "537.69",
+        "pl": "39,763.0519",
         "status": "New",
         "country": "United Kingdom"
       }
@@ -26684,9 +26684,9 @@
         "totaldeposits": "6,550.0000",
         "netdeposits": "5,250.00",
         "withdrawals": "1,300.00",
-        "volume": "752,000.0000",
-        "lots": "75.2",
-        "pl": "284.2900",
+        "volume": "756,000.0000",
+        "lots": "75.6",
+        "pl": "498.7900",
         "status": "New",
         "country": "Denmark"
       }
@@ -27294,8 +27294,8 @@
         "userid": "bullwaves-647752",
         "mt5account": "1310921",
         "totaldeposits": "1,159.8999",
-        "netdeposits": "-881.09",
-        "withdrawals": "2,040.99",
+        "netdeposits": "-1,286.76",
+        "withdrawals": "2,446.66",
         "volume": "193,300.0000",
         "lots": "19.33",
         "pl": "-945.0167",
@@ -27894,9 +27894,9 @@
         "totaldeposits": "1,900.0000",
         "netdeposits": "1,900.00",
         "withdrawals": "0.00",
-        "volume": "580,000.0000",
-        "lots": "58",
-        "pl": "785.1900",
+        "volume": "600,000.0000",
+        "lots": "60",
+        "pl": "433.1900",
         "status": "New",
         "country": "Australia"
       }
@@ -27957,45 +27957,6 @@
     },
     {
       "reviewLine": 657,
-      "reviewerName": "",
-      "country": "",
-      "starRating": 0,
-      "issueType": "",
-      "category": "",
-      "potentialLead": "",
-      "assignedTo": "",
-      "status": "",
-      "dateReviewed": "",
-      "trustpilotLink": "",
-      "reviewSummary": "",
-      "actionNeeded": "",
-      "followupNotes": "",
-      "contacted": "",
-      "contactChannel": "",
-      "contactOutcome": "",
-      "clientSentiment": "",
-      "mainIssue": "",
-      "actionTaken": "",
-      "reviewStatus": "",
-      "followUpNeeded": "",
-      "additionalNotes": "",
-      "matchStatus": "unmatched",
-      "matchedUserIds": [],
-      "priorityLevel": "high",
-      "recommendedAction": "public_reply",
-      "reasonCodes": [
-        "trustpilot_only_case"
-      ],
-      "templateKey": "template_public_recovery",
-      "checklist": [
-        "Reply publicly on Trustpilot using neutral support wording.",
-        "Invite user to secure support channel for identity verification.",
-        "Avoid exposing internal account data in public response."
-      ],
-      "tradingContext": null
-    },
-    {
-      "reviewLine": 658,
       "reviewerName": "Pradhan - Prop Trader",
       "country": "India",
       "starRating": 5,
@@ -28034,7 +27995,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 659,
+      "reviewLine": 658,
       "reviewerName": "Matteo Alessio Locaputo",
       "country": "Italy",
       "starRating": 5,
@@ -28073,7 +28034,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 660,
+      "reviewLine": 659,
       "reviewerName": "King forex",
       "country": "Pakistan",
       "starRating": 5,
@@ -28112,7 +28073,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 661,
+      "reviewLine": 660,
       "reviewerName": "Frederick",
       "country": "Nigeria",
       "starRating": 5,
@@ -28151,7 +28112,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 662,
+      "reviewLine": 661,
       "reviewerName": "Umer Jemal",
       "country": "Ethiopia",
       "starRating": 5,
@@ -28190,7 +28151,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 663,
+      "reviewLine": 662,
       "reviewerName": "Fazil Khan",
       "country": "New Zealand",
       "starRating": 5,
@@ -28229,7 +28190,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 664,
+      "reviewLine": 663,
       "reviewerName": "GEMECHU RETA",
       "country": "Ethiopia",
       "starRating": 5,
@@ -28268,7 +28229,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 665,
+      "reviewLine": 664,
       "reviewerName": "Paul Wetherill",
       "country": "United Kingdom",
       "starRating": 5,
@@ -28323,7 +28284,7 @@
       }
     },
     {
-      "reviewLine": 666,
+      "reviewLine": 665,
       "reviewerName": "rafiu deen",
       "country": "India",
       "starRating": 5,
@@ -28362,7 +28323,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 667,
+      "reviewLine": 666,
       "reviewerName": "Abdilah",
       "country": "Canada",
       "starRating": 5,
@@ -28401,7 +28362,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 668,
+      "reviewLine": 667,
       "reviewerName": "Fasal Trustpip",
       "country": "India",
       "starRating": 5,
@@ -28440,7 +28401,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 669,
+      "reviewLine": 668,
       "reviewerName": "Moealgendy",
       "country": "Egypt",
       "starRating": 5,
@@ -28479,7 +28440,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 670,
+      "reviewLine": 669,
       "reviewerName": "Uttam Yadav",
       "country": "Indonesia",
       "starRating": 5,
@@ -28518,7 +28479,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 671,
+      "reviewLine": 670,
       "reviewerName": "Nithish Fxc",
       "country": "India",
       "starRating": 5,
@@ -28557,7 +28518,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 672,
+      "reviewLine": 671,
       "reviewerName": "Ernestas Vaivada",
       "country": "Lithuana",
       "starRating": 5,
@@ -28599,17 +28560,17 @@
         "userid": "bullwaves-919172",
         "mt5account": "3009663",
         "totaldeposits": "571.3300",
-        "netdeposits": "571.33",
-        "withdrawals": "0.00",
-        "volume": "9,600.0000",
-        "lots": "0.96",
-        "pl": "9.3939",
+        "netdeposits": "-39.04",
+        "withdrawals": "610.37",
+        "volume": "56,600.0000",
+        "lots": "5.66",
+        "pl": "-310.0898",
         "status": "New",
         "country": "Lithuania"
       }
     },
     {
-      "reviewLine": 673,
+      "reviewLine": 672,
       "reviewerName": "Waphil",
       "country": "Botswana",
       "starRating": 5,
@@ -28648,7 +28609,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 674,
+      "reviewLine": 673,
       "reviewerName": "Meet Patel",
       "country": "India",
       "starRating": 5,
@@ -28687,7 +28648,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 675,
+      "reviewLine": 674,
       "reviewerName": "Iamblacklion",
       "country": "Nigeria",
       "starRating": 5,
@@ -28726,7 +28687,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 676,
+      "reviewLine": 675,
       "reviewerName": "My Philip",
       "country": "Botswana",
       "starRating": 5,
@@ -28765,7 +28726,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 677,
+      "reviewLine": 676,
       "reviewerName": "Wangu Phillip",
       "country": "Botswana",
       "starRating": 5,
@@ -28804,7 +28765,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 678,
+      "reviewLine": 677,
       "reviewerName": "Muhammad Umair",
       "country": "Pakistan",
       "starRating": 5,
@@ -28857,7 +28818,7 @@
       }
     },
     {
-      "reviewLine": 679,
+      "reviewLine": 678,
       "reviewerName": "Michela De Paoli",
       "country": "Italy",
       "starRating": 5,
@@ -28912,7 +28873,7 @@
       }
     },
     {
-      "reviewLine": 680,
+      "reviewLine": 679,
       "reviewerName": "Ahmad Bello",
       "country": "Nigeria",
       "starRating": 5,
@@ -28951,7 +28912,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 681,
+      "reviewLine": 680,
       "reviewerName": "Carl",
       "country": "United Kingdom",
       "starRating": 5,
@@ -28990,7 +28951,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 682,
+      "reviewLine": 681,
       "reviewerName": "Ka \"SINGERSONGOR\" CO",
       "country": "United Kingdom",
       "starRating": 5,
@@ -29029,7 +28990,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 683,
+      "reviewLine": 682,
       "reviewerName": "Mr.Oscar",
       "country": "Ghana",
       "starRating": 5,
@@ -29068,7 +29029,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 684,
+      "reviewLine": 683,
       "reviewerName": "Elton Korriku",
       "country": "Italy",
       "starRating": 5,
@@ -29120,7 +29081,7 @@
       }
     },
     {
-      "reviewLine": 685,
+      "reviewLine": 684,
       "reviewerName": "G.M ERDEM",
       "country": "Netherlands",
       "starRating": 5,
@@ -29159,7 +29120,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 686,
+      "reviewLine": 685,
       "reviewerName": "Luke._.",
       "country": "Italy",
       "starRating": 5,
@@ -29198,7 +29159,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 687,
+      "reviewLine": 686,
       "reviewerName": "Neo",
       "country": "France",
       "starRating": 1,
@@ -29237,7 +29198,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 688,
+      "reviewLine": 687,
       "reviewerName": "Muhammad Umair",
       "country": "Pakistan",
       "starRating": 5,
@@ -29290,7 +29251,7 @@
       }
     },
     {
-      "reviewLine": 689,
+      "reviewLine": 688,
       "reviewerName": "Rmx Patcher",
       "country": "Ethiopia",
       "starRating": 4,
@@ -29329,7 +29290,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 690,
+      "reviewLine": 689,
       "reviewerName": "Ryan",
       "country": "Australia",
       "starRating": 1,
@@ -29368,7 +29329,7 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 691,
+      "reviewLine": 690,
       "reviewerName": "Amanda Southern",
       "country": "Australia",
       "starRating": 1,
@@ -29414,15 +29375,15 @@
         "totaldeposits": "23,235.2499",
         "netdeposits": "8,719.94",
         "withdrawals": "14,515.31",
-        "volume": "4,510,500.0000",
-        "lots": "451.05",
-        "pl": "27,362.2400",
+        "volume": "4,554,900.0000",
+        "lots": "455.49",
+        "pl": "29,339.2100",
         "status": "New",
         "country": "Australia"
       }
     },
     {
-      "reviewLine": 692,
+      "reviewLine": 691,
       "reviewerName": "Maciej Swiatly",
       "country": "United Kingdom",
       "starRating": 1,
@@ -29471,12 +29432,12 @@
         "volume": "0.0000",
         "lots": "0",
         "pl": "0.0000",
-        "status": "New",
+        "status": "Interested",
         "country": "United Kingdom"
       }
     },
     {
-      "reviewLine": 693,
+      "reviewLine": 692,
       "reviewerName": "Firdausi Kabir",
       "country": "Nigeria",
       "starRating": 1,
@@ -29515,19 +29476,19 @@
       "tradingContext": null
     },
     {
-      "reviewLine": 694,
-      "reviewerName": "Matthew",
-      "country": "Canada",
+      "reviewLine": 693,
+      "reviewerName": "Tradergoldmillion",
+      "country": "Spain",
       "starRating": 1,
-      "issueType": "Withdrawal",
+      "issueType": "Trading",
       "category": "Complaint",
       "potentialLead": "No",
-      "assignedTo": "Santi",
+      "assignedTo": "Migs",
       "status": "Pending",
-      "dateReviewed": "",
-      "trustpilotLink": "https://it.trustpilot.com/reviews/69c0f7cc3b2a9bab377ccfdf",
-      "reviewSummary": "User accuses platform of unreliability and financial loss",
-      "actionNeeded": "Review withdrawal case and address complaint appropriately",
+      "dateReviewed": "Mar 22, 2026",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/69c17a7cc68cf33a79c7c611",
+      "reviewSummary": "Client claims broker manipulated market opening causing $14,681 loss",
+      "actionNeeded": "Investigate trade execution timing and respond with explanation or dispute resolution",
       "followupNotes": "",
       "contacted": "",
       "contactChannel": "",
@@ -29554,19 +29515,163 @@
       "tradingContext": null
     },
     {
+      "reviewLine": 694,
+      "reviewerName": "George Pay",
+      "country": "United Kingdom",
+      "starRating": 5,
+      "issueType": "Support",
+      "category": "Positive Feedback",
+      "potentialLead": "No",
+      "assignedTo": "Migs",
+      "status": "Pending",
+      "dateReviewed": "Mar 24, 2026",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/69c2728534daddd845c8616f",
+      "reviewSummary": "Client praises support agent for being helpful and patient",
+      "actionNeeded": "Acknowledge feedback and thank user for positive review",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "exact",
+      "matchedUserIds": [
+        "bullwaves-846833"
+      ],
+      "priorityLevel": "low",
+      "recommendedAction": "public_reply",
+      "reasonCodes": [
+        "trustpilot_only_case"
+      ],
+      "templateKey": "template_public_standard",
+      "checklist": [
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
+      ],
+      "tradingContext": {
+        "userid": "bullwaves-846833",
+        "mt5account": "3005942",
+        "totaldeposits": "537.6799",
+        "netdeposits": "403.44",
+        "withdrawals": "134.24",
+        "volume": "27,800.0000",
+        "lots": "2.78",
+        "pl": "347.9173",
+        "status": "Interested",
+        "country": "United Kingdom"
+      }
+    },
+    {
       "reviewLine": 695,
-      "reviewerName": "Neo",
-      "country": "France",
-      "starRating": 1,
+      "reviewerName": "Sachin Kumar",
+      "country": "India",
+      "starRating": 5,
       "issueType": "Withdrawal",
+      "category": "Positive Feedback",
+      "potentialLead": "No",
+      "assignedTo": "Migs",
+      "status": "Pending",
+      "dateReviewed": "Mar 24, 2026",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/69c2c5fc22f1c2350462572f",
+      "reviewSummary": "Client shares their smooth experience and easy payout with BullWave Prime",
+      "actionNeeded": "Acknowledge feedback and thank user for positive review",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "exact",
+      "matchedUserIds": [
+        "bullwaves-980314"
+      ],
+      "priorityLevel": "medium",
+      "recommendedAction": "direct_contact",
+      "reasonCodes": [
+        "exact_user_match",
+        "trading_context_available"
+      ],
+      "templateKey": "template_direct_followup",
+      "checklist": [
+        "Respond on Trustpilot with neutral acknowledgment.",
+        "Open direct contact channel with verified user identity.",
+        "Use internal trading context to tailor the outreach message."
+      ],
+      "tradingContext": {
+        "userid": "bullwaves-980314",
+        "mt5account": "2002945",
+        "totaldeposits": "0",
+        "netdeposits": "0.0000",
+        "withdrawals": "0.0000",
+        "volume": "0",
+        "lots": "0.00",
+        "pl": "0.0000",
+        "status": "Prop",
+        "country": "India"
+      }
+    },
+    {
+      "reviewLine": 696,
+      "reviewerName": "Sajjad Hussain",
+      "country": "Pakistan",
+      "starRating": 4,
+      "issueType": "Other",
+      "category": "Positive Feedback",
+      "potentialLead": "No",
+      "assignedTo": "Migs",
+      "status": "Pending",
+      "dateReviewed": "Mar 24, 2026",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/69c31bd0f718a60b7965d9de",
+      "reviewSummary": "Client praises BullWaves Prime for excellent trading conditions",
+      "actionNeeded": "Acknowledge feedback and thank user for positive review",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "unmatched",
+      "matchedUserIds": [],
+      "priorityLevel": "low",
+      "recommendedAction": "public_reply",
+      "reasonCodes": [
+        "trustpilot_only_case"
+      ],
+      "templateKey": "template_public_standard",
+      "checklist": [
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
+      ],
+      "tradingContext": null
+    },
+    {
+      "reviewLine": 697,
+      "reviewerName": "Kabiru",
+      "country": "Nigeria",
+      "starRating": 1,
+      "issueType": "Other",
       "category": "Complaint",
       "potentialLead": "No",
-      "assignedTo": "Santi",
+      "assignedTo": "Migs",
       "status": "Pending",
-      "dateReviewed": "",
-      "trustpilotLink": "https://it.trustpilot.com/reviews/69c14bf691e393fa47cf8283",
-      "reviewSummary": "Review summary: User",
-      "actionNeeded": "Review withdrawal records, investigate allegations, and handle as a high-risk reputational complaint",
+      "dateReviewed": "Mar 24, 2026",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/69c392b3bd1c94ee86a7f786",
+      "reviewSummary": "Client claims prop firm refuses to issue account despite winning",
+      "actionNeeded": "Get in touch with Client, follow up to verify if they have left a review on the right company and offer resolution or guidance",
       "followupNotes": "",
       "contacted": "",
       "contactChannel": "",

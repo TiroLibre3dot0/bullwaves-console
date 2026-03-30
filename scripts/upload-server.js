@@ -3,6 +3,16 @@ const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
 const { exec, spawn } = require('child_process')
+const dotenv = require('dotenv')
+const { routeConvrs } = require('../serverless/handlers/convrs')
+
+const projectRoot = path.join(__dirname, '..')
+;['.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
+  const filePath = path.join(projectRoot, name)
+  if (fs.existsSync(filePath)) {
+    dotenv.config({ path: filePath, override: false })
+  }
+})
 
 const app = express()
 const port = process.env.UPLOAD_PORT || 4000
@@ -18,6 +28,7 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage })
 
+app.use(express.json({ limit: '1mb' }))
 app.use(express.static(path.join(__dirname, '..', 'public')))
 
 function truncateTextTail(text, { maxLines = 80, maxChars = 12000 } = {}) {
@@ -769,5 +780,23 @@ app.get('/health', (req, res) => res.json({ ok: true }))
 
 // Alias for console/dev proxy
 app.get('/api/health', (req, res) => res.json({ ok: true }))
+
+app.all('/convrs', (req, res) => routeConvrs(req, res, []))
+app.all('/convrs/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/convrs\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeConvrs(req, res, tail)
+})
+
+app.all('/api/convrs', (req, res) => routeConvrs(req, res, []))
+app.all('/api/convrs/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/convrs\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeConvrs(req, res, tail)
+})
 
 app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))
