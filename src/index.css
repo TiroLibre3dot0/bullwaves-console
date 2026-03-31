@@ -2437,7 +2437,7 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 }
 
 .profitable-ranking-specs-modal {
-  width: min(1320px, 96vw) !important;
+  width: min(1800px, 98vw) !important;
   max-height: calc(100vh - 28px);
   border: 1px solid rgba(56, 189, 248, 0.28);
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(56, 189, 248, 0.08) inset;
@@ -2744,7 +2744,7 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 
 @media (max-width: 1440px) {
   .profitable-ranking-specs-modal {
-    width: min(1220px, 97vw) !important;
+    width: min(1600px, 97vw) !important;
   }
 
   .profitable-ranking-specs-table th,
@@ -2761,7 +2761,7 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 
 @media (max-width: 1180px) {
   .profitable-ranking-specs-modal {
-    width: min(1080px, 98vw) !important;
+    width: min(1400px, 98vw) !important;
   }
 
   .profitable-ranking-specs-kpi__value {
