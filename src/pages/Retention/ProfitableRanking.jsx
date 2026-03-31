@@ -1454,6 +1454,141 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
       )
     },
   },
+  {
+    key: 'vip_whales',
+    label: 'VIP Whales',
+    group: 'Retention',
+    priority: 9,
+    goal: 'Protect top-value traders with dedicated VIP retention and concierge campaigns.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant', 'inactive']),
+    rules: 'totalDeposit >= 10,000 OR equity >= 10,000',
+    rulesList: ['totalDeposit >= 10,000 OR equity >= 10,000'],
+    matches: ({ metric }) =>
+      Number(metric?.totalDeposit || 0) >= 10000 || Number(metric?.equity || 0) >= 10000,
+  },
+  {
+    key: 'churned_high_value',
+    label: 'Churned High Value',
+    group: 'Winback',
+    priority: 10,
+    goal: 'Recover high-value traders who have become inactive for a long period.',
+    statusBuckets: buildStatusBuckets(['inactive', 'dormant']),
+    rules: 'status IN (Inactive, Dormant); daysSinceLastTrade > 90; netDepositedCapital >= 1,000',
+    rulesList: [
+      'status IN (Inactive, Dormant)',
+      'daysSinceLastTrade > 90',
+      'netDepositedCapital >= 1,000',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'inactive' || statusKey === 'dormant') &&
+        Number.isFinite(d) &&
+        d > 90 &&
+        Number(metric?.netDeposit || 0) >= 1000
+      )
+    },
+  },
+  {
+    key: 'dormant_value',
+    label: 'Dormant Value Traders',
+    group: 'Winback',
+    priority: 11,
+    goal: 'Reactivate recently dormant traders that still hold meaningful value.',
+    statusBuckets: buildStatusBuckets(['dormant']),
+    rules: 'status = Dormant; 30 < daysSinceLastTrade <= 90; netDepositedCapital >= 500',
+    rulesList: [
+      'status = Dormant',
+      '30 < daysSinceLastTrade <= 90',
+      'netDepositedCapital >= 500',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        statusKey === 'dormant' &&
+        Number.isFinite(d) &&
+        d > 30 &&
+        d <= 90 &&
+        Number(metric?.netDeposit || 0) >= 500
+      )
+    },
+  },
+  {
+    key: 'high_volume_losing',
+    label: 'High-Volume Losing Traders',
+    group: 'Risk',
+    priority: 12,
+    goal: 'Reduce churn risk with education and risk-managed trading support.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant', 'inactive']),
+    rules: 'totalTrades >= 100; closedPL < 0',
+    rulesList: ['totalTrades >= 100', 'closedPL < 0'],
+    matches: ({ metric }) =>
+      Number(metric?.totalTrades || 0) >= 100 && Number(metric?.closedPL || 0) < 0,
+  },
+  {
+    key: 'funded_no_trade',
+    label: 'Funded, No Trade',
+    group: 'Activation',
+    priority: 13,
+    goal: 'Convert funded accounts that never executed their first trade.',
+    statusBuckets: buildStatusBuckets(['inactive']),
+    rules: 'totalDeposit > 0; totalTrades <= 0',
+    rulesList: ['totalDeposit > 0', 'totalTrades <= 0'],
+    matches: ({ metric }) =>
+      Number(metric?.totalDeposit || 0) > 0 && Number(metric?.totalTrades || 0) <= 0,
+  },
+  {
+    key: 'promising_mid',
+    label: 'Promising Mid-Tier',
+    group: 'Activation',
+    priority: 14,
+    goal: 'Scale medium-engagement traders toward high-value retention cohorts.',
+    statusBuckets: buildStatusBuckets(['active', 'dormant']),
+    rules: '10 <= totalTrades <= 49; daysSinceLastTrade <= 45; netDepositedCapital >= 300',
+    rulesList: [
+      '10 <= totalTrades <= 49',
+      'daysSinceLastTrade <= 45',
+      'netDepositedCapital >= 300',
+    ],
+    matches: ({ metric }) => {
+      const d = Number(metric?.recencyDays)
+      const trades = Number(metric?.totalTrades || 0)
+      return (
+        trades >= 10 &&
+        trades <= 49 &&
+        Number.isFinite(d) &&
+        d <= 45 &&
+        Number(metric?.netDeposit || 0) >= 300
+      )
+    },
+  },
+  {
+    key: 'onboarding_light',
+    label: 'Onboarding Light',
+    group: 'Activation',
+    priority: 15,
+    goal: 'Increase early frequency for recently activated low-trade users.',
+    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant']),
+    rules: '1 <= totalTrades <= 9; daysSinceLastTrade <= 30',
+    rulesList: ['1 <= totalTrades <= 9', 'daysSinceLastTrade <= 30'],
+    matches: ({ metric }) => {
+      const d = Number(metric?.recencyDays)
+      const trades = Number(metric?.totalTrades || 0)
+      return trades >= 1 && trades <= 9 && Number.isFinite(d) && d <= 30
+    },
+  },
+  {
+    key: 'new_unfunded',
+    label: 'New Unfunded',
+    group: 'Acquisition',
+    priority: 16,
+    goal: 'Activate never-funded accounts with first-deposit journeys.',
+    statusBuckets: buildStatusBuckets(['inactive']),
+    rules: 'totalDeposit <= 0; totalTrades <= 0',
+    rulesList: ['totalDeposit <= 0', 'totalTrades <= 0'],
+    matches: ({ metric }) =>
+      Number(metric?.totalDeposit || 0) <= 0 && Number(metric?.totalTrades || 0) <= 0,
+  },
 ]
 
 export default function ProfitableRanking({ publicMode = false, initialState = null } = {}) {
@@ -1515,7 +1650,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const [artifact, setArtifact] = useState(null)
 
   // Timeframe (global)
-  const [timeframe, setTimeframe] = useState('last12')
+  const [timeframe, setTimeframe] = useState('all')
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedMonthKey, setSelectedMonthKey] = useState('')
 
@@ -2205,6 +2340,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
     })
 
     const unassignedCount = Math.max(0, allClientIds.size - assignedClientIds.size)
+    const priorityRangeText = `NOT matched by priorities 1-${EXCLUSIVE_SEGMENT_CONFIGS.length}`
     rows.push({
       key: 'unassigned',
       label: 'Unassigned',
@@ -2212,8 +2348,8 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       priority: 'N/A',
       goal: 'Identify traders not covered by current Solitics retention segments.',
       statusBuckets: buildStatusBuckets([]),
-      rules: 'NOT matched by priorities 1-8',
-      rulesList: ['NOT matched by priorities 1-8'],
+      rules: priorityRangeText,
+      rulesList: [priorityRangeText],
       memberCount: unassignedCount,
     })
 
