@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import KpiCard from '../../components/common/KpiCard'
 import FullPageLoader from '../../components/FullPageLoader'
+import SegmentJourneyModal from './SegmentJourneyModal'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
+import {
+  nodes as mostConsistentTradersNodes,
+  edges as mostConsistentTradersEdges,
+  meta as mostConsistentTradersMeta,
+} from '../../flows/mostConsistentTradersFlow'
 
 function derivedStatusFormula(statusName) {
   const v = String(statusName || '')
@@ -24,6 +30,7 @@ function RankingSpecsModal({
   onShareTable,
   shareDisabled,
   standalone = false,
+  onSegmentClick,
 }) {
   useEffect(() => {
     if (!isOpen) return undefined
@@ -147,7 +154,14 @@ function RankingSpecsModal({
               return (
                 <tr
                   key={row.key}
-                  className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : ''}
+                  className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : 'profitable-ranking-specs-table__row--clickable'}
+                  onClick={() => {
+                    if (!isUnassigned && typeof onSegmentClick === 'function') {
+                      onSegmentClick(row)
+                    }
+                  }}
+                  style={!isUnassigned ? { cursor: 'pointer' } : {}}
+                  title={!isUnassigned ? 'Click to view journey' : ''}
                 >
                   <td>
                     <div className="profitable-ranking-specs-table__rank-cell">
@@ -2014,6 +2028,8 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       : 'most_active'
   )
   const [showRankingSpecsModal, setShowRankingSpecsModal] = useState(false)
+  const [selectedSegmentForJourney, setSelectedSegmentForJourney] = useState(null)
+  const [showSegmentJourneyModal, setShowSegmentJourneyModal] = useState(false)
   const [publicSegmentsStandalone] = useState(() => {
     if (!publicMode) return false
 
@@ -2423,6 +2439,27 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const showOverlayLoader = Boolean(loading || isUpdating)
   const overlaySubtitle = 'Loading…'
 
+  // Map segment keys to flow data
+  const segmentFlowMap = useMemo(() => ({
+    most_consistent: {
+      nodes: mostConsistentTradersNodes,
+      edges: mostConsistentTradersEdges,
+      meta: mostConsistentTradersMeta,
+    },
+    // More flows will be added as they're created
+  }), [])
+
+  const handleSegmentClick = (segment) => {
+    setSelectedSegmentForJourney(segment)
+    setShowSegmentJourneyModal(true)
+  }
+
+  const selectedSegmentFlowData = useMemo(() => {
+    if (!selectedSegmentForJourney) return null
+    const flowData = segmentFlowMap?.[selectedSegmentForJourney?.key]
+    return flowData || null
+  }, [selectedSegmentForJourney, segmentFlowMap])
+
   if (publicSegmentsStandalone) {
     return (
       <RankingSpecsModal
@@ -2432,6 +2469,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         onShareTable={null}
         shareDisabled
         standalone
+        onSegmentClick={handleSegmentClick}
       />
     )
   }
@@ -3004,6 +3042,17 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         rows={rankingSpecsRows}
         onShareTable={!publicMode ? onShareSegmentsTable : null}
         shareDisabled={publicMode || loading || !dataset}
+        onSegmentClick={handleSegmentClick}
+      />
+
+      <SegmentJourneyModal
+        isOpen={showSegmentJourneyModal}
+        onClose={() => {
+          setShowSegmentJourneyModal(false)
+          setSelectedSegmentForJourney(null)
+        }}
+        segment={selectedSegmentForJourney}
+        flowData={selectedSegmentFlowData}
       />
     </div>
   )

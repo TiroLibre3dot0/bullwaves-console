@@ -3098,6 +3098,43 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 	.ongoing-line .value { text-align: left; }
 }
 
+/* Segment Journey Modal */
+.segment-journey-modal {
+  width: min(1800px, 98vw) !important;
+  max-height: calc(100vh - 28px);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  box-shadow: 0 28px 90px rgba(0, 0, 0, 0.46), 0 0 0 1px rgba(56, 189, 248, 0.08) inset;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.segment-journey-modal__header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.segment-journey-modal__description {
+  padding: 12px 16px;
+  background: rgba(56, 189, 248, 0.04);
+  border-bottom: 1px solid rgba(56, 189, 248, 0.12);
+}
+
+.segment-journey-modal__diagram-wrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Clickable table row hover effect */
+.profitable-ranking-specs-table__row--clickable {
+  transition: background-color 0.2s ease;
+}
+
+.profitable-ranking-specs-table__row--clickable:hover {
+  background: rgba(56, 189, 248, 0.08);
+}
+
 @media (max-width: 640px) {
 	.ongoing-header-actions { width: 100%; justify-content: space-between; }
 	.ongoing-counter-pill { width: 100%; justify-content: space-between; }
