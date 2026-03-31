@@ -47,6 +47,11 @@ import {
   meta as preFtdConversionMeta,
 } from '../../flows/preFtdConversionFlow'
 import {
+  nodes as mostConsistentTradersNodes,
+  edges as mostConsistentTradersEdges,
+  meta as mostConsistentTradersMeta,
+} from '../../flows/mostConsistentTradersFlow'
+import {
   nodes as masterNodes,
   edges as masterEdges,
   meta as masterMeta,
@@ -102,6 +107,11 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         meta: preFtdConversionMeta,
         nodes: preFtdConversionNodes,
         edges: preFtdConversionEdges,
+      },
+      mostConsistentTraders: {
+        meta: mostConsistentTradersMeta,
+        nodes: mostConsistentTradersNodes,
+        edges: mostConsistentTradersEdges,
       },
     }),
     []
@@ -177,6 +187,7 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           'reactivation14d',
           'ftdFirstTrade',
           'preFtdConversion',
+          'mostConsistentTraders',
         ],
       }
 
