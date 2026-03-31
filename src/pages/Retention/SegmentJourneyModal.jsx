@@ -1,6 +1,5 @@
-import React, { useMemo } from 'react'
-import FlowDiagram from '../flows/FlowDiagram'
-import { fmtInt } from '../lib/formatters'
+import React from 'react'
+import FlowDiagram from '../../features/flows/FlowDiagram'
 
 /**
  * SegmentJourneyModal - Visualizza il journey/flow di un segmento specifico
@@ -22,7 +21,6 @@ export default function SegmentJourneyModal({
     return value == null ? '' : String(value)
   }
 
-  const flowTitle = pickText(flowData?.meta?.title)
   const flowDescription = pickText(flowData?.meta?.description)
   const flowGoal = pickText(flowData?.meta?.goal)
   const segmentLabel = pickText(segment?.label)
