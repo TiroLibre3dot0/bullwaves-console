@@ -1,286 +1,655 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import KpiCard from '../components/profit/KpiCard'
-import RegionBarChart from '../components/profit/RegionBarChart'
-import CountryMapChart from '../components/profit/CountryMapChart'
-import SegmentBarChart from '../components/profit/SegmentBarChart'
-import ProfitRatioScatter from '../components/profit/ProfitRatioScatter'
-import RegistrationBarChart, { MetricBarChart } from '../components/profit/RegistrationBarChart'
 import FullPageLoader from '../components/FullPageLoader'
-import { checkDataStatus } from '../utils/dataStatusChecker'
-import { useDataStatus } from '../context/DataStatusContext'
+import PnLTrendChart from '../components/PnLTrendChart'
 import { useI18n } from '../i18n/I18nContext'
-import {
-  fetchCsvRowsCached,
-  fetchFirstOkCsvRowsCached,
-  withReportsVersion,
-} from '../lib/fetchCache'
+import { fetchFirstOkCsvRowsCached, fetchTextCached, withReportsVersion } from '../lib/fetchCache'
 import { track } from '../utils/analytics'
 
-const formatter = new Intl.NumberFormat('en-GB', {
+const monthNames = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+]
+
+const numberFmt = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 })
-const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const FILTER_SOURCE_VALUES = ['both', 'creolabs', 'cellxpert']
 
-const formatNumberShort = (value) => {
-  const num = Number(value || 0)
-  const abs = Math.abs(num)
-  if (abs >= 1_000_000) return `${Math.round(num / 1_000_000)}M`
-  if (abs >= 1000) return `${Math.round(num / 1000)}k`
-  return formatter.format(Math.round(num))
+// Current (partial) month — excluded from charts and delta comparisons
+const NOW_MONTH_KEY = (() => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+})()
+
+const KPI_CONFIG = [
+  { key: 'registrations', label: 'Registrations', kind: 'count', tone: '#8b5cf6' },
+  { key: 'activeUsers', label: 'Active Traders', kind: 'count', tone: '#22c55e' },
+  { key: 'ftdAmount', label: 'FTD Amount', kind: 'money', tone: '#f59e0b' },
+  { key: 'ftdCount', label: 'FTD Count', kind: 'count', tone: '#fbbf24' },
+  { key: 'deposits', label: 'Deposits', kind: 'money', tone: '#38bdf8' },
+  { key: 'withdrawals', label: 'Withdrawals', kind: 'money', tone: '#f43f5e' },
+  { key: 'withdrawalCount', label: 'Number of Withdrawals', kind: 'count', tone: '#fb7185' },
+  { key: 'netDeposits', label: 'Net Deposits', kind: 'money', tone: '#22d3ee' },
+  { key: 'churn60', label: 'Churners (60d)', kind: 'count', tone: '#f59e0b' },
+]
+const FILTER_KPI_VALUES = ['all', ...KPI_CONFIG.map((k) => k.key)]
+
+const EMPTY_METRIC = {
+  registrations: null,
+  activeUsers: null,
+  activeUsersLtd: null,
+  churn60: null,
+  ftdAmount: null,
+  ftdCount: null,
+  qftd: null,
+  deposits: null,
+  depositCount: null,
+  withdrawals: null,
+  withdrawalCount: null,
+  netDeposits: null,
 }
-const formatEuro = (value) => `${formatNumberShort(value)} €`
-const formatPercent = (value) => `${Number(value || 0).toFixed(2)}%`
 
 function cleanNumber(value) {
   if (value === null || value === undefined) return 0
   const str = String(value).replace(/[$,]/g, '').trim()
-  if (!str) return 0
+  if (!str || str === '-') return 0
   const num = Number(str)
-  return Number.isNaN(num) ? 0 : num
+  return Number.isFinite(num) ? num : 0
 }
 
-function parseMonthLabel(raw) {
-  if (!raw) return { label: 'Unknown', monthIndex: -1, year: '—', key: 'unknown' }
-  const [m, y] = raw.split('/')
-  const monthIndex = Math.max(0, (Number(m) || 1) - 1)
-  const year = Number(y) || '—'
+function parseMediaMonth(raw) {
+  const s = String(raw || '').trim()
+  const m = /^(\d{1,2})\/(\d{4})$/.exec(s)
+  if (!m) return null
+  const month = Number(m[1])
+  const year = Number(m[2])
+  if (!Number.isFinite(month) || !Number.isFinite(year) || month < 1 || month > 12) return null
+  const key = `${year}-${String(month).padStart(2, '0')}`
+  return { key, year, month, label: `${monthNames[month - 1]} ${year}` }
+}
+
+function parseTradersYearMonth(raw) {
+  const s = String(raw || '').trim()
+  const m = /^(\d{4})-([A-Za-z]{3})$/.exec(s)
+  if (!m) return null
+  const year = Number(m[1])
+  const idx = monthNames.findIndex((x) => x.toLowerCase() === m[2].toLowerCase())
+  if (!Number.isFinite(year) || idx < 0) return null
+  const month = idx + 1
+  const key = `${year}-${String(month).padStart(2, '0')}`
+  return { key, year, month, label: `${monthNames[idx]} ${year}` }
+}
+
+function parseDateToMonthKey(raw) {
+  const s = String(raw || '').trim()
+  if (!s || s === '-' || s === '—') return null
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return null
+  const year = d.getUTCFullYear()
+  const month = d.getUTCMonth() + 1
+  return `${year}-${String(month).padStart(2, '0')}`
+}
+
+function parseDateValue(raw) {
+  const s = String(raw || '').trim()
+  if (!s || s === '-' || s === '—') return null
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return null
+  return d
+}
+
+function addDaysUTC(date, days) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return null
+  const d = new Date(date.getTime())
+  d.setUTCDate(d.getUTCDate() + Number(days || 0))
+  return d
+}
+
+function monthToIndex(key) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(key || ''))
+  if (!m) return Number.NEGATIVE_INFINITY
+  return Number(m[1]) * 12 + (Number(m[2]) - 1)
+}
+
+function formatShort(value) {
+  const num = Number(value || 0)
+  const abs = Math.abs(num)
+  if (abs >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`
+  if (abs >= 1000) return `${(num / 1000).toFixed(1)}k`
+  return numberFmt.format(Math.round(num))
+}
+
+function formatMetricValue(value, kind) {
+  const num = Number(value || 0)
+  if (kind === 'money') return `${formatShort(num)} €`
+  return numberFmt.format(Math.round(num))
+}
+
+function pctChange(current, previous) {
+  const c = Number(current || 0)
+  const p = Number(previous || 0)
+  if (p === 0) return c === 0 ? 0 : null
+  return ((c - p) / Math.abs(p)) * 100
+}
+
+function formatPct(pct) {
+  if (pct === null || pct === undefined || Number.isNaN(pct)) return 'n/a'
+  const sign = pct > 0 ? '+' : ''
+  return `${sign}${pct.toFixed(1)}%`
+}
+
+function pctTone(pct) {
+  if (pct === null || pct === undefined || Number.isNaN(pct)) return '#94a3b8'
+  if (pct > 0) return '#22c55e'
+  if (pct < 0) return '#f43f5e'
+  return '#e2e8f0'
+}
+
+function monthKeyToLabel(key) {
+  const m = /^(\d{4})-(\d{2})$/.exec(String(key || ''))
+  if (!m) return String(key || 'n/a')
+  const year = Number(m[1])
+  const month = Number(m[2])
+  return `${monthNames[month - 1] || 'M'} ${year}`
+}
+
+function monthRangeLabel(keys) {
+  if (!keys || !keys.length) return 'n/a'
+  if (keys.length === 1) return monthKeyToLabel(keys[0])
+  return `${monthKeyToLabel(keys[0])} - ${monthKeyToLabel(keys[keys.length - 1])}`
+}
+
+function buildComparisonEntry({ current, previous, currentLabel, previousLabel }) {
   return {
-    label: `${months[monthIndex]} ${year}`,
-    monthIndex,
-    year,
-    key: `${year}-${String(monthIndex).padStart(2, '0')}`,
+    pct: pctChange(current, previous),
+    current,
+    previous,
+    currentLabel,
+    previousLabel,
   }
 }
 
-const iso3FromName = (name) => {
-  const n = (name || '').toLowerCase().trim()
-  const map = {
-    italy: 'ITA',
-    spain: 'ESP',
-    france: 'FRA',
-    germany: 'DEU',
-    poland: 'POL',
-    portugal: 'PRT',
-    greece: 'GRC',
-    turkey: 'TUR',
-    romania: 'ROU',
-    russia: 'RUS',
-    ukraine: 'UKR',
-    canada: 'CAN',
-    'united states': 'USA',
-    'united states of america': 'USA',
-    usa: 'USA',
-    'united kingdom': 'GBR',
-    uk: 'GBR',
-    ireland: 'IRL',
-    netherlands: 'NLD',
-    belgium: 'BEL',
-    austria: 'AUT',
-    switzerland: 'CHE',
-    'czech republic': 'CZE',
-    czechia: 'CZE',
-    hungary: 'HUN',
-    'united arab emirates': 'ARE',
-    'saudi arabia': 'SAU',
-    sweden: 'SWE',
-    norway: 'NOR',
-    finland: 'FIN',
-    denmark: 'DNK',
-  }
-  if (map[n]) return map[n]
-  return (name || '').toUpperCase().slice(0, 3) || 'UNK'
-}
-
-function parseCsv(text) {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0)
-  if (!lines.length) return []
-  const headers = lines[0].split(',').map((h) => h.replace(/(^"|"$)/g, ''))
-  const rows = []
-  for (let i = 1; i < lines.length; i += 1) {
-    const cols = []
-    let current = ''
-    let inQuotes = false
-    const line = lines[i]
-    for (let j = 0; j < line.length; j += 1) {
-      const c = line[j]
-      if (c === '"') {
-        if (inQuotes && line[j + 1] === '"') {
-          current += '"'
-          j += 1
-        } else {
-          inQuotes = !inQuotes
-        }
-      } else if (c === ',' && !inQuotes) {
-        cols.push(current)
-        current = ''
-      } else {
-        current += c
-      }
+function readFiltersFromUrl() {
+  try {
+    const params = new window.URLSearchParams(window.location.search || '')
+    const source = String(params.get('source') || '').trim()
+    const kpi = String(params.get('kpi') || '').trim()
+    const normalizedSource = source === 'combined' ? 'both' : source
+    return {
+      timeRange: 'last24',
+      sourceMode: FILTER_SOURCE_VALUES.includes(normalizedSource) ? normalizedSource : 'both',
+      selectedKpi: FILTER_KPI_VALUES.includes(kpi) ? kpi : 'all',
     }
-    cols.push(current)
-    const row = {}
-    headers.forEach((h, idx) => {
-      row[h] = cols[idx] ?? ''
-    })
-    rows.push(row)
+  } catch {
+    return { timeRange: 'last24', sourceMode: 'both', selectedKpi: 'all' }
   }
-  return rows
 }
 
-function countryToRegion(country) {
-  const c = (country || '').toUpperCase()
-  const west = [
-    'US',
-    'USA',
-    'GBR',
-    'GB',
-    'UK',
-    'FRA',
-    'FR',
-    'ESP',
-    'ES',
-    'PRT',
-    'PT',
-    'IRL',
-    'IE',
-    'CAN',
-    'CA',
-  ]
-  const east = ['POL', 'PL', 'CZE', 'CZ', 'HUN', 'HU', 'ROU', 'RO', 'RUS', 'RU', 'UKR', 'UA']
-  const south = ['ITA', 'IT', 'GRC', 'GR', 'TUR', 'TR', 'ARE', 'AE', 'SAU', 'SA']
-  const central = ['DEU', 'DE', 'AUT', 'AT', 'CHE', 'CH', 'NLD', 'NL', 'BEL', 'BE']
-  if (west.includes(c)) return 'West'
-  if (east.includes(c)) return 'East'
-  if (south.includes(c)) return 'South'
-  if (central.includes(c)) return 'Central'
-  return 'Other'
+function getPeriodRange(keysSorted, mode) {
+  if (!keysSorted.length) return []
+  if (mode === 'all') return keysSorted
+
+  const latest = keysSorted[keysSorted.length - 1]
+  const latestIdx = monthToIndex(latest)
+  const latestYear = Number(latest.slice(0, 4))
+
+  if (mode === 'last12') {
+    return keysSorted.filter((k) => monthToIndex(k) >= latestIdx - 11)
+  }
+  if (mode === 'last24') {
+    return keysSorted.filter((k) => monthToIndex(k) >= latestIdx - 23)
+  }
+  if (mode === 'ytd') {
+    return keysSorted.filter((k) => Number(k.slice(0, 4)) === latestYear)
+  }
+  if (mode === 'currentYear') {
+    return keysSorted.filter((k) => Number(k.slice(0, 4)) === latestYear)
+  }
+  return keysSorted
 }
 
-function regionToSegment(region) {
-  if (region === 'West') return 'Consumer'
-  if (region === 'East') return 'Corporate'
-  if (region === 'South') return 'Home Office'
-  if (region === 'Central') return 'SMB'
-  return 'Enterprise'
+function sumRange(monthMap, metric, keys) {
+  return keys.reduce((acc, key) => acc + Number(monthMap[key]?.[metric] || 0), 0)
+}
+
+function buildComparisons({ keysInScope, allKeys, monthMap, metric }) {
+  if (!keysInScope.length) {
+    return {
+      ytd: buildComparisonEntry({
+        current: 0,
+        previous: 0,
+        currentLabel: 'n/a',
+        previousLabel: 'n/a',
+      }),
+      mom: buildComparisonEntry({
+        current: 0,
+        previous: 0,
+        currentLabel: 'n/a',
+        previousLabel: 'n/a',
+      }),
+      yoy: buildComparisonEntry({
+        current: 0,
+        previous: 0,
+        currentLabel: 'n/a',
+        previousLabel: 'n/a',
+      }),
+      qoq: buildComparisonEntry({
+        current: 0,
+        previous: 0,
+        currentLabel: 'n/a',
+        previousLabel: 'n/a',
+      }),
+      halfYear: buildComparisonEntry({
+        current: 0,
+        previous: 0,
+        currentLabel: 'n/a',
+        previousLabel: 'n/a',
+      }),
+      latestValue: 0,
+      latestMonth: null,
+    }
+  }
+
+  const latest = keysInScope[keysInScope.length - 1]
+  const latestIdx = monthToIndex(latest)
+  const latestYear = Number(latest.slice(0, 4))
+  const latestMonth = Number(latest.slice(5, 7))
+
+  const latestValue = Number(monthMap[latest]?.[metric] || 0)
+  const prevMonthKey = allKeys.find((k) => monthToIndex(k) === latestIdx - 1)
+  const sameMonthPrevYear = allKeys.find((k) => monthToIndex(k) === latestIdx - 12)
+
+  const ytdKeysCurrent = allKeys.filter((k) => {
+    const y = Number(k.slice(0, 4))
+    const m = Number(k.slice(5, 7))
+    return y === latestYear && m <= latestMonth
+  })
+  const ytdKeysPrev = allKeys.filter((k) => {
+    const y = Number(k.slice(0, 4))
+    const m = Number(k.slice(5, 7))
+    return y === latestYear - 1 && m <= latestMonth
+  })
+
+  const qCurrent = allKeys.filter((k) => {
+    const idx = monthToIndex(k)
+    return idx >= latestIdx - 2 && idx <= latestIdx
+  })
+  const qPrev = allKeys.filter((k) => {
+    const idx = monthToIndex(k)
+    return idx >= latestIdx - 5 && idx <= latestIdx - 3
+  })
+
+  const hCurrent = allKeys.filter((k) => {
+    const idx = monthToIndex(k)
+    return idx >= latestIdx - 5 && idx <= latestIdx
+  })
+  const hPrev = allKeys.filter((k) => {
+    const idx = monthToIndex(k)
+    return idx >= latestIdx - 11 && idx <= latestIdx - 6
+  })
+
+  return {
+    latestMonth: latest,
+    latestValue,
+    ytd: buildComparisonEntry({
+      current: sumRange(monthMap, metric, ytdKeysCurrent),
+      previous: sumRange(monthMap, metric, ytdKeysPrev),
+      currentLabel: `YTD ${monthRangeLabel(ytdKeysCurrent)}`,
+      previousLabel: `YTD ${monthRangeLabel(ytdKeysPrev)}`,
+    }),
+    mom: buildComparisonEntry({
+      current: latestValue,
+      previous: Number(monthMap[prevMonthKey]?.[metric] || 0),
+      currentLabel: monthKeyToLabel(latest),
+      previousLabel: monthKeyToLabel(prevMonthKey),
+    }),
+    yoy: buildComparisonEntry({
+      current: latestValue,
+      previous: Number(monthMap[sameMonthPrevYear]?.[metric] || 0),
+      currentLabel: monthKeyToLabel(latest),
+      previousLabel: monthKeyToLabel(sameMonthPrevYear),
+    }),
+    qoq: buildComparisonEntry({
+      current: sumRange(monthMap, metric, qCurrent),
+      previous: sumRange(monthMap, metric, qPrev),
+      currentLabel: `Quarter ${monthRangeLabel(qCurrent)}`,
+      previousLabel: `Quarter ${monthRangeLabel(qPrev)}`,
+    }),
+    halfYear: buildComparisonEntry({
+      current: sumRange(monthMap, metric, hCurrent),
+      previous: sumRange(monthMap, metric, hPrev),
+      currentLabel: `Half ${monthRangeLabel(hCurrent)}`,
+      previousLabel: `Half ${monthRangeLabel(hPrev)}`,
+    }),
+  }
+}
+
+function sourceHasMetric(monthMap, metric) {
+  return Object.values(monthMap).some((m) => m?.[metric] !== null && m?.[metric] !== undefined)
 }
 
 export default function ProfitAnalysisPage() {
   const { t } = useI18n()
-  const [mediaRows, setMediaRows] = useState([])
-  const [paymentsRows, setPaymentsRows] = useState([])
+  const initialFilters = useMemo(() => readFiltersFromUrl(), [])
   const [loading, setLoading] = useState(true)
-  const [selectedYear, setSelectedYear] = useState('all')
-  const [scatterEntity, setScatterEntity] = useState('affiliate')
-  const [roiMinPl, setRoiMinPl] = useState(2000)
-  const { setDataStatus } = useDataStatus()
+  const [mediaMonthly, setMediaMonthly] = useState({})
+  const [creoMonthly, setCreoMonthly] = useState({})
+  const [timeRange, setTimeRange] = useState(initialFilters.timeRange)
+  const [sourceMode, setSourceMode] = useState(initialFilters.sourceMode)
+  const [selectedKpi, setSelectedKpi] = useState(initialFilters.selectedKpi)
 
   useEffect(() => {
-    async function loadAllReports() {
+    track('page_view', { page: 'OverviewExecutiveCompass', access: 'console' })
+  }, [])
+
+  useEffect(() => {
+    const params = new window.URLSearchParams(window.location.search || '')
+    params.set('range', timeRange)
+    params.set('source', sourceMode)
+    params.set('kpi', selectedKpi)
+    const next = `${window.location.pathname}?${params.toString()}`
+    window.history.replaceState(window.history.state, '', next)
+  }, [timeRange, sourceMode, selectedKpi])
+
+  useEffect(() => {
+    async function loadDashboardData() {
       setLoading(true)
       try {
-        const candidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
-        const { rows: baseRows } = await fetchFirstOkCsvRowsCached(candidates)
-        if (!baseRows.length) return
+        const mediaCandidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
+        const { rows: mediaRows } = await fetchFirstOkCsvRowsCached(mediaCandidates)
 
-        const pick = (row, keys, fallback = '') => {
-          for (const k of keys) {
-            if (!k) continue
-            if (
-              Object.prototype.hasOwnProperty.call(row, k) &&
-              row[k] !== undefined &&
-              row[k] !== null &&
-              String(row[k]).trim() !== ''
-            ) {
-              return row[k]
-            }
+        const nextMedia = {}
+        for (const row of mediaRows || []) {
+          const month = parseMediaMonth(row.Month ?? row.month)
+          if (!month) continue
+          const entry = nextMedia[month.key] || {
+            ...EMPTY_METRIC,
+            registrations: 0,
+            ftdAmount: 0,
+            ftdCount: 0,
+            qftd: 0,
+            deposits: 0,
+            depositCount: 0,
+            withdrawals: 0,
+            withdrawalCount: 0,
+            netDeposits: 0,
+            label: month.label,
           }
-          return fallback
+
+          const dep = cleanNumber(row.Deposits ?? row.deposits)
+          const wd = cleanNumber(row.Withdrawals ?? row.withdrawals)
+          const depCount = cleanNumber(
+            row['Deposits Count'] ??
+              row['Deposits count'] ??
+              row['Deposit Count'] ??
+              row.deposit_count ??
+              row.deposits_count ??
+              row.num_deposits
+          )
+          const wdCount = cleanNumber(
+            row['Withdrawals Count'] ??
+              row['Withdrawal Count'] ??
+              row.withdrawals_count ??
+              row.withdrawal_count
+          )
+
+          entry.registrations += cleanNumber(
+            row.Registrations ?? row.registrations ?? row.Leads ?? row.leads
+          )
+          entry.ftdAmount += cleanNumber(
+            row.first_deposits ?? row.First_Deposits ?? row.firstDeposits
+          )
+          entry.ftdCount += cleanNumber(row.FTD ?? row.ftd)
+          entry.qftd += cleanNumber(row.QFTD ?? row.Qftd ?? row.qftd)
+          entry.deposits += dep
+          entry.withdrawals += wd
+          entry.netDeposits += cleanNumber(
+            row['Net Deposits'] ?? row.net_deposits ?? row.netdeposits
+          )
+          entry.depositCount += depCount > 0 ? depCount : dep > 0 ? 1 : 0
+          entry.withdrawalCount += wdCount > 0 ? wdCount : wd > 0 ? 1 : 0
+
+          nextMedia[month.key] = entry
         }
 
-        const parsed = baseRows.map((r) => {
-          const rawMonth = pick(r, ['Month', 'month'])
-          const monthMeta = parseMonthLabel(rawMonth)
-          const rawCountry = pick(r, [
-            'Country',
-            'country',
-            'Country Code',
-            'country_code',
-            'countrycode',
-          ])
-          const country = rawCountry || 'Unknown'
-          const countryCode = iso3FromName(
-            pick(r, ['Country Code', 'country_code', 'countrycode', 'Country', 'country'], country)
-          )
-          return {
-            monthKey: monthMeta.key,
-            monthLabel: monthMeta.label,
-            monthIndex: monthMeta.monthIndex,
-            year: monthMeta.year,
-            affiliate: String(pick(r, ['Affiliate', 'affiliate'], '—')).trim(),
-            registrations: cleanNumber(
-              pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])
-            ),
-            ftd: cleanNumber(pick(r, ['FTD', 'ftd'])),
-            qftd: cleanNumber(pick(r, ['QFTD', 'qftd'])),
-            pl: cleanNumber(pick(r, ['PL', 'pl', 'Profit/Loss', 'profit_loss', 'profitloss'])),
-            deposits: cleanNumber(pick(r, ['Deposits', 'deposits'])),
-            netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
-            withdrawals: cleanNumber(pick(r, ['Withdrawals', 'withdrawals'])),
-            country,
-            countryCode,
-          }
-        })
-        setMediaRows(parsed)
-        // Calcola lo stato dei dati
-        const status = checkDataStatus(parsed, 'monthLabel', 'Media Report')
-        setDataStatus(status)
+        const tradersRaw = await fetchTextCached(
+          withReportsVersion('/traders_ranking_rewards_table.json')
+        )
+        const tradersJson = JSON.parse(tradersRaw)
+        const rows = Array.isArray(tradersJson?.rows) ? tradersJson.rows : []
 
-        // Payments Report (commissions)
-        try {
-          const paymentsRowsBase = await fetchCsvRowsCached(
-            withReportsVersion('/Payments Report.csv')
-          )
-          const paymentsParsed = (paymentsRowsBase || []).map((r) => {
-            const rawDate = (
-              r.paymentdate ??
-              r.payment_date ??
-              r.PaymentDate ??
-              r['Payment Date'] ??
-              ''
+        const nextCreo = {}
+        const activeByMonth = new Map()
+        const activeByLtdMonth = new Map()
+        const registrationsByMonth = new Map()
+        const ftdClientsByMonth = new Map()
+        const clientsAgg = new Map()
+
+        for (const row of rows) {
+          const month = parseTradersYearMonth(row.year_month)
+          if (month) {
+            const entry = nextCreo[month.key] || {
+              ...EMPTY_METRIC,
+              ftdAmount: 0,
+              ftdCount: 0,
+              deposits: 0,
+              depositCount: 0,
+              withdrawals: 0,
+              withdrawalCount: 0,
+              netDeposits: 0,
+              label: month.label,
+            }
+
+            const dep = cleanNumber(row.deposit)
+            const wd = cleanNumber(row.wd)
+            const ftdAmount = cleanNumber(row.ftd)
+            const netRaw = row.net
+            const net = String(netRaw ?? '').trim() === '' ? dep - wd : cleanNumber(netRaw)
+            const depCount = cleanNumber(
+              row.deposit_count ?? row.deposits_count ?? row.num_deposits
             )
-              .toString()
-              .trim()
-            const parts = rawDate.split('/')
-            const year = parts.length >= 3 ? Number(parts[2]) : NaN
-            return {
-              paymentdate: rawDate,
-              year: Number.isFinite(year) ? year : '—',
-              affiliate: (r.affiliate ?? r.Affiliate ?? '').toString().trim(),
-              payment_amount: cleanNumber(
-                r.payment_amount ?? r.paymentAmount ?? r['Payment Amount'] ?? r.amount ?? r.Amount
-              ),
+            const wdCount = cleanNumber(row.withdrawal_count ?? row.withdrawals_count)
+
+            entry.ftdAmount += ftdAmount
+            entry.deposits += dep
+            entry.withdrawals += wd
+            entry.netDeposits += net
+            entry.depositCount += depCount > 0 ? depCount : dep > 0 ? 1 : 0
+            entry.withdrawalCount += wdCount > 0 ? wdCount : wd > 0 ? 1 : 0
+
+            nextCreo[month.key] = entry
+          }
+
+          const lttMonth = parseDateToMonthKey(row.ltt_date)
+          const ltdMonth = parseDateToMonthKey(row.ltd_date)
+          const registrationMonth = parseDateToMonthKey(row.client_timestamp)
+          const clientId = String(row.client_id || '').trim()
+          const rowFtdAmount = cleanNumber(row.ftd)
+          if (lttMonth && clientId) {
+            if (!activeByMonth.has(lttMonth)) activeByMonth.set(lttMonth, new Set())
+            activeByMonth.get(lttMonth).add(clientId)
+          }
+          if (ltdMonth && clientId) {
+            if (!activeByLtdMonth.has(ltdMonth)) activeByLtdMonth.set(ltdMonth, new Set())
+            activeByLtdMonth.get(ltdMonth).add(clientId)
+          }
+          if (registrationMonth && clientId) {
+            if (!registrationsByMonth.has(registrationMonth))
+              registrationsByMonth.set(registrationMonth, new Set())
+            registrationsByMonth.get(registrationMonth).add(clientId)
+          }
+          if (month && clientId && rowFtdAmount > 0) {
+            if (!ftdClientsByMonth.has(month.key)) ftdClientsByMonth.set(month.key, new Set())
+            ftdClientsByMonth.get(month.key).add(clientId)
+          }
+
+          if (clientId) {
+            const regDate = parseDateValue(row.client_timestamp)
+            const lttDate = parseDateValue(row.ltt_date)
+            const ltdDate = parseDateValue(row.ltd_date)
+            const existing = clientsAgg.get(clientId) || {
+              registrationDate: null,
+              lastLttDate: null,
+              lastLtdDate: null,
             }
-          })
-          setPaymentsRows(paymentsParsed)
-        } catch (e) {
-          console.warn('Failed to load payments report', e)
-          setPaymentsRows([])
+            if (regDate && (!existing.registrationDate || regDate < existing.registrationDate)) {
+              existing.registrationDate = regDate
+            }
+            if (lttDate && (!existing.lastLttDate || lttDate > existing.lastLttDate)) {
+              existing.lastLttDate = lttDate
+            }
+            if (ltdDate && (!existing.lastLtdDate || ltdDate > existing.lastLtdDate)) {
+              existing.lastLtdDate = ltdDate
+            }
+            clientsAgg.set(clientId, existing)
+          }
         }
+
+        for (const [key, clientsSet] of activeByMonth.entries()) {
+          if (!nextCreo[key]) {
+            const y = Number(key.slice(0, 4))
+            const m = Number(key.slice(5, 7))
+            nextCreo[key] = {
+              ...EMPTY_METRIC,
+              ftdAmount: 0,
+              ftdCount: 0,
+              deposits: 0,
+              depositCount: 0,
+              withdrawals: 0,
+              withdrawalCount: 0,
+              netDeposits: 0,
+              label: `${monthNames[m - 1]} ${y}`,
+            }
+          }
+          nextCreo[key].activeUsers = clientsSet.size
+        }
+
+        for (const [key, clientsSet] of activeByLtdMonth.entries()) {
+          if (!nextCreo[key]) {
+            const y = Number(key.slice(0, 4))
+            const m = Number(key.slice(5, 7))
+            nextCreo[key] = {
+              ...EMPTY_METRIC,
+              ftdAmount: 0,
+              ftdCount: 0,
+              deposits: 0,
+              depositCount: 0,
+              withdrawals: 0,
+              withdrawalCount: 0,
+              netDeposits: 0,
+              label: `${monthNames[m - 1]} ${y}`,
+            }
+          }
+          nextCreo[key].activeUsersLtd = clientsSet.size
+        }
+
+        for (const [key, clientsSet] of registrationsByMonth.entries()) {
+          if (!nextCreo[key]) {
+            const y = Number(key.slice(0, 4))
+            const m = Number(key.slice(5, 7))
+            nextCreo[key] = {
+              ...EMPTY_METRIC,
+              ftdAmount: 0,
+              ftdCount: 0,
+              deposits: 0,
+              depositCount: 0,
+              withdrawals: 0,
+              withdrawalCount: 0,
+              netDeposits: 0,
+              label: `${monthNames[m - 1]} ${y}`,
+            }
+          }
+          nextCreo[key].registrations = clientsSet.size
+        }
+
+        for (const [key, clientsSet] of ftdClientsByMonth.entries()) {
+          if (!nextCreo[key]) {
+            const y = Number(key.slice(0, 4))
+            const m = Number(key.slice(5, 7))
+            nextCreo[key] = {
+              ...EMPTY_METRIC,
+              ftdAmount: 0,
+              ftdCount: 0,
+              deposits: 0,
+              depositCount: 0,
+              withdrawals: 0,
+              withdrawalCount: 0,
+              netDeposits: 0,
+              label: `${monthNames[m - 1]} ${y}`,
+            }
+          }
+          nextCreo[key].ftdCount = clientsSet.size
+        }
+
+        const MS_PER_DAY = 24 * 60 * 60 * 1000
+        const now = new Date()
+        const ensureMonthBucket = (monthKey) => {
+          if (nextCreo[monthKey]) return
+          const y = Number(monthKey.slice(0, 4))
+          const m = Number(monthKey.slice(5, 7))
+          nextCreo[monthKey] = {
+            ...EMPTY_METRIC,
+            ftdAmount: 0,
+            ftdCount: 0,
+            deposits: 0,
+            depositCount: 0,
+            withdrawals: 0,
+            withdrawalCount: 0,
+            netDeposits: 0,
+            label: `${monthNames[m - 1]} ${y}`,
+          }
+        }
+        for (const [, agg] of clientsAgg.entries()) {
+          const regDate = agg.registrationDate
+          if (!regDate) continue
+          // Ultima attività = max(LTT, LTD). Se assenti, fallback alla registrazione.
+          let lastActivity = agg.lastLttDate || null
+          if (agg.lastLtdDate && (!lastActivity || agg.lastLtdDate > lastActivity)) {
+            lastActivity = agg.lastLtdDate
+          }
+          if (!lastActivity) lastActivity = regDate
+
+          const inactivityDays = Math.floor((now.getTime() - lastActivity.getTime()) / MS_PER_DAY)
+
+          if (inactivityDays >= 60) {
+            const churn60Date = addDaysUTC(lastActivity, 60)
+            const churn60Month = churn60Date
+              ? `${churn60Date.getUTCFullYear()}-${String(churn60Date.getUTCMonth() + 1).padStart(2, '0')}`
+              : null
+            if (churn60Month) {
+              ensureMonthBucket(churn60Month)
+              nextCreo[churn60Month].churn60 = Number(nextCreo[churn60Month].churn60 || 0) + 1
+            }
+          }
+        }
+
+        setMediaMonthly(nextMedia)
+        setCreoMonthly(nextCreo)
       } catch (err) {
-        console.error('Failed to load media report', err)
+        console.error('Failed to load overview executive data', err)
       } finally {
         setLoading(false)
       }
     }
-    const onReportsUpdated = () => {
-      loadAllReports()
-    }
+
+    const onReportsUpdated = () => loadDashboardData()
     const onStorage = (e) => {
       if (e && e.key === 'bw_reports_version') onReportsUpdated()
     }
 
-    loadAllReports()
+    loadDashboardData()
     window.addEventListener('bw-reports-updated', onReportsUpdated)
     window.addEventListener('storage', onStorage)
 
@@ -290,228 +659,240 @@ export default function ProfitAnalysisPage() {
     }
   }, [])
 
-  useEffect(() => {
-    track('page_view', { page: 'ProfitAnalysis', access: 'console' })
-  }, [])
+  const dashboard = useMemo(() => {
+    const allMonthKeys = Array.from(
+      new Set([...Object.keys(mediaMonthly), ...Object.keys(creoMonthly)])
+    ).sort((a, b) => monthToIndex(a) - monthToIndex(b))
 
-  const yearOptions = useMemo(() => {
-    const set = new Set(mediaRows.map((r) => r.year).filter((y) => y && y !== '—'))
-    return ['all', ...Array.from(set).sort()]
-  }, [mediaRows])
+    const keysInScope = getPeriodRange(allMonthKeys, timeRange)
+    // Exclude the current (partial) month from charts and comparisons; keep it in period totals
+    const completedKeysInScope = keysInScope.filter((k) => k !== NOW_MONTH_KEY)
 
-  const filteredRows = useMemo(
-    () =>
-      mediaRows.filter((r) => (selectedYear === 'all' ? true : r.year === Number(selectedYear))),
-    [mediaRows, selectedYear]
-  )
+    const hasFromCreo = {}
+    const hasFromMedia = {}
+    for (const metric of KPI_CONFIG.map((k) => k.key)) {
+      hasFromCreo[metric] = sourceHasMetric(creoMonthly, metric)
+      hasFromMedia[metric] = sourceHasMetric(mediaMonthly, metric)
+    }
 
-  const filteredPaymentsRows = useMemo(
-    () =>
-      paymentsRows.filter((r) => (selectedYear === 'all' ? true : r.year === Number(selectedYear))),
-    [paymentsRows, selectedYear]
-  )
+    const rows = KPI_CONFIG.filter(
+      (cfg) => cfg.key !== 'churn60' && (selectedKpi === 'all' || cfg.key === selectedKpi)
+    ).map((cfg) => {
+      const labels = completedKeysInScope.map(
+        (k) => mediaMonthly[k]?.label || creoMonthly[k]?.label || k
+      )
 
-  const commissionsByAffiliate = useMemo(() => {
-    const normalize = (s) =>
-      String(s || '')
-        .trim()
-        .toLowerCase()
-    const map = new Map()
-    filteredPaymentsRows.forEach((r) => {
-      const key = normalize(r.affiliate)
-      if (!key) return
-      map.set(key, (map.get(key) || 0) + (r.payment_amount || 0))
+      const creoSeries = completedKeysInScope.map((k) => Number(creoMonthly[k]?.[cfg.key] || 0))
+      const creoLtdSeries =
+        cfg.key === 'activeUsers'
+          ? completedKeysInScope.map((k) => Number(creoMonthly[k]?.activeUsersLtd || 0))
+          : []
+      const mediaSeries = completedKeysInScope.map((k) => Number(mediaMonthly[k]?.[cfg.key] || 0))
+
+      const showCreo = sourceMode === 'both' ? hasFromCreo[cfg.key] : sourceMode === 'creolabs'
+      const showMedia = sourceMode === 'both' ? hasFromMedia[cfg.key] : sourceMode === 'cellxpert'
+
+      const comparisonsCellxpert = buildComparisons({
+        keysInScope: completedKeysInScope,
+        allKeys: allMonthKeys,
+        monthMap: mediaMonthly,
+        metric: cfg.key,
+      })
+      const comparisonsCreolabs = buildComparisons({
+        keysInScope: completedKeysInScope,
+        allKeys: allMonthKeys,
+        monthMap: creoMonthly,
+        metric: cfg.key,
+      })
+      const comparisonsCreolabsLtd =
+        cfg.key === 'activeUsers'
+          ? buildComparisons({
+              keysInScope: completedKeysInScope,
+              allKeys: allMonthKeys,
+              monthMap: creoMonthly,
+              metric: 'activeUsersLtd',
+            })
+          : null
+
+      const sources = []
+      if (showCreo && hasFromCreo[cfg.key]) sources.push('CreoLabs')
+      if (showMedia && hasFromMedia[cfg.key]) sources.push('Cellxpert')
+      if (!sources.length) {
+        if (hasFromCreo[cfg.key]) sources.push('CreoLabs')
+        if (hasFromMedia[cfg.key]) sources.push('Cellxpert')
+      }
+
+      return {
+        ...cfg,
+        labels,
+        creoSeries,
+        creoLtdSeries,
+        mediaSeries,
+        tooltipData: completedKeysInScope.map((k, idx) => ({
+          key: k,
+          label: mediaMonthly[k]?.label || creoMonthly[k]?.label || k,
+          creolabs: creoSeries[idx] || 0,
+          creolabsLtd: creoLtdSeries[idx] || 0,
+          cellxpert: mediaSeries[idx] || 0,
+        })),
+        showCreo,
+        showMedia,
+        comparisonsCellxpert,
+        comparisonsCreolabs,
+        comparisonsCreolabsLtd,
+        sourceBadge: sources.join(' + ') || 'n/a',
+      }
     })
-    return map
-  }, [filteredPaymentsRows])
 
-  const kpis = useMemo(() => {
-    const sum = (field) => filteredRows.reduce((acc, r) => acc + (r[field] || 0), 0)
-    const deposits = sum('deposits')
-    const withdrawals = sum('withdrawals')
-    const netDeposits = sum('netDeposits')
-    const profit = sum('pl')
-    const ftd = sum('ftd')
-    const qftd = sum('qftd')
-    const registrations = sum('registrations')
-    const losingRatio = netDeposits ? (profit / netDeposits) * 100 : 0
-    const commissions = filteredPaymentsRows.reduce((acc, r) => acc + (r.payment_amount || 0), 0)
+    const topCards = KPI_CONFIG.map((cfg) => {
+      const cellxTotal = keysInScope.reduce(
+        (acc, key) => acc + Number(mediaMonthly[key]?.[cfg.key] || 0),
+        0
+      )
+      const creoTotal = keysInScope.reduce(
+        (acc, key) => acc + Number(creoMonthly[key]?.[cfg.key] || 0),
+        0
+      )
+      return { ...cfg, cellxTotal, creoTotal }
+    })
+
+    const ftdQftd = {
+      labels: completedKeysInScope.map((k) => mediaMonthly[k]?.label || k),
+      ftd: completedKeysInScope.map((k) => Number(mediaMonthly[k]?.ftdCount || 0)),
+      qftd: completedKeysInScope.map((k) => Number(mediaMonthly[k]?.qftd || 0)),
+      comparisonsFtd: buildComparisons({
+        keysInScope: completedKeysInScope,
+        allKeys: allMonthKeys,
+        monthMap: mediaMonthly,
+        metric: 'ftdCount',
+      }),
+      comparisonsQftd: buildComparisons({
+        keysInScope: completedKeysInScope,
+        allKeys: allMonthKeys,
+        monthMap: mediaMonthly,
+        metric: 'qftd',
+      }),
+      hasData: completedKeysInScope.some(
+        (k) => Number(mediaMonthly[k]?.ftdCount || 0) > 0 || Number(mediaMonthly[k]?.qftd || 0) > 0
+      ),
+    }
+
+    const churnTrend = {
+      labels: completedKeysInScope.map((k) => creoMonthly[k]?.label || k),
+      churn60: completedKeysInScope.map((k) => Number(creoMonthly[k]?.churn60 || 0)),
+      hasData: completedKeysInScope.some((k) => Number(creoMonthly[k]?.churn60 || 0) > 0),
+    }
+
+    const comparisonsChurn60 = buildComparisons({
+      keysInScope: completedKeysInScope,
+      allKeys: allMonthKeys,
+      monthMap: creoMonthly,
+      metric: 'churn60',
+    })
+
     return {
-      deposits,
-      withdrawals,
-      netDeposits,
-      profit,
-      ftd,
-      qftd,
-      registrations,
-      losingRatio,
-      commissions,
+      allMonthKeys,
+      keysInScope,
+      rows,
+      topCards,
+      hasFromCreo,
+      hasFromMedia,
+      ftdQftd,
+      churnTrend,
+      comparisonsChurn60,
     }
-  }, [filteredRows, filteredPaymentsRows])
-
-  const affiliatesData = useMemo(() => {
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      const key = r.affiliate || '—'
-      if (!map.has(key)) map.set(key, { label: key, profit: 0, netDeposits: 0 })
-      const acc = map.get(key)
-      acc.profit += r.pl || 0
-      acc.netDeposits += r.netDeposits || 0
-    })
-    return Array.from(map.values())
-      .sort((a, b) => (b.profit || 0) - (a.profit || 0))
-      .slice(0, 10)
-  }, [filteredRows])
-
-  const countryData = useMemo(() => {
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      const code = iso3FromName(r.country || r.countryCode)
-      if (!map.has(code))
-        map.set(code, { code, label: r.country || code, value: 0, netDeposits: 0 })
-      const acc = map.get(code)
-      acc.value += r.pl || 0
-      acc.netDeposits += r.netDeposits || 0
-    })
-    return Array.from(map.values())
-  }, [filteredRows])
-
-  const depositsWithdrawalsByMonth = useMemo(() => {
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      if (!map.has(r.monthIndex))
-        map.set(r.monthIndex, { label: r.monthLabel, deposits: 0, withdrawals: 0, pl: 0 })
-      const acc = map.get(r.monthIndex)
-      acc.deposits += r.deposits || 0
-      acc.withdrawals += r.withdrawals || 0
-      acc.pl += r.pl || 0
-    })
-    return Array.from(map.entries())
-      .sort((a, b) => a[0] - b[0])
-      .map(([, v]) => v)
-  }, [filteredRows])
-
-  const registrationsByAffiliate = useMemo(() => {
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      const key = r.affiliate || '—'
-      if (!map.has(key)) map.set(key, { label: key, registrations: 0 })
-      map.get(key).registrations += r.registrations || 0
-    })
-    const values = Array.from(map.values())
-    const best = [...values]
-      .sort((a, b) => (b.registrations || 0) - (a.registrations || 0))
-      .slice(0, 10)
-    const worst = [...values]
-      .sort((a, b) => (a.registrations || 0) - (b.registrations || 0))
-      .slice(0, 10)
-    return { best, worst }
-  }, [filteredRows])
-
-  const worstAffiliatesByRoi = useMemo(() => {
-    const normalize = (s) =>
-      String(s || '')
-        .trim()
-        .toLowerCase()
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      const key = r.affiliate || '—'
-      if (!map.has(key)) map.set(key, { label: key, profit: 0, netDeposits: 0 })
-      const acc = map.get(key)
-      acc.profit += r.pl || 0
-      acc.netDeposits += r.netDeposits || 0
-    })
-
-    const profitByAffiliateKey = new Map()
-    Array.from(map.values()).forEach((v) => {
-      profitByAffiliateKey.set(normalize(v.label), v.profit || 0)
-    })
-
-    const values = Array.from(map.values())
-      .map((v) => {
-        const commissions = commissionsByAffiliate.get(normalize(v.label)) || 0
-        const roi = commissions ? ((v.profit - commissions) / commissions) * 100 : 0
-        return { label: v.label, roi, commissions, pl: v.profit || 0 }
-      })
-      .filter((v) => {
-        const commissions = Number(v.commissions || 0)
-        // ROI is not meaningful if commissions are missing
-        if (commissions <= 0) return false
-        const pl = profitByAffiliateKey.get(normalize(v.label)) || 0
-        if (Number(pl || 0) === 0) return false
-        return Number(pl || 0) >= Number(roiMinPl || 0)
-      })
-
-    return values.sort((a, b) => (a.roi || 0) - (b.roi || 0)).slice(0, 10)
-  }, [filteredRows, commissionsByAffiliate, roiMinPl])
-
-  const scatterData = useMemo(() => {
-    if (scatterEntity === 'country') {
-      return countryData.map((c) => ({
-        x: c.netDeposits ? (c.value / Math.max(c.netDeposits, 1)) * 100 : 0,
-        y: c.netDeposits,
-        label: c.label,
-      }))
-    }
-    const map = new Map()
-    filteredRows.forEach((r) => {
-      if (!map.has(r.affiliate)) map.set(r.affiliate, { pl: 0, netDeposits: 0 })
-      const acc = map.get(r.affiliate)
-      acc.pl += r.pl || 0
-      acc.netDeposits += r.netDeposits || 0
-    })
-    return Array.from(map.entries()).map(([affiliate, agg]) => ({
-      x: agg.netDeposits ? (agg.pl / Math.max(agg.netDeposits, 1)) * 100 : 0,
-      y: agg.netDeposits,
-      label: affiliate,
-    }))
-  }, [filteredRows, scatterEntity, countryData])
+  }, [mediaMonthly, creoMonthly, sourceMode, timeRange, selectedKpi])
 
   if (loading) {
     return <FullPageLoader progress={35} subtitle={t('profitAnalysis.loader.mediaReport')} />
   }
 
+  const showFtdQftd =
+    (selectedKpi === 'all' || selectedKpi === 'ftdCount') && dashboard.ftdQftd.hasData
+  const showChurnTrend =
+    (selectedKpi === 'all' || selectedKpi === 'churn60') && dashboard.churnTrend.hasData
+
   return (
     <div
-      className="w-full space-y-4"
+      className="w-full"
       style={{
         background: 'radial-gradient(120% 120% at 10% 20%, #0b1c24 0%, #0a0f1e 45%, #0a090f 100%)',
         padding: 16,
         borderRadius: 16,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
       }}
     >
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: 12,
           flexWrap: 'wrap',
         }}
       >
         <div>
-          <h2 style={{ margin: 0 }}>Profit analysis</h2>
-          <p style={{ margin: 0, color: '#9fb3c8', fontSize: 12 }}>
-            Media Report + Payments Report (commissions) · KPIs, affiliates, map, deposits
+          <h2 style={{ margin: 0 }}>Overview Compass</h2>
+          <p style={{ margin: '4px 0 0', color: '#9fb3c8', fontSize: 12 }}>
+            Executive performance view across CreoLabs and Cellxpert
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <label style={{ color: '#94a3b8', fontSize: 12 }}>Year</label>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
             style={{
               background: '#0f172a',
               color: 'var(--text)',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 8,
               padding: '8px 10px',
-              minWidth: 120,
+              fontSize: 12,
             }}
           >
-            {yearOptions.map((y) => (
-              <option key={y} value={y}>
-                {y === 'all' ? 'All' : y}
+            <option value="all">All time</option>
+            <option value="last24">Last 24 months</option>
+            <option value="last12">Last 12 months</option>
+            <option value="ytd">YTD</option>
+            <option value="currentYear">Current year</option>
+          </select>
+
+          <select
+            value={sourceMode}
+            onChange={(e) => setSourceMode(e.target.value)}
+            style={{
+              background: '#0f172a',
+              color: 'var(--text)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              padding: '8px 10px',
+              fontSize: 12,
+            }}
+          >
+            <option value="both">Both sources</option>
+            <option value="creolabs">CreoLabs</option>
+            <option value="cellxpert">Cellxpert</option>
+          </select>
+
+          <select
+            value={selectedKpi}
+            onChange={(e) => setSelectedKpi(e.target.value)}
+            style={{
+              background: '#0f172a',
+              color: 'var(--text)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 8,
+              padding: '8px 10px',
+              fontSize: 12,
+            }}
+          >
+            <option value="all">All KPIs</option>
+            {KPI_CONFIG.map((k) => (
+              <option key={k.key} value={k.key}>
+                {k.label}
               </option>
             ))}
           </select>
@@ -520,250 +901,829 @@ export default function ProfitAnalysisPage() {
 
       <div
         style={{
-          display: 'flex',
-          flexWrap: 'nowrap',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(165px, 1fr))',
           gap: 8,
-          overflowX: 'auto',
-          paddingBottom: 2,
         }}
       >
-        <KpiCard
-          size="sm"
-          label="Registrations"
-          value={formatNumberShort(kpis.registrations)}
-          tone="#a855f7"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="Deposits"
-          value={formatEuro(kpis.deposits)}
-          tone="#38bdf8"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="Withdrawals"
-          value={formatEuro(kpis.withdrawals)}
-          tone="#fb7185"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="Net Deposits"
-          value={formatEuro(kpis.netDeposits)}
-          tone="#22d3ee"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="PL"
-          value={formatEuro(kpis.profit)}
-          tone="#34d399"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="FTD"
-          value={formatNumberShort(kpis.ftd)}
-          tone="#fbbf24"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="QFTD"
-          value={formatNumberShort(kpis.qftd)}
-          tone="#f97316"
-          style={{ minWidth: 140, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="PL / Net Deposits"
-          value={formatPercent(kpis.losingRatio)}
-          tone={kpis.losingRatio >= 0 ? '#34d399' : '#f87171'}
-          style={{ minWidth: 160, flex: '0 0 auto' }}
-        />
-        <KpiCard
-          size="sm"
-          label="Commissions"
-          value={formatEuro(kpis.commissions)}
-          tone="#60a5fa"
-          style={{ minWidth: 160, flex: '0 0 auto' }}
-        />
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 12,
-        }}
-      >
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>PL vs Net Deposits by affiliate</h3>
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>Top 10 by PL</span>
-          </div>
-          <RegionBarChart data={affiliatesData} />
-        </div>
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Profit by country</h3>
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>Hover to inspect</span>
-          </div>
-          <div className="h-72 md:h-80 lg:h-96">
-            <CountryMapChart data={countryData} />
-          </div>
-        </div>
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Deposits vs Withdrawals</h3>
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>By month</span>
-          </div>
-          <SegmentBarChart data={depositsWithdrawalsByMonth} />
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: 12,
-        }}
-      >
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Best affiliates by registrations</h3>
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>Top 10</span>
-          </div>
-          <RegistrationBarChart data={registrationsByAffiliate.best} title="Registrations" />
-        </div>
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Worst affiliates by ROI</h3>
-            <span style={{ fontSize: 11, color: '#94a3b8' }}>Bottom 10</span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              gap: 10,
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              marginBottom: 8,
-            }}
-          >
-            <div style={{ fontSize: 11, color: '#94a3b8' }}>Min PL</div>
-            {[2000, 20000, 100000, 500000].map((v) => {
-              const label = v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)
-              const checked = Number(roiMinPl) === v
-              return (
-                <label
-                  key={v}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    fontSize: 11,
-                    color: '#cbd5e1',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => {
-                      if (e.target.checked) setRoiMinPl(v)
-                      else setRoiMinPl(2000)
-                    }}
-                    style={{ width: 12, height: 12, accentColor: '#ef4444' }}
-                  />
-                  {label}
-                </label>
-              )
-            })}
-          </div>
-          <MetricBarChart
-            data={worstAffiliatesByRoi}
-            title="ROI"
-            valueKey="roi"
-            valueFormat="percent"
-            barBackgroundColor="rgba(248, 113, 113, 0.6)"
-            barBorderColor="rgba(248, 113, 113, 1)"
-            getTooltipLines={(d) => [
-              `Commissions: €${Math.round(d.commissions || 0).toLocaleString('en-GB')}`,
-              `PL: €${Math.round(d.pl || 0).toLocaleString('en-GB')}`,
-            ]}
+        {dashboard.topCards.map((card) => (
+          <KpiCard
+            key={card.key}
+            size="sm"
+            label={card.label}
+            value={formatMetricValue(card.cellxTotal, card.kind)}
+            helper={`CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
+            fullValue={`Cellxpert: ${formatMetricValue(card.cellxTotal, card.kind)} | CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
+            tone={card.tone}
+            style={{ minWidth: 140 }}
           />
-        </div>
-        <div className="card card-global">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 8,
-            }}
-          >
-            <h3 style={{ margin: 0 }}>Profit ratio vs sales</h3>
-            <select
-              value={scatterEntity}
-              onChange={(e) => setScatterEntity(e.target.value)}
+        ))}
+      </div>
+
+      {showFtdQftd ? (
+        <section
+          className="card card-global"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.8fr) minmax(260px, 1fr)',
+            gap: 14,
+            alignItems: 'stretch',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div
               style={{
-                background: '#0f172a',
-                color: 'var(--text)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8,
-                padding: '6px 8px',
-                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+                gap: 8,
+                flexWrap: 'wrap',
               }}
             >
-              <option value="affiliate">By affiliate</option>
-              <option value="country">By country</option>
-            </select>
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15 }}>FTD vs QFTD Trend</h3>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>
+                  Monthly comparison
+                </p>
+              </div>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>Cellxpert</span>
+            </div>
+
+            <div style={{ height: 220 }}>
+              <PnLTrendChart
+                labels={dashboard.ftdQftd.labels}
+                formatValue={(v) => formatMetricValue(v, 'count')}
+                showLegend
+                tooltipFormatter={({ value, datasetLabel }) =>
+                  `${datasetLabel}: ${formatMetricValue(value, 'count')}`
+                }
+                series={[
+                  {
+                    label: 'FTD',
+                    data: dashboard.ftdQftd.ftd,
+                    type: 'line',
+                    color: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.18)',
+                  },
+                  {
+                    label: 'QFTD',
+                    data: dashboard.ftdQftd.qftd,
+                    type: 'line',
+                    color: '#22c55e',
+                    backgroundColor: 'rgba(34,197,94,0.18)',
+                  },
+                ]}
+              />
+            </div>
           </div>
-          <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>
-            Destra = ROI migliore, alto = Net Deposits più alti. I punti verdi rendono di più; rossi
-            = PL negativo.
+
+          <div
+            style={{
+              borderLeft: '1px solid rgba(148,163,184,0.2)',
+              paddingLeft: 14,
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              alignContent: 'center',
+              gap: 8,
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      color: '#94a3b8',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    Metric
+                  </th>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      color: '#f59e0b',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    FTD
+                  </th>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      color: '#22c55e',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    QFTD
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    Value
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.ftdQftd.comparisonsFtd.mom.currentLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}
+                    title={`Latest: ${dashboard.ftdQftd.comparisonsFtd.latestMonth || 'n/a'}`}
+                  >
+                    {formatMetricValue(dashboard.ftdQftd.comparisonsFtd.latestValue, 'count')}
+                  </td>
+                  <td
+                    style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}
+                    title={`Latest: ${dashboard.ftdQftd.comparisonsQftd.latestMonth || 'n/a'}`}
+                  >
+                    {formatMetricValue(dashboard.ftdQftd.comparisonsQftd.latestValue, 'count')}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    MoM %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.ftdQftd.comparisonsFtd.mom.currentLabel} vs{' '}
+                      {dashboard.ftdQftd.comparisonsFtd.mom.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsFtd.mom.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsFtd.mom.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.mom.current, 'count')} | ${dashboard.ftdQftd.comparisonsFtd.mom.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.mom.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsFtd.mom.pct)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsQftd.mom.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsQftd.mom.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.mom.current, 'count')} | ${dashboard.ftdQftd.comparisonsQftd.mom.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.mom.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsQftd.mom.pct)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YoY %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.ftdQftd.comparisonsFtd.yoy.currentLabel} vs{' '}
+                      {dashboard.ftdQftd.comparisonsFtd.yoy.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsFtd.yoy.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsFtd.yoy.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.yoy.current, 'count')} | ${dashboard.ftdQftd.comparisonsFtd.yoy.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.yoy.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsFtd.yoy.pct)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsQftd.yoy.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsQftd.yoy.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.yoy.current, 'count')} | ${dashboard.ftdQftd.comparisonsQftd.yoy.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.yoy.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsQftd.yoy.pct)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YTD %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.ftdQftd.comparisonsFtd.ytd.currentLabel} vs{' '}
+                      {dashboard.ftdQftd.comparisonsFtd.ytd.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsFtd.ytd.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsFtd.ytd.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.ytd.current, 'count')} | ${dashboard.ftdQftd.comparisonsFtd.ytd.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsFtd.ytd.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsFtd.ytd.pct)}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.ftdQftd.comparisonsQftd.ytd.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.ftdQftd.comparisonsQftd.ytd.currentLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.ytd.current, 'count')} | ${dashboard.ftdQftd.comparisonsQftd.ytd.previousLabel}: ${formatMetricValue(dashboard.ftdQftd.comparisonsQftd.ytd.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.ftdQftd.comparisonsQftd.ytd.pct)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <ProfitRatioScatter data={scatterData} />
-        </div>
-      </div>
+        </section>
+      ) : null}
+
+      {showChurnTrend ? (
+        <section
+          className="card card-global"
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.8fr) minmax(260px, 1fr)',
+            gap: 14,
+            alignItems: 'stretch',
+          }}
+        >
+          <div style={{ minWidth: 0, padding: 14 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+                gap: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div>
+                <h3 style={{ margin: 0, fontSize: 15 }}>Churners (60d Inactivity Matured)</h3>
+                <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>
+                  Counted in the month when the client reaches 60 days of inactivity. Max(LTT, LTD)
+                  as last activity.
+                </p>
+              </div>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>CreoLabs</span>
+            </div>
+            <div style={{ height: 230 }}>
+              <PnLTrendChart
+                labels={dashboard.churnTrend.labels}
+                formatValue={(v) => formatMetricValue(v, 'count')}
+                showLegend
+                tooltipFormatter={({ value, datasetLabel }) =>
+                  `${datasetLabel}: ${formatMetricValue(value, 'count')}`
+                }
+                series={[
+                  {
+                    label: 'Churners (60d)',
+                    data: dashboard.churnTrend.churn60,
+                    type: 'line',
+                    color: '#f59e0b',
+                    backgroundColor: 'rgba(245,158,11,0.14)',
+                  },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderLeft: '1px solid rgba(148,163,184,0.2)',
+              padding: '14px 0 14px 14px',
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              alignContent: 'center',
+              gap: 8,
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      color: '#94a3b8',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    Metric
+                  </th>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      color: '#f59e0b',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    CreoLabs
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    Value
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.comparisonsChurn60.mom.currentLabel}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
+                    {formatMetricValue(dashboard.comparisonsChurn60.latestValue, 'count')}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    MoM %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.comparisonsChurn60.mom.currentLabel} vs{' '}
+                      {dashboard.comparisonsChurn60.mom.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.comparisonsChurn60.mom.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.comparisonsChurn60.mom.currentLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.mom.current, 'count')} | ${dashboard.comparisonsChurn60.mom.previousLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.mom.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.comparisonsChurn60.mom.pct)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YoY %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.comparisonsChurn60.yoy.currentLabel} vs{' '}
+                      {dashboard.comparisonsChurn60.yoy.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.comparisonsChurn60.yoy.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.comparisonsChurn60.yoy.currentLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.yoy.current, 'count')} | ${dashboard.comparisonsChurn60.yoy.previousLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.yoy.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.comparisonsChurn60.yoy.pct)}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YTD %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {dashboard.comparisonsChurn60.ytd.currentLabel} vs{' '}
+                      {dashboard.comparisonsChurn60.ytd.previousLabel}
+                    </div>
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      color: pctTone(dashboard.comparisonsChurn60.ytd.pct),
+                      padding: '4px 0',
+                    }}
+                    title={`${dashboard.comparisonsChurn60.ytd.currentLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.ytd.current, 'count')} | ${dashboard.comparisonsChurn60.ytd.previousLabel}: ${formatMetricValue(dashboard.comparisonsChurn60.ytd.previous, 'count')}`}
+                  >
+                    {formatPct(dashboard.comparisonsChurn60.ytd.pct)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
+      {dashboard.rows.map((row) => (
+        <section
+          key={row.key}
+          className="card card-global"
+          style={{
+            display: 'grid',
+            gridTemplateColumns:
+              row.key === 'churn60' ? '1fr' : 'minmax(0, 1.8fr) minmax(260px, 1fr)',
+            gap: 14,
+            alignItems: 'stretch',
+          }}
+        >
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 8,
+                gap: 8,
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: 15 }}>{row.label}</h3>
+                {row.key === 'activeUsers' ? (
+                  <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>
+                    LTT solid line, LTD dashed line. Both deduplicated by client and grouped by
+                    month.
+                  </p>
+                ) : null}
+              </div>
+              <span style={{ fontSize: 11, color: '#94a3b8' }}>{row.sourceBadge}</span>
+            </div>
+
+            <div style={{ height: 220 }}>
+              <PnLTrendChart
+                labels={row.labels}
+                formatValue={(v) => formatMetricValue(v, row.kind)}
+                showLegend
+                tooltipData={row.tooltipData}
+                tooltipFormatter={({ value, datasetLabel, extra }) => {
+                  if (row.key === 'activeUsers') {
+                    const current = formatMetricValue(value, row.kind)
+                    const ltt = formatMetricValue(extra?.creolabs || 0, row.kind)
+                    const ltd = formatMetricValue(extra?.creolabsLtd || 0, row.kind)
+                    return `${datasetLabel}: ${current} | LTT: ${ltt} | LTD: ${ltd}`
+                  }
+                  const current = formatMetricValue(value, row.kind)
+                  const creo = formatMetricValue(extra?.creolabs || 0, row.kind)
+                  const media = formatMetricValue(extra?.cellxpert || 0, row.kind)
+                  return `${datasetLabel}: ${current} | Cellxpert: ${media} | CreoLabs: ${creo}`
+                }}
+                series={[
+                  ...(row.key === 'activeUsers' && row.showCreo
+                    ? [
+                        {
+                          label: 'CreoLabs LTT',
+                          data: row.creoSeries,
+                          type: 'line',
+                          color: '#22d3ee',
+                          backgroundColor: 'rgba(34,211,238,0.18)',
+                        },
+                        {
+                          label: 'CreoLabs LTD',
+                          data: row.creoLtdSeries,
+                          type: 'line',
+                          color: '#f472b6',
+                          backgroundColor: 'rgba(244,114,182,0.14)',
+                          borderDash: [6, 4],
+                        },
+                      ]
+                    : []),
+                  ...(row.key === 'activeUsers'
+                    ? []
+                    : [
+                        ...(row.showCreo
+                          ? [
+                              {
+                                label: 'CreoLabs',
+                                data: row.creoSeries,
+                                type: 'line',
+                                color: '#22d3ee',
+                                backgroundColor: 'rgba(34,211,238,0.18)',
+                              },
+                            ]
+                          : []),
+                        ...(row.showMedia
+                          ? [
+                              {
+                                label: 'Cellxpert',
+                                data: row.mediaSeries,
+                                type: 'line',
+                                color: '#f59e0b',
+                                backgroundColor: 'rgba(245,158,11,0.18)',
+                              },
+                            ]
+                          : []),
+                        ...(!row.showCreo && !row.showMedia
+                          ? [
+                              {
+                                label: 'Cellxpert',
+                                data: row.mediaSeries,
+                                type: 'line',
+                                color: '#f59e0b',
+                                backgroundColor: 'rgba(245,158,11,0.18)',
+                              },
+                            ]
+                          : []),
+                      ]),
+                ]}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              borderLeft: row.key === 'churn60' ? 'none' : '1px solid rgba(148,163,184,0.2)',
+              paddingLeft: 14,
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              alignContent: 'center',
+              gap: 8,
+            }}
+          >
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+              <thead>
+                <tr>
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      color: '#94a3b8',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    Metric
+                  </th>
+                  <th
+                    style={{
+                      textAlign: 'right',
+                      color:
+                        row.key === 'churn60'
+                          ? '#f59e0b'
+                          : row.key === 'activeUsers'
+                            ? '#22d3ee'
+                            : '#f59e0b',
+                      fontWeight: 600,
+                      paddingBottom: 6,
+                    }}
+                  >
+                    {row.key === 'churn60'
+                      ? 'CreoLabs'
+                      : row.key === 'activeUsers'
+                        ? 'LTT'
+                        : 'Cellxpert'}
+                  </th>
+                  {row.key !== 'churn60' && (
+                    <th
+                      style={{
+                        textAlign: 'right',
+                        color: row.key === 'activeUsers' ? '#f472b6' : '#22d3ee',
+                        fontWeight: 600,
+                        paddingBottom: 6,
+                      }}
+                    >
+                      {row.key === 'activeUsers' ? 'LTD' : 'CreoLabs'}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    Value
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {row.key === 'churn60'
+                        ? row.comparisonsCreolabs.mom.currentLabel
+                        : row.key === 'activeUsers'
+                          ? row.comparisonsCreolabs.mom.currentLabel
+                          : row.comparisonsCellxpert.mom.currentLabel}
+                    </div>
+                  </td>
+                  {row.key === 'churn60' ? (
+                    <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
+                      {formatMetricValue(row.comparisonsCreolabs.latestValue, row.kind)}
+                    </td>
+                  ) : (
+                    <>
+                      <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
+                        {formatMetricValue(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabs.latestValue
+                            : row.comparisonsCellxpert.latestValue,
+                          row.kind
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
+                        {formatMetricValue(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabsLtd?.latestValue || 0
+                            : row.comparisonsCreolabs.latestValue,
+                          row.kind
+                        )}
+                      </td>
+                    </>
+                  )}
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    MoM %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {row.key === 'churn60'
+                        ? `${row.comparisonsCreolabs.mom.currentLabel} vs ${row.comparisonsCreolabs.mom.previousLabel}`
+                        : row.key === 'activeUsers'
+                          ? `${row.comparisonsCreolabs.mom.currentLabel} vs ${row.comparisonsCreolabs.mom.previousLabel}`
+                          : `${row.comparisonsCellxpert.mom.currentLabel} vs ${row.comparisonsCellxpert.mom.previousLabel}`}
+                    </div>
+                  </td>
+                  {row.key === 'churn60' ? (
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        color: pctTone(row.comparisonsCreolabs.mom.pct),
+                        padding: '4px 0',
+                      }}
+                      title={`${row.comparisonsCreolabs.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.current, row.kind)} | ${row.comparisonsCreolabs.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.previous, row.kind)}`}
+                    >
+                      {formatPct(row.comparisonsCreolabs.mom.pct)}
+                    </td>
+                  ) : (
+                    <>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabs.mom.pct
+                              : row.comparisonsCellxpert.mom.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabs.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.current, row.kind)} | ${row.comparisonsCreolabs.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.previous, row.kind)}`
+                            : `${row.comparisonsCellxpert.mom.currentLabel}: ${formatMetricValue(row.comparisonsCellxpert.mom.current, row.kind)} | ${row.comparisonsCellxpert.mom.previousLabel}: ${formatMetricValue(row.comparisonsCellxpert.mom.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabs.mom.pct
+                            : row.comparisonsCellxpert.mom.pct
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabsLtd?.mom.pct
+                              : row.comparisonsCreolabs.mom.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabsLtd?.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.mom.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.mom.previous || 0, row.kind)}`
+                            : `${row.comparisonsCreolabs.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.current, row.kind)} | ${row.comparisonsCreolabs.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabsLtd?.mom.pct
+                            : row.comparisonsCreolabs.mom.pct
+                        )}
+                      </td>
+                    </>
+                  )}
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YoY %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {row.key === 'churn60'
+                        ? `${row.comparisonsCreolabs.yoy.currentLabel} vs ${row.comparisonsCreolabs.yoy.previousLabel}`
+                        : row.key === 'activeUsers'
+                          ? `${row.comparisonsCreolabs.yoy.currentLabel} vs ${row.comparisonsCreolabs.yoy.previousLabel}`
+                          : `${row.comparisonsCellxpert.yoy.currentLabel} vs ${row.comparisonsCellxpert.yoy.previousLabel}`}
+                    </div>
+                  </td>
+                  {row.key === 'churn60' ? (
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        color: pctTone(row.comparisonsCreolabs.yoy.pct),
+                        padding: '4px 0',
+                      }}
+                      title={`${row.comparisonsCreolabs.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.current, row.kind)} | ${row.comparisonsCreolabs.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.previous, row.kind)}`}
+                    >
+                      {formatPct(row.comparisonsCreolabs.yoy.pct)}
+                    </td>
+                  ) : (
+                    <>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabs.yoy.pct
+                              : row.comparisonsCellxpert.yoy.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabs.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.current, row.kind)} | ${row.comparisonsCreolabs.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.previous, row.kind)}`
+                            : `${row.comparisonsCellxpert.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCellxpert.yoy.current, row.kind)} | ${row.comparisonsCellxpert.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCellxpert.yoy.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabs.yoy.pct
+                            : row.comparisonsCellxpert.yoy.pct
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabsLtd?.yoy.pct
+                              : row.comparisonsCreolabs.yoy.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabsLtd?.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.yoy.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.yoy.previous || 0, row.kind)}`
+                            : `${row.comparisonsCreolabs.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.current, row.kind)} | ${row.comparisonsCreolabs.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabsLtd?.yoy.pct
+                            : row.comparisonsCreolabs.yoy.pct
+                        )}
+                      </td>
+                    </>
+                  )}
+                </tr>
+                <tr>
+                  <td style={{ color: '#94a3b8', padding: '4px 0' }}>
+                    YTD %
+                    <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                      {row.key === 'churn60'
+                        ? `${row.comparisonsCreolabs.ytd.currentLabel} vs ${row.comparisonsCreolabs.ytd.previousLabel}`
+                        : row.key === 'activeUsers'
+                          ? `${row.comparisonsCreolabs.ytd.currentLabel} vs ${row.comparisonsCreolabs.ytd.previousLabel}`
+                          : `${row.comparisonsCellxpert.ytd.currentLabel} vs ${row.comparisonsCellxpert.ytd.previousLabel}`}
+                    </div>
+                  </td>
+                  {row.key === 'churn60' ? (
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        color: pctTone(row.comparisonsCreolabs.ytd.pct),
+                        padding: '4px 0',
+                      }}
+                      title={`${row.comparisonsCreolabs.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.current, row.kind)} | ${row.comparisonsCreolabs.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.previous, row.kind)}`}
+                    >
+                      {formatPct(row.comparisonsCreolabs.ytd.pct)}
+                    </td>
+                  ) : (
+                    <>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabs.ytd.pct
+                              : row.comparisonsCellxpert.ytd.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabs.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.current, row.kind)} | ${row.comparisonsCreolabs.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.previous, row.kind)}`
+                            : `${row.comparisonsCellxpert.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCellxpert.ytd.current, row.kind)} | ${row.comparisonsCellxpert.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCellxpert.ytd.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabs.ytd.pct
+                            : row.comparisonsCellxpert.ytd.pct
+                        )}
+                      </td>
+                      <td
+                        style={{
+                          textAlign: 'right',
+                          color: pctTone(
+                            row.key === 'activeUsers'
+                              ? row.comparisonsCreolabsLtd?.ytd.pct
+                              : row.comparisonsCreolabs.ytd.pct
+                          ),
+                          padding: '4px 0',
+                        }}
+                        title={
+                          row.key === 'activeUsers'
+                            ? `${row.comparisonsCreolabsLtd?.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.ytd.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.ytd.previous || 0, row.kind)}`
+                            : `${row.comparisonsCreolabs.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.current, row.kind)} | ${row.comparisonsCreolabs.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.previous, row.kind)}`
+                        }
+                      >
+                        {formatPct(
+                          row.key === 'activeUsers'
+                            ? row.comparisonsCreolabsLtd?.ytd.pct
+                            : row.comparisonsCreolabs.ytd.pct
+                        )}
+                      </td>
+                    </>
+                  )}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))}
     </div>
   )
 }
