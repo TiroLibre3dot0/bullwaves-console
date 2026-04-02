@@ -35,7 +35,7 @@ const NOW_MONTH_KEY = (() => {
 
 const KPI_CONFIG = [
   { key: 'registrations', label: 'Registrations', kind: 'count', tone: '#8b5cf6' },
-  { key: 'activeUsers', label: 'Active Traders', kind: 'count', tone: '#22c55e' },
+  { key: 'activeUsers', label: 'Active Traders (>0 Trades)', kind: 'count', tone: '#22c55e' },
   { key: 'ftdAmount', label: 'FTD Amount', kind: 'money', tone: '#f59e0b' },
   { key: 'ftdCount', label: 'FTD Count', kind: 'count', tone: '#fbbf24' },
   { key: 'deposits', label: 'Deposits', kind: 'money', tone: '#38bdf8' },
@@ -49,7 +49,6 @@ const FILTER_KPI_VALUES = ['all', ...KPI_CONFIG.map((k) => k.key)]
 const EMPTY_METRIC = {
   registrations: null,
   activeUsers: null,
-  activeUsersLtd: null,
   churn60: null,
   ftdAmount: null,
   ftdCount: null,
@@ -432,7 +431,6 @@ export default function ProfitAnalysisPage() {
 
         const nextCreo = {}
         const activeByMonth = new Map()
-        const activeByLtdMonth = new Map()
         const registrationsByMonth = new Map()
         const ftdClientsByMonth = new Map()
         const clientsAgg = new Map()
@@ -472,18 +470,13 @@ export default function ProfitAnalysisPage() {
             nextCreo[month.key] = entry
           }
 
-          const lttMonth = parseDateToMonthKey(row.ltt_date)
-          const ltdMonth = parseDateToMonthKey(row.ltd_date)
           const registrationMonth = parseDateToMonthKey(row.client_timestamp)
           const clientId = String(row.client_id || '').trim()
           const rowFtdAmount = cleanNumber(row.ftd)
-          if (lttMonth && clientId) {
-            if (!activeByMonth.has(lttMonth)) activeByMonth.set(lttMonth, new Set())
-            activeByMonth.get(lttMonth).add(clientId)
-          }
-          if (ltdMonth && clientId) {
-            if (!activeByLtdMonth.has(ltdMonth)) activeByLtdMonth.set(ltdMonth, new Set())
-            activeByLtdMonth.get(ltdMonth).add(clientId)
+          const rowTrades = cleanNumber(row.trades)
+          if (month?.key && clientId && rowTrades > 0) {
+            if (!activeByMonth.has(month.key)) activeByMonth.set(month.key, new Set())
+            activeByMonth.get(month.key).add(clientId)
           }
           if (registrationMonth && clientId) {
             if (!registrationsByMonth.has(registrationMonth))
@@ -534,25 +527,6 @@ export default function ProfitAnalysisPage() {
             }
           }
           nextCreo[key].activeUsers = clientsSet.size
-        }
-
-        for (const [key, clientsSet] of activeByLtdMonth.entries()) {
-          if (!nextCreo[key]) {
-            const y = Number(key.slice(0, 4))
-            const m = Number(key.slice(5, 7))
-            nextCreo[key] = {
-              ...EMPTY_METRIC,
-              ftdAmount: 0,
-              ftdCount: 0,
-              deposits: 0,
-              depositCount: 0,
-              withdrawals: 0,
-              withdrawalCount: 0,
-              netDeposits: 0,
-              label: `${monthNames[m - 1]} ${y}`,
-            }
-          }
-          nextCreo[key].activeUsersLtd = clientsSet.size
         }
 
         for (const [key, clientsSet] of registrationsByMonth.entries()) {
@@ -683,14 +657,16 @@ export default function ProfitAnalysisPage() {
       )
 
       const creoSeries = completedKeysInScope.map((k) => Number(creoMonthly[k]?.[cfg.key] || 0))
-      const creoLtdSeries =
-        cfg.key === 'activeUsers'
-          ? completedKeysInScope.map((k) => Number(creoMonthly[k]?.activeUsersLtd || 0))
-          : []
       const mediaSeries = completedKeysInScope.map((k) => Number(mediaMonthly[k]?.[cfg.key] || 0))
 
-      const showCreo = sourceMode === 'both' ? hasFromCreo[cfg.key] : sourceMode === 'creolabs'
-      const showMedia = sourceMode === 'both' ? hasFromMedia[cfg.key] : sourceMode === 'cellxpert'
+      const showCreo =
+        sourceMode === 'both'
+          ? hasFromCreo[cfg.key]
+          : sourceMode === 'creolabs' && hasFromCreo[cfg.key]
+      const showMedia =
+        sourceMode === 'both'
+          ? hasFromMedia[cfg.key]
+          : sourceMode === 'cellxpert' && hasFromMedia[cfg.key]
 
       const comparisonsCellxpert = buildComparisons({
         keysInScope: completedKeysInScope,
@@ -704,15 +680,6 @@ export default function ProfitAnalysisPage() {
         monthMap: creoMonthly,
         metric: cfg.key,
       })
-      const comparisonsCreolabsLtd =
-        cfg.key === 'activeUsers'
-          ? buildComparisons({
-              keysInScope: completedKeysInScope,
-              allKeys: allMonthKeys,
-              monthMap: creoMonthly,
-              metric: 'activeUsersLtd',
-            })
-          : null
 
       const sources = []
       if (showCreo && hasFromCreo[cfg.key]) sources.push('CreoLabs')
@@ -726,20 +693,18 @@ export default function ProfitAnalysisPage() {
         ...cfg,
         labels,
         creoSeries,
-        creoLtdSeries,
         mediaSeries,
         tooltipData: completedKeysInScope.map((k, idx) => ({
           key: k,
           label: mediaMonthly[k]?.label || creoMonthly[k]?.label || k,
           creolabs: creoSeries[idx] || 0,
-          creolabsLtd: creoLtdSeries[idx] || 0,
           cellxpert: mediaSeries[idx] || 0,
         })),
         showCreo,
         showMedia,
+        allowFallbackSeries: sourceMode === 'both',
         comparisonsCellxpert,
         comparisonsCreolabs,
-        comparisonsCreolabsLtd,
         sourceBadge: sources.join(' + ') || 'n/a',
       }
     })
@@ -912,7 +877,11 @@ export default function ProfitAnalysisPage() {
             size="sm"
             label={card.label}
             value={formatMetricValue(card.cellxTotal, card.kind)}
-            helper={`CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
+            helper={
+              card.key === 'activeUsers'
+                ? 'Unique clients per month with trades > 0'
+                : `CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`
+            }
             fullValue={`Cellxpert: ${formatMetricValue(card.cellxTotal, card.kind)} | CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
             tone={card.tone}
             style={{ minWidth: 140 }}
@@ -1325,8 +1294,7 @@ export default function ProfitAnalysisPage() {
                 <h3 style={{ margin: 0, fontSize: 15 }}>{row.label}</h3>
                 {row.key === 'activeUsers' ? (
                   <p style={{ margin: '2px 0 0', fontSize: 11, color: '#94a3b8' }}>
-                    LTT solid line, LTD dashed line. Both deduplicated by client and grouped by
-                    month.
+                    Unique clients per month with trades strictly greater than zero.
                   </p>
                 ) : null}
               </div>
@@ -1342,9 +1310,7 @@ export default function ProfitAnalysisPage() {
                 tooltipFormatter={({ value, datasetLabel, extra }) => {
                   if (row.key === 'activeUsers') {
                     const current = formatMetricValue(value, row.kind)
-                    const ltt = formatMetricValue(extra?.creolabs || 0, row.kind)
-                    const ltd = formatMetricValue(extra?.creolabsLtd || 0, row.kind)
-                    return `${datasetLabel}: ${current} | LTT: ${ltt} | LTD: ${ltd}`
+                    return `${datasetLabel}: ${current}`
                   }
                   const current = formatMetricValue(value, row.kind)
                   const creo = formatMetricValue(extra?.creolabs || 0, row.kind)
@@ -1352,62 +1318,39 @@ export default function ProfitAnalysisPage() {
                   return `${datasetLabel}: ${current} | Cellxpert: ${media} | CreoLabs: ${creo}`
                 }}
                 series={[
-                  ...(row.key === 'activeUsers' && row.showCreo
+                  ...(row.showCreo
                     ? [
                         {
-                          label: 'CreoLabs LTT',
+                          label: 'CreoLabs',
                           data: row.creoSeries,
                           type: 'line',
                           color: '#22d3ee',
                           backgroundColor: 'rgba(34,211,238,0.18)',
                         },
+                      ]
+                    : []),
+                  ...(row.showMedia
+                    ? [
                         {
-                          label: 'CreoLabs LTD',
-                          data: row.creoLtdSeries,
+                          label: 'Cellxpert',
+                          data: row.mediaSeries,
                           type: 'line',
-                          color: '#f472b6',
-                          backgroundColor: 'rgba(244,114,182,0.14)',
-                          borderDash: [6, 4],
+                          color: '#f59e0b',
+                          backgroundColor: 'rgba(245,158,11,0.18)',
                         },
                       ]
                     : []),
-                  ...(row.key === 'activeUsers'
-                    ? []
-                    : [
-                        ...(row.showCreo
-                          ? [
-                              {
-                                label: 'CreoLabs',
-                                data: row.creoSeries,
-                                type: 'line',
-                                color: '#22d3ee',
-                                backgroundColor: 'rgba(34,211,238,0.18)',
-                              },
-                            ]
-                          : []),
-                        ...(row.showMedia
-                          ? [
-                              {
-                                label: 'Cellxpert',
-                                data: row.mediaSeries,
-                                type: 'line',
-                                color: '#f59e0b',
-                                backgroundColor: 'rgba(245,158,11,0.18)',
-                              },
-                            ]
-                          : []),
-                        ...(!row.showCreo && !row.showMedia
-                          ? [
-                              {
-                                label: 'Cellxpert',
-                                data: row.mediaSeries,
-                                type: 'line',
-                                color: '#f59e0b',
-                                backgroundColor: 'rgba(245,158,11,0.18)',
-                              },
-                            ]
-                          : []),
-                      ]),
+                  ...(!row.showCreo && !row.showMedia && row.allowFallbackSeries
+                    ? [
+                        {
+                          label: 'Cellxpert',
+                          data: row.mediaSeries,
+                          type: 'line',
+                          color: '#f59e0b',
+                          backgroundColor: 'rgba(245,158,11,0.18)',
+                        },
+                      ]
+                    : []),
                 ]}
               />
             </div>
@@ -1440,31 +1383,23 @@ export default function ProfitAnalysisPage() {
                     style={{
                       textAlign: 'right',
                       color:
-                        row.key === 'churn60'
-                          ? '#f59e0b'
-                          : row.key === 'activeUsers'
-                            ? '#22d3ee'
-                            : '#f59e0b',
+                        row.key === 'churn60' || row.key === 'activeUsers' ? '#f59e0b' : '#f59e0b',
                       fontWeight: 600,
                       paddingBottom: 6,
                     }}
                   >
-                    {row.key === 'churn60'
-                      ? 'CreoLabs'
-                      : row.key === 'activeUsers'
-                        ? 'LTT'
-                        : 'Cellxpert'}
+                    {row.key === 'churn60' || row.key === 'activeUsers' ? 'CreoLabs' : 'Cellxpert'}
                   </th>
-                  {row.key !== 'churn60' && (
+                  {row.key !== 'churn60' && row.key !== 'activeUsers' && (
                     <th
                       style={{
                         textAlign: 'right',
-                        color: row.key === 'activeUsers' ? '#f472b6' : '#22d3ee',
+                        color: '#22d3ee',
                         fontWeight: 600,
                         paddingBottom: 6,
                       }}
                     >
-                      {row.key === 'activeUsers' ? 'LTD' : 'CreoLabs'}
+                      CreoLabs
                     </th>
                   )}
                 </tr>
@@ -1481,7 +1416,7 @@ export default function ProfitAnalysisPage() {
                           : row.comparisonsCellxpert.mom.currentLabel}
                     </div>
                   </td>
-                  {row.key === 'churn60' ? (
+                  {row.key === 'churn60' || row.key === 'activeUsers' ? (
                     <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
                       {formatMetricValue(row.comparisonsCreolabs.latestValue, row.kind)}
                     </td>
@@ -1496,12 +1431,7 @@ export default function ProfitAnalysisPage() {
                         )}
                       </td>
                       <td style={{ textAlign: 'right', color: '#e2e8f0', padding: '4px 0' }}>
-                        {formatMetricValue(
-                          row.key === 'activeUsers'
-                            ? row.comparisonsCreolabsLtd?.latestValue || 0
-                            : row.comparisonsCreolabs.latestValue,
-                          row.kind
-                        )}
+                        {formatMetricValue(row.comparisonsCreolabs.latestValue, row.kind)}
                       </td>
                     </>
                   )}
@@ -1517,7 +1447,7 @@ export default function ProfitAnalysisPage() {
                           : `${row.comparisonsCellxpert.mom.currentLabel} vs ${row.comparisonsCellxpert.mom.previousLabel}`}
                     </div>
                   </td>
-                  {row.key === 'churn60' ? (
+                  {row.key === 'churn60' || row.key === 'activeUsers' ? (
                     <td
                       style={{
                         textAlign: 'right',
@@ -1555,24 +1485,12 @@ export default function ProfitAnalysisPage() {
                       <td
                         style={{
                           textAlign: 'right',
-                          color: pctTone(
-                            row.key === 'activeUsers'
-                              ? row.comparisonsCreolabsLtd?.mom.pct
-                              : row.comparisonsCreolabs.mom.pct
-                          ),
+                          color: pctTone(row.comparisonsCreolabs.mom.pct),
                           padding: '4px 0',
                         }}
-                        title={
-                          row.key === 'activeUsers'
-                            ? `${row.comparisonsCreolabsLtd?.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.mom.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.mom.previous || 0, row.kind)}`
-                            : `${row.comparisonsCreolabs.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.current, row.kind)} | ${row.comparisonsCreolabs.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.previous, row.kind)}`
-                        }
+                        title={`${row.comparisonsCreolabs.mom.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.current, row.kind)} | ${row.comparisonsCreolabs.mom.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.mom.previous, row.kind)}`}
                       >
-                        {formatPct(
-                          row.key === 'activeUsers'
-                            ? row.comparisonsCreolabsLtd?.mom.pct
-                            : row.comparisonsCreolabs.mom.pct
-                        )}
+                        {formatPct(row.comparisonsCreolabs.mom.pct)}
                       </td>
                     </>
                   )}
@@ -1588,7 +1506,7 @@ export default function ProfitAnalysisPage() {
                           : `${row.comparisonsCellxpert.yoy.currentLabel} vs ${row.comparisonsCellxpert.yoy.previousLabel}`}
                     </div>
                   </td>
-                  {row.key === 'churn60' ? (
+                  {row.key === 'churn60' || row.key === 'activeUsers' ? (
                     <td
                       style={{
                         textAlign: 'right',
@@ -1626,24 +1544,12 @@ export default function ProfitAnalysisPage() {
                       <td
                         style={{
                           textAlign: 'right',
-                          color: pctTone(
-                            row.key === 'activeUsers'
-                              ? row.comparisonsCreolabsLtd?.yoy.pct
-                              : row.comparisonsCreolabs.yoy.pct
-                          ),
+                          color: pctTone(row.comparisonsCreolabs.yoy.pct),
                           padding: '4px 0',
                         }}
-                        title={
-                          row.key === 'activeUsers'
-                            ? `${row.comparisonsCreolabsLtd?.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.yoy.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.yoy.previous || 0, row.kind)}`
-                            : `${row.comparisonsCreolabs.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.current, row.kind)} | ${row.comparisonsCreolabs.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.previous, row.kind)}`
-                        }
+                        title={`${row.comparisonsCreolabs.yoy.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.current, row.kind)} | ${row.comparisonsCreolabs.yoy.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.yoy.previous, row.kind)}`}
                       >
-                        {formatPct(
-                          row.key === 'activeUsers'
-                            ? row.comparisonsCreolabsLtd?.yoy.pct
-                            : row.comparisonsCreolabs.yoy.pct
-                        )}
+                        {formatPct(row.comparisonsCreolabs.yoy.pct)}
                       </td>
                     </>
                   )}
@@ -1659,7 +1565,7 @@ export default function ProfitAnalysisPage() {
                           : `${row.comparisonsCellxpert.ytd.currentLabel} vs ${row.comparisonsCellxpert.ytd.previousLabel}`}
                     </div>
                   </td>
-                  {row.key === 'churn60' ? (
+                  {row.key === 'churn60' || row.key === 'activeUsers' ? (
                     <td
                       style={{
                         textAlign: 'right',
@@ -1697,24 +1603,12 @@ export default function ProfitAnalysisPage() {
                       <td
                         style={{
                           textAlign: 'right',
-                          color: pctTone(
-                            row.key === 'activeUsers'
-                              ? row.comparisonsCreolabsLtd?.ytd.pct
-                              : row.comparisonsCreolabs.ytd.pct
-                          ),
+                          color: pctTone(row.comparisonsCreolabs.ytd.pct),
                           padding: '4px 0',
                         }}
-                        title={
-                          row.key === 'activeUsers'
-                            ? `${row.comparisonsCreolabsLtd?.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.ytd.current || 0, row.kind)} | ${row.comparisonsCreolabsLtd?.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabsLtd?.ytd.previous || 0, row.kind)}`
-                            : `${row.comparisonsCreolabs.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.current, row.kind)} | ${row.comparisonsCreolabs.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.previous, row.kind)}`
-                        }
+                        title={`${row.comparisonsCreolabs.ytd.currentLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.current, row.kind)} | ${row.comparisonsCreolabs.ytd.previousLabel}: ${formatMetricValue(row.comparisonsCreolabs.ytd.previous, row.kind)}`}
                       >
-                        {formatPct(
-                          row.key === 'activeUsers'
-                            ? row.comparisonsCreolabsLtd?.ytd.pct
-                            : row.comparisonsCreolabs.ytd.pct
-                        )}
+                        {formatPct(row.comparisonsCreolabs.ytd.pct)}
                       </td>
                     </>
                   )}
