@@ -5,9 +5,10 @@ const fs = require('fs')
 const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
 const { routeConvrs } = require('../serverless/handlers/convrs')
+const { routeEmail } = require('../serverless/handlers/email')
 
 const projectRoot = path.join(__dirname, '..')
-;['.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
+;['.env.sendgrid.local', '.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
   const filePath = path.join(projectRoot, name)
   if (fs.existsSync(filePath)) {
     dotenv.config({ path: filePath, override: false })
@@ -797,6 +798,15 @@ app.all('/api/convrs/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeConvrs(req, res, tail)
+})
+
+app.all('/api/email', (req, res) => routeEmail(req, res, []))
+app.all('/api/email/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/email\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeEmail(req, res, tail)
 })
 
 app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))

@@ -1,0 +1,793 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bullwaves Email Master Template Preview</title>
+    <style>
+      :root {
+        --bg: #edf2f8;
+        --text: #112033;
+        --muted: #62758c;
+        --line: #dce5f0;
+        --brand: #0f39dd;
+        --brand-2: #5b9bff;
+        --card: #ffffff;
+        --soft: #f6f9fd;
+        --dark-bg: #081323;
+        --dark-card: #101b2d;
+        --dark-soft: #13233a;
+        --dark-text: #f5f8fe;
+        --dark-muted: #c3d3ea;
+        --shadow: 0 24px 70px rgba(17, 32, 51, 0.12);
+        --radius: 26px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background:
+          radial-gradient(circle at top left, rgba(91, 155, 255, 0.18), transparent 24%),
+          linear-gradient(180deg, #eef3f9 0%, #e7eef7 100%);
+        color: var(--text);
+      }
+
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 42px 24px 72px;
+      }
+
+      .intro {
+        max-width: 860px;
+        margin-bottom: 28px;
+      }
+
+      .kicker {
+        display: inline-block;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(15, 57, 221, 0.08);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 14px 0 10px;
+        font-size: 42px;
+        line-height: 1.08;
+      }
+
+      .intro p {
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        gap: 28px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid.preview-grid--single {
+        display: flex;
+        justify-content: center;
+      }
+
+      .grid.preview-grid--single.desktop .spec-card {
+        width: min(760px, 100%);
+      }
+
+      .grid.preview-grid--single.mobile .spec-card {
+        width: min(390px, 100%);
+      }
+
+      .is-hidden {
+        display: none !important;
+      }
+
+      .preview-meta {
+        margin-top: 12px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .preview-badge-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+
+      .preview-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        background: rgba(15, 57, 221, 0.08);
+        border: 1px solid rgba(15, 57, 221, 0.10);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .spec-card {
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+      }
+
+      .spec-card.light {
+        background: var(--card);
+      }
+
+      .spec-card.dark {
+        background: var(--dark-card);
+        color: var(--dark-text);
+      }
+
+      .brand-bar {
+        padding: 18px 28px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .brand-bar--master {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .brand-logo-shell {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(91, 155, 255, 0.18), rgba(15, 57, 221, 0.22));
+        border: 1px solid rgba(15, 57, 221, 0.14);
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--brand);
+      }
+
+      .dark .brand-logo-shell {
+        background: linear-gradient(135deg, rgba(91, 155, 255, 0.18), rgba(15, 57, 221, 0.32));
+        border-color: rgba(255,255,255,0.10);
+        color: #d7e7ff;
+      }
+
+      .brand-text {
+        min-width: 0;
+      }
+
+      .brand-text strong {
+        display: block;
+        font-size: 16px;
+        line-height: 1.1;
+      }
+
+      .brand-text span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+
+      .dark .brand-text span {
+        color: var(--dark-muted);
+      }
+
+      .light .brand-bar {
+        background: linear-gradient(90deg, #f7fbff, #eaf2ff);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .dark .brand-bar {
+        background: linear-gradient(90deg, #0d1a2e, #12284a);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .brand-mark {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--brand-2), var(--brand));
+      }
+
+      .body {
+        padding: 28px;
+      }
+
+      .eyebrow {
+        display: inline-block;
+        margin-bottom: 14px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .light .eyebrow {
+        background: rgba(15, 57, 221, 0.08);
+        color: var(--brand);
+      }
+
+      .dark .eyebrow {
+        background: rgba(91, 155, 255, 0.14);
+        color: #d7e7ff;
+      }
+
+      .headline {
+        margin: 0;
+        font-size: 34px;
+        line-height: 1.08;
+        font-weight: 700;
+      }
+
+      .subheadline {
+        margin: 12px 0 0;
+        font-size: 16px;
+        line-height: 1.7;
+        max-width: 86%;
+      }
+
+      .light .subheadline { color: var(--muted); }
+      .dark .subheadline { color: var(--dark-muted); }
+
+      .hero {
+        margin-top: 22px;
+        border-radius: 22px;
+        min-height: 260px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(140deg, rgba(255,255,255,0.32), transparent 34%),
+          radial-gradient(circle at 78% 26%, rgba(255,255,255,0.3), transparent 18%),
+          linear-gradient(135deg, #2d3f55 0%, #8094aa 32%, #eef4f8 100%);
+      }
+
+      .dark .hero::before {
+        background:
+          linear-gradient(145deg, rgba(91,155,255,0.18), transparent 32%),
+          radial-gradient(circle at 78% 22%, rgba(91,155,255,0.25), transparent 18%),
+          linear-gradient(135deg, #0a1221 0%, #152944 48%, #355b88 100%);
+      }
+
+      .hero::after {
+        content: "Hero Library Slot";
+        position: absolute;
+        left: 22px;
+        bottom: 18px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.75);
+        color: #203047;
+      }
+
+      .dark .hero::after {
+        background: rgba(8, 19, 35, 0.7);
+        color: #d7e7ff;
+        border: 1px solid rgba(255,255,255,0.12);
+      }
+
+      .cta-box {
+        margin-top: 22px;
+        padding: 20px;
+        border-radius: 20px;
+      }
+
+      .light .cta-box {
+        background: linear-gradient(180deg, #f4f8ff 0%, #edf4ff 100%);
+        border: 1px solid #d8e4f6;
+      }
+
+      .dark .cta-box {
+        background: linear-gradient(180deg, #10213a 0%, #142946 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 14px 22px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--brand-2), var(--brand));
+        color: #fff;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .helper {
+        margin-top: 10px;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .light .helper { color: var(--muted); }
+      .dark .helper { color: var(--dark-muted); }
+
+      .section {
+        margin-top: 24px;
+        padding: 22px;
+        border-radius: 20px;
+      }
+
+      .light .section {
+        background: var(--soft);
+        border: 1px solid var(--line);
+      }
+
+      .dark .section {
+        background: var(--dark-soft);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .section-title {
+        margin: 0 0 14px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .pillars {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .pillar {
+        padding: 16px 14px;
+        border-radius: 16px;
+      }
+
+      .light .pillar {
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .dark .pillar {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .pillar strong,
+      .proof strong,
+      .support strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+
+      .pillar span,
+      .proof span,
+      .support span,
+      .footer {
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .light .pillar span,
+      .light .proof span,
+      .light .support span,
+      .light .footer {
+        color: var(--muted);
+      }
+
+      .dark .pillar span,
+      .dark .proof span,
+      .dark .support span,
+      .dark .footer {
+        color: var(--dark-muted);
+      }
+
+      .proof-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1.3fr 0.9fr;
+      }
+
+      .proof,
+      .support {
+        padding: 18px;
+        border-radius: 16px;
+      }
+
+      .light .proof,
+      .light .support {
+        background: #fff;
+        border: 1px solid var(--line);
+      }
+
+      .dark .proof,
+      .dark .support {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .proof-visual {
+        margin-top: 12px;
+        height: 132px;
+        border-radius: 14px;
+        background:
+          linear-gradient(135deg, rgba(91,155,255,0.16), transparent 36%),
+          linear-gradient(180deg, #edf4ff 0%, #dde9fb 100%);
+        border: 1px dashed rgba(15,57,221,0.22);
+      }
+
+      .dark .proof-visual {
+        background:
+          linear-gradient(135deg, rgba(91,155,255,0.18), transparent 32%),
+          linear-gradient(180deg, #162744 0%, #10213a 100%);
+        border: 1px dashed rgba(91,155,255,0.28);
+      }
+
+      .footer {
+        margin-top: 22px;
+        padding-top: 18px;
+        border-top: 1px solid;
+      }
+
+      .legal-shell {
+        margin-top: 20px;
+        padding: 18px;
+        border-radius: 18px;
+      }
+
+      .light .legal-shell {
+        background: linear-gradient(180deg, #f5f8fc 0%, #edf3fa 100%);
+        border: 1px solid #d8e2ef;
+      }
+
+      .dark .legal-shell {
+        background: linear-gradient(180deg, #0f1d31 0%, #13243b 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .legal-head {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .legal-title {
+        font-size: 16px;
+        line-height: 1.1;
+        font-weight: 700;
+      }
+
+      .legal-subtitle {
+        margin-top: 4px;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .light .legal-subtitle { color: var(--muted); }
+      .dark .legal-subtitle { color: var(--dark-muted); }
+
+      .legal-cards {
+        display: grid;
+        gap: 12px;
+      }
+
+      .legal-card {
+        padding: 14px 16px;
+        border-radius: 16px;
+      }
+
+      .light .legal-card {
+        background: #ffffff;
+        border: 1px solid var(--line);
+      }
+
+      .dark .legal-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .legal-card--risk.light-tone {
+        background: linear-gradient(180deg, #fffaf2 0%, #fff5e7 100%);
+        border: 1px solid #f3dfb7;
+      }
+
+      .legal-section-title {
+        margin: 0 0 8px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .legal-copy {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.62;
+      }
+
+      .light .legal-copy { color: var(--muted); }
+      .dark .legal-copy { color: var(--dark-muted); }
+
+      .legal-links {
+        margin-top: 12px;
+        font-size: 11px;
+      }
+
+      .light .footer { border-color: var(--line); }
+      .dark .footer { border-color: rgba(255,255,255,0.08); }
+
+      @media (max-width: 980px) {
+        .grid { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 640px) {
+        .page { padding: 24px 14px 44px; }
+        h1 { font-size: 32px; }
+        .headline { font-size: 28px; }
+        .subheadline { max-width: 100%; }
+        .pillars,
+        .proof-grid { grid-template-columns: 1fr; }
+        .body { padding: 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="intro">
+        <span class="kicker">Bullwaves System</span>
+        <h1>Email Master Template</h1>
+        <p>
+          Questa preview mostra il layout master con le due skin approvate: una light per onboarding e activation,
+          una dark per reminder e re-engagement. La struttura resta la stessa; cambiano skin, hero assegnata e contenuti.
+        </p>
+        <div class="preview-meta" id="previewMeta"></div>
+        <div class="preview-badge-row">
+          <span class="preview-badge" id="skinBadge">Skin: compare</span>
+          <span class="preview-badge" id="deviceBadge">Device: compare</span>
+        </div>
+      </div>
+
+      <div class="grid" id="previewGrid">
+        <section class="spec-card light" id="lightCard">
+          <div class="brand-bar">
+            <span class="brand-bar--master">
+              <span class="brand-logo-shell">B</span>
+              <span class="brand-text">
+                <strong>Bullwaves | core-light</strong>
+                <span>Visible logo first, then structure. Brand should be unmistakable at first glance.</span>
+              </span>
+            </span>
+          </div>
+          <div class="body">
+            <div class="eyebrow">Bullwaves Journey</div>
+            <h2 class="headline">Start with one clear next step</h2>
+            <p class="subheadline">
+              The light master is designed for trust, clarity and lower-friction activation. It should feel premium,
+              warm and easy to scan.
+            </p>
+
+            <div class="hero"></div>
+
+            <div class="cta-box">
+              <a class="btn" href="#">Open Your Next Step</a>
+              <div class="helper">Single primary CTA. Support link stays secondary and lower in the layout.</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Quick Value Block</div>
+              <div class="pillars">
+                <div class="pillar">
+                  <strong>Clarity First</strong>
+                  <span>Three short points max. Clear scanning beats long explanations.</span>
+                </div>
+                <div class="pillar">
+                  <strong>Human Trust</strong>
+                  <span>Calm, credible language and stable visuals that do not feel over-produced.</span>
+                </div>
+                <div class="pillar">
+                  <strong>Action Ready</strong>
+                  <span>Every block should move the user closer to one action, not many.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Proof Block</div>
+              <div class="proof-grid">
+                <div class="proof">
+                  <strong>Product Or Benefit Proof</strong>
+                  <span>Use this space for one clean proof idea: KPI crop, dashboard detail, insight card, or guided next step.</span>
+                  <div class="proof-visual"></div>
+                </div>
+                <div class="support">
+                  <strong>Support Block</strong>
+                  <span>Short reassurance copy, account manager note, or secondary support CTA.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              Minimal footer, compliance-safe, visually light. No heavy newsletter feeling.
+            </div>
+
+            <div class="legal-shell">
+              <div class="legal-head">
+                <span class="brand-logo-shell">B</span>
+                <div>
+                  <div class="legal-title">Bullwaves</div>
+                  <div class="legal-subtitle">Regulatory information and risk notice remain fixed in the master.</div>
+                </div>
+              </div>
+              <div class="legal-cards">
+                <div class="legal-card">
+                  <div class="legal-section-title">Company Information</div>
+                  <p class="legal-copy">Entity and jurisdiction details live here in a structured, readable block.</p>
+                </div>
+                <div class="legal-card legal-card--risk light-tone">
+                  <div class="legal-section-title">Risk Disclaimer</div>
+                  <p class="legal-copy">Risk language should remain visible, stable and easy to scan instead of becoming an unreadable wall of text.</p>
+                </div>
+              </div>
+              <div class="legal-links">Unsubscribe · Unsubscribe Preferences</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-card dark" id="darkCard">
+          <div class="brand-bar">
+            <span class="brand-bar--master">
+              <span class="brand-logo-shell">B</span>
+              <span class="brand-text">
+                <strong>Bullwaves | core-dark</strong>
+                <span>The dark skin keeps the logo equally prominent and preserves the same legal logic.</span>
+              </span>
+            </span>
+          </div>
+          <div class="body">
+            <div class="eyebrow">Bullwaves Journey</div>
+            <h2 class="headline">A more focused push for high-intent moments</h2>
+            <p class="subheadline">
+              The dark master is designed for sharper emphasis and stronger momentum, while staying premium and avoiding hype.
+            </p>
+
+            <div class="hero"></div>
+
+            <div class="cta-box">
+              <a class="btn" href="#">Review Your Opportunity</a>
+              <div class="helper">Same master layout, stronger visual contrast, best for reminders and active segments.</div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Quick Value Block</div>
+              <div class="pillars">
+                <div class="pillar">
+                  <strong>Higher Intent</strong>
+                  <span>Best for users who already know the product and need a sharper prompt.</span>
+                </div>
+                <div class="pillar">
+                  <strong>Controlled Energy</strong>
+                  <span>More contrast, but still restrained. No crypto-ad vibe, no noisy visuals.</span>
+                </div>
+                <div class="pillar">
+                  <strong>Stable Structure</strong>
+                  <span>Layout stays fixed so only message angle, hero and proof modules evolve.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Proof Block</div>
+              <div class="proof-grid">
+                <div class="proof">
+                  <strong>Focused Proof Signal</strong>
+                  <span>Use one strong proof element only: action insight, product context or progress signal.</span>
+                  <div class="proof-visual"></div>
+                </div>
+                <div class="support">
+                  <strong>Secondary Help</strong>
+                  <span>Support remains available, but never competes with the primary action.</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer">
+              Dark version should be manually controlled as a separate template skin, not delegated to client-side dark mode behavior.
+            </div>
+
+            <div class="legal-shell">
+              <div class="legal-head">
+                <span class="brand-logo-shell">B</span>
+                <div>
+                  <div class="legal-title">Bullwaves</div>
+                  <div class="legal-subtitle">Footer identity, company notice and risk disclaimer remain mandatory.</div>
+                </div>
+              </div>
+              <div class="legal-cards">
+                <div class="legal-card">
+                  <div class="legal-section-title">Company Information</div>
+                  <p class="legal-copy">Structured compliance copy sits in its own panel rather than blending into the email body.</p>
+                </div>
+                <div class="legal-card">
+                  <div class="legal-section-title">Risk Disclaimer</div>
+                  <p class="legal-copy">The dark version keeps the disclaimer readable with clear contrast and fixed placement.</p>
+                </div>
+              </div>
+              <div class="legal-links">Unsubscribe · Unsubscribe Preferences</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script>
+      (function () {
+        const params = new URLSearchParams(window.location.search)
+        const skin = (params.get('skin') || 'compare').toLowerCase()
+        const device = (params.get('device') || 'compare').toLowerCase()
+
+        const normalizedSkin = skin === 'light' || skin === 'dark' ? skin : 'compare'
+        const normalizedDevice = device === 'mobile' || device === 'desktop' ? device : 'compare'
+
+        const lightCard = document.getElementById('lightCard')
+        const darkCard = document.getElementById('darkCard')
+        const previewGrid = document.getElementById('previewGrid')
+        const previewMeta = document.getElementById('previewMeta')
+        const skinBadge = document.getElementById('skinBadge')
+        const deviceBadge = document.getElementById('deviceBadge')
+
+        if (normalizedSkin === 'light') {
+          darkCard.classList.add('is-hidden')
+          previewGrid.classList.add('preview-grid--single')
+        } else if (normalizedSkin === 'dark') {
+          lightCard.classList.add('is-hidden')
+          previewGrid.classList.add('preview-grid--single')
+        }
+
+        if (previewGrid.classList.contains('preview-grid--single')) {
+          previewGrid.classList.add(normalizedDevice === 'mobile' ? 'mobile' : 'desktop')
+        }
+
+        skinBadge.textContent = 'Skin: ' + normalizedSkin
+        deviceBadge.textContent = 'Device: ' + normalizedDevice
+
+        if (normalizedSkin === 'compare') {
+          previewMeta.textContent = 'Compare mode: both light and dark masters are visible side by side.'
+        } else if (normalizedDevice === 'mobile') {
+          previewMeta.textContent = 'Mobile preview: single-skin card constrained to a narrow device width.'
+        } else {
+          previewMeta.textContent = 'Desktop preview: single-skin card shown at a wider editorial email width.'
+        }
+      })()
+    </script>
+  </body>
+</html>

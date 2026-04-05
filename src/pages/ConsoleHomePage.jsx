@@ -62,7 +62,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'commandCenter',
       title: t('sidebar.commandCenter'),
       desc: t('home.action.commandCenter'),
-      kicker: t('sidebar.projectManagement'),
+      kicker: 'Operations',
+      area: 'Operations',
       emoji: '🧭',
       tone: 'accent',
     },
@@ -70,7 +71,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'projectBoard',
       title: t('sidebar.projectBoard'),
       desc: t('home.action.tasks'),
-      kicker: t('sidebar.projectManagement'),
+      kicker: 'Operations',
+      area: 'Operations',
       emoji: '✅',
       tone: 'accent',
     },
@@ -78,7 +80,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'flows',
       title: t('sidebar.flows'),
       desc: t('home.action.flows'),
-      kicker: t('sidebar.projectManagement'),
+      kicker: 'Operations',
+      area: 'Operations',
       emoji: '🧬',
       tone: 'info',
     },
@@ -86,7 +89,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'overview',
       title: t('sidebar.overview'),
       desc: t('home.action.dashboard'),
-      kicker: t('sidebar.dashboard'),
+      kicker: 'Finance',
+      area: 'Finance',
       emoji: '📈',
       tone: 'accent',
     },
@@ -94,7 +98,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'executive',
       title: t('sidebar.executiveSuite'),
       desc: t('home.action.executiveSuite'),
-      kicker: t('sidebar.dashboard'),
+      kicker: 'Finance',
+      area: 'Finance',
       emoji: '🧠',
       tone: 'success',
     },
@@ -102,7 +107,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'affiliate',
       title: t('sidebar.affiliate'),
       desc: t('home.action.affiliateHub'),
-      kicker: t('sidebar.affiliate'),
+      kicker: 'Sales',
+      area: 'Sales',
       emoji: '🤝',
       tone: 'warning',
     },
@@ -110,7 +116,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'fraud',
       title: t('sidebar.fraud'),
       desc: t('home.action.fraud'),
-      kicker: t('sidebar.dashboard'),
+      kicker: 'Dealing',
+      area: 'Dealing',
       emoji: '🛡️',
       tone: 'danger',
     },
@@ -118,7 +125,8 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'traderPointsSimulator',
       title: t('sidebar.traderPoints'),
       desc: t('home.action.traderPoints'),
-      kicker: t('sidebar.dashboard'),
+      kicker: 'Dealing',
+      area: 'Dealing',
       emoji: '🎯',
       tone: 'info',
     },
@@ -126,23 +134,53 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'profitableRanking',
       title: t('sidebar.profitableRanking'),
       desc: t('home.action.profitableRanking'),
-      kicker: t('sidebar.dashboard'),
+      kicker: 'Sales',
+      area: 'Sales',
       emoji: '🏅',
       tone: 'success',
+    },
+    {
+      key: 'segmentComposition',
+      title: 'Segment Composition',
+      desc: 'Standalone customer-base segmentation view for retention and winback clusters.',
+      kicker: 'Sales',
+      area: 'Sales',
+      emoji: '🧩',
+      tone: 'info',
     },
     {
       key: 'supportUserCheck',
       title: t('sidebar.supportUserCheck'),
       desc: t('home.action.userCheck'),
-      kicker: t('sidebar.support'),
+      kicker: 'Support',
+      area: 'Support',
       emoji: '🎧',
       tone: 'warning',
+    },
+    {
+      key: 'aiAssistant',
+      title: t('sidebar.aiAssistant'),
+      desc: t('home.action.aiAssistant'),
+      kicker: 'Support',
+      area: 'Support',
+      emoji: '💬',
+      tone: 'success',
+    },
+    {
+      key: 'whatsappPerformance',
+      title: t('sidebar.whatsappPerformance'),
+      desc: t('home.action.whatsappPerformance'),
+      kicker: 'Marketing',
+      area: 'Marketing',
+      emoji: '📱',
+      tone: 'accent',
     },
     {
       key: 'orgChart',
       title: t('sidebar.orgChart'),
       desc: t('home.action.orgChart'),
-      kicker: t('sidebar.ops'),
+      kicker: 'Operations',
+      area: 'Operations',
       emoji: '🧩',
       tone: 'accent',
     },
@@ -150,11 +188,21 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       key: 'upload',
       title: t('sidebar.upload'),
       desc: t('home.action.upload'),
-      kicker: t('sidebar.ops'),
+      kicker: 'Operations',
+      area: 'Operations',
       emoji: '⬆️',
       tone: 'accent',
     },
   ]
+
+  const areaOrder = ['Sales', 'Support', 'Operations', 'Finance', 'Marketing', 'Dealing']
+
+  const areaSections = areaOrder
+    .map((area) => ({
+      area,
+      cards: sectionCards.filter((card) => card.area === area),
+    }))
+    .filter((section) => section.cards.length > 0)
 
   return (
     <div className="console-home">
@@ -170,27 +218,36 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
         <div className="console-home__welcome">{welcome}</div>
         <div className="console-home__roleText">{roleText || t('home.role.default')}</div>
 
-        <div className="console-home__sectionLabel">{t('home.quickActions.title')}</div>
+        <div className="console-home__sectionLabel">Areas</div>
 
-        <div className="card-columns console-home__actions" role="list">
-          {sectionCards.map((card) => (
-            <button
-              key={card.key}
-              type="button"
-              className={`card card-global console-home__action console-home__action--${card.tone}`}
-              onClick={() => go(card.key)}
-              disabled={!canGo(card.key)}
-              role="listitem"
-            >
-              <div className="console-home__actionTop">
-                <div className="console-home__actionEmoji" aria-hidden="true">
-                  {card.emoji}
-                </div>
-                <div className="console-home__actionKicker">{card.kicker}</div>
+        <div className="console-home__areaSections">
+          {areaSections.map((section) => (
+            <section key={section.area} className="console-home__areaSection">
+              <div className="console-home__areaHeader">
+                <h2 className="console-home__areaTitle">{section.area}</h2>
               </div>
-              <h3 className="console-home__actionTitle">{card.title}</h3>
-              <div className="console-home__actionDesc">{card.desc}</div>
-            </button>
+              <div className="card-columns console-home__actions" role="list">
+                {section.cards.map((card) => (
+                  <button
+                    key={card.key}
+                    type="button"
+                    className={`card card-global console-home__action console-home__action--${card.tone}`}
+                    onClick={() => go(card.key)}
+                    disabled={!canGo(card.key)}
+                    role="listitem"
+                  >
+                    <div className="console-home__actionTop">
+                      <div className="console-home__actionEmoji" aria-hidden="true">
+                        {card.emoji}
+                      </div>
+                      <div className="console-home__actionKicker">{card.kicker}</div>
+                    </div>
+                    <h3 className="console-home__actionTitle">{card.title}</h3>
+                    <div className="console-home__actionDesc">{card.desc}</div>
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
 

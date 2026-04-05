@@ -15,6 +15,12 @@ const ProfitAnalysisPage = lazy(() => import('./pages/ProfitAnalysisPage'))
 const CommentsAnalysisPage = lazy(() => import('./pages/CommentsAnalysisPage'))
 const FraudMonitoringDashboard = lazy(() => import('./components/FraudMonitoringDashboard'))
 const SupportUserCheck = lazy(() => import('./features/support/pages/SupportUserCheck'))
+const BullwavesAIAssistantPage = lazy(
+  () => import('./features/support/pages/BullwavesAIAssistantPage')
+)
+const WhatsAppPerformancePage = lazy(
+  () => import('./features/support/pages/WhatsAppPerformancePage')
+)
 const TrustpilotGuidePage = lazy(() => import('./features/trustpilot/pages/TrustpilotGuidePage'))
 const WhatsAppTemplatesPage = lazy(
   () => import('./features/whatsapp-templates/pages/WhatsAppTemplatesPage')
@@ -30,6 +36,7 @@ const PlatformUsageBillingPage = lazy(
 const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
 const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
 const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonitor'))
+const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMasterTemplatePage'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
@@ -84,7 +91,9 @@ export default function AuthenticatedApp() {
   // Admin features (Custom Events, Admin Panel) follow the org chart: Management Team has full access.
   // Keep a small explicit allowlist for exceptional admin users outside management.
   const adminEmails = new Set(['paolo.v@bullwaves.com'])
+  const emailTemplatePreviewEmails = new Set(['paolo.v@bullwaves.com'])
   const isAdmin = Boolean(isManagementTeam || adminEmails.has(normalizedEmail))
+  const canAccessEmailMasterTemplate = emailTemplatePreviewEmails.has(normalizedEmail)
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
   const isBusinessDevSales = Boolean(!isManagementTeam && isSalesDepartment(user?.department || ''))
@@ -93,8 +102,23 @@ export default function AuthenticatedApp() {
   const restrictedAllowedViews = useMemo(() => {
     // Support can upload reports; BD/Sales should not.
     if (isSupportOnly)
-      return new Set(['home', 'supportUserCheck', 'trustpilotGuide', 'orgChart', 'upload'])
-    return new Set(['home', 'supportUserCheck', 'trustpilotGuide', 'orgChart'])
+      return new Set([
+        'home',
+        'supportUserCheck',
+        'aiAssistant',
+        'whatsappPerformance',
+        'trustpilotGuide',
+        'orgChart',
+        'upload',
+      ])
+    return new Set([
+      'home',
+      'supportUserCheck',
+      'aiAssistant',
+      'whatsappPerformance',
+      'trustpilotGuide',
+      'orgChart',
+    ])
   }, [isSupportOnly])
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
@@ -151,11 +175,15 @@ export default function AuthenticatedApp() {
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
       profitableRanking: '/retention/profitable-ranking',
+      segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
+      emailMasterTemplate: '/retention/email-master-template',
       fraud: '/fraud',
       orgChart: '/org-chart',
       platformUsageBilling: '/platform-usage-billing',
       supportUserCheck: '/support/user-check',
+      aiAssistant: '/support/ai-assistant',
+      whatsappPerformance: '/support/whatsapp-performance',
       trustpilotGuide: '/trustpilot-guide',
       whatsappTemplates: '/whatsapp-templates',
       customEvents: '/custom-events',
@@ -185,11 +213,15 @@ export default function AuthenticatedApp() {
     // Ranking section removed: keep legacy URLs working.
     if (pathname.startsWith('/ranking')) return 'profitableRanking'
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
+    if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
+    if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/platform-usage-billing')) return 'platformUsageBilling'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
+    if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
+    if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
@@ -272,6 +304,14 @@ export default function AuthenticatedApp() {
           setView('trustpilotGuide')
           return
         }
+        if (nextPath.startsWith('/support/ai-assistant')) {
+          setView('aiAssistant')
+          return
+        }
+        if (nextPath.startsWith('/support/whatsapp-performance')) {
+          setView('whatsappPerformance')
+          return
+        }
         if (nextPath.startsWith('/org-chart')) {
           setView('orgChart')
           return
@@ -302,6 +342,15 @@ export default function AuthenticatedApp() {
         return
       }
 
+      if (
+        !canAccessEmailMasterTemplate &&
+        nextPath.startsWith('/retention/email-master-template')
+      ) {
+        window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+        setView('commandCenter')
+        return
+      }
+
       const nextView = pathToView(nextPath)
 
       setView(nextView)
@@ -311,7 +360,14 @@ export default function AuthenticatedApp() {
     }
     window.addEventListener('popstate', onPop)
     return () => window.removeEventListener('popstate', onPop)
-  }, [isAdmin, isRestrictedUser, isSupportOnly, routes.commandCenter, routes.projectBoard])
+  }, [
+    canAccessEmailMasterTemplate,
+    isAdmin,
+    isRestrictedUser,
+    isSupportOnly,
+    routes.commandCenter,
+    routes.projectBoard,
+  ])
 
   useEffect(() => {
     if (view !== 'affiliate') return
@@ -350,12 +406,23 @@ export default function AuthenticatedApp() {
     setView('commandCenter')
   }, [isAdmin, routes.commandCenter, user, view])
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (!user) return
+    if (view !== 'emailMasterTemplate') return
+    if (canAccessEmailMasterTemplate) return
+
+    window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+    setView('commandCenter')
+  }, [canAccessEmailMasterTemplate, routes.commandCenter, user, view])
+
   const navigate = (nextView) => {
     if (isMobile) setIsSidebarOpen(false)
     if (!nextView) return
 
     if (nextView === 'admin' && !isAdmin) return
     if (nextView === 'customEvents' && !isAdmin) return
+    if (nextView === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return
 
     if (isRestrictedUser && !restrictedAllowedViews.has(nextView)) {
       const nextPath = routes.supportUserCheck
@@ -478,10 +545,14 @@ export default function AuthenticatedApp() {
       notion: 'notion',
       summary: 'summary',
       profitableRanking: 'retention-profitable-ranking',
+      segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
+      emailMasterTemplate: 'retention-email-master-template',
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
       supportUserCheck: 'support-user-check',
+      aiAssistant: 'support-ai-assistant',
+      whatsappPerformance: 'support-whatsapp-performance',
       trustpilotGuide: 'trustpilot-guide',
       whatsappTemplates: 'whatsapp-templates',
       upload: 'upload',
@@ -514,6 +585,7 @@ export default function AuthenticatedApp() {
             supportOnly={isRestrictedUser}
             allowedViews={restrictedAllowedViews}
             customEventsDisabled={!isAdmin}
+            canAccessEmailMasterTemplate={canAccessEmailMasterTemplate}
             navigate={navigate}
             goExecutiveSection={goExecutiveSection}
             goAffiliateSection={goAffiliateSection}
@@ -550,12 +622,16 @@ export default function AuthenticatedApp() {
               {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
               {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
               {view === 'profitableRanking' ? <ProfitableRanking /> : null}
+              {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
+              {view === 'emailMasterTemplate' ? <EmailMasterTemplatePage /> : null}
               {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
               {view === 'orgChart' ? <OrgChart /> : null}
               {view === 'platformUsageBilling' ? <PlatformUsageBillingPage /> : null}
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
+              {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
+              {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}

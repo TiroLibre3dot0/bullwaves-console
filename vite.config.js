@@ -104,6 +104,7 @@ export default defineConfig({
       '/api/upload-stream': 'http://localhost:4000',
       '/api/health': 'http://localhost:4000',
       '/api/convrs': 'http://localhost:4000',
+      '/api/email': 'http://localhost:4000',
     },
   },
 })

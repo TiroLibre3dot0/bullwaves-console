@@ -10,6 +10,18 @@ import {
   edges as mostConsistentTradersEdges,
   meta as mostConsistentTradersMeta,
 } from '../../flows/mostConsistentTradersFlow'
+import {
+  nodes as topPerformingTradersNodes,
+  edges as topPerformingTradersEdges,
+  meta as topPerformingTradersMeta,
+} from '../../flows/topPerformingTradersFlow'
+import {
+  nodes as unfundedNewcomersNodes,
+  edges as unfundedNewcomersEdges,
+  meta as unfundedNewcomersMeta,
+} from '../../flows/unfundedNewcomersFlow'
+
+const JOURNEY_SEGMENT_KEYS = new Set(['top_performing', 'most_consistent', 'new_unfunded'])
 
 function derivedStatusFormula(statusName) {
   const v = String(statusName || '')
@@ -17,6 +29,7 @@ function derivedStatusFormula(statusName) {
     .toLowerCase()
   if (v === 'very active') return 'daysSinceLastTrade <= 7 AND Avg Trades / Month >= 20'
   if (v === 'active') return 'daysSinceLastTrade <= 30 AND Avg Trades / Month >= 5'
+  if (v === 'dormant') return '30 < daysSinceLastTrade <= 90'
   if (v === 'inactive') {
     return 'totalTrades <= 0 OR missing last-trade date OR daysSinceLastTrade > 90'
   }
@@ -30,6 +43,7 @@ function RankingSpecsModal({
   onShareTable,
   shareDisabled,
   standalone = false,
+  embedded = false,
   onSegmentClick,
 }) {
   useEffect(() => {
@@ -54,7 +68,7 @@ function RankingSpecsModal({
 
   const card = (
     <div
-      className={`modal-card profitable-ranking-specs-modal${standalone ? ' profitable-ranking-specs-modal--standalone' : ''}`}
+      className={`modal-card profitable-ranking-specs-modal${standalone ? ' profitable-ranking-specs-modal--standalone' : ''}${embedded ? ' profitable-ranking-specs-modal--embedded' : ''}`}
       role="dialog"
       aria-modal={standalone ? undefined : 'true'}
       aria-labelledby="ranking-specs-modal-title"
@@ -124,8 +138,8 @@ function RankingSpecsModal({
             ) : null}
             <tr>
               <th>Segment</th>
-              <th>Solitics Status</th>
-              <th>Derived Status</th>
+              <th>Description</th>
+              <th>Activity Status</th>
               <th>Goal</th>
               <th>Exact Rules</th>
               <th>Members</th>
@@ -148,24 +162,39 @@ function RankingSpecsModal({
               const derivedStatuses = Array.isArray(row?.statusBuckets?.derivedStatuses)
                 ? row.statusBuckets.derivedStatuses
                 : []
-              const derivedStatusFormulas = derivedStatuses
-                .map((statusName) => derivedStatusFormula(statusName))
+              const activityStatuses = [
+                ...soliticsStatuses.map((statusName) => ({ statusName, tone: 'solitics' })),
+                ...derivedStatuses.map((statusName) => ({ statusName, tone: 'derived' })),
+              ]
+              const activityStatusFormulas = activityStatuses
+                .map(({ statusName }) => derivedStatusFormula(statusName))
                 .filter((formula) => Boolean(formula))
+              const description = String(row?.description || '').trim()
               return (
                 <tr
                   key={row.key}
-                  className={isUnassigned ? 'profitable-ranking-specs-table__row--unassigned' : 'profitable-ranking-specs-table__row--clickable'}
-                  onClick={() => {
-                    if (!isUnassigned && typeof onSegmentClick === 'function') {
-                      onSegmentClick(row)
-                    }
-                  }}
-                  style={!isUnassigned ? { cursor: 'pointer' } : {}}
-                  title={!isUnassigned ? 'Click to view journey' : ''}
+                  className={
+                    isUnassigned
+                      ? 'profitable-ranking-specs-table__row--unassigned'
+                      : row?.journeyEnabled
+                        ? 'profitable-ranking-specs-table__row--clickable'
+                        : ''
+                  }
                 >
                   <td>
                     <div className="profitable-ranking-specs-table__rank-cell">
-                      <div className="profitable-ranking-specs-table__rank-name">{row.label}</div>
+                      {row?.journeyEnabled && typeof onSegmentClick === 'function' ? (
+                        <button
+                          type="button"
+                          className="profitable-ranking-specs-table__rank-link"
+                          onClick={() => onSegmentClick(row)}
+                          title="Open journey"
+                        >
+                          {row.label}
+                        </button>
+                      ) : (
+                        <div className="profitable-ranking-specs-table__rank-name">{row.label}</div>
+                      )}
                       <div className="profitable-ranking-specs-table__meta-row">
                         <span className="profitable-ranking-specs-table__group-pill">
                           {row.group}
@@ -174,28 +203,17 @@ function RankingSpecsModal({
                     </div>
                   </td>
                   <td>
-                    <div className="profitable-ranking-specs-table__status-pills">
-                      {soliticsStatuses.length ? (
-                        soliticsStatuses.map((statusName) => (
-                          <span
-                            key={`${row.key}-solitics-${statusName}`}
-                            className="profitable-ranking-specs-table__status-pill profitable-ranking-specs-table__status-pill--solitics"
-                          >
-                            {statusName}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="profitable-ranking-specs-table__status-empty">None</span>
-                      )}
+                    <div className="profitable-ranking-specs-table__description">
+                      {description || 'No description available.'}
                     </div>
                   </td>
                   <td>
                     <div className="profitable-ranking-specs-table__status-pills">
-                      {derivedStatuses.length ? (
-                        derivedStatuses.map((statusName) => (
+                      {activityStatuses.length ? (
+                        activityStatuses.map(({ statusName, tone }) => (
                           <span
-                            key={`${row.key}-derived-${statusName}`}
-                            className="profitable-ranking-specs-table__status-pill profitable-ranking-specs-table__status-pill--derived"
+                            key={`${row.key}-${tone}-${statusName}`}
+                            className={`profitable-ranking-specs-table__status-pill profitable-ranking-specs-table__status-pill--${tone}`}
                           >
                             {statusName}
                           </span>
@@ -204,11 +222,11 @@ function RankingSpecsModal({
                         <span className="profitable-ranking-specs-table__status-empty">None</span>
                       )}
                     </div>
-                    {derivedStatusFormulas.length ? (
+                    {activityStatusFormulas.length ? (
                       <ul className="profitable-ranking-specs-table__status-formulas">
-                        {derivedStatusFormulas.map((formula, idx) => (
+                        {activityStatusFormulas.map((formula, idx) => (
                           <li
-                            key={`${row.key}-derived-formula-${idx}`}
+                            key={`${row.key}-activity-formula-${idx}`}
                             className="profitable-ranking-specs-table__status-formula-item"
                           >
                             {formula}
@@ -253,6 +271,10 @@ function RankingSpecsModal({
 
   if (standalone) {
     return <div className="profitable-ranking-specs-standalone">{card}</div>
+  }
+
+  if (embedded) {
+    return <div className="profitable-ranking-specs-embedded">{card}</div>
   }
 
   return (
@@ -1276,6 +1298,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Retention',
     priority: 1,
     goal: 'Protect and upsell profitable high-value traders.',
+    description:
+      'A trader with positive closed P/L, at least 50 total trades, and total deposits of at least EUR 1,000.',
     statusBuckets: buildStatusBuckets([]),
     rules: 'closedPL > 0; totalTrades >= 50; totalDeposit >= 1,000',
     rulesList: ['closedPL > 0', 'totalTrades >= 50', 'totalDeposit >= 1,000'],
@@ -1290,6 +1314,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Retention',
     priority: 2,
     goal: 'Retain high-value engaged traders before churn risk increases.',
+    description:
+      'A high-value active or recently dormant trader with net deposited capital of at least EUR 3,000, at least 50 trades, and a last trade between 7 and 60 days ago.',
     statusBuckets: buildStatusBuckets(['active', 'dormant']),
     rules:
       'status IN (Active, Dormant); netDepositedCapital >= 3,000; totalTrades >= 50; 7 <= daysSinceLastTrade <= 60',
@@ -1318,6 +1344,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 3,
     goal: 'Target hyper-active traders for frequency-based campaigns.',
+    description:
+      'A very high-frequency trader with average activity of at least 100 trades per month and a last trade within the past 14 days.',
     statusBuckets: buildStatusBuckets(['very_active', 'active']),
     rules: 'status IN (Very Active, Active); avgTradesPerMonth >= 100; daysSinceLastTrade <= 14',
     rulesList: [
@@ -1341,6 +1369,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Retention',
     priority: 4,
     goal: 'Nurture stable medium-high engagement behavior over time.',
+    description:
+      'A trader active for at least 3 months, averaging at least 30 trades per month, with a last trade within the past 60 days.',
     statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant']),
     rules:
       'status IN (Very Active, Active, Dormant); activeMonths >= 3; avgTradesPerMonth >= 30; daysSinceLastTrade <= 60',
@@ -1367,7 +1397,9 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 5,
     goal: 'Accelerate onboarding momentum for early-stage active traders.',
-    statusBuckets: buildStatusBuckets(['very_active', 'active']),
+    description:
+      'An early-stage high-momentum trader active for up to 3 months, averaging at least 50 trades per month, with a last trade within the past 7 days.',
+    statusBuckets: buildStatusBuckets(['very_active']),
     rules:
       'status IN (Very Active, Active); daysSinceLastTrade <= 7; avgTradesPerMonth >= 50; activeMonths <= 3',
     rulesList: [
@@ -1393,6 +1425,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 6,
     goal: 'Grow medium-activity users toward top engagement tiers.',
+    description:
+      'A medium-activity trader with net deposited capital of at least EUR 1,000, averaging at least 15 trades per month, and a last trade within the past 45 days.',
     statusBuckets: buildStatusBuckets(['active', 'dormant']),
     rules:
       'status IN (Active, Dormant); avgTradesPerMonth >= 15; daysSinceLastTrade <= 45; netDepositedCapital >= 1,000',
@@ -1419,6 +1453,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Winback',
     priority: 7,
     goal: 'Win back historically valuable traders with declining recency.',
+    description:
+      'A historically valuable trader with at least 30 total trades and net deposited capital of at least EUR 1,500, but no trade in the last 61 to 180 days.',
     statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
     rules:
       'status IN (Dormant, Inactive); totalTrades >= 30; netDepositedCapital >= 1,500; 60 < daysSinceLastTrade <= 180',
@@ -1446,6 +1482,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 8,
     goal: 'Onboard newer traders with activation and first-value journeys.',
+    description:
+      'A trader active for up to 3 months, with 5 to 49 total trades, total deposits of at least EUR 500, and a last trade within the past 30 days.',
     statusBuckets: buildStatusBuckets([]),
     rules:
       'activeMonths <= 3; totalTrades BETWEEN 5 AND 49; daysSinceLastTrade <= 30; totalDeposit >= 500',
@@ -1474,7 +1512,9 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Retention',
     priority: 9,
     goal: 'Protect top-value traders with dedicated VIP retention and concierge campaigns.',
-    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant', 'inactive']),
+    description:
+      'A top-value trader with total deposits of at least EUR 10,000 or equity of at least EUR 10,000.',
+    statusBuckets: buildStatusBuckets([]),
     rules: 'totalDeposit >= 10,000 OR equity >= 10,000',
     rulesList: ['totalDeposit >= 10,000 OR equity >= 10,000'],
     matches: ({ metric }) =>
@@ -1486,13 +1526,11 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Winback',
     priority: 10,
     goal: 'Recover high-value traders who have become inactive for a long period.',
-    statusBuckets: buildStatusBuckets(['inactive', 'dormant']),
-    rules: 'status IN (Inactive, Dormant); daysSinceLastTrade > 90; netDepositedCapital >= 1,000',
-    rulesList: [
-      'status IN (Inactive, Dormant)',
-      'daysSinceLastTrade > 90',
-      'netDepositedCapital >= 1,000',
-    ],
+    description:
+      'A high-value trader with net deposited capital of at least EUR 1,000 who has not executed any trade in more than 90 days.',
+    statusBuckets: buildStatusBuckets(['inactive']),
+    rules: 'status = Inactive; daysSinceLastTrade > 90; netDepositedCapital >= 1,000',
+    rulesList: ['status = Inactive', 'daysSinceLastTrade > 90', 'netDepositedCapital >= 1,000'],
     matches: ({ metric, statusKey }) => {
       const d = Number(metric?.recencyDays)
       return (
@@ -1509,13 +1547,11 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Winback',
     priority: 11,
     goal: 'Reactivate recently dormant traders that still hold meaningful value.',
+    description:
+      'A trader with net deposited capital of at least EUR 500 who has not executed any trade in the last 31 to 90 days.',
     statusBuckets: buildStatusBuckets(['dormant']),
     rules: 'status = Dormant; 30 < daysSinceLastTrade <= 90; netDepositedCapital >= 500',
-    rulesList: [
-      'status = Dormant',
-      '30 < daysSinceLastTrade <= 90',
-      'netDepositedCapital >= 500',
-    ],
+    rulesList: ['status = Dormant', '30 < daysSinceLastTrade <= 90', 'netDepositedCapital >= 500'],
     matches: ({ metric, statusKey }) => {
       const d = Number(metric?.recencyDays)
       return (
@@ -1533,7 +1569,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Risk',
     priority: 12,
     goal: 'Reduce churn risk with education and risk-managed trading support.',
-    statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant', 'inactive']),
+    description: 'A trader with at least 100 total trades and a negative closed P/L.',
+    statusBuckets: buildStatusBuckets([]),
     rules: 'totalTrades >= 100; closedPL < 0',
     rulesList: ['totalTrades >= 100', 'closedPL < 0'],
     matches: ({ metric }) =>
@@ -1545,6 +1582,7 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 13,
     goal: 'Convert funded accounts that never executed their first trade.',
+    description: 'A funded trader who has deposited money but has not executed any trade.',
     statusBuckets: buildStatusBuckets(['inactive']),
     rules: 'totalDeposit > 0; totalTrades <= 0',
     rulesList: ['totalDeposit > 0', 'totalTrades <= 0'],
@@ -1557,6 +1595,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 14,
     goal: 'Scale medium-engagement traders toward high-value retention cohorts.',
+    description:
+      'A mid-tier trader with 10 to 49 total trades, net deposited capital of at least EUR 300, and a last trade within the past 45 days.',
     statusBuckets: buildStatusBuckets(['active', 'dormant']),
     rules: '10 <= totalTrades <= 49; daysSinceLastTrade <= 45; netDepositedCapital >= 300',
     rulesList: [
@@ -1582,6 +1622,8 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     group: 'Activation',
     priority: 15,
     goal: 'Increase early frequency for recently activated low-trade users.',
+    description:
+      'A recently activated trader with 1 to 9 total trades and a last trade within the past 30 days.',
     statusBuckets: buildStatusBuckets(['very_active', 'active', 'dormant']),
     rules: '1 <= totalTrades <= 9; daysSinceLastTrade <= 30',
     rulesList: ['1 <= totalTrades <= 9', 'daysSinceLastTrade <= 30'],
@@ -1593,19 +1635,81 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
   },
   {
     key: 'new_unfunded',
-    label: 'New Unfunded',
+    label: 'Unfunded Newcomers',
     group: 'Acquisition',
     priority: 16,
-    goal: 'Activate never-funded accounts with first-deposit journeys.',
+    goal: 'Convert newly registered accounts into first-time depositors quickly.',
+    description: 'A newly registered account with no deposits and no trades recorded yet.',
     statusBuckets: buildStatusBuckets(['inactive']),
     rules: 'totalDeposit <= 0; totalTrades <= 0',
     rulesList: ['totalDeposit <= 0', 'totalTrades <= 0'],
     matches: ({ metric }) =>
       Number(metric?.totalDeposit || 0) <= 0 && Number(metric?.totalTrades || 0) <= 0,
   },
+  {
+    key: 'dormant_low',
+    label: 'Dormant Low',
+    group: 'Winback',
+    priority: 17,
+    goal: 'Re-engage low-value dormant traders before they become long-term inactive.',
+    description:
+      'A trader who has deposited less than or equal to EUR 499 and traded at least 3 times, but has not executed any trade in the last 31 to 120 days.',
+    statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
+    rules:
+      '31 < daysSinceLastTrade <= 120; totalTrades >= 3; totalDeposit > 0; totalDeposit <= 499',
+    rulesList: [
+      '31 < daysSinceLastTrade <= 120',
+      'totalTrades >= 3',
+      'totalDeposit > 0',
+      'totalDeposit <= 499',
+    ],
+    matches: ({ metric }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        Number.isFinite(d) &&
+        d > 30 &&
+        d <= 120 &&
+        Number(metric?.totalTrades || 0) >= 3 &&
+        Number(metric?.totalDeposit || 0) > 0 &&
+        Number(metric?.totalDeposit || 0) <= 499
+      )
+    },
+  },
+  {
+    key: 'dormant_mid',
+    label: 'Dormant Mid',
+    group: 'Winback',
+    priority: 18,
+    goal: 'Reactivate medium-value dormant traders with focused winback campaigns.',
+    description:
+      'A trader who has deposited between EUR 500 and EUR 1,999 and traded at least 3 times, but has not executed any trade in the last 31 to 120 days.',
+    statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
+    rules: '31 < daysSinceLastTrade <= 120; totalTrades >= 3; 500 <= totalDeposit < 2,000',
+    rulesList: [
+      '31 < daysSinceLastTrade <= 120',
+      'totalTrades >= 3',
+      'totalDeposit >= 500',
+      'totalDeposit < 2,000',
+    ],
+    matches: ({ metric }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        Number.isFinite(d) &&
+        d > 30 &&
+        d <= 120 &&
+        Number(metric?.totalTrades || 0) >= 3 &&
+        Number(metric?.totalDeposit || 0) >= 500 &&
+        Number(metric?.totalDeposit || 0) < 2000
+      )
+    },
+  },
 ]
 
-export default function ProfitableRanking({ publicMode = false, initialState = null } = {}) {
+export default function ProfitableRanking({
+  publicMode = false,
+  initialState = null,
+  segmentsOnly = false,
+} = {}) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fileName, setFileName] = useState('')
@@ -1715,7 +1819,20 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const todayRef = useRef(null)
   if (!todayRef.current) todayRef.current = new Date()
 
+  const publicSegmentsStandalone = useMemo(() => {
+    if (!publicMode) return false
+
+    const fromSharedState = String(initialState?.sv || '').toLowerCase() === 'segments'
+    if (fromSharedState) return true
+
+    if (typeof window === 'undefined') return false
+    const view = new window.URLSearchParams(window.location.search).get('view')
+    return String(view || '').toLowerCase() === 'segments'
+  }, [initialState?.sv, publicMode])
+
   useEffect(() => {
+    if (segmentsOnly || publicSegmentsStandalone) return undefined
+
     // Dashboard-style page: prevent the global document from scrolling.
     // Only the table container should scroll.
     const prevHtmlOverflow = document.documentElement.style.overflow
@@ -1742,7 +1859,7 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         dashboardContent.style.overscrollBehavior = prevDashOverscroll || ''
       }
     }
-  }, [])
+  }, [publicSegmentsStandalone, segmentsOnly])
 
   const rawRows = artifact?.rows || []
   const rawHeaders = artifact?.headers || []
@@ -2027,25 +2144,8 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       ? String(initialState.activeTab)
       : 'most_active'
   )
-  const [showRankingSpecsModal, setShowRankingSpecsModal] = useState(false)
   const [selectedSegmentForJourney, setSelectedSegmentForJourney] = useState(null)
   const [showSegmentJourneyModal, setShowSegmentJourneyModal] = useState(false)
-  const [publicSegmentsStandalone] = useState(() => {
-    if (!publicMode) return false
-
-    const fromSharedState = String(initialState?.sv || '').toLowerCase() === 'segments'
-    if (fromSharedState) return true
-
-    if (typeof window === 'undefined') return false
-    const view = new window.URLSearchParams(window.location.search).get('view')
-    return String(view || '').toLowerCase() === 'segments'
-  })
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    const view = new window.URLSearchParams(window.location.search).get('view')
-    if (String(view || '').toLowerCase() === 'segments') setShowRankingSpecsModal(true)
-  }, [])
 
   const [sortByTab, setSortByTab] = useState(() => {
     const out = {}
@@ -2348,6 +2448,8 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         group: segment.group,
         priority: segment.priority,
         goal: segment.goal,
+        description: segment.description,
+        journeyEnabled: JOURNEY_SEGMENT_KEYS.has(segment.key),
         statusBuckets: segment.statusBuckets,
         rules: segment.rules,
         rulesList: segment.rulesList,
@@ -2363,13 +2465,25 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
       group: 'Coverage Gap',
       priority: 'N/A',
       goal: 'Identify traders not covered by current Solitics retention segments.',
+      description:
+        'A trader who is not captured by any of the current segment rules and may require a new segment definition.',
+      journeyEnabled: false,
       statusBuckets: buildStatusBuckets([]),
       rules: priorityRangeText,
       rulesList: [priorityRangeText],
       memberCount: unassignedCount,
     })
 
-    return rows
+    const unassignedRow = rows.find((row) => row.key === 'unassigned') || null
+    const assignedRows = rows
+      .filter((row) => row.key !== 'unassigned')
+      .sort((a, b) => {
+        const diff = Number(b?.memberCount || 0) - Number(a?.memberCount || 0)
+        if (diff !== 0) return diff
+        return String(a?.label || '').localeCompare(String(b?.label || ''))
+      })
+
+    return unassignedRow ? [...assignedRows, unassignedRow] : assignedRows
   }, [v1?.metrics])
 
   const sortedForDisplay = useMemo(() => {
@@ -2440,14 +2554,26 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
   const overlaySubtitle = 'Loading…'
 
   // Map segment keys to flow data
-  const segmentFlowMap = useMemo(() => ({
-    most_consistent: {
-      nodes: mostConsistentTradersNodes,
-      edges: mostConsistentTradersEdges,
-      meta: mostConsistentTradersMeta,
-    },
-    // More flows will be added as they're created
-  }), [])
+  const segmentFlowMap = useMemo(
+    () => ({
+      top_performing: {
+        nodes: topPerformingTradersNodes,
+        edges: topPerformingTradersEdges,
+        meta: topPerformingTradersMeta,
+      },
+      most_consistent: {
+        nodes: mostConsistentTradersNodes,
+        edges: mostConsistentTradersEdges,
+        meta: mostConsistentTradersMeta,
+      },
+      new_unfunded: {
+        nodes: unfundedNewcomersNodes,
+        edges: unfundedNewcomersEdges,
+        meta: unfundedNewcomersMeta,
+      },
+    }),
+    []
+  )
 
   const handleSegmentClick = (segment) => {
     setSelectedSegmentForJourney(segment)
@@ -2471,6 +2597,144 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
         standalone
         onSegmentClick={handleSegmentClick}
       />
+    )
+  }
+
+  if (segmentsOnly) {
+    return (
+      <div
+        ref={rootRef}
+        className="page-shell profitable-ranking-page profitable-ranking-segments-page"
+      >
+        {showOverlayLoader ? (
+          <div
+            className="logo-tools-backdrop"
+            role="status"
+            aria-live="polite"
+            aria-label={overlaySubtitle}
+            style={{ zIndex: 210, display: 'grid', placeItems: 'center', padding: 14 }}
+          >
+            <div style={{ width: 'min(420px, 92vw)' }}>
+              <FullPageLoader progress={45} subtitle={overlaySubtitle} minHeight="auto" />
+            </div>
+          </div>
+        ) : null}
+
+        <header className="page-header ranking-header" style={{ alignItems: 'stretch' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div>
+              <p className="page-label">Customer Base</p>
+              <h1 className="page-title">Segment Composition</h1>
+              <p className="page-subtitle">
+                Dedicated customer-base segmentation view for retention and winback planning.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+              {fileName ? (
+                <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+                  {fileName}
+                  {dataset ? ` • ${fmtInt(kpis.count)} traders` : ''}
+                </span>
+              ) : (
+                <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+                  Data loads automatically when available.
+                </span>
+              )}
+
+              {loading ? (
+                <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+                  Reading…
+                </span>
+              ) : null}
+
+              <button
+                type="button"
+                className="pill-tab"
+                onClick={onShareSegmentsTable}
+                disabled={loading || !dataset}
+                title="Open the public share page for Segment Composition"
+              >
+                Share Public Page
+              </button>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+              gap: 8,
+              minWidth: 'min(440px, 100%)',
+            }}
+          >
+            <KpiCard label="Total Traders" value={fmtInt(kpis.count)} size="sm" density="compact" />
+            <KpiCard
+              label="Total Deposits"
+              value={fmtMoney0(kpis.totalDeposits)}
+              size="sm"
+              density="compact"
+            />
+            <KpiCard
+              label="Total Trades"
+              value={fmtInt(kpis.totalTrades)}
+              size="sm"
+              density="compact"
+            />
+          </div>
+        </header>
+
+        {error ? (
+          <div
+            style={{
+              marginTop: 12,
+              padding: '10px 12px',
+              borderRadius: 12,
+              background: 'rgba(248, 113, 113, 0.08)',
+              border: '1px solid rgba(248, 113, 113, 0.18)',
+              color: 'rgba(248, 113, 113, 0.95)',
+              fontWeight: 800,
+            }}
+          >
+            {error}
+          </div>
+        ) : null}
+
+        {dataset ? (
+          <RankingSpecsModal
+            isOpen
+            onClose={null}
+            rows={rankingSpecsRows}
+            onShareTable={null}
+            shareDisabled={publicMode || loading || !dataset}
+            standalone
+            onSegmentClick={handleSegmentClick}
+          />
+        ) : (
+          <div
+            style={{
+              padding: 14,
+              borderRadius: 12,
+              background: 'rgba(255,255,255,0.02)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              color: 'var(--text-muted)',
+              fontWeight: 800,
+            }}
+          >
+            Data is not available.
+          </div>
+        )}
+
+        <SegmentJourneyModal
+          isOpen={showSegmentJourneyModal}
+          onClose={() => {
+            setShowSegmentJourneyModal(false)
+            setSelectedSegmentForJourney(null)
+          }}
+          segment={selectedSegmentForJourney}
+          flowData={selectedSegmentFlowData}
+        />
+      </div>
     )
   }
 
@@ -2522,20 +2786,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
                       Data loads automatically when available.
                     </span>
                   )}
-
-                  <button
-                    type="button"
-                    className="profitable-ranking-specs-trigger"
-                    onClick={() => setShowRankingSpecsModal(true)}
-                    disabled={!dataset}
-                    title="Open exclusive segment specifications"
-                    aria-label="Open exclusive segment specifications"
-                  >
-                    <span className="profitable-ranking-specs-trigger__icon" aria-hidden="true">
-                      i
-                    </span>
-                    <span>Segment specs</span>
-                  </button>
 
                   {loading ? (
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
@@ -2997,28 +3247,30 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
 
         <div className="profitable-ranking-scroll">
           {dataset ? (
-            <Table
-              rows={sortedForDisplay}
-              columns={activeTabConfig?.columns || []}
-              sortState={
-                sortByTab[activeTab] ||
-                activeTabConfig?.defaultSort || { key: 'totalTrades', dir: 'desc' }
-              }
-              onSort={(colKey) => {
-                deferAfterUpdate(() => setSort(activeTab, colKey))
-              }}
-              pageSize={pageSize}
-              onPageSize={(n) => {
-                deferAfterUpdate(() => {
-                  setPageSize(n)
-                  setPageByTab((p) => ({ ...p, [activeTab]: 1 }))
-                })
-              }}
-              page={pageByTab[activeTab] || 1}
-              onPage={(n) => {
-                deferAfterUpdate(() => setPageByTab((p) => ({ ...p, [activeTab]: n })))
-              }}
-            />
+            <>
+              <Table
+                rows={sortedForDisplay}
+                columns={activeTabConfig?.columns || []}
+                sortState={
+                  sortByTab[activeTab] ||
+                  activeTabConfig?.defaultSort || { key: 'totalTrades', dir: 'desc' }
+                }
+                onSort={(colKey) => {
+                  deferAfterUpdate(() => setSort(activeTab, colKey))
+                }}
+                pageSize={pageSize}
+                onPageSize={(n) => {
+                  deferAfterUpdate(() => {
+                    setPageSize(n)
+                    setPageByTab((p) => ({ ...p, [activeTab]: 1 }))
+                  })
+                }}
+                page={pageByTab[activeTab] || 1}
+                onPage={(n) => {
+                  deferAfterUpdate(() => setPageByTab((p) => ({ ...p, [activeTab]: n })))
+                }}
+              />
+            </>
           ) : (
             <div
               style={{
@@ -3035,15 +3287,6 @@ export default function ProfitableRanking({ publicMode = false, initialState = n
           )}
         </div>
       </div>
-
-      <RankingSpecsModal
-        isOpen={showRankingSpecsModal}
-        onClose={() => setShowRankingSpecsModal(false)}
-        rows={rankingSpecsRows}
-        onShareTable={!publicMode ? onShareSegmentsTable : null}
-        shareDisabled={publicMode || loading || !dataset}
-        onSegmentClick={handleSegmentClick}
-      />
 
       <SegmentJourneyModal
         isOpen={showSegmentJourneyModal}

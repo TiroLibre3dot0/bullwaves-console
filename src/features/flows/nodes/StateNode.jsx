@@ -5,7 +5,10 @@ export default function StateNode({ data }) {
   const isPrimary = data?.kind === 'primary'
   const branching = Boolean(data?.branching)
   const isLink = Boolean(data?.linkToFlow)
-  const linkVariant = isLink && data?.kind === 'influence' ? 'influence' : 'step'
+  const isTemplate = Boolean(data?.templateId)
+  const isClickable = isLink || isTemplate
+  const linkVariant = isClickable && data?.kind === 'influence' ? 'influence' : 'step'
+  const timingBadge = String(data?.timingBadge || '').trim()
 
   const kpis = Array.isArray(data?.kpis)
     ? data.kpis
@@ -35,7 +38,7 @@ export default function StateNode({ data }) {
           icon: 'rgba(56, 189, 248, 0.95)',
         }
 
-  const linkAccent = isLink
+  const linkAccent = isClickable
     ? {
         cursor: 'pointer',
         border: `1px solid ${linkPalette.border}`,
@@ -142,7 +145,8 @@ export default function StateNode({ data }) {
         position: 'relative',
         overflow: 'visible',
         padding: isPrimary ? '12px 14px' : '10px 12px',
-        paddingRight: isLink ? (isPrimary ? 40 : 38) : undefined,
+        paddingTop: timingBadge ? (isPrimary ? 32 : 28) : undefined,
+        paddingRight: isClickable ? (isPrimary ? 40 : 38) : undefined,
         background: isPrimary ? 'rgba(2, 6, 23, 0.78)' : 'rgba(15, 23, 42, 0.65)',
         border: isPrimary
           ? '1px solid rgba(226,232,240,0.22)'
@@ -156,6 +160,28 @@ export default function StateNode({ data }) {
         ...(linkAccent || {}),
       }}
     >
+      {timingBadge ? (
+        <div
+          style={{
+            position: 'absolute',
+            top: -10,
+            left: 12,
+            padding: '5px 10px',
+            borderRadius: 999,
+            background: 'linear-gradient(135deg, rgba(253,224,71,0.95), rgba(251,146,60,0.92))',
+            color: 'rgba(67,20,7,0.96)',
+            fontSize: 10,
+            fontWeight: 900,
+            lineHeight: 1,
+            letterSpacing: 0.5,
+            boxShadow: '0 10px 24px rgba(0,0,0,0.22)',
+            border: '1px solid rgba(255,255,255,0.35)',
+          }}
+        >
+          {timingBadge}
+        </div>
+      ) : null}
+
       {kpis.length ? (
         <div
           style={{
@@ -233,7 +259,7 @@ export default function StateNode({ data }) {
           })}
         </div>
       ) : null}
-      {isLink ? (
+      {isClickable ? (
         <div
           style={{
             position: 'absolute',

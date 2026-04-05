@@ -1,4 +1,5 @@
 const { routeAnalytics } = require('./handlers/analytics')
+const { routeEmail } = require('./handlers/email')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeConvrs } = require('./handlers/convrs')
@@ -41,6 +42,10 @@ async function routeApi(req, res) {
 
   if (scope === 'analytics') {
     return routeAnalytics(req, res, parts.slice(1))
+  }
+
+  if (scope === 'email') {
+    return routeEmail(req, res, parts.slice(1))
   }
 
   if (scope === 'share') {

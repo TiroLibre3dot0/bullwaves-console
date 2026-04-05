@@ -44,7 +44,12 @@ const baseEdge = {
 
 const decisionLabel = {
   labelStyle: { fontSize: 10, fontWeight: 700 },
-  labelBgStyle: { fill: 'rgba(10, 10, 15, 0.92)', color: '#94a3b8', padding: '4px 8px', borderRadius: '4px' },
+  labelBgStyle: {
+    fill: 'rgba(10, 10, 15, 0.92)',
+    color: '#94a3b8',
+    padding: '4px 8px',
+    borderRadius: '4px',
+  },
 }
 
 const influenceEdgeStyle = {
@@ -86,6 +91,8 @@ const nodes = [
     position: { x: xCenter(stateW), y: y.step1 },
     data: {
       label: { en: 'Consistency Badge awarded', it: 'Badge Consistenza assegnato' },
+      templateId: 'most_consistent_badge_award_email',
+      timingBadge: 'D0',
       subLabel: {
         en: 'D0: Email + in-app notification "3+ months active"',
         it: 'D0: Email + notifica in-app "3+ mesi attivi"',
@@ -126,6 +133,8 @@ const nodes = [
     position: { x: xCenter(stateW), y: y.step2 },
     data: {
       label: { en: 'Growth roadmap sent', it: 'Roadmap crescita inviata' },
+      templateId: 'most_consistent_growth_roadmap_email',
+      timingBadge: 'D7',
       subLabel: {
         en: 'D7: Personalized 2-month challenge with milestones',
         it: 'D7: Challenge personalizzata 2 mesi con milestone',
@@ -166,6 +175,8 @@ const nodes = [
     position: { x: xCenter(stateW), y: y.step3 },
     data: {
       label: { en: 'Loyalty reward sent', it: 'Reward fedeltà inviato' },
+      templateId: 'most_consistent_loyalty_reward_email',
+      timingBadge: 'D21',
       subLabel: {
         en: 'D21: Bonus tied to challenge completion & volume',
         it: 'D21: Bonus legato a completamento challenge + volume',
@@ -257,9 +268,11 @@ const nodes = [
     position: { x: 400, y: y.followUp },
     data: {
       label: { en: 'Top Performers onboarding', it: 'Onboarding Top Performers' },
+      templateId: 'most_consistent_top_performers_onboarding_email',
+      timingBadge: 'PROMO +0d',
       subLabel: {
-        en: 'VIP account manager assignment',
-        it: 'Assegnazione account manager VIP',
+        en: 'PROMO +0d: VIP account manager assignment after promotion',
+        it: 'PROMO +0d: assegnazione account manager VIP dopo la promozione',
       },
       kpis: [
         {
@@ -279,9 +292,11 @@ const nodes = [
     position: { x: 720, y: y.followUp },
     data: {
       label: { en: 'Cycle restart', it: 'Riavvio ciclo' },
+      templateId: 'most_consistent_cycle_restart_email',
+      timingBadge: 'D30',
       subLabel: {
-        en: 'New recognition + challenge in 30d',
-        it: 'Nuovo riconoscimento + challenge in 30g',
+        en: 'D30: new recognition + challenge in 30 days',
+        it: 'D30: nuovo riconoscimento + challenge in 30 giorni',
       },
       kpis: [
         {
@@ -527,7 +542,10 @@ export const meta = {
   canvasWidth: CANVAS_WIDTH,
   canvasHeight: 1450,
   segment: 'most_consistent',
-  goal: { en: 'Stabilize & scale medium-high engagement traders', it: 'Stabilizzare e scalare trader con engagement medio-alto' },
+  goal: {
+    en: 'Stabilize & scale medium-high engagement traders',
+    it: 'Stabilizzare e scalare trader con engagement medio-alto',
+  },
   kpis: [
     { en: 'Monthly continuity', it: 'Continuità mensile' },
     { en: 'Avg ticket growth', it: 'Crescita ticket medio' },
