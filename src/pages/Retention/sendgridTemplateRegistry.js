@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-06T14:06:46.177Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-04-06T14:37:18.359Z'
 
 export const sendgridTemplateRegistry = {
   most_consistent_badge_award_email: {

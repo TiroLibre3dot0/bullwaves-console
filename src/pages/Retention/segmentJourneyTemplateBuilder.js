@@ -53,21 +53,20 @@ function renderStepIcon(iconUrl, href, fallbackLabel) {
 const DEFAULT_CTA_URL = 'https://portal.bullwaves.com/custom/webtrader'
 const SENDGRID_BULLWAVES_ICON_URL =
   'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
-const SENDGRID_BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Logo.png'
+const BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Group%202087330250.svg'
 const STATIC_BULLWAVES_ICON_URL = '/Group%202087330261.svg'
-const STATIC_BULLWAVES_WORDMARK_URL = '/Group%202087330250.svg'
 
 function getBullwavesBrandAssets(mode = 'static') {
   if (mode === 'sendgrid') {
     return {
       iconUrl: SENDGRID_BULLWAVES_ICON_URL,
-      wordmarkUrl: SENDGRID_BULLWAVES_WORDMARK_URL,
+      wordmarkUrl: BULLWAVES_WORDMARK_URL,
     }
   }
 
   return {
     iconUrl: STATIC_BULLWAVES_ICON_URL,
-    wordmarkUrl: STATIC_BULLWAVES_WORDMARK_URL,
+    wordmarkUrl: BULLWAVES_WORDMARK_URL,
   }
 }
 
