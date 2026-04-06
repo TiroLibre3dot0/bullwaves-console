@@ -8,10 +8,18 @@ dotenv.config({
 })
 
 const SENDGRID_API = 'https://api.sendgrid.com/v3/mail/send'
+const PRIVATE_PREVIEW_EMAILS = new Set(['paolo.v@bullwaves.com'])
+const PRIVATE_PREVIEW_RECIPIENTS = new Set(['paolo.v@bullwaves.com'])
 
 function env(name, fallback = '') {
   const value = process.env[name]
   return value == null ? fallback : String(value).trim()
+}
+
+function normalizeEmail(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
 }
 
 function getConfig() {
@@ -19,39 +27,30 @@ function getConfig() {
     apiKey: env('SENDGRID_API_KEY'),
     fromEmail: env('SENDGRID_FROM_EMAIL'),
     fromName: env('SENDGRID_FROM_NAME', 'Bullwaves'),
-    testSecret: env('SENDGRID_TEST_SECRET'),
   }
-}
-
-function readBearerToken(req) {
-  const auth = String(pickHeader(req, 'authorization') || '').trim()
-  if (!auth.toLowerCase().startsWith('bearer ')) return ''
-  return auth.slice(7).trim()
-}
-
-function isAuthorized(req, expectedSecret) {
-  if (!expectedSecret) return false
-
-  const byBearer = readBearerToken(req)
-  if (byBearer && byBearer === expectedSecret) return true
-
-  const byHeader = String(pickHeader(req, 'x-sendgrid-test-secret') || '').trim()
-  if (byHeader && byHeader === expectedSecret) return true
-
-  try {
-    const parsed = new URL(req?.url || '/', 'http://localhost')
-    const byQuery = String(parsed.searchParams.get('secret') || '').trim()
-    if (byQuery && byQuery === expectedSecret) return true
-  } catch {
-    // Ignore malformed URL and fall back to header checks only.
-  }
-
-  return false
 }
 
 function isValidEmail(value) {
   const email = String(value || '').trim()
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+
+function readViewerEmail(req, body) {
+  const byHeader = normalizeEmail(pickHeader(req, 'x-bullwaves-user-email'))
+  if (isValidEmail(byHeader)) return byHeader
+
+  const byBody = normalizeEmail(body?.viewerEmail)
+  if (isValidEmail(byBody)) return byBody
+
+  return ''
+}
+
+function canAccessPrivatePreview(email) {
+  return PRIVATE_PREVIEW_EMAILS.has(normalizeEmail(email))
+}
+
+function isAllowedRecipient(email) {
+  return PRIVATE_PREVIEW_RECIPIENTS.has(normalizeEmail(email))
 }
 
 function normalizeContent(body) {
@@ -138,6 +137,19 @@ async function handleHealth(req, res) {
     return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
   }
 
+  const viewerEmail = readViewerEmail(req)
+  if (!canAccessPrivatePreview(viewerEmail)) {
+    return json(
+      res,
+      403,
+      {
+        ok: false,
+        error: 'Access denied. This preview is limited to paolo.v@bullwaves.com.',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
   const config = getConfig()
 
   return json(
@@ -145,15 +157,18 @@ async function handleHealth(req, res) {
     200,
     {
       ok: true,
-      configured: Boolean(config.apiKey && config.fromEmail && config.testSecret),
+      configured: Boolean(config.apiKey && config.fromEmail),
       missing: {
         SENDGRID_API_KEY: !config.apiKey,
         SENDGRID_FROM_EMAIL: !config.fromEmail,
-        SENDGRID_TEST_SECRET: !config.testSecret,
       },
       defaults: {
         fromEmail: config.fromEmail || null,
         fromName: config.fromName || null,
+      },
+      access: {
+        viewerEmail,
+        recipientLock: Array.from(PRIVATE_PREVIEW_RECIPIENTS),
       },
     },
     { 'Cache-Control': 'no-store' }
@@ -164,6 +179,21 @@ async function handleSendTest(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
     return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const body = safeParseJsonBody(req)
+  const viewerEmail = readViewerEmail(req, body)
+
+  if (!canAccessPrivatePreview(viewerEmail)) {
+    return json(
+      res,
+      403,
+      {
+        ok: false,
+        error: 'Access denied. This preview is limited to paolo.v@bullwaves.com.',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
   }
 
   const config = getConfig()
@@ -183,25 +213,23 @@ async function handleSendTest(req, res) {
     )
   }
 
-  if (!config.testSecret) {
-    return json(
-      res,
-      501,
-      { ok: false, error: 'SENDGRID_TEST_SECRET is required to enable this endpoint.' },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-
-  if (!isAuthorized(req, config.testSecret)) {
-    return json(res, 401, { ok: false, error: 'Unauthorized' }, { 'Cache-Control': 'no-store' })
-  }
-
-  const body = safeParseJsonBody(req)
   const to = String(body?.to || '').trim()
   const fromEmail = String(body?.fromEmail || config.fromEmail).trim()
 
   if (!isValidEmail(to)) {
     return json(res, 400, { ok: false, error: 'Missing or invalid field: to' }, { 'Cache-Control': 'no-store' })
+  }
+
+  if (!isAllowedRecipient(to)) {
+    return json(
+      res,
+      403,
+      {
+        ok: false,
+        error: 'Recipient locked. Test emails can currently be sent only to paolo.v@bullwaves.com.',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
   }
 
   if (!isValidEmail(fromEmail)) {
@@ -235,6 +263,7 @@ async function handleSendTest(req, res) {
         sendgridStatus: result.status,
         messageId: result.headers.messageId,
         request: {
+          viewerEmail,
           to,
           fromEmail: payload.from.email,
           fromName: payload.from.name,

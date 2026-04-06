@@ -1,4 +1,4 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,6 +8,9 @@ import { segmentJourneyTemplateExtrasById } from '../src/pages/Retention/segment
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const workspaceRoot = path.resolve(__dirname, '..')
+
+dotenv.config({ path: path.join(workspaceRoot, '.env.sendgrid.local'), override: false })
+dotenv.config({ path: path.join(workspaceRoot, '.env.local'), override: false })
 
 const args = new Set(process.argv.slice(2))
 const isApply = args.has('--apply')
@@ -203,11 +206,21 @@ function buildRuntimeRegistryContent(summary) {
     }
   }
 
-  return `export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = ${JSON.stringify(
+  return `const WHATSAPP_NUMBER = '35799514794'
+
+const WHATSAPP_TEXT = {
+  en: 'Hi Bullwaves, I would like help with the next step on my account.',
+  it: 'Ciao Bullwaves, vorrei supporto per il prossimo passo sul mio account.',
+}
+
+function getLocalizedSupportUrl(locale = 'en') {
+  const normalizedLocale = locale === 'it' ? 'it' : 'en'
+  return 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(WHATSAPP_TEXT[normalizedLocale])
+}
+
+export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = ${JSON.stringify(
     {
       cta_url: 'https://portal.bullwaves.com/custom/webtrader',
-      support_url:
-        'https://wa.me/35799514794?text=Hi%20Bullwaves%2C%20I%20would%20like%20help%20with%20the%20next%20step%20on%20my%20account.',
       account_manager_name: 'The Bullwaves Team',
     },
     null,
@@ -223,9 +236,11 @@ export function getSendgridTemplateMapping(localTemplateId, locale = 'en', varia
 }
 
 export function buildSendgridDynamicTemplateData(overrides = {}) {
+  const locale = overrides?.locale === 'it' ? 'it' : 'en'
   return Object.fromEntries(
     Object.entries({
       ...SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS,
+      support_url: overrides?.support_url ?? getLocalizedSupportUrl(locale),
       ...overrides,
     }).filter(([, value]) => value !== undefined)
   )

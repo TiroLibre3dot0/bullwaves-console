@@ -1,39 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 import { segmentJourneyTemplatesById } from './segmentJourneyTemplates'
 import {
   buildSendgridDynamicTemplateData,
   getSendgridTemplateMapping,
 } from './sendgridTemplateRegistry'
 
-const PREVIEW_PATH = '/email-master-template-preview.html'
+const PRIVATE_PREVIEW_EMAIL = 'paolo.v@bullwaves.com'
+const PRIVATE_PREVIEW_FIRST_NAME = 'Paolo'
 
-const DEFAULT_TEST_SECRET = ''
-const SENDGRID_SECRET_STORAGE_KEY = 'bullwaves.sendgrid.testSecret'
-const SENDGRID_RECIPIENT_STORAGE_KEY = 'bullwaves.sendgrid.recipient'
-
-function readStoredValue(key, fallback = '') {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return fallback
-    return window.localStorage.getItem(key) || fallback
-  } catch {
-    return fallback
-  }
-}
-
-function writeStoredValue(key, value) {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return
-    if (!value) {
-      window.localStorage.removeItem(key)
-      return
-    }
-    window.localStorage.setItem(key, value)
-  } catch {
-    // Ignore storage failures.
-  }
-}
-
-function textInputStyle() {
+function inputStyle() {
   return {
     minHeight: '42px',
     borderRadius: '14px',
@@ -45,14 +21,41 @@ function textInputStyle() {
   }
 }
 
-function TextField({ label, value, onChange, placeholder, type = 'text' }) {
+function SelectField({ label, value, onChange, options }) {
   return (
-    <label
-      style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '220px', flex: 1 }}
-    >
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 180, flex: 1 }}>
       <span
         style={{
-          fontSize: '11px',
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.08em',
+          textTransform: 'uppercase',
+          color: '#8fa6bd',
+        }}
+      >
+        {label}
+      </span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        style={{ ...inputStyle(), fontWeight: 700 }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
+
+function TextField({ label, value, onChange, placeholder, disabled = false, type = 'text' }) {
+  return (
+    <label style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 220, flex: 1 }}>
+      <span
+        style={{
+          fontSize: 11,
           fontWeight: 800,
           letterSpacing: '0.08em',
           textTransform: 'uppercase',
@@ -66,37 +69,11 @@ function TextField({ label, value, onChange, placeholder, type = 'text' }) {
         value={value}
         onChange={(event) => onChange(event.target.value)}
         placeholder={placeholder}
-        style={textInputStyle()}
-      />
-    </label>
-  )
-}
-
-function TextAreaField({ label, value, onChange, placeholder, minHeight = 110 }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%' }}>
-      <span
+        disabled={disabled}
         style={{
-          fontSize: '11px',
-          fontWeight: 800,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#8fa6bd',
-        }}
-      >
-        {label}
-      </span>
-      <textarea
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        style={{
-          ...textInputStyle(),
-          minHeight,
-          padding: '12px 14px',
-          resize: 'vertical',
-          fontFamily: 'inherit',
-          lineHeight: 1.5,
+          ...inputStyle(),
+          opacity: disabled ? 0.72 : 1,
+          cursor: disabled ? 'not-allowed' : 'text',
         }}
       />
     </label>
@@ -104,24 +81,21 @@ function TextAreaField({ label, value, onChange, placeholder, minHeight = 110 })
 }
 
 function ActionButton({ children, onClick, disabled, tone = 'primary' }) {
-  const background =
-    tone === 'secondary'
-      ? 'rgba(255,255,255,0.06)'
-      : 'linear-gradient(135deg, rgba(56,189,248,0.95), rgba(15,57,221,0.95))'
-  const color = tone === 'secondary' ? '#d7e7f6' : '#ffffff'
-
+  const primary = tone === 'primary'
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
       style={{
-        minHeight: '44px',
+        minHeight: 44,
         padding: '0 16px',
-        borderRadius: '999px',
-        border: tone === 'secondary' ? '1px solid rgba(255,255,255,0.10)' : '0',
-        background,
-        color,
+        borderRadius: 999,
+        border: primary ? 'none' : '1px solid rgba(255,255,255,0.10)',
+        background: primary
+          ? 'linear-gradient(135deg, rgba(56,189,248,0.95), rgba(15,57,221,0.95))'
+          : 'rgba(255,255,255,0.06)',
+        color: '#ffffff',
         fontWeight: 800,
         cursor: disabled ? 'not-allowed' : 'pointer',
         opacity: disabled ? 0.45 : 1,
@@ -132,84 +106,15 @@ function ActionButton({ children, onClick, disabled, tone = 'primary' }) {
   )
 }
 
-function StatusBadge({ healthy }) {
-  return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        minHeight: '32px',
-        padding: '0 12px',
-        borderRadius: '999px',
-        border: healthy ? '1px solid rgba(34,197,94,0.30)' : '1px solid rgba(248,113,113,0.30)',
-        background: healthy ? 'rgba(34,197,94,0.12)' : 'rgba(248,113,113,0.12)',
-        color: healthy ? '#c7f9d3' : '#ffd2d2',
-        fontSize: '12px',
-        fontWeight: 800,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-      }}
-    >
-      {healthy ? 'API ready' : 'API missing env'}
-    </span>
-  )
-}
-
-function prettyTemplateLabel(template, fallbackId) {
-  return (
-    template?.locales?.it?.variants?.a?.name ||
-    template?.locales?.en?.variants?.a?.name ||
-    fallbackId
-  )
-}
-
-function SelectField({ label, value, onChange, options }) {
-  return (
-    <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '220px' }}>
-      <span
-        style={{
-          fontSize: '11px',
-          fontWeight: 800,
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: '#8fa6bd',
-        }}
-      >
-        {label}
-      </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        style={{
-          minHeight: '42px',
-          borderRadius: '14px',
-          border: '1px solid rgba(255,255,255,0.10)',
-          background: 'rgba(255,255,255,0.04)',
-          color: '#f8fdff',
-          padding: '0 14px',
-          fontWeight: 700,
-        }}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
-}
-
 function ToggleButton({ active, children, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{
-        minHeight: '40px',
+        minHeight: 38,
         padding: '0 14px',
-        borderRadius: '999px',
+        borderRadius: 999,
         border: active ? '1px solid rgba(56,189,248,0.55)' : '1px solid rgba(255,255,255,0.10)',
         background: active
           ? 'linear-gradient(135deg, rgba(56,189,248,0.22), rgba(15,57,221,0.30))'
@@ -224,9 +129,51 @@ function ToggleButton({ active, children, onClick }) {
   )
 }
 
+function StatusBadge({ loading, healthy }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        minHeight: 32,
+        padding: '0 12px',
+        borderRadius: 999,
+        border: loading
+          ? '1px solid rgba(255,255,255,0.10)'
+          : healthy
+            ? '1px solid rgba(34,197,94,0.30)'
+            : '1px solid rgba(248,113,113,0.30)',
+        background: loading
+          ? 'rgba(255,255,255,0.04)'
+          : healthy
+            ? 'rgba(34,197,94,0.12)'
+            : 'rgba(248,113,113,0.12)',
+        color: loading ? '#d9e6f2' : healthy ? '#c7f9d3' : '#ffd2d2',
+        fontSize: 12,
+        fontWeight: 800,
+        letterSpacing: '0.06em',
+        textTransform: 'uppercase',
+      }}
+    >
+      {loading ? 'Checking' : healthy ? 'API ready' : 'API blocked'}
+    </span>
+  )
+}
+
+function prettyTemplateLabel(template, fallbackId) {
+  return (
+    template?.locales?.it?.variants?.a?.name ||
+    template?.locales?.en?.variants?.a?.name ||
+    fallbackId
+  )
+}
+
 export default function EmailMasterTemplatePage() {
-  const [skin, setSkin] = useState('light')
-  const [device, setDevice] = useState('desktop')
+  const { user } = useAuth()
+  const viewerEmail = String(user?.email || '')
+    .trim()
+    .toLowerCase()
+
   const templateOptions = useMemo(
     () =>
       Object.entries(segmentJourneyTemplatesById)
@@ -235,27 +182,16 @@ export default function EmailMasterTemplatePage() {
     []
   )
 
+  const [device, setDevice] = useState('desktop')
   const [templateId, setTemplateId] = useState(templateOptions[0]?.value || '')
   const [locale, setLocale] = useState('it')
   const [variant, setVariant] = useState('a')
   const [emailHealth, setEmailHealth] = useState({ loading: true, data: null, error: '' })
-  const [recipient, setRecipient] = useState(() =>
-    readStoredValue(SENDGRID_RECIPIENT_STORAGE_KEY, 'paolo.v@bullwaves.com')
-  )
-  const [testSecret, setTestSecret] = useState(() =>
-    readStoredValue(SENDGRID_SECRET_STORAGE_KEY, DEFAULT_TEST_SECRET)
-  )
-  const [firstName, setFirstName] = useState('Paolo')
-  const [accountManagerName, setAccountManagerName] = useState('The Bullwaves Team')
-  const [ctaUrl, setCtaUrl] = useState('https://portal.bullwaves.com/custom/webtrader')
-  const [supportUrl, setSupportUrl] = useState(
-    'https://wa.me/35799514794?text=Hi%20Bullwaves%2C%20I%20would%20like%20help%20with%20the%20next%20step%20on%20my%20account.'
-  )
   const [sendState, setSendState] = useState({ loading: false, mode: '', data: null, error: '' })
 
-  const previewUrl = useMemo(
-    () => `${PREVIEW_PATH}?skin=${encodeURIComponent(skin)}&device=${encodeURIComponent(device)}`,
-    [device, skin]
+  const requestViewerHeaders = useMemo(
+    () => (viewerEmail ? { 'x-bullwaves-user-email': viewerEmail } : {}),
+    [viewerEmail]
   )
 
   const selectedTemplate = templateId ? segmentJourneyTemplatesById?.[templateId] || null : null
@@ -266,9 +202,11 @@ export default function EmailMasterTemplatePage() {
       label: entry === 'it' ? 'Italiano' : 'English',
     }))
   }, [selectedTemplate])
+
   const activeLocale = localeOptions.some((entry) => entry.value === locale)
     ? locale
     : localeOptions[0]?.value || 'it'
+
   const variantOptions = useMemo(() => {
     const variants = Object.keys(selectedTemplate?.locales?.[activeLocale]?.variants || {})
     return variants.map((entry) => ({
@@ -276,33 +214,57 @@ export default function EmailMasterTemplatePage() {
       label: `Variant ${String(entry).toUpperCase()}`,
     }))
   }, [activeLocale, selectedTemplate])
+
   const activeVariant = variantOptions.some((entry) => entry.value === variant)
     ? variant
     : variantOptions[0]?.value || 'a'
+
   const localizedVariant =
     selectedTemplate?.locales?.[activeLocale]?.variants?.[activeVariant] || null
+
   const sendgridMapping = useMemo(
     () => getSendgridTemplateMapping(templateId, activeLocale, activeVariant),
     [activeLocale, activeVariant, templateId]
   )
+
   const dynamicTemplateData = useMemo(
     () =>
       buildSendgridDynamicTemplateData({
-        first_name: firstName || undefined,
-        cta_url: ctaUrl || undefined,
-        support_url: supportUrl || undefined,
-        account_manager_name: accountManagerName || undefined,
+        first_name: PRIVATE_PREVIEW_FIRST_NAME,
+        locale: activeLocale,
       }),
-    [accountManagerName, ctaUrl, firstName, supportUrl]
+    [activeLocale]
   )
+
+  useEffect(() => {
+    if (!localeOptions.length) return
+    if (!localeOptions.some((entry) => entry.value === locale)) {
+      setLocale(localeOptions[0].value)
+    }
+  }, [locale, localeOptions])
+
+  useEffect(() => {
+    if (!variantOptions.length) return
+    if (!variantOptions.some((entry) => entry.value === variant)) {
+      setVariant(variantOptions[0].value)
+    }
+  }, [variant, variantOptions])
 
   useEffect(() => {
     let cancelled = false
 
     async function loadHealth() {
+      if (!viewerEmail) {
+        setEmailHealth({ loading: false, data: null, error: 'Sessione utente non disponibile.' })
+        return
+      }
+
       setEmailHealth((current) => ({ ...current, loading: true, error: '' }))
       try {
-        const response = await fetch('/api/email/health', { cache: 'no-store' })
+        const response = await fetch('/api/email/health', {
+          cache: 'no-store',
+          headers: requestViewerHeaders,
+        })
         const data = await response.json()
         if (cancelled) return
         setEmailHealth({
@@ -324,34 +286,20 @@ export default function EmailMasterTemplatePage() {
     return () => {
       cancelled = true
     }
-  }, [])
-
-  useEffect(() => {
-    if (!localeOptions.length) return
-    if (!localeOptions.some((entry) => entry.value === locale)) {
-      setLocale(localeOptions[0].value)
-    }
-  }, [locale, localeOptions])
-
-  useEffect(() => {
-    if (!variantOptions.length) return
-    if (!variantOptions.some((entry) => entry.value === variant)) {
-      setVariant(variantOptions[0].value)
-    }
-  }, [variant, variantOptions])
-
-  useEffect(() => {
-    writeStoredValue(SENDGRID_SECRET_STORAGE_KEY, testSecret.trim())
-  }, [testSecret])
-
-  useEffect(() => {
-    writeStoredValue(SENDGRID_RECIPIENT_STORAGE_KEY, recipient.trim())
-  }, [recipient])
+  }, [requestViewerHeaders, viewerEmail])
 
   async function refreshEmailHealth() {
+    if (!viewerEmail) {
+      setEmailHealth({ loading: false, data: null, error: 'Sessione utente non disponibile.' })
+      return
+    }
+
     setEmailHealth((current) => ({ ...current, loading: true, error: '' }))
     try {
-      const response = await fetch('/api/email/health', { cache: 'no-store' })
+      const response = await fetch('/api/email/health', {
+        cache: 'no-store',
+        headers: requestViewerHeaders,
+      })
       const data = await response.json()
       setEmailHealth({
         loading: false,
@@ -364,26 +312,23 @@ export default function EmailMasterTemplatePage() {
   }
 
   async function sendEmail(mode) {
-    if (!recipient.trim()) {
-      window.alert('Inserisci un destinatario email valido.')
-      return
-    }
-
-    if (!testSecret.trim()) {
-      window.alert('Inserisci SENDGRID_TEST_SECRET prima di inviare.')
+    if (!viewerEmail) {
+      window.alert('Sessione utente non disponibile.')
       return
     }
 
     const body =
       mode === 'template'
         ? {
-            to: recipient.trim(),
+            to: PRIVATE_PREVIEW_EMAIL,
+            viewerEmail,
             templateId: sendgridMapping?.templateId || '',
             subject: localizedVariant?.subject || sendgridMapping?.subject || '',
             dynamicTemplateData,
           }
         : {
-            to: recipient.trim(),
+            to: PRIVATE_PREVIEW_EMAIL,
+            viewerEmail,
             subject: localizedVariant?.subject || 'Bullwaves email preview',
             html: localizedVariant?.html || '',
             text:
@@ -399,7 +344,7 @@ export default function EmailMasterTemplatePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${testSecret.trim()}`,
+          ...requestViewerHeaders,
         },
         body: JSON.stringify(body),
       })
@@ -414,273 +359,190 @@ export default function EmailMasterTemplatePage() {
     }
   }
 
+  const canSendTemplate = Boolean(sendgridMapping?.templateId && emailHealth?.data?.configured)
+  const canSendHtml = Boolean(localizedVariant?.html && emailHealth?.data?.configured)
+
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '18px',
+        display: 'grid',
+        gap: 16,
         minHeight: 'calc(100vh - 120px)',
       }}
     >
       <section
         style={{
-          borderRadius: '24px',
+          borderRadius: 22,
           border: '1px solid rgba(255,255,255,0.08)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.025) 100%)',
-          padding: '24px',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.025))',
+          padding: 20,
           boxShadow: '0 24px 60px rgba(2,6,23,0.22)',
+          display: 'grid',
+          gap: 16,
         }}
       >
         <div
           style={{
             display: 'flex',
-            flexWrap: 'wrap',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '14px',
+            alignItems: 'flex-start',
+            gap: 16,
+            flexWrap: 'wrap',
           }}
         >
-          <div style={{ maxWidth: '760px' }}>
+          <div style={{ maxWidth: 760 }}>
             <div
               style={{
                 display: 'inline-block',
                 padding: '7px 12px',
-                borderRadius: '999px',
-                background: 'rgba(34,211,238,0.10)',
-                color: '#bff7ff',
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Retention Design System
-            </div>
-            <h1 style={{ margin: '14px 0 10px', fontSize: '34px', lineHeight: 1.08 }}>
-              Email Template Review
-            </h1>
-            <p style={{ margin: 0, color: '#9fb3c8', lineHeight: 1.7, fontSize: '15px' }}>
-              Qui puoi rivedere i journey reali con lingua, variante e device reali senza passare
-              dal modal del ranking. La preview master statica resta disponibile come riferimento di
-              sistema.
-            </p>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-              alignItems: 'flex-end',
-            }}
-          >
-            <div
-              style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
-            >
-              <ToggleButton active={skin === 'light'} onClick={() => setSkin('light')}>
-                Light
-              </ToggleButton>
-              <ToggleButton active={skin === 'dark'} onClick={() => setSkin('dark')}>
-                Dark
-              </ToggleButton>
-            </div>
-
-            <div
-              style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
-            >
-              <ToggleButton active={device === 'desktop'} onClick={() => setDevice('desktop')}>
-                Desktop
-              </ToggleButton>
-              <ToggleButton active={device === 'mobile'} onClick={() => setDevice('mobile')}>
-                Mobile
-              </ToggleButton>
-            </div>
-
-            <a
-              href={previewUrl}
-              target="_blank"
-              rel="noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '44px',
-                padding: '0 18px',
-                borderRadius: '999px',
-                background: 'linear-gradient(135deg, #38bdf8 0%, #0f39dd 100%)',
-                color: '#ffffff',
-                textDecoration: 'none',
-                fontWeight: 800,
-              }}
-            >
-              Open Static Preview
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section
-        style={{
-          borderRadius: '24px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.025) 100%)',
-          padding: '24px',
-          boxShadow: '0 24px 60px rgba(2,6,23,0.22)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div style={{ maxWidth: '820px' }}>
-            <div
-              style={{
-                display: 'inline-block',
-                padding: '7px 12px',
-                borderRadius: '999px',
+                borderRadius: 999,
                 background: 'rgba(56,189,248,0.10)',
                 color: '#bff7ff',
-                fontSize: '12px',
+                fontSize: 12,
                 fontWeight: 800,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
               }}
             >
-              SendGrid Test Panel
+              Email test
             </div>
-            <h2 style={{ margin: '14px 0 8px', fontSize: '28px', lineHeight: 1.1 }}>
-              Test invio dal template selezionato
-            </h2>
-            <p style={{ margin: 0, color: '#9fb3c8', lineHeight: 1.7, fontSize: '14px' }}>
-              Compila <strong>.env.sendgrid.local</strong> con API key, sender e test secret. Poi
-              usa questo pannello per inviare sia il template dinamico SendGrid sia l HTML live
-              generato dal builder.
+            <h1 style={{ margin: '12px 0 8px', fontSize: 30, lineHeight: 1.08 }}>
+              Email Master Template
+            </h1>
+            <p style={{ margin: 0, color: '#9fb3c8', lineHeight: 1.65, fontSize: 14 }}>
+              Solo il necessario: scegli il journey, controlla la preview e invia il test a{' '}
+              <strong>{PRIVATE_PREVIEW_EMAIL}</strong>.
             </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <StatusBadge healthy={Boolean(emailHealth?.data?.configured)} />
-            <ActionButton
-              tone="secondary"
-              onClick={refreshEmailHealth}
-              disabled={emailHealth.loading}
-            >
-              {emailHealth.loading ? 'Checking...' : 'Refresh API health'}
-            </ActionButton>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <ToggleButton active={device === 'desktop'} onClick={() => setDevice('desktop')}>
+              Desktop
+            </ToggleButton>
+            <ToggleButton active={device === 'mobile'} onClick={() => setDevice('mobile')}>
+              Mobile
+            </ToggleButton>
           </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <SelectField
+            label="Journey"
+            value={templateId}
+            onChange={setTemplateId}
+            options={templateOptions}
+          />
+          <SelectField
+            label="Lingua"
+            value={activeLocale}
+            onChange={setLocale}
+            options={localeOptions}
+          />
+          <SelectField
+            label="Variante"
+            value={activeVariant}
+            onChange={setVariant}
+            options={variantOptions}
+          />
         </div>
 
         <div
           style={{
             display: 'grid',
-            gap: '16px',
-            gridTemplateColumns: 'minmax(300px, 1fr) minmax(340px, 460px)',
+            gridTemplateColumns: 'minmax(280px, 420px) minmax(0, 1fr)',
+            gap: 16,
             alignItems: 'start',
           }}
         >
           <div
             style={{
-              borderRadius: '20px',
+              borderRadius: 18,
               border: '1px solid rgba(255,255,255,0.08)',
               background: 'rgba(255,255,255,0.03)',
-              padding: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
+              padding: 16,
+              display: 'grid',
+              gap: 14,
             }}
           >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <TextField
-                label="Destinatario"
-                type="email"
-                value={recipient}
-                onChange={setRecipient}
-                placeholder="paolo.v@bullwaves.com"
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+                flexWrap: 'wrap',
+              }}
+            >
+              <StatusBadge
+                loading={emailHealth.loading}
+                healthy={Boolean(emailHealth?.data?.configured)}
               />
-              <TextField
-                label="Test Secret"
-                value={testSecret}
-                onChange={setTestSecret}
-                placeholder="Inserisci SENDGRID_TEST_SECRET"
-              />
+              <ActionButton
+                tone="secondary"
+                onClick={refreshEmailHealth}
+                disabled={emailHealth.loading}
+              >
+                Refresh
+              </ActionButton>
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <TextField
-                label="First name"
-                value={firstName}
-                onChange={setFirstName}
-                placeholder="Paolo"
-              />
-              <TextField
-                label="Account manager"
-                value={accountManagerName}
-                onChange={setAccountManagerName}
-                placeholder="The Bullwaves Team"
-              />
+            <TextField
+              label="Destinatario"
+              type="email"
+              value={PRIVATE_PREVIEW_EMAIL}
+              onChange={() => {}}
+              disabled
+            />
+
+            <div
+              style={{
+                display: 'grid',
+                gap: 10,
+                color: '#d9e6f2',
+                fontSize: 13,
+                lineHeight: 1.6,
+              }}
+            >
+              <div>
+                <strong>Subject:</strong>{' '}
+                {sendgridMapping?.subject || localizedVariant?.subject || '—'}
+              </div>
+              <div>
+                <strong>Template ID:</strong>{' '}
+                {sendgridMapping?.templateId || 'Nessun mapping SendGrid'}
+              </div>
+              {emailHealth.error ? (
+                <div style={{ color: '#ffd2d2' }}>{emailHealth.error}</div>
+              ) : null}
             </div>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
-              <TextField
-                label="CTA URL"
-                value={ctaUrl}
-                onChange={setCtaUrl}
-                placeholder="https://..."
-              />
-              <TextField
-                label="Support URL"
-                value={supportUrl}
-                onChange={setSupportUrl}
-                placeholder="https://..."
-              />
-            </div>
-
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <ActionButton
                 onClick={() => sendEmail('template')}
-                disabled={
-                  sendState.loading ||
-                  !sendgridMapping?.templateId ||
-                  !emailHealth?.data?.configured
-                }
+                disabled={sendState.loading || !canSendTemplate}
               >
                 {sendState.loading && sendState.mode === 'template'
-                  ? 'Sending template...'
-                  : 'Send SendGrid template'}
+                  ? 'Sending...'
+                  : 'Send template'}
               </ActionButton>
               <ActionButton
                 tone="secondary"
                 onClick={() => sendEmail('html')}
-                disabled={
-                  sendState.loading || !localizedVariant?.html || !emailHealth?.data?.configured
-                }
+                disabled={sendState.loading || !canSendHtml}
               >
-                {sendState.loading && sendState.mode === 'html'
-                  ? 'Sending HTML...'
-                  : 'Send live HTML preview'}
+                {sendState.loading && sendState.mode === 'html' ? 'Sending...' : 'Send HTML'}
               </ActionButton>
             </div>
 
             {sendState.error ? (
               <div
                 style={{
-                  borderRadius: '16px',
+                  borderRadius: 14,
                   border: '1px solid rgba(248,113,113,0.24)',
                   background: 'rgba(248,113,113,0.10)',
                   color: '#ffd2d2',
-                  padding: '14px 16px',
-                  fontSize: '13px',
+                  padding: '12px 14px',
+                  fontSize: 13,
                   lineHeight: 1.6,
                 }}
               >
@@ -691,12 +553,12 @@ export default function EmailMasterTemplatePage() {
             {sendState.data?.accepted ? (
               <div
                 style={{
-                  borderRadius: '16px',
+                  borderRadius: 14,
                   border: '1px solid rgba(34,197,94,0.24)',
                   background: 'rgba(34,197,94,0.10)',
                   color: '#d7fee2',
-                  padding: '14px 16px',
-                  fontSize: '13px',
+                  padding: '12px 14px',
+                  fontSize: 13,
                   lineHeight: 1.7,
                 }}
               >
@@ -708,288 +570,34 @@ export default function EmailMasterTemplatePage() {
 
           <div
             style={{
-              borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.03)',
-              padding: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#8fa6bd',
-                }}
-              >
-                API status
-              </div>
-              <div
-                style={{ marginTop: '6px', fontSize: '14px', color: '#d9e6f2', lineHeight: 1.6 }}
-              >
-                {emailHealth.loading
-                  ? 'Controllo configurazione in corso...'
-                  : emailHealth.error ||
-                    (emailHealth?.data?.configured
-                      ? 'Configurazione pronta.'
-                      : 'Mancano variabili server-side.')}
-              </div>
-            </div>
-
-            <div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#8fa6bd',
-                }}
-              >
-                Template mapping
-              </div>
-              <div
-                style={{ marginTop: '6px', fontSize: '14px', color: '#d9e6f2', lineHeight: 1.6 }}
-              >
-                {sendgridMapping?.templateId || 'Nessun mapping SendGrid per questa combinazione.'}
-              </div>
-            </div>
-
-            <div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#8fa6bd',
-                }}
-              >
-                Subject attuale
-              </div>
-              <div
-                style={{ marginTop: '6px', fontSize: '14px', color: '#d9e6f2', lineHeight: 1.6 }}
-              >
-                {sendgridMapping?.subject || localizedVariant?.subject || '—'}
-              </div>
-            </div>
-
-            <TextAreaField
-              label="Dynamic template data preview"
-              value={JSON.stringify(dynamicTemplateData, null, 2)}
-              onChange={() => {}}
-              placeholder="{}"
-              minHeight={180}
-            />
-
-            <div style={{ fontSize: '12px', color: '#8fa6bd', lineHeight: 1.7 }}>
-              File locale da compilare: <strong>.env.sendgrid.local</strong>. Il pannello usa{' '}
-              <strong>/api/email/health</strong> e<strong> /api/email/send-test</strong>.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
-        style={{
-          borderRadius: '24px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          background:
-            'linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.025) 100%)',
-          padding: '24px',
-          boxShadow: '0 24px 60px rgba(2,6,23,0.22)',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px',
-        }}
-      >
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-between',
-            alignItems: 'flex-end',
-            gap: '14px',
-          }}
-        >
-          <div style={{ maxWidth: '760px' }}>
-            <div
-              style={{
-                display: 'inline-block',
-                padding: '7px 12px',
-                borderRadius: '999px',
-                background: 'rgba(56,189,248,0.10)',
-                color: '#bff7ff',
-                fontSize: '12px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
-              Live Journey Preview
-            </div>
-            <h2 style={{ margin: '14px 0 8px', fontSize: '28px', lineHeight: 1.1 }}>
-              Journey reali renderizzati dal builder
-            </h2>
-            <p style={{ margin: 0, color: '#9fb3c8', lineHeight: 1.7, fontSize: '14px' }}>
-              Questa area mostra l HTML finale dei template email reali, utile per controllare
-              densita hero, contrasti e resa mobile.
-            </p>
-          </div>
-
-          <div
-            style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-end' }}
-          >
-            <SelectField
-              label="Journey"
-              value={templateId}
-              onChange={setTemplateId}
-              options={templateOptions}
-            />
-            <SelectField
-              label="Lingua"
-              value={activeLocale}
-              onChange={setLocale}
-              options={localeOptions}
-            />
-            <SelectField
-              label="Variante"
-              value={activeVariant}
-              onChange={setVariant}
-              options={variantOptions}
-            />
-          </div>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gap: '16px',
-            gridTemplateColumns: 'minmax(280px, 340px) minmax(0, 1fr)',
-          }}
-        >
-          <div
-            style={{
-              borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.08)',
-              background: 'rgba(255,255,255,0.03)',
-              padding: '18px',
-            }}
-          >
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: '#8fa6bd',
-              }}
-            >
-              Nome
-            </div>
-            <div style={{ marginTop: '6px', fontSize: '15px', lineHeight: 1.5, fontWeight: 800 }}>
-              {localizedVariant?.name || '—'}
-            </div>
-
-            <div
-              style={{
-                marginTop: '18px',
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: '#8fa6bd',
-              }}
-            >
-              Subject
-            </div>
-            <div style={{ marginTop: '6px', fontSize: '14px', lineHeight: 1.6, color: '#d9e6f2' }}>
-              {localizedVariant?.subject || '—'}
-            </div>
-
-            <div
-              style={{
-                marginTop: '18px',
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-                color: '#8fa6bd',
-              }}
-            >
-              Descrizione
-            </div>
-            <div style={{ marginTop: '6px', fontSize: '14px', lineHeight: 1.6, color: '#9fb3c8' }}>
-              {localizedVariant?.description || '—'}
-            </div>
-          </div>
-
-          <div
-            style={{
-              minHeight: '72vh',
-              borderRadius: '26px',
+              borderRadius: 22,
               border: '1px solid rgba(255,255,255,0.08)',
               background: 'rgba(255,255,255,0.03)',
               boxShadow: '0 30px 80px rgba(2,6,23,0.24)',
-              padding: device === 'mobile' ? '18px' : '0',
+              padding: device === 'mobile' ? 18 : 0,
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'stretch',
+              minHeight: '72vh',
             }}
           >
             <iframe
               title="Bullwaves Journey Template Preview"
               srcDoc={localizedVariant?.html || ''}
               style={{
-                width: device === 'mobile' ? '430px' : '100%',
+                width: device === 'mobile' ? 430 : '100%',
                 maxWidth: '100%',
                 minHeight: '72vh',
                 height: '100%',
                 border: 0,
                 display: 'block',
-                borderRadius: device === 'mobile' ? '26px' : '0',
+                borderRadius: device === 'mobile' ? 22 : 0,
                 background: '#0b1320',
                 boxShadow: device === 'mobile' ? '0 24px 60px rgba(2,6,23,0.30)' : 'none',
               }}
             />
           </div>
         </div>
-      </section>
-
-      <section
-        style={{
-          flex: 1,
-          minHeight: '72vh',
-          borderRadius: '26px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          background: 'rgba(255,255,255,0.03)',
-          boxShadow: '0 30px 80px rgba(2,6,23,0.24)',
-          padding: device === 'mobile' ? '18px' : '0',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'stretch',
-        }}
-      >
-        <iframe
-          title="Bullwaves Email Master Template Preview"
-          src={previewUrl}
-          style={{
-            width: device === 'mobile' ? '402px' : '100%',
-            maxWidth: '100%',
-            minHeight: '72vh',
-            height: '100%',
-            border: 0,
-            display: 'block',
-            borderRadius: device === 'mobile' ? '26px' : '0',
-            background: '#0b1320',
-            boxShadow: device === 'mobile' ? '0 24px 60px rgba(2,6,23,0.30)' : 'none',
-          }}
-        />
       </section>
     </div>
   )

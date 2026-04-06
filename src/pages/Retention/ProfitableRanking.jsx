@@ -2588,15 +2588,27 @@ export default function ProfitableRanking({
 
   if (publicSegmentsStandalone) {
     return (
-      <RankingSpecsModal
-        isOpen
-        onClose={null}
-        rows={rankingSpecsRows}
-        onShareTable={null}
-        shareDisabled
-        standalone
-        onSegmentClick={handleSegmentClick}
-      />
+      <>
+        <RankingSpecsModal
+          isOpen
+          onClose={null}
+          rows={rankingSpecsRows}
+          onShareTable={null}
+          shareDisabled
+          standalone
+          onSegmentClick={handleSegmentClick}
+        />
+
+        <SegmentJourneyModal
+          isOpen={showSegmentJourneyModal}
+          onClose={() => {
+            setShowSegmentJourneyModal(false)
+            setSelectedSegmentForJourney(null)
+          }}
+          segment={selectedSegmentForJourney}
+          flowData={selectedSegmentFlowData}
+        />
+      </>
     )
   }
 

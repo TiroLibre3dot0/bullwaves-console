@@ -1,11 +1,96 @@
 import { makeLocaleVariants } from './segmentJourneyTemplateBuilder.js'
+import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry.js'
+
+const {
+  customerService,
+  financialSuccessSecurity,
+  riskManagementControl,
+  successfulInvestmentReward,
+  successGrowthCertificate,
+  secureAccess,
+} = EMAIL_JOURNEY_ICON_URLS
+
+const ADDITIONAL_JOURNEY_ICON_SETS = {
+  top_performing_vip_recognition_email: {
+    boxOneIconUrl: financialSuccessSecurity,
+    boxTwoIconUrl: secureAccess,
+    boxThreeIconUrl: customerService,
+  },
+  top_performing_advanced_tools_email: {
+    boxOneIconUrl: secureAccess,
+    boxTwoIconUrl: successGrowthCertificate,
+    boxThreeIconUrl: customerService,
+  },
+  top_performing_loyalty_upgrade_email: {
+    boxOneIconUrl: successfulInvestmentReward,
+    boxTwoIconUrl: financialSuccessSecurity,
+    boxThreeIconUrl: customerService,
+  },
+  top_performing_vip_review_email: {
+    boxOneIconUrl: riskManagementControl,
+    boxTwoIconUrl: successGrowthCertificate,
+    boxThreeIconUrl: customerService,
+  },
+  top_performing_premium_nurture_email: {
+    boxOneIconUrl: financialSuccessSecurity,
+    boxTwoIconUrl: successfulInvestmentReward,
+    boxThreeIconUrl: customerService,
+  },
+  most_consistent_badge_award_email: {
+    boxOneIconUrl: successGrowthCertificate,
+    boxTwoIconUrl: financialSuccessSecurity,
+    boxThreeIconUrl: secureAccess,
+  },
+  most_consistent_growth_roadmap_email: {
+    boxOneIconUrl: successGrowthCertificate,
+    boxTwoIconUrl: riskManagementControl,
+    boxThreeIconUrl: customerService,
+  },
+  most_consistent_loyalty_reward_email: {
+    boxOneIconUrl: successfulInvestmentReward,
+    boxTwoIconUrl: successGrowthCertificate,
+    boxThreeIconUrl: customerService,
+  },
+  most_consistent_top_performers_onboarding_email: {
+    boxOneIconUrl: successGrowthCertificate,
+    boxTwoIconUrl: secureAccess,
+    boxThreeIconUrl: customerService,
+  },
+  most_consistent_cycle_restart_email: {
+    boxOneIconUrl: secureAccess,
+    boxTwoIconUrl: financialSuccessSecurity,
+    boxThreeIconUrl: customerService,
+  },
+}
+
+function makeAdditionalLocaleVariants(templateId, variantA, variantB) {
+  const iconSet = ADDITIONAL_JOURNEY_ICON_SETS[templateId] || {}
+
+  return makeLocaleVariants(
+    {
+      ...variantA,
+      html: {
+        ...variantA.html,
+        ...iconSet,
+      },
+    },
+    {
+      ...variantB,
+      html: {
+        ...variantB.html,
+        ...iconSet,
+      },
+    }
+  )
+}
 
 export const additionalSegmentJourneyTemplatesById = {
   top_performing_vip_recognition_email: {
     id: 'top_performing_vip_recognition_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'top_performing_vip_recognition_email',
         {
           name: 'Top Performing - VIP Recognition A',
           description:
@@ -71,7 +156,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'top_performing_vip_recognition_email',
         {
           name: 'Top Performing - VIP Recognition A IT',
           description:
@@ -145,7 +231,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'top_performing_advanced_tools_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'top_performing_advanced_tools_email',
         {
           name: 'Top Performing - Advanced Tools A',
           description: 'Value expansion variant around premium insights and execution support.',
@@ -211,7 +298,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'top_performing_advanced_tools_email',
         {
           name: 'Top Performing - Advanced Tools A IT',
           description: 'Variante value expansion su insight premium e supporto operativo.',
@@ -283,7 +371,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'top_performing_loyalty_upgrade_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'top_performing_loyalty_upgrade_email',
         {
           name: 'Top Performing - Loyalty Upgrade A',
           description: 'Reward-led variant for sustained profitable behavior.',
@@ -347,7 +436,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'top_performing_loyalty_upgrade_email',
         {
           name: 'Top Performing - Loyalty Upgrade A IT',
           description: 'Variante reward-led per comportamento profittevole sostenuto.',
@@ -417,7 +507,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'top_performing_vip_review_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'top_performing_vip_review_email',
         {
           name: 'Top Performing - VIP Review A',
           description:
@@ -483,7 +574,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'top_performing_vip_review_email',
         {
           name: 'Top Performing - VIP Review A IT',
           description:
@@ -556,7 +648,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'top_performing_premium_nurture_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'top_performing_premium_nurture_email',
         {
           name: 'Top Performing - Premium Nurture A',
           description: 'Light premium nurture loop focused on continuity and soft re-engagement.',
@@ -622,7 +715,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'top_performing_premium_nurture_email',
         {
           name: 'Top Performing - Premium Nurture A IT',
           description: 'Loop premium leggero focalizzato su continuita e soft re-engagement.',
@@ -694,7 +788,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'most_consistent_badge_award_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'most_consistent_badge_award_email',
         {
           name: 'Most Consistent - Badge Award A',
           description: 'Recognition-led launch for consistency-based engagement.',
@@ -757,7 +852,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'most_consistent_badge_award_email',
         {
           name: 'Most Consistent - Badge Award A IT',
           description: 'Apertura recognition-led per engagement basato sulla costanza.',
@@ -827,7 +923,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'most_consistent_growth_roadmap_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'most_consistent_growth_roadmap_email',
         {
           name: 'Most Consistent - Growth Roadmap A',
           description:
@@ -892,7 +989,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'most_consistent_growth_roadmap_email',
         {
           name: 'Most Consistent - Growth Roadmap A IT',
           description: 'Touch strutturato che canalizza la costanza in milestone chiare.',
@@ -961,7 +1059,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'most_consistent_loyalty_reward_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'most_consistent_loyalty_reward_email',
         {
           name: 'Most Consistent - Loyalty Reward A',
           description: 'Reward touch tied to challenge completion and sustained rhythm.',
@@ -1024,7 +1123,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'most_consistent_loyalty_reward_email',
         {
           name: 'Most Consistent - Loyalty Reward A IT',
           description: 'Touch reward collegato a challenge completata e ritmo sostenuto.',
@@ -1094,7 +1194,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'most_consistent_top_performers_onboarding_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'most_consistent_top_performers_onboarding_email',
         {
           name: 'Most Consistent - Top Performers Onboarding A',
           description: 'Escalation touch that frames promotion as the next deserved environment.',
@@ -1159,7 +1260,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'most_consistent_top_performers_onboarding_email',
         {
           name: 'Most Consistent - Top Performers Onboarding A IT',
           description:
@@ -1231,7 +1333,8 @@ export const additionalSegmentJourneyTemplatesById = {
     id: 'most_consistent_cycle_restart_email',
     channel: 'email',
     locales: {
-      en: makeLocaleVariants(
+      en: makeAdditionalLocaleVariants(
+        'most_consistent_cycle_restart_email',
         {
           name: 'Most Consistent - Cycle Restart A',
           description: 'Re-entry loop for consistent traders who need a fresh structured restart.',
@@ -1294,7 +1397,8 @@ export const additionalSegmentJourneyTemplatesById = {
           },
         }
       ),
-      it: makeLocaleVariants(
+      it: makeAdditionalLocaleVariants(
+        'most_consistent_cycle_restart_email',
         {
           name: 'Most Consistent - Cycle Restart A IT',
           description:

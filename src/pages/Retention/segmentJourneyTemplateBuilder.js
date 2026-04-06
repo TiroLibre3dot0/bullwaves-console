@@ -1,20 +1,214 @@
-const WHATSAPP_HREF =
-  'https://wa.me/35799514794?text=Hi%20Bullwaves%2C%20I%20would%20like%20help%20with%20the%20next%20step%20on%20my%20account.'
+const WHATSAPP_NUMBER = '35799514794'
+const WHATSAPP_TEXT = {
+  en: 'Hi Bullwaves, I would like help with the next step on my account.',
+  it: 'Ciao Bullwaves, vorrei supporto per il prossimo passo sul mio account.',
+}
+
+function getWhatsAppHref(lang = 'en') {
+  const normalizedLang = lang === 'it' ? 'it' : 'en'
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_TEXT[normalizedLang])}`
+}
 
 const DEFAULT_CTA_URL = 'https://portal.bullwaves.com/custom/webtrader'
-const BULLWAVES_LOGO_URL =
-  'http://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
+const SENDGRID_BULLWAVES_ICON_URL =
+  'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
+const SENDGRID_BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Logo.png'
+const STATIC_BULLWAVES_ICON_URL = '/Group%202087330261.svg'
+const STATIC_BULLWAVES_WORDMARK_URL = '/Group%202087330250.svg'
+
+function getBullwavesBrandAssets(mode = 'static') {
+  if (mode === 'sendgrid') {
+    return {
+      iconUrl: SENDGRID_BULLWAVES_ICON_URL,
+      wordmarkUrl: SENDGRID_BULLWAVES_WORDMARK_URL,
+    }
+  }
+
+  return {
+    iconUrl: STATIC_BULLWAVES_ICON_URL,
+    wordmarkUrl: STATIC_BULLWAVES_WORDMARK_URL,
+  }
+}
+
+const ITALIAN_TEXT_REPLACEMENTS = [
+  [/\bc e\b/g, "c'è"],
+  [/\bC e\b/g, "C'è"],
+  [/\be abbastanza\b/g, 'è abbastanza'],
+  [/\bE abbastanza\b/g, 'È abbastanza'],
+  [/\b e pronta\b/g, ' è pronta'],
+  [/\b E pronta\b/g, ' È pronta'],
+  [/\b e ancora\b/g, ' è ancora'],
+  [/\b E ancora\b/g, ' È ancora'],
+  [/\b e ora\b/g, ' è ora'],
+  [/\b E ora\b/g, ' È ora'],
+  [/\b si e\b/g, ' si è'],
+  [/\b Si e\b/g, ' Si è'],
+  [/\bl account\b/g, "l'account"],
+  [/\bL account\b/g, "L'account"],
+  [/\bl area\b/g, "l'area"],
+  [/\bL area\b/g, "L'area"],
+  [/\bnell area\b/g, "nell'area"],
+  [/\bNell area\b/g, "Nell'area"],
+  [/\bdall ingresso\b/g, "dall'ingresso"],
+  [/\bDall ingresso\b/g, "Dall'ingresso"],
+  [/\bl ambiente\b/g, "l'ambiente"],
+  [/\bL ambiente\b/g, "L'ambiente"],
+  [/\bl engagement\b/g, "l'engagement"],
+  [/\bL engagement\b/g, "L'engagement"],
+  [/\bl obiettivo\b/g, "l'obiettivo"],
+  [/\bL obiettivo\b/g, "L'obiettivo"],
+  [/\bl ultimo\b/g, "l'ultimo"],
+  [/\bL ultimo\b/g, "L'ultimo"],
+  [/\bpiu\b/g, 'più'],
+  [/\bPiu\b/g, 'Più'],
+  [/\bpuo\b/g, 'può'],
+  [/\bPuo\b/g, 'Può'],
+  [/\bcosi\b/g, 'così'],
+  [/\bCosi\b/g, 'Così'],
+  [/\bgia\b/g, 'già'],
+  [/\bGia\b/g, 'Già'],
+  [/\bperche\b/g, 'perché'],
+  [/\bPerche\b/g, 'Perché'],
+  [/\bsocieta\b/g, 'società'],
+  [/\bSocieta\b/g, 'Società'],
+  [/\battivita\b/g, 'attività'],
+  [/\bAttivita\b/g, 'Attività'],
+  [/\bpriorita\b/g, 'priorità'],
+  [/\bPriorita\b/g, 'Priorità'],
+  [/\bcontinuita\b/g, 'continuità'],
+  [/\bContinuita\b/g, 'Continuità'],
+  [/\bsemplicita\b/g, 'semplicità'],
+  [/\bSemplicita\b/g, 'Semplicità'],
+  [/\bidentita\b/g, 'identità'],
+  [/\bIdentita\b/g, 'Identità'],
+  [/\bstabilita\b/g, 'stabilità'],
+  [/\bStabilita\b/g, 'Stabilità'],
+  [/\bopportunita\b/g, 'opportunità'],
+  [/\bOpportunita\b/g, 'Opportunità'],
+  [/\bqualita\b/g, 'qualità'],
+  [/\bQualita\b/g, 'Qualità'],
+  [/\brealta\b/g, 'realtà'],
+  [/\bRealta\b/g, 'Realtà'],
+  [/\bvarieta\b/g, 'varietà'],
+  [/\bVarieta\b/g, 'Varietà'],
+  [/\bIl tuo account e\b/g, 'Il tuo account è'],
+  [/\bIl tuo profilo e\b/g, 'Il tuo profilo è'],
+  [/\bIl prossimo passo e\b/g, 'Il prossimo passo è'],
+  [/\bLa registrazione e\b/g, 'La registrazione è'],
+  [/\bLa mossa principale e\b/g, 'La mossa principale è'],
+  [/\bLa mossa migliore e\b/g, 'La mossa migliore è'],
+  [/\bQuesto badge non e\b/g, 'Questo badge non è'],
+  [/\bQuesto messaggio esiste perche\b/g, 'Questo messaggio esiste perché'],
+  [/\bQuesto e il ruolo\b/g, 'Questo è il ruolo'],
+  [/\bIl punto e\b/g, 'Il punto è'],
+  [/\bLa costanza e\b/g, 'La costanza è'],
+  [/\bIl tuo pattern e\b/g, 'Il tuo pattern è'],
+  [/\bCosa ti da\b/g, 'Cosa ti dà'],
+  [/\bfinche\b/g, 'finché'],
+  [/\bFinche\b/g, 'Finché'],
+  [/\bperche li\b/g, 'perché lì'],
+  [/\bPerche li\b/g, 'Perché lì'],
+  [/\bperché li\b/g, 'perché lì'],
+  [/\bPerché li\b/g, 'Perché lì'],
+  [/\bverso l alto\b/g, "verso l'alto"],
+  [/\bVerso l alto\b/g, "Verso l'alto"],
+  [/\bun altra\b/g, "un'altra"],
+  [/\bUn altra\b/g, "Un'altra"],
+  [/\bl abitudine\b/g, "l'abitudine"],
+  [/\bL abitudine\b/g, "L'abitudine"],
+  [/\bnell interpretare\b/g, "nell'interpretare"],
+  [/\bNell interpretare\b/g, "Nell'interpretare"],
+  [/\bun interpretazione\b/g, "un'interpretazione"],
+  [/\bUn interpretazione\b/g, "Un'interpretazione"],
+  [/\bL offerta\b/g, "L'offerta"],
+  [/\bl offerta\b/g, "l'offerta"],
+  [/\bdell offerta\b/g, "dell'offerta"],
+  [/\bl account\b/g, "l'account"],
+  [/\bL account\b/g, "L'account"],
+  [/\bnell account\b/g, "nell'account"],
+  [/\bNell account\b/g, "Nell'account"],
+  [/\ball azione\b/g, "all'azione"],
+  [/\bAll azione\b/g, "All'azione"],
+  [/\bL aiuto\b/g, "L'aiuto"],
+  [/\bl aiuto\b/g, "l'aiuto"],
+  [/\bdall area\b/g, "dall'area"],
+  [/\bDall area\b/g, "Dall'area"],
+  [/\bnon e\b/g, 'non è'],
+  [/\bNon e\b/g, 'Non è'],
+  [/\bE un ambiente\b/g, 'È un ambiente'],
+  [/\bE un meccanismo\b/g, 'È un meccanismo'],
+  [/\bE continuita\b/g, 'È continuità'],
+  [/\bE continuità\b/g, 'È continuità'],
+  [/\bQuesto e il momento\b/g, 'Questo è il momento'],
+  [/\bIl punto migliore spesso e\b/g, 'Il punto migliore spesso è'],
+  [/\bOra che l account e\b/g, "Ora che l'account è"],
+  [/\bora che l account e\b/g, "ora che l'account è"],
+  [/\bla mossa migliore e\b/g, 'la mossa migliore è'],
+  [/\bLa mossa migliore e\b/g, 'La mossa migliore è'],
+  [/\bIl valore della prima operazione e\b/g, 'Il valore della prima operazione è'],
+  [
+    /\bIl supporto resta secondario rispetto all azione\b/g,
+    "Il supporto resta secondario rispetto all'azione",
+  ],
+  [/\bE un rientro chiaro\b/g, 'è un rientro chiaro'],
+  [/\bil deposito e piu semplice\b/g, 'il deposito è più semplice'],
+  [/\bIl deposito e piu semplice\b/g, 'Il deposito è più semplice'],
+  [/\bQuesto loop e\b/g, 'Questo loop è'],
+  [/\bQuesta migrazione e\b/g, 'Questa migrazione è'],
+  [/\bQuesto e il tuo\b/g, 'Questo è il tuo'],
+  [/\bIl supporto e opzionale\b/g, 'Il supporto è opzionale'],
+  [/\bIl supporto umano e opzionale\b/g, 'Il supporto umano è opzionale'],
+  [/\bIl supporto umano e\b/g, 'Il supporto umano è'],
+  [/\bL upgrade\b/g, "L'upgrade"],
+  [/\bl upgrade\b/g, "l'upgrade"],
+  [/\bl azione\b/g, "l'azione"],
+  [/\bL azione\b/g, "L'azione"],
+  [/\bda al\b/g, 'dà al'],
+  [/\be per trader\b/g, 'è per trader'],
+  [/\bstoria e finita\b/g, 'storia è finita'],
+  [/\bla mossa giusta e\b/g, 'la mossa giusta è'],
+  [
+    /\bIl supporto c'è se utile, ma l area cliente viene prima\.\b/g,
+    "Il supporto c'è se utile, ma l'area cliente viene prima.",
+  ],
+  [
+    /\bIl supporto c'è solo se aiuta a sbloccare il ritorno\.\b/g,
+    "Il supporto c'è solo se aiuta a sbloccare il ritorno.",
+  ],
+  [
+    /\bIl supporto c'è se utile, ma la piattaforma deve restare al primo posto\.\b/g,
+    "Il supporto c'è se utile, ma la piattaforma deve restare al primo posto.",
+  ],
+  [
+    /\bIl supporto c'è se utile, ma il passo dopo resta sbloccare l account\.\b/g,
+    "Il supporto c'è se utile, ma il passo dopo resta sbloccare l'account.",
+  ],
+  [/\bWhatsApp e\b/g, 'WhatsApp è'],
+  [
+    /\bIl tuo comportamento recente ti colloca tra i profili da trattenere con piu attenzione\.\b/g,
+    'Il tuo comportamento recente ti colloca tra i profili da trattenere con più attenzione.',
+  ],
+]
+
+function normalizeLocalizedText(lang, value) {
+  if (lang !== 'it' || typeof value !== 'string' || !value) return value
+
+  return ITALIAN_TEXT_REPLACEMENTS.reduce(
+    (current, [pattern, replacement]) => current.replace(pattern, replacement),
+    value
+  )
+}
 
 function getLanguageContent(lang) {
   if (lang === 'it') {
     return {
       legalBrandSubtitle: 'Informazioni normative e avvertenza essenziale sui rischi',
-      legalCompanyTitle: 'Informazioni sulla societa',
+      legalCompanyTitle: 'Informazioni sulla società',
       legalRiskTitle: 'Avvertenza sui rischi',
       legalCompanyCopy:
-        'Bullwaves e un marchio commerciale utilizzato da piu entita autorizzate in diverse giurisdizioni, tra cui Equitex Capital Limited (Registration No. 8434948-1), societa autorizzata e regolamentata dalla Financial Services Authority (FSA, licence no. SD185), e Moonance LLC, societa regolamentata da MISA nelle Isole Comore.',
+        'Bullwaves è un marchio commerciale utilizzato da più entità autorizzate in diverse giurisdizioni, tra cui Equitex Capital Limited (Registration No. 8434948-1), società autorizzata e regolamentata dalla Financial Services Authority (FSA, licence no. SD185), e Moonance LLC, società regolamentata da MISA nelle Isole Comore.',
       legalRiskCopy:
-        'I derivati over-the-counter sono strumenti complessi e comportano un elevato rischio di perdere rapidamente il capitale iniziale a causa della leva finanziaria. Dovresti valutare se comprendi il funzionamento dei derivati over-the-counter e se puoi permetterti di sostenere un livello di rischio cosi elevato sul tuo capitale. Investire in derivati over-the-counter comporta rischi significativi e non e adatto a tutti gli investitori.',
+        'I derivati over-the-counter sono strumenti complessi e comportano un elevato rischio di perdere rapidamente il capitale iniziale a causa della leva finanziaria. Dovresti valutare se comprendi il funzionamento dei derivati over-the-counter e se puoi permetterti di sostenere un livello di rischio così elevato sul tuo capitale. Investire in derivati over-the-counter comporta rischi significativi e non è adatto a tutti gli investitori.',
       unsubscribe: 'Disiscriviti',
       unsubscribePreferences: 'Preferenze di disiscrizione',
       preparedFor: 'Preparato per',
@@ -25,10 +219,8 @@ function getLanguageContent(lang) {
       signatureFallback: 'Il team Bullwaves',
       brandTagline: 'Accesso sicuro. Supporto reale.',
       metricChips: ['Sicurezza', 'Accesso', 'Supporto'],
-      panelTitle: 'Perche questo passaggio conta adesso',
+      panelTitle: 'Perché questo passaggio conta adesso',
       ratingLabel: 'Valutazione 4.5',
-      footerNote:
-        'Questo footer resta fisso nel master template per mantenere coerenti logo, note legali e avvertenze sui rischi.',
       logoAlt: 'Logo Bullwaves',
     }
   }
@@ -53,8 +245,6 @@ function getLanguageContent(lang) {
     metricChips: ['Security', 'Access', 'Support'],
     panelTitle: 'Why this step matters now',
     ratingLabel: 'Rated 4.5',
-    footerNote:
-      'This footer stays fixed across the master template so logo, legal and risk notices remain consistent.',
     logoAlt: 'Bullwaves Logo',
   }
 }
@@ -62,16 +252,24 @@ function getLanguageContent(lang) {
 function buildLegalFooterHtml(mode, content) {
   const unsubscribeHref = mode === 'sendgrid' ? '{{{unsubscribe}}}' : '#'
   const unsubscribePreferencesHref = mode === 'sendgrid' ? '{{{unsubscribe_preferences}}}' : '#'
+  const { iconUrl } = getBullwavesBrandAssets(mode)
 
   return `
     <div class="legal-shell">
-      <div class="legal-brand-row">
-        <img src="${BULLWAVES_LOGO_URL}" width="54" alt="${content.logoAlt}" class="legal-logo" />
-        <div class="legal-brand-copy">
-          <div class="legal-brand-title">Bullwaves</div>
-          <div class="legal-brand-subtitle">${content.legalBrandSubtitle}</div>
-        </div>
-      </div>
+      <table width="100%" role="presentation" class="legal-brand-table">
+        <tr>
+          <td width="74" valign="middle" class="legal-brand-logo-cell">
+            <div class="legal-logo-badge">
+              <img src="${iconUrl}" width="42" alt="${content.logoAlt}" class="legal-logo" />
+            </div>
+          </td>
+          <td valign="middle" class="legal-brand-copy-cell">
+            <div class="legal-kicker">Bullwaves</div>
+            <div class="legal-brand-title">Bullwaves</div>
+            <div class="legal-brand-subtitle">${content.legalBrandSubtitle}</div>
+          </td>
+        </tr>
+      </table>
 
       <div class="legal-card">
         <div class="legal-section-title">${content.legalCompanyTitle}</div>
@@ -97,10 +295,11 @@ function buildSendgridSubjectTemplate(subject) {
 }
 
 function buildDefaultSendgridTestData(overrides = {}) {
+  const locale = overrides?.locale === 'it' ? 'it' : 'en'
   return {
     first_name: 'Alex',
     cta_url: DEFAULT_CTA_URL,
-    support_url: WHATSAPP_HREF,
+    support_url: getWhatsAppHref(locale),
     account_manager_name: 'The Bullwaves Team',
     ...overrides,
   }
@@ -137,20 +336,36 @@ export function buildSegmentEmailHtml(
   options = {}
 ) {
   const mode = options?.mode === 'sendgrid' ? 'sendgrid' : 'static'
+  const { wordmarkUrl } = getBullwavesBrandAssets(mode)
   const normalizedSkin = skin === 'dark' ? 'dark' : 'light'
   const isDark = normalizedSkin === 'dark'
   const content = getLanguageContent(lang)
+  const normalize = (value) => normalizeLocalizedText(lang, value)
+  const normalizedTitle = normalize(title)
+  const normalizedEyebrow = normalize(eyebrow)
+  const normalizedHeroTitle = normalize(heroTitle)
+  const normalizedHeroSubtitle = normalize(heroSubtitle)
+  const normalizedMainTitle = normalize(mainTitle)
+  const normalizedIntroLead = normalize(introLead)
+  const normalizedBodyOne = normalize(bodyOne)
+  const normalizedBodyTwo = normalize(bodyTwo)
+  const normalizedBoxOneTitle = normalize(boxOneTitle)
+  const normalizedBoxOneCopy = normalize(boxOneCopy)
+  const normalizedBoxTwoTitle = normalize(boxTwoTitle)
+  const normalizedBoxTwoCopy = normalize(boxTwoCopy)
+  const normalizedBoxThreeTitle = normalize(boxThreeTitle)
+  const normalizedBoxThreeCopy = normalize(boxThreeCopy)
+  const normalizedBodyThree = normalize(bodyThree)
+  const normalizedBodyFour = normalize(bodyFour)
+  const normalizedCtaLabel = normalize(ctaLabel)
+  const normalizedCtaHelper = normalize(ctaHelper)
+  const normalizedSupportLabel = normalize(supportLabel)
+  const normalizedSupportHelper = normalize(supportHelper)
   const ctaHref = mode === 'sendgrid' ? '{{cta_url}}' : DEFAULT_CTA_URL
-  const supportHref = mode === 'sendgrid' ? '{{support_url}}' : WHATSAPP_HREF
-  const eyebrowHtml = eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''
-  const personalMarker =
-    mode === 'sendgrid'
-      ? `<div class="hero-personal">{{#if first_name}}${content.preparedFor} {{first_name}}{{else}}${content.preparedFallback}{{/if}}</div>`
-      : ''
-  const greetingLead =
-    mode === 'sendgrid'
-      ? `<p class="greeting">{{#if first_name}}${content.greetingWithName} {{first_name}},{{else}}${content.greetingFallback}{{/if}}</p>`
-      : ''
+  const supportHref = mode === 'sendgrid' ? '{{support_url}}' : getWhatsAppHref(lang)
+  const eyebrowHtml = ''
+  const personalMarker = mode === 'sendgrid' ? '' : ''
+  const greetingLead = ''
   const signatureName =
     mode === 'sendgrid'
       ? `{{#if account_manager_name}}{{account_manager_name}}{{else}}${content.signatureFallback}{{/if}}`
@@ -171,7 +386,7 @@ export function buildSegmentEmailHtml(
     ? 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))'
     : 'linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))'
   const heroCardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.16)'
-  const brandBarBackground = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.12)'
+  const brandBarBackground = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.14)'
   const brandBarBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.16)'
   const bodyText = isDark ? '#e7eef8' : '#102033'
   const leadText = isDark ? '#cbd7e8' : '#30465e'
@@ -198,19 +413,13 @@ export function buildSegmentEmailHtml(
   const stepTitleColor = '#102033'
   const stepCopyColor = '#597087'
   const signatureColor = isDark ? '#b6c5d8' : '#556b82'
-  const logoBarBackground = isDark
-    ? 'linear-gradient(180deg, #12233a 0%, #102033 100%)'
-    : 'linear-gradient(180deg, #f8fbff 0%, #eff5ff 100%)'
-  const logoBarBorder = isDark ? '#223754' : '#dbe5f3'
-  const logoBarTitleColor = isDark ? '#f5f8fe' : '#102033'
-  const logoBarNoteColor = isDark ? '#a8bdd4' : '#62758c'
 
   return `<!doctype html>
 <html lang="${lang}">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>${title}</title>
+<title>${mode === 'sendgrid' ? 'Bullwaves' : normalizedTitle}</title>
 
 <style>
   body {
@@ -227,7 +436,7 @@ export function buildSegmentEmailHtml(
   }
   .container {
     width:100%;
-    max-width:620px;
+    max-width:700px;
     margin:0 auto;
     background:${containerBackground};
     border-radius:24px;
@@ -235,45 +444,55 @@ export function buildSegmentEmailHtml(
     box-shadow:${containerShadow};
   }
   .hero-shell {
-    padding:26px 28px;
+    padding:22px 26px;
     background:${heroShellBackground};
   }
   .hero-card {
     border-radius:20px;
-    padding:20px 20px 18px;
+    padding:24px 22px 20px;
     background:${heroCardBackground};
     border:1px solid ${heroCardBorder};
+    text-align:center;
   }
   .brand-bar {
-    display:flex;
-    align-items:center;
-    gap:14px;
-    padding:14px 16px;
-    border-radius:18px;
-    background:${brandBarBackground};
-    border:1px solid ${brandBarBorder};
+    width:100%;
+    padding:0;
+    background:transparent;
+    border:none;
+  }
+  .brand-bar-table,
+  .legal-brand-table {
+    width:100%;
+    border-collapse:collapse;
+  }
+  .brand-logo-cell,
+  .legal-brand-logo-cell {
+    padding-right:12px;
+  }
+  .brand-center {
+    text-align:center;
+  }
+  .brand-stage {
+    display:inline-block;
+    width:100%;
+    max-width:340px;
+    padding:16px 22px 14px;
+    border-radius:22px;
+    background:linear-gradient(180deg, rgba(7,19,44,0.24) 0%, rgba(43,100,228,0.12) 100%);
+    border:1px solid rgba(255,255,255,0.12);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(3,10,26,0.12);
+  }
+  .brand-lockup {
+    width:100%;
+    max-width:220px;
+    margin:0 auto;
   }
   .brand-logo {
     display:block;
-    width:54px;
+    width:100%;
     height:auto;
-    flex:0 0 auto;
-  }
-  .brand-copy {
-    min-width:0;
-  }
-  .brand-name {
-    color:#ffffff;
-    font-size:18px;
-    line-height:1.1;
-    font-weight:700;
-    letter-spacing:0.02em;
-  }
-  .brand-tagline {
-    margin-top:4px;
-    color:#dbe8ff;
-    font-size:11px;
-    line-height:1.4;
+    margin:0 auto;
+    filter:drop-shadow(0 14px 24px rgba(4,12,30,0.28));
   }
   .eyebrow {
     display:inline-block;
@@ -288,7 +507,10 @@ export function buildSegmentEmailHtml(
     text-transform:uppercase;
   }
   .hero-grid {
-    margin-top:16px;
+    margin-top:18px;
+    max-width:520px;
+    margin-left:auto;
+    margin-right:auto;
   }
   .hero-personal {
     margin-top:14px;
@@ -300,132 +522,111 @@ export function buildSegmentEmailHtml(
   }
   .hero-title {
     color:#ffffff;
-    margin:12px 0 0;
-    font-size:26px;
-    line-height:1.14;
+    margin:0;
+    font-size:34px;
+    line-height:1.06;
     font-weight:700;
   }
   .hero-subtitle {
     color:#dbe8ff;
-    margin:8px 0 0;
-    font-size:13px;
-    line-height:1.52;
-  }
-  .hero-metrics {
-    margin-top:14px;
-  }
-  .metric-chip {
-    display:inline-block;
-    margin:0 6px 6px 0;
-    padding:8px 13px;
-    border-radius:999px;
-    background:${metricChipBackground};
-    border:1px solid ${metricChipBorder};
-    color:${metricChipText};
-    font-size:10px;
-    line-height:1;
-    font-weight:700;
-    letter-spacing:0.04em;
-    text-transform:uppercase;
+    margin:12px 0 0;
+    font-size:16px;
+    line-height:1.48;
   }
   .pad {
-    padding:28px 24px 22px;
+    padding:28px 30px 22px;
+    text-align:center;
   }
   .main-title {
-    font-size:20px;
-    line-height:1.3;
+    font-size:22px;
+    line-height:1.26;
     font-weight:700;
     color:${mainTitleColor};
-    margin:0 0 12px;
+    margin:0 auto 12px;
+    max-width:520px;
   }
   .lead {
-    font-size:14px;
+    font-size:15px;
     line-height:1.62;
     color:${leadText};
-    margin:0 0 14px;
+    margin:0 auto 18px;
+    max-width:520px;
   }
   .greeting {
-    font-size:14px;
-    line-height:1.5;
+    font-size:15px;
+    line-height:1.55;
     color:${bodyText};
     font-weight:700;
-    margin:0 0 10px;
+    margin:0 0 12px;
   }
   .body-copy {
-    font-size:13px;
-    line-height:1.62;
+    font-size:15px;
+    line-height:1.72;
     color:${bodyCopy};
-    margin:0 0 10px;
+    margin:0 0 12px;
   }
   .highlight-panel {
-    margin:20px 0;
-    padding:18px;
-    border-radius:18px;
+    margin:22px 0;
+    padding:18px 18px 14px;
+    border-radius:20px;
     background:${panelBackground};
     border:1px solid ${panelBorder};
-  }
-  .panel-title {
-    font-size:11px;
-    color:${panelTitle};
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-    font-weight:700;
-    margin:0 0 14px;
+    text-align:left;
   }
   .mini-steps td {
     width:33.33%;
     vertical-align:top;
-    padding:0 4px;
+    padding:0 8px;
   }
   .step-card {
-    border-radius:18px;
+    border-radius:20px;
     background:${stepCardBackground};
     border:1px solid ${stepCardBorder};
     box-shadow:${stepCardShadow};
-    padding:18px 12px 16px;
-    min-height:138px;
+    padding:24px 18px 20px;
+    min-height:198px;
   }
   .step-icon {
-    width:56px;
-    height:56px;
-    line-height:56px;
+    width:108px;
+    height:108px;
+    line-height:108px;
     text-align:center;
-    border-radius:18px;
-    margin:0 auto 12px;
+    border-radius:30px;
+    margin:0 auto 16px;
     background:${stepIconBackground};
     border:1px solid ${stepIconBorder};
     box-shadow:${stepIconShadow};
     color:#23486f;
-    font-size:18px;
+    font-size:24px;
     font-weight:700;
     overflow:hidden;
   }
   .step-icon img {
     display:block;
-    width:32px;
-    height:32px;
-    margin:11px auto;
+    width:72px;
+    height:72px;
+    margin:18px auto;
     object-fit:contain;
   }
   .step-title {
-    font-size:12px;
+    font-size:15px;
     font-weight:700;
     color:${stepTitleColor};
-    margin-bottom:5px;
+    margin-bottom:6px;
     text-align:center;
     line-height:1.3;
   }
   .step-copy {
-    font-size:11px;
+    font-size:13px;
     color:${stepCopyColor};
-    line-height:1.4;
+    line-height:1.5;
     text-align:center;
   }
   .cta-wrap {
-    margin:24px 0 8px;
+    margin:22px 0 8px;
     text-align:center;
-    padding:20px 18px;
-    border-radius:20px;
+    padding:18px 18px;
+    border-radius:22px;
     background:linear-gradient(180deg, #0c1830 0%, #11254b 100%);
   }
   .btn {
@@ -433,135 +634,117 @@ export function buildSegmentEmailHtml(
     background:linear-gradient(135deg, #2e79ff 0%, #0f39dd 100%);
     color:#ffffff !important;
     text-decoration:none;
-    padding:15px 24px;
+    padding:16px 28px;
     border-radius:999px;
     font-weight:700;
-    font-size:14px;
+    font-size:15px;
     box-shadow:0 14px 30px rgba(15,57,221,0.28);
   }
-  .helper {
-    margin-top:10px;
-    font-size:11px;
-    line-height:1.45;
-    color:#c8d8f8;
-  }
   .secondary-link {
-    display:inline-block;
+    display:none;
     margin-top:12px;
     color:#ffffff !important;
     text-decoration:none;
-    font-size:12px;
+    font-size:13px;
     font-weight:700;
     opacity:0.82;
   }
-  .secondary-helper {
-    margin-top:6px;
-    font-size:10px;
-    line-height:1.45;
-    color:#91a9d2;
-  }
-  .rating {
-    margin-top:14px;
-    font-size:13px;
-    color:#f7fbff;
-  }
   .signature {
-    font-size:13px;
+    font-size:14px;
     color:${signatureColor};
-    margin-top:22px;
-    line-height:1.65;
-  }
-  .logo-bar {
     margin-top:24px;
-    padding:18px;
-    border-radius:18px;
-    background:${logoBarBackground};
-    border:1px solid ${logoBarBorder};
-    display:flex;
-    align-items:center;
-    gap:14px;
-  }
-  .logo-bar-copy {
-    min-width:0;
-  }
-  .logo-bar-title {
-    color:${logoBarTitleColor};
-    font-size:16px;
-    line-height:1.15;
-    font-weight:700;
-  }
-  .logo-bar-note {
-    margin-top:4px;
-    color:${logoBarNoteColor};
-    font-size:12px;
-    line-height:1.55;
+    line-height:1.7;
   }
   .legal {
     padding:0 24px 26px;
   }
   .legal-shell {
     padding:18px;
-    border-radius:20px;
-    background:linear-gradient(180deg, #f5f8fc 0%, #edf3fa 100%);
-    border:1px solid #d8e2ef;
+    border-radius:22px;
+    background:linear-gradient(180deg, #f7fafd 0%, #eef4fb 100%);
+    border:1px solid #d9e4f1;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.65);
   }
-  .legal-brand-row {
-    display:flex;
-    align-items:center;
-    gap:12px;
+  .legal-brand-table {
     margin-bottom:16px;
+    padding-bottom:14px;
+    border-bottom:1px solid #dde7f2;
+  }
+  .legal-brand-logo-cell {
+    padding-right:14px;
+  }
+  .legal-logo-badge {
+    width:56px;
+    height:56px;
+    line-height:56px;
+    text-align:center;
+    border-radius:18px;
+    background:linear-gradient(180deg, #ffffff 0%, #f3f7fd 100%);
+    border:1px solid #d7e3f0;
+    box-shadow:0 10px 24px rgba(21,44,79,0.08);
   }
   .legal-logo {
-    display:block;
-    width:54px;
+    display:inline-block;
+    vertical-align:middle;
+    width:34px;
     height:auto;
-    flex:0 0 auto;
+  }
+  .legal-kicker {
+    color:#5d7390;
+    font-size:10px;
+    line-height:1.2;
+    font-weight:700;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    margin-bottom:5px;
   }
   .legal-brand-title {
     color:#102033;
-    font-size:16px;
-    line-height:1.15;
+    font-size:18px;
+    line-height:1.1;
     font-weight:700;
   }
   .legal-brand-subtitle {
-    margin-top:4px;
-    color:#62758c;
+    margin-top:5px;
+    color:#667b93;
     font-size:12px;
-    line-height:1.5;
+    line-height:1.55;
   }
   .legal-card {
-    padding:14px 16px;
-    border-radius:16px;
-    background:#ffffff;
-    border:1px solid #dde6f2;
+    padding:15px 17px;
+    border-radius:18px;
+    background:linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    border:1px solid #dde7f3;
+    box-shadow:0 8px 18px rgba(21,44,79,0.04);
   }
   .legal-card + .legal-card {
     margin-top:12px;
   }
   .legal-card--risk {
-    background:linear-gradient(180deg, #fffaf2 0%, #fff5e7 100%);
-    border-color:#f3dfb7;
+    background:linear-gradient(180deg, #fffaf2 0%, #fff4e5 100%);
+    border-color:#f1ddb5;
   }
   .legal-section-title {
-    color:#102033;
+    color:#20344f;
     font-size:11px;
     line-height:1.2;
     font-weight:700;
-    letter-spacing:0.08em;
+    letter-spacing:0.1em;
     text-transform:uppercase;
-    margin-bottom:8px;
+    margin-bottom:9px;
   }
   .legal-copy {
     margin:0;
     font-size:11px;
-    color:#6f8093;
-    line-height:1.62;
+    color:#6b7f95;
+    line-height:1.68;
   }
   .legal-links {
-    margin-top:14px;
+    margin-top:16px;
     font-size:11px;
     line-height:1.6;
-    color:#6f8093;
+    color:#73869c;
+    text-align:left;
   }
   .legal-link-divider {
     margin:0 6px;
@@ -572,20 +755,24 @@ export function buildSegmentEmailHtml(
     text-decoration:none;
   }
   @media only screen and (max-width: 620px) {
-    .hero-shell { padding:18px 16px; }
-    .hero-card { padding:18px 16px 16px; }
-    .hero-title { font-size:21px; line-height:1.16; }
-    .hero-subtitle { font-size:12px; line-height:1.45; }
-    .hero-metrics { margin-top:12px; }
-    .pad { padding:24px 18px 18px; }
+    .hero-shell { padding:16px 14px; }
+    .hero-card { padding:16px 14px 14px; }
+    .hero-title { font-size:26px; line-height:1.12; }
+    .hero-subtitle { font-size:14px; line-height:1.52; }
+    .pad { padding:26px 18px 18px; }
     .legal { padding:0 18px 22px; }
     .mini-steps td { display:block; width:100%; padding:0 0 8px; }
     .step-card { min-height:auto; }
-    .brand-bar,
-    .logo-bar,
-    .legal-brand-row { align-items:flex-start; }
-    .brand-logo,
-    .legal-logo { width:48px; }
+    .brand-stage { max-width:270px; padding:14px 18px 12px; border-radius:20px; }
+    .brand-lockup { max-width:188px; }
+    .brand-logo { width:100%; }
+    .legal-shell { padding:16px; }
+    .legal-brand-table { padding-bottom:12px; }
+    .legal-brand-logo-cell { width:68px !important; padding-right:12px; }
+    .legal-logo-badge { width:50px; height:50px; line-height:50px; border-radius:16px; }
+    .legal-logo { width:30px; }
+    .legal-brand-title { font-size:16px; }
+    .legal-brand-subtitle { font-size:11px; }
   }
 </style>
 </head>
@@ -599,23 +786,17 @@ export function buildSegmentEmailHtml(
 <tr>
 <td class="hero-shell">
   <div class="hero-card">
-    <div class="brand-bar">
-      <img src="${BULLWAVES_LOGO_URL}" alt="${content.logoAlt}" class="brand-logo" />
-      <div class="brand-copy">
-        <div class="brand-name">Bullwaves</div>
-        <div class="brand-tagline">${content.brandTagline}</div>
+    <div class="brand-bar brand-center">
+      <div class="brand-stage">
+        <div class="brand-lockup">
+          <img src="${wordmarkUrl}" width="220" alt="${content.logoAlt}" class="brand-logo" />
+        </div>
       </div>
     </div>
     ${eyebrowHtml}
     ${personalMarker}
     <div class="hero-grid">
-      <h1 class="hero-title">${heroTitle}</h1>
-      <p class="hero-subtitle">${heroSubtitle}</p>
-    </div>
-    <div class="hero-metrics">
-      <span class="metric-chip">${content.metricChips[0]}</span>
-      <span class="metric-chip">${content.metricChips[1]}</span>
-      <span class="metric-chip">${content.metricChips[2]}</span>
+      <h1 class="hero-title">${normalizedHeroTitle}</h1>
     </div>
   </div>
 </td>
@@ -624,63 +805,45 @@ export function buildSegmentEmailHtml(
 <tr>
 <td class="pad">
 ${greetingLead}
-<p class="main-title">${mainTitle}</p>
-<p class="lead">${introLead}</p>
-<p class="body-copy">${bodyOne}</p>
-<p class="body-copy">${bodyTwo}</p>
-
+<p class="main-title">${normalizedMainTitle}</p>
+<p class="lead">${normalizedIntroLead}</p>
 <div class="highlight-panel">
-  <p class="panel-title">${content.panelTitle}</p>
   <table width="100%" class="mini-steps">
     <tr>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxOneIconUrl ? `<img src="${boxOneIconUrl}" alt="" />` : '01'}</div>
-          <div class="step-title">${boxOneTitle}</div>
-          <div class="step-copy">${boxOneCopy}</div>
+          <div class="step-icon">${boxOneIconUrl ? `<img src="${boxOneIconUrl}" alt="" width="72" height="72" />` : '01'}</div>
+          <div class="step-title">${normalizedBoxOneTitle}</div>
+          <div class="step-copy">${normalizedBoxOneCopy}</div>
         </div>
       </td>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxTwoIconUrl ? `<img src="${boxTwoIconUrl}" alt="" />` : '02'}</div>
-          <div class="step-title">${boxTwoTitle}</div>
-          <div class="step-copy">${boxTwoCopy}</div>
+          <div class="step-icon">${boxTwoIconUrl ? `<img src="${boxTwoIconUrl}" alt="" width="72" height="72" />` : '02'}</div>
+          <div class="step-title">${normalizedBoxTwoTitle}</div>
+          <div class="step-copy">${normalizedBoxTwoCopy}</div>
         </div>
       </td>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxThreeIconUrl ? `<img src="${boxThreeIconUrl}" alt="" />` : '03'}</div>
-          <div class="step-title">${boxThreeTitle}</div>
-          <div class="step-copy">${boxThreeCopy}</div>
+          <div class="step-icon">${boxThreeIconUrl ? `<img src="${boxThreeIconUrl}" alt="" width="72" height="72" />` : '03'}</div>
+          <div class="step-title">${normalizedBoxThreeTitle}</div>
+          <div class="step-copy">${normalizedBoxThreeCopy}</div>
         </div>
       </td>
     </tr>
   </table>
 </div>
 
-<p class="body-copy">${bodyThree}</p>
-<p class="body-copy">${bodyFour}</p>
-
 <div class="cta-wrap">
-  <a href="${ctaHref}" class="btn">${ctaLabel}</a>
-  <div class="helper">${ctaHelper}</div>
-  <a href="${supportHref}" class="secondary-link">${supportLabel}</a>
-  <div class="secondary-helper">${supportHelper}</div>
-  <div class="rating"><strong>${content.ratingLabel}</strong> <span style="color:#ffd15c;">★★★★☆</span></div>
+  <a href="${ctaHref}" class="btn">${normalizedCtaLabel}</a>
+  <a href="${supportHref}" class="secondary-link">${normalizedSupportLabel}</a>
 </div>
 
 <p class="signature">
 ${content.signatureClosing}<br>
 <strong>${signatureName}</strong>
 </p>
-
-<div class="logo-bar">
-  <img src="${BULLWAVES_LOGO_URL}" width="54" alt="${content.logoAlt}" />
-  <div class="logo-bar-copy">
-    <div class="logo-bar-title">Bullwaves</div>
-    <div class="logo-bar-note">${content.footerNote}</div>
-  </div>
-</div>
 </td>
 </tr>
 
@@ -699,14 +862,21 @@ ${legalFooter}
 }
 
 function makeVariant(spec) {
+  const lang = spec?.html?.lang || 'en'
+  const normalizedDescription = normalizeLocalizedText(lang, spec.description)
+  const normalizedSubject = normalizeLocalizedText(lang, spec.subject)
+
   return {
     name: spec.name,
-    description: spec.description,
-    subject: spec.subject,
+    description: normalizedDescription,
+    subject: normalizedSubject,
     html: buildSegmentEmailHtml(spec.html),
-    sendgridSubject: buildSendgridSubjectTemplate(spec.subject),
+    sendgridSubject: buildSendgridSubjectTemplate(normalizedSubject),
     sendgridHtml: buildSegmentEmailHtml(spec.html, { mode: 'sendgrid' }),
-    sendgridTestData: buildDefaultSendgridTestData(spec.sendgridTestData),
+    sendgridTestData: buildDefaultSendgridTestData({
+      locale: lang,
+      ...(spec.sendgridTestData || {}),
+    }),
   }
 }
 
