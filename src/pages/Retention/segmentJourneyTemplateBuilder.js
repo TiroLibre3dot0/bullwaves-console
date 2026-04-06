@@ -1,12 +1,53 @@
+import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry.js'
+
+const { customerService, creditCard, secureDepositCard } = EMAIL_JOURNEY_ICON_URLS
+
 const WHATSAPP_NUMBER = '35799514794'
+const PORTAL_LOGIN_URL = 'https://portal.bullwaves.com/login'
+const DEPOSIT_PAGE_URL = 'https://my.bullwaves.global/deposit'
 const WHATSAPP_TEXT = {
   en: 'Hi Bullwaves, I would like help with the next step on my account.',
   it: 'Ciao Bullwaves, vorrei supporto per il prossimo passo sul mio account.',
 }
 
+const SUPPORT_ICON_URLS = new Set([customerService])
+const DEPOSIT_ICON_URLS = new Set([creditCard, secureDepositCard])
+
 function getWhatsAppHref(lang = 'en') {
   const normalizedLang = lang === 'it' ? 'it' : 'en'
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(WHATSAPP_TEXT[normalizedLang])}`
+}
+
+function getContextualSupportWhatsAppHref(lang = 'en', context = {}) {
+  const normalizedLang = lang === 'it' ? 'it' : 'en'
+  const contextLabel = String(
+    context?.heroTitle || context?.mainTitle || context?.title || ''
+  ).trim()
+
+  if (!contextLabel) return getWhatsAppHref(normalizedLang)
+
+  const message =
+    normalizedLang === 'it'
+      ? `Ciao Bullwaves, ho bisogno di supporto sulla mail "${contextLabel}". Vorrei aiuto per il prossimo passo sul mio account.`
+      : `Hi Bullwaves, I need support regarding the email "${contextLabel}". I would like help with the next step on my account.`
+
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+}
+
+function getJourneyIconHref(iconUrl, lang = 'en', context = {}) {
+  if (!iconUrl) return ''
+  if (SUPPORT_ICON_URLS.has(iconUrl)) return getContextualSupportWhatsAppHref(lang, context)
+  if (DEPOSIT_ICON_URLS.has(iconUrl)) return DEPOSIT_PAGE_URL
+  return PORTAL_LOGIN_URL
+}
+
+function renderStepIcon(iconUrl, href, fallbackLabel) {
+  if (!iconUrl) return fallbackLabel
+
+  const imageHtml = `<img src="${iconUrl}" alt="" width="72" height="72" />`
+  if (!href) return imageHtml
+
+  return `<a href="${href}" class="step-icon-link">${imageHtml}</a>`
 }
 
 const DEFAULT_CTA_URL = 'https://portal.bullwaves.com/custom/webtrader'
@@ -362,7 +403,15 @@ export function buildSegmentEmailHtml(
   const normalizedSupportLabel = normalize(supportLabel)
   const normalizedSupportHelper = normalize(supportHelper)
   const ctaHref = mode === 'sendgrid' ? '{{cta_url}}' : DEFAULT_CTA_URL
-  const supportHref = mode === 'sendgrid' ? '{{support_url}}' : getWhatsAppHref(lang)
+  const iconContext = {
+    title: normalizedTitle,
+    heroTitle: normalizedHeroTitle,
+    mainTitle: normalizedMainTitle,
+  }
+  const supportHref = getContextualSupportWhatsAppHref(lang, iconContext)
+  const boxOneHref = getJourneyIconHref(boxOneIconUrl, lang, iconContext)
+  const boxTwoHref = getJourneyIconHref(boxTwoIconUrl, lang, iconContext)
+  const boxThreeHref = getJourneyIconHref(boxThreeIconUrl, lang, iconContext)
   const eyebrowHtml = ''
   const personalMarker = mode === 'sendgrid' ? '' : ''
   const greetingLead = ''
@@ -608,6 +657,13 @@ export function buildSegmentEmailHtml(
     margin:18px auto;
     object-fit:contain;
   }
+  .step-icon-link {
+    display:block;
+    width:100%;
+    height:100%;
+    color:inherit !important;
+    text-decoration:none;
+  }
   .step-title {
     font-size:15px;
     font-weight:700;
@@ -812,21 +868,21 @@ ${greetingLead}
     <tr>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxOneIconUrl ? `<img src="${boxOneIconUrl}" alt="" width="72" height="72" />` : '01'}</div>
+          <div class="step-icon">${renderStepIcon(boxOneIconUrl, boxOneHref, '01')}</div>
           <div class="step-title">${normalizedBoxOneTitle}</div>
           <div class="step-copy">${normalizedBoxOneCopy}</div>
         </div>
       </td>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxTwoIconUrl ? `<img src="${boxTwoIconUrl}" alt="" width="72" height="72" />` : '02'}</div>
+          <div class="step-icon">${renderStepIcon(boxTwoIconUrl, boxTwoHref, '02')}</div>
           <div class="step-title">${normalizedBoxTwoTitle}</div>
           <div class="step-copy">${normalizedBoxTwoCopy}</div>
         </div>
       </td>
       <td>
         <div class="step-card">
-          <div class="step-icon">${boxThreeIconUrl ? `<img src="${boxThreeIconUrl}" alt="" width="72" height="72" />` : '03'}</div>
+          <div class="step-icon">${renderStepIcon(boxThreeIconUrl, boxThreeHref, '03')}</div>
           <div class="step-title">${normalizedBoxThreeTitle}</div>
           <div class="step-copy">${normalizedBoxThreeCopy}</div>
         </div>
