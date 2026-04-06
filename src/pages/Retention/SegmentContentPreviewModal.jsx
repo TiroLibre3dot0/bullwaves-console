@@ -1,6 +1,60 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { segmentJourneyTemplateExtrasById } from './segmentJourneyTemplateExtras'
 
+const EXCLUDED_TEMPLATE_PLACEHOLDERS = new Set(['account_manager_name'])
+const HANDLEBARS_CONTROL_KEYWORDS = new Set(['if', 'else'])
+
+function extractTemplateLinks(html) {
+  if (!html) return []
+
+  const matches = html.matchAll(/href="([^"]+)"/g)
+  const links = []
+  const seen = new Set()
+
+  for (const match of matches) {
+    const href = String(match?.[1] || '').trim()
+    if (!href || seen.has(href)) continue
+    seen.add(href)
+    links.push(href)
+  }
+
+  return links
+}
+
+function extractTemplatePlaceholders(...sources) {
+  const found = new Set()
+
+  for (const source of sources) {
+    const value = String(source || '')
+    if (!value) continue
+
+    const matches = value.matchAll(/{{{?([^{}]+)}?}}/g)
+    for (const match of matches) {
+      const expression = String(match?.[1] || '').trim()
+      if (!expression) continue
+
+      const normalized = expression.replace(/^#/, '').replace(/^\//, '').trim()
+      const parts = normalized.split(/\s+/).filter(Boolean)
+      if (!parts.length) continue
+
+      let candidate = ''
+      if (parts[0] === 'if') {
+        candidate = parts[1] || ''
+      } else if (!HANDLEBARS_CONTROL_KEYWORDS.has(parts[0])) {
+        candidate = parts[0]
+      }
+
+      if (!candidate) continue
+      if (HANDLEBARS_CONTROL_KEYWORDS.has(candidate)) continue
+      if (EXCLUDED_TEMPLATE_PLACEHOLDERS.has(candidate)) continue
+
+      found.add(candidate)
+    }
+  }
+
+  return Array.from(found)
+}
+
 function localeLabel(locale) {
   return locale === 'it' ? 'Italiano' : 'English'
 }
@@ -45,6 +99,14 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
   const timing = extraVariant?.timing || '—'
   const delay = extraVariant?.delay || '—'
   const subject = activeChannel === 'email' ? localized?.subject || '—' : '—'
+  const templateLinks = useMemo(
+    () => (activeChannel === 'email' ? extractTemplateLinks(rawValue) : []),
+    [activeChannel, rawValue]
+  )
+  const templatePlaceholders = useMemo(
+    () => (activeChannel === 'email' ? extractTemplatePlaceholders(subject, rawValue) : []),
+    [activeChannel, subject, rawValue]
+  )
 
   useEffect(() => {
     if (!availableLocales.includes(locale)) {
@@ -245,6 +307,49 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
               <div className="mt-1 text-sm font-semibold text-slate-900">
                 {activeChannel.toUpperCase()}
               </div>
+
+              {activeChannel === 'email' ? (
+                <>
+                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Placeholders
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {templatePlaceholders.length ? (
+                      templatePlaceholders.map((entry) => (
+                        <span
+                          key={entry}
+                          className="inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 border border-slate-200"
+                        >
+                          {entry}
+                        </span>
+                      ))
+                    ) : (
+                      <div className="text-sm text-slate-700">—</div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    Links
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {templateLinks.length ? (
+                      templateLinks.map((entry) => (
+                        <a
+                          key={entry}
+                          href={entry.startsWith('{{') ? undefined : entry}
+                          target={entry.startsWith('{{') ? undefined : '_blank'}
+                          rel={entry.startsWith('{{') ? undefined : 'noreferrer'}
+                          className="block rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-700 break-all"
+                        >
+                          {entry}
+                        </a>
+                      ))
+                    ) : (
+                      <div className="text-sm text-slate-700">—</div>
+                    )}
+                  </div>
+                </>
+              ) : null}
             </div>
 
             <div>

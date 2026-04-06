@@ -50,7 +50,7 @@ function renderStepIcon(iconUrl, href, fallbackLabel) {
   return `<a href="${href}" class="step-icon-link">${imageHtml}</a>`
 }
 
-const DEFAULT_CTA_URL = 'https://portal.bullwaves.com/custom/webtrader'
+const DEFAULT_CTA_URL = PORTAL_LOGIN_URL
 const SENDGRID_BULLWAVES_ICON_URL =
   'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
 const BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Group%202087330250.svg'

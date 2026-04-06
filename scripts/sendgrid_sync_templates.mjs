@@ -220,7 +220,7 @@ function getLocalizedSupportUrl(locale = 'en') {
 
 export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = ${JSON.stringify(
     {
-      cta_url: 'https://portal.bullwaves.com/custom/webtrader',
+      cta_url: 'https://portal.bullwaves.com/login',
       account_manager_name: 'The Bullwaves Team',
     },
     null,
