@@ -1,9 +1,58 @@
 import React from 'react'
 import { Handle, Position } from '../reactflowCompat'
 
+function OutcomeIcon({ tone = 'neutral' }) {
+  const palette = {
+    positive: { bg: '#16a34a', stroke: '#ffffff' },
+    neutral: { bg: '#94a3b8', stroke: '#ffffff' },
+    negative: { bg: '#ef4444', stroke: '#ffffff' },
+  }
+
+  const colors = palette[tone] || palette.neutral
+
+  return (
+    <div
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: 999,
+        background: colors.bg,
+        border: '3px solid #ffffff',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 10px 18px rgba(15,23,42,0.14)',
+      }}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        {tone === 'positive' ? (
+          <path
+            d="m6.5 12.5 3.3 3.3 7.7-7.8"
+            stroke={colors.stroke}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        ) : tone === 'negative' ? (
+          <path
+            d="m8 8 8 8M16 8l-8 8"
+            stroke={colors.stroke}
+            strokeWidth="2.2"
+            strokeLinecap="round"
+          />
+        ) : (
+          <path d="M7.5 12h9" stroke={colors.stroke} strokeWidth="2.2" strokeLinecap="round" />
+        )}
+      </svg>
+    </div>
+  )
+}
+
 export default function OutcomeNode({ data }) {
   const tone = data?.kind
   const isLink = Boolean(data?.linkToFlow)
+  const isHorizontal = data?.flowDirection === 'horizontal'
+  const isSolitics = data?.theme === 'solitics'
   const kpis = Array.isArray(data?.kpis)
     ? data.kpis
         .filter((k) => k && (k.label || k.value))
@@ -93,15 +142,15 @@ export default function OutcomeNode({ data }) {
         }
       default:
         return {
-          bgA: 'rgba(16,185,129,0.18)',
-          bgB: 'rgba(34,211,238,0.10)',
-          border: 'rgba(16,185,129,0.58)',
-          dot: 'rgba(16,185,129,0.95)',
-          dotGlow: 'rgba(16,185,129,0.26)',
-          ring: 'rgba(16,185,129,0.10)',
-          glow: 'rgba(16,185,129,0.12)',
-          label: 'rgba(167,243,208,0.95)',
-          text: 'rgba(236,253,245,0.95)',
+          bgA: 'rgba(59,130,246,0.18)',
+          bgB: 'rgba(14,165,233,0.10)',
+          border: 'rgba(59,130,246,0.58)',
+          dot: 'rgba(59,130,246,0.95)',
+          dotGlow: 'rgba(59,130,246,0.26)',
+          ring: 'rgba(59,130,246,0.10)',
+          glow: 'rgba(14,165,233,0.12)',
+          label: 'rgba(191,219,254,0.95)',
+          text: 'rgba(239,246,255,0.96)',
         }
     }
   }
@@ -122,17 +171,98 @@ export default function OutcomeNode({ data }) {
       }
     : null
 
+  const backgroundByTone = isSolitics
+    ? {
+        positive: 'linear-gradient(180deg, #ecfdf5, #dcfce7)',
+        neutral: 'linear-gradient(180deg, #ffffff, #f1f5f9)',
+        negative: 'linear-gradient(180deg, #fef2f2, #fee2e2)',
+      }
+    : null
+  const textColor = isSolitics ? '#0f172a' : '#e5e7eb'
+  const shadow = isSolitics ? '0 12px 24px rgba(15,23,42,0.10)' : '0 10px 30px rgba(0,0,0,0.24)'
+
+  if (isSolitics) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 16,
+            background: backgroundByTone[tone] || backgroundByTone.neutral,
+            border: `1px solid ${borderByTone[tone] || 'rgba(148, 163, 184, 0.25)'}`,
+            boxShadow: '0 10px 22px rgba(15,23,42,0.08)',
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            inset: 12,
+            display: 'grid',
+            gridTemplateColumns: '42px minmax(0, 1fr)',
+            gap: 12,
+            alignItems: 'center',
+          }}
+        >
+          <OutcomeIcon tone={tone} />
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 900,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#94a3b8',
+                lineHeight: 1,
+              }}
+            >
+              Outcome
+            </div>
+            <div
+              style={{
+                marginTop: 6,
+                maxWidth: '100%',
+                fontSize: 11,
+                fontWeight: 800,
+                lineHeight: 1.2,
+                color: '#334155',
+              }}
+            >
+              {data?.label}
+            </div>
+          </div>
+        </div>
+
+        <Handle
+          type="target"
+          position={isHorizontal ? Position.Left : Position.Top}
+          id="in"
+          style={{ opacity: 0 }}
+        />
+        <Handle
+          type="source"
+          position={isHorizontal ? Position.Right : Position.Bottom}
+          id="out"
+          style={{ opacity: 0 }}
+        />
+      </div>
+    )
+  }
+
   return (
     <div
       style={{
         position: 'relative',
         overflow: 'visible',
         padding: '10px 12px',
-        background: 'rgba(15, 23, 42, 0.75)',
+        background: isSolitics
+          ? backgroundByTone[tone] || backgroundByTone.neutral
+          : 'rgba(15, 23, 42, 0.75)',
         border: `1px solid ${borderByTone[tone] || 'rgba(148, 163, 184, 0.25)'}`,
         borderRadius: 999,
-        boxShadow: '0 10px 30px rgba(0,0,0,0.24)',
-        color: '#e5e7eb',
+        boxShadow: shadow,
+        color: textColor,
         fontWeight: 900,
         fontSize: 12,
         textAlign: 'center',
@@ -144,12 +274,14 @@ export default function OutcomeNode({ data }) {
         <div
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '100%',
-            marginLeft: 12,
-            transform: 'translateY(-50%)',
+            top: isHorizontal ? '100%' : '50%',
+            left: isHorizontal ? 12 : '100%',
+            marginTop: isHorizontal ? 12 : 0,
+            marginLeft: isHorizontal ? 0 : 12,
+            transform: isHorizontal ? 'none' : 'translateY(-50%)',
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: isHorizontal ? 'row' : 'column',
+            flexWrap: isHorizontal ? 'wrap' : 'nowrap',
             gap: 6,
             alignItems: 'flex-start',
             pointerEvents: 'none',
@@ -235,8 +367,18 @@ export default function OutcomeNode({ data }) {
       ) : null}
       <div style={{ lineHeight: 1.2 }}>{data?.label}</div>
 
-      <Handle type="target" position={Position.Top} id="in" style={{ opacity: 0 }} />
-      <Handle type="source" position={Position.Bottom} id="out" style={{ opacity: 0 }} />
+      <Handle
+        type="target"
+        position={isHorizontal ? Position.Left : Position.Top}
+        id="in"
+        style={{ opacity: 0 }}
+      />
+      <Handle
+        type="source"
+        position={isHorizontal ? Position.Right : Position.Bottom}
+        id="out"
+        style={{ opacity: 0 }}
+      />
     </div>
   )
 }

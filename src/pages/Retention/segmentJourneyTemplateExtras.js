@@ -29,15 +29,15 @@ export const segmentJourneyTemplateExtrasById = {
       it: localeVariants(
         {
           timing: 'D0',
-          delay: '0 giorni dall ingresso nel segmento',
+          delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: il tuo account e pronto. Completa il prossimo step e sblocca l accesso. Entra nella tua area personale per continuare.',
+            "Bullwaves: il tuo account è pronto. Completa il prossimo step e sblocca l'accesso. Entra nella tua area personale per continuare.",
         },
         {
           timing: 'D0',
-          delay: '0 giorni dall ingresso nel segmento',
+          delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: registrazione completata. Il prossimo step e attivare l accesso. Entra nella tua area e continua quando vuoi.',
+            "Bullwaves: registrazione completata. Il prossimo step è attivare l'accesso. Entra nella tua area e continua quando vuoi.",
         }
       ),
     },
@@ -63,13 +63,13 @@ export const segmentJourneyTemplateExtrasById = {
           timing: 'D2',
           delay: '+2 giorni dopo il welcome message',
           smsText:
-            'Bullwaves: se un dubbio ti sta fermando sul primo deposito, riapri ora il percorso di funding. Il supporto c e solo se ti serve.',
+            "Bullwaves: se un dubbio ti sta fermando sul primo deposito, riapri ora il percorso di deposito. Il supporto c'è solo se ti serve.",
         },
         {
           timing: 'D2',
           delay: '+2 giorni dopo il welcome message',
           smsText:
-            'Bullwaves: il passaggio di funding puo essere piu semplice di quanto sembri. Riapri il percorso e riguardalo con un frame piu leggero.',
+            'Bullwaves: il passaggio di funding può essere più semplice di quanto sembri. Riapri il percorso e riguardalo con un approccio più leggero.',
         }
       ),
     },
@@ -95,13 +95,13 @@ export const segmentJourneyTemplateExtrasById = {
           timing: 'D5',
           delay: '+3 giorni dopo il messaggio di riduzione attriti',
           smsText:
-            'Bullwaves: il tuo accesso e quasi sbloccato. Completa ora il primo deposito e porta l account in attivazione.',
+            "Bullwaves: il tuo accesso è quasi sbloccato. Completa ora il primo deposito e porta l'account in attivazione.",
         },
         {
           timing: 'D5',
           delay: '+3 giorni dopo il messaggio di riduzione attriti',
           smsText:
-            'Bullwaves: non perdere momentum. Completa oggi il funding e chiudi il setup del tuo account.',
+            'Bullwaves: non perdere slancio. Completa oggi il deposito e chiudi la configurazione del tuo account.',
         }
       ),
     },
@@ -127,13 +127,13 @@ export const segmentJourneyTemplateExtrasById = {
           timing: 'FTD +0d',
           delay: 'Immediatamente dopo il primo deposito riuscito',
           smsText:
-            'Bullwaves: il tuo account e finanziato. Apri la piattaforma e fai il tuo primo trade quando vuoi.',
+            'Bullwaves: il tuo account è finanziato. Apri la piattaforma e fai la tua prima operazione quando vuoi.',
         },
         {
           timing: 'FTD +0d',
           delay: 'Immediatamente dopo il primo deposito riuscito',
           smsText:
-            'Bullwaves: il tuo primo trade puo restare semplice. Apri la piattaforma e fai il prossimo passo con un primo movimento piccolo.',
+            'Bullwaves: la tua prima operazione può restare semplice. Apri la piattaforma e fai il prossimo passo con un primo movimento piccolo.',
         }
       ),
     },
@@ -159,13 +159,13 @@ export const segmentJourneyTemplateExtrasById = {
           timing: 'D21',
           delay: '+21 giorni dopo l ultimo step non convertito',
           smsText:
-            'Bullwaves: sei ancora interessato? Riapri la tua area personale con un percorso piu semplice e continua solo se il prossimo step ti e chiaro.',
+            'Bullwaves: sei ancora interessato? Riapri la tua area personale con un percorso più semplice e continua solo se il prossimo step ti è chiaro.',
         },
         {
           timing: 'D21',
           delay: '+21 giorni dopo l ultimo step non convertito',
           smsText:
-            'Bullwaves: la tua opportunita e ancora aperta. Torna nel tuo account e riparti con un prossimo step piu chiaro.',
+            'Bullwaves: la tua opportunità è ancora aperta. Torna nel tuo account e riparti con un prossimo step più chiaro.',
         }
       ),
     },

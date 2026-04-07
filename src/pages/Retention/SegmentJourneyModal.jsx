@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import FlowDiagram from '../../features/flows/FlowDiagram'
 import { useI18n } from '../../i18n/I18nContext'
 import SegmentContentPreviewModal from './SegmentContentPreviewModal'
@@ -11,6 +11,7 @@ import { segmentJourneyTemplatesById } from './segmentJourneyTemplates'
 export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData }) {
   const { locale } = useI18n()
   const [selectedTemplateId, setSelectedTemplateId] = useState(null)
+  const [selectedNodeId, setSelectedNodeId] = useState(null)
   const safeFlowData = flowData || null
   const safeSegment = segment || null
 
@@ -57,9 +58,131 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
   const flowDescription = pickText(safeFlowData?.meta?.description)
   const flowGoal = pickText(safeFlowData?.meta?.goal)
   const segmentLabel = pickText(safeSegment?.label)
+  const flowTitle = pickText(safeFlowData?.meta?.title) || segmentLabel
   const selectedTemplate = selectedTemplateId
     ? segmentJourneyTemplatesById?.[selectedTemplateId]
     : null
+
+  const journeyNodes = useMemo(
+    () =>
+      [...localizedNodes]
+        .filter(Boolean)
+        .sort(
+          (left, right) =>
+            (left?.position?.y ?? 0) - (right?.position?.y ?? 0) ||
+            (left?.position?.x ?? 0) - (right?.position?.x ?? 0)
+        ),
+    [localizedNodes]
+  )
+
+  const actionableNodes = useMemo(
+    () =>
+      journeyNodes.filter((node) =>
+        ['state', 'decision', 'outcome', 'communication'].includes(String(node?.type || ''))
+      ),
+    [journeyNodes]
+  )
+
+  const stepNodes = useMemo(
+    () => actionableNodes.filter((node) => ['state', 'decision', 'outcome'].includes(node.type)),
+    [actionableNodes]
+  )
+
+  const defaultSelectedNodeId =
+    stepNodes.find((node) => node?.data?.templateId)?.id ||
+    stepNodes[0]?.id ||
+    actionableNodes[0]?.id ||
+    null
+
+  useEffect(() => {
+    if (!isOpen) return
+    setSelectedNodeId(defaultSelectedNodeId)
+  }, [defaultSelectedNodeId, isOpen, safeFlowData?.meta?.id])
+
+  const selectedNode = useMemo(
+    () => actionableNodes.find((node) => node?.id === selectedNodeId) || null,
+    [actionableNodes, selectedNodeId]
+  )
+
+  const countByType = useMemo(
+    () => ({
+      steps: journeyNodes.filter((node) => node?.type === 'state').length,
+      decisions: journeyNodes.filter((node) => node?.type === 'decision').length,
+      outcomes: journeyNodes.filter((node) => node?.type === 'outcome').length,
+    }),
+    [journeyNodes]
+  )
+
+  const nodeConnections = useMemo(() => {
+    if (!selectedNodeId) return { incoming: [], outgoing: [] }
+
+    return {
+      incoming: localizedEdges.filter((edge) => edge?.target === selectedNodeId),
+      outgoing: localizedEdges.filter((edge) => edge?.source === selectedNodeId),
+    }
+  }, [localizedEdges, selectedNodeId])
+
+  const getNodeLabel = (node) => {
+    if (!node) return ''
+    return pickText(node?.data?.label || node?.id)
+  }
+
+  const getNodeSubLabel = (node) => pickText(node?.data?.subLabel)
+
+  const getNodeTypeLabel = (node) => {
+    switch (node?.type) {
+      case 'state':
+        return node?.data?.templateId ? 'Communication step' : 'Journey step'
+      case 'decision':
+        return 'Decision split'
+      case 'outcome':
+        return 'Outcome bucket'
+      case 'communication':
+        return 'Influence / note'
+      default:
+        return 'Journey node'
+    }
+  }
+
+  const getNodeSoliticsAction = (node) => {
+    if (!node) return ''
+    if (node?.data?.templateId) return 'Send communication'
+    if (node?.type === 'decision') return 'Wait for event and branch'
+    if (node?.type === 'outcome') return 'Mark result and handoff'
+    if (node?.type === 'communication') return 'Supporting rule or context'
+    return 'Journey logic'
+  }
+
+  const getNodeTiming = (node) => {
+    if (!node) return ''
+    if (node?.data?.timingBadge) return String(node.data.timingBadge)
+    if (node?.id === 'E0') return 'Segment entry'
+    if (node?.type === 'decision') return 'Behavior-based check'
+    return 'Immediate'
+  }
+
+  const getEdgeLabel = (edge) => {
+    if (!edge) return ''
+    if (edge?.data?.primary) return pickText(edge.data.primary)
+    return pickText(edge?.label)
+  }
+
+  const buildConnectionSummary = (edge, direction) => {
+    const counterpartId = direction === 'incoming' ? edge?.source : edge?.target
+    const counterpart = actionableNodes.find((node) => node?.id === counterpartId)
+    return {
+      id: edge?.id || `${direction}-${counterpartId}`,
+      title: getNodeLabel(counterpart) || counterpartId,
+      caption: getEdgeLabel(edge) || (direction === 'incoming' ? 'Previous step' : 'Next step'),
+    }
+  }
+
+  const incomingSummary = nodeConnections.incoming.map((edge) =>
+    buildConnectionSummary(edge, 'incoming')
+  )
+  const outgoingSummary = nodeConnections.outgoing.map((edge) =>
+    buildConnectionSummary(edge, 'outgoing')
+  )
 
   const openTemplate = (templateId) => {
     const id = String(templateId || '').trim()
@@ -94,7 +217,7 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
               {pickText(safeSegment?.group)}
             </p>
             <h2 id="segment-journey-modal-title" style={{ margin: 0, fontSize: 20 }}>
-              {segmentLabel} — Journey
+              {segmentLabel} — Solitics View
             </h2>
             {flowGoal && (
               <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
@@ -121,12 +244,182 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
           </div>
         )}
 
-        <div className="segment-journey-modal__diagram-wrap">
-          <FlowDiagram
-            nodes={localizedNodes}
-            edges={localizedEdges}
-            onOpenTemplate={(templateId) => openTemplate(templateId)}
-          />
+        <div className="segment-journey-modal__workspace">
+          <aside className="segment-journey-modal__sidebar">
+            <section className="segment-journey-modal__panel">
+              <div className="segment-journey-modal__eyebrow">Solitics format</div>
+              <h3 className="segment-journey-modal__panel-title">Journey blueprint</h3>
+              <p className="segment-journey-modal__panel-copy">
+                Ogni nodo mostra il corrispettivo operativo da replicare in Solitics: touch,
+                condizione, outcome e timing.
+              </p>
+              <div className="segment-journey-modal__legend">
+                <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--step">
+                  <span />
+                  <strong>Touch</strong>
+                </div>
+                <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--decision">
+                  <span />
+                  <strong>Condition</strong>
+                </div>
+                <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--outcome">
+                  <span />
+                  <strong>Outcome</strong>
+                </div>
+                <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--note">
+                  <span />
+                  <strong>Context</strong>
+                </div>
+              </div>
+            </section>
+
+            <section className="segment-journey-modal__panel">
+              <div className="segment-journey-modal__eyebrow">Step navigator</div>
+              <div className="segment-journey-modal__step-list">
+                {stepNodes.map((node, index) => (
+                  <button
+                    key={node.id}
+                    type="button"
+                    className={`segment-journey-modal__step-button${
+                      node.id === selectedNodeId ? ' is-active' : ''
+                    }`}
+                    onClick={() => setSelectedNodeId(node.id)}
+                  >
+                    <span className="segment-journey-modal__step-index">{index + 1}</span>
+                    <span className="segment-journey-modal__step-copy">
+                      <strong>{getNodeLabel(node)}</strong>
+                      <small>{getNodeTypeLabel(node)}</small>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {selectedNode ? (
+              <section className="segment-journey-modal__panel segment-journey-modal__panel--active">
+                <div className="segment-journey-modal__eyebrow">Selected node</div>
+                <h3 className="segment-journey-modal__panel-title">{getNodeLabel(selectedNode)}</h3>
+                <div className="segment-journey-modal__tag-row">
+                  <span className="segment-journey-modal__tag">
+                    {getNodeTypeLabel(selectedNode)}
+                  </span>
+                  <span className="segment-journey-modal__tag">{getNodeTiming(selectedNode)}</span>
+                </div>
+                {getNodeSubLabel(selectedNode) ? (
+                  <p className="segment-journey-modal__panel-copy">
+                    {getNodeSubLabel(selectedNode)}
+                  </p>
+                ) : null}
+
+                <div className="segment-journey-modal__details-grid">
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Solitics action</span>
+                    <strong className="segment-journey-modal__detail-value">
+                      {getNodeSoliticsAction(selectedNode)}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Journey</span>
+                    <strong className="segment-journey-modal__detail-value">{flowTitle}</strong>
+                  </div>
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Segment</span>
+                    <strong className="segment-journey-modal__detail-value">{segmentLabel}</strong>
+                  </div>
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Template</span>
+                    <strong className="segment-journey-modal__detail-value">
+                      {selectedNode?.data?.templateId || 'No template linked'}
+                    </strong>
+                  </div>
+                </div>
+
+                {selectedNode?.data?.templateId ? (
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => openTemplate(selectedNode.data.templateId)}
+                  >
+                    Open linked template
+                  </button>
+                ) : null}
+
+                <div className="segment-journey-modal__routes">
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Incoming</span>
+                    <div className="segment-journey-modal__route-list">
+                      {incomingSummary.length ? (
+                        incomingSummary.map((item) => (
+                          <div key={item.id} className="segment-journey-modal__route-card">
+                            <strong>{item.title}</strong>
+                            <small>{item.caption}</small>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="segment-journey-modal__route-card is-empty">
+                          <strong>Start point</strong>
+                          <small>Nessun nodo precedente</small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="segment-journey-modal__detail-label">Outgoing</span>
+                    <div className="segment-journey-modal__route-list">
+                      {outgoingSummary.length ? (
+                        outgoingSummary.map((item) => (
+                          <div key={item.id} className="segment-journey-modal__route-card">
+                            <strong>{item.title}</strong>
+                            <small>{item.caption}</small>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="segment-journey-modal__route-card is-empty">
+                          <strong>Final node</strong>
+                          <small>Nessun passaggio successivo</small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+          </aside>
+
+          <div className="segment-journey-modal__canvas-panel">
+            <div className="segment-journey-modal__canvas-toolbar">
+              <div>
+                <div className="segment-journey-modal__eyebrow">Console to Solitics</div>
+                <h3 className="segment-journey-modal__panel-title">
+                  Operational map for collaborators
+                </h3>
+              </div>
+              <div className="segment-journey-modal__toolbar-stats">
+                <span className="segment-journey-modal__stat-pill">{countByType.steps} touch</span>
+                <span className="segment-journey-modal__stat-pill">
+                  {countByType.decisions} split
+                </span>
+                <span className="segment-journey-modal__stat-pill">
+                  {countByType.outcomes} outcome
+                </span>
+              </div>
+            </div>
+
+            <div className="segment-journey-modal__diagram-wrap">
+              <FlowDiagram
+                nodes={localizedNodes}
+                edges={localizedEdges}
+                theme="solitics"
+                height="100%"
+                selectedNodeId={selectedNodeId}
+                onSelectNode={(node) => setSelectedNodeId(node?.id || null)}
+                onOpenTemplate={(templateId, node) => {
+                  if (node?.id) setSelectedNodeId(node.id)
+                  openTemplate(templateId)
+                }}
+              />
+            </div>
+          </div>
         </div>
 
         <SegmentContentPreviewModal

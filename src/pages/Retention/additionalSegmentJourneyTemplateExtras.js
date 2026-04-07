@@ -27,15 +27,15 @@ export const additionalSegmentJourneyTemplateExtrasById = {
       it: localeVariants(
         {
           timing: 'D0',
-          delay: '0 giorni dall ingresso nel segmento',
+          delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: il tuo profilo e entrato in un percorso di attenzione premium. Riapri la tua area cliente e continua con il support layer gia attivo.',
+            'Bullwaves: il tuo profilo è entrato in un percorso di attenzione premium. Riapri la tua area cliente e continua con il supporto dedicato già attivo.',
         },
         {
           timing: 'D0',
-          delay: '0 giorni dall ingresso nel segmento',
+          delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: la tua performance recente ha sbloccato un percorso piu su misura. Apri la tua area cliente e mantieni attivo il momentum.',
+            'Bullwaves: la tua performance recente ha sbloccato un percorso più su misura. Apri la tua area cliente e mantieni attivo lo slancio.',
         }
       ),
     },
@@ -61,13 +61,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D3',
           delay: '+3 giorni dopo il touch VIP',
           smsText:
-            'Bullwaves: il tuo profilo puo accedere a un support stack piu affilato. Riapri la piattaforma e guarda il toolkit premium preparato per te.',
+            'Bullwaves: il tuo profilo può accedere a un supporto più preciso. Riapri la piattaforma e guarda gli strumenti premium preparati per te.',
         },
         {
           timing: 'D3',
           delay: '+3 giorni dopo il touch VIP',
           smsText:
-            'Bullwaves: proteggere il vantaggio parte da un ambiente operativo migliore. Apri la piattaforma e rivedi il support layer evoluto.',
+            'Bullwaves: proteggere il vantaggio parte da un ambiente operativo migliore. Apri la piattaforma e rivedi il supporto evoluto.',
         }
       ),
     },
@@ -91,15 +91,15 @@ export const additionalSegmentJourneyTemplateExtrasById = {
       it: localeVariants(
         {
           timing: 'D10',
-          delay: '+7 giorni dopo l offerta strumenti avanzati',
+          delay: "+7 giorni dopo l'offerta strumenti avanzati",
           smsText:
-            'Bullwaves: la tua continuita sta aprendo un trattamento loyalty premium. Rivedi il tuo tier dall area cliente e mantieni attivo il percorso.',
+            "Bullwaves: la tua continuità sta aprendo un percorso loyalty premium. Rivedi il tuo livello dall'area cliente e mantieni attivo il percorso.",
         },
         {
           timing: 'D10',
-          delay: '+7 giorni dopo l offerta strumenti avanzati',
+          delay: "+7 giorni dopo l'offerta strumenti avanzati",
           smsText:
-            'Bullwaves: un loyalty tier piu forte e ora collegato al tuo profilo. Apri la piattaforma e guarda la tua progressione premium.',
+            'Bullwaves: un livello loyalty più forte è ora collegato al tuo profilo. Apri la piattaforma e guarda la tua progressione premium.',
         }
       ),
     },
@@ -125,7 +125,7 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'Q+0d',
           delay: 'All inizio del ciclo review trimestrale',
           smsText:
-            'Bullwaves: la tua review VIP trimestrale e pronta. Apri la tua area cliente per impostare il prossimo ciclo account con piu precisione.',
+            'Bullwaves: la tua review VIP trimestrale è pronta. Apri la tua area cliente per impostare il prossimo ciclo account con più precisione.',
         },
         {
           timing: 'Q+0d',
@@ -155,15 +155,15 @@ export const additionalSegmentJourneyTemplateExtrasById = {
       it: localeVariants(
         {
           timing: 'D30',
-          delay: '+30 giorni dopo l ultimo touch premium',
+          delay: "+30 giorni dopo l'ultimo touch premium",
           smsText:
-            'Bullwaves: tenere attivo il tuo ritmo premium conta. Riapri la piattaforma e continua dal percorso premium gia preparato per te.',
+            'Bullwaves: tenere attivo il tuo ritmo premium conta. Riapri la piattaforma e continua dal percorso premium già preparato per te.',
         },
         {
           timing: 'D30',
-          delay: '+30 giorni dopo l ultimo touch premium',
+          delay: "+30 giorni dopo l'ultimo touch premium",
           smsText:
-            'Bullwaves: una relazione ad alto valore si raffredda solo quando perde continuita. Rientra in piattaforma con un percorso premium piu leggero.',
+            'Bullwaves: una relazione ad alto valore si raffredda solo quando perde continuità. Rientra in piattaforma con un percorso premium più leggero.',
         }
       ),
     },
@@ -187,15 +187,15 @@ export const additionalSegmentJourneyTemplateExtrasById = {
       it: localeVariants(
         {
           timing: 'D0',
-          delay: '0 giorni dall ingresso nel segmento',
+          delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: hai ottenuto il tuo badge di consistenza. Apri la piattaforma e usa questo momentum come base del prossimo step di crescita.',
+            'Bullwaves: hai ottenuto il tuo badge di consistenza. Apri la piattaforma e usa questo slancio come base del prossimo step di crescita.',
         },
         {
           timing: 'D0',
           delay: '0 giorni dall ingresso nel segmento',
           smsText:
-            'Bullwaves: la tua costanza e ora un asset visibile di crescita. Riapri la piattaforma e mantieni attivo il ritmo verso l alto.',
+            "Bullwaves: la tua costanza è ora un asset visibile di crescita. Riapri la piattaforma e mantieni attivo il ritmo verso l'alto.",
         }
       ),
     },
@@ -221,13 +221,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D7',
           delay: '+7 giorni dopo il badge',
           smsText:
-            'Bullwaves: la tua growth roadmap e pronta. Apri la piattaforma e usa le prossime milestone per rendere il tuo ritmo piu intenzionale.',
+            'Bullwaves: il tuo piano di crescita è pronto. Apri la piattaforma e usa le prossime tappe per rendere il tuo ritmo più intenzionale.',
         },
         {
           timing: 'D7',
           delay: '+7 giorni dopo il badge',
           smsText:
-            'Bullwaves: i trader costanti crescono piu velocemente quando i target successivi sono chiari. Rivedi ora la tua roadmap dalla piattaforma.',
+            'Bullwaves: i trader costanti crescono più velocemente quando i target successivi sono chiari. Rivedi ora il tuo piano dalla piattaforma.',
         }
       ),
     },
@@ -253,13 +253,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D21',
           delay: '+14 giorni dopo la roadmap',
           smsText:
-            'Bullwaves: la tua costanza sta sbloccando un reward fedelta. Apri la piattaforma e mantieni attivo da qui il loop di crescita.',
+            'Bullwaves: la tua costanza sta sbloccando un premio fedeltà. Apri la piattaforma e mantieni attivo da qui il percorso di crescita.',
         },
         {
           timing: 'D21',
           delay: '+14 giorni dopo la roadmap',
           smsText:
-            'Bullwaves: uno sforzo stabile porta ora un reward signal piu forte. Rivedilo dalla piattaforma e continua a crescere.',
+            'Bullwaves: uno sforzo stabile porta ora un riconoscimento più forte. Rivedilo dalla piattaforma e continua a crescere.',
         }
       ),
     },
@@ -285,13 +285,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'PROMO +0d',
           delay: 'Immediatamente dopo la promozione a Top Performers',
           smsText:
-            'Bullwaves: sei pronto per il percorso Top Performers. Apri la tua area cliente e avvia ora il journey di segmento evoluto.',
+            'Bullwaves: sei pronto per il percorso Top Performers. Apri la tua area cliente e avvia ora il percorso del segmento evoluto.',
         },
         {
           timing: 'PROMO +0d',
           delay: 'Immediatamente dopo la promozione a Top Performers',
           smsText:
-            'Bullwaves: il tuo profilo sta entrando in un tier piu forte. Entra in piattaforma e avvia da li il percorso evoluto.',
+            'Bullwaves: il tuo profilo sta entrando in un livello più forte. Entra in piattaforma e avvia da lì il percorso evoluto.',
         }
       ),
     },
@@ -317,13 +317,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D30',
           delay: '+30 giorni dopo l ultimo ciclo a basso engagement',
           smsText:
-            'Bullwaves: un percorso di restart piu pulito e pronto per te. Riapri la piattaforma e rilancia da li il tuo prossimo ciclo di crescita.',
+            'Bullwaves: un percorso di ripartenza più pulito è pronto per te. Riapri la piattaforma e rilancia da lì il tuo prossimo ciclo di crescita.',
         },
         {
           timing: 'D30',
           delay: '+30 giorni dopo l ultimo ciclo a basso engagement',
           smsText:
-            'Bullwaves: se il momentum si e raffreddato, un restart piu soft puo funzionare meglio. Rientra nell area cliente e riparti con un frame piu leggero.',
+            "Bullwaves: se lo slancio si è raffreddato, una ripartenza più morbida può funzionare meglio. Rientra nell'area cliente e riparti con un'impostazione più leggera.",
         }
       ),
     },

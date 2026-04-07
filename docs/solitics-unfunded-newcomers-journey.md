@@ -93,6 +93,70 @@ Durante queste `48 ore` va monitorato il primo decision checkpoint:
 - `Visited deposit page?`
 - segnali: click CTA deposito, apertura cashier, ingresso deposit page o evento equivalente
 
+### Branching consigliato subito dopo Step 1
+
+Per l implementazione Solitics conviene introdurre un branching intermedio basato sul `login/access event`, perche separa bene due problemi diversi:
+
+- chi non fa login dopo il welcome probabilmente non ha ancora superato il blocco di accesso, fiducia o orientamento
+- chi fa login ma non deposita ha gia superato il primo attrito e va spinto sul funding, non sul semplice accesso
+
+#### Ramo A. Nessun login registrato dopo Step 1
+
+- condizione: nessun evento `login`, `portal access`, `client area opened` o equivalente nella finestra di osservazione iniziale
+- interpretazione: il profilo non e ancora entrato davvero nella piattaforma; il problema non e il deposito ma l attivazione iniziale
+- messaggio da inviare: contenuto `access-first`
+
+Angolo consigliato del messaggio:
+
+- focus su accesso semplice e sicuro
+- reminder del valore dell account gia creato
+- istruzioni rapide: entra, verifica area personale, poi vai al deposito
+- CTA primaria: login portal
+- CTA secondaria: supporto WhatsApp per aiuto immediato
+
+Cosa dire, in pratica:
+
+- `il tuo account e pronto`
+- `entra in area personale in 1 minuto`
+- `se hai dubbi su accesso o credenziali ti aiutiamo noi`
+
+Obiettivo operativo:
+
+- ottenere il primo accesso/login
+- non chiedere ancora un deposito in modo aggressivo, perche il profilo non ha ancora mostrato attivazione reale
+
+#### Ramo B. Login registrato dopo Step 1
+
+- condizione: evento `login`, `portal access`, `client area opened` o equivalente registrato dopo il welcome
+- interpretazione: il profilo ha gia mostrato attivazione iniziale; il collo di bottiglia si sposta su deposito, KYC o scelta del metodo di pagamento
+- messaggio da inviare: `unfunded_newcomers_friction_reduction_email`
+
+Angolo consigliato del messaggio:
+
+- non vendere piu l accesso
+- ridurre l attrito sul funding
+- spiegare il prossimo step concreto: apri cashier, scegli metodo, completa deposito
+- evidenziare velocita, chiarezza, proof sui payment methods e supporto live
+- CTA primaria: deposito
+- CTA secondaria: supporto WhatsApp
+
+Cosa dire, in pratica:
+
+- `hai gia fatto accesso, ora completiamo il funding`
+- `ti mostriamo il modo piu semplice per depositare`
+- `se ti blocchi su metodo di pagamento o verifica, ti assistiamo`
+
+Obiettivo operativo:
+
+- trasformare il login in `deposit intent`
+- spingere il profilo verso cashier open, payment method selection o KYC completion
+
+#### Regola pratica consigliata in Solitics
+
+- se entro `24 ore` dallo Step 1 non c e login: invia un touch breve orientato a `login/access recovery`
+- se invece entro `24 ore` o `48 ore` c e login ma non c e `visited deposit page`: invia il ramo `Friction Reduction`
+- se c e gia `visited deposit page` o `cashier open`: puoi anche evitare il touch access-first e tenere il profilo sul percorso funding
+
 ### Fase 2: Friction Reduction
 
 - step key: `unfunded_newcomers_friction_reduction_email`

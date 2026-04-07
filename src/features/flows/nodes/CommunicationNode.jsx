@@ -1,11 +1,22 @@
 import React from 'react'
 import { Handle, Position } from '../reactflowCompat'
 
+function LightningIcon({ color = '#94a3b8' }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M13 2 6 13h4l-1 9 7-11h-4l1-9Z" fill={color} stroke={color} strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export default function CommunicationNode({ data }) {
   const isInfluence = data?.kind === 'influence'
   const isLink = Boolean(data?.linkToFlow)
   const isTemplate = Boolean(data?.templateId)
   const isClickable = isLink || isTemplate
+  const isHorizontal = data?.flowDirection === 'horizontal'
+  const isSolitics = data?.theme === 'solitics'
+  const showDetails = Boolean(data?.showDetails)
   const linkVariant = isClickable && isInfluence ? 'influence' : 'step'
 
   const kpis = Array.isArray(data?.kpis)
@@ -114,17 +125,113 @@ export default function CommunicationNode({ data }) {
         }
       default:
         return {
-          bgA: 'rgba(16,185,129,0.18)',
-          bgB: 'rgba(34,211,238,0.10)',
-          border: 'rgba(16,185,129,0.58)',
-          dot: 'rgba(16,185,129,0.95)',
-          dotGlow: 'rgba(16,185,129,0.26)',
-          ring: 'rgba(16,185,129,0.10)',
-          glow: 'rgba(16,185,129,0.12)',
-          label: 'rgba(167,243,208,0.95)',
-          text: 'rgba(236,253,245,0.95)',
+          bgA: 'rgba(59,130,246,0.18)',
+          bgB: 'rgba(14,165,233,0.10)',
+          border: 'rgba(59,130,246,0.58)',
+          dot: 'rgba(59,130,246,0.95)',
+          dotGlow: 'rgba(59,130,246,0.26)',
+          ring: 'rgba(59,130,246,0.10)',
+          glow: 'rgba(14,165,233,0.12)',
+          label: 'rgba(191,219,254,0.95)',
+          text: 'rgba(239,246,255,0.96)',
         }
     }
+  }
+
+  if (isSolitics) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: 14,
+            background: 'rgba(248,250,252,0.92)',
+            border: '1px dashed #cbd5e1',
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            inset: 10,
+            display: 'grid',
+            gridTemplateColumns: '30px minmax(0, 1fr)',
+            gap: 10,
+            alignItems: 'center',
+          }}
+        >
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 10,
+              background: 'rgba(241,245,249,0.9)',
+              border: '1px solid #dbe4ee',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <LightningIcon />
+          </div>
+
+          <div style={{ minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 9,
+                fontWeight: 900,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#94a3b8',
+                lineHeight: 1,
+              }}
+            >
+              Context
+            </div>
+            <div
+              style={{
+                marginTop: 5,
+                fontSize: 10,
+                fontWeight: 700,
+                color: '#64748b',
+                lineHeight: 1.2,
+                maxWidth: '100%',
+              }}
+            >
+              {data?.label}
+            </div>
+            {showDetails && data?.subLabel ? (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 9,
+                  fontWeight: 700,
+                  color: '#94a3b8',
+                  lineHeight: 1.2,
+                  maxWidth: '100%',
+                }}
+              >
+                {data.subLabel}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <Handle
+          type="target"
+          position={isHorizontal ? Position.Left : Position.Top}
+          id="in"
+          style={{ opacity: 0 }}
+        />
+        <Handle
+          type="source"
+          position={isHorizontal ? Position.Right : Position.Bottom}
+          id="out"
+          style={{ opacity: 0 }}
+        />
+      </div>
+    )
   }
 
   return (
@@ -134,36 +241,54 @@ export default function CommunicationNode({ data }) {
         overflow: 'visible',
         padding: isInfluence ? '8px 10px' : '9px 12px',
         paddingRight: isClickable ? (isInfluence ? 34 : 36) : undefined,
-        background: isInfluence ? 'rgba(15, 23, 42, 0.28)' : 'rgba(15, 23, 42, 0.55)',
+        background: isSolitics
+          ? isInfluence
+            ? '#f8fafc'
+            : '#ffffff'
+          : isInfluence
+            ? 'rgba(15, 23, 42, 0.28)'
+            : 'rgba(15, 23, 42, 0.55)',
         border: isClickable
           ? `1px solid ${linkPalette.border}`
           : isInfluence
-            ? '1px dashed rgba(148, 163, 184, 0.38)'
-            : '1px dashed rgba(148, 163, 184, 0.55)',
+            ? isSolitics
+              ? '1px dashed #94a3b8'
+              : '1px dashed rgba(148, 163, 184, 0.38)'
+            : isSolitics
+              ? '1px dashed #cbd5e1'
+              : '1px dashed rgba(148, 163, 184, 0.55)',
         outline: isClickable ? `2px solid ${linkPalette.outline}` : 'none',
         outlineOffset: isClickable ? 2 : 0,
         borderRadius: 10,
-        color: isInfluence ? 'rgba(226,232,240,0.68)' : 'rgba(226,232,240,0.95)',
+        color: isSolitics
+          ? '#334155'
+          : isInfluence
+            ? 'rgba(226,232,240,0.68)'
+            : 'rgba(226,232,240,0.95)',
         fontWeight: isInfluence ? 750 : 800,
         fontSize: isInfluence ? 11 : 12,
         letterSpacing: 0.2,
-        opacity: isInfluence ? 0.72 : 1,
+        opacity: isSolitics ? 1 : isInfluence ? 0.72 : 1,
         cursor: isClickable ? 'pointer' : 'default',
         boxShadow: isClickable
           ? `0 0 0 4px ${linkPalette.ring}, 0 0 22px ${linkPalette.glow}`
-          : 'none',
+          : isSolitics
+            ? '0 8px 18px rgba(15,23,42,0.08)'
+            : 'none',
       }}
     >
       {kpis.length ? (
         <div
           style={{
             position: 'absolute',
-            top: '50%',
-            left: '100%',
-            marginLeft: 12,
-            transform: 'translateY(-50%)',
+            top: isHorizontal ? '100%' : '50%',
+            left: isHorizontal ? 12 : '100%',
+            marginTop: isHorizontal ? 12 : 0,
+            marginLeft: isHorizontal ? 0 : 12,
+            transform: isHorizontal ? 'none' : 'translateY(-50%)',
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: isHorizontal ? 'row' : 'column',
+            flexWrap: isHorizontal ? 'wrap' : 'nowrap',
             gap: 6,
             alignItems: 'flex-start',
             pointerEvents: 'none',
@@ -251,14 +376,29 @@ export default function CommunicationNode({ data }) {
 
       {data?.subLabel ? (
         <div
-          style={{ marginTop: 4, fontSize: 10, fontWeight: 800, color: 'rgba(148,163,184,0.9)' }}
+          style={{
+            marginTop: 4,
+            fontSize: 10,
+            fontWeight: 800,
+            color: isSolitics ? '#64748b' : 'rgba(148,163,184,0.9)',
+          }}
         >
           {data.subLabel}
         </div>
       ) : null}
 
-      <Handle type="target" position={Position.Top} id="in" style={{ opacity: 0 }} />
-      <Handle type="source" position={Position.Bottom} id="out" style={{ opacity: 0 }} />
+      <Handle
+        type="target"
+        position={isHorizontal ? Position.Left : Position.Top}
+        id="in"
+        style={{ opacity: 0 }}
+      />
+      <Handle
+        type="source"
+        position={isHorizontal ? Position.Right : Position.Bottom}
+        id="out"
+        style={{ opacity: 0 }}
+      />
     </div>
   )
 }

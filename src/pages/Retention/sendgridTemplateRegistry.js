@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-06T16:15:00.982Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-04-07T14:50:19.652Z'
 
 export const sendgridTemplateRegistry = {
   most_consistent_badge_award_email: {
@@ -52,7 +52,7 @@ export const sendgridTemplateRegistry = {
         subject:
           '{{#if first_name}}{{first_name}}, {{/if}}Hai ottenuto il tuo badge Bullwaves di consistenza.',
         timing: 'D0',
-        delay: '0 giorni dall ingresso nel segmento',
+        delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
         templateId: 'd-21af5f4b88d34859ad0536a4dafc2852',
@@ -134,7 +134,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'd02c72e1-ff13-4518-9fe0-a2a2bf6aab2b',
         name: 'Most Consistent - Growth Roadmap A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}La tua roadmap Bullwaves è pronta. Trasforma la costanza in crescita.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo piano di crescita Bullwaves è pronto. Trasforma la costanza in crescita.',
         timing: 'D7',
         delay: '+7 giorni dopo il badge',
       },
@@ -176,7 +176,7 @@ export const sendgridTemplateRegistry = {
         versionId: '835c668d-09f3-400d-96de-b7b61b3dabe8',
         name: 'Most Consistent - Loyalty Reward A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}La tua costanza sta sbloccando una loyalty reward Bullwaves.',
+          '{{#if first_name}}{{first_name}}, {{/if}}La tua costanza sta sbloccando un premio fedeltà Bullwaves.',
         timing: 'D21',
         delay: '+14 giorni dopo la roadmap',
       },
@@ -185,7 +185,7 @@ export const sendgridTemplateRegistry = {
         versionId: '84ebd387-6c61-486e-bb3c-5092b9adfff9',
         name: 'Most Consistent - Loyalty Reward B IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Uno sforzo stabile merita un segnale reward Bullwaves più forte.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Uno sforzo stabile merita un riconoscimento Bullwaves più forte.',
         timing: 'D21',
         delay: '+14 giorni dopo la roadmap',
       },
@@ -260,7 +260,7 @@ export const sendgridTemplateRegistry = {
         versionId: '0aa22212-af3c-4395-9f08-039a039ac983',
         name: 'Top Performing - Advanced Tools A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Un trader più forte dovrebbe avere un support stack più affilato.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Un trader più forte dovrebbe avere un supporto più preciso.',
         timing: 'D3',
         delay: '+3 giorni dopo il touch VIP',
       },
@@ -302,18 +302,18 @@ export const sendgridTemplateRegistry = {
         versionId: 'b6b8aef1-62ef-4a3b-91fe-405249e2b0de',
         name: 'Top Performing - Loyalty Upgrade A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}La tua continuità sta aprendo un trattamento loyalty premium.',
+          '{{#if first_name}}{{first_name}}, {{/if}}La tua continuità sta aprendo un percorso loyalty premium.',
         timing: 'D10',
-        delay: '+7 giorni dopo l offerta strumenti avanzati',
+        delay: "+7 giorni dopo l'offerta strumenti avanzati",
       },
       b: {
         templateId: 'd-ca5d71a32d57464bbd89dc167d60f2d8',
         versionId: '28508bba-89a4-42d7-9c81-1bc244b14811',
         name: 'Top Performing - Loyalty Upgrade B IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Un loyalty tier più forte e pronto per il tuo profilo Bullwaves.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Un livello loyalty più forte è pronto per il tuo profilo Bullwaves.',
         timing: 'D10',
-        delay: '+7 giorni dopo l offerta strumenti avanzati',
+        delay: "+7 giorni dopo l'offerta strumenti avanzati",
       },
     },
   },
@@ -344,9 +344,9 @@ export const sendgridTemplateRegistry = {
         versionId: 'c8b4da45-23ea-4c59-a938-2ba17d52c75d',
         name: 'Top Performing - Premium Nurture A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Mantieni vivo il tuo premium momentum su Bullwaves.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Mantieni vivo il tuo slancio premium su Bullwaves.',
         timing: 'D30',
-        delay: '+30 giorni dopo l ultimo touch premium',
+        delay: "+30 giorni dopo l'ultimo touch premium",
       },
       b: {
         templateId: 'd-b3c2ee22965c43ac92f6c92d80b45bdf',
@@ -355,7 +355,7 @@ export const sendgridTemplateRegistry = {
         subject:
           '{{#if first_name}}{{first_name}}, {{/if}}Una relazione premium resta forte con continuità intelligente.',
         timing: 'D30',
-        delay: '+30 giorni dopo l ultimo touch premium',
+        delay: "+30 giorni dopo l'ultimo touch premium",
       },
     },
   },
@@ -386,9 +386,9 @@ export const sendgridTemplateRegistry = {
         versionId: 'a08f0ca8-802e-48a2-98fe-c66bc80eec26',
         name: 'Top Performing - VIP Recognition A IT',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Sei tra i top performer Bullwaves. Il prossimo step e costruito di conseguenza.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Sei tra i top performer Bullwaves. Il prossimo passo è costruito di conseguenza.',
         timing: 'D0',
-        delay: '0 giorni dall ingresso nel segmento',
+        delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
         templateId: 'd-644aaf5d6af64564993d198279aba9dd',
@@ -397,7 +397,7 @@ export const sendgridTemplateRegistry = {
         subject:
           '{{#if first_name}}{{first_name}}, {{/if}}Il tuo profilo trading ha sbloccato un percorso Bullwaves più su misura.',
         timing: 'D0',
-        delay: '0 giorni dall ingresso nel segmento',
+        delay: "0 giorni dall'ingresso nel segmento",
       },
     },
   },
@@ -443,6 +443,90 @@ export const sendgridTemplateRegistry = {
       },
     },
   },
+  unfunded_newcomers_account_activation_reminder_email: {
+    en: {
+      a: {
+        templateId: 'd-3ed7a5ef517f4297b9fe81e8292cb9a6',
+        versionId: '86ee0f3b-2479-4c06-87f2-2234f9ad5101',
+        name: 'Unfunded Newcomers - Account Activation Reminder A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is waiting. Log in and complete your setup.',
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-143b22351278478a82eb973f6350a254',
+        versionId: 'e7bf3260-43b5-4ab0-94b6-cf3c9e2385cc',
+        name: 'Unfunded Newcomers - Account Activation Reminder B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Do not leave your Bullwaves access unused. Enter your account now.',
+        timing: null,
+        delay: null,
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-9e2bf1c75add478f93ddb6b248472882',
+        versionId: 'ed5486ef-315b-494e-82a4-0e6c23db1c45',
+        name: 'Unfunded Newcomers - Reminder Attivazione Account A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves ti aspetta. Entra e completa la configurazione.',
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-c546f893dba145568a8d793a8a925263',
+        versionId: '3925fe30-fd44-4bdf-b0c4-3d839369332c',
+        name: 'Unfunded Newcomers - Reminder Attivazione Account B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Non lasciare inutilizzato il tuo accesso Bullwaves. Entra ora nel tuo account.',
+        timing: null,
+        delay: null,
+      },
+    },
+  },
+  unfunded_newcomers_deposit_intent_recovery_email: {
+    en: {
+      a: {
+        templateId: 'd-c2d2a0dd07b74e5bb0a558b46b96b89d',
+        versionId: '3000e43d-5683-4944-a0f4-4a621a05c96b',
+        name: 'Unfunded Newcomers - Deposit Intent Recovery A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}You entered the account, but the next step is still open.',
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-706dade977124b1195c3fb8be35ce037',
+        versionId: 'd575f14a-a7c2-4f40-bc76-b855b3a8c095',
+        name: 'Unfunded Newcomers - Deposit Intent Recovery B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}You came back once. Use that momentum to open the funding path.',
+        timing: null,
+        delay: null,
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-130098ffa8d84e60be45b21116e9c8ad',
+        versionId: '7a42467a-7c6d-4ce3-8bf5-cbe9396d2203',
+        name: 'Unfunded Newcomers - Recupero Intento Deposito A',
+        subject:
+          "{{#if first_name}}{{first_name}}, {{/if}}Sei entrato nell'account, ma il prossimo passo è ancora aperto.",
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-17eb6df60f89453caec0df23b260c2bf',
+        versionId: '7a3ec722-b63d-4ff9-bc6e-6af64502092b',
+        name: 'Unfunded Newcomers - Recupero Intento Deposito B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Sei già tornato una volta. Usa quello slancio per aprire il funding.',
+        timing: null,
+        delay: null,
+      },
+    },
+  },
   unfunded_newcomers_first_deposit_push_email: {
     en: {
       a: {
@@ -470,7 +554,7 @@ export const sendgridTemplateRegistry = {
         versionId: '05cf59b6-9cc9-4783-a550-a9faa3305626',
         name: 'Unfunded Newcomers - Primo Deposito A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo accesso Bullwaves e quasi sbloccato. Completa ora il primo deposito.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo accesso Bullwaves è quasi sbloccato. Completa ora il primo deposito.',
         timing: 'D5',
         delay: '+3 giorni dopo il messaggio di riduzione attriti',
       },
@@ -569,6 +653,48 @@ export const sendgridTemplateRegistry = {
       },
     },
   },
+  unfunded_newcomers_post_login_deposit_activation_email: {
+    en: {
+      a: {
+        templateId: 'd-b973f2a405424420a5ab3d8da289b499',
+        versionId: '2798fec1-4b60-4926-a288-d3b59430c2ab',
+        name: 'Unfunded Newcomers - Post-login Deposit Activation A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}You are already inside. Open the funding path now.',
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-044bcad122d84f1787438495aa1a3e57',
+        versionId: '6528dfe5-574e-4414-aa5a-9e61e9d4dee0',
+        name: 'Unfunded Newcomers - Post-login Deposit Activation B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your next step is already visible. Start the deposit flow.',
+        timing: null,
+        delay: null,
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-d9799893ebef49fc9a04e6c51936a68e',
+        versionId: '33bae03a-d1ad-4fab-8113-97d0cb94a7db',
+        name: 'Unfunded Newcomers - Attivazione Deposito Post-login A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Sei già dentro. Apri ora il percorso di deposito.',
+        timing: null,
+        delay: null,
+      },
+      b: {
+        templateId: 'd-f34c1fe855694bf18a2ce16809c7ae8c',
+        versionId: '8b64e988-3d02-4077-9de7-4b1489a8e52a',
+        name: 'Unfunded Newcomers - Attivazione Deposito Post-login B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo prossimo passo è già visibile. Avvia il flusso di deposito.',
+        timing: null,
+        delay: null,
+      },
+    },
+  },
   unfunded_newcomers_reentry_nurture_email: {
     en: {
       a: {
@@ -638,9 +764,9 @@ export const sendgridTemplateRegistry = {
         versionId: 'd6e95aeb-f3b0-4b51-9720-bb53c74461aa',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves e pronto. Ti manca solo un passo.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Ti manca solo un passo.',
         timing: 'D0',
-        delay: '0 giorni dall ingresso nel segmento',
+        delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
         templateId: 'd-260c34d7c84c4ef280ee7dfd8538bf99',
@@ -649,7 +775,7 @@ export const sendgridTemplateRegistry = {
         subject:
           '{{#if first_name}}{{first_name}}, {{/if}}Registrazione completata. Sblocca il prossimo passaggio su Bullwaves.',
         timing: 'D0',
-        delay: '0 giorni dall ingresso nel segmento',
+        delay: "0 giorni dall'ingresso nel segmento",
       },
     },
   },
