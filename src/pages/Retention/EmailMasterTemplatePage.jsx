@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { segmentJourneyTemplatesById } from './segmentJourneyTemplates'
+import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry'
+import { buildSegmentEmailHtml } from './segmentJourneyTemplateBuilder'
 import {
   buildSendgridDynamicTemplateData,
   getSendgridTemplateMapping,
@@ -8,6 +10,52 @@ import {
 
 const PRIVATE_PREVIEW_EMAIL = 'paolo.v@bullwaves.com'
 const PRIVATE_PREVIEW_FIRST_NAME = 'Paolo'
+
+function buildMasterReferenceContent(lang = 'it', skin = 'light') {
+  const isItalian = lang === 'it'
+
+  return {
+    lang,
+    skin,
+    title: isItalian ? 'Bullwaves Master Template' : 'Bullwaves Master Template',
+    eyebrow: isItalian ? 'Template master di riferimento' : 'Reference master template',
+    heroTitle: isItalian
+      ? 'Questa è la struttura base da cui devono derivare i journey email.'
+      : 'This is the base structure from which Bullwaves email journeys should derive.',
+    heroSubtitle: isItalian
+      ? 'Brand bar, hero pulita, tre blocchi valore, CTA primaria e footer legale coerente.'
+      : 'Brand bar, clean hero, three value blocks, one clear primary CTA, and a consistent legal footer.',
+    mainTitle: isItalian
+      ? 'Il master template è il riferimento strutturale, non un singolo step di journey.'
+      : 'The master template is the structural reference, not a single journey step.',
+    introLead: isItalian
+      ? 'Qui devi vedere il layout base Bullwaves: stessa gerarchia visiva, stessi moduli e stessa logica email-safe. I contenuti dei journey cambiano sopra questa struttura, non al posto di questa struttura.'
+      : 'This view shows the Bullwaves base layout: same visual hierarchy, same modules, same email-safe logic. Journey content should change on top of this structure, not replace it.',
+    boxOneTitle: isItalian ? 'Brand Bar' : 'Brand Bar',
+    boxOneCopy: isItalian
+      ? 'Logo chiaro, respiro e segnale premium immediato.'
+      : 'Clear logo, breathing room, and an immediate premium brand signal.',
+    boxOneIconUrl: EMAIL_JOURNEY_ICON_URLS.customerService,
+    boxTwoTitle: isItalian ? 'Hero + CTA' : 'Hero + CTA',
+    boxTwoCopy: isItalian
+      ? 'Headline breve, orientamento rapido e una CTA primaria evidente.'
+      : 'Short headline, fast orientation, and one obvious primary CTA.',
+    boxTwoIconUrl: EMAIL_JOURNEY_ICON_URLS.creditCard,
+    boxThreeTitle: isItalian ? 'Footer Legale' : 'Legal Footer',
+    boxThreeCopy: isItalian
+      ? 'Company info, risk warning e link di unsubscribe sempre leggibili.'
+      : 'Company info, risk warning, and unsubscribe links that always stay readable.',
+    boxThreeIconUrl: EMAIL_JOURNEY_ICON_URLS.secureDepositCard,
+    ctaLabel: isItalian ? 'CTA primaria di riferimento' : 'Reference primary CTA',
+    ctaHelper: isItalian
+      ? 'La CTA resta unica e centrale in ogni variante.'
+      : 'The CTA stays singular and central across variants.',
+    supportLabel: isItalian ? 'Supporto secondario' : 'Secondary support',
+    supportHelper: isItalian
+      ? 'Il supporto resta presente ma subordinato alla CTA principale.'
+      : 'Support remains available but subordinate to the main CTA.',
+  }
+}
 
 function inputStyle() {
   return {
@@ -183,6 +231,8 @@ export default function EmailMasterTemplatePage() {
   )
 
   const [device, setDevice] = useState('desktop')
+  const [viewMode, setViewMode] = useState('master')
+  const [masterSkin, setMasterSkin] = useState('light')
   const [templateId, setTemplateId] = useState(templateOptions[0]?.value || '')
   const [locale, setLocale] = useState('it')
   const [variant, setVariant] = useState('a')
@@ -235,6 +285,13 @@ export default function EmailMasterTemplatePage() {
       }),
     [activeLocale]
   )
+
+  const masterReferenceHtml = useMemo(
+    () => buildSegmentEmailHtml(buildMasterReferenceContent(activeLocale, masterSkin)),
+    [activeLocale, masterSkin]
+  )
+
+  const previewHtml = viewMode === 'master' ? masterReferenceHtml : localizedVariant?.html || ''
 
   useEffect(() => {
     if (!localeOptions.length) return
@@ -410,8 +467,8 @@ export default function EmailMasterTemplatePage() {
               Email Master Template
             </h1>
             <p style={{ margin: 0, color: '#9fb3c8', lineHeight: 1.65, fontSize: 14 }}>
-              Solo il necessario: scegli il journey, controlla la preview e invia il test a{' '}
-              <strong>{PRIVATE_PREVIEW_EMAIL}</strong>.
+              Qui deve vivere prima di tutto il template master di riferimento. Le preview dei
+              singoli journey restano disponibili, ma come vista secondaria.
             </p>
           </div>
 
@@ -426,24 +483,47 @@ export default function EmailMasterTemplatePage() {
         </div>
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', minWidth: 260 }}>
+            <ToggleButton active={viewMode === 'master'} onClick={() => setViewMode('master')}>
+              Master reference
+            </ToggleButton>
+            <ToggleButton active={viewMode === 'journey'} onClick={() => setViewMode('journey')}>
+              Journey previews
+            </ToggleButton>
+          </div>
+          {viewMode === 'master' ? (
+            <SelectField
+              label="Skin"
+              value={masterSkin}
+              onChange={setMasterSkin}
+              options={[
+                { value: 'light', label: 'Core Light' },
+                { value: 'dark', label: 'Core Dark' },
+              ]}
+            />
+          ) : null}
           <SelectField
-            label="Journey"
-            value={templateId}
-            onChange={setTemplateId}
-            options={templateOptions}
+            label={viewMode === 'master' ? 'Lingua master' : 'Journey'}
+            value={viewMode === 'master' ? activeLocale : templateId}
+            onChange={viewMode === 'master' ? setLocale : setTemplateId}
+            options={viewMode === 'master' ? localeOptions : templateOptions}
           />
-          <SelectField
-            label="Lingua"
-            value={activeLocale}
-            onChange={setLocale}
-            options={localeOptions}
-          />
-          <SelectField
-            label="Variante"
-            value={activeVariant}
-            onChange={setVariant}
-            options={variantOptions}
-          />
+          {viewMode === 'journey' ? (
+            <SelectField
+              label="Lingua"
+              value={activeLocale}
+              onChange={setLocale}
+              options={localeOptions}
+            />
+          ) : null}
+          {viewMode === 'journey' ? (
+            <SelectField
+              label="Variante"
+              value={activeVariant}
+              onChange={setVariant}
+              options={variantOptions}
+            />
+          ) : null}
         </div>
 
         <div
@@ -494,6 +574,24 @@ export default function EmailMasterTemplatePage() {
               disabled
             />
 
+            {viewMode === 'master' ? (
+              <div
+                style={{
+                  borderRadius: 14,
+                  border: '1px solid rgba(56,189,248,0.18)',
+                  background: 'rgba(56,189,248,0.08)',
+                  color: '#dff7ff',
+                  padding: '12px 14px',
+                  fontSize: 13,
+                  lineHeight: 1.65,
+                }}
+              >
+                Questa è la vista del master template. Qui devi vedere il layout base Bullwaves, non
+                un singolo step di journey. Usa la modalità <strong>Journey previews</strong> solo
+                quando vuoi confrontare le varianti operative.
+              </div>
+            ) : null}
+
             <div
               style={{
                 display: 'grid',
@@ -505,11 +603,17 @@ export default function EmailMasterTemplatePage() {
             >
               <div>
                 <strong>Subject:</strong>{' '}
-                {sendgridMapping?.subject || localizedVariant?.subject || '—'}
+                {viewMode === 'master'
+                  ? activeLocale === 'it'
+                    ? 'Template master Bullwaves di riferimento'
+                    : 'Bullwaves reference master template'
+                  : sendgridMapping?.subject || localizedVariant?.subject || '—'}
               </div>
               <div>
                 <strong>Template ID:</strong>{' '}
-                {sendgridMapping?.templateId || 'Nessun mapping SendGrid'}
+                {viewMode === 'master'
+                  ? 'Master reference preview only'
+                  : sendgridMapping?.templateId || 'Nessun mapping SendGrid'}
               </div>
               {emailHealth.error ? (
                 <div style={{ color: '#ffd2d2' }}>{emailHealth.error}</div>
@@ -519,7 +623,7 @@ export default function EmailMasterTemplatePage() {
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <ActionButton
                 onClick={() => sendEmail('template')}
-                disabled={sendState.loading || !canSendTemplate}
+                disabled={viewMode === 'master' || sendState.loading || !canSendTemplate}
               >
                 {sendState.loading && sendState.mode === 'template'
                   ? 'Sending...'
@@ -528,7 +632,7 @@ export default function EmailMasterTemplatePage() {
               <ActionButton
                 tone="secondary"
                 onClick={() => sendEmail('html')}
-                disabled={sendState.loading || !canSendHtml}
+                disabled={viewMode === 'master' || sendState.loading || !canSendHtml}
               >
                 {sendState.loading && sendState.mode === 'html' ? 'Sending...' : 'Send HTML'}
               </ActionButton>
@@ -582,8 +686,12 @@ export default function EmailMasterTemplatePage() {
             }}
           >
             <iframe
-              title="Bullwaves Journey Template Preview"
-              srcDoc={localizedVariant?.html || ''}
+              title={
+                viewMode === 'master'
+                  ? 'Bullwaves Master Template Reference'
+                  : 'Bullwaves Journey Template Preview'
+              }
+              srcDoc={previewHtml}
               style={{
                 width: device === 'mobile' ? 430 : '100%',
                 maxWidth: '100%',
