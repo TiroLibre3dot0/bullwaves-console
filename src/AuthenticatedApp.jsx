@@ -93,7 +93,9 @@ export default function AuthenticatedApp() {
   const adminEmails = new Set(['paolo.v@bullwaves.com'])
   const emailTemplatePreviewEmails = new Set(['paolo.v@bullwaves.com'])
   const isAdmin = Boolean(isManagementTeam || adminEmails.has(normalizedEmail))
-  const canAccessEmailMasterTemplate = emailTemplatePreviewEmails.has(normalizedEmail)
+  const canAccessEmailMasterTemplate = Boolean(
+    isManagementTeam || emailTemplatePreviewEmails.has(normalizedEmail)
+  )
   const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
   const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
   const isBusinessDevSales = Boolean(!isManagementTeam && isSalesDepartment(user?.department || ''))
