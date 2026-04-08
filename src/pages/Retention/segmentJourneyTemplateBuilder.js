@@ -51,6 +51,9 @@ function renderStepIcon(iconUrl, href, fallbackLabel) {
 }
 
 const DEFAULT_CTA_URL = PORTAL_LOGIN_URL
+const SENDGRID_CTA_HREF = `{{insert cta_url "default=${DEFAULT_CTA_URL}"}}`
+const SENDGRID_GROUP_UNSUBSCRIBE_RAW_URL = '<%asm_group_unsubscribe_raw_url%>'
+const SENDGRID_PREFERENCES_RAW_URL = '<%asm_preferences_raw_url%>'
 const SENDGRID_BULLWAVES_ICON_URL =
   'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
 const BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Group%202087330250.svg'
@@ -290,8 +293,8 @@ function getLanguageContent(lang) {
 }
 
 function buildLegalFooterHtml(mode, content) {
-  const unsubscribeHref = mode === 'sendgrid' ? '{{{unsubscribe}}}' : '#'
-  const unsubscribePreferencesHref = mode === 'sendgrid' ? '{{{unsubscribe_preferences}}}' : '#'
+  const unsubscribeHref = mode === 'sendgrid' ? SENDGRID_GROUP_UNSUBSCRIBE_RAW_URL : '#'
+  const unsubscribePreferencesHref = mode === 'sendgrid' ? SENDGRID_PREFERENCES_RAW_URL : '#'
   const { iconUrl } = getBullwavesBrandAssets(mode)
 
   return `
@@ -401,7 +404,7 @@ export function buildSegmentEmailHtml(
   const normalizedCtaHelper = normalize(ctaHelper)
   const normalizedSupportLabel = normalize(supportLabel)
   const normalizedSupportHelper = normalize(supportHelper)
-  const ctaHref = mode === 'sendgrid' ? '{{cta_url}}' : DEFAULT_CTA_URL
+  const ctaHref = mode === 'sendgrid' ? SENDGRID_CTA_HREF : DEFAULT_CTA_URL
   const iconContext = {
     title: normalizedTitle,
     heroTitle: normalizedHeroTitle,
@@ -434,8 +437,6 @@ export function buildSegmentEmailHtml(
     ? 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))'
     : 'linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))'
   const heroCardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.16)'
-  const brandBarBackground = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.14)'
-  const brandBarBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.16)'
   const bodyText = isDark ? '#e7eef8' : '#102033'
   const leadText = isDark ? '#cbd7e8' : '#30465e'
   const bodyCopy = isDark ? '#b6c5d8' : '#47607a'
@@ -509,37 +510,32 @@ export function buildSegmentEmailHtml(
     border:none;
   }
   .brand-bar-table,
+  .brand-stage-table,
   .legal-brand-table {
     width:100%;
     border-collapse:collapse;
   }
-  .brand-logo-cell,
-  .legal-brand-logo-cell {
-    padding-right:12px;
-  }
   .brand-center {
     text-align:center;
   }
-  .brand-stage {
-    display:inline-block;
-    width:100%;
+  .brand-stage-table {
     max-width:340px;
+    margin:0 auto;
+  }
+  .brand-stage-cell {
     padding:16px 22px 14px;
     border-radius:22px;
     background:linear-gradient(180deg, rgba(7,19,44,0.24) 0%, rgba(43,100,228,0.12) 100%);
     border:1px solid rgba(255,255,255,0.12);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(3,10,26,0.12);
   }
-  .brand-lockup {
-    width:100%;
-    max-width:220px;
-    margin:0 auto;
-  }
   .brand-logo {
     display:block;
-    width:100%;
+    width:220px;
+    max-width:100%;
     height:auto;
     margin:0 auto;
+    border:0;
     filter:drop-shadow(0 14px 24px rgba(4,12,30,0.28));
   }
   .eyebrow {
@@ -818,9 +814,9 @@ export function buildSegmentEmailHtml(
     .legal { padding:0 18px 22px; }
     .mini-steps td { display:block; width:100%; padding:0 0 8px; }
     .step-card { min-height:auto; }
-    .brand-stage { max-width:270px; padding:14px 18px 12px; border-radius:20px; }
-    .brand-lockup { max-width:188px; }
-    .brand-logo { width:100%; }
+    .brand-stage-table { max-width:270px; }
+    .brand-stage-cell { padding:14px 18px 12px; border-radius:20px; }
+    .brand-logo { max-width:188px !important; }
     .legal-shell { padding:16px; }
     .legal-brand-table { padding-bottom:12px; }
     .legal-brand-logo-cell { width:68px !important; padding-right:12px; }
@@ -841,13 +837,19 @@ export function buildSegmentEmailHtml(
 <tr>
 <td class="hero-shell">
   <div class="hero-card">
-    <div class="brand-bar brand-center">
-      <div class="brand-stage">
-        <div class="brand-lockup">
-          <img src="${wordmarkUrl}" width="220" alt="${content.logoAlt}" class="brand-logo" />
-        </div>
-      </div>
-    </div>
+    <table role="presentation" class="brand-bar-table brand-bar" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <tr>
+        <td align="center" class="brand-center">
+          <table role="presentation" class="brand-stage-table" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:340px; margin:0 auto;">
+            <tr>
+              <td align="center" class="brand-stage-cell" style="padding:16px 22px 14px; border-radius:22px;">
+                <img src="${wordmarkUrl}" width="220" alt="${content.logoAlt}" class="brand-logo" style="display:block; width:100%; max-width:220px; height:auto; margin:0 auto; border:0;" />
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
     ${eyebrowHtml}
     ${personalMarker}
     <div class="hero-grid">
@@ -891,7 +893,13 @@ ${greetingLead}
 </div>
 
 <div class="cta-wrap">
-  <a href="${ctaHref}" class="btn">${normalizedCtaLabel}</a>
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+    <tr>
+      <td align="center" style="border-radius:999px; background:#1f56f0;">
+        <a href="${ctaHref}" class="btn" style="display:inline-block; background:#1f56f0; color:#ffffff !important; text-decoration:none; padding:16px 28px; border-radius:999px; font-weight:700; font-size:15px; line-height:1.2;">${normalizedCtaLabel}</a>
+      </td>
+    </tr>
+  </table>
   <a href="${supportHref}" class="secondary-link">${normalizedSupportLabel}</a>
 </div>
 

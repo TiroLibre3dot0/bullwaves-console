@@ -429,8 +429,6 @@ Per tutti i template qui sotto, salvo diversa indicazione, i placeholder da dich
 
 - `first_name`
 - `cta_url`
-- `unsubscribe`
-- `unsubscribe_preferences`
 
 Non includere:
 
@@ -441,10 +439,13 @@ Non includere:
 
 Per tutti i template qui sotto, salvo diversa indicazione, sono presenti:
 
-- CTA principale: `{{cta_url}}`
+- CTA principale: `{{insert cta_url "default=https://portal.bullwaves.com/login"}}`
 - Link supporto secondario: `https://wa.me/35799514794?...`
-- Footer unsubscribe: `{{{unsubscribe}}}`
-- Footer unsubscribe preferences: `{{{unsubscribe_preferences}}}`
+- Footer unsubscribe: `<%asm_group_unsubscribe_raw_url%>`
+- Footer unsubscribe preferences: `<%asm_preferences_raw_url%>`
+
+Nota operativa:
+- i link footer ASM si popolano solo se l'invio API include `asm.group_id`
 
 ## Dettaglio link per step e variante
 

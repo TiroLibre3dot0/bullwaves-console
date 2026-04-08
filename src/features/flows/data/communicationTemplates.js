@@ -113,7 +113,7 @@ If you didn’t request this, please ignore this email.
 </p>
 
 <p style="margin:12px 0 0;font-size:10px;">
-<a href="{{{unsubscribe}}}" style="color:#93a2c8;text-decoration:underline;">Unsubscribe</a>
+<a href="<%asm_group_unsubscribe_raw_url%>" style="color:#93a2c8;text-decoration:underline;">Unsubscribe</a>
 </p>
 
 </td>

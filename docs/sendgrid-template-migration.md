@@ -100,6 +100,16 @@ These are applied in:
 - support URL
 - signature block
 
+For delivery-safe links, the generator now uses:
+- CTA principale: `{{insert cta_url "default=https://portal.bullwaves.com/login"}}`
+- Group unsubscribe: `<%asm_group_unsubscribe_raw_url%>`
+- Preferences: `<%asm_preferences_raw_url%>`
+
+Important:
+- the CTA now has a fallback URL even if `dynamic_template_data.cta_url` is omitted
+- ASM links populate only when the send request includes `asm.group_id`
+- local preview/send-test can inject ASM via `SENDGRID_UNSUBSCRIBE_GROUP_ID`
+
 Then the send step can use `personalizations.dynamic_template_data` in `POST /v3/mail/send`.
 
 ## Remaining limitation

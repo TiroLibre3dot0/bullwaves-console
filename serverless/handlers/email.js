@@ -27,6 +27,7 @@ function getConfig() {
     apiKey: env('SENDGRID_API_KEY'),
     fromEmail: env('SENDGRID_FROM_EMAIL'),
     fromName: env('SENDGRID_FROM_NAME', 'Bullwaves'),
+    unsubscribeGroupId: env('SENDGRID_UNSUBSCRIBE_GROUP_ID'),
   }
 }
 
@@ -68,6 +69,7 @@ function buildPayload(body, config) {
     body?.dynamicTemplateData && typeof body.dynamicTemplateData === 'object'
       ? body.dynamicTemplateData
       : undefined
+  const unsubscribeGroupId = Number(body?.unsubscribeGroupId || config.unsubscribeGroupId || 0)
 
   const payload = {
     personalizations: [
@@ -88,6 +90,11 @@ function buildPayload(body, config) {
     }
     if (dynamicTemplateData) {
       payload.personalizations[0].dynamic_template_data = dynamicTemplateData
+    }
+    if (Number.isInteger(unsubscribeGroupId) && unsubscribeGroupId > 0) {
+      payload.asm = {
+        group_id: unsubscribeGroupId,
+      }
     }
     return payload
   }
@@ -165,6 +172,7 @@ async function handleHealth(req, res) {
       defaults: {
         fromEmail: config.fromEmail || null,
         fromName: config.fromName || null,
+        unsubscribeGroupId: config.unsubscribeGroupId || null,
       },
       access: {
         viewerEmail,
@@ -269,6 +277,7 @@ async function handleSendTest(req, res) {
           fromName: payload.from.name,
           templateId: payload.template_id || null,
           usedDynamicTemplateData: Boolean(payload.personalizations?.[0]?.dynamic_template_data),
+          unsubscribeGroupId: payload.asm?.group_id || null,
         },
       },
       { 'Cache-Control': 'no-store' }
