@@ -2636,7 +2636,31 @@ export default function ProfitableRanking({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div>
               <p className="page-label">Customer Base</p>
-              <h1 className="page-title">Segment Composition</h1>
+              <h1
+                className="page-title"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}
+              >
+                <span>Segment Composition</span>
+                <span
+                  className="animate-pulse"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    border: '1px solid rgba(56,189,248,0.28)',
+                    background: 'rgba(56,189,248,0.12)',
+                    color: '#79d6ff',
+                    fontSize: '10px',
+                    fontWeight: 900,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  (new)
+                </span>
+              </h1>
               <p className="page-subtitle">
                 Dedicated customer-base segmentation view for retention and winback planning.
               </p>

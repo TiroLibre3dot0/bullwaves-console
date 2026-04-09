@@ -1,5 +1,41 @@
 import { useI18n } from '../i18n/I18nContext'
 
+const RECENT_SECTION_KEYS = new Set(['segmentComposition', 'emailMasterTemplate'])
+
+function SidebarNewBadge() {
+  return (
+    <span
+      className="animate-pulse"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        marginLeft: '8px',
+        padding: '1px 6px',
+        borderRadius: '999px',
+        border: '1px solid rgba(125,211,252,0.28)',
+        background: 'rgba(56,189,248,0.12)',
+        color: '#9edcff',
+        fontSize: '9px',
+        fontWeight: 900,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        lineHeight: 1.2,
+      }}
+    >
+      (new)
+    </span>
+  )
+}
+
+function SidebarItemLabel({ label, itemKey }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', flexWrap: 'wrap' }}>
+      <span>{label}</span>
+      {RECENT_SECTION_KEYS.has(itemKey) ? <SidebarNewBadge /> : null}
+    </span>
+  )
+}
+
 function Icon({ name, size = 16 }) {
   const common = {
     width: size,
@@ -345,6 +381,14 @@ export default function Sidebar({
           onClick: () => navigate('platformUsageBilling'),
           disabled: disabled('platformUsageBilling'),
         },
+        {
+          key: 'financeToolOrganigram',
+          label: t('sidebar.financeToolOrganigram'),
+          icon: 'org',
+          active: view === 'financeToolOrganigram',
+          onClick: () => navigate('financeToolOrganigram'),
+          disabled: disabled('financeToolOrganigram'),
+        },
       ],
     },
     {
@@ -430,7 +474,9 @@ export default function Sidebar({
                     <span className="sidebar-item__icon" aria-hidden="true">
                       <Icon name={item.icon} />
                     </span>
-                    <span className="sidebar-item__label">{item.label}</span>
+                    <span className="sidebar-item__label">
+                      <SidebarItemLabel label={item.label} itemKey={item.key} />
+                    </span>
                   </span>
                 </button>
 

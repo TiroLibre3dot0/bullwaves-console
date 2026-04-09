@@ -1,6 +1,4 @@
-import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry.js'
-
-const { customerService, creditCard, secureDepositCard } = EMAIL_JOURNEY_ICON_URLS
+import { getEmailJourneyIconMetaByUrl } from './emailJourneyIconRegistry.js'
 
 const WHATSAPP_NUMBER = '35799514794'
 const PORTAL_LOGIN_URL = 'https://portal.bullwaves.com/login'
@@ -9,9 +7,6 @@ const WHATSAPP_TEXT = {
   en: 'Hi Bullwaves, I would like help with the next step on my account.',
   it: 'Ciao Bullwaves, vorrei supporto per il prossimo passo sul mio account.',
 }
-
-const SUPPORT_ICON_URLS = new Set([customerService])
-const DEPOSIT_ICON_URLS = new Set([creditCard, secureDepositCard])
 
 function getWhatsAppHref(lang = 'en') {
   const normalizedLang = lang === 'it' ? 'it' : 'en'
@@ -36,15 +31,17 @@ function getContextualSupportWhatsAppHref(lang = 'en', context = {}) {
 
 function getJourneyIconHref(iconUrl, lang = 'en', context = {}) {
   if (!iconUrl) return ''
-  if (SUPPORT_ICON_URLS.has(iconUrl)) return getContextualSupportWhatsAppHref(lang, context)
-  if (DEPOSIT_ICON_URLS.has(iconUrl)) return DEPOSIT_PAGE_URL
+
+  const meta = getEmailJourneyIconMetaByUrl(iconUrl)
+  if (meta?.hrefBehavior === 'support') return getContextualSupportWhatsAppHref(lang, context)
+  if (meta?.hrefBehavior === 'deposit') return DEPOSIT_PAGE_URL
   return PORTAL_LOGIN_URL
 }
 
 function renderStepIcon(iconUrl, href, fallbackLabel) {
-  if (!iconUrl) return fallbackLabel
+  if (!iconUrl) return `<span class="journey-step-icon-fallback">${fallbackLabel}</span>`
 
-  const imageHtml = `<img src="${iconUrl}" alt="" width="72" height="72" />`
+  const imageHtml = `<img src="${iconUrl}" alt="" width="24" height="24" class="journey-step-icon-image" />`
   if (!href) return imageHtml
 
   return `<a href="${href}" class="step-icon-link">${imageHtml}</a>`
@@ -414,54 +411,52 @@ export function buildSegmentEmailHtml(
   const boxOneHref = getJourneyIconHref(boxOneIconUrl, lang, iconContext)
   const boxTwoHref = getJourneyIconHref(boxTwoIconUrl, lang, iconContext)
   const boxThreeHref = getJourneyIconHref(boxThreeIconUrl, lang, iconContext)
-  const eyebrowHtml = ''
-  const personalMarker = mode === 'sendgrid' ? '' : ''
-  const greetingLead = ''
+  const eyebrowLabel = normalizedEyebrow || 'Bullwaves'
+  const eyebrowHtml = `<div class="minimal-eyebrow">${eyebrowLabel}</div>`
+  const greetingLead =
+    mode === 'sendgrid'
+      ? `<p class="minimal-copy"><strong>${content.greetingWithName} {{first_name}},</strong></p>`
+      : `<p class="minimal-copy"><strong>${content.greetingFallback}</strong></p>`
   const signatureName =
     mode === 'sendgrid'
       ? `{{#if account_manager_name}}{{account_manager_name}}{{else}}${content.signatureFallback}{{/if}}`
       : content.signatureFallback
   const legalFooter = buildLegalFooterHtml(mode, content)
-  const bodyBackground = isDark ? '#07111f' : '#eef2f8'
-  const wrapperBackground = isDark
-    ? 'radial-gradient(circle at top left, rgba(91,155,255,0.12), transparent 32%), linear-gradient(180deg, #07111f 0%, #0c1728 100%)'
-    : 'radial-gradient(circle at top left, rgba(18,67,255,0.12), transparent 32%), linear-gradient(180deg, #eef2f8 0%, #e8eef7 100%)'
-  const containerBackground = isDark ? '#0e1b2f' : '#ffffff'
-  const containerShadow = isDark
-    ? '0 28px 80px rgba(2,8,20,0.44)'
-    : '0 28px 80px rgba(16,32,51,0.14)'
-  const heroShellBackground = isDark
-    ? 'radial-gradient(circle at top right, rgba(91,155,255,0.22), transparent 28%), linear-gradient(135deg, #040b16 0%, #0d1a2f 42%, #163865 100%)'
-    : 'radial-gradient(circle at top right, rgba(90,170,255,0.32), transparent 28%), linear-gradient(135deg, #081a33 0%, #1036d1 56%, #2e79ff 100%)'
-  const heroCardBackground = isDark
-    ? 'linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))'
-    : 'linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06))'
-  const heroCardBorder = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.16)'
-  const bodyText = isDark ? '#e7eef8' : '#102033'
-  const leadText = isDark ? '#cbd7e8' : '#30465e'
-  const bodyCopy = isDark ? '#b6c5d8' : '#47607a'
-  const panelBackground = isDark
-    ? 'linear-gradient(180deg, #12243b 0%, #102032 100%)'
-    : 'linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%)'
-  const panelBorder = isDark ? '#223754' : '#dce8f8'
-  const panelTitle = isDark ? '#9fb6d4' : '#5d738c'
-  const metricChipBackground = isDark ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.94)'
-  const metricChipBorder = isDark ? 'rgba(177,202,232,0.28)' : 'rgba(138,169,210,0.24)'
-  const metricChipText = isDark ? '#17304f' : '#27486f'
-  const mainTitleColor = isDark ? '#f5f8fe' : '#102033'
-  const stepCardBackground = '#ffffff'
-  const stepCardBorder = isDark ? '#d6e1ee' : '#dfe8f2'
-  const stepCardShadow = isDark
-    ? '0 12px 28px rgba(2,8,20,0.18)'
-    : '0 12px 28px rgba(16,32,51,0.08)'
-  const stepIconBackground = '#ffffff'
-  const stepIconBorder = isDark ? '#d7e3f1' : '#dce7f4'
-  const stepIconShadow = isDark
-    ? '0 12px 24px rgba(9,22,42,0.12)'
-    : '0 12px 24px rgba(31,58,94,0.10)'
-  const stepTitleColor = '#102033'
-  const stepCopyColor = '#597087'
-  const signatureColor = isDark ? '#b6c5d8' : '#556b82'
+  const bodyBackground = '#edf2f8'
+  const wrapperBackground =
+    'radial-gradient(circle at top left, rgba(91,155,255,0.18), transparent 24%), linear-gradient(180deg, #eef3f9 0%, #e7eef7 100%)'
+  const containerBackground = '#ffffff'
+  const containerShadow = '0 24px 70px rgba(17, 32, 51, 0.12)'
+  const bodyText = '#112033'
+  const copyText = '#2a2d34'
+  const mutedText = '#5b6270'
+  const subtleText = '#62758c'
+  const titleText = '#0f0f11'
+  const headerBackground = 'linear-gradient(180deg, #081022 0%, #0b1433 45%, #1632b7 100%)'
+  const headerText = '#d8e6ff'
+  const ctaPanelBackground = 'linear-gradient(180deg, #f4f8ff 0%, #edf4ff 100%)'
+  const ctaPanelBorder = '#d8e4f6'
+  const signatureColor = '#5b6270'
+  const primaryTitle = normalizedHeroTitle || normalizedMainTitle || normalizedTitle
+  const supportingIntro = normalizedHeroSubtitle || normalizedIntroLead
+  const introParagraph =
+    normalizedIntroLead && normalizedIntroLead !== supportingIntro ? normalizedIntroLead : ''
+  const bodyOneHtml = normalizedBodyOne ? `<p class="minimal-copy">${normalizedBodyOne}</p>` : ''
+  const bodyTwoHtml = normalizedBodyTwo
+    ? `<p class="minimal-copy minimal-copy--compact"><strong>${normalizedBodyTwo}</strong></p>`
+    : ''
+  const bodyThreeHtml = normalizedBodyThree
+    ? `<p class="minimal-copy minimal-copy--muted">${normalizedBodyThree}</p>`
+    : ''
+  const ctaHelperHtml = normalizedCtaHelper
+    ? `<div class="helper">${normalizedCtaHelper}</div>`
+    : ''
+  const supportLinkHtml = normalizedSupportLabel
+    ? `<a href="${supportHref}" class="support-link">${normalizedSupportLabel}</a>`
+    : ''
+  const supportHelperHtml = normalizedSupportHelper
+    ? `<div class="support-helper">${normalizedSupportHelper}</div>`
+    : ''
 
   return `<!doctype html>
 <html lang="${lang}">
@@ -475,7 +470,7 @@ export function buildSegmentEmailHtml(
     margin:0;
     padding:0;
     background:${bodyBackground};
-    font-family:Verdana, Geneva, sans-serif;
+    font-family:Arial, Helvetica, sans-serif;
     color:${bodyText};
   }
   table { border-collapse:collapse; }
@@ -488,197 +483,132 @@ export function buildSegmentEmailHtml(
     max-width:700px;
     margin:0 auto;
     background:${containerBackground};
-    border-radius:24px;
+    border-radius:28px;
     overflow:hidden;
     box-shadow:${containerShadow};
   }
-  .hero-shell {
-    padding:22px 26px;
-    background:${heroShellBackground};
+  .minimal-header {
+    padding:28px;
+    background:${headerBackground};
+    color:#ffffff;
   }
-  .hero-card {
-    border-radius:20px;
-    padding:24px 22px 20px;
-    background:${heroCardBackground};
-    border:1px solid ${heroCardBorder};
-    text-align:center;
+  .header-logo {
+    display:block;
+    width:170px;
+    max-width:170px;
+    border:0;
+    filter:brightness(0) invert(1);
   }
-  .brand-bar {
-    width:100%;
-    padding:0;
-    background:transparent;
-    border:none;
+  .minimal-brand-line {
+    margin-top:8px;
+    font-size:11px;
+    line-height:15px;
+    letter-spacing:0.10em;
+    text-transform:uppercase;
+    font-weight:700;
+    color:${headerText};
   }
-  .brand-bar-table,
-  .brand-stage-table,
   .legal-brand-table {
     width:100%;
     border-collapse:collapse;
   }
-  .brand-center {
-    text-align:center;
+  .minimal-body {
+    padding:28px;
   }
-  .brand-stage-table {
-    max-width:340px;
-    margin:0 auto;
-  }
-  .brand-stage-cell {
-    padding:16px 22px 14px;
-    border-radius:22px;
-    background:linear-gradient(180deg, rgba(7,19,44,0.24) 0%, rgba(43,100,228,0.12) 100%);
-    border:1px solid rgba(255,255,255,0.12);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(3,10,26,0.12);
-  }
-  .brand-logo {
-    display:block;
-    width:220px;
-    max-width:100%;
-    height:auto;
-    margin:0 auto;
-    border:0;
-    filter:drop-shadow(0 14px 24px rgba(4,12,30,0.28));
-  }
-  .eyebrow {
+  .minimal-eyebrow {
     display:inline-block;
-    margin-top:16px;
-    padding:7px 12px;
-    border-radius:999px;
-    background:rgba(255,255,255,0.16);
-    color:#d9e6ff;
-    font-size:11px;
-    font-weight:700;
-    letter-spacing:0.08em;
+    margin:0 0 16px;
+    font-size:12px;
+    line-height:16px;
+    letter-spacing:0.12em;
     text-transform:uppercase;
-  }
-  .hero-grid {
-    margin-top:18px;
-    max-width:520px;
-    margin-left:auto;
-    margin-right:auto;
-  }
-  .hero-personal {
-    margin-top:14px;
-    color:#f7fbff;
-    font-size:11px;
     font-weight:700;
-    letter-spacing:0.04em;
-    text-transform:uppercase;
+    color:#4b61ff;
   }
-  .hero-title {
-    color:#ffffff;
-    margin:0;
-    font-size:34px;
-    line-height:1.06;
+  .minimal-title {
+    margin:0 0 14px;
+    font-size:38px;
+    line-height:1.08;
+    letter-spacing:-0.04em;
+    font-weight:700;
+    color:${titleText};
+  }
+  .minimal-copy {
+    margin:0 0 16px;
+    font-size:18px;
+    line-height:1.7;
+    color:${copyText};
+  }
+  .minimal-copy strong,
+  .step-copy strong {
+    color:${titleText};
     font-weight:700;
   }
-  .hero-subtitle {
-    color:#dbe8ff;
-    margin:12px 0 0;
-    font-size:16px;
-    line-height:1.48;
+  .minimal-copy--compact {
+    margin-bottom:14px;
   }
-  .pad {
-    padding:28px 30px 22px;
-    text-align:center;
+  .minimal-copy--muted {
+    color:${subtleText};
   }
-  .main-title {
-    font-size:22px;
-    line-height:1.26;
-    font-weight:700;
-    color:${mainTitleColor};
-    margin:0 auto 12px;
-    max-width:520px;
+  .minimal-feature-list {
+    margin-top:26px;
+    display:grid;
+    gap:16px;
   }
-  .lead {
-    font-size:15px;
-    line-height:1.62;
-    color:${leadText};
-    margin:0 auto 18px;
-    max-width:520px;
+  .minimal-feature-item {
+    display:grid;
+    grid-template-columns:34px 1fr;
+    gap:14px;
+    align-items:start;
   }
-  .greeting {
-    font-size:15px;
-    line-height:1.55;
-    color:${bodyText};
-    font-weight:700;
-    margin:0 0 12px;
-  }
-  .body-copy {
-    font-size:15px;
-    line-height:1.72;
-    color:${bodyCopy};
-    margin:0 0 12px;
-  }
-  .highlight-panel {
-    margin:22px 0;
-    padding:18px 18px 14px;
-    border-radius:20px;
-    background:${panelBackground};
-    border:1px solid ${panelBorder};
-    text-align:left;
-  }
-  .mini-steps td {
-    width:33.33%;
-    vertical-align:top;
-    padding:0 8px;
-  }
-  .step-card {
-    border-radius:20px;
-    background:${stepCardBackground};
-    border:1px solid ${stepCardBorder};
-    box-shadow:${stepCardShadow};
-    padding:24px 18px 20px;
-    min-height:198px;
-  }
-  .step-icon {
-    width:108px;
-    height:108px;
-    line-height:108px;
-    text-align:center;
-    border-radius:30px;
-    margin:0 auto 16px;
-    background:${stepIconBackground};
-    border:1px solid ${stepIconBorder};
-    box-shadow:${stepIconShadow};
-    color:#23486f;
-    font-size:24px;
-    font-weight:700;
-    overflow:hidden;
-  }
-  .step-icon img {
+  .minimal-feature-icon {
+    width:24px;
+    height:24px;
     display:block;
-    width:72px;
-    height:72px;
-    margin:18px auto;
-    object-fit:contain;
+    color:${titleText};
+    text-align:center;
   }
   .step-icon-link {
-    display:block;
-    width:100%;
-    height:100%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
     color:inherit !important;
     text-decoration:none;
   }
-  .step-title {
-    font-size:15px;
-    font-weight:700;
-    color:${stepTitleColor};
-    margin-bottom:6px;
+  .journey-step-icon-image {
+    display:block;
+    width:24px;
+    height:24px;
+    object-fit:contain;
+  }
+  .journey-step-icon-fallback {
+    display:inline-block;
+    width:24px;
     text-align:center;
+    font-size:14px;
+    line-height:24px;
+    font-weight:700;
+    color:${titleText};
+  }
+  .step-title {
+    font-size:16px;
+    font-weight:700;
+    color:${titleText};
+    margin-bottom:6px;
     line-height:1.3;
   }
   .step-copy {
-    font-size:13px;
-    color:${stepCopyColor};
-    line-height:1.5;
-    text-align:center;
+    font-size:15px;
+    color:${mutedText};
+    line-height:1.7;
   }
   .cta-wrap {
-    margin:22px 0 8px;
+    margin:22px 0 0;
     text-align:center;
-    padding:18px 18px;
+    padding:20px 18px;
     border-radius:22px;
-    background:linear-gradient(180deg, #0c1830 0%, #11254b 100%);
+    background:${ctaPanelBackground};
+    border:1px solid ${ctaPanelBorder};
   }
   .btn {
     display:inline-block;
@@ -691,19 +621,30 @@ export function buildSegmentEmailHtml(
     font-size:15px;
     box-shadow:0 14px 30px rgba(15,57,221,0.28);
   }
-  .secondary-link {
-    display:none;
+  .helper {
     margin-top:12px;
-    color:#ffffff !important;
+    color:${subtleText};
+    font-size:13px;
+    line-height:1.6;
+  }
+  .support-link {
+    display:inline-block;
+    margin-top:12px;
+    color:#3853dd !important;
     text-decoration:none;
     font-size:13px;
     font-weight:700;
-    opacity:0.82;
+  }
+  .support-helper {
+    margin-top:6px;
+    color:${subtleText};
+    font-size:12px;
+    line-height:1.6;
   }
   .signature {
     font-size:14px;
     color:${signatureColor};
-    margin-top:24px;
+    margin-top:18px;
     line-height:1.7;
   }
   .legal {
@@ -806,17 +747,12 @@ export function buildSegmentEmailHtml(
     text-decoration:none;
   }
   @media only screen and (max-width: 620px) {
-    .hero-shell { padding:16px 14px; }
-    .hero-card { padding:16px 14px 14px; }
-    .hero-title { font-size:26px; line-height:1.12; }
-    .hero-subtitle { font-size:14px; line-height:1.52; }
-    .pad { padding:26px 18px 18px; }
+    .minimal-header { padding:24px 20px; }
+    .header-logo { width:152px !important; max-width:152px !important; }
+    .minimal-body { padding:24px 20px; }
+    .minimal-title { font-size:30px; line-height:1.12; }
+    .minimal-copy { font-size:16px; }
     .legal { padding:0 18px 22px; }
-    .mini-steps td { display:block; width:100%; padding:0 0 8px; }
-    .step-card { min-height:auto; }
-    .brand-stage-table { max-width:270px; }
-    .brand-stage-cell { padding:14px 18px 12px; border-radius:20px; }
-    .brand-logo { max-width:188px !important; }
     .legal-shell { padding:16px; }
     .legal-brand-table { padding-bottom:12px; }
     .legal-brand-logo-cell { width:68px !important; padding-right:12px; }
@@ -835,62 +771,47 @@ export function buildSegmentEmailHtml(
 
 <table class="container" data-skin="${normalizedSkin}">
 <tr>
-<td class="hero-shell">
-  <div class="hero-card">
-    <table role="presentation" class="brand-bar-table brand-bar" width="100%" cellspacing="0" cellpadding="0" border="0">
-      <tr>
-        <td align="center" class="brand-center">
-          <table role="presentation" class="brand-stage-table" width="100%" cellspacing="0" cellpadding="0" border="0" style="width:100%; max-width:340px; margin:0 auto;">
-            <tr>
-              <td align="center" class="brand-stage-cell" style="padding:16px 22px 14px; border-radius:22px;">
-                <img src="${wordmarkUrl}" width="220" alt="${content.logoAlt}" class="brand-logo" style="display:block; width:100%; max-width:220px; height:auto; margin:0 auto; border:0;" />
-              </td>
-            </tr>
-          </table>
-        </td>
-      </tr>
-    </table>
-    ${eyebrowHtml}
-    ${personalMarker}
-    <div class="hero-grid">
-      <h1 class="hero-title">${normalizedHeroTitle}</h1>
-    </div>
-  </div>
+<td class="minimal-header">
+  <img src="${wordmarkUrl}" width="170" alt="${content.logoAlt}" class="header-logo" style="display:block; width:170px; max-width:170px; height:auto; border:0; filter:brightness(0) invert(1);" />
+  <div class="minimal-brand-line">Bullwaves Client Communication</div>
 </td>
 </tr>
 
 <tr>
-<td class="pad">
+<td class="minimal-body">
+${eyebrowHtml}
+<h1 class="minimal-title">${primaryTitle}</h1>
+${supportingIntro ? `<p class="minimal-copy minimal-copy--muted">${supportingIntro}</p>` : ''}
 ${greetingLead}
-<p class="main-title">${normalizedMainTitle}</p>
-<p class="lead">${normalizedIntroLead}</p>
-<div class="highlight-panel">
-  <table width="100%" class="mini-steps">
-    <tr>
-      <td>
-        <div class="step-card">
-          <div class="step-icon">${renderStepIcon(boxOneIconUrl, boxOneHref, '01')}</div>
-          <div class="step-title">${normalizedBoxOneTitle}</div>
-          <div class="step-copy">${normalizedBoxOneCopy}</div>
-        </div>
-      </td>
-      <td>
-        <div class="step-card">
-          <div class="step-icon">${renderStepIcon(boxTwoIconUrl, boxTwoHref, '02')}</div>
-          <div class="step-title">${normalizedBoxTwoTitle}</div>
-          <div class="step-copy">${normalizedBoxTwoCopy}</div>
-        </div>
-      </td>
-      <td>
-        <div class="step-card">
-          <div class="step-icon">${renderStepIcon(boxThreeIconUrl, boxThreeHref, '03')}</div>
-          <div class="step-title">${normalizedBoxThreeTitle}</div>
-          <div class="step-copy">${normalizedBoxThreeCopy}</div>
-        </div>
-      </td>
-    </tr>
-  </table>
+${introParagraph ? `<p class="minimal-copy">${introParagraph}</p>` : ''}
+${bodyOneHtml}
+${bodyTwoHtml}
+
+<div class="minimal-feature-list">
+  <div class="minimal-feature-item">
+    <div class="minimal-feature-icon">${renderStepIcon(boxOneIconUrl, boxOneHref, '01')}</div>
+    <div>
+      <div class="step-title">${normalizedBoxOneTitle}</div>
+      <div class="step-copy">${normalizedBoxOneCopy}</div>
+    </div>
+  </div>
+  <div class="minimal-feature-item">
+    <div class="minimal-feature-icon">${renderStepIcon(boxTwoIconUrl, boxTwoHref, '02')}</div>
+    <div>
+      <div class="step-title">${normalizedBoxTwoTitle}</div>
+      <div class="step-copy">${normalizedBoxTwoCopy}</div>
+    </div>
+  </div>
+  <div class="minimal-feature-item">
+    <div class="minimal-feature-icon">${renderStepIcon(boxThreeIconUrl, boxThreeHref, '03')}</div>
+    <div>
+      <div class="step-title">${normalizedBoxThreeTitle}</div>
+      <div class="step-copy">${normalizedBoxThreeCopy}</div>
+    </div>
+  </div>
 </div>
+
+${bodyThreeHtml}
 
 <div class="cta-wrap">
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
@@ -900,7 +821,9 @@ ${greetingLead}
       </td>
     </tr>
   </table>
-  <a href="${supportHref}" class="secondary-link">${normalizedSupportLabel}</a>
+  ${ctaHelperHtml}
+  ${supportLinkHtml}
+  ${supportHelperHtml}
 </div>
 
 <p class="signature">
@@ -928,11 +851,13 @@ function makeVariant(spec) {
   const lang = spec?.html?.lang || 'en'
   const normalizedDescription = normalizeLocalizedText(lang, spec.description)
   const normalizedSubject = normalizeLocalizedText(lang, spec.subject)
+  const iconGuide = spec?.iconGuide || spec?.html?.iconGuide || null
 
   return {
     name: spec.name,
     description: normalizedDescription,
     subject: normalizedSubject,
+    iconGuide,
     html: buildSegmentEmailHtml(spec.html),
     sendgridSubject: buildSendgridSubjectTemplate(normalizedSubject),
     sendgridHtml: buildSegmentEmailHtml(spec.html, { mode: 'sendgrid' }),

@@ -54,6 +54,7 @@ export function buildPublicOrgTreeModel(people = [], opts = {}) {
     rootLabel = 'Bullwaves',
     includeDepartmentsRoles = false,
     includeCrossEdges = false,
+    includeLeadershipGroup = true,
   } = opts
 
   const labels = {
@@ -69,24 +70,25 @@ export function buildPublicOrgTreeModel(people = [], opts = {}) {
   const isManagement = (p) => (p?.sectionId || '') === 'management-team'
 
   const rootId = buildNodeId('root', 'org')
-  const leadershipId = buildNodeId('group', 'leadership')
+  const leadershipId = includeLeadershipGroup ? buildNodeId('group', 'leadership') : null
 
-  const nodes = [
-    { id: rootId, label: rootLabel, type: 'root', parentId: null, tags: [] },
-    {
+  const nodes = [{ id: rootId, label: rootLabel, type: 'root', parentId: null, tags: [] }]
+  const edges = []
+
+  if (includeLeadershipGroup && leadershipId) {
+    nodes.push({
       id: leadershipId,
       label: labels.ceo || DEFAULT_LABELS.ceo,
       type: 'group',
       parentId: rootId,
       tags: ['management-team'],
-    },
-  ]
-
-  const edges = [{ from: rootId, to: leadershipId, kind: 'reporting' }]
+    })
+    edges.push({ from: rootId, to: leadershipId, kind: 'reporting' })
+  }
 
   // Management nodes (role label + optional name)
   const managementPeople = list.filter(isManagement)
-  for (const p of managementPeople) {
+  for (const p of includeLeadershipGroup ? managementPeople : []) {
     const title = cleanLabel(p?.title) || 'Leader'
     const name = cleanLabel(p?.name)
     const label = showTopManagementNames && name ? `${title} — ${name}` : title

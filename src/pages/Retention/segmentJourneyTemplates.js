@@ -1,84 +1,127 @@
 import { makeLocaleVariants } from './segmentJourneyTemplateBuilder.js'
 import { additionalSegmentJourneyTemplatesById } from './additionalSegmentJourneyTemplates.js'
-import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry.js'
-
-const {
-  customerService,
-  creditCard,
-  financialSuccessSecurity,
-  riskManagementControl,
-  successfulInvestmentReward,
-  successGrowthCertificate,
-  secureAccess,
-  secureDepositCard,
-} = EMAIL_JOURNEY_ICON_URLS
+import { createJourneyIconSelection } from './emailJourneyIconRegistry.js'
 
 const UNFUNDED_ICON_SETS = {
-  welcomeTrust: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: secureDepositCard,
-    boxThreeIconUrl: customerService,
-  },
-  welcomeValue: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: creditCard,
-    boxThreeIconUrl: financialSuccessSecurity,
-  },
-  frictionClarity: {
-    boxOneIconUrl: financialSuccessSecurity,
-    boxTwoIconUrl: secureDepositCard,
-    boxThreeIconUrl: customerService,
-  },
-  frictionRelief: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: creditCard,
-    boxThreeIconUrl: customerService,
-  },
-  accountActivationReminder: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: customerService,
-  },
-  postLoginDepositActivation: {
-    boxOneIconUrl: secureDepositCard,
-    boxTwoIconUrl: successfulInvestmentReward,
-    boxThreeIconUrl: customerService,
-  },
-  intentRecovery: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: secureDepositCard,
-    boxThreeIconUrl: financialSuccessSecurity,
-  },
-  depositPush: {
-    boxOneIconUrl: successfulInvestmentReward,
-    boxTwoIconUrl: secureAccess,
-    boxThreeIconUrl: customerService,
-  },
-  depositMomentum: {
-    boxOneIconUrl: successfulInvestmentReward,
-    boxTwoIconUrl: successGrowthCertificate,
-    boxThreeIconUrl: customerService,
-  },
-  firstTradeStructured: {
-    boxOneIconUrl: successfulInvestmentReward,
-    boxTwoIconUrl: successGrowthCertificate,
-    boxThreeIconUrl: riskManagementControl,
-  },
-  firstTradeConfidence: {
-    boxOneIconUrl: financialSuccessSecurity,
-    boxTwoIconUrl: successfulInvestmentReward,
-    boxThreeIconUrl: riskManagementControl,
-  },
-  reentrySoft: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: customerService,
-  },
-  reentryOpportunity: {
-    boxOneIconUrl: successGrowthCertificate,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: customerService,
-  },
+  welcomeTrust: createJourneyIconSelection({
+    boxOneKey: 'secure_approval_badge',
+    boxTwoKey: 'funding_hand_transfer',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['onboarding', 'account'],
+    rationale:
+      'Welcome trust: sicurezza, funding e presenza account devono restare immediati e coerenti.',
+  }),
+  welcomeValue: createJourneyIconSelection({
+    boxOneKey: 'user_account_profile',
+    boxTwoKey: 'onboarding_calendar',
+    boxThreeKey: 'secure_approval_badge',
+    recommendedGroups: ['account', 'onboarding'],
+    rationale:
+      'Welcome value: accesso, semplicità e fiducia seguono una sequenza account, orientamento, rassicurazione.',
+  }),
+  frictionClarity: createJourneyIconSelection({
+    boxOneKey: 'onboarding_calendar',
+    boxTwoKey: 'funding_hand_transfer',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['onboarding', 'account'],
+    rationale:
+      'Riduzione attrito: chiarezza del percorso, pagamenti e guida restano nell’area onboarding/account.',
+  }),
+  frictionRelief: createJourneyIconSelection({
+    boxOneKey: 'secure_approval_badge',
+    boxTwoKey: 'funding_hand_transfer',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['onboarding', 'account'],
+    rationale:
+      'Friction relief: rassicurazione, funding chiaro e supporto leggero, senza introdurre urgenza visiva.',
+  }),
+  accountActivationReminder: createJourneyIconSelection({
+    boxOneKey: 'user_account_profile',
+    boxTwoKey: 'onboarding_calendar',
+    boxThreeKey: 'secure_approval_badge',
+    recommendedGroups: ['account', 'onboarding'],
+    rationale:
+      'Reminder accesso: account, orientamento e fiducia devono restare leggibili al primo sguardo.',
+  }),
+  postLoginDepositActivation: createJourneyIconSelection({
+    boxOneKey: 'funding_hand_transfer',
+    boxTwoKey: 'market_growth_chart',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['account', 'trading'],
+    rationale:
+      'Post-login deposit: funding, progresso e aiuto account devono spingere avanti senza cambiare linguaggio visivo.',
+  }),
+  intentRecovery: createJourneyIconSelection({
+    boxOneKey: 'onboarding_calendar',
+    boxTwoKey: 'funding_hand_transfer',
+    boxThreeKey: 'secure_approval_badge',
+    recommendedGroups: ['onboarding', 'account'],
+    rationale:
+      'Intent recovery: il focus è rendere visibile il prossimo passo con chiarezza e fiducia.',
+  }),
+  depositPush: createJourneyIconSelection({
+    boxOneKey: 'time_recovery_clock',
+    boxTwoKey: 'user_account_profile',
+    boxThreeKey: 'funding_hand_transfer',
+    recommendedGroups: ['onboarding', 'account'],
+    rationale:
+      'First deposit push: tempo, accesso e funding devono essere immediati e riconoscibili.',
+  }),
+  depositMomentum: createJourneyIconSelection({
+    boxOneKey: 'time_recovery_clock',
+    boxTwoKey: 'market_growth_chart',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['onboarding', 'trading', 'account'],
+    rationale:
+      'Momentum: tempo, progresso e supporto leggero devono restare i tre segnali principali.',
+  }),
+  firstTradeStructured: createJourneyIconSelection({
+    boxOneKey: 'market_growth_chart',
+    boxTwoKey: 'trading_setup_controls',
+    boxThreeKey: 'trading_setup_controls',
+    recommendedGroups: ['trading'],
+    rationale:
+      'First trade structured: direzione, entrata e rischio devono vivere tutte nella stessa grammatica trading.',
+  }),
+  firstTradeConfidence: createJourneyIconSelection({
+    boxOneKey: 'market_growth_chart',
+    boxTwoKey: 'trading_setup_controls',
+    boxThreeKey: 'secure_approval_badge',
+    recommendedGroups: ['trading', 'onboarding'],
+    rationale:
+      'First trade confidence: direzione, azione e controllo devono restare chiari, con una chiusura più rassicurante.',
+  }),
+  reentrySoft: createJourneyIconSelection({
+    boxOneKey: 'onboarding_calendar',
+    boxTwoKey: 'experience_star',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['onboarding', 'trading', 'account'],
+    rationale:
+      'Re-entry soft: semplicità, esperienza più chiara e supporto discreto devono restare coerenti.',
+  }),
+  reentryOpportunity: createJourneyIconSelection({
+    boxOneKey: 'market_growth_chart',
+    boxTwoKey: 'onboarding_calendar',
+    boxThreeKey: 'user_account_profile',
+    recommendedGroups: ['trading', 'onboarding', 'account'],
+    rationale:
+      'Re-entry opportunity: opportunità, focus e account guidance devono parlare la stessa lingua.',
+  }),
+}
+
+export const RECENTLY_UPDATED_SEGMENT_TEMPLATE_IDS = new Set([
+  'unfunded_newcomers_welcome_value_email',
+  'unfunded_newcomers_friction_reduction_email',
+  'unfunded_newcomers_account_activation_reminder_email',
+  'unfunded_newcomers_post_login_deposit_activation_email',
+  'unfunded_newcomers_deposit_intent_recovery_email',
+  'unfunded_newcomers_first_deposit_push_email',
+  'unfunded_newcomers_first_trade_onboarding_email',
+  'unfunded_newcomers_reentry_nurture_email',
+])
+
+export function isRecentlyUpdatedSegmentTemplate(templateId) {
+  return RECENTLY_UPDATED_SEGMENT_TEMPLATE_IDS.has(String(templateId || '').trim())
 }
 
 export const segmentJourneyTemplatesById = {
@@ -90,20 +133,19 @@ export const segmentJourneyTemplatesById = {
         {
           name: 'Unfunded Newcomers - Welcome + Value Proposition A',
           description:
-            'Trust-first welcome variant that presents funding as the natural step to unlock the client area and platform access.',
-          subject: 'Your Bullwaves account is ready. Funding it takes just one step.',
+            'Empathetic welcome variant that reassures the user and frames funding as a clear next step, without pressure.',
+          subject: 'Your Bullwaves account is ready. When you are ready, the next step is simple.',
           html: {
             lang: 'en',
             skin: 'light',
             title: 'Your Bullwaves account is ready',
             heroTitle: 'Your account is ready',
-            heroSubtitle: 'A secure deposit unlocks your Bullwaves access.',
-            mainTitle: 'You already completed the first step: registration.',
-            introLead:
-              'Your account is active. Funding unlocks your client area, tools, and support.',
-            bodyOne:
-              'The path is simple: secure payments, guided onboarding, and help if you need it.',
-            bodyTwo: 'Here is the value you get immediately once you move forward:',
+            heroSubtitle:
+              'You completed <strong>registration</strong>. The next step is <strong>clear</strong>.',
+            mainTitle: 'Your registration is complete and your account is waiting for you.',
+            introLead: 'Your account is active. Funding opens your client area and tools.',
+            bodyOne: 'We kept it simple: secure payments, one clear step, support only if needed.',
+            bodyTwo: 'Here is what helps most when you decide to move forward:',
             boxOneTitle: 'Security',
             boxOneCopy: 'Protected access',
             boxTwoTitle: 'Funding',
@@ -111,32 +153,30 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Support',
             boxThreeCopy: 'Real human guidance',
             ...UNFUNDED_ICON_SETS.welcomeTrust,
-            bodyThree:
-              'A first deposit simply unlocks the full environment so you can evaluate it properly.',
-            bodyFour:
-              'If you need help, support is there, but the next move is to unlock the account.',
+            bodyThree: 'A first deposit unlocks the full environment with more clarity.',
             ctaLabel: 'Open Your Client Area',
-            ctaHelper: 'Review the account and continue',
-            supportLabel: 'Need help first? Chat on WhatsApp',
-            supportHelper: 'Use support only for a quick answer',
+            ctaHelper: 'Open your area and continue',
+            supportLabel: 'Need a quick hand?',
+            supportHelper: 'Use WhatsApp for one open detail',
           },
         },
         {
           name: 'Unfunded Newcomers - Welcome + Value Proposition B',
           description:
-            'Benefit-led welcome variant focused on access, onboarding simplicity, and reduced hesitation before the first deposit.',
-          subject: 'Your registration is done. Unlock the next step on Bullwaves.',
+            'Softer welcome variant focused on access, simplicity, and helping the user continue without friction.',
+          subject: 'Your registration is complete. Your next step on Bullwaves is ready.',
           html: {
             lang: 'en',
             skin: 'light',
             title: 'Unlock the next step',
             heroTitle: 'You are almost inside',
-            heroSubtitle: 'Registration is done. Activate your access.',
-            mainTitle: 'The setup is already behind you.',
-            introLead: 'Your profile is ready. Funding opens the real Bullwaves experience.',
+            heroSubtitle: '<strong>Registration</strong> is done. Your next step is ready.',
+            mainTitle: 'The hardest part is already behind you.',
+            introLead:
+              'Your profile is ready. Continuing now makes the experience more <strong>complete</strong>.',
             bodyOne:
-              'The next step is simpler than it looks: open the area, review the path, and proceed.',
-            bodyTwo: 'What you unlock once you continue:',
+              'You do not need to do everything now. Open your area, review the path, and continue.',
+            bodyTwo: 'What becomes clearer once you continue:',
             boxOneTitle: 'Access',
             boxOneCopy: 'Client area ready',
             boxTwoTitle: 'Simplicity',
@@ -145,13 +185,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Support if needed',
             ...UNFUNDED_ICON_SETS.welcomeValue,
             bodyThree:
-              'This is about momentum, not pressure. Acting now keeps the process lighter.',
-            bodyFour:
-              'If anything is unclear, support stays available, but activating the account comes first.',
+              'This is about momentum, not pressure. One small step makes the rest easier.',
             ctaLabel: 'Unlock Your Access',
             ctaHelper: 'Enter your area and continue',
-            supportLabel: 'Prefer a quick clarification on WhatsApp?',
-            supportHelper: 'Use support only for a quick answer',
+            supportLabel: 'Need a quick clarification?',
+            supportHelper: 'WhatsApp can unblock one detail',
           },
         }
       ),
@@ -159,19 +197,21 @@ export const segmentJourneyTemplatesById = {
         {
           name: 'Unfunded Newcomers - Welcome + Proposta di Valore A',
           description:
-            'Variante trust-first che presenta il funding come passaggio naturale per sbloccare area personale e accesso alla piattaforma.',
-          subject: 'Il tuo account Bullwaves è pronto. Ti manca solo un passo.',
+            'Variante welcome più empatica che rassicura l’utente e presenta il funding come passo naturale, senza pressione.',
+          subject: 'Il tuo account Bullwaves è pronto. Quando vuoi, il prossimo passo è semplice.',
           html: {
             lang: 'it',
             skin: 'light',
             title: 'Il tuo account Bullwaves è pronto',
             heroTitle: 'Il tuo account è pronto',
-            heroSubtitle: 'Un deposito sicuro sblocca il tuo accesso Bullwaves.',
-            mainTitle: 'Hai già completato il primo passo: la registrazione.',
+            heroSubtitle:
+              'Hai completato la <strong>registrazione</strong>. Il prossimo passo è <strong>chiaro</strong>.',
+            mainTitle: 'La registrazione è completata e il tuo account ti sta aspettando.',
             introLead:
-              'Il tuo account è attivo. Il deposito sblocca area personale, strumenti e supporto.',
-            bodyOne: 'Il percorso è semplice: pagamenti sicuri, guida chiara e aiuto se serve.',
-            bodyTwo: 'Ecco il valore che ottieni subito appena procedi:',
+              'Il tuo account è attivo. Il deposito apre area personale e strumenti utili.',
+            bodyOne:
+              'Abbiamo tenuto tutto semplice: pagamenti sicuri, un passo chiaro, supporto solo se serve.',
+            bodyTwo: 'Ecco cosa ti aiuta di più quando decidi di andare avanti:',
             boxOneTitle: 'Sicurezza',
             boxOneCopy: 'Accesso protetto',
             boxTwoTitle: 'Deposito',
@@ -180,32 +220,30 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Guida umana reale',
             ...UNFUNDED_ICON_SETS.welcomeTrust,
             bodyThree:
-              "Il primo deposito serve solo a sbloccare l'ambiente completo e valutarlo meglio.",
-            bodyFour:
-              "Se ti serve aiuto, il supporto c'è, ma il passo dopo resta sbloccare l'account.",
+              "Il primo deposito ti permette di vedere l'ambiente completo con più chiarezza.",
             ctaLabel: 'Apri la tua Area Personale',
-            ctaHelper: "Controlla l'account e continua",
-            supportLabel: 'Hai bisogno di aiuto prima? Scrivici su WhatsApp',
-            supportHelper: 'Usa il supporto solo per un chiarimento rapido',
+            ctaHelper: 'Apri la tua area e continua',
+            supportLabel: 'Ti serve un aiuto rapido?',
+            supportHelper: 'Usa WhatsApp per un dubbio aperto',
           },
         },
         {
           name: 'Unfunded Newcomers - Welcome + Proposta di Valore B',
           description:
-            "Variante benefit-led orientata ad accesso, semplicità di onboarding e riduzione dell'esitazione prima del primo deposito.",
-          subject: 'Registrazione completata. Sblocca il prossimo passaggio su Bullwaves.',
+            'Variante welcome più morbida, centrata su accesso, semplicità e continuità del percorso.',
+          subject: 'Registrazione completata. Il tuo prossimo passaggio su Bullwaves è pronto.',
           html: {
             lang: 'it',
             skin: 'dark',
             title: 'Sblocca il prossimo passaggio',
             heroTitle: 'Sei quasi dentro',
-            heroSubtitle: 'La registrazione è fatta. Attiva il tuo accesso.',
+            heroSubtitle: 'La <strong>registrazione</strong> è fatta. Il prossimo passo è pronto.',
             mainTitle: 'La parte più tecnica è già alle spalle.',
             introLead:
-              'Il tuo profilo è pronto. Finanziare il conto apre la vera esperienza Bullwaves.',
+              'Il tuo profilo è pronto. Continuare adesso rende l’esperienza più <strong>chiara</strong>.',
             bodyOne:
-              'Il prossimo passo è più semplice di quanto sembri: entri, valuti il percorso e procedi.',
-            bodyTwo: 'Cosa sblocchi appena continui:',
+              'Non serve capire tutto subito. Entra nella tua area, guarda il percorso e decidi da lì.',
+            bodyTwo: 'Cosa diventa più chiaro quando continui:',
             boxOneTitle: 'Accesso',
             boxOneCopy: 'Area personale pronta',
             boxTwoTitle: 'Semplicità',
@@ -214,13 +252,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Supporto se serve',
             ...UNFUNDED_ICON_SETS.welcomeValue,
             bodyThree:
-              'Qui conta lo slancio, non la pressione. Muoversi ora rende tutto più lineare.',
-            bodyFour:
-              "Se qualcosa non è chiaro, il supporto resta disponibile, ma attivare l'account viene prima.",
+              'Conta lo slancio, non la pressione. Un piccolo passo rende il resto più leggero.',
             ctaLabel: 'Sblocca il tuo Accesso',
             ctaHelper: 'Entra nella tua area e continua',
-            supportLabel: 'Preferisci un chiarimento veloce su WhatsApp?',
-            supportHelper: 'Usa il supporto solo per una risposta rapida',
+            supportLabel: 'Ti serve un chiarimento veloce?',
+            supportHelper: 'WhatsApp può sbloccare un dettaglio',
           },
         }
       ),
@@ -234,20 +270,20 @@ export const segmentJourneyTemplatesById = {
         {
           name: 'Unfunded Newcomers - Friction Reduction A',
           description:
-            'Objection-removal variant focused on clarifying payments and reducing uncertainty before funding.',
-          subject: 'Questions before funding? Here is the fastest way forward.',
+            'Empathetic friction-reduction variant focused on reducing uncertainty before funding without sounding heavy.',
+          subject: 'Questions before funding? Here is a simpler way forward.',
           html: {
             lang: 'en',
             skin: 'light',
             title: 'Questions before funding?',
             heroTitle: 'Make funding easier',
-            heroSubtitle: 'A few clear answers can move you forward.',
+            heroSubtitle: 'A few <strong>clear answers</strong> can move you forward.',
             mainTitle: 'Most first deposits stop because of one simple doubt.',
             introLead:
-              'Usually it is not lack of interest. It is doubt around payment, timing, or what happens next.',
+              'Usually it is not lack of interest. It is one practical doubt about <strong>payment</strong>, timing, or the next step.',
             bodyOne:
-              'That is why we simplified the path: clearer routes, fewer doubts, and a direct next action.',
-            bodyTwo: 'Here are the three points that matter most before your first deposit:',
+              'That is why we simplified the path: clearer routes, fewer doubts, one visible action.',
+            bodyTwo: 'These are the three points that usually help most before the first deposit:',
             boxOneTitle: 'Clarity',
             boxOneCopy: 'Simple answers first',
             boxTwoTitle: 'Payments',
@@ -256,13 +292,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Available if needed',
             ...UNFUNDED_ICON_SETS.frictionClarity,
             bodyThree:
-              'You can review the funding path first and decide after. Often that is enough to move.',
-            bodyFour:
-              'The priority is simple: review the path, confirm it works, and continue in platform.',
+              'Review the funding path first, then decide. Often that is enough to move with more confidence.',
             ctaLabel: 'Review Deposit Options',
-            ctaHelper: 'Open the platform and check the route',
-            supportLabel: 'Need clarification on WhatsApp?',
-            supportHelper: 'Human help stays secondary to the platform',
+            ctaHelper: 'Open the platform and review the route',
+            supportLabel: 'Need one quick clarification?',
+            supportHelper: 'WhatsApp can clear one practical doubt',
           },
         },
         {
@@ -275,10 +309,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Still hesitating?',
             heroTitle: 'A lighter path is here',
-            heroSubtitle: 'If funding felt heavy before, this path makes it lighter.',
+            heroSubtitle:
+              'If funding felt heavy before, this path makes it <strong>lighter</strong>.',
             mainTitle: 'You may not need more time. You may just need less friction.',
             introLead: 'Users often pause here because the next step feels bigger than it is.',
-            bodyOne: 'The best next move is to reopen the funding path with a simpler frame.',
+            bodyOne: 'The best next move is simple: reopen the funding path with a lighter frame.',
             bodyTwo: 'What this clearer route gives you:',
             boxOneTitle: 'Less doubt',
             boxOneCopy: 'Answers before action',
@@ -288,12 +323,12 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Support in the background',
             ...UNFUNDED_ICON_SETS.frictionRelief,
             bodyThree:
-              'Go back into the account, review the route, and use support only for one blocker.',
+              'Go back into the account, review the route, and use support only for one <strong>blocker</strong>.',
             bodyFour:
               'That keeps the next step focused instead of adding extra conversations too early.',
             ctaLabel: 'Reopen the Funding Path',
-            ctaHelper: 'Check the route again with a simpler frame',
-            supportLabel: 'Have one specific blocker? Ask on WhatsApp',
+            ctaHelper: 'Check the route again',
+            supportLabel: 'Have one specific blocker?',
             supportHelper: 'WhatsApp is backup, not the main path',
           },
         }
@@ -302,20 +337,21 @@ export const segmentJourneyTemplatesById = {
         {
           name: 'Unfunded Newcomers - Riduzione Attriti A',
           description:
-            'Variante focalizzata sulla rimozione delle obiezioni con maggiore chiarezza su pagamenti e passaggi di funding.',
-          subject: 'Hai dubbi prima di depositare? Ecco il modo più semplice per procedere.',
+            'Variante più empatica per ridurre l’incertezza prima del funding senza appesantire il tono.',
+          subject: 'Hai dubbi prima di depositare? Ecco un modo più semplice per procedere.',
           html: {
             lang: 'it',
             skin: 'light',
             title: 'Hai dubbi prima di depositare?',
             heroTitle: 'Rendiamo il deposito semplice',
-            heroSubtitle: 'Poche risposte chiare possono farti andare avanti.',
+            heroSubtitle: 'Poche <strong>risposte chiare</strong> possono farti andare avanti.',
             mainTitle: 'Molti primi depositi si fermano per un dubbio molto semplice.',
             introLead:
-              'Di solito non manca interesse. Manca chiarezza su pagamento, tempi o passaggi successivi.',
+              'Di solito non manca interesse. C’è solo un dubbio pratico su <strong>pagamento</strong>, tempi o passaggio successivo.',
             bodyOne:
-              'Per questo il percorso è più lineare: più chiarezza, meno dubbi, un passo diretto.',
-            bodyTwo: 'Ecco i tre punti che contano di più prima del primo deposito:',
+              'Per questo il percorso è più lineare: più chiarezza, meno dubbi, un solo passo visibile.',
+            bodyTwo:
+              'Questi sono i tre punti che di solito aiutano di più prima del primo deposito:',
             boxOneTitle: 'Chiarezza',
             boxOneCopy: 'Risposte semplici',
             boxTwoTitle: 'Pagamenti',
@@ -324,13 +360,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Disponibile se serve',
             ...UNFUNDED_ICON_SETS.frictionClarity,
             bodyThree:
-              'Puoi controllare prima il percorso e decidere dopo. Spesso basta questo per muoverti.',
-            bodyFour:
-              'La priorità resta semplice: rivedere il percorso e procedere dalla piattaforma.',
+              'Puoi controllare prima il percorso e decidere dopo. Spesso basta questo per muoverti con più serenità.',
             ctaLabel: 'Controlla le Opzioni di Deposito',
-            ctaHelper: 'Apri la piattaforma e verifica il percorso',
-            supportLabel: 'Ti serve un chiarimento su WhatsApp?',
-            supportHelper: "L'aiuto umano resta secondario alla piattaforma",
+            ctaHelper: 'Apri la piattaforma e guarda il percorso',
+            supportLabel: 'Ti serve un chiarimento rapido?',
+            supportHelper: 'WhatsApp può chiarire un dubbio pratico',
           },
         },
         {
@@ -343,7 +377,8 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Sei ancora indeciso?',
             heroTitle: 'Esiste un percorso leggero',
-            heroSubtitle: 'Se prima sembrava pesante, ora il deposito è più semplice.',
+            heroSubtitle:
+              'Se prima sembrava pesante, ora il deposito è più <strong>semplice</strong>.',
             mainTitle: 'Forse non ti serve più tempo. Ti serve meno attrito.',
             introLead:
               'Quando un utente si ferma qui, spesso il passo dopo sembra più grande di quanto sia.',
@@ -358,11 +393,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Supporto sullo sfondo',
             ...UNFUNDED_ICON_SETS.frictionRelief,
             bodyThree:
-              "Rientra nell'account, rivedi il percorso e usa il supporto solo per un blocco preciso.",
+              "Rientra nell'account, rivedi il percorso e usa il supporto solo per un <strong>blocco</strong> preciso.",
             bodyFour: 'Così il prossimo passaggio resta focalizzato, senza conversazioni inutili.',
             ctaLabel: 'Riapri il Percorso di Deposito',
-            ctaHelper: 'Riguarda il percorso con un criterio più semplice',
-            supportLabel: 'Hai un blocco preciso? Scrivici su WhatsApp',
+            ctaHelper: 'Riguarda il percorso',
+            supportLabel: 'Hai un blocco preciso?',
             supportHelper: 'WhatsApp resta un supporto di riserva',
           },
         }
@@ -384,12 +419,13 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Your account is waiting',
             heroTitle: 'Log in to continue',
-            heroSubtitle: 'Your Bullwaves profile is ready. The next move is simply to enter.',
+            heroSubtitle:
+              'Your Bullwaves profile is ready. The next move is to <strong>enter</strong>.',
             mainTitle: 'You already registered. Now complete the access step.',
             introLead:
-              'Before funding becomes relevant, the account has to become familiar. The first action is logging in and reviewing your client area.',
+              'Before funding matters, the account has to feel <strong>familiar</strong>. Start by logging in.',
             bodyOne:
-              'Users often stop here not because of rejection, but because they did not take the first real in-platform step.',
+              'Users often stop here because they never take the first real in-platform step.',
             bodyTwo: 'What logging in gives you immediately:',
             boxOneTitle: 'Access',
             boxOneCopy: 'See your area clearly',
@@ -398,11 +434,10 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Support',
             boxThreeCopy: 'Ask only if blocked',
             ...UNFUNDED_ICON_SETS.accountActivationReminder,
-            bodyThree:
-              'Enter first, review the environment, and only then decide how to proceed with funding.',
+            bodyThree: 'Enter first, review the environment, then decide how to proceed.',
             bodyFour: 'This keeps the process lighter and gives context before any payment step.',
             ctaLabel: 'Log In to Your Account',
-            ctaHelper: 'Enter the portal and review your next step',
+            ctaHelper: 'Enter the portal and review the next step',
             supportLabel: 'Need help accessing the area?',
             supportHelper: 'Use WhatsApp only if access is blocked',
           },
@@ -417,12 +452,12 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Use the access you already created',
             heroTitle: 'Your next step is small',
-            heroSubtitle: 'Logging in is enough to restart the journey clearly.',
+            heroSubtitle: '<strong>Logging in</strong> is enough to restart the journey.',
             mainTitle: 'You do not need to decide everything now. You only need to enter.',
             introLead:
-              'Once you are inside the portal, the next action becomes more concrete and less abstract.',
+              'Once you are inside, the next action becomes more <strong>concrete</strong>.',
             bodyOne:
-              'That is why this reminder is not about pressure. It is about taking the first operational step inside your account.',
+              'This reminder is not about pressure. It is about taking the first operational step.',
             bodyTwo: 'Why this step matters:',
             boxOneTitle: 'Simplicity',
             boxOneCopy: 'One easy action',
@@ -432,11 +467,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Move with context',
             ...UNFUNDED_ICON_SETS.accountActivationReminder,
             bodyThree:
-              'Open the account, look around, and let the next decision come from clarity rather than hesitation.',
+              'Open the account, look around, and let the next decision come from clarity.',
             bodyFour:
               'Support is available if needed, but portal access stays the main destination.',
             ctaLabel: 'Enter Your Bullwaves Area',
-            ctaHelper: 'Re-enter the portal and restart with context',
+            ctaHelper: 'Re-enter the portal and restart',
             supportLabel: 'Have an access issue?',
             supportHelper: 'Use WhatsApp only for a specific login blocker',
           },
@@ -454,12 +489,12 @@ export const segmentJourneyTemplatesById = {
             title: 'Il tuo account ti aspetta',
             heroTitle: 'Entra per continuare',
             heroSubtitle:
-              'Il tuo profilo Bullwaves è pronto. Il prossimo passo è semplicemente entrare.',
+              'Il tuo profilo Bullwaves è pronto. Il prossimo passo è <strong>entrare</strong>.',
             mainTitle: 'Ti sei già registrato. Ora completa il passaggio di accesso.',
             introLead:
-              "Prima che il deposito diventi rilevante, l'account deve diventare familiare. La prima azione è fare login e guardare l'area personale.",
+              "Prima che il deposito conti, l'account deve diventare <strong>familiare</strong>. La prima azione è fare login.",
             bodyOne:
-              'Molti utenti si fermano qui non per rifiuto, ma perché non fanno il primo vero passo dentro la piattaforma.',
+              'Molti utenti si fermano qui perché non fanno il primo vero passo dentro la piattaforma.',
             bodyTwo: 'Cosa ottieni subito entrando:',
             boxOneTitle: 'Accesso',
             boxOneCopy: 'Vedi la tua area',
@@ -468,8 +503,7 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Supporto',
             boxThreeCopy: 'Chiedi solo se bloccato',
             ...UNFUNDED_ICON_SETS.accountActivationReminder,
-            bodyThree:
-              "Prima entra, guarda l'ambiente, poi decidi con calma come procedere sul funding.",
+            bodyThree: "Prima entra, guarda l'ambiente, poi decidi come procedere.",
             bodyFour:
               'Così il processo resta più leggero e il passaggio di pagamento arriva con più contesto.',
             ctaLabel: 'Accedi al tuo Account',
@@ -488,12 +522,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: "Usa l'accesso che hai già creato",
             heroTitle: 'Il tuo prossimo passo è piccolo',
-            heroSubtitle: 'Fare login basta per riavviare il percorso con chiarezza.',
+            heroSubtitle: '<strong>Fare login</strong> basta per riavviare il percorso.',
             mainTitle: 'Non devi decidere tutto adesso. Devi solo entrare.',
             introLead:
-              'Una volta dentro il portale, il passaggio successivo diventa più concreto e meno astratto.',
-            bodyOne:
-              'Per questo promemoria non si parla di pressione. Si parla del primo passo operativo dentro il tuo account.',
+              'Una volta dentro il portale, il passaggio successivo diventa più <strong>concreto</strong>.',
+            bodyOne: 'Questo promemoria non parla di pressione. Parla del primo passo operativo.',
             bodyTwo: 'Perché questo passaggio conta:',
             boxOneTitle: 'Semplicità',
             boxOneCopy: 'Un azione semplice',
@@ -503,11 +536,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Ti muovi con contesto',
             ...UNFUNDED_ICON_SETS.accountActivationReminder,
             bodyThree:
-              "Apri l'account, guarda il percorso e lascia che la decisione successiva nasca dalla chiarezza, non dall'esitazione.",
+              "Apri l'account, guarda il percorso e lascia che la decisione successiva nasca dalla chiarezza.",
             bodyFour:
               "Il supporto resta disponibile se serve, ma la destinazione principale resta l'accesso al portale.",
             ctaLabel: 'Entra nella tua Area Bullwaves',
-            ctaHelper: 'Rientra nel portale e riparti con contesto',
+            ctaHelper: 'Rientra nel portale e riparti',
             supportLabel: 'Hai un problema di accesso?',
             supportHelper: 'Usa WhatsApp solo per un blocco specifico sul login',
           },
@@ -530,12 +563,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'You are already inside',
             heroTitle: 'Turn access into action',
-            heroSubtitle: 'Now that you logged in, the next step is opening the funding path.',
+            heroSubtitle: 'Now that you logged in, the next step is <strong>funding</strong>.',
             mainTitle: 'The hardest mental step is already done: you entered the account.',
             introLead:
-              'At this point the best move is not more explanation. It is moving from access to deposit intent while the session is still warm.',
-            bodyOne:
-              'Open the cashier, review the payment routes, and keep the path practical and short.',
+              'At this point the best move is not more explanation. It is moving from access to <strong>intent</strong>.',
+            bodyOne: 'Open the cashier, review the payment routes, and keep the path short.',
             bodyTwo: 'What this next step should give you:',
             boxOneTitle: 'Direction',
             boxOneCopy: 'Open the right route',
@@ -544,12 +576,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Assistance',
             boxThreeCopy: 'Available only if needed',
             ...UNFUNDED_ICON_SETS.postLoginDepositActivation,
-            bodyThree:
-              'Do not stop at account access. Use that momentum to enter the funding flow while the process feels familiar.',
+            bodyThree: 'Do not stop at access. Use that momentum to enter the funding flow.',
             bodyFour:
               'If one blocker appears, support can help, but the main path remains the cashier and payment route.',
             ctaLabel: 'Open the Deposit Path',
-            ctaHelper: 'Go directly to the cashier and review your payment options',
+            ctaHelper: 'Go to the cashier and review payment options',
             supportLabel: 'Need help with one blocker?',
             supportHelper: 'Use WhatsApp only for a specific funding issue',
           },
@@ -564,12 +595,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Your next step is visible',
             heroTitle: 'Stay in motion',
-            heroSubtitle: 'You logged in. Now move straight into the funding flow.',
+            heroSubtitle: 'You logged in. Now move into the <strong>funding flow</strong>.',
             mainTitle: 'Once the portal is open, the right move is to keep going.',
             introLead:
-              'Stopping after login often recreates hesitation. Opening the funding route keeps the process operational.',
-            bodyOne:
-              'This is why the message is simple: do not just visit the account. Advance to the cashier and inspect the route.',
+              'Stopping after login often recreates hesitation. Opening the funding route keeps the process <strong>active</strong>.',
+            bodyOne: 'Do not just visit the account. Advance to the cashier and inspect the route.',
             bodyTwo: 'Keep the next action anchored to three things:',
             boxOneTitle: 'Momentum',
             boxOneCopy: 'Act while warm',
@@ -579,10 +609,10 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Resolve only real blockers',
             ...UNFUNDED_ICON_SETS.postLoginDepositActivation,
             bodyThree:
-              'The goal is not a long conversation. The goal is one concrete move toward first deposit.',
+              'The goal is not a long conversation. It is one concrete move toward the first deposit.',
             bodyFour: 'Keep the platform first. Use support only if the route stops you.',
             ctaLabel: 'Start the Funding Flow',
-            ctaHelper: 'Open the cashier and take the next clear step',
+            ctaHelper: 'Open the cashier and take the next step',
             supportLabel: 'Blocked by one detail?',
             supportHelper: 'Use WhatsApp only for the last unresolved obstacle',
           },
@@ -676,12 +706,13 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'The next step is still open',
             heroTitle: 'Turn attention into intent',
-            heroSubtitle: 'You came back to the account. Now open the funding route clearly.',
+            heroSubtitle:
+              'You came back to the account. Now open the <strong>funding route</strong>.',
             mainTitle: 'Interest existed, but no deposit-intent event followed.',
             introLead:
-              'That usually means the user needs a cleaner handoff into the cashier or KYC path, not more generic persuasion.',
+              'That usually means the user needs a cleaner handoff into cashier or KYC, not more persuasion.',
             bodyOne:
-              'This message exists to make the next action visible: open the deposit route, inspect the steps, and decide from there.',
+              'This message makes the next action visible: open the deposit route, inspect the steps, and decide from there.',
             bodyTwo: 'What this recovery touch should do:',
             boxOneTitle: 'Reframe',
             boxOneCopy: 'Show the next action',
@@ -691,11 +722,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Remove practical doubt',
             ...UNFUNDED_ICON_SETS.intentRecovery,
             bodyThree:
-              'If no intent event happened yet, the problem is usually not value. It is route visibility and hesitation.',
+              'If no intent event happened yet, the problem is usually <strong>visibility</strong>, not value.',
             bodyFour:
               'Go back in, open the path, and use support only if one concrete obstacle remains.',
             ctaLabel: 'Reopen the Deposit Route',
-            ctaHelper: 'Open the funding path and review the next operational step',
+            ctaHelper: 'Open the funding path and review the next step',
             supportLabel: 'Need help removing one obstacle?',
             supportHelper: 'Use WhatsApp only for one practical blocker',
           },
@@ -713,9 +744,8 @@ export const segmentJourneyTemplatesById = {
             heroSubtitle: 'Coming back matters only if it leads to a concrete step.',
             mainTitle: 'The account revisit was useful. Now it needs a follow-through action.',
             introLead:
-              'The missing signal is not account access anymore. It is deposit intent. That is the gap this message closes.',
-            bodyOne:
-              'Move from portal visit to route exploration, and keep the process active instead of observational.',
+              'The missing signal is not account access anymore. It is <strong>deposit intent</strong>.',
+            bodyOne: 'Move from portal visit to route exploration, and keep the process active.',
             bodyTwo: 'This touch is built to create three things:',
             boxOneTitle: 'Intent',
             boxOneCopy: 'Open the cashier',
@@ -725,11 +755,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Ask help only if blocked',
             ...UNFUNDED_ICON_SETS.intentRecovery,
             bodyThree:
-              'Think of this as the moment where interest becomes an observable event inside the journey.',
+              'Think of this as the moment where interest becomes an observable <strong>signal</strong>.',
             bodyFour:
               'Open the funding route first. Only after that should support enter the picture.',
             ctaLabel: 'Open the Cashier Now',
-            ctaHelper: 'Generate a clear deposit-intent action from your account',
+            ctaHelper: 'Create a clear deposit-intent action',
             supportLabel: 'Still blocked after reopening the path?',
             supportHelper: 'Use WhatsApp only after checking the route',
           },
@@ -747,12 +777,12 @@ export const segmentJourneyTemplatesById = {
             title: 'Il prossimo passo è ancora aperto',
             heroTitle: 'Trasforma attenzione in intento',
             heroSubtitle:
-              "Sei rientrato nell'account. Ora apri con chiarezza il percorso di funding.",
+              "Sei rientrato nell'account. Ora apri il <strong>percorso di funding</strong>.",
             mainTitle: "C'è stato interesse, ma non è seguito nessun evento di intento deposito.",
             introLead:
-              'Questo di solito significa che serve un passaggio più pulito verso cashier o KYC, non altra persuasione generica.',
+              'Questo di solito significa che serve un passaggio più pulito verso cashier o KYC, non altra persuasione.',
             bodyOne:
-              'Questo messaggio serve a rendere visibile la prossima azione: aprire il percorso di deposito, guardare i passaggi e decidere da lì.',
+              'Questo messaggio rende visibile la prossima azione: aprire il percorso di deposito e decidere da lì.',
             bodyTwo: 'Cosa deve fare questo touch di recupero:',
             boxOneTitle: 'Riformulare',
             boxOneCopy: 'Mostra il prossimo step',
@@ -762,11 +792,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Rimuovi il dubbio pratico',
             ...UNFUNDED_ICON_SETS.intentRecovery,
             bodyThree:
-              "Se l'evento di intento non è ancora avvenuto, il problema di solito non è il valore. È la visibilità del percorso e l'esitazione.",
+              "Se l'evento di intento non è ancora avvenuto, il problema di solito è la <strong>visibilità</strong> del percorso.",
             bodyFour:
               'Rientra, apri il percorso e usa il supporto solo se resta un ostacolo concreto.',
             ctaLabel: 'Riapri il Percorso di Deposito',
-            ctaHelper: 'Apri il funding e guarda il prossimo passaggio operativo',
+            ctaHelper: 'Apri il funding e guarda il prossimo passaggio',
             supportLabel: 'Hai bisogno di rimuovere un ostacolo?',
             supportHelper: 'Usa WhatsApp solo per un blocco pratico',
           },
@@ -784,9 +814,9 @@ export const segmentJourneyTemplatesById = {
             heroSubtitle: 'Tornare conta solo se porta a un passo concreto.',
             mainTitle: "La rivisita dell'account è stata utile. Ora serve un'azione coerente.",
             introLead:
-              "Il segnale che manca non è più l'accesso all'account. È l'intento deposito. Questo messaggio chiude proprio quel gap.",
+              "Il segnale che manca non è più l'accesso all'account. È l'<strong>intento deposito</strong>.",
             bodyOne:
-              "Passa dalla visita del portale all'esplorazione del percorso e mantieni il processo attivo invece che osservativo.",
+              "Passa dalla visita del portale all'esplorazione del percorso e mantieni il processo attivo.",
             bodyTwo: 'Questo touch è costruito per creare tre cose:',
             boxOneTitle: 'Intento',
             boxOneCopy: 'Apri il cashier',
@@ -796,11 +826,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Chiedi aiuto solo se bloccato',
             ...UNFUNDED_ICON_SETS.intentRecovery,
             bodyThree:
-              "Pensa a questo come al momento in cui l'interesse diventa un segnale concreto dentro il percorso.",
+              "Pensa a questo come al momento in cui l'interesse diventa un <strong>segnale</strong> concreto.",
             bodyFour:
               'Apri prima il percorso di funding. Solo dopo dovrebbe entrare in gioco il supporto.',
             ctaLabel: 'Apri Ora il Cashier',
-            ctaHelper: 'Trasforma il rientro in un segnale chiaro di interesse al deposito',
+            ctaHelper: 'Trasforma il rientro in un segnale chiaro',
             supportLabel: 'Sei ancora bloccato dopo aver riaperto il percorso?',
             supportHelper: 'Usa WhatsApp solo dopo aver controllato il percorso',
           },
@@ -823,11 +853,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Complete your first deposit',
             heroTitle: 'One step from full access',
-            heroSubtitle: 'Complete your first deposit and unlock the platform.',
+            heroSubtitle: 'Complete your first deposit and unlock the <strong>platform</strong>.',
             mainTitle: 'Everything is ready. Only the funding step is missing.',
-            introLead: 'Your account is set up. The next stage starts with the first deposit.',
-            bodyOne:
-              'This is the moment to move from interest to activation and unlock the platform.',
+            introLead:
+              'Your account is set up. The next stage starts with the <strong>first deposit</strong>.',
+            bodyOne: 'This is the moment to move from interest to activation.',
             bodyTwo: 'To make the next step easier, focus on these three points:',
             boxOneTitle: 'Timing',
             boxOneCopy: 'Take action now',
@@ -836,11 +866,10 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Support',
             boxThreeCopy: 'Available if needed',
             ...UNFUNDED_ICON_SETS.depositPush,
-            bodyThree:
-              'If you are ready, go straight to the platform and complete the deposit flow.',
+            bodyThree: 'If you are ready, go straight to the platform and complete the flow.',
             bodyFour: 'Delaying adds hesitation. Acting now keeps the process simpler.',
             ctaLabel: 'Complete Your First Deposit',
-            ctaHelper: 'Open the platform and finish the funding step now',
+            ctaHelper: 'Open the platform and finish the step',
             supportLabel: 'Need help only if something blocks you?',
             supportHelper: 'Use WhatsApp only for a specific issue',
           },
@@ -855,10 +884,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Do not lose momentum',
             heroTitle: 'Keep your momentum',
-            heroSubtitle: 'The next step is easiest while your setup is still fresh.',
+            heroSubtitle:
+              'The next step is easiest while your setup is still <strong>fresh</strong>.',
             mainTitle: 'Waiting makes the decision heavier than it needs to be.',
             introLead:
-              'You already did the setup work. Completing the deposit now keeps the path light.',
+              'You already did the setup work. Completing the deposit now keeps the path <strong>light</strong>.',
             bodyOne:
               'The strongest move is often the simplest one: go back in, complete the step, and move on.',
             bodyTwo: 'What matters most right now:',
@@ -873,7 +903,7 @@ export const segmentJourneyTemplatesById = {
             bodyFour:
               'If one blocker remains, support is there, but reopening the platform stays first.',
             ctaLabel: 'Finish the Funding Step',
-            ctaHelper: 'Return to the platform and complete the account setup',
+            ctaHelper: 'Return to the platform and complete setup',
             supportLabel: 'One blocker left? Use WhatsApp support',
             supportHelper: 'Support is secondary and removes only the last obstacle',
           },
@@ -890,11 +920,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Completa il tuo primo deposito',
             heroTitle: "A un passo dall'accesso completo",
-            heroSubtitle: 'Completa il primo deposito e sblocca la piattaforma.',
+            heroSubtitle: 'Completa il primo deposito e sblocca la <strong>piattaforma</strong>.',
             mainTitle: 'È tutto pronto. Manca solo il passaggio di deposito.',
-            introLead: 'Il tuo account è configurato. La fase successiva parte dal primo deposito.',
-            bodyOne:
-              "Questo è il momento di passare dall'interesse all'attivazione e sbloccare la piattaforma.",
+            introLead:
+              'Il tuo account è configurato. La fase successiva parte dal <strong>primo deposito</strong>.',
+            bodyOne: "Questo è il momento di passare dall'interesse all'attivazione.",
             bodyTwo:
               'Per rendere il prossimo passaggio più semplice, concentrati su questi tre punti:',
             boxOneTitle: 'Tempismo',
@@ -904,10 +934,10 @@ export const segmentJourneyTemplatesById = {
             boxThreeTitle: 'Supporto',
             boxThreeCopy: 'Disponibile se serve',
             ...UNFUNDED_ICON_SETS.depositPush,
-            bodyThree: 'Se sei pronto, entra in piattaforma e completa il flusso di deposito.',
+            bodyThree: 'Se sei pronto, entra in piattaforma e completa il flusso.',
             bodyFour: "Rimandare aumenta l'esitazione. Muoversi ora rende tutto più semplice.",
             ctaLabel: 'Completa il Primo Deposito',
-            ctaHelper: 'Apri la piattaforma e chiudi ora il passaggio di deposito',
+            ctaHelper: 'Apri la piattaforma e chiudi il passaggio',
             supportLabel: 'Ti serve aiuto solo se qualcosa ti blocca?',
             supportHelper: 'Usa WhatsApp solo per un problema preciso',
           },
@@ -922,10 +952,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Non perdere slancio',
             heroTitle: 'Mantieni lo slancio',
-            heroSubtitle: 'Il prossimo passo è più facile finché la configurazione è fresca.',
+            heroSubtitle:
+              'Il prossimo passo è più facile finché la configurazione è <strong>fresca</strong>.',
             mainTitle: 'Aspettare rende la decisione più pesante del necessario.',
             introLead:
-              'Hai già completato la configurazione. Completare il deposito ora rende tutto più leggero.',
+              'Hai già completato la configurazione. Completare il deposito ora rende tutto più <strong>leggero</strong>.',
             bodyOne:
               'Il punto migliore spesso è il più semplice: rientrare, completare il deposito e proseguire.',
             bodyTwo: 'Cosa conta di più adesso:',
@@ -941,7 +972,7 @@ export const segmentJourneyTemplatesById = {
             bodyFour:
               "Se resta un blocco preciso, il supporto c'è, ma il percorso principale resta la piattaforma.",
             ctaLabel: 'Completa il Deposito',
-            ctaHelper: 'Rientra in piattaforma e completa la configurazione del tuo account',
+            ctaHelper: 'Rientra in piattaforma e completa la configurazione',
             supportLabel: 'Hai ancora un blocco? Usa il supporto WhatsApp',
             supportHelper: "Il supporto resta secondario e rimuove l'ultimo ostacolo",
           },
@@ -964,10 +995,10 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Your account is funded',
             heroTitle: 'One step away',
-            heroSubtitle: 'Your account is funded. Now place your first move.',
+            heroSubtitle: 'Your account is funded. Now place your <strong>first move</strong>.',
             mainTitle: 'You have already completed the most important step.',
             introLead:
-              'Your account is funded and ready. The only thing missing now is your first trade.',
+              'Your account is funded and ready. The only thing missing now is your <strong>first trade</strong>.',
             bodyOne:
               'Every trade follows the same structure, so the first one does not need to be complex.',
             bodyTwo: 'Focus on these three elements when you place your first position:',
@@ -983,7 +1014,7 @@ export const segmentJourneyTemplatesById = {
             bodyFour:
               'If you need support, it is there, but the next move is to enter the platform and trade.',
             ctaLabel: 'Open Your Platform',
-            ctaHelper: 'Place your first trade when you are ready',
+            ctaHelper: 'Place your first trade when ready',
             supportLabel: 'Need guidance before trading?',
             supportHelper: 'WhatsApp stays secondary',
           },
@@ -998,10 +1029,10 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Your first trade can stay simple',
             heroTitle: 'Keep the first step simple',
-            heroSubtitle: 'Your first position is about flow, not perfection.',
+            heroSubtitle: 'Your first position is about <strong>flow</strong>, not perfection.',
             mainTitle: 'A simple first trade is often the smartest one.',
             introLead:
-              'Now that the account is funded, the best next move is a small and clear first action.',
+              'Now that the account is funded, the best next move is a small, clear action.',
             bodyOne:
               'You do not need a perfect setup. You need a clear structure and an easy first move.',
             bodyTwo: 'Keep your first move anchored to these three basics:',
@@ -1013,11 +1044,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Define the risk',
             ...UNFUNDED_ICON_SETS.firstTradeConfidence,
             bodyThree:
-              'The value of the first trade is also the confidence you build from the full flow.',
+              'The value of the first trade is also the <strong>confidence</strong> you build from the full flow.',
             bodyFour:
               'If one question remains, support is there, but the main path stays simple: open the platform.',
             ctaLabel: 'Place Your First Trade',
-            ctaHelper: 'Use a simple first setup and get familiar with the flow',
+            ctaHelper: 'Use a simple setup and get familiar with the flow',
             supportLabel: 'Need one quick answer before starting?',
             supportHelper: 'Support stays secondary to the platform action',
           },
@@ -1109,10 +1140,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'light',
             title: 'Still considering Bullwaves?',
             heroTitle: 'The next step can stay simple',
-            heroSubtitle: 'If the timing was off before, you can restart clearly.',
+            heroSubtitle:
+              'If the timing was off before, you can restart with <strong>clarity</strong>.',
             mainTitle: 'You do not need to start over. You only need a better angle.',
             introLead:
-              'If you looked at the platform but did not deposit, interest is likely there but timing was off.',
+              'If you looked at the platform but did not deposit, the interest is likely there. The timing was off.',
             bodyOne:
               'This follow-up reopens the path without pressure and gives you a cleaner way forward.',
             bodyTwo: 'What changes in this restart approach:',
@@ -1124,11 +1156,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Help if needed',
             ...UNFUNDED_ICON_SETS.reentrySoft,
             bodyThree:
-              'You can revisit your area, review the route, and move only when it feels clear.',
+              'You can revisit your area, review the route, and move only when it feels <strong>clear</strong>.',
             bodyFour:
               'If one obstacle remains, support can help, but re-entering the account stays first.',
             ctaLabel: 'Reopen Your Client Area',
-            ctaHelper: 'Take another look with a simpler path in mind',
+            ctaHelper: 'Take another look with a simpler path',
             supportLabel: 'Need help removing one blocker?',
             supportHelper: 'Use WhatsApp only for one specific issue',
           },
@@ -1143,12 +1175,11 @@ export const segmentJourneyTemplatesById = {
             skin: 'dark',
             title: 'Your opportunity is still open',
             heroTitle: 'You can still restart easily',
-            heroSubtitle: 'A missed step earlier does not reset everything.',
+            heroSubtitle: 'A missed step earlier does not reset <strong>everything</strong>.',
             mainTitle: 'The path is still there. It just needs a cleaner restart.',
             introLead:
-              'If you paused earlier, the next move is not to rebuild everything. It is simply to return clearly.',
-            bodyOne:
-              'That keeps the process lighter while still giving you a practical way to continue.',
+              'If you paused earlier, the next move is not to rebuild everything. It is simply to return.',
+            bodyOne: 'That keeps the process light while giving you a practical way to continue.',
             bodyTwo: 'What this restart gives you:',
             boxOneTitle: 'Reset',
             boxOneCopy: 'Fresh perspective',
@@ -1158,11 +1189,11 @@ export const segmentJourneyTemplatesById = {
             boxThreeCopy: 'Support if blocked',
             ...UNFUNDED_ICON_SETS.reentryOpportunity,
             bodyThree:
-              'Go back into the account, recheck the path, and continue only if it now feels natural.',
+              'Go back into the account, recheck the path, and continue only if it feels <strong>natural</strong>.',
             bodyFour:
               'If something still blocks you, support is there, but reopening the platform stays first.',
             ctaLabel: 'Return to Your Account',
-            ctaHelper: 'Re-enter with a clearer, lighter next step',
+            ctaHelper: 'Re-enter with a lighter next step',
             supportLabel: 'Still blocked? Use WhatsApp support',
             supportHelper: 'Human support stays secondary to the platform restart',
           },

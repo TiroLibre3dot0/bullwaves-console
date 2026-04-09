@@ -63,6 +63,10 @@ export const translations = {
     'publicShare.tasks.ogTitle': 'Tasks',
     'publicShare.tasks.ogDescription': 'Public read-only view of Tasks.',
     'publicShare.tasks.title': 'Tasks',
+    'publicShare.financeToolOrganigram.ogTitle': 'Finance Tool Organigram',
+    'publicShare.financeToolOrganigram.ogDescription':
+      'Public read-only view of the Finance tool organigram and invoice-backed totals.',
+    'publicShare.financeToolOrganigram.title': 'Finance Tool Organigram',
 
     // Stories Kanban
     'storiesKanban.topline': 'Execution marketing',
@@ -225,6 +229,7 @@ export const translations = {
     'sidebar.support': 'Support',
     'sidebar.projectBoard': 'Tasks',
     'sidebar.platformUsageBilling': 'Platform Usage & Billing',
+    'sidebar.financeToolOrganigram': 'Finance Tool Organigram',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analysis',
     'sidebar.affiliate.clientsMoved': 'Clients moved',
@@ -407,6 +412,63 @@ export const translations = {
     'platformUsageBilling.usersTable.lastLogin': 'Last Login',
     'platformUsageBilling.usersTable.usageLevel': 'Usage Level',
     'platformUsageBilling.usersTable.status': 'Status',
+    'platformUsageBilling.operational.eyebrow': 'Operational Stack',
+    'platformUsageBilling.operational.title': 'Operational Tools Organigram',
+    'platformUsageBilling.operational.subtitle':
+      'Organigram-style hierarchy of company tools with invoice-based monthly costs when a provider invoice is already mapped.',
+    'platformUsageBilling.operational.summaryEyebrow': 'Cost Summary',
+    'platformUsageBilling.operational.summaryTitle': 'Operational machine cost',
+    'platformUsageBilling.operational.summarySubtitle':
+      'Known totals stay tied to invoices. Unknown tools remain visible until mapped.',
+    'platformUsageBilling.operational.summary.totalTools': 'Total tools',
+    'platformUsageBilling.operational.summary.knownMonthlyCost': 'Known monthly cost',
+    'platformUsageBilling.operational.summary.knownMonthlyCostHint':
+      'Summed only from mapped invoice totals.',
+    'platformUsageBilling.operational.summary.missingCosts': 'Missing costs',
+    'platformUsageBilling.operational.summary.missingCostsHint':
+      'Tools still waiting for invoice mapping.',
+    'platformUsageBilling.operational.summary.machineCost': 'Operational machine cost',
+    'platformUsageBilling.operational.summary.knownTotal': 'Known total',
+    'platformUsageBilling.operational.summary.missingCount': 'Missing costs: {count} tools',
+    'platformUsageBilling.operational.treeEyebrow': 'Hierarchy',
+    'platformUsageBilling.operational.treeTitle': 'Operational tools organigram',
+    'platformUsageBilling.operational.treeSubtitle':
+      'Organigram view of the external tools feeding day-to-day company operations.',
+    'platformUsageBilling.operational.group.tools': 'tools',
+    'platformUsageBilling.operational.group.mapped': 'mapped',
+    'platformUsageBilling.operational.group.missing': 'missing',
+    'platformUsageBilling.operational.group.knownTotal': 'Known total',
+    'platformUsageBilling.operational.tool.category': 'Category',
+    'platformUsageBilling.operational.tool.function': 'Function',
+    'platformUsageBilling.operational.tool.source': 'Source',
+    'platformUsageBilling.operational.tool.invoiceFound': 'Invoice found',
+    'platformUsageBilling.operational.tool.invoicePending': 'Invoice mapping pending',
+    'platformUsageBilling.operational.tool.openInvoice': 'Open invoice',
+    'platformUsageBilling.operational.financeEyebrow': 'Finance',
+    'platformUsageBilling.operational.financeTitle': 'Finance Tool Organigram',
+    'platformUsageBilling.operational.financeSubtitle':
+      'Compact Finance subsection for the operational stack, optimized to keep the whole organigram visible on one screen when possible.',
+    'platformUsageBilling.operational.financeNodeEyebrow': 'Macro Area',
+    'platformUsageBilling.operational.financeNodeSubtitle':
+      'Tool cost governance, invoice visibility, and operational cost control.',
+    'platformUsageBilling.operational.financeSectionLabel': 'Section',
+    'platformUsageBilling.operational.financeSectionValue': 'Ops Stack',
+    'platformUsageBilling.operational.share.open': 'Open public page',
+    'platformUsageBilling.operational.share.copy': 'Copy public link',
+    'platformUsageBilling.operational.share.copied': 'Link copied',
+    'platformUsageBilling.operational.share.copyPrompt': 'Copy the link:',
+    'platformUsageBilling.operational.view.overview': 'All tools',
+    'platformUsageBilling.operational.view.details': 'Exploded specs',
+    'platformUsageBilling.operational.board.dragHint': 'Drag to move • Scroll to zoom',
+    'platformUsageBilling.operational.board.legend.reporting': 'Solid = hierarchy',
+    'platformUsageBilling.operational.board.legend.tools': 'Green nodes = tools',
+    'platformUsageBilling.operational.board.legend.details': 'Green nodes = tool specs',
+    'platformUsageBilling.operational.board.structureHint':
+      'All tools in structure-only board view',
+    'platformUsageBilling.operational.board.explodedHint':
+      'All tools with full specs inside the same structure',
+    'platformUsageBilling.operational.board.footerOverview': 'Public view: structure only',
+    'platformUsageBilling.operational.board.footerDetails': 'Public view: expanded tool specs',
 
     // Home
     'home.welcome.generic': 'Welcome back — ready to pick up where you left off?',
@@ -2583,6 +2645,10 @@ export const translations = {
     'publicShare.tasks.ogTitle': 'Tasks',
     'publicShare.tasks.ogDescription': 'Vista pubblica in sola lettura dei Tasks.',
     'publicShare.tasks.title': 'Tasks',
+    'publicShare.financeToolOrganigram.ogTitle': 'Organigramma Tool Finance',
+    'publicShare.financeToolOrganigram.ogDescription':
+      'Vista pubblica in sola lettura dell’organigramma tool Finance con totali basati su fatture.',
+    'publicShare.financeToolOrganigram.title': 'Organigramma Tool Finance',
 
     // Stories Kanban
     'storiesKanban.topline': 'Execution marketing',
@@ -2743,6 +2809,7 @@ export const translations = {
     'sidebar.support': 'Support',
     'sidebar.projectBoard': 'Tasks',
     'sidebar.platformUsageBilling': 'Platform Usage & Billing',
+    'sidebar.financeToolOrganigram': 'Organigramma Tool Finance',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analysis',
     'sidebar.affiliate.clientsMoved': 'Clienti spostati',
@@ -2928,6 +2995,64 @@ export const translations = {
     'platformUsageBilling.usersTable.lastLogin': 'Ultimo login',
     'platformUsageBilling.usersTable.usageLevel': 'Livello utilizzo',
     'platformUsageBilling.usersTable.status': 'Stato',
+    'platformUsageBilling.operational.eyebrow': 'Stack operativo',
+    'platformUsageBilling.operational.title': 'Organigramma tool operativi',
+    'platformUsageBilling.operational.subtitle':
+      'Gerarchia in formato organigramma degli strumenti che alimentano l’operatività aziendale, con costo mensile basato su fattura quando il mapping esiste già.',
+    'platformUsageBilling.operational.summaryEyebrow': 'Riepilogo costi',
+    'platformUsageBilling.operational.summaryTitle': 'Costo macchina operativa',
+    'platformUsageBilling.operational.summarySubtitle':
+      'I totali noti restano agganciati alle fatture. Gli strumenti senza mapping restano visibili fino a completamento.',
+    'platformUsageBilling.operational.summary.totalTools': 'Tool totali',
+    'platformUsageBilling.operational.summary.knownMonthlyCost': 'Costo mensile noto',
+    'platformUsageBilling.operational.summary.knownMonthlyCostHint':
+      'Somma solo dei totali fattura già mappati.',
+    'platformUsageBilling.operational.summary.missingCosts': 'Costi mancanti',
+    'platformUsageBilling.operational.summary.missingCostsHint':
+      'Strumenti ancora in attesa di mapping fattura.',
+    'platformUsageBilling.operational.summary.machineCost': 'Costo macchina operativa',
+    'platformUsageBilling.operational.summary.knownTotal': 'Totale noto',
+    'platformUsageBilling.operational.summary.missingCount': 'Costi mancanti: {count} tool',
+    'platformUsageBilling.operational.treeEyebrow': 'Gerarchia',
+    'platformUsageBilling.operational.treeTitle': 'Organigramma tool operativi',
+    'platformUsageBilling.operational.treeSubtitle':
+      'Vista a organigramma dei tool esterni che sostengono l’operatività quotidiana dell’azienda.',
+    'platformUsageBilling.operational.group.tools': 'tool',
+    'platformUsageBilling.operational.group.mapped': 'mappati',
+    'platformUsageBilling.operational.group.missing': 'mancanti',
+    'platformUsageBilling.operational.group.knownTotal': 'Totale noto',
+    'platformUsageBilling.operational.tool.category': 'Categoria',
+    'platformUsageBilling.operational.tool.function': 'Funzione',
+    'platformUsageBilling.operational.tool.source': 'Fonte',
+    'platformUsageBilling.operational.tool.invoiceFound': 'Fattura trovata',
+    'platformUsageBilling.operational.tool.invoicePending': 'Mapping fattura in attesa',
+    'platformUsageBilling.operational.tool.openInvoice': 'Apri fattura',
+    'platformUsageBilling.operational.financeEyebrow': 'Finance',
+    'platformUsageBilling.operational.financeTitle': 'Organigramma tool Finance',
+    'platformUsageBilling.operational.financeSubtitle':
+      'Sottosezione Finance compatta per lo stack operativo, ottimizzata per mantenere l’organigramma leggibile su una sola schermata quando possibile.',
+    'platformUsageBilling.operational.financeNodeEyebrow': 'Macrosezione',
+    'platformUsageBilling.operational.financeNodeSubtitle':
+      'Governance costi tool, visibilità fatture e controllo del costo operativo.',
+    'platformUsageBilling.operational.financeSectionLabel': 'Sezione',
+    'platformUsageBilling.operational.financeSectionValue': 'Stack operativo',
+    'platformUsageBilling.operational.share.open': 'Apri pagina pubblica',
+    'platformUsageBilling.operational.share.copy': 'Copia link pubblico',
+    'platformUsageBilling.operational.share.copied': 'Link copiato',
+    'platformUsageBilling.operational.share.copyPrompt': 'Copia il link:',
+    'platformUsageBilling.operational.view.overview': 'Tutti i tool',
+    'platformUsageBilling.operational.view.details': 'Tool esplosi',
+    'platformUsageBilling.operational.board.dragHint': 'Trascina per muoverti • Scroll per zoom',
+    'platformUsageBilling.operational.board.legend.reporting': 'Linea piena = gerarchia',
+    'platformUsageBilling.operational.board.legend.tools': 'Nodi verdi = tool',
+    'platformUsageBilling.operational.board.legend.details': 'Nodi verdi = specifiche tool',
+    'platformUsageBilling.operational.board.structureHint':
+      'Tutti i tool in board view strutturale',
+    'platformUsageBilling.operational.board.explodedHint':
+      'Tutti i tool con specifiche complete dentro la stessa struttura',
+    'platformUsageBilling.operational.board.footerOverview': 'Vista pubblica: solo struttura',
+    'platformUsageBilling.operational.board.footerDetails':
+      'Vista pubblica: specifiche tool espanse',
 
     // Home
     'home.welcome.generic': 'Bentornato — riprendiamo da dove avevi lasciato?',
@@ -5138,6 +5263,10 @@ export const translations = {
     'publicShare.tasks.ogTitle': 'Tasks',
     'publicShare.tasks.ogDescription': 'Javni prikaz (samo čitanje) Tasks-a.',
     'publicShare.tasks.title': 'Tasks',
+    'publicShare.financeToolOrganigram.ogTitle': 'Finance Organigram Alata',
+    'publicShare.financeToolOrganigram.ogDescription':
+      'Javni prikaz (samo čitanje) Finance organigrama alata sa totalima zasnovanim na fakturama.',
+    'publicShare.financeToolOrganigram.title': 'Finance Organigram Alata',
 
     // Stories Kanban
     'storiesKanban.topline': 'Marketing execution',
@@ -5298,6 +5427,7 @@ export const translations = {
     'sidebar.support': 'Support',
     'sidebar.projectBoard': 'Tasks',
     'sidebar.platformUsageBilling': 'Platform Usage & Billing',
+    'sidebar.financeToolOrganigram': 'Finance Organigram Alata',
     'sidebar.affiliate': 'Affiliate',
     'sidebar.affiliate.analysis': 'Analiza',
     'sidebar.affiliate.clientsMoved': 'Premešteni klijenti',
@@ -5481,6 +5611,62 @@ export const translations = {
     'platformUsageBilling.usersTable.lastLogin': 'Poslednji login',
     'platformUsageBilling.usersTable.usageLevel': 'Nivo korišćenja',
     'platformUsageBilling.usersTable.status': 'Status',
+    'platformUsageBilling.operational.eyebrow': 'Operativni stack',
+    'platformUsageBilling.operational.title': 'Organigram operativnih alata',
+    'platformUsageBilling.operational.subtitle':
+      'Hijerarhija alata u formatu organigrama, sa mesečnim troškom zasnovanim na fakturi kada mapping već postoji.',
+    'platformUsageBilling.operational.summaryEyebrow': 'Sažetak troškova',
+    'platformUsageBilling.operational.summaryTitle': 'Trošak operativne mašine',
+    'platformUsageBilling.operational.summarySubtitle':
+      'Poznati total ostaje vezan za fakture. Nepoznati alati ostaju vidljivi dok se mapping ne dopuni.',
+    'platformUsageBilling.operational.summary.totalTools': 'Ukupno alata',
+    'platformUsageBilling.operational.summary.knownMonthlyCost': 'Poznati mesečni trošak',
+    'platformUsageBilling.operational.summary.knownMonthlyCostHint':
+      'Sabira samo već mapirane invoice totale.',
+    'platformUsageBilling.operational.summary.missingCosts': 'Nedostajući troškovi',
+    'platformUsageBilling.operational.summary.missingCostsHint':
+      'Alati koji još čekaju invoice mapping.',
+    'platformUsageBilling.operational.summary.machineCost': 'Trošak operativne mašine',
+    'platformUsageBilling.operational.summary.knownTotal': 'Poznati total',
+    'platformUsageBilling.operational.summary.missingCount': 'Nedostajući troškovi: {count} alata',
+    'platformUsageBilling.operational.treeEyebrow': 'Hijerarhija',
+    'platformUsageBilling.operational.treeTitle': 'Organigram operativnih alata',
+    'platformUsageBilling.operational.treeSubtitle':
+      'Prikaz u formatu organigrama za eksterne alate koji podržavaju svakodnevne operacije kompanije.',
+    'platformUsageBilling.operational.group.tools': 'alata',
+    'platformUsageBilling.operational.group.mapped': 'mapirano',
+    'platformUsageBilling.operational.group.missing': 'nedostaje',
+    'platformUsageBilling.operational.group.knownTotal': 'Poznati total',
+    'platformUsageBilling.operational.tool.category': 'Kategorija',
+    'platformUsageBilling.operational.tool.function': 'Funkcija',
+    'platformUsageBilling.operational.tool.source': 'Izvor',
+    'platformUsageBilling.operational.tool.invoiceFound': 'Faktura pronađena',
+    'platformUsageBilling.operational.tool.invoicePending': 'Invoice mapping na čekanju',
+    'platformUsageBilling.operational.tool.openInvoice': 'Otvori fakturu',
+    'platformUsageBilling.operational.financeEyebrow': 'Finance',
+    'platformUsageBilling.operational.financeTitle': 'Organigram Finance alata',
+    'platformUsageBilling.operational.financeSubtitle':
+      'Kompaktna Finance podsekcija za operativni stack, optimizovana da ceo organigram ostane vidljiv na jednom ekranu kad god je moguće.',
+    'platformUsageBilling.operational.financeNodeEyebrow': 'Makro oblast',
+    'platformUsageBilling.operational.financeNodeSubtitle':
+      'Kontrola troškova alata, vidljivost faktura i upravljanje operativnim troškom.',
+    'platformUsageBilling.operational.financeSectionLabel': 'Sekcija',
+    'platformUsageBilling.operational.financeSectionValue': 'Operativni stack',
+    'platformUsageBilling.operational.share.open': 'Otvori javnu stranu',
+    'platformUsageBilling.operational.share.copy': 'Kopiraj javni link',
+    'platformUsageBilling.operational.share.copied': 'Link kopiran',
+    'platformUsageBilling.operational.share.copyPrompt': 'Kopiraj link:',
+    'platformUsageBilling.operational.view.overview': 'Svi alati',
+    'platformUsageBilling.operational.view.details': 'Razloženi detalji',
+    'platformUsageBilling.operational.board.dragHint': 'Prevuci za pomeranje • Točkić za zum',
+    'platformUsageBilling.operational.board.legend.reporting': 'Puna linija = hijerarhija',
+    'platformUsageBilling.operational.board.legend.tools': 'Zeleni čvorovi = alati',
+    'platformUsageBilling.operational.board.legend.details': 'Zeleni čvorovi = detalji alata',
+    'platformUsageBilling.operational.board.structureHint': 'Svi alati u board prikazu strukture',
+    'platformUsageBilling.operational.board.explodedHint':
+      'Svi alati sa punim detaljima unutar iste strukture',
+    'platformUsageBilling.operational.board.footerOverview': 'Javni prikaz: samo struktura',
+    'platformUsageBilling.operational.board.footerDetails': 'Javni prikaz: prošireni detalji alata',
 
     // Home
     'home.welcome.generic': 'Dobrodošao nazad — nastavljamo gde si stao?',

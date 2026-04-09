@@ -4,6 +4,7 @@ import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 import { parseCsv } from '../../../lib/csv'
 import { sections as orgSections } from '../../../pages/orgChartData'
+import { INVOICE_CATALOG } from '../invoiceCatalog'
 
 const PROVIDERS = [
   { key: 'skale', label: 'Skale', active: true, hasUsageCsv: true, invoiceMode: 'single' },
@@ -18,45 +19,6 @@ const PROVIDERS = [
   { key: 'voiso', label: 'Voiso', active: false, hasUsageCsv: false, invoiceMode: 'byMonth' },
   { key: 'solitics', label: 'Solitics', active: false, hasUsageCsv: false, invoiceMode: 'byMonth' },
 ]
-
-const INVOICE_CATALOG = {
-  // Key format: YYYY-MM
-  cellxpert: {
-    '2026-02': {
-      href: new URL('../../../../Invoice providers/Cellxpert- 10827.pdf', import.meta.url).href,
-      invoiceNo: '10827',
-      invoiceDate: '2026-02-14',
-      dueDate: '2026-02-24',
-      currency: 'EUR',
-      total: 3150,
-      vatPercent: 0,
-      items: [
-        { description: 'Affiliate Software - February 2026', amount: 3000 },
-        { description: 'Active Tracking URL - February 2026', amount: 150 },
-      ],
-    },
-  },
-  creolabs: {
-    '2026-02': {
-      href: new URL('../../../../Invoice providers/CreoLabs-40085.pdf', import.meta.url).href,
-      invoiceNo: '40085',
-      invoiceDate: '2026-02-02',
-      dueDate: '2026-02-28',
-      currency: 'USD',
-      total: 5500,
-      vatPercent: 0,
-      items: [
-        {
-          sku: '50',
-          description: 'BI Professional Services',
-          qty: 27.5,
-          unitPrice: 200,
-          amount: 5500,
-        },
-      ],
-    },
-  },
-}
 
 const PERIODS = [
   { key: 'last7', label: 'Last 7 days', days: 7 },

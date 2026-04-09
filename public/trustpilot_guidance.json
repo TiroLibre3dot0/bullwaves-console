@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-08T10:03:35.547Z",
+  "generatedAt": "2026-04-09T18:34:32.634Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -8763,6 +8763,45 @@
     },
     {
       "reviewLine": 210,
+      "reviewerName": "Nuno Marques",
+      "country": "Portugal",
+      "starRating": 4,
+      "issueType": "Support",
+      "category": "Positive Feedback",
+      "potentialLead": "No",
+      "assignedTo": "Migs Dy",
+      "status": "Replied",
+      "dateReviewed": "Nov 18, 2025",
+      "trustpilotLink": "https://www.trustpilot.com/reviews/691c69f73f5114c9b9f70b5b",
+      "reviewSummary": "Support Experience",
+      "actionNeeded": "Acknowledge positive feedback and thank the user",
+      "followupNotes": "",
+      "contacted": "",
+      "contactChannel": "",
+      "contactOutcome": "",
+      "clientSentiment": "",
+      "mainIssue": "",
+      "actionTaken": "",
+      "reviewStatus": "",
+      "followUpNeeded": "",
+      "additionalNotes": "",
+      "matchStatus": "unmatched",
+      "matchedUserIds": [],
+      "priorityLevel": "low",
+      "recommendedAction": "public_reply",
+      "reasonCodes": [
+        "trustpilot_only_case"
+      ],
+      "templateKey": "template_public_standard",
+      "checklist": [
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
+      ],
+      "tradingContext": null
+    },
+    {
+      "reviewLine": 211,
       "reviewerName": "Usman Habeeb",
       "country": "Nigeria",
       "starRating": 4,
@@ -8814,45 +8853,6 @@
         "status": "New",
         "country": "Nigeria"
       }
-    },
-    {
-      "reviewLine": 211,
-      "reviewerName": "Nuno Marques",
-      "country": "Portugal",
-      "starRating": 4,
-      "issueType": "Support",
-      "category": "Positive Feedback",
-      "potentialLead": "No",
-      "assignedTo": "Migs Dy",
-      "status": "Replied",
-      "dateReviewed": "Nov 18, 2025",
-      "trustpilotLink": "https://www.trustpilot.com/reviews/691c69f73f5114c9b9f70b5b",
-      "reviewSummary": "Support Experience",
-      "actionNeeded": "Acknowledge positive feedback and thank the user",
-      "followupNotes": "",
-      "contacted": "",
-      "contactChannel": "",
-      "contactOutcome": "",
-      "clientSentiment": "",
-      "mainIssue": "",
-      "actionTaken": "",
-      "reviewStatus": "",
-      "followUpNeeded": "",
-      "additionalNotes": "",
-      "matchStatus": "unmatched",
-      "matchedUserIds": [],
-      "priorityLevel": "low",
-      "recommendedAction": "public_reply",
-      "reasonCodes": [
-        "trustpilot_only_case"
-      ],
-      "templateKey": "template_public_standard",
-      "checklist": [
-        "Reply publicly on Trustpilot using neutral support wording.",
-        "Invite user to secure support channel for identity verification.",
-        "Avoid exposing internal account data in public response."
-      ],
-      "tradingContext": null
     },
     {
       "reviewLine": 212,

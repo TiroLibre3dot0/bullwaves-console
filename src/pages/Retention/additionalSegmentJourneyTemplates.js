@@ -1,66 +1,85 @@
 import { makeLocaleVariants } from './segmentJourneyTemplateBuilder.js'
-import { EMAIL_JOURNEY_ICON_URLS } from './emailJourneyIconRegistry.js'
-
-const {
-  customerService,
-  financialSuccessSecurity,
-  riskManagementControl,
-  successfulInvestmentReward,
-  successGrowthCertificate,
-  secureAccess,
-} = EMAIL_JOURNEY_ICON_URLS
+import { createJourneyIconSelection } from './emailJourneyIconRegistry.js'
 
 const ADDITIONAL_JOURNEY_ICON_SETS = {
-  top_performing_vip_recognition_email: {
-    boxOneIconUrl: financialSuccessSecurity,
-    boxTwoIconUrl: secureAccess,
-    boxThreeIconUrl: customerService,
-  },
-  top_performing_advanced_tools_email: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: successGrowthCertificate,
-    boxThreeIconUrl: customerService,
-  },
-  top_performing_loyalty_upgrade_email: {
-    boxOneIconUrl: successfulInvestmentReward,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: customerService,
-  },
-  top_performing_vip_review_email: {
-    boxOneIconUrl: riskManagementControl,
-    boxTwoIconUrl: successGrowthCertificate,
-    boxThreeIconUrl: customerService,
-  },
-  top_performing_premium_nurture_email: {
-    boxOneIconUrl: financialSuccessSecurity,
-    boxTwoIconUrl: successfulInvestmentReward,
-    boxThreeIconUrl: customerService,
-  },
-  most_consistent_badge_award_email: {
-    boxOneIconUrl: successGrowthCertificate,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: secureAccess,
-  },
-  most_consistent_growth_roadmap_email: {
-    boxOneIconUrl: successGrowthCertificate,
-    boxTwoIconUrl: riskManagementControl,
-    boxThreeIconUrl: customerService,
-  },
-  most_consistent_loyalty_reward_email: {
-    boxOneIconUrl: successfulInvestmentReward,
-    boxTwoIconUrl: successGrowthCertificate,
-    boxThreeIconUrl: customerService,
-  },
-  most_consistent_top_performers_onboarding_email: {
-    boxOneIconUrl: successGrowthCertificate,
-    boxTwoIconUrl: secureAccess,
-    boxThreeIconUrl: customerService,
-  },
-  most_consistent_cycle_restart_email: {
-    boxOneIconUrl: secureAccess,
-    boxTwoIconUrl: financialSuccessSecurity,
-    boxThreeIconUrl: customerService,
-  },
+  top_performing_vip_recognition_email: createJourneyIconSelection({
+    boxOneKey: 'strongerExperience',
+    boxTwoKey: 'premiumAccess',
+    boxThreeKey: 'marketOpportunities',
+    recommendedGroups: ['trading'],
+    rationale:
+      'VIP recognition should use premium and experience-led icons instead of generic legacy security badges.',
+  }),
+  top_performing_advanced_tools_email: createJourneyIconSelection({
+    boxOneKey: 'secureApproval',
+    boxTwoKey: 'readyToTrade',
+    boxThreeKey: 'premiumAccess',
+    recommendedGroups: ['trading', 'onboarding'],
+    rationale:
+      'Advanced-tools journeys should look like a stronger environment, not a generic access reminder.',
+  }),
+  top_performing_loyalty_upgrade_email: createJourneyIconSelection({
+    boxOneKey: 'premiumAccess',
+    boxTwoKey: 'strongerExperience',
+    boxThreeKey: 'marketOpportunities',
+    recommendedGroups: ['trading'],
+    rationale:
+      'Upgrade journeys should keep the visual focus on higher-tier value and product quality.',
+  }),
+  top_performing_vip_review_email: createJourneyIconSelection({
+    boxOneKey: 'readyToTrade',
+    boxTwoKey: 'premiumAccess',
+    boxThreeKey: 'strongerExperience',
+    recommendedGroups: ['trading'],
+    rationale:
+      'VIP review journeys should prioritize active trading context and premium environment cues.',
+  }),
+  top_performing_premium_nurture_email: createJourneyIconSelection({
+    boxOneKey: 'strongerExperience',
+    boxTwoKey: 'marketOpportunities',
+    boxThreeKey: 'premiumAccess',
+    recommendedGroups: ['trading'],
+    rationale: 'Premium nurture should look curated and high-value, not operationally generic.',
+  }),
+  most_consistent_badge_award_email: createJourneyIconSelection({
+    boxOneKey: 'premiumAccess',
+    boxTwoKey: 'strongerExperience',
+    boxThreeKey: 'secureApproval',
+    recommendedGroups: ['trading', 'onboarding'],
+    rationale:
+      'Badge-award journeys should combine recognition, stronger experience, and verified-status cues.',
+  }),
+  most_consistent_growth_roadmap_email: createJourneyIconSelection({
+    boxOneKey: 'onboardingTimeline',
+    boxTwoKey: 'readyToTrade',
+    boxThreeKey: 'premiumAccess',
+    recommendedGroups: ['onboarding', 'trading'],
+    rationale:
+      'Roadmap journeys should use milestone and next-step iconography, not generic support symbols.',
+  }),
+  most_consistent_loyalty_reward_email: createJourneyIconSelection({
+    boxOneKey: 'premiumAccess',
+    boxTwoKey: 'strongerExperience',
+    boxThreeKey: 'marketOpportunities',
+    recommendedGroups: ['trading'],
+    rationale: 'Loyalty rewards should feel earned, premium, and forward-looking.',
+  }),
+  most_consistent_top_performers_onboarding_email: createJourneyIconSelection({
+    boxOneKey: 'activateAccount',
+    boxTwoKey: 'premiumAccess',
+    boxThreeKey: 'readyToTrade',
+    recommendedGroups: ['account', 'trading'],
+    rationale:
+      'Migration into top performers should combine activation with higher-tier access and readiness.',
+  }),
+  most_consistent_cycle_restart_email: createJourneyIconSelection({
+    boxOneKey: 'noTimeLoss',
+    boxTwoKey: 'marketOpportunities',
+    boxThreeKey: 'strongerExperience',
+    recommendedGroups: ['onboarding', 'trading'],
+    rationale:
+      'Cycle-restart journeys should privilege timing, return-to-market, and a smoother experience.',
+  }),
 }
 
 function makeAdditionalLocaleVariants(templateId, variantA, variantB) {

@@ -547,8 +547,268 @@
       .light .footer { border-color: var(--line); }
       .dark .footer { border-color: rgba(255,255,255,0.08); }
 
+      .minimal-shell {
+        background: #ffffff;
+      }
+
+      .minimal-header {
+        padding: 28px;
+        background: linear-gradient(180deg, #081022 0%, #0b1433 45%, #1632b7 100%);
+        color: #ffffff;
+      }
+
+      .minimal-brand-line {
+        margin-top: 8px;
+        font-size: 11px;
+        line-height: 15px;
+        letter-spacing: 0.10em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #d9e6ff;
+      }
+
+      .minimal-body {
+        padding: 28px;
+      }
+
+      .minimal-eyebrow {
+        margin: 0 0 16px;
+        font-size: 12px;
+        line-height: 16px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #4b61ff;
+      }
+
+      .minimal-title {
+        margin: 0 0 14px;
+        font-size: 38px;
+        line-height: 1.08;
+        letter-spacing: -0.04em;
+      }
+
+      .minimal-copy {
+        margin: 0 0 18px;
+        font-size: 18px;
+        line-height: 1.7;
+        color: #2a2d34;
+      }
+
+      .minimal-feature-list {
+        margin-top: 26px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .minimal-feature-item {
+        display: grid;
+        grid-template-columns: 34px 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .minimal-feature-icon {
+        width: 24px;
+        height: 24px;
+        display: block;
+        color: #0f0f11;
+      }
+
+      .minimal-feature-item strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 16px;
+      }
+
+      .minimal-feature-item span {
+        font-size: 15px;
+        line-height: 1.7;
+        color: #5b6270;
+      }
+
+      .minimal-library-note {
+        margin-top: 24px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, #f6f9ff 0%, #edf3ff 100%);
+        border: 1px solid #dbe4f4;
+      }
+
+      .minimal-library-note strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 13px;
+        line-height: 1.4;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #3853dd;
+      }
+
+      .minimal-library-note span {
+        display: block;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #586273;
+      }
+
+      .minimal-footer-note {
+        margin-top: 16px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #5b6270;
+      }
+
+      .markleting-shell {
+        background: #ffffff;
+      }
+
+      .markleting-hero {
+        padding: 56px 30px 60px;
+        text-align: center;
+        background: linear-gradient(180deg, #05070f 0%, #0a1335 42%, #1e45ff 100%);
+        color: #ffffff;
+      }
+
+      .markleting-hero h2 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.12;
+      }
+
+      .markleting-hero p {
+        margin: 16px 0 0;
+        font-size: 16px;
+        line-height: 1.7;
+        color: #dfe6ff;
+      }
+
+      .markleting-body {
+        padding: 34px 30px 18px;
+      }
+
+      .markleting-copy {
+        margin: 0 0 18px;
+        font-size: 16px;
+        line-height: 1.75;
+        color: #1b1b1d;
+      }
+
+      .markleting-list {
+        display: grid;
+        gap: 8px;
+        margin: 0 0 24px;
+      }
+
+      .markleting-list div {
+        font-size: 16px;
+        line-height: 1.75;
+        color: #1b1b1d;
+      }
+
+      .single-preview .spec-card {
+        width: min(760px, 100%);
+      }
+
+      .preview-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .preview-control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .preview-control-label {
+        font-size: 11px;
+        line-height: 14px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: #8ea4bc;
+      }
+
+      .preview-control-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .preview-control-button {
+        min-height: 36px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.04);
+        color: #dce8f5;
+        font-size: 13px;
+        line-height: 36px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: border-color 140ms ease, background 140ms ease, color 140ms ease;
+      }
+
+      .preview-control-button.is-active {
+        border-color: rgba(56,189,248,0.55);
+        background: linear-gradient(135deg, rgba(56,189,248,0.18), rgba(15,57,221,0.24));
+        color: #ffffff;
+      }
+
+      .viewport-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .viewport-grid.compare-viewports {
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+      }
+
+      .viewport-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .viewport-heading {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+        color: #dbe8f6;
+        font-size: 11px;
+        line-height: 32px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      .viewport-stack {
+        width: 100%;
+        display: grid;
+        gap: 16px;
+        justify-items: center;
+      }
+
+      .viewport-panel.viewport-desktop .spec-card {
+        width: min(760px, 100%);
+      }
+
+      .viewport-panel.viewport-mobile .spec-card {
+        width: min(402px, 100%);
+      }
+
       @media (max-width: 980px) {
         .grid { grid-template-columns: 1fr; }
+        .viewport-grid.compare-viewports { grid-template-columns: 1fr; }
       }
 
       @media (max-width: 640px) {
@@ -568,13 +828,24 @@
         <span class="kicker">Bullwaves System</span>
         <h1>Email Master Template</h1>
         <p>
-          Questa preview mostra il layout master con le due skin approvate: una light per onboarding e activation,
-          una dark per reminder e re-engagement. La struttura resta la stessa; cambiano skin, hero assegnata e contenuti.
+          Questa preview mostra sia il framework storico sia i master template recenti aggiunti al sistema:
+          Minimal e MARKLETING. La vista cambia in base al template selezionato dal pannello React.
         </p>
         <div class="preview-meta" id="previewMeta"></div>
         <div class="preview-badge-row">
+          <span class="preview-badge" id="templateBadge">Template: minimal</span>
           <span class="preview-badge" id="skinBadge">Skin: compare</span>
-          <span class="preview-badge" id="deviceBadge">Device: compare</span>
+          <span class="preview-badge" id="deviceBadge">Device: mobile</span>
+        </div>
+        <div class="preview-controls">
+          <div class="preview-control-group">
+            <div class="preview-control-label">Viewport</div>
+            <div class="preview-control-pills">
+              <button class="preview-control-button" type="button" data-control="device" data-value="desktop">Desktop</button>
+              <button class="preview-control-button" type="button" data-control="device" data-value="mobile">Mobile</button>
+              <button class="preview-control-button" type="button" data-control="device" data-value="compare">Both</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -747,43 +1018,247 @@
             </div>
           </div>
         </section>
+
+        <section class="spec-card minimal-shell is-hidden" id="minimalCard">
+          <div class="minimal-header">
+            <img src="https://bullwaves-console.vercel.app/Group%202087330250.svg" alt="Bullwaves" width="170" style="display:block; width:170px; max-width:170px; border:0; filter:brightness(0) invert(1);" />
+            <div class="minimal-brand-line">Bullwaves Client Communication</div>
+          </div>
+          <div class="minimal-body">
+            <div class="minimal-eyebrow">Bullwaves</div>
+            <h2 class="minimal-title">The next step is clear, and the message stays focused.</h2>
+            <p class="minimal-copy">This is the strongest direction so far for the Bullwaves master: one clean structure, one CTA, and only the icons that help the journey context.</p>
+            <p class="minimal-copy"><strong>Hi [First Name],</strong></p>
+            <p class="minimal-copy">The market is moving fast, and this minimal master now absorbs the new icon set without losing discipline. We keep the body lighter than the MARKLETING variant and only surface the signals that matter.</p>
+
+            <div class="minimal-feature-list">
+              <div class="minimal-feature-item">
+                <svg class="minimal-feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/>
+                  <path d="M14 2v5a1 1 0 0 0 1 1h5"/>
+                  <path d="m9 15 2 2 4-4"/>
+                </svg>
+                <div><strong>Faster verification</strong><span>Use this icon when the journey needs to communicate KYC completion, profile checks or document flow.</span></div>
+              </div>
+              <div class="minimal-feature-item">
+                <svg class="minimal-feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z"/>
+                  <path d="m9 12 2 2 4-4"/>
+                </svg>
+                <div><strong>Secure account approval</strong><span>Perfect for reassurance flows: verification passed, compliance confirmed, safer account access.</span></div>
+              </div>
+              <div class="minimal-feature-item">
+                <svg class="minimal-feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 3v16a2 2 0 0 0 2 2h16"/>
+                  <path d="M7 11.207a.5.5 0 0 1 .146-.353l2-2a.5.5 0 0 1 .708 0l3.292 3.292a.5.5 0 0 0 .708 0l4.292-4.292a.5.5 0 0 1 .854.353V16a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1z"/>
+                </svg>
+                <div><strong>More market opportunities</strong><span>Use for reactivation, return-to-trading or momentum emails where market timing is the main reason to act.</span></div>
+              </div>
+              <div class="minimal-feature-item">
+                <svg class="minimal-feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 15h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 17"/>
+                  <path d="m7 21 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9"/>
+                  <path d="m2 16 6 6"/>
+                  <circle cx="16" cy="9" r="2.9"/>
+                  <circle cx="6" cy="5" r="3"/>
+                </svg>
+                <div><strong>Easier funding access</strong><span>Reserve this icon for deposit, wallet and account-funding contexts, not for generic activation steps.</span></div>
+              </div>
+              <div class="minimal-feature-item">
+                <svg class="minimal-feature-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                <div><strong>Activate your account fully</strong><span>Best for completion journeys where the account profile, not the market message, is the real conversion target.</span></div>
+              </div>
+            </div>
+
+            <div class="minimal-library-note">
+              <strong>Icon library rule</strong>
+              <span>The full set is now part of the master system. Future journeys should only use the icons that match the exact context, instead of carrying the whole pack into every email.</span>
+            </div>
+
+            <div class="cta-box" style="margin-top:24px; background:linear-gradient(180deg, #f4f8ff 0%, #edf4ff 100%); border:1px solid #d8e4f6;">
+              <a class="btn" href="#">Complete Your KYC Now</a>
+              <div class="helper" style="color:#62758c;">One CTA only. This stays closer to the minimal master even when icon-led content blocks are needed.</div>
+            </div>
+
+            <div class="minimal-footer-note">Best regards,<br /><strong>The Bullwaves Team</strong></div>
+
+            <div class="legal-shell" style="margin-top:22px;">
+              <div class="legal-head">
+                <div>
+                  <div class="legal-title">Bullwaves</div>
+                  <div class="legal-subtitle">Company information and risk disclaimer remain mandatory in the minimal version too.</div>
+                </div>
+              </div>
+              <div class="legal-cards">
+                <div class="legal-card">
+                  <div class="legal-section-title">Company Information</div>
+                  <p class="legal-copy">Bullwaves is a brand name and trading name with multiple entities and authorised in various jurisdictions, such as Equitex Capital Limited (Registration No. 8434948-1), a company authorized and regulated by the Financial Services Authority and Moonance LLC, a company regulated by MISA in Comoros Island.</p>
+                </div>
+                <div class="legal-card legal-card--risk light-tone">
+                  <div class="legal-section-title">Risk Disclaimer</div>
+                  <p class="legal-copy">Over-the-counter derivatives are complex instruments and come with a high risk of losing your initial capital rapidly due to leverage. Investing in over-the-counter derivatives carries significant risks and is not suitable for all investors.</p>
+                </div>
+              </div>
+              <div class="legal-links">Unsubscribe · Unsubscribe Preferences</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="spec-card markleting-shell is-hidden" id="markletingCard">
+          <div class="markleting-hero">
+            <h2>Market Opportunities</h2>
+            <p>Your trading potential is just waiting to be unlocked.</p>
+          </div>
+          <div class="markleting-body">
+            <p class="markleting-copy"><strong>Hi [First Name],</strong></p>
+            <p class="markleting-copy">The market is <strong>moving fast</strong>, and we do not want you to <strong>miss out on potential gains</strong>. This preview keeps the MARKLETING base visible inside the new master-template flow.</p>
+            <div class="markleting-list">
+              <div>✅ Volatile market conditions ripe for short-term strategies.</div>
+              <div>🔥 Enhanced tools and features on our platform.</div>
+              <div>🧠 New insights to help you stay ahead of the curve.</div>
+            </div>
+            <div class="cta-box" style="background:#ffffff; border:0; padding:0; margin-top:0;">
+              <a class="btn" href="#">Complete Your KYC Now</a>
+              <div class="helper" style="color:#62758c;">The MARKLETING variant stays more campaign-like, but still keeps one dominant CTA.</div>
+            </div>
+            <div class="legal-shell" style="margin-top:26px;">
+              <div class="legal-cards">
+                <div class="legal-card">
+                  <div class="legal-section-title">Company Information</div>
+                  <p class="legal-copy">Entity and jurisdiction details live here in the final footer area.</p>
+                </div>
+                <div class="legal-card legal-card--risk light-tone">
+                  <div class="legal-section-title">Risk Disclaimer</div>
+                  <p class="legal-copy">Over-the-counter derivatives are complex instruments and come with a high risk of losing capital rapidly due to leverage.</p>
+                </div>
+              </div>
+              <div class="legal-links">Unsubscribe · Unsubscribe Preferences</div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
     <script>
       (function () {
         const params = new URLSearchParams(window.location.search)
+        const template = (params.get('template') || 'minimal').toLowerCase()
         const skin = (params.get('skin') || 'compare').toLowerCase()
-        const device = (params.get('device') || 'compare').toLowerCase()
+        const device = (params.get('device') || 'mobile').toLowerCase()
 
+        const normalizedTemplate = ['framework', 'markleting', 'minimal'].includes(template)
+          ? template
+          : 'minimal'
         const normalizedSkin = skin === 'light' || skin === 'dark' ? skin : 'compare'
-        const normalizedDevice = device === 'mobile' || device === 'desktop' ? device : 'compare'
+        const normalizedDevice = ['mobile', 'desktop', 'compare'].includes(device)
+          ? device
+          : 'compare'
 
         const lightCard = document.getElementById('lightCard')
         const darkCard = document.getElementById('darkCard')
+        const minimalCard = document.getElementById('minimalCard')
+        const markletingCard = document.getElementById('markletingCard')
         const previewGrid = document.getElementById('previewGrid')
         const previewMeta = document.getElementById('previewMeta')
+        const templateBadge = document.getElementById('templateBadge')
         const skinBadge = document.getElementById('skinBadge')
         const deviceBadge = document.getElementById('deviceBadge')
 
-        if (normalizedSkin === 'light') {
-          darkCard.classList.add('is-hidden')
-          previewGrid.classList.add('preview-grid--single')
-        } else if (normalizedSkin === 'dark') {
-          lightCard.classList.add('is-hidden')
-          previewGrid.classList.add('preview-grid--single')
+        const sourceCards = {
+          light: lightCard.cloneNode(true),
+          dark: darkCard.cloneNode(true),
+          minimal: minimalCard.cloneNode(true),
+          markleting: markletingCard.cloneNode(true),
         }
 
-        if (previewGrid.classList.contains('preview-grid--single')) {
-          previewGrid.classList.add(normalizedDevice === 'mobile' ? 'mobile' : 'desktop')
+        function updateQueryParam(key, value) {
+          const nextParams = new URLSearchParams(window.location.search)
+          nextParams.set(key, value)
+          window.location.search = nextParams.toString()
         }
 
+        function buildViewportPanel(viewport, heading, cardKeys) {
+          const panel = document.createElement('section')
+          panel.className = 'viewport-panel viewport-' + viewport
+
+          const title = document.createElement('div')
+          title.className = 'viewport-heading'
+          title.textContent = heading
+
+          const stack = document.createElement('div')
+          stack.className = 'viewport-stack'
+
+          cardKeys.forEach(function (cardKey) {
+            const clone = sourceCards[cardKey].cloneNode(true)
+            clone.removeAttribute('id')
+            clone.classList.remove('is-hidden')
+            stack.appendChild(clone)
+          })
+
+          panel.appendChild(title)
+          panel.appendChild(stack)
+
+          return panel
+        }
+
+        function getSelectedCardKeys() {
+          if (normalizedTemplate === 'minimal') return ['minimal']
+          if (normalizedTemplate === 'markleting') return ['markleting']
+          if (normalizedSkin === 'light') return ['light']
+          if (normalizedSkin === 'dark') return ['dark']
+          return ['light', 'dark']
+        }
+
+        const cardKeys = getSelectedCardKeys()
+
+        previewGrid.innerHTML = ''
+        previewGrid.className = normalizedDevice === 'compare' ? 'viewport-grid compare-viewports' : 'viewport-grid single-preview'
+
+        if (normalizedDevice === 'compare') {
+          previewGrid.appendChild(buildViewportPanel('desktop', 'Desktop', cardKeys))
+          previewGrid.appendChild(buildViewportPanel('mobile', 'Mobile', cardKeys))
+        } else {
+          previewGrid.appendChild(
+            buildViewportPanel(
+              normalizedDevice,
+              normalizedDevice === 'mobile' ? 'Mobile' : 'Desktop',
+              cardKeys
+            )
+          )
+        }
+
+        document.querySelectorAll('[data-control="device"]').forEach(function (button) {
+          const isActive = button.getAttribute('data-value') === normalizedDevice
+          button.classList.toggle('is-active', isActive)
+          button.addEventListener('click', function () {
+            const nextValue = button.getAttribute('data-value')
+            if (!nextValue || nextValue === normalizedDevice) return
+            updateQueryParam('device', nextValue)
+          })
+        })
+
+        templateBadge.textContent = 'Template: ' + normalizedTemplate
         skinBadge.textContent = 'Skin: ' + normalizedSkin
         deviceBadge.textContent = 'Device: ' + normalizedDevice
 
-        if (normalizedSkin === 'compare') {
-          previewMeta.textContent = 'Compare mode: both light and dark masters are visible side by side.'
+        if (normalizedTemplate === 'minimal') {
+          previewMeta.textContent = normalizedDevice === 'compare'
+            ? 'Minimal master template shown in both desktop and mobile viewport, with the new icon system curated for future journey reuse.'
+            : 'Minimal master template with Bullwaves brand header, curated icon library, single CTA and full disclaimers.'
+        } else if (normalizedTemplate === 'markleting') {
+          previewMeta.textContent = normalizedDevice === 'compare'
+            ? 'MARKLETING template shown in both desktop and mobile viewport for shareable review.'
+            : 'Recent change visible: MARKLETING master template preserved as a separate campaign-style variant.'
+        } else if (normalizedSkin === 'compare') {
+          previewMeta.textContent = normalizedDevice === 'compare'
+            ? 'Framework compare mode: both skin variants are visible in both desktop and mobile viewport.'
+            : 'Compare mode: both light and dark masters are visible side by side.'
         } else if (normalizedDevice === 'mobile') {
           previewMeta.textContent = 'Mobile preview: single-skin card constrained to a narrow device width.'
+        } else if (normalizedDevice === 'compare') {
+          previewMeta.textContent = 'Shared review mode: the selected master template is visible in both desktop and mobile viewport.'
         } else {
           previewMeta.textContent = 'Desktop preview: single-skin card shown at a wider editorial email width.'
         }

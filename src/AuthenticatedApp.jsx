@@ -33,6 +33,9 @@ const TraderPointsSimulatorPage = lazy(
 const PlatformUsageBillingPage = lazy(
   () => import('./features/platform-usage/pages/PlatformUsageBillingPage')
 )
+const FinanceToolOrganigramPage = lazy(
+  () => import('./features/platform-usage/pages/FinanceToolOrganigramPage')
+)
 const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
 const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
 const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonitor'))
@@ -183,6 +186,7 @@ export default function AuthenticatedApp() {
       fraud: '/fraud',
       orgChart: '/org-chart',
       platformUsageBilling: '/platform-usage-billing',
+      financeToolOrganigram: '/finance/tool-organigram',
       supportUserCheck: '/support/user-check',
       aiAssistant: '/support/ai-assistant',
       whatsappPerformance: '/support/whatsapp-performance',
@@ -221,6 +225,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
     if (pathname.startsWith('/platform-usage-billing')) return 'platformUsageBilling'
+    if (pathname.startsWith('/finance/tool-organigram')) return 'financeToolOrganigram'
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
@@ -552,6 +557,7 @@ export default function AuthenticatedApp() {
       emailMasterTemplate: 'retention-email-master-template',
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
+      financeToolOrganigram: 'finance-tool-organigram',
       supportUserCheck: 'support-user-check',
       aiAssistant: 'support-ai-assistant',
       whatsappPerformance: 'support-whatsapp-performance',
@@ -631,6 +637,7 @@ export default function AuthenticatedApp() {
 
               {view === 'orgChart' ? <OrgChart /> : null}
               {view === 'platformUsageBilling' ? <PlatformUsageBillingPage /> : null}
+              {view === 'financeToolOrganigram' ? <FinanceToolOrganigramPage /> : null}
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
               {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
               {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}

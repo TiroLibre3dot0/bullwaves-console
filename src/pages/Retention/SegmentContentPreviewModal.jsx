@@ -1,5 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { segmentJourneyTemplateExtrasById } from './segmentJourneyTemplateExtras'
+import { isRecentlyUpdatedSegmentTemplate } from './segmentJourneyTemplates'
+import {
+  EMAIL_ICON_GROUP_LABELS,
+  getEmailJourneyIconMetaByKey,
+  getEmailJourneyIconsForGroup,
+} from './emailJourneyIconRegistry.js'
 
 const EXCLUDED_TEMPLATE_PLACEHOLDERS = new Set(['account_manager_name'])
 const HANDLEBARS_CONTROL_KEYWORDS = new Set(['if', 'else'])
@@ -59,6 +65,38 @@ function localeLabel(locale) {
   return locale === 'it' ? 'Italiano' : 'English'
 }
 
+function IconGuideCard({ title, meta }) {
+  if (!meta) return null
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-3">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        {title}
+      </div>
+      <div className="mt-2 flex items-start gap-3">
+        <img
+          src={meta.url}
+          alt={meta.label}
+          className="h-10 w-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 p-1.5"
+        />
+        <div className="min-w-0">
+          <div className="text-sm font-bold text-slate-900">{meta.label}</div>
+          <div className="mt-1 text-xs font-semibold text-blue-700">{meta.category}</div>
+          <div className="mt-1 text-xs leading-5 text-slate-600">{meta.usage}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NewBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full border border-cyan-300/70 bg-cyan-200/20 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.18em] text-cyan-100 animate-pulse">
+      (new)
+    </span>
+  )
+}
+
 export default function SegmentContentPreviewModal({ isOpen, onClose, template }) {
   const [tab, setTab] = useState('preview')
   const [locale, setLocale] = useState('it')
@@ -66,6 +104,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
   const [channel, setChannel] = useState('email')
   const [copied, setCopied] = useState(false)
   const safeTemplate = template || null
+  const templateIsRecent = isRecentlyUpdatedSegmentTemplate(safeTemplate?.id)
 
   useEffect(() => {
     if (!isOpen) return
@@ -107,6 +146,27 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
     () => (activeChannel === 'email' ? extractTemplatePlaceholders(subject, rawValue) : []),
     [activeChannel, subject, rawValue]
   )
+  const iconGuide = localized?.iconGuide || null
+  const currentIconCards = useMemo(() => {
+    if (!iconGuide) return []
+
+    return [
+      { title: 'Box 1', meta: getEmailJourneyIconMetaByKey(iconGuide.boxOneKey) },
+      { title: 'Box 2', meta: getEmailJourneyIconMetaByKey(iconGuide.boxTwoKey) },
+      { title: 'Box 3', meta: getEmailJourneyIconMetaByKey(iconGuide.boxThreeKey) },
+    ].filter((entry) => entry.meta)
+  }, [iconGuide])
+  const recommendedGroups = useMemo(() => {
+    if (!iconGuide?.recommendedGroups?.length) return []
+
+    return iconGuide.recommendedGroups
+      .map((groupKey) => ({
+        key: groupKey,
+        label: EMAIL_ICON_GROUP_LABELS[groupKey] || groupKey,
+        icons: getEmailJourneyIconsForGroup(groupKey),
+      }))
+      .filter((entry) => entry.icons.length)
+  }, [iconGuide])
 
   useEffect(() => {
     if (!availableLocales.includes(locale)) {
@@ -159,7 +219,10 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
               <h2 className="text-xl font-bold truncate">
                 {localized?.name || 'Template Preview'}
               </h2>
-              <div className="text-blue-100 text-sm mt-2">Journey step content preview</div>
+              <div className="mt-2 flex items-center gap-2 text-blue-100 text-sm">
+                <span>Journey step content preview</span>
+                {templateIsRecent ? <NewBadge /> : null}
+              </div>
             </div>
 
             <button
@@ -310,6 +373,65 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
 
               {activeChannel === 'email' ? (
                 <>
+                  {currentIconCards.length ? (
+                    <>
+                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="inline-flex items-center gap-2">
+                          <span>Icone attive</span>
+                          {templateIsRecent ? <NewBadge /> : null}
+                        </span>
+                      </div>
+                      <div className="mt-2 space-y-3">
+                        {currentIconCards.map((entry) => (
+                          <IconGuideCard key={entry.title} title={entry.title} meta={entry.meta} />
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
+                  {recommendedGroups.length ? (
+                    <>
+                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        <span className="inline-flex items-center gap-2">
+                          <span>Selezione guidata</span>
+                          {templateIsRecent ? <NewBadge /> : null}
+                        </span>
+                      </div>
+                      {iconGuide?.rationale ? (
+                        <div className="mt-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs leading-5 text-blue-900">
+                          {iconGuide.rationale}
+                        </div>
+                      ) : null}
+                      <div className="mt-3 space-y-3">
+                        {recommendedGroups.map((group) => (
+                          <div
+                            key={group.key}
+                            className="rounded-xl border border-slate-200 bg-white p-3"
+                          >
+                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                              {group.label}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {group.icons.map((icon) => (
+                                <div
+                                  key={icon.key}
+                                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs text-slate-700"
+                                >
+                                  <img
+                                    src={icon.url}
+                                    alt={icon.label}
+                                    className="h-5 w-5 shrink-0"
+                                  />
+                                  <span>{icon.label}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+
                   <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-500">
                     Placeholders
                   </div>

@@ -1,18 +1,103 @@
+function buildSvgDataUri(svgMarkup) {
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svgMarkup.trim())}`
+}
+
+const ICON_STROKE = '#000000'
+
+function buildStrokeIcon(paths) {
+  return buildSvgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${ICON_STROKE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${paths}
+    </svg>
+  `)
+}
+
+import {
+  RETENTION_ICON_GROUP_LABELS,
+  RETENTION_ICON_GROUPS,
+  RETENTION_ICON_LIBRARY,
+  RETENTION_ICON_ORDER,
+  RETENTION_ICON_URLS,
+} from './icons.js'
+
+const ICON_ALIASES = {
+  fasterVerification: 'verification_document_check',
+  secureApproval: 'secure_approval_badge',
+  marketOpportunities: 'market_growth_chart',
+  fundingAccess: 'funding_hand_transfer',
+  readyToTrade: 'trading_setup_controls',
+  onboardingTimeline: 'onboarding_calendar',
+  premiumAccess: 'premium_platform_crown',
+  strongerExperience: 'experience_star',
+  noTimeLoss: 'time_recovery_clock',
+  activateAccount: 'user_account_profile',
+}
+
 export const EMAIL_JOURNEY_ICON_URLS = {
-  customerService:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/ce697fad-8f30-4a63-b105-a12c1b8d6660/512x512.png',
-  creditCard:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/e7eee782-2851-4609-adba-6727853a4033/1024x1024.png',
-  financialSuccessSecurity:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/c6cece3b-7548-481a-8f28-7c395be7c123/1024x1024.png',
-  riskManagementControl:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/fd51b279-7d4f-467f-8d95-c372d4f2d317/1024x1024.png',
-  successfulInvestmentReward:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/26aba9f6-5075-4fcb-95d7-d1a00027fc35/1024x1024.png',
-  successGrowthCertificate:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/732f5134-aecd-404b-bf04-c1c95be0331a/1024x1024.png',
-  secureAccess:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/0543eda0-82a2-4338-b208-07cf707136fb/1024x1024.png',
-  secureDepositCard:
-    'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/6ad54481-6188-42c8-977a-778b90516d83/512x512.png',
+  ...RETENTION_ICON_URLS,
+  ...Object.fromEntries(
+    Object.entries(ICON_ALIASES).map(([aliasKey, canonicalKey]) => [
+      aliasKey,
+      RETENTION_ICON_URLS[canonicalKey],
+    ])
+  ),
+}
+
+export const EMAIL_MASTER_ICON_GROUPS = RETENTION_ICON_GROUPS
+export const EMAIL_MASTER_ICON_ORDER = RETENTION_ICON_ORDER
+export const EMAIL_ICON_GROUP_LABELS = RETENTION_ICON_GROUP_LABELS
+
+export const EMAIL_JOURNEY_ICON_LIBRARY = {
+  ...RETENTION_ICON_LIBRARY,
+  ...Object.fromEntries(
+    Object.entries(ICON_ALIASES).map(([aliasKey, canonicalKey]) => {
+      const meta = RETENTION_ICON_LIBRARY[canonicalKey]
+      return [
+        aliasKey,
+        {
+          ...meta,
+          key: aliasKey,
+          canonicalKey,
+        },
+      ]
+    })
+  ),
+}
+
+const EMAIL_ICON_LIBRARY_BY_URL = new Map(
+  Object.values(EMAIL_JOURNEY_ICON_LIBRARY).map((entry) => [entry.url, entry])
+)
+
+export function getEmailJourneyIconMetaByKey(key) {
+  return EMAIL_JOURNEY_ICON_LIBRARY[key] || null
+}
+
+export function getEmailJourneyIconMetaByUrl(url) {
+  return EMAIL_ICON_LIBRARY_BY_URL.get(url) || null
+}
+
+export function getEmailJourneyIconsForGroup(groupKey) {
+  const keys = EMAIL_MASTER_ICON_GROUPS[groupKey] || []
+  return keys.map((key) => getEmailJourneyIconMetaByKey(key)).filter(Boolean)
+}
+
+export function createJourneyIconSelection({
+  boxOneKey,
+  boxTwoKey,
+  boxThreeKey,
+  recommendedGroups = [],
+  rationale = '',
+}) {
+  return {
+    boxOneIconUrl: EMAIL_JOURNEY_ICON_URLS[boxOneKey] || '',
+    boxTwoIconUrl: EMAIL_JOURNEY_ICON_URLS[boxTwoKey] || '',
+    boxThreeIconUrl: EMAIL_JOURNEY_ICON_URLS[boxThreeKey] || '',
+    iconGuide: {
+      boxOneKey,
+      boxTwoKey,
+      boxThreeKey,
+      recommendedGroups,
+      rationale,
+    },
+  }
 }

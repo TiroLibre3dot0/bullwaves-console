@@ -34,6 +34,9 @@ const PublicTrustpilotGuideSharePage = React.lazy(
 const PublicProfitableRankingSharePage = React.lazy(
   () => import('./pages/share/PublicProfitableRankingSharePage')
 )
+const PublicFinanceToolOrganigramSharePage = React.lazy(
+  () => import('./features/platform-usage/pages/PublicFinanceToolOrganigramSharePage')
+)
 
 export default function App() {
   const { t } = useI18n()
@@ -102,6 +105,8 @@ export default function App() {
     if (p === '/share/ranking' || p.startsWith('/share/ranking/')) return 'ranking-removed'
     if (p === '/share/profitable-ranking' || p.startsWith('/share/profitable-ranking/'))
       return 'profitable-ranking'
+    if (p === '/share/finance-tool-organigram' || p.startsWith('/share/finance-tool-organigram/'))
+      return 'finance-tool-organigram'
     if (p === '/share/affiliate-payout-summary') return 'affiliate-payout-summary'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
@@ -200,6 +205,15 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicProjectBoardSharePage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'finance-tool-organigram') {
+    const token = window.location.pathname.split('/').pop()
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicFinanceToolOrganigramSharePage token={token} />
       </React.Suspense>
     )
   }
