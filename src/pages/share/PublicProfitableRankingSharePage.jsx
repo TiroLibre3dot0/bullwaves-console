@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { decodeSharePayload } from '../../utils/shareCodec'
 import { trackPublicShareOpen } from '../../utils/analytics'
+import { resetOpenGraphMeta, setOpenGraphMeta } from '../../utils/ogMeta'
 import FullPageLoader from '../../components/FullPageLoader'
 import ProfitableRanking from '../Retention/ProfitableRanking'
 
@@ -129,6 +130,26 @@ export default function PublicProfitableRankingSharePage({ token }) {
 
   const initialState = useMemo(() => buildInitialStateFromPayload(payload), [payload])
   const isValid = Boolean(initialState)
+  const shareMeta = useMemo(() => {
+    if (!isValid) {
+      return {
+        title: 'Bullwaves — Profitable Ranking Share',
+        description: 'Public Bullwaves share for ranking snapshots.',
+      }
+    }
+
+    if (initialState?.definitionKey === 'prime_challenge') {
+      return {
+        title: 'Bullwaves — Prime Challenge Ranking',
+        description: 'Public Bullwaves share for the Prime Challenge payout ranking.',
+      }
+    }
+
+    return {
+      title: 'Bullwaves — Profitable Traders Ranking',
+      description: 'Public Bullwaves share for the profitable traders ranking.',
+    }
+  }, [initialState?.definitionKey, isValid])
 
   useEffect(() => {
     if (!isValid) return
@@ -140,13 +161,15 @@ export default function PublicProfitableRankingSharePage({ token }) {
   }, [payload?.generatedAt, isValid, cleanToken])
 
   useEffect(() => {
-    if (typeof document === 'undefined') return
-    const publicTitle =
-      initialState?.definitionKey === 'prime_challenge'
-        ? 'Prime Challenge Ranking (Public)'
-        : 'Profitable Ranking (Public)'
-    document.title = isValid ? publicTitle : 'Profitable Ranking (Invalid Share)'
-  }, [initialState?.definitionKey, isValid])
+    setOpenGraphMeta({
+      title: shareMeta.title,
+      description: shareMeta.description,
+      image: '/Logo.png',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    })
+
+    return () => resetOpenGraphMeta()
+  }, [shareMeta.description, shareMeta.title])
 
   if (loading) {
     return <FullPageLoader progress={25} subtitle="Loading share..." />
