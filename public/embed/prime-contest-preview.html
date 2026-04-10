@@ -3,60 +3,722 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bullwaves Prime Contest Preview</title>
+    <title>Bullwaves Prime Challenge Campaign Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Instrument+Serif:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
     <style>
+      :root {
+        --bg: #071018;
+        --bg-soft: #0f1c29;
+        --panel: rgba(11, 21, 31, 0.72);
+        --panel-strong: rgba(9, 18, 28, 0.92);
+        --line: rgba(255, 255, 255, 0.1);
+        --text: #eef4fb;
+        --muted: #9db4c8;
+        --muted-strong: #bfd0df;
+        --lime: #8eea57;
+        --lime-deep: #4ade80;
+        --gold: #f5c56a;
+        --cyan: #76d5ff;
+        --shadow: 0 28px 90px rgba(0, 0, 0, 0.35);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
         margin: 0;
         min-height: 100vh;
-        background: linear-gradient(180deg, #030712 0%, #0f172a 100%);
-        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-        color: #e5edf7;
+        background:
+          radial-gradient(circle at 15% 20%, rgba(118, 213, 255, 0.15), transparent 26%),
+          radial-gradient(circle at 85% 12%, rgba(142, 234, 87, 0.18), transparent 24%),
+          radial-gradient(circle at 50% 100%, rgba(245, 197, 106, 0.1), transparent 30%),
+          linear-gradient(180deg, #040b12 0%, #0b1723 52%, #071018 100%);
+        font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+        color: var(--text);
       }
+
+      body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+        background-size: 44px 44px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 88%);
+      }
+
       .page {
-        max-width: 1280px;
+        position: relative;
+        max-width: 1320px;
         margin: 0 auto;
-        padding: 48px 20px 72px;
+        padding: 28px 20px 96px;
       }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 30px;
+        padding: 14px 18px;
+        border: 1px solid var(--line);
+        background: rgba(7, 16, 24, 0.54);
+        backdrop-filter: blur(18px);
+        border-radius: 999px;
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--muted-strong);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .brand-mark {
+        width: 11px;
+        height: 11px;
+        border-radius: 999px;
+        background: linear-gradient(135deg, var(--lime) 0%, var(--cyan) 100%);
+        box-shadow: 0 0 24px rgba(142, 234, 87, 0.6);
+      }
+
+      .topbar-links {
+        display: inline-flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .topbar-links span {
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+        gap: 22px;
+        align-items: stretch;
+      }
+
+      .hero-copy,
+      .hero-side,
+      .section-panel,
+      .embed-shell,
+      .footer-cta {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        backdrop-filter: blur(18px);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-copy {
+        position: relative;
+        overflow: hidden;
+        border-radius: 34px;
+        padding: 34px;
+      }
+
+      .hero-copy::after {
+        content: '';
+        position: absolute;
+        inset: auto -12% -18% auto;
+        width: 320px;
+        height: 320px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(118, 213, 255, 0.22) 0%, transparent 65%);
+        pointer-events: none;
+      }
+
       .eyebrow {
         font-size: 12px;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #86a8ff;
+        color: var(--cyan);
+        font-weight: 800;
+        margin-bottom: 18px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero-title {
+        max-width: 820px;
+        font-size: clamp(48px, 6vw, 88px);
+        line-height: 0.92;
+        letter-spacing: -0.05em;
+        font-weight: 700;
+      }
+
+      .hero-title em {
+        font-family: 'Instrument Serif', Georgia, serif;
+        font-style: italic;
+        font-weight: 400;
+        color: #fff7e8;
+      }
+
+      .hero-subtitle {
+        margin-top: 18px;
+        max-width: 720px;
+        color: var(--muted-strong);
+        font-size: 18px;
+        line-height: 1.7;
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: 28px;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        padding: 0 22px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 14px;
         font-weight: 800;
       }
-      h1 {
-        margin: 14px 0 10px;
-        font-size: clamp(34px, 5vw, 64px);
-        line-height: 0.95;
+
+      .primary-btn {
+        color: #051019;
+        background: linear-gradient(135deg, var(--lime) 0%, var(--gold) 100%);
+        box-shadow: 0 18px 40px rgba(142, 234, 87, 0.22);
       }
-      p {
-        margin: 0 0 24px;
-        max-width: 760px;
-        color: #9db0c7;
+
+      .secondary-btn {
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .ticker-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .ticker-card {
+        padding: 16px 18px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .ticker-label {
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        font-weight: 700;
+      }
+
+      .ticker-value {
+        margin-top: 10px;
+        font-size: 28px;
+        line-height: 1;
+        font-weight: 700;
+      }
+
+      .ticker-value small {
+        display: block;
+        margin-top: 8px;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted-strong);
+      }
+
+      .hero-side {
+        border-radius: 30px;
+        padding: 28px;
+        background:
+          radial-gradient(circle at 100% 0%, rgba(245, 197, 106, 0.16), transparent 30%),
+          var(--panel-strong);
+      }
+
+      .prize-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        background: rgba(245, 197, 106, 0.08);
+        color: var(--gold);
+        border: 1px solid rgba(245, 197, 106, 0.16);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+
+      .hero-side h2 {
+        margin-top: 18px;
+        font-size: 32px;
+        line-height: 1.04;
+      }
+
+      .hero-side p {
+        margin-top: 14px;
+        color: var(--muted-strong);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .prize-stack {
+        display: grid;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .prize-card {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 16px 18px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.045);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .prize-rank {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        font-weight: 800;
+        color: #08121a;
+        background: linear-gradient(135deg, var(--gold) 0%, #fff0c5 100%);
+      }
+
+      .prize-meta strong {
+        display: block;
         font-size: 16px;
-        line-height: 1.6;
+      }
+
+      .prize-meta span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .prize-amount {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--lime);
+      }
+
+      .section-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 22px;
+        margin-top: 22px;
+      }
+
+      .section-panel {
+        border-radius: 28px;
+        padding: 28px;
+      }
+
+      .section-title {
+        font-size: 28px;
+        line-height: 1.05;
+        margin-bottom: 12px;
+      }
+
+      .section-copy {
+        color: var(--muted-strong);
+        font-size: 15px;
+        line-height: 1.7;
+      }
+
+      .signal-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .signal-card,
+      .step-card {
+        padding: 18px;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+      }
+
+      .signal-card strong,
+      .step-card strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .signal-card span,
+      .step-card span {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .steps {
+        display: grid;
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .step-card {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 14px;
+        align-items: start;
+      }
+
+      .step-index {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        background: rgba(142, 234, 87, 0.12);
+        color: var(--lime);
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .embed-shell {
+        position: relative;
+        margin-top: 22px;
+        border-radius: 34px;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .embed-shell::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(118, 213, 255, 0.08), transparent 36%);
+        pointer-events: none;
+      }
+
+      .embed-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+      }
+
+      .embed-header p {
+        margin-top: 10px;
+        color: var(--muted-strong);
+        max-width: 760px;
+        line-height: 1.7;
+      }
+
+      .embed-note {
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .footer-cta {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 18px;
+        align-items: center;
+        margin-top: 22px;
+        padding: 28px;
+        border-radius: 30px;
+      }
+
+      .footer-cta p {
+        margin-top: 10px;
+        color: var(--muted-strong);
+        line-height: 1.7;
+      }
+
+      @keyframes floatUp {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .hero-copy,
+      .hero-side,
+      .section-panel,
+      .embed-shell,
+      .footer-cta {
+        animation: floatUp 600ms ease both;
+      }
+
+      .hero-side { animation-delay: 100ms; }
+      .section-grid .section-panel:first-child { animation-delay: 160ms; }
+      .section-grid .section-panel:last-child { animation-delay: 220ms; }
+      .embed-shell { animation-delay: 280ms; }
+      .footer-cta { animation-delay: 340ms; }
+
+      @media (max-width: 1080px) {
+        .hero,
+        .section-grid,
+        .footer-cta {
+          grid-template-columns: 1fr;
+        }
+
+        .signal-grid,
+        .ticker-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          padding-left: 14px;
+          padding-right: 14px;
+          padding-bottom: 80px;
+        }
+
+        .topbar {
+          border-radius: 24px;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .hero-copy,
+        .hero-side,
+        .section-panel,
+        .embed-shell,
+        .footer-cta {
+          padding: 22px;
+          border-radius: 24px;
+        }
+
+        .hero-title {
+          font-size: clamp(38px, 12vw, 58px);
+        }
+
+        .embed-header {
+          align-items: flex-start;
+        }
       }
     </style>
   </head>
   <body>
     <main class="page">
-      <div class="eyebrow">Bullwaves Embed Preview</div>
-      <h1>Prime Challenge Widget</h1>
-      <p>
-        This page is the live preview for the JS embed version. If this looks right here,
-        the same widget can be mounted inside Webflow with the script snippet only.
-      </p>
+      <div class="topbar">
+        <div class="brand">
+          <span class="brand-mark"></span>
+          <span>Bullwaves Prime Campaign Preview</span>
+        </div>
+        <div class="topbar-links">
+          <span>JS Embed Ready</span>
+          <span>Webflow Friendly</span>
+          <span>Monthly Refresh</span>
+        </div>
+      </div>
 
-      <div
-        data-bw-prime-contest
-        data-limit="10"
-        data-title="Prime Challenge Leaderboard"
-        data-subtitle="Latest monthly payout ranking"
-        data-cta-label="Explore Prime"
-        data-cta-url="https://prime.bullwaves.com/"
-      ></div>
+      <section class="hero">
+        <div class="hero-copy">
+          <div class="eyebrow">Prime Challenge · Monthly Activation</div>
+          <h1 class="hero-title">
+            Trade for the <em>leaderboard</em>.<br />Finish the month where payouts turn into proof.
+          </h1>
+          <p class="hero-subtitle">
+            This preview turns the contest into a real campaign surface: a clear reward story, a
+            public leaderboard, and a direct path from curiosity to challenge signup.
+          </p>
+
+          <div class="hero-actions">
+            <a class="primary-btn" href="https://prime.bullwaves.com/" target="_blank" rel="noopener noreferrer">
+              Join Prime Challenge
+            </a>
+            <a class="secondary-btn" href="#live-ranking">See live ranking block</a>
+          </div>
+
+          <div class="ticker-row">
+            <div class="ticker-card">
+              <div class="ticker-label">Monthly hook</div>
+              <div class="ticker-value">Fresh cycle<small>New leaderboard momentum every month.</small></div>
+            </div>
+            <div class="ticker-card">
+              <div class="ticker-label">Proof signal</div>
+              <div class="ticker-value">Payout-first<small>Public ranking tied to the primary metric.</small></div>
+            </div>
+            <div class="ticker-card">
+              <div class="ticker-label">Privacy layer</div>
+              <div class="ticker-value">Masked names<small>Public-facing, still compliant and credible.</small></div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="hero-side">
+          <div class="prize-pill">Featured campaign angle</div>
+          <h2>What the page is selling is not only a challenge. It is visible status.</h2>
+          <p>
+            A marketing landing should make the leaderboard feel aspirational before it feels
+            analytical. That means prize framing, public recognition, and a stronger emotional arc.
+          </p>
+
+          <div class="prize-stack">
+            <div class="prize-card">
+              <div class="prize-rank">#1</div>
+              <div class="prize-meta">
+                <strong>Champion Spotlight</strong>
+                <span>Homepage feature + top reward narrative</span>
+              </div>
+              <div class="prize-amount">$1K</div>
+            </div>
+            <div class="prize-card">
+              <div class="prize-rank">#2</div>
+              <div class="prize-meta">
+                <strong>Momentum Reward</strong>
+                <span>Secondary prize for sustained performance</span>
+              </div>
+              <div class="prize-amount">$500</div>
+            </div>
+            <div class="prize-card">
+              <div class="prize-rank">#3</div>
+              <div class="prize-meta">
+                <strong>Recognition Tier</strong>
+                <span>Top 3 visibility, social-proof positioning</span>
+              </div>
+              <div class="prize-amount">$250</div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="section-grid">
+        <div class="section-panel">
+          <h2 class="section-title">Why this landing structure works</h2>
+          <p class="section-copy">
+            It converts the leaderboard from an internal analytics artifact into a public acquisition
+            asset. The page first sells the opportunity, then validates it with the ranking block,
+            and finally closes with a direct CTA to enter the challenge.
+          </p>
+
+          <div class="signal-grid">
+            <div class="signal-card">
+              <strong>High-clarity story</strong>
+              <span>Visitors understand what they win, why it matters, and how performance is measured.</span>
+            </div>
+            <div class="signal-card">
+              <strong>Built-in proof</strong>
+              <span>The ranking acts as live campaign evidence instead of static marketing copy.</span>
+            </div>
+            <div class="signal-card">
+              <strong>Reusable surface</strong>
+              <span>The same JS widget can be dropped into Webflow, campaign pages, and future promos.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-panel">
+          <h2 class="section-title">Suggested visitor journey</h2>
+          <p class="section-copy">
+            The landing should guide a cold visitor from curiosity to legitimacy to action without
+            exposing internal dashboard complexity.
+          </p>
+
+          <div class="steps">
+            <div class="step-card">
+              <div class="step-index">1</div>
+              <div>
+                <strong>Hook attention</strong>
+                <span>Lead with the monthly challenge angle and visible rewards, not with raw tables.</span>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-index">2</div>
+              <div>
+                <strong>Show public proof</strong>
+                <span>Bring the leaderboard in as the central confidence block, already anonymized.</span>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-index">3</div>
+              <div>
+                <strong>Drive conversion</strong>
+                <span>Close with one clear CTA into Prime Challenge, without extra navigation noise.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="live-ranking" class="embed-shell">
+        <div class="embed-header">
+          <div>
+            <div class="eyebrow">Live ranking module</div>
+            <h2 class="section-title">This is the actual embeddable block</h2>
+            <p>
+              Everything below is rendered by the same JS widget Daniel can mount in Webflow. If we
+              refine the widget UX here, the live site reflects it after deploy.
+            </p>
+          </div>
+          <div class="embed-note">Previewing the real JS embed, not a mockup</div>
+        </div>
+
+        <div
+          data-bw-prime-contest
+          data-limit="10"
+          data-title="Prime Challenge Leaderboard"
+          data-subtitle="Latest monthly payout ranking"
+          data-cta-label="Explore Prime"
+          data-cta-url="https://prime.bullwaves.com/"
+          data-accent="#8eea57"
+        ></div>
+      </section>
+
+      <section class="footer-cta">
+        <div>
+          <div class="eyebrow">Marketing handoff</div>
+          <h2 class="section-title">Ready to ship into Webflow as a real campaign section</h2>
+          <p>
+            If this direction feels right, the next step is not another mockup. It is tightening the
+            copy, the prize language, and the CTA so Daniel can drop the final widget into the live site.
+          </p>
+        </div>
+        <a class="primary-btn" href="https://prime.bullwaves.com/" target="_blank" rel="noopener noreferrer">
+          Open Prime Site
+        </a>
+      </section>
     </main>
 
     <script src="/embed/prime-contest.js"></script>
   </body>
-  </html>
+</html>
