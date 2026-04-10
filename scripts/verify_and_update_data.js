@@ -150,6 +150,7 @@ function main() {
     creolabsAffiliateMonth: path.join(PUBLIC, 'creolabs_affiliate_month.json'),
     tradersRankingRewardsTable: path.join(PUBLIC, 'traders_ranking_rewards_table.json'),
     primeClientsRankingTable: path.join(PUBLIC, 'prime_clients_ranking_table.json'),
+    primeContestEmbed: path.join(PUBLIC, 'embed', 'prime-contest.json'),
     shareOrgPeople: path.join(PUBLIC, 'share', 'org-chart-people.json'),
     fraudSummary: path.join(PUBLIC, 'fraud_monitor_summary.json'),
     fraudUserFlagsCsv: path.join(PUBLIC, 'fraud_monitor_user_flags.csv'),
@@ -226,6 +227,12 @@ function main() {
       optional: true,
     },
     {
+      artifact: artifacts.primeContestEmbed,
+      sources: [PRIME_CLIENTS_RANKING_XLSX],
+      name: 'embed/prime-contest.json',
+      optional: true,
+    },
+    {
       artifact: artifacts.fraudSummary,
       sources: [sourceRegistrations, sourcePayments, sourceMedia].filter((p) => safeStat(p).exists),
       name: 'fraud_monitor_summary.json',
@@ -280,6 +287,7 @@ function main() {
       { p: 'generate_creolabs_index.js', label: 'Generate Creolabs index' },
       { p: 'generate_traders_ranking_rewards_table.js', label: 'Generate Traders Ranking Rewards artifact' },
       { p: 'generate_prime_clients_ranking_table.js', label: 'Generate Prime Clients Ranking artifact' },
+      { p: 'generate_prime_contest_embed.js', label: 'Generate Prime Contest embed feed' },
       { p: 'generate_cellx_affiliate_month.js', label: 'Generate CellX monthly artifact' },
       { p: 'generate_share_org_people_index.mjs', label: 'Generate share org people index' },
       { p: 'generate_reports_meta.js', label: 'Generate reports meta (pre-fraud-monitor)' },

@@ -777,6 +777,19 @@ function buildPeriodKey(year, month) {
   return `${y}-${String(m).padStart(2, '0')}`
 }
 
+function maskContestDisplayName(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return '—'
+
+  const parts = raw.split(/\s+/).filter(Boolean)
+  if (!parts.length) return '—'
+  if (parts.length === 1) return `${parts[0].charAt(0).toUpperCase()}.`
+
+  const firstName = parts[0]
+  const surnameInitial = parts[parts.length - 1].charAt(0).toUpperCase()
+  return `${firstName} ${surnameInitial}.`
+}
+
 function Table({
   rows,
   columns,
@@ -792,6 +805,10 @@ function Table({
   showAgentColumn = true,
   showCountryColumn = true,
   totalRow = null,
+  compactMode = false,
+  getEntityPrimaryText,
+  getEntitySecondaryText,
+  getEntityTitle,
 }) {
   const safeColumns = Array.isArray(columns) ? columns : []
   const total = rows.length
@@ -804,6 +821,24 @@ function Table({
   useEffect(() => {
     if (page !== safePage) onPage(safePage)
   }, [onPage, page, safePage])
+
+  const resolveEntityPrimaryText =
+    typeof getEntityPrimaryText === 'function'
+      ? getEntityPrimaryText
+      : (row) => String(row?.clientName || '—')
+
+  const resolveEntitySecondaryText =
+    typeof getEntitySecondaryText === 'function'
+      ? getEntitySecondaryText
+      : (row) => String(row?.clientId || '')
+
+  const resolveEntityTitle =
+    typeof getEntityTitle === 'function'
+      ? getEntityTitle
+      : (row) => {
+          if (!(row?.clientName || row?.clientId)) return undefined
+          return `${String(row?.clientName || '—')}\n${String(row?.clientId || '')}`.trim()
+        }
 
   const SortTh = ({ label, colKey, align = 'right', width, help, headerStyle }) => {
     const isActive = sortState.key === colKey
@@ -853,7 +888,7 @@ function Table({
           display: 'flex',
           gap: 10,
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: compactMode ? 'flex-start' : 'space-between',
           flexWrap: 'wrap',
           margin: '10px 0 8px',
         }}
@@ -862,65 +897,69 @@ function Table({
           Showing {start + 1}-{end} of {total}
         </div>
 
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>Rows</span>
-            <select
-              className="search-hero-input"
-              value={pageSize}
-              onChange={(e) => onPageSize(clampInt(e.target.value, 1, 1000))}
-              style={{ width: 96, fontSize: 13, padding: '7px 10px', borderRadius: 10 }}
-            >
-              {[25, 50, 100].map((n) => (
-                <option key={String(n)} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>
-          </label>
+        {!compactMode ? (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <label style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+                Rows
+              </span>
+              <select
+                className="search-hero-input"
+                value={pageSize}
+                onChange={(e) => onPageSize(clampInt(e.target.value, 1, 1000))}
+                style={{ width: 96, fontSize: 13, padding: '7px 10px', borderRadius: 10 }}
+              >
+                {[25, 50, 100].map((n) => (
+                  <option key={String(n)} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
-            <button
-              type="button"
-              className="pill-tab"
-              onClick={() => onPage(1)}
-              disabled={safePage <= 1}
-              title="First page"
-            >
-              «
-            </button>
-            <button
-              type="button"
-              className="pill-tab"
-              onClick={() => onPage(Math.max(1, safePage - 1))}
-              disabled={safePage <= 1}
-              title="Previous page"
-            >
-              ‹
-            </button>
-            <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-              {safePage}/{totalPages}
-            </span>
-            <button
-              type="button"
-              className="pill-tab"
-              onClick={() => onPage(Math.min(totalPages, safePage + 1))}
-              disabled={safePage >= totalPages}
-              title="Next page"
-            >
-              ›
-            </button>
-            <button
-              type="button"
-              className="pill-tab"
-              onClick={() => onPage(totalPages)}
-              disabled={safePage >= totalPages}
-              title="Last page"
-            >
-              »
-            </button>
+            <div style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+              <button
+                type="button"
+                className="pill-tab"
+                onClick={() => onPage(1)}
+                disabled={safePage <= 1}
+                title="First page"
+              >
+                «
+              </button>
+              <button
+                type="button"
+                className="pill-tab"
+                onClick={() => onPage(Math.max(1, safePage - 1))}
+                disabled={safePage <= 1}
+                title="Previous page"
+              >
+                ‹
+              </button>
+              <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
+                {safePage}/{totalPages}
+              </span>
+              <button
+                type="button"
+                className="pill-tab"
+                onClick={() => onPage(Math.min(totalPages, safePage + 1))}
+                disabled={safePage >= totalPages}
+                title="Next page"
+              >
+                ›
+              </button>
+              <button
+                type="button"
+                className="pill-tab"
+                onClick={() => onPage(totalPages)}
+                disabled={safePage >= totalPages}
+                title="Last page"
+              >
+                »
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="ranking-table-scroll hide-scrollbar" tabIndex={0} aria-label={tableAriaLabel}>
@@ -1078,17 +1117,13 @@ function Table({
                   <td
                     className="ranking-sticky-col ranking-sticky-col-2"
                     style={{ textAlign: 'left' }}
-                    title={
-                      r.clientName || r.clientId
-                        ? `${String(r.clientName || '—')}\n${String(r.clientId || '')}`.trim()
-                        : undefined
-                    }
+                    title={resolveEntityTitle(r)}
                   >
                     <div style={{ fontWeight: 850, color: 'var(--text-primary)' }}>
-                      {r.clientName || '—'}
+                      {resolveEntityPrimaryText(r)}
                     </div>
                     <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>
-                      {r.clientId || ''}
+                      {resolveEntitySecondaryText(r)}
                     </div>
                   </td>
                   {showAgentColumn ? (
@@ -2116,9 +2151,28 @@ export default function ProfitableRanking({
   initialState = null,
   segmentsOnly = false,
   definitionKey = 'traders',
+  publicVariant = '',
 } = {}) {
   const rankingDefinition = RANKING_DEFINITIONS[definitionKey] || RANKING_DEFINITIONS.traders
   const definitionFilters = rankingDefinition.filters || {}
+  const contestEmbedMode = useMemo(() => {
+    if (!publicMode) return false
+
+    const explicitVariant = String(publicVariant || initialState?.sv || '')
+      .trim()
+      .toLowerCase()
+    if (explicitVariant === 'contest' || explicitVariant === 'embed') return true
+
+    if (typeof window === 'undefined') return false
+    const params = new window.URLSearchParams(window.location.search)
+    const view = String(params.get('view') || '')
+      .trim()
+      .toLowerCase()
+    const embed = String(params.get('embed') || '')
+      .trim()
+      .toLowerCase()
+    return view === 'contest' || embed === '1' || embed === 'true'
+  }, [initialState?.sv, publicMode, publicVariant])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fileName, setFileName] = useState('')
@@ -2615,7 +2669,12 @@ export default function ProfitableRanking({
     for (const t of rankingDefinition.tabConfigs || []) out[t.key] = 1
     return out
   })
-  const [pageSize, setPageSize] = useState(50)
+  const [pageSize, setPageSize] = useState(() => (contestEmbedMode ? 10 : 50))
+
+  useEffect(() => {
+    if (!contestEmbedMode) return
+    if (pageSize !== 10) setPageSize(10)
+  }, [contestEmbedMode, pageSize])
 
   const createRankingShareToken = useCallback(async (payload) => {
     if (typeof window === 'undefined') return null
@@ -2727,7 +2786,7 @@ export default function ProfitableRanking({
         tf: String(timeframe || 'all'),
         y: Number.isFinite(Number(selectedYear)) ? Number(selectedYear) : null,
         mk: String(selectedMonthKey || '').trim(),
-        sv: segmentsView ? 'segments' : '',
+        sv: segmentsView ? 'segments' : contestEmbedMode ? 'contest' : '',
       },
     }),
     [
@@ -2740,6 +2799,7 @@ export default function ProfitableRanking({
       selectedMonthKey,
       selectedYear,
       timeframe,
+      contestEmbedMode,
     ]
   )
 
@@ -2775,6 +2835,42 @@ export default function ProfitableRanking({
     const href = `${shareData.shareOrigin}/share/profitable-ranking/${encodeURIComponent(shareData.token)}`
     await openPublicShareLink(href)
   }, [buildCurrentRankingSharePayload, createRankingShareToken, openPublicShareLink])
+
+  const onCopyContestEmbedLink = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const payload = buildCurrentRankingSharePayload({ segmentsView: false })
+    payload.s.sv = 'contest'
+
+    const shareData = await createRankingShareToken(payload)
+    if (!shareData?.token) return
+
+    const hrefBase = `${shareData.shareOrigin}/share/profitable-ranking/${encodeURIComponent(shareData.token)}`
+    let href = hrefBase
+    try {
+      const url = new URL(hrefBase)
+      url.searchParams.set('view', 'contest')
+      url.searchParams.set('embed', '1')
+      href = url.toString()
+    } catch {
+      href = `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}view=contest&embed=1`
+    }
+
+    let copied = false
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(href)
+        copied = true
+      }
+    } catch {
+      // ignore
+    }
+
+    window.alert(
+      copied
+        ? `Contest embed link copied:\n\n${href}`
+        : `Use this contest embed link in your iframe:\n\n${href}`
+    )
+  }, [buildCurrentRankingSharePayload, createRankingShareToken])
 
   useEffect(() => {
     // Reset paging when tab changes
@@ -3341,10 +3437,18 @@ export default function ProfitableRanking({
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div>
-                  <p className="page-label">{rankingDefinition.sectionLabel}</p>
-                  <h1 className="page-title">{rankingDefinition.pageTitle}</h1>
+                  <p className="page-label">
+                    {contestEmbedMode ? 'Bullwaves Contest' : rankingDefinition.sectionLabel}
+                  </p>
+                  <h1 className="page-title">
+                    {contestEmbedMode
+                      ? 'Monthly Challenge Leaderboard'
+                      : rankingDefinition.pageTitle}
+                  </h1>
                   <p className="page-subtitle" style={{ maxWidth: 780 }}>
-                    {rankingDefinition.pageSubtitle}
+                    {contestEmbedMode
+                      ? 'Iframe-ready public leaderboard for website embeds, with masked competitor names.'
+                      : rankingDefinition.pageSubtitle}
                   </p>
                 </div>
 
@@ -3367,15 +3471,28 @@ export default function ProfitableRanking({
                   ) : null}
 
                   {!publicMode ? (
-                    <button
-                      type="button"
-                      className="pill-tab"
-                      onClick={onShareCurrentRankingPage}
-                      disabled={loading || !dataset}
-                      title="Open a public page for the current ranking view"
-                    >
-                      Share Public Page
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        className="pill-tab"
+                        onClick={onShareCurrentRankingPage}
+                        disabled={loading || !dataset}
+                        title="Open a public page for the current ranking view"
+                      >
+                        Share Public Page
+                      </button>
+                      {rankingDefinition.key === 'prime_challenge' ? (
+                        <button
+                          type="button"
+                          className="pill-tab active"
+                          onClick={onCopyContestEmbedLink}
+                          disabled={loading || !dataset}
+                          title="Copy an iframe-ready contest link for your website"
+                        >
+                          Copy Contest Embed
+                        </button>
+                      ) : null}
+                    </>
                   ) : null}
 
                   {dataset ? (
@@ -3392,12 +3509,14 @@ export default function ProfitableRanking({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+                    gridTemplateColumns: contestEmbedMode
+                      ? 'repeat(3, minmax(0, 1fr))'
+                      : 'repeat(4, minmax(0, 1fr))',
                     gap: 8,
                     width: '100%',
                   }}
                 >
-                  {kpis.map((kpi) => (
+                  {(contestEmbedMode ? kpis.slice(0, 3) : kpis).map((kpi) => (
                     <KpiCard
                       key={kpi.label}
                       label={kpi.label}
@@ -3413,409 +3532,413 @@ export default function ProfitableRanking({
             </header>
           </div>
 
-          <div className="ranking-controls">
-            <div
-              style={{
-                display: 'flex',
-                gap: 10,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                marginBottom: 6,
-              }}
-            >
-              <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 900 }}>
-                Timeframe
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className={`pill-tab${timeframe === 'all' ? ' active' : ''}`}
-                  onClick={() => {
-                    deferAfterUpdate(() => setTimeframe('all'))
-                  }}
-                  disabled={!dataset}
-                  title="Show all available data"
-                >
-                  All Time
-                </button>
-
-                <button
-                  type="button"
-                  className={`pill-tab${timeframe === 'last12' ? ' active' : ''}`}
-                  onClick={() => {
-                    deferAfterUpdate(() => setTimeframe('last12'))
-                  }}
-                  disabled={!dataset}
-                  title="Show only the last 12 months of data"
-                >
-                  Last 12 Months
-                </button>
-
-                {periodAvailable ? (
-                  <select
-                    className={`pill-tab${timeframe === 'year' ? ' active' : ''}`}
-                    value={selectedYear == null ? '' : String(selectedYear)}
-                    onFocus={() => {
-                      deferAfterUpdate(() => setTimeframe('year'))
-                    }}
-                    onChange={(e) => {
-                      const nextYear = Number(e.target.value)
-                      deferAfterUpdate(() => {
-                        setSelectedYear(nextYear)
-                        setTimeframe('year')
-                      })
-                    }}
-                    disabled={!dataset || !yearOptions.length}
-                    title="Filter by year"
-                  >
-                    {yearOptions.map((y) => (
-                      <option key={String(y)} value={String(y)}>
-                        {y}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-
-                {periodAvailable ? (
-                  <select
-                    className={`pill-tab${timeframe === 'month' ? ' active' : ''}`}
-                    value={selectedMonthKey}
-                    onFocus={() => {
-                      deferAfterUpdate(() => setTimeframe('month'))
-                    }}
-                    onChange={(e) => {
-                      const nextKey = String(e.target.value)
-                      deferAfterUpdate(() => {
-                        setSelectedMonthKey(nextKey)
-                        setTimeframe('month')
-                      })
-                    }}
-                    disabled={!dataset || !monthOptions.length}
-                    title="Filter by month (YYYY-MM)"
-                  >
-                    {monthOptions.map((k) => (
-                      <option key={k} value={k}>
-                        {k}
-                      </option>
-                    ))}
-                  </select>
-                ) : null}
-
-                <button
-                  type="button"
-                  className="pill-tab ranking-collapse-toggle"
-                  onClick={() => setHeaderCollapsed((v) => !v)}
-                  title={headerCollapsed ? 'Expand header' : 'Collapse header'}
-                >
-                  {headerCollapsed ? 'Expand' : 'Collapse'}{' '}
-                  <span aria-hidden="true" style={{ fontWeight: 900 }}>
-                    {headerCollapsed ? '▾' : '▴'}
-                  </span>
-                </button>
-              </div>
-            </div>
-
-            {dataset && !periodAvailable ? (
+          {!contestEmbedMode ? (
+            <div className="ranking-controls">
               <div
                 style={{
-                  margin: '-2px 0 10px',
-                  color: 'var(--text-muted)',
-                  fontSize: 12,
-                  fontWeight: 800,
+                  display: 'flex',
+                  gap: 10,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  marginBottom: 6,
                 }}
               >
-                Month/Year not available in source data
-              </div>
-            ) : null}
+                <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 900 }}>
+                  Timeframe
+                </div>
 
-            <div className="ranking-tabs-row">
-              {tabConfigs.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  className={`pill-tab${activeTab === t.key ? ' active' : ''}`}
-                  onClick={() => {
-                    deferAfterUpdate(() => setActiveTab(t.key))
-                  }}
-                  disabled={!dataset}
-                  title={t.tooltip || ''}
-                >
-                  <span
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <span>{t.label}</span>
-                    {t.subtitle ? (
-                      <span
-                        style={{ fontSize: 11, fontWeight: 700, opacity: 0.78, lineHeight: 1.1 }}
-                      >
-                        {t.subtitle}
-                      </span>
-                    ) : null}
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                gap: 8,
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                marginTop: 10,
-              }}
-            >
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className={`pill-tab${filtersCollapsed ? '' : ' active'}`}
-                  onClick={() => setFiltersCollapsed((v) => !v)}
-                  disabled={!dataset}
-                  title={filtersCollapsed ? 'Show filters' : 'Hide filters'}
-                >
-                  {filtersCollapsed ? 'Show Filters' : 'Hide Filters'}
-                  {activeFiltersCount > 0 ? ` • ${fmtInt(activeFiltersCount)}` : ''}
-                </button>
-
-                {hasAnyFilterActive ? (
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    className="pill-tab active"
+                    className={`pill-tab${timeframe === 'all' ? ' active' : ''}`}
                     onClick={() => {
-                      triggerUpdate()
-                      setMinDeposit(0)
-                      setMinTrades(0)
-                      setActivityRecencyDays(0)
-                      setSelectedCountries([])
-                      setSelectedAgents([])
-                      setAgentSearch('')
+                      deferAfterUpdate(() => setTimeframe('all'))
                     }}
-                    title="Reset all filters"
+                    disabled={!dataset}
+                    title="Show all available data"
                   >
-                    Reset Filters
+                    All Time
                   </button>
-                ) : null}
+
+                  <button
+                    type="button"
+                    className={`pill-tab${timeframe === 'last12' ? ' active' : ''}`}
+                    onClick={() => {
+                      deferAfterUpdate(() => setTimeframe('last12'))
+                    }}
+                    disabled={!dataset}
+                    title="Show only the last 12 months of data"
+                  >
+                    Last 12 Months
+                  </button>
+
+                  {periodAvailable ? (
+                    <select
+                      className={`pill-tab${timeframe === 'year' ? ' active' : ''}`}
+                      value={selectedYear == null ? '' : String(selectedYear)}
+                      onFocus={() => {
+                        deferAfterUpdate(() => setTimeframe('year'))
+                      }}
+                      onChange={(e) => {
+                        const nextYear = Number(e.target.value)
+                        deferAfterUpdate(() => {
+                          setSelectedYear(nextYear)
+                          setTimeframe('year')
+                        })
+                      }}
+                      disabled={!dataset || !yearOptions.length}
+                      title="Filter by year"
+                    >
+                      {yearOptions.map((y) => (
+                        <option key={String(y)} value={String(y)}>
+                          {y}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+
+                  {periodAvailable ? (
+                    <select
+                      className={`pill-tab${timeframe === 'month' ? ' active' : ''}`}
+                      value={selectedMonthKey}
+                      onFocus={() => {
+                        deferAfterUpdate(() => setTimeframe('month'))
+                      }}
+                      onChange={(e) => {
+                        const nextKey = String(e.target.value)
+                        deferAfterUpdate(() => {
+                          setSelectedMonthKey(nextKey)
+                          setTimeframe('month')
+                        })
+                      }}
+                      disabled={!dataset || !monthOptions.length}
+                      title="Filter by month (YYYY-MM)"
+                    >
+                      {monthOptions.map((k) => (
+                        <option key={k} value={k}>
+                          {k}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
+
+                  <button
+                    type="button"
+                    className="pill-tab ranking-collapse-toggle"
+                    onClick={() => setHeaderCollapsed((v) => !v)}
+                    title={headerCollapsed ? 'Expand header' : 'Collapse header'}
+                  >
+                    {headerCollapsed ? 'Expand' : 'Collapse'}{' '}
+                    <span aria-hidden="true" style={{ fontWeight: 900 }}>
+                      {headerCollapsed ? '▾' : '▴'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
-              <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
-                {hasAnyFilterActive
-                  ? filterSummary.join(' • ')
-                  : 'No active filters. Table is showing the full ranking scope.'}
-              </div>
-            </div>
+              {dataset && !periodAvailable ? (
+                <div
+                  style={{
+                    margin: '-2px 0 10px',
+                    color: 'var(--text-muted)',
+                    fontSize: 12,
+                    fontWeight: 800,
+                  }}
+                >
+                  Month/Year not available in source data
+                </div>
+              ) : null}
 
-            {!filtersCollapsed ? (
+              <div className="ranking-tabs-row">
+                {tabConfigs.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    className={`pill-tab${activeTab === t.key ? ' active' : ''}`}
+                    onClick={() => {
+                      deferAfterUpdate(() => setActiveTab(t.key))
+                    }}
+                    disabled={!dataset}
+                    title={t.tooltip || ''}
+                  >
+                    <span
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                        alignItems: 'flex-start',
+                      }}
+                    >
+                      <span>{t.label}</span>
+                      {t.subtitle ? (
+                        <span
+                          style={{ fontSize: 11, fontWeight: 700, opacity: 0.78, lineHeight: 1.1 }}
+                        >
+                          {t.subtitle}
+                        </span>
+                      ) : null}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
               <div
                 style={{
+                  display: 'flex',
+                  gap: 8,
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
                   marginTop: 10,
-                  padding: '12px 14px',
-                  borderRadius: 14,
-                  background: 'rgba(255,255,255,0.025)',
-                  border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
-                <div className="ranking-filters-grid ranking-filters-grid--minimal">
-                  {definitionFilters.agents ? (
-                    <label
-                      className={`ranking-filter-field ranking-filter-field--agent${
-                        hasAgentFilter ? ' ranking-filter-field--active' : ''
-                      }`}
-                    >
-                      <span className="ranking-filter-label">Agent</span>
-                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                        <input
-                          type="text"
-                          className={`search-hero-input ranking-filter-input${
-                            String(agentSearch || '').trim() ? ' ranking-filter-input--active' : ''
-                          }`}
-                          value={agentSearch}
-                          onChange={(e) => setAgentSearch(String(e.target.value || ''))}
-                          placeholder="Search agents…"
-                          aria-label="Agent search"
-                        />
-                        <button
-                          type="button"
-                          className="pill-tab"
-                          onClick={() => {
-                            triggerUpdate()
-                            setSelectedAgents([])
-                            setAgentSearch('')
-                          }}
-                          disabled={!selectedAgents.length && !agentSearch}
-                          title="Clear agent selection"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <select
-                        multiple
-                        size={headerCollapsed ? 2 : 3}
-                        value={selectedAgents}
-                        onChange={(e) => {
-                          triggerUpdate()
-                          const next = []
-                          for (const opt of e.target.options) {
-                            if (opt.selected) next.push(opt.value)
-                          }
-                          setSelectedAgents(next)
-                        }}
-                        className={`search-hero-input ranking-filter-input ranking-filter-agents${
-                          hasAgentFilter ? ' ranking-filter-input--active' : ''
-                        }`}
-                        disabled={!agentOptions.length}
-                        aria-label="Agent filter"
-                        title="Filter by assigned agent (Ctrl/Cmd+Click to multi-select)"
-                      >
-                        {filteredAgentOptions.map((a) => (
-                          <option key={String(a)} value={String(a)}>
-                            {a}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  ) : null}
-
-                  {definitionFilters.minDeposit ? (
-                    <label
-                      className={`ranking-filter-field${hasMinDepositFilter ? ' ranking-filter-field--active' : ''}`}
-                    >
-                      <span className="ranking-filter-label">Min Deposit</span>
-                      <input
-                        type="number"
-                        className={`search-hero-input ranking-filter-input${
-                          hasMinDepositFilter ? ' ranking-filter-input--active' : ''
-                        }`}
-                        value={minDeposit}
-                        onChange={(e) => {
-                          triggerUpdate()
-                          setMinDeposit(Number(e.target.value || 0))
-                        }}
-                      />
-                    </label>
-                  ) : null}
-
-                  <label
-                    className={`ranking-filter-field${hasMinTradesFilter ? ' ranking-filter-field--active' : ''}`}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className={`pill-tab${filtersCollapsed ? '' : ' active'}`}
+                    onClick={() => setFiltersCollapsed((v) => !v)}
+                    disabled={!dataset}
+                    title={filtersCollapsed ? 'Show filters' : 'Hide filters'}
                   >
-                    <span className="ranking-filter-label">Min Trades</span>
-                    <input
-                      type="number"
-                      className={`search-hero-input ranking-filter-input${
-                        hasMinTradesFilter ? ' ranking-filter-input--active' : ''
-                      }`}
-                      value={minTrades}
-                      onChange={(e) => {
-                        triggerUpdate()
-                        setMinTrades(Number(e.target.value || 0))
-                      }}
-                    />
-                  </label>
+                    {filtersCollapsed ? 'Show Filters' : 'Hide Filters'}
+                    {activeFiltersCount > 0 ? ` • ${fmtInt(activeFiltersCount)}` : ''}
+                  </button>
 
-                  {definitionFilters.countries ? (
-                    <label
-                      className={`ranking-filter-field ranking-filter-field--countries${
-                        hasCountryFilter ? ' ranking-filter-field--active' : ''
-                      }`}
+                  {hasAnyFilterActive ? (
+                    <button
+                      type="button"
+                      className="pill-tab active"
+                      onClick={() => {
+                        triggerUpdate()
+                        setMinDeposit(0)
+                        setMinTrades(0)
+                        setActivityRecencyDays(0)
+                        setSelectedCountries([])
+                        setSelectedAgents([])
+                        setAgentSearch('')
+                      }}
+                      title="Reset all filters"
                     >
-                      <span className="ranking-filter-label">Countries (Ctrl/Cmd+Click)</span>
-                      <select
-                        multiple
-                        size={headerCollapsed ? 2 : 3}
-                        value={selectedCountries}
-                        onChange={(e) => {
-                          triggerUpdate()
-                          const next = []
-                          for (const opt of e.target.options) {
-                            if (opt.selected) next.push(opt.value)
-                          }
-                          setSelectedCountries(next)
-                        }}
-                        className={`search-hero-input ranking-filter-input ranking-filter-countries${
-                          hasCountryFilter ? ' ranking-filter-input--active' : ''
-                        }`}
-                        disabled={!countryOptions.length}
-                        aria-label="Country filter"
-                      >
-                        {countryOptions.map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                      Reset Filters
+                    </button>
                   ) : null}
                 </div>
 
-                {dataset && definitionFilters.agents ? (
-                  <div
-                    style={{
-                      margin: '10px 0 0',
-                      color: 'var(--text-muted)',
-                      fontSize: 12,
-                      fontWeight: 900,
-                    }}
-                  >
-                    Agent: {agentSummaryText}
-                  </div>
-                ) : null}
+                <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
+                  {hasAnyFilterActive
+                    ? filterSummary.join(' • ')
+                    : 'No active filters. Table is showing the full ranking scope.'}
+                </div>
+              </div>
 
+              {!filtersCollapsed ? (
                 <div
-                  className="profitable-ranking-collapsible profitable-ranking-collapsible--advanced"
-                  style={{ marginTop: 10 }}
+                  style={{
+                    marginTop: 10,
+                    padding: '12px 14px',
+                    borderRadius: 14,
+                    background: 'rgba(255,255,255,0.025)',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
                 >
-                  <div className="ranking-filters-grid ranking-filters-grid--advanced">
-                    {definitionFilters.activityRecency ? (
+                  <div className="ranking-filters-grid ranking-filters-grid--minimal">
+                    {definitionFilters.agents ? (
                       <label
-                        className={`ranking-filter-field${
-                          hasActivityRecencyFilter ? ' ranking-filter-field--active' : ''
+                        className={`ranking-filter-field ranking-filter-field--agent${
+                          hasAgentFilter ? ' ranking-filter-field--active' : ''
                         }`}
                       >
-                        <span className="ranking-filter-label">Activity Recency</span>
+                        <span className="ranking-filter-label">Agent</span>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          <input
+                            type="text"
+                            className={`search-hero-input ranking-filter-input${
+                              String(agentSearch || '').trim()
+                                ? ' ranking-filter-input--active'
+                                : ''
+                            }`}
+                            value={agentSearch}
+                            onChange={(e) => setAgentSearch(String(e.target.value || ''))}
+                            placeholder="Search agents…"
+                            aria-label="Agent search"
+                          />
+                          <button
+                            type="button"
+                            className="pill-tab"
+                            onClick={() => {
+                              triggerUpdate()
+                              setSelectedAgents([])
+                              setAgentSearch('')
+                            }}
+                            disabled={!selectedAgents.length && !agentSearch}
+                            title="Clear agent selection"
+                          >
+                            ×
+                          </button>
+                        </div>
                         <select
-                          className={`search-hero-input ranking-filter-input${
-                            hasActivityRecencyFilter ? ' ranking-filter-input--active' : ''
-                          }`}
-                          value={String(activityRecencyDays)}
+                          multiple
+                          size={headerCollapsed ? 2 : 3}
+                          value={selectedAgents}
                           onChange={(e) => {
                             triggerUpdate()
-                            setActivityRecencyDays(Number(e.target.value || 0))
+                            const next = []
+                            for (const opt of e.target.options) {
+                              if (opt.selected) next.push(opt.value)
+                            }
+                            setSelectedAgents(next)
                           }}
-                          aria-label="Activity recency filter"
+                          className={`search-hero-input ranking-filter-input ranking-filter-agents${
+                            hasAgentFilter ? ' ranking-filter-input--active' : ''
+                          }`}
+                          disabled={!agentOptions.length}
+                          aria-label="Agent filter"
+                          title="Filter by assigned agent (Ctrl/Cmd+Click to multi-select)"
                         >
-                          <option value="0">Any</option>
-                          <option value="7">Last 7 days</option>
-                          <option value="30">Last 30 days</option>
-                          <option value="90">Last 90 days</option>
-                          <option value="365">Last 12 months</option>
+                          {filteredAgentOptions.map((a) => (
+                            <option key={String(a)} value={String(a)}>
+                              {a}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : null}
+
+                    {definitionFilters.minDeposit ? (
+                      <label
+                        className={`ranking-filter-field${hasMinDepositFilter ? ' ranking-filter-field--active' : ''}`}
+                      >
+                        <span className="ranking-filter-label">Min Deposit</span>
+                        <input
+                          type="number"
+                          className={`search-hero-input ranking-filter-input${
+                            hasMinDepositFilter ? ' ranking-filter-input--active' : ''
+                          }`}
+                          value={minDeposit}
+                          onChange={(e) => {
+                            triggerUpdate()
+                            setMinDeposit(Number(e.target.value || 0))
+                          }}
+                        />
+                      </label>
+                    ) : null}
+
+                    <label
+                      className={`ranking-filter-field${hasMinTradesFilter ? ' ranking-filter-field--active' : ''}`}
+                    >
+                      <span className="ranking-filter-label">Min Trades</span>
+                      <input
+                        type="number"
+                        className={`search-hero-input ranking-filter-input${
+                          hasMinTradesFilter ? ' ranking-filter-input--active' : ''
+                        }`}
+                        value={minTrades}
+                        onChange={(e) => {
+                          triggerUpdate()
+                          setMinTrades(Number(e.target.value || 0))
+                        }}
+                      />
+                    </label>
+
+                    {definitionFilters.countries ? (
+                      <label
+                        className={`ranking-filter-field ranking-filter-field--countries${
+                          hasCountryFilter ? ' ranking-filter-field--active' : ''
+                        }`}
+                      >
+                        <span className="ranking-filter-label">Countries (Ctrl/Cmd+Click)</span>
+                        <select
+                          multiple
+                          size={headerCollapsed ? 2 : 3}
+                          value={selectedCountries}
+                          onChange={(e) => {
+                            triggerUpdate()
+                            const next = []
+                            for (const opt of e.target.options) {
+                              if (opt.selected) next.push(opt.value)
+                            }
+                            setSelectedCountries(next)
+                          }}
+                          className={`search-hero-input ranking-filter-input ranking-filter-countries${
+                            hasCountryFilter ? ' ranking-filter-input--active' : ''
+                          }`}
+                          disabled={!countryOptions.length}
+                          aria-label="Country filter"
+                        >
+                          {countryOptions.map((c) => (
+                            <option key={c} value={c}>
+                              {c}
+                            </option>
+                          ))}
                         </select>
                       </label>
                     ) : null}
                   </div>
-                </div>
-              </div>
-            ) : null}
 
-            {dataset && definitionFilters.agents && filtersCollapsed ? (
-              <div
-                style={{
-                  margin: '6px 0 0',
-                  color: 'var(--text-muted)',
-                  fontSize: 12,
-                  fontWeight: 900,
-                }}
-              >
-                Agent: {agentSummaryText}
-              </div>
-            ) : null}
-          </div>
+                  {dataset && definitionFilters.agents ? (
+                    <div
+                      style={{
+                        margin: '10px 0 0',
+                        color: 'var(--text-muted)',
+                        fontSize: 12,
+                        fontWeight: 900,
+                      }}
+                    >
+                      Agent: {agentSummaryText}
+                    </div>
+                  ) : null}
+
+                  <div
+                    className="profitable-ranking-collapsible profitable-ranking-collapsible--advanced"
+                    style={{ marginTop: 10 }}
+                  >
+                    <div className="ranking-filters-grid ranking-filters-grid--advanced">
+                      {definitionFilters.activityRecency ? (
+                        <label
+                          className={`ranking-filter-field${
+                            hasActivityRecencyFilter ? ' ranking-filter-field--active' : ''
+                          }`}
+                        >
+                          <span className="ranking-filter-label">Activity Recency</span>
+                          <select
+                            className={`search-hero-input ranking-filter-input${
+                              hasActivityRecencyFilter ? ' ranking-filter-input--active' : ''
+                            }`}
+                            value={String(activityRecencyDays)}
+                            onChange={(e) => {
+                              triggerUpdate()
+                              setActivityRecencyDays(Number(e.target.value || 0))
+                            }}
+                            aria-label="Activity recency filter"
+                          >
+                            <option value="0">Any</option>
+                            <option value="7">Last 7 days</option>
+                            <option value="30">Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="365">Last 12 months</option>
+                          </select>
+                        </label>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {dataset && definitionFilters.agents && filtersCollapsed ? (
+                <div
+                  style={{
+                    margin: '6px 0 0',
+                    color: 'var(--text-muted)',
+                    fontSize: 12,
+                    fontWeight: 900,
+                  }}
+                >
+                  Agent: {agentSummaryText}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {error ? (
             <div
@@ -3913,7 +4036,23 @@ export default function ProfitableRanking({
                 tableAriaLabel={rankingDefinition.tableAriaLabel}
                 showAgentColumn={Boolean(definitionFilters.agents)}
                 showCountryColumn={Boolean(definitionFilters.countries)}
-                totalRow={totalRow}
+                totalRow={contestEmbedMode ? null : totalRow}
+                compactMode={contestEmbedMode}
+                getEntityPrimaryText={(row) =>
+                  contestEmbedMode
+                    ? maskContestDisplayName(row?.clientName)
+                    : row?.clientName || '—'
+                }
+                getEntitySecondaryText={(row) =>
+                  contestEmbedMode ? row?.country || '' : row?.clientId || ''
+                }
+                getEntityTitle={(row) =>
+                  contestEmbedMode
+                    ? undefined
+                    : row?.clientName || row?.clientId
+                      ? `${String(row?.clientName || '—')}\n${String(row?.clientId || '')}`.trim()
+                      : undefined
+                }
               />
             </>
           ) : (

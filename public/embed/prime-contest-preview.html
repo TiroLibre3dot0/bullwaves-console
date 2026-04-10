@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bullwaves Prime Contest Preview</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(180deg, #030712 0%, #0f172a 100%);
+        font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        color: #e5edf7;
+      }
+      .page {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 48px 20px 72px;
+      }
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #86a8ff;
+        font-weight: 800;
+      }
+      h1 {
+        margin: 14px 0 10px;
+        font-size: clamp(34px, 5vw, 64px);
+        line-height: 0.95;
+      }
+      p {
+        margin: 0 0 24px;
+        max-width: 760px;
+        color: #9db0c7;
+        font-size: 16px;
+        line-height: 1.6;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="eyebrow">Bullwaves Embed Preview</div>
+      <h1>Prime Challenge Widget</h1>
+      <p>
+        This page is the live preview for the JS embed version. If this looks right here,
+        the same widget can be mounted inside Webflow with the script snippet only.
+      </p>
+
+      <div
+        data-bw-prime-contest
+        data-limit="10"
+        data-title="Prime Challenge Leaderboard"
+        data-subtitle="Latest monthly payout ranking"
+        data-cta-label="Explore Prime"
+        data-cta-url="https://prime.bullwaves.com/"
+      ></div>
+    </main>
+
+    <script src="/embed/prime-contest.js"></script>
+  </body>
+  </html>

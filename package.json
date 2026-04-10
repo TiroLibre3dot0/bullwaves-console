@@ -29,6 +29,7 @@
     "generate:fraud-patterns-index": "node scripts/generate_fraud_patterns_index.js",
     "generate:affiliate-kpi-index": "node scripts/generate_affiliate_kpi_index.js",
     "generate:trustpilot-guidance": "node scripts/generate_trustpilot_guidance.js",
+    "generate:prime-contest-embed": "node scripts/generate_prime_contest_embed.js",
     "sendgrid:templates:plan": "node scripts/sendgrid_sync_templates.mjs --dry-run",
     "sendgrid:templates:sync": "node scripts/sendgrid_sync_templates.mjs --apply",
     "trustpilot:sync": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/sync_trustpilot_guidance.ps1",

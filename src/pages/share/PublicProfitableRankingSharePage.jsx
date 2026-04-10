@@ -69,6 +69,19 @@ function buildInitialStateFromPayload(payload) {
 
 export default function PublicProfitableRankingSharePage({ token }) {
   const cleanToken = useMemo(() => String(token || '').trim(), [token])
+  const urlVariant = useMemo(() => {
+    if (typeof window === 'undefined') return ''
+    const params = new window.URLSearchParams(window.location.search)
+    const view = String(params.get('view') || '')
+      .trim()
+      .toLowerCase()
+    const embed = String(params.get('embed') || '')
+      .trim()
+      .toLowerCase()
+    if (view === 'contest') return 'contest'
+    if (embed === '1' || embed === 'true') return 'contest'
+    return ''
+  }, [])
   const looksLikeToken = useMemo(() => {
     const t = cleanToken
     return (t.startsWith('share_') || t.startsWith('share_local_')) && t.length <= 96
@@ -129,6 +142,14 @@ export default function PublicProfitableRankingSharePage({ token }) {
   }, [cleanToken, looksLikeToken])
 
   const initialState = useMemo(() => buildInitialStateFromPayload(payload), [payload])
+  const resolvedInitialState = useMemo(() => {
+    if (!initialState) return null
+    if (!urlVariant) return initialState
+    return {
+      ...initialState,
+      sv: urlVariant,
+    }
+  }, [initialState, urlVariant])
   const isValid = Boolean(initialState)
   const shareMeta = useMemo(() => {
     if (!isValid) {
@@ -138,7 +159,17 @@ export default function PublicProfitableRankingSharePage({ token }) {
       }
     }
 
-    if (initialState?.definitionKey === 'prime_challenge') {
+    if (
+      resolvedInitialState?.definitionKey === 'prime_challenge' &&
+      resolvedInitialState?.sv === 'contest'
+    ) {
+      return {
+        title: 'Bullwaves — Prime Challenge Contest',
+        description: 'Public Bullwaves contest leaderboard, optimized for website embeds.',
+      }
+    }
+
+    if (resolvedInitialState?.definitionKey === 'prime_challenge') {
       return {
         title: 'Bullwaves — Prime Challenge Ranking',
         description: 'Public Bullwaves share for the Prime Challenge payout ranking.',
@@ -149,7 +180,7 @@ export default function PublicProfitableRankingSharePage({ token }) {
       title: 'Bullwaves — Profitable Traders Ranking',
       description: 'Public Bullwaves share for the profitable traders ranking.',
     }
-  }, [initialState?.definitionKey, isValid])
+  }, [resolvedInitialState?.definitionKey, resolvedInitialState?.sv, isValid])
 
   useEffect(() => {
     if (!isValid) return
@@ -191,8 +222,9 @@ export default function PublicProfitableRankingSharePage({ token }) {
   return (
     <ProfitableRanking
       publicMode
-      initialState={initialState}
-      definitionKey={initialState?.definitionKey || 'traders'}
+      initialState={resolvedInitialState}
+      definitionKey={resolvedInitialState?.definitionKey || 'traders'}
+      publicVariant={resolvedInitialState?.sv || ''}
     />
   )
 }
