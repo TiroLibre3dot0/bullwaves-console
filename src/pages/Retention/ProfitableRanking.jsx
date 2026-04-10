@@ -451,14 +451,21 @@ function totalWithdrawalsColumn({
   label = 'WD',
   help = 'Total withdrawals from the source report.',
   width = 110,
+  key = 'totalWithdrawals',
+  align = 'right',
+  render,
+  headerStyle,
+  cellStyle,
 } = {}) {
   return {
-    key: 'totalWithdrawals',
+    key,
     label,
     help,
-    align: 'right',
+    align,
     width,
-    render: (r) => fmtMoney0(r.totalWithdrawals),
+    headerStyle,
+    cellStyle,
+    render: (r) => (typeof render === 'function' ? render(r) : fmtMoney0(r.totalWithdrawals)),
   }
 }
 
@@ -784,6 +791,7 @@ function Table({
   tableAriaLabel = 'Ranking list',
   showAgentColumn = true,
   showCountryColumn = true,
+  totalRow = null,
 }) {
   const safeColumns = Array.isArray(columns) ? columns : []
   const total = rows.length
@@ -797,7 +805,7 @@ function Table({
     if (page !== safePage) onPage(safePage)
   }, [onPage, page, safePage])
 
-  const SortTh = ({ label, colKey, align = 'right', width, help }) => {
+  const SortTh = ({ label, colKey, align = 'right', width, help, headerStyle }) => {
     const isActive = sortState.key === colKey
     const arrow = isActive ? (sortState.dir === 'asc' ? '▲' : '▼') : ''
 
@@ -826,6 +834,7 @@ function Table({
           userSelect: 'none',
           textAlign: align,
           width,
+          ...(headerStyle || {}),
         }}
         title={title}
       >
@@ -954,9 +963,102 @@ function Table({
                   align={c.align || 'right'}
                   width={c.width}
                   help={c.help}
+                  headerStyle={c.headerStyle}
                 />
               ))}
             </tr>
+            {totalRow ? (
+              <tr>
+                <th
+                  className="ranking-sticky-col ranking-sticky-col-1"
+                  style={{
+                    textAlign: 'left',
+                    background: 'rgb(15, 23, 42)',
+                    borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                    color: '#fbbf24',
+                    fontWeight: 900,
+                  }}
+                  title="Aggregated totals for the current filtered ranking"
+                >
+                  Total
+                </th>
+                <th
+                  className="ranking-sticky-col ranking-sticky-col-2"
+                  style={{
+                    textAlign: 'left',
+                    background: 'rgb(15, 23, 42)',
+                    borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                  }}
+                  title={totalRow.description || undefined}
+                >
+                  <div style={{ fontWeight: 900, color: 'var(--text-primary)' }}>
+                    {totalRow.label || 'Filtered total'}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 700 }}>
+                    {totalRow.description || ''}
+                  </div>
+                </th>
+                {showAgentColumn ? (
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      background: 'rgb(15, 23, 42)',
+                      borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                    }}
+                  >
+                    {totalRow.agentUser || '—'}
+                  </th>
+                ) : null}
+                {showCountryColumn ? (
+                  <th
+                    style={{
+                      textAlign: 'left',
+                      background: 'rgb(15, 23, 42)',
+                      borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                    }}
+                  >
+                    {totalRow.country || '—'}
+                  </th>
+                ) : null}
+                {safeColumns.map((c) => {
+                  const totalMetricRow = totalRow.values || {}
+                  const cellTitle =
+                    typeof c.getTitle === 'function'
+                      ? c.getTitle(totalMetricRow)
+                      : c.help || undefined
+                  const isNumeric = (c.align || 'right') === 'right'
+                  const resolvedCellStyle =
+                    typeof c.cellStyle === 'function'
+                      ? c.cellStyle(totalMetricRow)
+                      : c.cellStyle || null
+                  const totalCellStyle = resolvedCellStyle ? { ...resolvedCellStyle } : null
+                  if (totalCellStyle?.background) {
+                    if (String(c.key) === 'primaryPayoutAmount') {
+                      totalCellStyle.background = 'rgb(12, 58, 36)'
+                    } else {
+                      totalCellStyle.background = 'rgb(15, 23, 42)'
+                    }
+                  }
+                  return (
+                    <th
+                      key={`total-${String(c.key)}`}
+                      className={isNumeric ? 'ranking-td-numeric' : undefined}
+                      style={{
+                        textAlign: c.align || 'right',
+                        background: 'rgb(15, 23, 42)',
+                        borderBottom: '1px solid rgba(245, 158, 11, 0.2)',
+                        ...(totalCellStyle || {}),
+                      }}
+                      title={cellTitle || undefined}
+                    >
+                      {typeof c.render === 'function'
+                        ? c.render(totalMetricRow)
+                        : String(totalMetricRow?.[c.key] ?? '—')}
+                    </th>
+                  )
+                })}
+              </tr>
+            ) : null}
           </thead>
           <tbody>
             {pageRows.map((r, i) => {
@@ -1013,11 +1115,13 @@ function Table({
                       const cellTitle =
                         typeof c.getTitle === 'function' ? c.getTitle(r) : c.help || undefined
                       const isNumeric = (c.align || 'right') === 'right'
+                      const resolvedCellStyle =
+                        typeof c.cellStyle === 'function' ? c.cellStyle(r) : c.cellStyle || null
                       return (
                         <td
                           key={String(c.key)}
                           className={isNumeric ? 'ranking-td-numeric' : undefined}
-                          style={{ textAlign: c.align || 'right' }}
+                          style={{ textAlign: c.align || 'right', ...(resolvedCellStyle || {}) }}
                           title={cellTitle || undefined}
                         >
                           {typeof c.render === 'function' ? c.render(r) : String(r?.[c.key] ?? '—')}
@@ -1394,11 +1498,45 @@ const PRIME_TAB_CONFIGS = [
   {
     key: 'payout_users',
     label: 'Payout Users',
-    subtitle: 'Positive P&L users and explicit payout cases.',
-    tooltip: 'Prime clients with positive P&L or explicit payout signals.',
-    defaultSort: { key: 'closedPL', dir: 'desc' },
+    subtitle: 'Prime clients ranked primarily by payout volume.',
+    tooltip: 'Prime clients ranked primarily by payout volume.',
+    defaultSort: { key: 'primaryPayoutAmount', dir: 'desc' },
     columns: [
       payoutSignalColumn(),
+      totalWithdrawalsColumn({
+        key: 'primaryPayoutAmount',
+        label: 'WD / Payout',
+        help: 'Primary ranking metric for Prime Challenge. WD is aligned to payout volume in this view.',
+        align: 'center',
+        width: 160,
+        headerStyle: {
+          color: '#22c55e',
+          fontWeight: 900,
+          textAlign: 'center',
+        },
+        cellStyle: {
+          background: 'rgba(34, 197, 94, 0.12)',
+          boxShadow: 'inset 0 0 0 1px rgba(34, 197, 94, 0.24)',
+          textAlign: 'center',
+        },
+        render: (r) => (
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: 94,
+              padding: '4px 8px',
+              borderRadius: 999,
+              background: 'rgba(34, 197, 94, 0.18)',
+              color: '#ffffff',
+              fontWeight: 900,
+            }}
+          >
+            {fmtMoney0(r.primaryPayoutAmount)}
+          </span>
+        ),
+      }),
       sourceStatusColumn(),
       {
         key: 'closedPL',
@@ -1448,20 +1586,6 @@ const PRIME_TAB_CONFIGS = [
         align: 'right',
         width: 110,
         render: (r) => fmtMoney0(r.totalDeposit),
-      },
-      totalWithdrawalsColumn({
-        label: 'WD',
-        help: 'Total withdrawals from the Prime report.',
-        width: 110,
-      }),
-      {
-        key: 'payoutAmount',
-        label: 'Payout Amount',
-        help: 'Explicit payout amount when present in the Prime source.',
-        align: 'right',
-        width: 130,
-        requires: 'primePayoutAmount',
-        render: (r) => (Number(r?.payoutAmount || 0) ? fmtMoney0(r.payoutAmount) : '—'),
       },
     ],
   },
@@ -1541,7 +1665,7 @@ const RANKING_DEFINITIONS = {
     kpis(summary, dataset) {
       return [
         { label: 'Payout Users', value: fmtInt(summary?.totalTraders || 0) },
-        { label: 'Closed PL', value: fmtMoney0(summary?.totalClosedPL || 0) },
+        { label: 'Total Payouts', value: fmtMoney0(summary?.totalPayoutAmount || 0) },
         { label: 'Total Trades', value: fmtInt(summary?.totalTrades || 0) },
         { label: 'Countries', value: fmtInt(dataset?.countries?.length || 0) },
       ]
@@ -2665,22 +2789,17 @@ export default function ProfitableRanking({
     return clients.some((c) => Number.isFinite(Number(c?.depositCount)))
   }, [dataset?.clients])
 
-  const hasPrimePayoutAmountColumn = useMemo(() => {
-    return Boolean(dataset?.schema?.payout_amount)
-  }, [dataset?.schema?.payout_amount])
-
   const tabConfigs = useMemo(() => {
     return (rankingDefinition.tabConfigs || []).map((t) => {
       const safeCols = Array.isArray(t.columns) ? t.columns : []
       const cols = safeCols.filter((c) => {
         if (c?.requires === 'depositCount' && !hasDepositCount) return false
         if (c?.excludes === 'depositCount' && hasDepositCount) return false
-        if (c?.requires === 'primePayoutAmount' && !hasPrimePayoutAmountColumn) return false
         return true
       })
       return { ...t, columns: cols }
     })
-  }, [hasDepositCount, hasPrimePayoutAmountColumn, rankingDefinition.tabConfigs])
+  }, [hasDepositCount, rankingDefinition.tabConfigs])
 
   const agentOptions = useMemo(() => {
     const list = Array.isArray(dataset?.agentUsers) ? dataset.agentUsers : []
@@ -2885,8 +3004,53 @@ export default function ProfitableRanking({
       tieBreakers.push({ key: 'netDeposit', dir: 'desc' }, { key: 'totalTrades', dir: 'desc' })
     }
 
+    if (activeTab === 'payout_users' && s.key === 'primaryPayoutAmount' && s.dir === 'desc') {
+      tieBreakers.push({ key: 'totalTrades', dir: 'desc' }, { key: 'closedPL', dir: 'desc' })
+    }
+
     return sortByKey(activeListWithSortKeys, s, tieBreakers)
   }, [activeListWithSortKeys, activeTab, activeTabConfig, sortByTab])
+
+  const totalRow = useMemo(() => {
+    if (rankingDefinition.sectionLabel !== 'Prime Challenge') return null
+    if (activeTab !== 'payout_users') return null
+    if (!sortedForDisplay.length) return null
+
+    const totals = sortedForDisplay.reduce(
+      (acc, row) => {
+        acc.primaryPayoutAmount += Number(row?.primaryPayoutAmount || 0)
+        acc.closedPL += Number(row?.closedPL || 0)
+        acc.openPL += Number(row?.openPL || 0)
+        acc.totalTrades += Number(row?.totalTrades || 0)
+        acc.netDeposit += Number(row?.netDeposit || 0)
+        acc.totalDeposit += Number(row?.totalDeposit || 0)
+        acc.totalWithdrawals += Number(row?.totalWithdrawals || 0)
+        return acc
+      },
+      {
+        primaryPayoutAmount: 0,
+        closedPL: 0,
+        openPL: 0,
+        totalTrades: 0,
+        netDeposit: 0,
+        totalDeposit: 0,
+        totalWithdrawals: 0,
+      }
+    )
+
+    return {
+      label: 'All filtered Prime clients',
+      description: `${fmtInt(sortedForDisplay.length)} clients aggregated`,
+      values: {
+        payoutSignalLabel: 'TOTAL',
+        sourceStatus: '—',
+        daysSinceLastTrade: null,
+        daysSinceLastTradeSort: null,
+        tradesPerMonth: null,
+        ...totals,
+      },
+    }
+  }, [activeTab, rankingDefinition.sectionLabel, sortedForDisplay])
 
   const setSort = (tabKey, colKey) => {
     setSortByTab((prev) => {
@@ -3749,6 +3913,7 @@ export default function ProfitableRanking({
                 tableAriaLabel={rankingDefinition.tableAriaLabel}
                 showAgentColumn={Boolean(definitionFilters.agents)}
                 showCountryColumn={Boolean(definitionFilters.countries)}
+                totalRow={totalRow}
               />
             </>
           ) : (

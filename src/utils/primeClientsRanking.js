@@ -332,12 +332,19 @@ export function buildPrimeRankingsV1({
       if (!Number.isFinite(d) || d > maxDays) continue
     }
 
+    const explicitPayoutAmount = Number(client?.payoutAmount || 0)
+    const fallbackWithdrawals = Number(metric?.totalWithdrawals || client?.totalWithdrawals || 0)
+    const primaryPayoutAmount =
+      explicitPayoutAmount > 0 ? explicitPayoutAmount : fallbackWithdrawals
+
     base.push({
       ...metric,
       brand: String(client?.brand || '').trim(),
       sourceStatus: String(client?.sourceStatus || '').trim(),
       payoutCount: Number(client?.payoutCount || 0),
-      payoutAmount: Number(client?.payoutAmount || 0),
+      payoutAmount: primaryPayoutAmount,
+      primaryPayoutAmount,
+      totalWithdrawals: primaryPayoutAmount,
       isPayoutUser: Boolean(client?.isPayoutUser),
       lastReportDate: client?.lastReportDate || null,
     })
@@ -350,10 +357,12 @@ export function buildPrimeRankingsV1({
       payoutSignalLabel: payoutSignalLabel(metric),
     }))
     .sort((a, b) => {
-      const closedDiff = Number(b.closedPL || 0) - Number(a.closedPL || 0)
-      if (closedDiff !== 0) return closedDiff
+      const payoutDiff = Number(b.primaryPayoutAmount || 0) - Number(a.primaryPayoutAmount || 0)
+      if (payoutDiff !== 0) return payoutDiff
       const tradeDiff = Number(b.totalTrades || 0) - Number(a.totalTrades || 0)
       if (tradeDiff !== 0) return tradeDiff
+      const closedDiff = Number(b.closedPL || 0) - Number(a.closedPL || 0)
+      if (closedDiff !== 0) return closedDiff
       return String(a.clientName || '').localeCompare(String(b.clientName || ''))
     })
 
@@ -363,6 +372,7 @@ export function buildPrimeRankingsV1({
       acc.totalTrades += Number(metric.totalTrades || 0)
       acc.totalClosedPL += Number(metric.closedPL || 0)
       acc.totalNetDeposits += Number(metric.netDeposit || 0)
+      acc.totalPayoutAmount += Number(metric.primaryPayoutAmount || 0)
       return acc
     },
     {
@@ -370,6 +380,7 @@ export function buildPrimeRankingsV1({
       totalTrades: 0,
       totalClosedPL: 0,
       totalNetDeposits: 0,
+      totalPayoutAmount: 0,
     }
   )
 
