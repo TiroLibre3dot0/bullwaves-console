@@ -166,10 +166,40 @@ function pickMinDate(a, b) {
   return da.getTime() <= db.getTime() ? da : db
 }
 
+function buildHeaderIndex(headers = []) {
+  const map = new Map()
+  for (let i = 0; i < headers.length; i += 1) {
+    const key = String(headers[i] || '').trim()
+    if (key) map.set(key, i)
+  }
+  return map
+}
+
+function getRowValue(row, columnName, headerIndex, fallbackKeys = []) {
+  if (Array.isArray(row)) {
+    const idx = headerIndex.get(String(columnName || '').trim())
+    return Number.isInteger(idx) ? row[idx] : undefined
+  }
+
+  if (row && typeof row === 'object') {
+    if (columnName && Object.prototype.hasOwnProperty.call(row, columnName)) {
+      return row[columnName]
+    }
+    for (const fallbackKey of fallbackKeys) {
+      if (Object.prototype.hasOwnProperty.call(row, fallbackKey)) {
+        return row[fallbackKey]
+      }
+    }
+  }
+
+  return undefined
+}
+
 export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = {}) {
   const safeRows = Array.isArray(rows) ? rows : []
   const safeHeaders =
     Array.isArray(headers) && headers.length ? headers : Object.keys(safeRows[0] || {})
+  const headerIndex = buildHeaderIndex(safeHeaders)
 
   const schema = {}
   for (const canonical of Object.keys(COLUMN_VARIANTS)) {
@@ -203,15 +233,17 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
   const agentUsersSet = new Set()
 
   for (const row of safeRows) {
-    const clientId = coerceString(row?.[schema.client_id] ?? row?.clientId ?? row?.client_id)
+    const clientId = coerceString(
+      getRowValue(row, schema.client_id, headerIndex, ['clientId', 'client_id'])
+    )
     if (!clientId) continue
 
     const prev = byClientId.get(clientId)
 
     const clientName = coerceString(
-      row?.[schema.client_name] ?? row?.clientName ?? row?.client_name
+      getRowValue(row, schema.client_name, headerIndex, ['clientName', 'client_name'])
     )
-    const country = coerceString(row?.[schema.country] ?? row?.country)
+    const country = coerceString(getRowValue(row, schema.country, headerIndex, ['country']))
     if (country) countriesSet.add(country)
 
     const next = prev
@@ -251,13 +283,19 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
       next.depositCount = 0
     }
 
-    if (!next.affiliateId)
-      next.affiliateId = coerceString(row?.[schema.affiliate_id] ?? row?.affiliateId)
-    if (!next.clientLogin)
-      next.clientLogin = coerceString(row?.[schema.client_login] ?? row?.clientLogin)
-    if (!next.user) next.user = coerceString(row?.[schema.user] ?? row?.user)
+    if (!next.affiliateId) {
+      next.affiliateId = coerceString(
+        getRowValue(row, schema.affiliate_id, headerIndex, ['affiliateId'])
+      )
+    }
+    if (!next.clientLogin) {
+      next.clientLogin = coerceString(
+        getRowValue(row, schema.client_login, headerIndex, ['clientLogin'])
+      )
+    }
+    if (!next.user) next.user = coerceString(getRowValue(row, schema.user, headerIndex, ['user']))
 
-    const agentRaw = coerceString(row?.[schema.user] ?? row?.user ?? row?.User)
+    const agentRaw = coerceString(getRowValue(row, schema.user, headerIndex, ['user', 'User']))
     const agentUser = agentRaw || 'Unassigned'
     if (agentUser && agentUser !== 'Unassigned') {
       if (!next.agentUser || next.agentUser === 'Unassigned') next.agentUser = agentUser
@@ -268,31 +306,44 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
     if (clientName && clientName.length > next.clientName.length) next.clientName = clientName
     if (country && !next.country) next.country = country
 
-    next.balance += parseNumberSafe(row?.[schema.balance] ?? row?.balance)
-    next.equity += parseNumberSafe(row?.[schema.equity] ?? row?.equity)
+    next.balance += parseNumberSafe(getRowValue(row, schema.balance, headerIndex, ['balance']))
+    next.equity += parseNumberSafe(getRowValue(row, schema.equity, headerIndex, ['equity']))
 
-    next.closedPL += parseNumberSafe(row?.[schema.closed_pl] ?? row?.closedPL ?? row?.closed_pl)
-    next.openPL += parseNumberSafe(row?.[schema.open_pl] ?? row?.openPL ?? row?.open_pl)
-
-    next.totalTrades += Math.floor(
-      Math.max(0, parseNumberSafe(row?.[schema.trades] ?? row?.totalTrades ?? row?.trades))
+    next.closedPL += parseNumberSafe(
+      getRowValue(row, schema.closed_pl, headerIndex, ['closedPL', 'closed_pl'])
+    )
+    next.openPL += parseNumberSafe(
+      getRowValue(row, schema.open_pl, headerIndex, ['openPL', 'open_pl'])
     )
 
-    next.firstDeposit += parseNumberSafe(row?.[schema.ftd] ?? row?.firstDeposit ?? row?.ftd)
-    next.redeposit += parseNumberSafe(row?.[schema.rdp] ?? row?.redeposit ?? row?.rdp)
+    next.totalTrades += Math.floor(
+      Math.max(
+        0,
+        parseNumberSafe(getRowValue(row, schema.trades, headerIndex, ['totalTrades', 'trades']))
+      )
+    )
 
-    const dep = parseNumberSafe(row?.[schema.deposit] ?? row?.totalDeposit ?? row?.deposit)
-    const wd = parseNumberSafe(row?.[schema.wd] ?? row?.totalWithdrawals ?? row?.wd)
+    next.firstDeposit += parseNumberSafe(
+      getRowValue(row, schema.ftd, headerIndex, ['firstDeposit', 'ftd'])
+    )
+    next.redeposit += parseNumberSafe(
+      getRowValue(row, schema.rdp, headerIndex, ['redeposit', 'rdp'])
+    )
+
+    const dep = parseNumberSafe(
+      getRowValue(row, schema.deposit, headerIndex, ['totalDeposit', 'deposit'])
+    )
+    const wd = parseNumberSafe(getRowValue(row, schema.wd, headerIndex, ['totalWithdrawals', 'wd']))
 
     // Net Deposit handling (raw-first, but no blanks):
     // - If the dataset provides `net` for the row, use it.
     // - If it's missing/blank (or the column is absent), derive net = deposit - withdrawals.
     let netRow
     if (schema.net) {
-      const rawNet = row?.[schema.net] ?? row?.netDeposit ?? row?.net
+      const rawNet = getRowValue(row, schema.net, headerIndex, ['netDeposit', 'net'])
       netRow = isBlankCell(rawNet) ? dep - wd : parseNumberSafe(rawNet)
     } else {
-      const rawNet = row?.netDeposit ?? row?.net
+      const rawNet = getRowValue(row, null, headerIndex, ['netDeposit', 'net'])
       netRow = isBlankCell(rawNet) ? dep - wd : parseNumberSafe(rawNet)
     }
 
@@ -304,20 +355,32 @@ export function buildTradersRankingRewardsDataset({ rows = [], headers = [] } = 
       next.depositCount += Math.floor(
         Math.max(
           0,
-          parseNumberSafe(row?.[schema.deposit_count] ?? row?.depositCount ?? row?.deposit_count)
+          parseNumberSafe(
+            getRowValue(row, schema.deposit_count, headerIndex, ['depositCount', 'deposit_count'])
+          )
         )
       )
     }
 
     next.clientsP += Math.floor(
-      Math.max(0, parseNumberSafe(row?.[schema.clients_p] ?? row?.clientsP ?? row?.clients_p))
+      Math.max(
+        0,
+        parseNumberSafe(getRowValue(row, schema.clients_p, headerIndex, ['clientsP', 'clients_p']))
+      )
     )
 
     const ts = parseDateSafe(
-      row?.[schema.client_timestamp] ?? row?.clientTimestamp ?? row?.client_timestamp
+      getRowValue(row, schema.client_timestamp, headerIndex, [
+        'clientTimestamp',
+        'client_timestamp',
+      ])
     )
-    const ltd = parseDateSafe(row?.[schema.ltd_date] ?? row?.lastTradeDate ?? row?.ltd_date)
-    const ltt = parseDateSafe(row?.[schema.ltt_date] ?? row?.lastTransactionDate ?? row?.ltt_date)
+    const ltd = parseDateSafe(
+      getRowValue(row, schema.ltd_date, headerIndex, ['lastTradeDate', 'ltd_date'])
+    )
+    const ltt = parseDateSafe(
+      getRowValue(row, schema.ltt_date, headerIndex, ['lastTransactionDate', 'ltt_date'])
+    )
 
     next.clientTimestamp = pickMinDate(next.clientTimestamp, ts)
 

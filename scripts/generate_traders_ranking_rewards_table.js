@@ -191,17 +191,16 @@ async function main() {
       }
       if (!hasAny) continue
 
-      const obj = {}
+      const compactRow = []
       for (let i = 0; i < headers.length; i += 1) {
-        const key = headers[i]
-        if (!key) continue
-        obj[key] = cellToJsonValue(values[i])
+        compactRow.push(cellToJsonValue(values[i]))
       }
-      rows.push(obj)
+      rows.push(compactRow)
     }
   }
 
   const out = {
+    format: 'header-array-rows-v1',
     generatedAt: new Date().toISOString(),
     source: path.relative(ROOT_DIR, inputPath).replace(/\\/g, '/'),
     sheetIndex: 0,
