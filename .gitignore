@@ -57,6 +57,7 @@ public/support_users_index.json
 
 .vercel
 .env*.local
+.env.vercel.preview
 
 # Temporary ESLint output
 .eslint_tmp.json

@@ -180,6 +180,7 @@ export default function AuthenticatedApp() {
       affiliate: '/affiliate',
       traderPointsSimulator: '/trader-points',
       profitableRanking: '/retention/profitable-ranking',
+      primeChallengeRanking: '/prime-challenge/ranking',
       segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
       emailMasterTemplate: '/retention/email-master-template',
@@ -219,6 +220,7 @@ export default function AuthenticatedApp() {
     // Ranking section removed: keep legacy URLs working.
     if (pathname.startsWith('/ranking')) return 'profitableRanking'
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
+    if (pathname.startsWith('/prime-challenge/ranking')) return 'primeChallengeRanking'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
     if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
@@ -552,6 +554,7 @@ export default function AuthenticatedApp() {
       notion: 'notion',
       summary: 'summary',
       profitableRanking: 'retention-profitable-ranking',
+      primeChallengeRanking: 'prime-challenge-ranking',
       segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
       emailMasterTemplate: 'retention-email-master-template',
@@ -629,7 +632,10 @@ export default function AuthenticatedApp() {
               ) : null}
               {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
               {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
-              {view === 'profitableRanking' ? <ProfitableRanking /> : null}
+              {view === 'profitableRanking' ? <ProfitableRanking definitionKey="traders" /> : null}
+              {view === 'primeChallengeRanking' ? (
+                <ProfitableRanking definitionKey="prime_challenge" />
+              ) : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
               {view === 'emailMasterTemplate' ? <EmailMasterTemplatePage /> : null}

@@ -14,18 +14,18 @@ function buildInitialStateFromPayload(payload) {
   if (!p || p.v !== 1 || p.k !== 'profitable-ranking') return null
 
   const s = p.s && typeof p.s === 'object' ? p.s : {}
+  const definitionKey = String(s.dk || s.definitionKey || 'traders').trim()
 
   // Current shape:
   // s.md (minDeposit), s.mt (minTrades), s.r (activityRecencyDays), s.c (countries), s.tab
   // Back-compat: accept older keys when present.
   const tab = String(s.tab || '')
-  const validTabs = new Set([
-    'most_active',
-    'top_performing',
-    'most_consistent',
-    'rising',
-    'best_reward',
-  ])
+  const validTabsByDefinition = {
+    traders: new Set(['most_active', 'top_performing', 'most_consistent', 'rising', 'best_reward']),
+    prime_challenge: new Set(['payout_users']),
+  }
+  const safeDefinitionKey = validTabsByDefinition[definitionKey] ? definitionKey : 'traders'
+  const validTabs = validTabsByDefinition[safeDefinitionKey]
 
   const minDeposit = Number.isFinite(Number(s.md))
     ? Number(s.md)
@@ -43,14 +43,26 @@ function buildInitialStateFromPayload(payload) {
       : 0
 
   return {
+    definitionKey: safeDefinitionKey,
     minDeposit: coerceNumber(minDeposit, 0),
     minTrades: coerceNumber(minTrades, 0),
     activityRecencyDays: coerceNumber(activityRecencyDays, 0),
     selectedCountries: Array.isArray(s.c)
       ? s.c.map((x) => String(x || '').trim()).filter(Boolean)
       : [],
-    activeTab: validTabs.has(tab) ? tab : 'most_active',
-    sv: String(s.sv || '').trim().toLowerCase(),
+    activeTab: validTabs.has(tab)
+      ? tab
+      : safeDefinitionKey === 'prime_challenge'
+        ? 'payout_users'
+        : 'most_active',
+    timeframe: ['all', 'last12', 'year', 'month'].includes(String(s.tf || '').trim())
+      ? String(s.tf).trim()
+      : 'all',
+    selectedYear: Number.isFinite(Number(s.y)) ? Number(s.y) : null,
+    selectedMonthKey: String(s.mk || '').trim(),
+    sv: String(s.sv || '')
+      .trim()
+      .toLowerCase(),
   }
 }
 
@@ -129,8 +141,12 @@ export default function PublicProfitableRankingSharePage({ token }) {
 
   useEffect(() => {
     if (typeof document === 'undefined') return
-    document.title = isValid ? 'Profitable Ranking (Public)' : 'Profitable Ranking (Invalid Share)'
-  }, [isValid])
+    const publicTitle =
+      initialState?.definitionKey === 'prime_challenge'
+        ? 'Prime Challenge Ranking (Public)'
+        : 'Profitable Ranking (Public)'
+    document.title = isValid ? publicTitle : 'Profitable Ranking (Invalid Share)'
+  }, [initialState?.definitionKey, isValid])
 
   if (loading) {
     return <FullPageLoader progress={25} subtitle="Loading share..." />
@@ -149,5 +165,11 @@ export default function PublicProfitableRankingSharePage({ token }) {
     )
   }
 
-  return <ProfitableRanking publicMode initialState={initialState} />
+  return (
+    <ProfitableRanking
+      publicMode
+      initialState={initialState}
+      definitionKey={initialState?.definitionKey || 'traders'}
+    />
+  )
 }

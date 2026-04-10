@@ -25,6 +25,7 @@ const CREOLABS_DIR = path.join(ROOT, 'CREOLABS')
 const ORG_DATA = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
 
 const TRADERS_REWARDS_XLSX = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const PRIME_CLIENTS_RANKING_XLSX = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
 
 function parseArgs(argv) {
   const out = { verbose: false }
@@ -148,6 +149,7 @@ function main() {
     creolabsClientsTable: path.join(PUBLIC, 'creolabs_clients_table.json'),
     creolabsAffiliateMonth: path.join(PUBLIC, 'creolabs_affiliate_month.json'),
     tradersRankingRewardsTable: path.join(PUBLIC, 'traders_ranking_rewards_table.json'),
+    primeClientsRankingTable: path.join(PUBLIC, 'prime_clients_ranking_table.json'),
     shareOrgPeople: path.join(PUBLIC, 'share', 'org-chart-people.json'),
     fraudSummary: path.join(PUBLIC, 'fraud_monitor_summary.json'),
     fraudUserFlagsCsv: path.join(PUBLIC, 'fraud_monitor_user_flags.csv'),
@@ -218,6 +220,12 @@ function main() {
       optional: true,
     },
     {
+      artifact: artifacts.primeClientsRankingTable,
+      sources: [PRIME_CLIENTS_RANKING_XLSX],
+      name: 'prime_clients_ranking_table.json',
+      optional: true,
+    },
+    {
       artifact: artifacts.fraudSummary,
       sources: [sourceRegistrations, sourcePayments, sourceMedia].filter((p) => safeStat(p).exists),
       name: 'fraud_monitor_summary.json',
@@ -271,6 +279,7 @@ function main() {
       { p: 'generate_rankings_index.js', label: 'Generate rankings index' },
       { p: 'generate_creolabs_index.js', label: 'Generate Creolabs index' },
       { p: 'generate_traders_ranking_rewards_table.js', label: 'Generate Traders Ranking Rewards artifact' },
+      { p: 'generate_prime_clients_ranking_table.js', label: 'Generate Prime Clients Ranking artifact' },
       { p: 'generate_cellx_affiliate_month.js', label: 'Generate CellX monthly artifact' },
       { p: 'generate_share_org_people_index.mjs', label: 'Generate share org people index' },
       { p: 'generate_reports_meta.js', label: 'Generate reports meta (pre-fraud-monitor)' },

@@ -1,6 +1,10 @@
 import { useI18n } from '../i18n/I18nContext'
 
-const RECENT_SECTION_KEYS = new Set(['segmentComposition', 'emailMasterTemplate'])
+const RECENT_SECTION_KEYS = new Set([
+  'segmentComposition',
+  'emailMasterTemplate',
+  'primeChallengeRanking',
+])
 
 function SidebarNewBadge() {
   return (
@@ -291,6 +295,20 @@ export default function Sidebar({
           active: view === 'aiAssistant',
           onClick: () => navigate('aiAssistant'),
           disabled: disabled('aiAssistant'),
+        },
+      ],
+    },
+    {
+      key: 'primeChallenge',
+      title: 'Prime Challenge',
+      items: [
+        {
+          key: 'primeChallengeRanking',
+          label: 'Ranking',
+          icon: 'chart',
+          active: view === 'primeChallengeRanking',
+          onClick: () => navigate('primeChallengeRanking'),
+          disabled: disabled('primeChallengeRanking'),
         },
       ],
     },

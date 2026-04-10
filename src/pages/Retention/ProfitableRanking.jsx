@@ -3,6 +3,10 @@ import KpiCard from '../../components/common/KpiCard'
 import FullPageLoader from '../../components/FullPageLoader'
 import SegmentJourneyModal from './SegmentJourneyModal'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
+import {
+  buildPrimeClientsRankingDataset,
+  buildPrimeRankingsV1,
+} from '../../utils/primeClientsRanking'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { buildRankingsV1 } from '../../utils/profitableRankingV1'
 import {
@@ -421,6 +425,100 @@ function rewardLabelColumn() {
   }
 }
 
+function payoutSignalColumn() {
+  return {
+    key: 'payoutSignalLabel',
+    label: 'Payout Signal',
+    help: 'Why this Prime client is included in the payout ranking.',
+    align: 'left',
+    width: 170,
+    render: (r) => <RewardChip label={r?.payoutSignalLabel} />,
+  }
+}
+
+function sourceStatusColumn() {
+  return {
+    key: 'sourceStatus',
+    label: 'Prime Status',
+    help: 'Raw status from the Prime report.',
+    align: 'left',
+    width: 130,
+    render: (r) => String(r?.sourceStatus || '').trim() || '—',
+  }
+}
+
+function totalWithdrawalsColumn({
+  label = 'WD',
+  help = 'Total withdrawals from the source report.',
+  width = 110,
+} = {}) {
+  return {
+    key: 'totalWithdrawals',
+    label,
+    help,
+    align: 'right',
+    width,
+    render: (r) => fmtMoney0(r.totalWithdrawals),
+  }
+}
+
+function countActiveFilters({
+  hasMinDepositFilter,
+  hasMinTradesFilter,
+  hasActivityRecencyFilter,
+  hasCountryFilter,
+  hasAgentFilter,
+}) {
+  return [
+    hasMinDepositFilter,
+    hasMinTradesFilter,
+    hasActivityRecencyFilter,
+    hasCountryFilter,
+    hasAgentFilter,
+  ].filter(Boolean).length
+}
+
+function buildFilterSummary({
+  definitionFilters,
+  minDeposit,
+  minTrades,
+  activityRecencyDays,
+  selectedCountries,
+  selectedAgents,
+}) {
+  const bits = []
+
+  if (definitionFilters.minDeposit && Number(minDeposit) > 0) {
+    bits.push(`Min deposit ${fmtMoney0(minDeposit)}`)
+  }
+  if (Number(minTrades) > 0) {
+    bits.push(`Min trades ${fmtInt(minTrades)}`)
+  }
+  if (definitionFilters.activityRecency && Number(activityRecencyDays) > 0) {
+    bits.push(`Activity ${fmtInt(activityRecencyDays)}d`)
+  }
+  if (
+    definitionFilters.countries &&
+    Array.isArray(selectedCountries) &&
+    selectedCountries.length > 0
+  ) {
+    bits.push(
+      selectedCountries.length === 1
+        ? `Country ${selectedCountries[0]}`
+        : `${fmtInt(selectedCountries.length)} countries`
+    )
+  }
+  if (definitionFilters.agents && Array.isArray(selectedAgents) && selectedAgents.length > 0) {
+    bits.push(
+      selectedAgents.length === 1
+        ? `Agent ${selectedAgents[0]}`
+        : `${fmtInt(selectedAgents.length)} agents`
+    )
+  }
+
+  return bits
+}
+
 function statusReasonColumn() {
   return {
     key: 'statusReasonShort',
@@ -672,7 +770,21 @@ function buildPeriodKey(year, month) {
   return `${y}-${String(m).padStart(2, '0')}`
 }
 
-function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, onPage }) {
+function Table({
+  rows,
+  columns,
+  sortState,
+  onSort,
+  pageSize,
+  onPageSize,
+  page,
+  onPage,
+  entityLabel = 'Trader',
+  entityHelp = 'Trader name (Client ID shown below)',
+  tableAriaLabel = 'Ranking list',
+  showAgentColumn = true,
+  showCountryColumn = true,
+}) {
   const safeColumns = Array.isArray(columns) ? columns : []
   const total = rows.length
   const totalPages = Math.max(1, Math.ceil(total / pageSize))
@@ -802,7 +914,7 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
         </div>
       </div>
 
-      <div className="ranking-table-scroll hide-scrollbar" tabIndex={0} aria-label="Trader list">
+      <div className="ranking-table-scroll hide-scrollbar" tabIndex={0} aria-label={tableAriaLabel}>
         <table className="table payout-unified-table ranking-table sticky-metrics-table">
           <thead>
             <tr>
@@ -812,24 +924,28 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
               <th
                 className="ranking-sticky-col ranking-sticky-col-2"
                 style={{ textAlign: 'left', width: 210 }}
-                title="Trader name (Client ID shown below)"
+                title={entityHelp}
               >
-                Trader
+                {entityLabel}
               </th>
-              <SortTh
-                label="Agent"
-                colKey="agentUser"
-                align="left"
-                width={140}
-                help="Assigned agent from the report (User column)"
-              />
-              <SortTh
-                label="Country"
-                colKey="country"
-                align="left"
-                width={120}
-                help="Trader country from the report"
-              />
+              {showAgentColumn ? (
+                <SortTh
+                  label="Agent"
+                  colKey="agentUser"
+                  align="left"
+                  width={140}
+                  help="Assigned agent from the report (User column)"
+                />
+              ) : null}
+              {showCountryColumn ? (
+                <SortTh
+                  label="Country"
+                  colKey="country"
+                  align="left"
+                  width={120}
+                  help="Country from the report"
+                />
+              ) : null}
               {safeColumns.map((c) => (
                 <SortTh
                   key={String(c.key)}
@@ -873,21 +989,25 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
                       {r.clientId || ''}
                     </div>
                   </td>
-                  <td style={{ textAlign: 'left' }} title={String(r.agentUser || 'Unassigned')}>
-                    <div
-                      style={{
-                        maxWidth: 135,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontWeight: 750,
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {String(r.agentUser || 'Unassigned')}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'left' }}>{r.country || '—'}</td>
+                  {showAgentColumn ? (
+                    <td style={{ textAlign: 'left' }} title={String(r.agentUser || 'Unassigned')}>
+                      <div
+                        style={{
+                          maxWidth: 135,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontWeight: 750,
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        {String(r.agentUser || 'Unassigned')}
+                      </div>
+                    </td>
+                  ) : null}
+                  {showCountryColumn ? (
+                    <td style={{ textAlign: 'left' }}>{r.country || '—'}</td>
+                  ) : null}
                   {safeColumns.map((c) =>
                     (() => {
                       const cellTitle =
@@ -911,7 +1031,9 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
             {!pageRows.length ? (
               <tr>
                 <td
-                  colSpan={4 + safeColumns.length}
+                  colSpan={
+                    2 + (showAgentColumn ? 1 : 0) + (showCountryColumn ? 1 : 0) + safeColumns.length
+                  }
                   style={{ padding: 14, color: 'var(--text-muted)' }}
                 >
                   No rows match the current filters.
@@ -925,7 +1047,7 @@ function Table({ rows, columns, sortState, onSort, pageSize, onPageSize, page, o
   )
 }
 
-const TAB_CONFIGS = [
+const TRADERS_TAB_CONFIGS = [
   {
     key: 'most_active',
     label: 'Most Active Traders',
@@ -1267,6 +1389,166 @@ const TAB_CONFIGS = [
     ],
   },
 ]
+
+const PRIME_TAB_CONFIGS = [
+  {
+    key: 'payout_users',
+    label: 'Payout Users',
+    subtitle: 'Positive P&L users and explicit payout cases.',
+    tooltip: 'Prime clients with positive P&L or explicit payout signals.',
+    defaultSort: { key: 'closedPL', dir: 'desc' },
+    columns: [
+      payoutSignalColumn(),
+      sourceStatusColumn(),
+      {
+        key: 'closedPL',
+        label: 'Closed PL',
+        help: 'Closed profit/loss from the Prime report.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtMoney0(r.closedPL),
+      },
+      {
+        key: 'openPL',
+        label: 'Open PL',
+        help: 'Open profit/loss from the Prime report.',
+        align: 'right',
+        width: 120,
+        render: (r) => fmtMoney0(r.openPL),
+      },
+      {
+        key: 'totalTrades',
+        label: 'Total Trades',
+        help: 'Total executed trades aggregated from the Prime report.',
+        align: 'right',
+        width: 110,
+        render: (r) => fmtInt(r.totalTrades),
+      },
+      {
+        key: 'tradesPerMonth',
+        label: 'Avg Trades / Month',
+        help: 'Average trades per month across the observed Prime activity window.',
+        align: 'right',
+        width: 130,
+        render: (r) => fmtNum2(r.tradesPerMonth),
+      },
+      daysSinceLastTradeColumn(),
+      {
+        key: 'netDeposit',
+        label: 'Net',
+        help: 'Net value from the Prime report, preserved as-is when available.',
+        align: 'right',
+        width: 110,
+        render: (r) => fmtMoney0(r.netDeposit),
+      },
+      {
+        key: 'totalDeposit',
+        label: 'Deposit',
+        help: 'Deposit value from the Prime report.',
+        align: 'right',
+        width: 110,
+        render: (r) => fmtMoney0(r.totalDeposit),
+      },
+      totalWithdrawalsColumn({
+        label: 'WD',
+        help: 'Total withdrawals from the Prime report.',
+        width: 110,
+      }),
+      {
+        key: 'payoutAmount',
+        label: 'Payout Amount',
+        help: 'Explicit payout amount when present in the Prime source.',
+        align: 'right',
+        width: 130,
+        requires: 'primePayoutAmount',
+        render: (r) => (Number(r?.payoutAmount || 0) ? fmtMoney0(r.payoutAmount) : '—'),
+      },
+    ],
+  },
+]
+
+function buildTraderRankingResults(options) {
+  const result = buildRankingsV1(options)
+  return {
+    summary: result?.summary || null,
+    metrics: result?.metrics || [],
+    rankingsByKey: {
+      most_active: result?.rankings?.mostActive || [],
+      top_performing: result?.rankings?.topPerforming || [],
+      most_consistent: result?.rankings?.mostConsistent || [],
+      rising: result?.rankings?.rising || [],
+      best_reward: result?.rankings?.bestRewardCandidates || [],
+    },
+  }
+}
+
+const RANKING_DEFINITIONS = {
+  traders: {
+    key: 'traders',
+    sectionLabel: 'Retention',
+    pageTitle: 'Profitable Traders Ranking (Retention Rewards)',
+    pageSubtitle: 'Rank traders by broker value and engagement for reward campaigns.',
+    artifactPath: 'traders_ranking_rewards_table.json',
+    artifactLabel: 'Traders Ranking Rewards.xlsx (auto)',
+    datasetBuilder: buildTradersRankingRewardsDataset,
+    buildResults: buildTraderRankingResults,
+    defaultTab: 'most_active',
+    tabConfigs: TRADERS_TAB_CONFIGS,
+    supportsSegments: true,
+    entityLabel: 'Trader',
+    entityHelp: 'Trader name (Client ID shown below)',
+    tableAriaLabel: 'Trader list',
+    filters: {
+      agents: true,
+      minDeposit: true,
+      minTrades: true,
+      countries: true,
+      activityRecency: true,
+    },
+    kpis(summary) {
+      return [
+        { label: 'Total Traders', value: fmtInt(summary?.totalTraders || 0) },
+        { label: 'Total Deposits', value: fmtMoney0(summary?.totalDeposits || 0) },
+        { label: 'Total Trades', value: fmtInt(summary?.totalTrades || 0) },
+        { label: 'Total Closed PL', value: fmtMoney0(summary?.totalClosedPL || 0) },
+      ]
+    },
+    emptyText: '0 results with current filters. Try lowering Min Deposit / Min Trades.',
+  },
+  prime_challenge: {
+    key: 'prime_challenge',
+    sectionLabel: 'Prime Challenge',
+    pageTitle: 'Payout Users Ranking',
+    pageSubtitle:
+      'Bullwaves Prime view for payout-oriented users, with the table kept central and filters on demand.',
+    artifactPath: 'prime_clients_ranking_table.json',
+    artifactLabel: 'Prime Clients Ranking.xlsx (auto)',
+    datasetBuilder: buildPrimeClientsRankingDataset,
+    buildResults: buildPrimeRankingsV1,
+    defaultTab: 'payout_users',
+    tabConfigs: PRIME_TAB_CONFIGS,
+    supportsSegments: false,
+    entityLabel: 'Client',
+    entityHelp: 'Prime client name (Client ID shown below)',
+    tableAriaLabel: 'Prime client list',
+    filters: {
+      agents: false,
+      minDeposit: false,
+      minTrades: true,
+      countries: true,
+      activityRecency: true,
+    },
+    kpis(summary, dataset) {
+      return [
+        { label: 'Payout Users', value: fmtInt(summary?.totalTraders || 0) },
+        { label: 'Closed PL', value: fmtMoney0(summary?.totalClosedPL || 0) },
+        { label: 'Total Trades', value: fmtInt(summary?.totalTrades || 0) },
+        { label: 'Countries', value: fmtInt(dataset?.countries?.length || 0) },
+      ]
+    },
+    emptyText: '0 Prime clients match the current payout ranking filters.',
+  },
+}
 
 const SOLITICS_NATIVE_STATUS_KEYS = new Set(['dormant'])
 
@@ -1709,7 +1991,10 @@ export default function ProfitableRanking({
   publicMode = false,
   initialState = null,
   segmentsOnly = false,
+  definitionKey = 'traders',
 } = {}) {
+  const rankingDefinition = RANKING_DEFINITIONS[definitionKey] || RANKING_DEFINITIONS.traders
+  const definitionFilters = rankingDefinition.filters || {}
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fileName, setFileName] = useState('')
@@ -1768,39 +2053,51 @@ export default function ProfitableRanking({
   const [artifact, setArtifact] = useState(null)
 
   // Timeframe (global)
-  const [timeframe, setTimeframe] = useState('all')
-  const [selectedYear, setSelectedYear] = useState(null)
-  const [selectedMonthKey, setSelectedMonthKey] = useState('')
+  const [timeframe, setTimeframe] = useState(() => {
+    const tf = String(initialState?.timeframe || '').trim()
+    return ['all', 'last12', 'year', 'month'].includes(tf) ? tf : 'all'
+  })
+  const [selectedYear, setSelectedYear] = useState(() => {
+    const y = Number(initialState?.selectedYear)
+    return Number.isFinite(y) ? y : null
+  })
+  const [selectedMonthKey, setSelectedMonthKey] = useState(() =>
+    String(initialState?.selectedMonthKey || '').trim()
+  )
 
   const loadReqRef = useRef(0)
-  const loadFromConsoleArtifact = useCallback(async ({ silent = false } = {}) => {
-    const reqId = (loadReqRef.current = loadReqRef.current + 1)
+  const loadFromConsoleArtifact = useCallback(
+    async ({ silent = false } = {}) => {
+      const reqId = (loadReqRef.current = loadReqRef.current + 1)
 
-    if (!silent) setError('')
-    setLoading(true)
-    try {
-      const ts = Date.now()
-      const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
-      const res = await fetch(`${baseUrl}traders_ranking_rewards_table.json?ts=${ts}`, {
-        cache: 'no-store',
-      })
-      if (!res.ok) throw new Error('Traders Ranking Rewards report not found in console assets')
-      const json = await res.json()
-      const rows = Array.isArray(json?.rows) ? json.rows : []
-      const headers = Array.isArray(json?.headers) ? json.headers : Object.keys(rows[0] || {})
-      if (loadReqRef.current !== reqId) return
+      if (!silent) setError('')
+      setLoading(true)
+      try {
+        const ts = Date.now()
+        const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
+        const res = await fetch(`${baseUrl}${rankingDefinition.artifactPath}?ts=${ts}`, {
+          cache: 'no-store',
+        })
+        if (!res.ok)
+          throw new Error(`${rankingDefinition.pageTitle} report not found in console assets`)
+        const json = await res.json()
+        const rows = Array.isArray(json?.rows) ? json.rows : []
+        const headers = Array.isArray(json?.headers) ? json.headers : Object.keys(rows[0] || {})
+        if (loadReqRef.current !== reqId) return
 
-      setFileName('Traders Ranking Rewards.xlsx (auto)')
-      setArtifact({ rows, headers })
-    } catch (e) {
-      if (!silent) {
-        const msg = String(e?.message || '').trim() || 'Refresh failed'
-        setError(msg)
+        setFileName(rankingDefinition.artifactLabel)
+        setArtifact({ rows, headers })
+      } catch (e) {
+        if (!silent) {
+          const msg = String(e?.message || '').trim() || 'Refresh failed'
+          setError(msg)
+        }
+      } finally {
+        if (loadReqRef.current === reqId) setLoading(false)
       }
-    } finally {
-      if (loadReqRef.current === reqId) setLoading(false)
-    }
-  }, [])
+    },
+    [rankingDefinition.artifactLabel, rankingDefinition.artifactPath, rankingDefinition.pageTitle]
+  )
 
   // Auto-load from console artifacts (generated from Creolabs XLSX) when available.
   // Browser apps cannot read arbitrary local project folders; fetching from `public/` is the safe way.
@@ -1820,6 +2117,7 @@ export default function ProfitableRanking({
   if (!todayRef.current) todayRef.current = new Date()
 
   const publicSegmentsStandalone = useMemo(() => {
+    if (!rankingDefinition.supportsSegments) return false
     if (!publicMode) return false
 
     const fromSharedState = String(initialState?.sv || '').toLowerCase() === 'segments'
@@ -1828,7 +2126,7 @@ export default function ProfitableRanking({
     if (typeof window === 'undefined') return false
     const view = new window.URLSearchParams(window.location.search).get('view')
     return String(view || '').toLowerCase() === 'segments'
-  }, [initialState?.sv, publicMode])
+  }, [initialState?.sv, publicMode, rankingDefinition.supportsSegments])
 
   useEffect(() => {
     if (segmentsOnly || publicSegmentsStandalone) return undefined
@@ -2100,8 +2398,8 @@ export default function ProfitableRanking({
     if (!artifact) return null
     const rows = Array.isArray(filteredRows) ? filteredRows : []
     const headers = Array.isArray(rawHeaders) ? rawHeaders : []
-    return buildTradersRankingRewardsDataset({ rows, headers })
-  }, [artifact, filteredRows, rawHeaders])
+    return rankingDefinition.datasetBuilder({ rows, headers })
+  }, [artifact, filteredRows, rankingDefinition, rawHeaders])
 
   useEffect(() => {
     if (!dataset) setIsUpdating(false)
@@ -2125,57 +2423,78 @@ export default function ProfitableRanking({
 
   const [selectedAgents, setSelectedAgents] = useState([])
   const [agentSearch, setAgentSearch] = useState('')
+  const [filtersCollapsed, setFiltersCollapsed] = useState(true)
 
-  const hasMinDepositFilter = Number(minDeposit) > 0
+  const hasMinDepositFilter = Boolean(definitionFilters.minDeposit) && Number(minDeposit) > 0
   const hasMinTradesFilter = Number(minTrades) > 0
-  const hasActivityRecencyFilter = Number(activityRecencyDays) > 0
-  const hasCountryFilter = Array.isArray(selectedCountries) && selectedCountries.length > 0
-  const hasAgentFilter = Array.isArray(selectedAgents) && selectedAgents.length > 0
+  const hasActivityRecencyFilter =
+    Boolean(definitionFilters.activityRecency) && Number(activityRecencyDays) > 0
+  const hasCountryFilter =
+    Boolean(definitionFilters.countries) &&
+    Array.isArray(selectedCountries) &&
+    selectedCountries.length > 0
+  const hasAgentFilter =
+    Boolean(definitionFilters.agents) && Array.isArray(selectedAgents) && selectedAgents.length > 0
   const hasAnyFilterActive =
     hasMinDepositFilter ||
     hasMinTradesFilter ||
     hasActivityRecencyFilter ||
     hasCountryFilter ||
     hasAgentFilter
+  const activeFiltersCount = countActiveFilters({
+    hasMinDepositFilter,
+    hasMinTradesFilter,
+    hasActivityRecencyFilter,
+    hasCountryFilter,
+    hasAgentFilter,
+  })
+  const filterSummary = useMemo(
+    () =>
+      buildFilterSummary({
+        definitionFilters,
+        minDeposit,
+        minTrades,
+        activityRecencyDays,
+        selectedCountries,
+        selectedAgents,
+      }),
+    [
+      activityRecencyDays,
+      definitionFilters,
+      minDeposit,
+      minTrades,
+      selectedAgents,
+      selectedCountries,
+    ]
+  )
 
-  const validTabKeys = useMemo(() => new Set(TAB_CONFIGS.map((t) => t.key)), [])
+  const validTabKeys = useMemo(
+    () => new Set((rankingDefinition.tabConfigs || []).map((t) => t.key)),
+    [rankingDefinition.tabConfigs]
+  )
   const [activeTab, setActiveTab] = useState(
     validTabKeys.has(String(initialState?.activeTab || ''))
       ? String(initialState.activeTab)
-      : 'most_active'
+      : rankingDefinition.defaultTab
   )
   const [selectedSegmentForJourney, setSelectedSegmentForJourney] = useState(null)
   const [showSegmentJourneyModal, setShowSegmentJourneyModal] = useState(false)
 
   const [sortByTab, setSortByTab] = useState(() => {
     const out = {}
-    for (const t of TAB_CONFIGS) out[t.key] = t.defaultSort
+    for (const t of rankingDefinition.tabConfigs || []) out[t.key] = t.defaultSort
     return out
   })
 
   const [pageByTab, setPageByTab] = useState(() => {
     const out = {}
-    for (const t of TAB_CONFIGS) out[t.key] = 1
+    for (const t of rankingDefinition.tabConfigs || []) out[t.key] = 1
     return out
   })
   const [pageSize, setPageSize] = useState(50)
 
-  const onShareSegmentsTable = async () => {
-    if (typeof window === 'undefined') return
-
-    const payload = {
-      v: 1,
-      k: 'profitable-ranking',
-      generatedAt: new Date().toISOString(),
-      s: {
-        md: Number(minDeposit) || 0,
-        mt: Number(minTrades) || 0,
-        r: Number(activityRecencyDays) || 0,
-        c: Array.isArray(selectedCountries) ? selectedCountries : [],
-        tab: String(activeTab || ''),
-        sv: 'segments',
-      },
-    }
+  const createRankingShareToken = useCallback(async (payload) => {
+    if (typeof window === 'undefined') return null
 
     const shareOrigin = getPublicShareOrigin()
     const runtimeOrigin = window.location?.origin || ''
@@ -2194,10 +2513,9 @@ export default function ProfitableRanking({
     } catch {
       if (!isLocalhost) {
         window.alert('Share link non disponibile (storage share non configurato).')
-        return
+        return null
       }
 
-      // Local fallback (dev only): store snapshot in localStorage (same browser/device only)
       try {
         const bytes = new Uint8Array(12)
         if (window.crypto?.getRandomValues) window.crypto.getRandomValues(bytes)
@@ -2218,20 +2536,15 @@ export default function ProfitableRanking({
       }
     }
 
-    // Always use the full profitable-ranking share route here so `view=segments`
-    // is preserved end-to-end without depending on short-link redirect behavior.
-    const hrefBase = `${shareOrigin}/share/profitable-ranking/${encodeURIComponent(token)}`
-
-    let href = hrefBase
-    try {
-      const u = new URL(hrefBase)
-      u.searchParams.set('view', 'segments')
-      href = u.toString()
-    } catch {
-      href = `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}view=segments`
+    return {
+      token,
+      shareOrigin,
     }
+  }, [])
 
-    // Open in a new tab only. Never navigate away from this page.
+  const openPublicShareLink = useCallback(async (href) => {
+    if (typeof window === 'undefined') return
+
     let opened = false
     try {
       const w = window.open(href, '_blank', 'noopener,noreferrer')
@@ -2240,7 +2553,6 @@ export default function ProfitableRanking({
       // ignore
     }
 
-    // Some browsers block window.open but still allow a user-initiated anchor click.
     if (!opened) {
       try {
         const a = document.createElement('a')
@@ -2257,7 +2569,6 @@ export default function ProfitableRanking({
       }
     }
 
-    // Best-effort: copy link so the user can paste it even if popups are blocked.
     let copied = false
     try {
       if (navigator.clipboard?.writeText) {
@@ -2275,7 +2586,71 @@ export default function ProfitableRanking({
           : `Popup bloccato dal browser. Apri manualmente questo link:\n\n${href}`
       )
     }
+  }, [])
+
+  const buildCurrentRankingSharePayload = useCallback(
+    ({ segmentsView = false } = {}) => ({
+      v: 1,
+      k: 'profitable-ranking',
+      generatedAt: new Date().toISOString(),
+      s: {
+        dk: rankingDefinition.key,
+        md: Number(minDeposit) || 0,
+        mt: Number(minTrades) || 0,
+        r: Number(activityRecencyDays) || 0,
+        c: Array.isArray(selectedCountries) ? selectedCountries : [],
+        tab: String(activeTab || ''),
+        tf: String(timeframe || 'all'),
+        y: Number.isFinite(Number(selectedYear)) ? Number(selectedYear) : null,
+        mk: String(selectedMonthKey || '').trim(),
+        sv: segmentsView ? 'segments' : '',
+      },
+    }),
+    [
+      activeTab,
+      activityRecencyDays,
+      minDeposit,
+      minTrades,
+      rankingDefinition.key,
+      selectedCountries,
+      selectedMonthKey,
+      selectedYear,
+      timeframe,
+    ]
+  )
+
+  const onShareSegmentsTable = async () => {
+    if (typeof window === 'undefined') return
+
+    const payload = buildCurrentRankingSharePayload({ segmentsView: true })
+    const shareData = await createRankingShareToken(payload)
+    if (!shareData?.token) return
+
+    // Always use the full profitable-ranking share route here so `view=segments`
+    // is preserved end-to-end without depending on short-link redirect behavior.
+    const hrefBase = `${shareData.shareOrigin}/share/profitable-ranking/${encodeURIComponent(shareData.token)}`
+
+    let href = hrefBase
+    try {
+      const u = new URL(hrefBase)
+      u.searchParams.set('view', 'segments')
+      href = u.toString()
+    } catch {
+      href = `${hrefBase}${hrefBase.includes('?') ? '&' : '?'}view=segments`
+    }
+
+    await openPublicShareLink(href)
   }
+
+  const onShareCurrentRankingPage = useCallback(async () => {
+    if (typeof window === 'undefined') return
+    const payload = buildCurrentRankingSharePayload()
+    const shareData = await createRankingShareToken(payload)
+    if (!shareData?.token) return
+
+    const href = `${shareData.shareOrigin}/share/profitable-ranking/${encodeURIComponent(shareData.token)}`
+    await openPublicShareLink(href)
+  }, [buildCurrentRankingSharePayload, createRankingShareToken, openPublicShareLink])
 
   useEffect(() => {
     // Reset paging when tab changes
@@ -2290,17 +2665,22 @@ export default function ProfitableRanking({
     return clients.some((c) => Number.isFinite(Number(c?.depositCount)))
   }, [dataset?.clients])
 
+  const hasPrimePayoutAmountColumn = useMemo(() => {
+    return Boolean(dataset?.schema?.payout_amount)
+  }, [dataset?.schema?.payout_amount])
+
   const tabConfigs = useMemo(() => {
-    return TAB_CONFIGS.map((t) => {
+    return (rankingDefinition.tabConfigs || []).map((t) => {
       const safeCols = Array.isArray(t.columns) ? t.columns : []
       const cols = safeCols.filter((c) => {
         if (c?.requires === 'depositCount' && !hasDepositCount) return false
         if (c?.excludes === 'depositCount' && hasDepositCount) return false
+        if (c?.requires === 'primePayoutAmount' && !hasPrimePayoutAmountColumn) return false
         return true
       })
       return { ...t, columns: cols }
     })
-  }, [hasDepositCount])
+  }, [hasDepositCount, hasPrimePayoutAmountColumn, rankingDefinition.tabConfigs])
 
   const agentOptions = useMemo(() => {
     const list = Array.isArray(dataset?.agentUsers) ? dataset.agentUsers : []
@@ -2313,6 +2693,7 @@ export default function ProfitableRanking({
 
   const datasetForRanking = useMemo(() => {
     if (!dataset?.clients) return null
+    if (!definitionFilters.agents) return dataset
     const agents = Array.isArray(selectedAgents) ? selectedAgents : []
     if (!agents.length) return dataset
     const allowed = new Set(agents.map((a) => String(a || '').trim()))
@@ -2320,7 +2701,7 @@ export default function ProfitableRanking({
       allowed.has(String(c?.agentUser || 'Unassigned').trim() || 'Unassigned')
     )
     return { ...dataset, clients }
-  }, [dataset, selectedAgents])
+  }, [dataset, definitionFilters.agents, selectedAgents])
 
   const agentByClientId = useMemo(() => {
     const map = new Map()
@@ -2335,7 +2716,7 @@ export default function ProfitableRanking({
 
   const v1 = useMemo(() => {
     if (!datasetForRanking?.clients) return null
-    return buildRankingsV1({
+    return rankingDefinition.buildResults({
       dataset: datasetForRanking,
       minTrades: Number(minTrades) || 0,
       minDeposit: Number(minDeposit) || 0,
@@ -2343,18 +2724,18 @@ export default function ProfitableRanking({
       activityRecencyDays: Number(activityRecencyDays) || 0,
       today: todayRef.current,
     })
-  }, [activityRecencyDays, datasetForRanking, minDeposit, minTrades, selectedCountries])
+  }, [
+    activityRecencyDays,
+    datasetForRanking,
+    minDeposit,
+    minTrades,
+    rankingDefinition,
+    selectedCountries,
+  ])
 
   const activeList = useMemo(() => {
-    const r = v1?.rankings
-    if (!r) return []
-    if (activeTab === 'most_active') return r.mostActive || []
-    if (activeTab === 'top_performing') return r.topPerforming || []
-    if (activeTab === 'most_consistent') return r.mostConsistent || []
-    if (activeTab === 'rising') return r.rising || []
-    if (activeTab === 'best_reward') return r.bestRewardCandidates || []
-    return []
-  }, [activeTab, v1?.rankings])
+    return v1?.rankingsByKey?.[activeTab] || []
+  }, [activeTab, v1?.rankingsByKey])
 
   const activeListWithSortKeys = useMemo(() => {
     // Ensure date sort works consistently even if some rows miss dates.
@@ -2400,21 +2781,17 @@ export default function ProfitableRanking({
   }, [activeList, agentByClientId])
 
   const kpis = useMemo(() => {
-    const s = v1?.summary
-    return {
-      count: Number(s?.totalTraders || 0),
-      totalDeposits: Number(s?.totalDeposits || 0),
-      totalTrades: Number(s?.totalTrades || 0),
-      totalClosedPL: Number(s?.totalClosedPL || 0),
-    }
-  }, [v1?.summary])
+    return rankingDefinition.kpis(v1?.summary, dataset)
+  }, [dataset, rankingDefinition, v1?.summary])
 
   const activeTabConfig = useMemo(() => {
-    const configs = Array.isArray(tabConfigs) && tabConfigs.length ? tabConfigs : TAB_CONFIGS
+    const configs =
+      Array.isArray(tabConfigs) && tabConfigs.length ? tabConfigs : rankingDefinition.tabConfigs
     return configs.find((t) => t.key === activeTab) || configs[0]
-  }, [activeTab, tabConfigs])
+  }, [activeTab, rankingDefinition.tabConfigs, tabConfigs])
 
   const rankingSpecsRows = useMemo(() => {
+    if (!rankingDefinition.supportsSegments) return []
     const metrics = Array.isArray(v1?.metrics) ? v1.metrics : []
     const allClientIds = new Set(
       metrics
@@ -2484,7 +2861,7 @@ export default function ProfitableRanking({
       })
 
     return unassignedRow ? [...assignedRows, unassignedRow] : assignedRows
-  }, [v1?.metrics])
+  }, [rankingDefinition.supportsSegments, v1?.metrics])
 
   const sortedForDisplay = useMemo(() => {
     const fallback = activeTabConfig?.defaultSort || { key: 'totalTrades', dir: 'desc' }
@@ -2670,7 +3047,7 @@ export default function ProfitableRanking({
               {fileName ? (
                 <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
                   {fileName}
-                  {dataset ? ` • ${fmtInt(kpis.count)} traders` : ''}
+                  {dataset ? ` • ${kpis[0]?.value || '—'} users` : ''}
                 </span>
               ) : (
                 <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
@@ -2704,19 +3081,15 @@ export default function ProfitableRanking({
               minWidth: 'min(440px, 100%)',
             }}
           >
-            <KpiCard label="Total Traders" value={fmtInt(kpis.count)} size="sm" density="compact" />
-            <KpiCard
-              label="Total Deposits"
-              value={fmtMoney0(kpis.totalDeposits)}
-              size="sm"
-              density="compact"
-            />
-            <KpiCard
-              label="Total Trades"
-              value={fmtInt(kpis.totalTrades)}
-              size="sm"
-              density="compact"
-            />
+            {kpis.slice(0, 3).map((kpi) => (
+              <KpiCard
+                key={kpi.label}
+                label={kpi.label}
+                value={kpi.value}
+                size="sm"
+                density="compact"
+              />
+            ))}
           </div>
         </header>
 
@@ -2804,10 +3177,10 @@ export default function ProfitableRanking({
             >
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <div>
-                  <p className="page-label">Retention</p>
-                  <h1 className="page-title">Profitable Traders Ranking (Retention Rewards)</h1>
-                  <p className="page-subtitle">
-                    Rank traders by broker value and engagement for reward campaigns.
+                  <p className="page-label">{rankingDefinition.sectionLabel}</p>
+                  <h1 className="page-title">{rankingDefinition.pageTitle}</h1>
+                  <p className="page-subtitle" style={{ maxWidth: 780 }}>
+                    {rankingDefinition.pageSubtitle}
                   </p>
                 </div>
 
@@ -2815,7 +3188,7 @@ export default function ProfitableRanking({
                   {fileName ? (
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
                       {fileName}
-                      {dataset ? ` • ${fmtInt(kpis.count)} traders` : ''}
+                      {dataset ? ` • ${kpis[0]?.value || '—'} users` : ''}
                     </span>
                   ) : (
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
@@ -2826,6 +3199,24 @@ export default function ProfitableRanking({
                   {loading ? (
                     <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
                       Reading…
+                    </span>
+                  ) : null}
+
+                  {!publicMode ? (
+                    <button
+                      type="button"
+                      className="pill-tab"
+                      onClick={onShareCurrentRankingPage}
+                      disabled={loading || !dataset}
+                      title="Open a public page for the current ranking view"
+                    >
+                      Share Public Page
+                    </button>
+                  ) : null}
+
+                  {dataset ? (
+                    <span style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+                      {activeTabConfig?.subtitle || activeTabConfig?.label || ''}
                     </span>
                   ) : null}
                 </div>
@@ -2842,30 +3233,15 @@ export default function ProfitableRanking({
                     width: '100%',
                   }}
                 >
-                  <KpiCard
-                    label="Total Traders"
-                    value={fmtInt(kpis.count)}
-                    size="sm"
-                    density="compact"
-                  />
-                  <KpiCard
-                    label="Total Deposits"
-                    value={fmtMoney0(kpis.totalDeposits)}
-                    size="sm"
-                    density="compact"
-                  />
-                  <KpiCard
-                    label="Total Trades"
-                    value={fmtInt(kpis.totalTrades)}
-                    size="sm"
-                    density="compact"
-                  />
-                  <KpiCard
-                    label="Total Closed PL"
-                    value={fmtMoney0(kpis.totalClosedPL)}
-                    size="sm"
-                    density="compact"
-                  />
+                  {kpis.map((kpi) => (
+                    <KpiCard
+                      key={kpi.label}
+                      label={kpi.label}
+                      value={kpi.value}
+                      size="sm"
+                      density="compact"
+                    />
+                  ))}
                 </div>
 
                 <div style={{ height: 1, width: '100%', background: 'rgba(255,255,255,0.06)' }} />
@@ -3023,158 +3399,250 @@ export default function ProfitableRanking({
               ))}
             </div>
 
-            <div className="ranking-filters-grid ranking-filters-grid--minimal">
-              <label
-                className={`ranking-filter-field ranking-filter-field--agent${
-                  hasAgentFilter ? ' ranking-filter-field--active' : ''
-                }`}
-              >
-                <span className="ranking-filter-label">Agent</span>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input
-                    type="text"
-                    className={`search-hero-input ranking-filter-input${
-                      String(agentSearch || '').trim() ? ' ranking-filter-input--active' : ''
-                    }`}
-                    value={agentSearch}
-                    onChange={(e) => setAgentSearch(String(e.target.value || ''))}
-                    placeholder="Search agents…"
-                    aria-label="Agent search"
-                  />
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                marginTop: 10,
+              }}
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className={`pill-tab${filtersCollapsed ? '' : ' active'}`}
+                  onClick={() => setFiltersCollapsed((v) => !v)}
+                  disabled={!dataset}
+                  title={filtersCollapsed ? 'Show filters' : 'Hide filters'}
+                >
+                  {filtersCollapsed ? 'Show Filters' : 'Hide Filters'}
+                  {activeFiltersCount > 0 ? ` • ${fmtInt(activeFiltersCount)}` : ''}
+                </button>
+
+                {hasAnyFilterActive ? (
                   <button
                     type="button"
-                    className="pill-tab"
+                    className="pill-tab active"
                     onClick={() => {
                       triggerUpdate()
+                      setMinDeposit(0)
+                      setMinTrades(0)
+                      setActivityRecencyDays(0)
+                      setSelectedCountries([])
                       setSelectedAgents([])
                       setAgentSearch('')
                     }}
-                    disabled={!selectedAgents.length && !agentSearch}
-                    title="Clear agent selection"
+                    title="Reset all filters"
                   >
-                    ×
+                    Reset Filters
                   </button>
-                </div>
-                <select
-                  multiple
-                  size={headerCollapsed ? 2 : 3}
-                  value={selectedAgents}
-                  onChange={(e) => {
-                    triggerUpdate()
-                    const next = []
-                    for (const opt of e.target.options) {
-                      if (opt.selected) next.push(opt.value)
-                    }
-                    setSelectedAgents(next)
-                  }}
-                  className={`search-hero-input ranking-filter-input ranking-filter-agents${
-                    hasAgentFilter ? ' ranking-filter-input--active' : ''
-                  }`}
-                  disabled={!agentOptions.length}
-                  aria-label="Agent filter"
-                  title="Filter by assigned agent (Ctrl/Cmd+Click to multi-select)"
-                >
-                  {filteredAgentOptions.map((a) => (
-                    <option key={String(a)} value={String(a)}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                ) : null}
+              </div>
 
-              <label
-                className={`ranking-filter-field${hasMinDepositFilter ? ' ranking-filter-field--active' : ''}`}
-              >
-                <span className="ranking-filter-label">Min Deposit</span>
-                <input
-                  type="number"
-                  className={`search-hero-input ranking-filter-input${
-                    hasMinDepositFilter ? ' ranking-filter-input--active' : ''
-                  }`}
-                  value={minDeposit}
-                  onChange={(e) => {
-                    triggerUpdate()
-                    setMinDeposit(Number(e.target.value || 0))
-                  }}
-                />
-              </label>
-
-              <label
-                className={`ranking-filter-field${hasMinTradesFilter ? ' ranking-filter-field--active' : ''}`}
-              >
-                <span className="ranking-filter-label">Min Trades</span>
-                <input
-                  type="number"
-                  className={`search-hero-input ranking-filter-input${
-                    hasMinTradesFilter ? ' ranking-filter-input--active' : ''
-                  }`}
-                  value={minTrades}
-                  onChange={(e) => {
-                    triggerUpdate()
-                    setMinTrades(Number(e.target.value || 0))
-                  }}
-                />
-              </label>
-
-              <label
-                className={`ranking-filter-field ranking-filter-field--countries${
-                  hasCountryFilter ? ' ranking-filter-field--active' : ''
-                }`}
-              >
-                <span className="ranking-filter-label">Countries (Ctrl/Cmd+Click)</span>
-                <select
-                  multiple
-                  size={headerCollapsed ? 2 : 3}
-                  value={selectedCountries}
-                  onChange={(e) => {
-                    triggerUpdate()
-                    const next = []
-                    for (const opt of e.target.options) {
-                      if (opt.selected) next.push(opt.value)
-                    }
-                    setSelectedCountries(next)
-                  }}
-                  className={`search-hero-input ranking-filter-input ranking-filter-countries${
-                    hasCountryFilter ? ' ranking-filter-input--active' : ''
-                  }`}
-                  disabled={!countryOptions.length}
-                  aria-label="Country filter"
-                >
-                  {countryOptions.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div
-                className="ranking-filter-field ranking-filter-field--reset"
-                style={{ alignSelf: 'end' }}
-              >
-                <button
-                  type="button"
-                  className={`pill-tab${hasAnyFilterActive ? ' active' : ''}`}
-                  onClick={() => {
-                    triggerUpdate()
-                    setMinDeposit(0)
-                    setMinTrades(0)
-                    setActivityRecencyDays(0)
-                    setSelectedCountries([])
-                    setSelectedAgents([])
-                    setAgentSearch('')
-                  }}
-                  title="Reset all filters"
-                >
-                  Reset Filters
-                </button>
+              <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 800 }}>
+                {hasAnyFilterActive
+                  ? filterSummary.join(' • ')
+                  : 'No active filters. Table is showing the full ranking scope.'}
               </div>
             </div>
 
-            {dataset ? (
+            {!filtersCollapsed ? (
               <div
                 style={{
-                  margin: '2px 0 0',
+                  marginTop: 10,
+                  padding: '12px 14px',
+                  borderRadius: 14,
+                  background: 'rgba(255,255,255,0.025)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <div className="ranking-filters-grid ranking-filters-grid--minimal">
+                  {definitionFilters.agents ? (
+                    <label
+                      className={`ranking-filter-field ranking-filter-field--agent${
+                        hasAgentFilter ? ' ranking-filter-field--active' : ''
+                      }`}
+                    >
+                      <span className="ranking-filter-label">Agent</span>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className={`search-hero-input ranking-filter-input${
+                            String(agentSearch || '').trim() ? ' ranking-filter-input--active' : ''
+                          }`}
+                          value={agentSearch}
+                          onChange={(e) => setAgentSearch(String(e.target.value || ''))}
+                          placeholder="Search agents…"
+                          aria-label="Agent search"
+                        />
+                        <button
+                          type="button"
+                          className="pill-tab"
+                          onClick={() => {
+                            triggerUpdate()
+                            setSelectedAgents([])
+                            setAgentSearch('')
+                          }}
+                          disabled={!selectedAgents.length && !agentSearch}
+                          title="Clear agent selection"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <select
+                        multiple
+                        size={headerCollapsed ? 2 : 3}
+                        value={selectedAgents}
+                        onChange={(e) => {
+                          triggerUpdate()
+                          const next = []
+                          for (const opt of e.target.options) {
+                            if (opt.selected) next.push(opt.value)
+                          }
+                          setSelectedAgents(next)
+                        }}
+                        className={`search-hero-input ranking-filter-input ranking-filter-agents${
+                          hasAgentFilter ? ' ranking-filter-input--active' : ''
+                        }`}
+                        disabled={!agentOptions.length}
+                        aria-label="Agent filter"
+                        title="Filter by assigned agent (Ctrl/Cmd+Click to multi-select)"
+                      >
+                        {filteredAgentOptions.map((a) => (
+                          <option key={String(a)} value={String(a)}>
+                            {a}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+
+                  {definitionFilters.minDeposit ? (
+                    <label
+                      className={`ranking-filter-field${hasMinDepositFilter ? ' ranking-filter-field--active' : ''}`}
+                    >
+                      <span className="ranking-filter-label">Min Deposit</span>
+                      <input
+                        type="number"
+                        className={`search-hero-input ranking-filter-input${
+                          hasMinDepositFilter ? ' ranking-filter-input--active' : ''
+                        }`}
+                        value={minDeposit}
+                        onChange={(e) => {
+                          triggerUpdate()
+                          setMinDeposit(Number(e.target.value || 0))
+                        }}
+                      />
+                    </label>
+                  ) : null}
+
+                  <label
+                    className={`ranking-filter-field${hasMinTradesFilter ? ' ranking-filter-field--active' : ''}`}
+                  >
+                    <span className="ranking-filter-label">Min Trades</span>
+                    <input
+                      type="number"
+                      className={`search-hero-input ranking-filter-input${
+                        hasMinTradesFilter ? ' ranking-filter-input--active' : ''
+                      }`}
+                      value={minTrades}
+                      onChange={(e) => {
+                        triggerUpdate()
+                        setMinTrades(Number(e.target.value || 0))
+                      }}
+                    />
+                  </label>
+
+                  {definitionFilters.countries ? (
+                    <label
+                      className={`ranking-filter-field ranking-filter-field--countries${
+                        hasCountryFilter ? ' ranking-filter-field--active' : ''
+                      }`}
+                    >
+                      <span className="ranking-filter-label">Countries (Ctrl/Cmd+Click)</span>
+                      <select
+                        multiple
+                        size={headerCollapsed ? 2 : 3}
+                        value={selectedCountries}
+                        onChange={(e) => {
+                          triggerUpdate()
+                          const next = []
+                          for (const opt of e.target.options) {
+                            if (opt.selected) next.push(opt.value)
+                          }
+                          setSelectedCountries(next)
+                        }}
+                        className={`search-hero-input ranking-filter-input ranking-filter-countries${
+                          hasCountryFilter ? ' ranking-filter-input--active' : ''
+                        }`}
+                        disabled={!countryOptions.length}
+                        aria-label="Country filter"
+                      >
+                        {countryOptions.map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+                </div>
+
+                {dataset && definitionFilters.agents ? (
+                  <div
+                    style={{
+                      margin: '10px 0 0',
+                      color: 'var(--text-muted)',
+                      fontSize: 12,
+                      fontWeight: 900,
+                    }}
+                  >
+                    Agent: {agentSummaryText}
+                  </div>
+                ) : null}
+
+                <div
+                  className="profitable-ranking-collapsible profitable-ranking-collapsible--advanced"
+                  style={{ marginTop: 10 }}
+                >
+                  <div className="ranking-filters-grid ranking-filters-grid--advanced">
+                    {definitionFilters.activityRecency ? (
+                      <label
+                        className={`ranking-filter-field${
+                          hasActivityRecencyFilter ? ' ranking-filter-field--active' : ''
+                        }`}
+                      >
+                        <span className="ranking-filter-label">Activity Recency</span>
+                        <select
+                          className={`search-hero-input ranking-filter-input${
+                            hasActivityRecencyFilter ? ' ranking-filter-input--active' : ''
+                          }`}
+                          value={String(activityRecencyDays)}
+                          onChange={(e) => {
+                            triggerUpdate()
+                            setActivityRecencyDays(Number(e.target.value || 0))
+                          }}
+                          aria-label="Activity recency filter"
+                        >
+                          <option value="0">Any</option>
+                          <option value="7">Last 7 days</option>
+                          <option value="30">Last 30 days</option>
+                          <option value="90">Last 90 days</option>
+                          <option value="365">Last 12 months</option>
+                        </select>
+                      </label>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {dataset && definitionFilters.agents && filtersCollapsed ? (
+              <div
+                style={{
+                  margin: '6px 0 0',
                   color: 'var(--text-muted)',
                   fontSize: 12,
                   fontWeight: 900,
@@ -3183,35 +3651,6 @@ export default function ProfitableRanking({
                 Agent: {agentSummaryText}
               </div>
             ) : null}
-
-            <div className="profitable-ranking-collapsible profitable-ranking-collapsible--advanced">
-              <div className="ranking-filters-grid ranking-filters-grid--advanced">
-                <label
-                  className={`ranking-filter-field${
-                    hasActivityRecencyFilter ? ' ranking-filter-field--active' : ''
-                  }`}
-                >
-                  <span className="ranking-filter-label">Activity Recency</span>
-                  <select
-                    className={`search-hero-input ranking-filter-input${
-                      hasActivityRecencyFilter ? ' ranking-filter-input--active' : ''
-                    }`}
-                    value={String(activityRecencyDays)}
-                    onChange={(e) => {
-                      triggerUpdate()
-                      setActivityRecencyDays(Number(e.target.value || 0))
-                    }}
-                    aria-label="Activity recency filter"
-                  >
-                    <option value="0">Any</option>
-                    <option value="7">Last 7 days</option>
-                    <option value="30">Last 30 days</option>
-                    <option value="90">Last 90 days</option>
-                    <option value="365">Last 12 months</option>
-                  </select>
-                </label>
-              </div>
-            </div>
           </div>
 
           {error ? (
@@ -3276,7 +3715,7 @@ export default function ProfitableRanking({
                 fontWeight: 800,
               }}
             >
-              0 results with current filters. Try lowering Min Deposit / Min Trades.
+              {rankingDefinition.emptyText}
             </div>
           ) : null}
         </div>
@@ -3305,6 +3744,11 @@ export default function ProfitableRanking({
                 onPage={(n) => {
                   deferAfterUpdate(() => setPageByTab((p) => ({ ...p, [activeTab]: n })))
                 }}
+                entityLabel={rankingDefinition.entityLabel}
+                entityHelp={rankingDefinition.entityHelp}
+                tableAriaLabel={rankingDefinition.tableAriaLabel}
+                showAgentColumn={Boolean(definitionFilters.agents)}
+                showCountryColumn={Boolean(definitionFilters.countries)}
               />
             </>
           ) : (

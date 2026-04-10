@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-09T18:34:32.634Z",
+  "generatedAt": "2026-04-10T10:05:20.730Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -13,8 +13,8 @@
   "summary": {
     "total": 696,
     "byMatchStatus": {
-      "exact": 120,
-      "candidate": 57,
+      "exact": 119,
+      "candidate": 58,
       "unmatched": 519
     },
     "byPriority": {
@@ -23,8 +23,8 @@
       "low": 436
     },
     "byRecommendedAction": {
-      "direct_contact": 45,
-      "public_reply": 647,
+      "direct_contact": 44,
+      "public_reply": 648,
       "no_contact": 0,
       "manual_review": 4
     }
@@ -213,7 +213,7 @@
         "volume": "5,105,600.0000",
         "lots": "510.56",
         "pl": "11,080.2544",
-        "status": "No Answer",
+        "status": "Trustpilot",
         "country": "United Kingdom"
       }
     },
@@ -595,7 +595,7 @@
         "volume": "135,000.0000",
         "lots": "13.5",
         "pl": "-361.2100",
-        "status": "No Answer",
+        "status": "Call Back",
         "country": "Australia"
       }
     },
@@ -1201,7 +1201,7 @@
         "volume": "288,800.0000",
         "lots": "28.88",
         "pl": "614.7338",
-        "status": "New",
+        "status": "Call Back",
         "country": "Netherlands"
       }
     },
@@ -2017,7 +2017,7 @@
         "volume": "5,105,600.0000",
         "lots": "510.56",
         "pl": "11,080.2544",
-        "status": "No Answer",
+        "status": "Trustpilot",
         "country": "United Kingdom"
       }
     },
@@ -2504,33 +2504,33 @@
       "reviewStatus": "",
       "followUpNeeded": "",
       "additionalNotes": "",
-      "matchStatus": "exact",
+      "matchStatus": "candidate",
       "matchedUserIds": [
+        "bullwaves-1094380",
         "bullwaves-210669"
       ],
       "priorityLevel": "high",
-      "recommendedAction": "direct_contact",
+      "recommendedAction": "public_reply",
       "reasonCodes": [
-        "exact_user_match",
-        "trading_context_available",
-        "high_priority_issue"
+        "identity_not_confirmed",
+        "request_secure_verification"
       ],
-      "templateKey": "template_direct_recovery",
+      "templateKey": "template_public_recovery",
       "checklist": [
-        "Respond on Trustpilot with neutral acknowledgment.",
-        "Open direct contact channel with verified user identity.",
-        "Use internal trading context to tailor the outreach message."
+        "Reply publicly on Trustpilot using neutral support wording.",
+        "Invite user to secure support channel for identity verification.",
+        "Avoid exposing internal account data in public response."
       ],
       "tradingContext": {
-        "userid": "bullwaves-210669",
-        "mt5account": "926498",
-        "totaldeposits": "1,076.2749",
-        "netdeposits": "312.01",
-        "withdrawals": "764.26",
-        "volume": "98,100.0000",
-        "lots": "9.81",
-        "pl": "298.2428",
-        "status": "Call Back",
+        "userid": "bullwaves-1094380",
+        "mt5account": "3015836",
+        "totaldeposits": "1,144.0000",
+        "netdeposits": "1,144.00",
+        "withdrawals": "0.00",
+        "volume": "0.0000",
+        "lots": "0",
+        "pl": "0.0000",
+        "status": "New",
         "country": "Australia"
       }
     },
@@ -2887,7 +2887,7 @@
         "volume": "46,700.0000",
         "lots": "4.67",
         "pl": "1,730.1018",
-        "status": "New",
+        "status": "Call Back",
         "country": "United Kingdom"
       }
     },
@@ -4241,7 +4241,7 @@
         "volume": "223,800.0000",
         "lots": "22.38",
         "pl": "480.5000",
-        "status": "Call Back",
+        "status": "Trustpilot",
         "country": "Netherlands"
       }
     },
@@ -8902,7 +8902,7 @@
         "volume": "9,820,800.0000",
         "lots": "982.08",
         "pl": "1,629.3736",
-        "status": "Call Back",
+        "status": "Trustpilot",
         "country": "United Kingdom"
       }
     },
@@ -9941,9 +9941,9 @@
         "totaldeposits": "13,950.0000",
         "netdeposits": "13,950.00",
         "withdrawals": "0.00",
-        "volume": "1,742,200.0000",
-        "lots": "174.22",
-        "pl": "13,635.8300",
+        "volume": "1,774,700.0000",
+        "lots": "177.47",
+        "pl": "13,692.5800",
         "status": "New",
         "country": "New Zealand"
       }
@@ -10438,9 +10438,9 @@
         "totaldeposits": "1,500.0000",
         "netdeposits": "1,500.00",
         "withdrawals": "0.00",
-        "volume": "27,600.0000",
-        "lots": "2.76",
-        "pl": "1,041.1200",
+        "volume": "125,800.0000",
+        "lots": "12.58",
+        "pl": "1,694.1600",
         "status": "New",
         "country": "United Kingdom"
       }
@@ -12315,9 +12315,9 @@
         "totaldeposits": "1,027.7000",
         "netdeposits": "1,027.70",
         "withdrawals": "0.00",
-        "volume": "2,401,800.0000",
-        "lots": "240.18",
-        "pl": "-187.8128",
+        "volume": "2,402,800.0000",
+        "lots": "240.28",
+        "pl": "-171.7016",
         "status": "New",
         "country": "Italy"
       }
@@ -13777,7 +13777,7 @@
         "volume": "1,221,000.0000",
         "lots": "122.1",
         "pl": "969.8900",
-        "status": "New",
+        "status": "Deleted",
         "country": "Australia"
       }
     },
@@ -15494,13 +15494,13 @@
       "tradingContext": {
         "userid": "bullwaves-586289",
         "mt5account": "1304126",
-        "totaldeposits": "24,500.0000",
-        "netdeposits": "1,541.82",
+        "totaldeposits": "25,000.0000",
+        "netdeposits": "2,041.82",
         "withdrawals": "22,958.18",
-        "volume": "821,112,800.0000",
-        "lots": "82111.28",
-        "pl": "1,611.7700",
-        "status": "Dormant",
+        "volume": "821,114,100.0000",
+        "lots": "82111.41",
+        "pl": "2,112.8200",
+        "status": "Call Back",
         "country": "United Kingdom"
       }
     },
@@ -19185,8 +19185,8 @@
       "tradingContext": {
         "userid": "bullwaves-29048",
         "mt5account": "501918",
-        "totaldeposits": "11,067.0000",
-        "netdeposits": "10,949.17",
+        "totaldeposits": "11,167.0000",
+        "netdeposits": "11,049.17",
         "withdrawals": "117.83",
         "volume": "3,002,100.0000",
         "lots": "300.21",
@@ -21378,9 +21378,9 @@
         "totaldeposits": "2,214.0600",
         "netdeposits": "2,214.06",
         "withdrawals": "0.00",
-        "volume": "229,600.0000",
-        "lots": "22.96",
-        "pl": "1,792.1998",
+        "volume": "234,600.0000",
+        "lots": "23.46",
+        "pl": "1,778.1247",
         "status": "New",
         "country": "Spain"
       }
@@ -26473,13 +26473,13 @@
       "tradingContext": {
         "userid": "bullwaves-595452",
         "mt5account": "1305298",
-        "totaldeposits": "51,258.0799",
-        "netdeposits": "36,013.70",
+        "totaldeposits": "52,249.5599",
+        "netdeposits": "37,005.18",
         "withdrawals": "15,244.38",
-        "volume": "5,376,900.0000",
-        "lots": "537.69",
-        "pl": "39,763.0519",
-        "status": "New",
+        "volume": "5,531,900.0000",
+        "lots": "553.19",
+        "pl": "40,818.8641",
+        "status": "Call Back",
         "country": "United Kingdom"
       }
     },
@@ -26684,9 +26684,9 @@
         "totaldeposits": "6,550.0000",
         "netdeposits": "5,250.00",
         "withdrawals": "1,300.00",
-        "volume": "756,000.0000",
-        "lots": "75.6",
-        "pl": "498.7900",
+        "volume": "759,000.0000",
+        "lots": "75.9",
+        "pl": "1,314.9500",
         "status": "New",
         "country": "Denmark"
       }
@@ -27754,7 +27754,7 @@
         "volume": "9,500.0000",
         "lots": "0.95",
         "pl": "154.0331",
-        "status": "Dormant",
+        "status": "Call Back",
         "country": "United Kingdom"
       }
     },
@@ -27806,7 +27806,7 @@
         "volume": "671,800.0000",
         "lots": "67.18",
         "pl": "4,847.4932",
-        "status": "New",
+        "status": "Contacted",
         "country": "United Kingdom"
       }
     },
@@ -27894,9 +27894,9 @@
         "totaldeposits": "1,900.0000",
         "netdeposits": "1,900.00",
         "withdrawals": "0.00",
-        "volume": "600,000.0000",
-        "lots": "60",
-        "pl": "433.1900",
+        "volume": "610,000.0000",
+        "lots": "61",
+        "pl": "333.1900",
         "status": "New",
         "country": "Australia"
       }
@@ -28560,8 +28560,8 @@
         "userid": "bullwaves-919172",
         "mt5account": "3009663",
         "totaldeposits": "571.3300",
-        "netdeposits": "-39.04",
-        "withdrawals": "610.37",
+        "netdeposits": "-314.03",
+        "withdrawals": "885.36",
         "volume": "56,600.0000",
         "lots": "5.66",
         "pl": "-310.0898",
@@ -29378,7 +29378,7 @@
         "volume": "4,554,900.0000",
         "lots": "455.49",
         "pl": "29,339.2100",
-        "status": "New",
+        "status": "Trustpilot",
         "country": "Australia"
       }
     },
@@ -29559,9 +29559,9 @@
         "totaldeposits": "537.6799",
         "netdeposits": "403.44",
         "withdrawals": "134.24",
-        "volume": "27,800.0000",
-        "lots": "2.78",
-        "pl": "347.9173",
+        "volume": "34,100.0000",
+        "lots": "3.41",
+        "pl": "374.1152",
         "status": "Interested",
         "country": "United Kingdom"
       }
