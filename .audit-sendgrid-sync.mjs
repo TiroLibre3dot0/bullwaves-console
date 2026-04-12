@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv'
+import dotenv from 'dotenv'
 import path from 'node:path'
 import { sendgridTemplateRegistry } from './src/pages/Retention/sendgridTemplateRegistry.js'
 
