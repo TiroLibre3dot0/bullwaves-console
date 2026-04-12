@@ -41,6 +41,7 @@ const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking
 const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonitor'))
 const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMasterTemplatePage'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
+const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
@@ -181,6 +182,7 @@ export default function AuthenticatedApp() {
       traderPointsSimulator: '/trader-points',
       profitableRanking: '/retention/profitable-ranking',
       primeChallengeRanking: '/prime-challenge/ranking',
+      primeChallengeWidget: '/prime-challenge/widget',
       segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
       emailMasterTemplate: '/retention/email-master-template',
@@ -221,6 +223,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/ranking')) return 'profitableRanking'
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/prime-challenge/ranking')) return 'primeChallengeRanking'
+    if (pathname.startsWith('/prime-challenge/widget')) return 'primeChallengeWidget'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
     if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
@@ -555,6 +558,7 @@ export default function AuthenticatedApp() {
       summary: 'summary',
       profitableRanking: 'retention-profitable-ranking',
       primeChallengeRanking: 'prime-challenge-ranking',
+      primeChallengeWidget: 'prime-challenge-widget',
       segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
       emailMasterTemplate: 'retention-email-master-template',
@@ -636,6 +640,7 @@ export default function AuthenticatedApp() {
               {view === 'primeChallengeRanking' ? (
                 <ProfitableRanking definitionKey="prime_challenge" />
               ) : null}
+              {view === 'primeChallengeWidget' ? <PrimeChallengeWidgetPage /> : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
               {view === 'emailMasterTemplate' ? <EmailMasterTemplatePage /> : null}

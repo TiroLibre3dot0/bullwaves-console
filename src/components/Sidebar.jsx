@@ -4,6 +4,7 @@ const RECENT_SECTION_KEYS = new Set([
   'segmentComposition',
   'emailMasterTemplate',
   'primeChallengeRanking',
+  'primeChallengeWidget',
 ])
 
 function SidebarNewBadge() {
@@ -309,6 +310,14 @@ export default function Sidebar({
           active: view === 'primeChallengeRanking',
           onClick: () => navigate('primeChallengeRanking'),
           disabled: disabled('primeChallengeRanking'),
+        },
+        {
+          key: 'primeChallengeWidget',
+          label: 'Widget',
+          icon: 'layout',
+          active: view === 'primeChallengeWidget',
+          onClick: () => navigate('primeChallengeWidget'),
+          disabled: disabled('primeChallengeWidget'),
         },
       ],
     },
