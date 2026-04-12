@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-07T15:44:02.468Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-04-12T16:07:51.216Z'
 
 export const sendgridTemplateRegistry = {
   most_consistent_badge_award_email: {
@@ -618,7 +618,7 @@ export const sendgridTemplateRegistry = {
         versionId: '7d929f01-6cf0-42be-989c-dd368e5e67e5',
         name: 'Unfunded Newcomers - Friction Reduction A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Questions before funding? Here is the fastest way forward.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Questions before funding? Here is a simpler way forward.',
         timing: 'D2',
         delay: '+2 days after welcome message',
       },
@@ -638,7 +638,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'df257034-2601-4f6e-8d62-7f67addf055c',
         name: 'Unfunded Newcomers - Riduzione Attriti A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Hai dubbi prima di depositare? Ecco il modo più semplice per procedere.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Hai dubbi prima di depositare? Ecco un modo più semplice per procedere.',
         timing: 'D2',
         delay: '+2 giorni dopo il welcome message',
       },
@@ -744,7 +744,7 @@ export const sendgridTemplateRegistry = {
         versionId: '8f3f5fac-a2d8-4042-90e1-08b7fa82e8bb',
         name: 'Unfunded Newcomers - Welcome + Value Proposition A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is ready. Funding it takes just one step.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is ready. When you are ready, the next step is simple.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
@@ -753,7 +753,7 @@ export const sendgridTemplateRegistry = {
         versionId: '756f8692-e74b-4452-af58-9b6eb32e1bb1',
         name: 'Unfunded Newcomers - Welcome + Value Proposition B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your registration is done. Unlock the next step on Bullwaves.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your registration is complete. Your next step on Bullwaves is ready.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
@@ -764,7 +764,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'd6e95aeb-f3b0-4b51-9720-bb53c74461aa',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Ti manca solo un passo.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Quando vuoi, il prossimo passo è semplice.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
@@ -773,7 +773,7 @@ export const sendgridTemplateRegistry = {
         versionId: '6259cffa-0173-4176-a40f-6f1ccc1f05a5',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Registrazione completata. Sblocca il prossimo passaggio su Bullwaves.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Registrazione completata. Il tuo prossimo passaggio su Bullwaves è pronto.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
