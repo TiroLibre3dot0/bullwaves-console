@@ -133,6 +133,49 @@ function coerceBoolean(value) {
   return ['1', 'true', 'yes', 'y', 'paid', 'payout'].includes(text)
 }
 
+function parseDateSafe(value) {
+  if (value == null || value === '') return null
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null
+  const ms = Date.parse(String(value).trim())
+  if (!Number.isFinite(ms)) return null
+  const date = new Date(ms)
+  return Number.isFinite(date.getTime()) ? date : null
+}
+
+function pickMaxDate(left, right) {
+  const a = left instanceof Date ? left : null
+  const b = right instanceof Date ? right : null
+  if (!a) return b
+  if (!b) return a
+  return a.getTime() >= b.getTime() ? a : b
+}
+
+function pickMinDate(left, right) {
+  const a = left instanceof Date ? left : null
+  const b = right instanceof Date ? right : null
+  if (!a) return b
+  if (!b) return a
+  return a.getTime() <= b.getTime() ? a : b
+}
+
+function diffDays(fromDate, toDate) {
+  const from = fromDate instanceof Date ? fromDate.getTime() : NaN
+  const to = toDate instanceof Date ? toDate.getTime() : NaN
+  if (!Number.isFinite(from) || !Number.isFinite(to)) return null
+  const days = Math.floor((from - to) / 86400000)
+  return Number.isFinite(days) ? Math.max(0, days) : null
+}
+
+function hasActivitySignal({ trades, closedPL, deposit, wd, net }) {
+  return (
+    Number(trades || 0) > 0 ||
+    Number(closedPL || 0) !== 0 ||
+    Number(deposit || 0) !== 0 ||
+    Number(wd || 0) !== 0 ||
+    Number(net || 0) !== 0
+  )
+}
+
 function pad2(value) {
   return String(value).padStart(2, '0')
 }
@@ -224,18 +267,18 @@ function buildContestPayload(artifact) {
   }
 
   let latestPeriodKey = ''
+  let latestSourceDate = null
   for (const row of rows) {
     const periodKey = extractPeriod(row, schema, headerIndex)
     if (periodKey && periodKey > latestPeriodKey) latestPeriodKey = periodKey
+    latestSourceDate = pickMaxDate(
+      latestSourceDate,
+      parseDateSafe(getRowValue(row, schema.date, headerIndex, ['date', 'year_month']))
+    )
   }
 
   const byClient = new Map()
   for (const row of rows) {
-    if (latestPeriodKey) {
-      const rowPeriodKey = extractPeriod(row, schema, headerIndex)
-      if (rowPeriodKey !== latestPeriodKey) continue
-    }
-
     const clientId = coerceString(getRowValue(row, schema.client_id, headerIndex, ['client_id']))
     if (!clientId) continue
 
@@ -286,11 +329,46 @@ function buildContestPayload(artifact) {
     current.primaryPayoutAmount += primaryPayoutAmount
     current.isPayoutUser = current.isPayoutUser || isPayoutUser
 
+    const deposit = parseNumberSafe(getRowValue(row, 'deposit', headerIndex, ['deposit', 'std']))
+    const net = schema.net
+      ? parseNumberSafe(getRowValue(row, schema.net, headerIndex, ['net']))
+      : deposit - fallbackWithdrawals
+    const rowDate = parseDateSafe(
+      getRowValue(row, schema.date, headerIndex, ['date', 'year_month'])
+    )
+
+    current.clientTimestamp = pickMinDate(current.clientTimestamp, rowDate)
+    current.lastReportDate = pickMaxDate(current.lastReportDate, rowDate)
+    if (
+      hasActivitySignal({
+        trades: totalTrades,
+        closedPL,
+        deposit,
+        wd: fallbackWithdrawals,
+        net,
+      })
+    ) {
+      current.lastTradeDate = pickMaxDate(current.lastTradeDate, rowDate)
+    }
+
     byClient.set(clientId, current)
   }
 
+  const activeWindowDays = 180
+  const referenceDate = latestSourceDate || new Date()
   const ranking = [...byClient.values()]
-    .filter((entry) => entry.isPayoutUser || entry.closedPL > 0 || entry.primaryPayoutAmount > 0)
+    .map((entry) => {
+      const recencyDays = diffDays(referenceDate, entry.lastTradeDate)
+      return {
+        ...entry,
+        recencyDays,
+      }
+    })
+    .filter((entry) => {
+      if (Number(entry.primaryPayoutAmount || 0) <= 0) return false
+      const recencyDays = Number(entry.recencyDays)
+      return Number.isFinite(recencyDays) && recencyDays <= activeWindowDays
+    })
     .sort((left, right) => {
       const payoutDiff = Number(right.primaryPayoutAmount || 0) - Number(left.primaryPayoutAmount || 0)
       if (payoutDiff !== 0) return payoutDiff
@@ -319,7 +397,7 @@ function buildContestPayload(artifact) {
     generatedAt: new Date().toISOString(),
     sourceGeneratedAt: String(artifact?.generatedAt || ''),
     periodKey: latestPeriodKey || '',
-    periodLabel: formatMonthLabel(latestPeriodKey),
+    periodLabel: 'Active in last 180 days',
     updatedAtLabel: new Intl.DateTimeFormat('en-GB', {
       day: '2-digit',
       month: 'short',

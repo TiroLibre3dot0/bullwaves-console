@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-10T07:27:39.186Z",
+  "generatedAt": "2026-04-10T19:21:46.640Z",
   "source": "Media Report.csv",
   "rows": [
     {
@@ -120,15 +120,6 @@
       "pl": -313.64
     },
     {
-      "affiliateId": "1436",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 1157,
-      "commission": 0,
-      "pl": 1166.0679
-    },
-    {
       "affiliateId": "1439",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -226,15 +217,6 @@
       "netDeposits": 0,
       "commission": 0.72,
       "pl": 1.83
-    },
-    {
-      "affiliateId": "1876",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": -148.82
     },
     {
       "affiliateId": "1895",
@@ -336,15 +318,6 @@
       "pl": -580.8533
     },
     {
-      "affiliateId": "2099",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 1000,
-      "commission": 1000,
-      "pl": -2468.19
-    },
-    {
       "affiliateId": "2142",
       "affiliateName": "StandardMerchants",
       "year": 2026,
@@ -397,24 +370,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "2277",
-      "affiliateName": "ArmanShabanTrading",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "228",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 11.5
     },
     {
       "affiliateId": "2288",
@@ -685,15 +640,6 @@
       "netDeposits": 800,
       "commission": 47.33,
       "pl": 205.57
-    },
-    {
-      "affiliateId": "286",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 13820,
-      "commission": 3200,
-      "pl": 512.72
     },
     {
       "affiliateId": "2901",
@@ -1497,6 +1443,15 @@
       "pl": 33.4384
     },
     {
+      "affiliateId": "35401",
+      "affiliateName": "Archieward99",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 15320,
+      "commission": 3200,
+      "pl": 1631.4012
+    },
+    {
       "affiliateId": "35423",
       "affiliateName": "fxtradinggroup",
       "year": 2026,
@@ -1857,7 +1812,16 @@
       "pl": 0
     },
     {
-      "affiliateId": "3592",
+      "affiliateId": "35853",
+      "affiliateName": "levrone-bw",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 6157,
+      "commission": 2200,
+      "pl": -3213.8221
+    },
+    {
+      "affiliateId": "35928",
       "affiliateName": "ArmanShabanTrading",
       "year": 2026,
       "monthIndex": 3,
@@ -2307,15 +2271,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "4290",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 1500,
-      "commission": 0,
-      "pl": 1107.1812
-    },
-    {
       "affiliateId": "4335",
       "affiliateName": "Myfxbook",
       "year": 2026,
@@ -2408,15 +2363,6 @@
     {
       "affiliateId": "440",
       "affiliateName": "Myfxbook",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "4424",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
@@ -2604,15 +2550,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "4727",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "474",
       "affiliateName": "CentralBrokers1",
       "year": 2026,
@@ -2782,15 +2719,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "493",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 3300,
-      "commission": 1200,
-      "pl": -283.3
     },
     {
       "affiliateId": "4932",
@@ -3351,15 +3279,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5632",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "5634",
       "affiliateName": "Admasters",
       "year": 2026,
@@ -3513,15 +3432,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5875",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "5877",
       "affiliateName": "Default Affiliate",
       "year": 2026,
@@ -3637,15 +3547,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "743",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 3,
-      "netDeposits": 700,
-      "commission": 0,
-      "pl": -1479.58
     },
     {
       "affiliateId": "745",
@@ -3837,15 +3738,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "1093",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "1094",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -3952,15 +3844,6 @@
       "netDeposits": 5060,
       "commission": 0,
       "pl": 5604.59
-    },
-    {
-      "affiliateId": "1152",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 2775,
-      "commission": 2400,
-      "pl": 1373.9284
     },
     {
       "affiliateId": "1155",
@@ -4350,15 +4233,6 @@
       "pl": 742.3901
     },
     {
-      "affiliateId": "2217",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 15159,
-      "commission": 10400,
-      "pl": 3535.4752
-    },
-    {
       "affiliateId": "2221",
       "affiliateName": "forexero",
       "year": 2026,
@@ -4494,15 +4368,6 @@
       "pl": -850.34
     },
     {
-      "affiliateId": "2472",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 1400,
-      "commission": 0,
-      "pl": 44.55
-    },
-    {
       "affiliateId": "249",
       "affiliateName": "khanarsal",
       "year": 2026,
@@ -4510,15 +4375,6 @@
       "netDeposits": 3085,
       "commission": 1800,
       "pl": 440.42
-    },
-    {
-      "affiliateId": "2494",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
     },
     {
       "affiliateId": "2495",
@@ -4618,15 +4474,6 @@
       "netDeposits": 0,
       "commission": 0,
       "pl": 0
-    },
-    {
-      "affiliateId": "264",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 6411,
-      "commission": 4000,
-      "pl": 502.3
     },
     {
       "affiliateId": "2640",
@@ -5052,24 +4899,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "3096",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "31",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 16657,
-      "commission": 1500,
-      "pl": -18141.8869
-    },
-    {
       "affiliateId": "3113",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -5441,15 +5270,6 @@
     {
       "affiliateId": "3473",
       "affiliateName": "ZoniTK",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "3475",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -5889,6 +5709,15 @@
       "pl": -26.4118
     },
     {
+      "affiliateId": "35401",
+      "affiliateName": "Archieward99",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 22970,
+      "commission": 14400,
+      "pl": 4082.3252
+    },
+    {
       "affiliateId": "35403",
       "affiliateName": "dominguero",
       "year": 2026,
@@ -6238,6 +6067,15 @@
       "netDeposits": 0,
       "commission": 3000,
       "pl": 0
+    },
+    {
+      "affiliateId": "35853",
+      "affiliateName": "levrone-bw",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 25490,
+      "commission": 5100,
+      "pl": -10661.5285
     },
     {
       "affiliateId": "3586",
@@ -7140,15 +6978,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "4295",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 6058,
-      "commission": 1200,
-      "pl": 6106.43
-    },
-    {
       "affiliateId": "4324",
       "affiliateName": "owen",
       "year": 2026,
@@ -7475,15 +7304,6 @@
     {
       "affiliateId": "4544",
       "affiliateName": "DayTrading",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "4545",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -7878,15 +7698,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "4899",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "4915",
       "affiliateName": "mstmng",
       "year": 2026,
@@ -8247,15 +8058,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5189",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "519",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -8330,15 +8132,6 @@
     {
       "affiliateId": "5218",
       "affiliateName": "bullwavespartner",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "5219",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -8832,15 +8625,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5581",
-      "affiliateName": "levrone-bw",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "5582",
       "affiliateName": "CISaff",
       "year": 2026,
@@ -9302,15 +9086,6 @@
     {
       "affiliateId": "5887",
       "affiliateName": "candrin",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "5897",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -9950,15 +9725,6 @@
     {
       "affiliateId": "973",
       "affiliateName": "StandardMerchants",
-      "year": 2026,
-      "monthIndex": 2,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "975",
-      "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
@@ -11737,6 +11503,15 @@
       "netDeposits": -77,
       "commission": 0,
       "pl": 2846.4105999999997
+    },
+    {
+      "affiliateId": "35401",
+      "affiliateName": "Archieward99",
+      "year": 2026,
+      "monthIndex": 1,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
     },
     {
       "affiliateId": "35403",
@@ -13683,15 +13458,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5011",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "5023",
       "affiliateName": "DayTrading",
       "year": 2026,
@@ -14000,15 +13766,6 @@
     {
       "affiliateId": "5303",
       "affiliateName": "thinhnn",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "5305",
-      "affiliateName": "Archieward99",
       "year": 2026,
       "monthIndex": 1,
       "netDeposits": 0,
@@ -14403,15 +14160,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "5661",
-      "affiliateName": "Archieward99",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "5664",
       "affiliateName": "thinhnn",
       "year": 2026,
@@ -14648,15 +14396,6 @@
     {
       "affiliateId": "5808",
       "affiliateName": "Default Affiliate",
-      "year": 2026,
-      "monthIndex": 1,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
-      "affiliateId": "5819",
-      "affiliateName": "Archieward99",
       "year": 2026,
       "monthIndex": 1,
       "netDeposits": 0,
@@ -37713,15 +37452,6 @@
       "pl": 0
     },
     {
-      "affiliateId": "10550",
-      "affiliateName": "Archieward99",
-      "year": 2025,
-      "monthIndex": 7,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "10576",
       "affiliateName": "bullwavespartner",
       "year": 2025,
@@ -39288,15 +39018,6 @@
       "pl": 106.0548
     },
     {
-      "affiliateId": "2463",
-      "affiliateName": "Archieward99",
-      "year": 2025,
-      "monthIndex": 7,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
-    },
-    {
       "affiliateId": "2574",
       "affiliateName": "salesmarkelitics",
       "year": 2025,
@@ -39902,6 +39623,15 @@
     {
       "affiliateId": "35399",
       "affiliateName": "KeanuxTrade",
+      "year": 2025,
+      "monthIndex": 7,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35401",
+      "affiliateName": "Archieward99",
       "year": 2025,
       "monthIndex": 7,
       "netDeposits": 0,

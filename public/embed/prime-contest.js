@@ -266,7 +266,7 @@
               : `<div class="bw-empty">No contest rows available.</div>`
           }
           <div class="bw-foot">
-            <div class="bw-note">Masked names. Ranking ordered by payout volume for the latest available month.</div>
+            <div class="bw-note">Masked names. Ranking ordered by positive payout volume for clients active in the last 180 days.</div>
             ${options.ctaUrl ? `<a class="bw-cta" href="${options.ctaUrl}" target="_blank" rel="noopener noreferrer">${options.ctaLabel}</a>` : ''}
           </div>
         </div>
