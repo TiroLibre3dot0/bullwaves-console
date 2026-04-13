@@ -126,14 +126,6 @@ function main() {
   const trustpilotRemoteSourceUrl = String(process.env.TRUSTPILOT_SOURCE_URL || '').trim()
   const hasTrustpilotSource = safeStat(sourceTrustpilot).exists || Boolean(trustpilotRemoteSourceUrl)
 
-  const creolabsInputs = fs.existsSync(CREOLABS_DIR)
-    ? fs
-        .readdirSync(CREOLABS_DIR)
-        .filter((n) => /\.xlsx$/i.test(n))
-        .filter((n) => !/^~\$/.test(n))
-        .map((n) => path.join(CREOLABS_DIR, n))
-    : []
-
   const allTopLevelPublicFiles = fs.existsSync(PUBLIC) ? fs.readdirSync(PUBLIC).map((n) => path.join(PUBLIC, n)) : []
   const publicCsvFiles = allTopLevelPublicFiles.filter((p) => /\.csv$/i.test(p))
 
@@ -147,9 +139,6 @@ function main() {
     rankingsIndex: path.join(PUBLIC, 'rankings_index.json'),
     rankingsUsersTable: path.join(PUBLIC, 'rankings_users_table.json'),
     cellxAffiliateMonth: path.join(PUBLIC, 'cellx_affiliate_month.json'),
-    creolabsIndex: path.join(PUBLIC, 'creolabs_index.json'),
-    creolabsClientsTable: path.join(PUBLIC, 'creolabs_clients_table.json'),
-    creolabsAffiliateMonth: path.join(PUBLIC, 'creolabs_affiliate_month.json'),
     tradersRankingRewardsTable: path.join(PUBLIC, 'traders_ranking_rewards_table.json'),
     primeClientsRankingTable: path.join(PUBLIC, 'prime_clients_ranking_table.json'),
     primeContestEmbed: path.join(PUBLIC, 'embed', 'prime-contest.json'),
@@ -198,24 +187,6 @@ function main() {
     { artifact: artifacts.rankingsUsersTable, sources: [sourceRegistrations], name: 'rankings_users_table.json' },
     { artifact: artifacts.cellxAffiliateMonth, sources: [sourceMedia], name: 'cellx_affiliate_month.json' },
     { artifact: artifacts.shareOrgPeople, sources: [ORG_DATA], name: 'share/org-chart-people.json' },
-    {
-      artifact: artifacts.creolabsIndex,
-      sources: creolabsInputs,
-      name: 'creolabs_index.json',
-      optional: true,
-    },
-    {
-      artifact: artifacts.creolabsClientsTable,
-      sources: creolabsInputs,
-      name: 'creolabs_clients_table.json',
-      optional: true,
-    },
-    {
-      artifact: artifacts.creolabsAffiliateMonth,
-      sources: creolabsInputs,
-      name: 'creolabs_affiliate_month.json',
-      optional: true,
-    },
     {
       artifact: artifacts.tradersRankingRewardsTable,
       sources: [TRADERS_REWARDS_XLSX],
@@ -285,7 +256,6 @@ function main() {
       { p: 'generate_fraud_patterns_index.js', label: 'Generate fraud patterns index' },
       { p: 'generate_affiliate_kpi_index.js', label: 'Generate affiliate KPI index' },
       { p: 'generate_rankings_index.js', label: 'Generate rankings index' },
-      { p: 'generate_creolabs_index.js', label: 'Generate Creolabs index' },
       { p: 'generate_traders_ranking_rewards_table.js', label: 'Generate Traders Ranking Rewards artifact' },
       { p: 'generate_prime_clients_ranking_table.js', label: 'Generate Prime Clients Ranking artifact' },
       { p: 'generate_prime_contest_embed.js', label: 'Generate Prime Contest embed feed' },
