@@ -123,6 +123,8 @@ function main() {
   const sourceChargebacks = path.join(PUBLIC, 'Chargebacks Report.csv')
   const sourceComments = path.join(PUBLIC, 'comments.csv')
   const sourceTrustpilot = path.join(ROOT, 'Trustpilot', 'TrustPilot Review Tracker.csv')
+  const trustpilotRemoteSourceUrl = String(process.env.TRUSTPILOT_SOURCE_URL || '').trim()
+  const hasTrustpilotSource = safeStat(sourceTrustpilot).exists || Boolean(trustpilotRemoteSourceUrl)
 
   const creolabsInputs = fs.existsSync(CREOLABS_DIR)
     ? fs
@@ -280,7 +282,6 @@ function main() {
     const genScripts = [
       { p: 'generate_affiliate_index.js', label: 'Generate affiliate index' },
       { p: 'generate_support_users_index.js', label: 'Generate support users index' },
-      { p: 'generate_trustpilot_guidance.js', label: 'Generate trustpilot guidance' },
       { p: 'generate_fraud_patterns_index.js', label: 'Generate fraud patterns index' },
       { p: 'generate_affiliate_kpi_index.js', label: 'Generate affiliate KPI index' },
       { p: 'generate_rankings_index.js', label: 'Generate rankings index' },
@@ -292,6 +293,15 @@ function main() {
       { p: 'generate_share_org_people_index.mjs', label: 'Generate share org people index' },
       { p: 'generate_reports_meta.js', label: 'Generate reports meta (pre-fraud-monitor)' },
     ]
+
+    if (hasTrustpilotSource) {
+      genScripts.splice(2, 0, {
+        p: 'generate_trustpilot_guidance.js',
+        label: 'Generate trustpilot guidance',
+      })
+    } else {
+      notes.push('SKIP generate_trustpilot_guidance.js (missing local CSV and TRUSTPILOT_SOURCE_URL)')
+    }
 
     const generatorFailures = []
     for (const g of genScripts) {
