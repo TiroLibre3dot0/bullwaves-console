@@ -8,6 +8,40 @@ const PREVIEW_HTML_PINNED =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest-preview.html'
 const LIVE_WIDGET_DEMO_PATH = '/embed/prime-contest-widget-demo.html'
 const LIVE_FULL_PREVIEW_PATH = '/embed/prime-contest-preview.html#leaderboard'
+const LIVE_WIDGET_DEMO_SRCDOC = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(circle at 20% 20%, #0f1f4a 0%, #040b1e 58%, #020617 100%);
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        padding: 20px;
+      }
+
+      [data-bw-prime-contest] {
+        width: min(1120px, 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      data-bw-prime-contest
+      data-limit="10"
+      data-title="Prime Challenge Leaderboard"
+      data-subtitle="Monthly payout ranking"
+      data-cta-label="Start the challenge"
+      data-cta-url="https://prime.bullwaves.com/"
+      data-accent="#16a34a"
+    ></div>
+    <script src="${EMBED_JS_MAIN}" defer><\/script>
+  </body>
+</html>`
 
 const BASE_SNIPPET = `<div
   data-bw-prime-contest
@@ -194,7 +228,9 @@ export default function PrimeChallengeWidgetPage() {
           </a>
           <iframe
             title="Prime widget demo"
-            src={LIVE_WIDGET_DEMO_PATH}
+            srcDoc={LIVE_WIDGET_DEMO_SRCDOC}
+            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
+            loading="lazy"
             style={{
               width: '100%',
               minHeight: 520,
