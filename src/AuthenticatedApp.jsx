@@ -44,7 +44,9 @@ const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
 const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
 const CreolabsPage = lazy(() => import('./features/creolabs/pages/CreolabsPage'))
-const ExternalReportsHubPage = lazy(() => import('./features/reports/pages/ExternalReportsHubPage'))
+const ExternalReportsHubPage = lazy(
+  () => import('./features/reportsHub/pages/ExternalReportsHubPage')
+)
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
