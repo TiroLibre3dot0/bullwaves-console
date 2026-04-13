@@ -270,6 +270,9 @@ function main() {
         label: 'Generate trustpilot guidance',
       })
     } else {
+      console.log(
+        'INFO SKIP generate_trustpilot_guidance.js (missing local Trustpilot CSV and TRUSTPILOT_SOURCE_URL)'
+      )
       notes.push('SKIP generate_trustpilot_guidance.js (missing local CSV and TRUSTPILOT_SOURCE_URL)')
     }
 

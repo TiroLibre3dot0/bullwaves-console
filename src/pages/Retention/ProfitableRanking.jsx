@@ -24,8 +24,62 @@ import {
   edges as unfundedNewcomersEdges,
   meta as unfundedNewcomersMeta,
 } from '../../flows/unfundedNewcomersFlow'
+import { buildDedicatedSegmentLifecycleFlow } from '../../flows/dedicatedSegmentLifecycleFlow'
 
-const JOURNEY_SEGMENT_KEYS = new Set(['top_performing', 'most_consistent', 'new_unfunded'])
+function orientFlowHorizontal(flow) {
+  if (!flow || !Array.isArray(flow.nodes)) return flow
+
+  const nodes = flow.nodes
+  if (!nodes.length) return flow
+
+  const bounds = nodes.reduce(
+    (acc, node) => {
+      const x = Number(node?.position?.x || 0)
+      const y = Number(node?.position?.y || 0)
+      return {
+        minX: Math.min(acc.minX, x),
+        maxX: Math.max(acc.maxX, x),
+        minY: Math.min(acc.minY, y),
+        maxY: Math.max(acc.maxY, y),
+      }
+    },
+    {
+      minX: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+    }
+  )
+
+  const laneScale = 0.72
+  const nextNodes = nodes.map((node) => {
+    const x = Number(node?.position?.x || 0)
+    const y = Number(node?.position?.y || 0)
+
+    return {
+      ...node,
+      position: {
+        x: Math.round(y - bounds.minY + 120),
+        y: Math.round((x - bounds.minX) * laneScale + 140),
+      },
+    }
+  })
+
+  const nextMeta = {
+    ...(flow.meta || {}),
+    canvasWidth: Math.max(
+      Number(flow?.meta?.canvasWidth || 0),
+      Math.round(bounds.maxY - bounds.minY + 620)
+    ),
+    canvasHeight: Math.max(940, Math.round((bounds.maxX - bounds.minX) * laneScale + 520)),
+  }
+
+  return {
+    ...flow,
+    nodes: nextNodes,
+    meta: nextMeta,
+  }
+}
 
 function derivedStatusFormula(statusName) {
   const v = String(statusName || '')
@@ -3041,7 +3095,7 @@ export default function ProfitableRanking({
         priority: segment.priority,
         goal: segment.goal,
         description: segment.description,
-        journeyEnabled: JOURNEY_SEGMENT_KEYS.has(segment.key),
+        journeyEnabled: true,
         statusBuckets: segment.statusBuckets,
         rules: segment.rules,
         rulesList: segment.rulesList,
@@ -3191,26 +3245,33 @@ export default function ProfitableRanking({
   const overlaySubtitle = 'Loading…'
 
   // Map segment keys to flow data
-  const segmentFlowMap = useMemo(
-    () => ({
-      top_performing: {
+  const segmentFlowMap = useMemo(() => {
+    const genericFlows = Object.fromEntries(
+      EXCLUSIVE_SEGMENT_CONFIGS.map((segment) => [
+        segment.key,
+        buildDedicatedSegmentLifecycleFlow(segment),
+      ])
+    )
+
+    return {
+      ...genericFlows,
+      top_performing: orientFlowHorizontal({
         nodes: topPerformingTradersNodes,
         edges: topPerformingTradersEdges,
         meta: topPerformingTradersMeta,
-      },
-      most_consistent: {
+      }),
+      most_consistent: orientFlowHorizontal({
         nodes: mostConsistentTradersNodes,
         edges: mostConsistentTradersEdges,
         meta: mostConsistentTradersMeta,
-      },
-      new_unfunded: {
+      }),
+      new_unfunded: orientFlowHorizontal({
         nodes: unfundedNewcomersNodes,
         edges: unfundedNewcomersEdges,
         meta: unfundedNewcomersMeta,
-      },
-    }),
-    []
-  )
+      }),
+    }
+  }, [])
 
   const handleSegmentClick = (segment) => {
     setSelectedSegmentForJourney(segment)
