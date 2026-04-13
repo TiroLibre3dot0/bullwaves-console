@@ -567,8 +567,7 @@ export default function SupportUserDetails({
 
   function toSkaleRecordId(id) {
     const digits = String(id || '').replace(/\D+/g, '')
-    const last6 = digits.slice(-6)
-    return last6.length === 6 ? last6 : null
+    return digits || null
   }
 
   const skaleRecordId = toSkaleRecordId(accountIdRaw)

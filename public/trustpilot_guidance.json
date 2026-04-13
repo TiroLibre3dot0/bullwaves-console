@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-13T13:33:19.967Z",
+  "generatedAt": "2026-04-13T16:03:16.647Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -2527,9 +2527,9 @@
         "totaldeposits": "1,144.0000",
         "netdeposits": "1,144.00",
         "withdrawals": "0.00",
-        "volume": "0.0000",
-        "lots": "0",
-        "pl": "0.0000",
+        "volume": "30,000.0000",
+        "lots": "3",
+        "pl": "-135.0000",
         "status": "New",
         "country": "Australia"
       }
@@ -9941,9 +9941,9 @@
         "totaldeposits": "13,950.0000",
         "netdeposits": "13,950.00",
         "withdrawals": "0.00",
-        "volume": "1,774,700.0000",
-        "lots": "177.47",
-        "pl": "13,692.5800",
+        "volume": "1,777,200.0000",
+        "lots": "177.72",
+        "pl": "13,680.8300",
         "status": "New",
         "country": "New Zealand"
       }
@@ -12315,9 +12315,9 @@
         "totaldeposits": "1,027.7000",
         "netdeposits": "1,027.70",
         "withdrawals": "0.00",
-        "volume": "2,402,800.0000",
-        "lots": "240.28",
-        "pl": "-171.7016",
+        "volume": "2,403,500.0000",
+        "lots": "240.35",
+        "pl": "-151.7188",
         "status": "New",
         "country": "Italy"
       }
@@ -19188,9 +19188,9 @@
         "totaldeposits": "11,167.0000",
         "netdeposits": "11,049.17",
         "withdrawals": "117.83",
-        "volume": "3,002,100.0000",
-        "lots": "300.21",
-        "pl": "10,254.3700",
+        "volume": "3,004,000.0000",
+        "lots": "300.4",
+        "pl": "10,277.9300",
         "status": "New",
         "country": "Australia"
       }
@@ -26473,13 +26473,13 @@
       "tradingContext": {
         "userid": "bullwaves-595452",
         "mt5account": "1305298",
-        "totaldeposits": "52,249.5599",
-        "netdeposits": "37,005.18",
+        "totaldeposits": "54,943.1499",
+        "netdeposits": "39,698.77",
         "withdrawals": "15,244.38",
-        "volume": "5,531,900.0000",
-        "lots": "553.19",
-        "pl": "40,818.8641",
-        "status": "Call Back",
+        "volume": "5,590,400.0000",
+        "lots": "559.04",
+        "pl": "39,535.4634",
+        "status": "Deposited",
         "country": "United Kingdom"
       }
     },
@@ -26684,9 +26684,9 @@
         "totaldeposits": "6,550.0000",
         "netdeposits": "5,250.00",
         "withdrawals": "1,300.00",
-        "volume": "759,000.0000",
-        "lots": "75.9",
-        "pl": "1,314.9500",
+        "volume": "760,000.0000",
+        "lots": "76",
+        "pl": "1,324.2200",
         "status": "New",
         "country": "Denmark"
       }

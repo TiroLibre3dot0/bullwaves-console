@@ -1834,26 +1834,12 @@ export default function SupportUserCheck({ shareConfig = null }) {
                         const partnerUrl = partnerId
                           ? `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/${encodeURIComponent(partnerId)}`
                           : null
-                        // Cellxpert logic: fixed format, only last 6 digits from user input
-                        let cellxpertUrl = null
-                        if (partnerId) {
-                          const digits = String(query || '').replace(/\D+/g, '')
-                          const last6 = digits.slice(-6)
-                          if (last6.length === 6) {
-                            cellxpertUrl = `https://partner.trackingaffiliates.com/v2/adminv2/#!/app/customer-profile/bullwaves-${last6}`
-                          }
-                        }
-
-                        // Skale logic: fixed format, only last 6 digits from user input
-                        let skaleUrl = null
-                        if (partnerId) {
-                          // Extract only the last 6 digits from the user input
-                          const digits = String(query || '').replace(/\D+/g, '')
-                          const last6 = digits.slice(-6)
-                          if (last6.length === 6) {
-                            skaleUrl = `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${last6}`
-                          }
-                        }
+                        // Keep full account digits for CRM deep-links.
+                        const cellxpertUrl = partnerUrl
+                        const skaleRecordId = String(query || '').replace(/\D+/g, '') || null
+                        const skaleUrl = skaleRecordId
+                          ? `https://bul934907.skalecrm.com/index.php?module=Accounts&view=Detail&record=${encodeURIComponent(skaleRecordId)}`
+                          : null
 
                         return (
                           <div
