@@ -5,42 +5,7 @@ const EMBED_JS_MAIN =
 const EMBED_JS_PINNED =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest.js'
 const PUBLIC_PREVIEW_URL = 'https://bullwaves-console.vercel.app/embed/prime-contest-preview.html'
-const LIVE_WIDGET_DEMO_PATH = '/embed/prime-contest-widget-demo.html'
 const LIVE_FULL_PREVIEW_PATH = '/embed/prime-contest-preview.html#leaderboard'
-const LIVE_WIDGET_DEMO_SRCDOC = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        display: grid;
-        place-items: center;
-        background: radial-gradient(circle at 20% 20%, #0f1f4a 0%, #040b1e 58%, #020617 100%);
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-        padding: 20px;
-      }
-
-      [data-bw-prime-contest] {
-        width: min(1120px, 100%);
-      }
-    </style>
-  </head>
-  <body>
-    <div
-      data-bw-prime-contest
-      data-limit="10"
-      data-title="Prime Challenge Leaderboard"
-      data-subtitle="Monthly payout ranking"
-      data-cta-label="Start the challenge"
-      data-cta-url="https://prime.bullwaves.com/"
-      data-accent="#16a34a"
-    ></div>
-    <script src="${EMBED_JS_MAIN}" defer><\/script>
-  </body>
-</html>`
 
 const BASE_SNIPPET = `<div
   data-bw-prime-contest
@@ -231,31 +196,8 @@ export default function PrimeChallengeWidgetPage() {
       >
         <h2 style={{ margin: 0, fontSize: 18, color: '#e2e8f0' }}>Live previews</h2>
         <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
-          View both assets directly: standalone widget and full Prime contest page.
+          Use the full Prime contest preview page as the canonical public destination.
         </p>
-
-        <div style={{ display: 'grid', gap: 10 }}>
-          <a
-            href={LIVE_WIDGET_DEMO_PATH}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ color: '#93c5fd', fontSize: 12, fontWeight: 700 }}
-          >
-            Open widget demo in new tab
-          </a>
-          <iframe
-            title="Prime widget demo"
-            srcDoc={LIVE_WIDGET_DEMO_SRCDOC}
-            sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"
-            loading="lazy"
-            style={{
-              width: '100%',
-              minHeight: 520,
-              border: '1px solid rgba(148, 163, 184, 0.22)',
-              borderRadius: 10,
-            }}
-          />
-        </div>
 
         <div style={{ display: 'grid', gap: 10 }}>
           <a
@@ -264,7 +206,7 @@ export default function PrimeChallengeWidgetPage() {
             rel="noopener noreferrer"
             style={{ color: '#93c5fd', fontSize: 12, fontWeight: 700 }}
           >
-            Open full preview page in new tab
+            Open prime-contest-preview.html#leaderboard in new tab
           </a>
           <iframe
             title="Prime full preview"
