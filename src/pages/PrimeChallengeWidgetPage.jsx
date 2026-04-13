@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const EMBED_JS_MAIN =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@main/public/embed/prime-contest.js'
 const EMBED_JS_PINNED =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest.js'
-const PREVIEW_HTML_PINNED =
-  'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest-preview.html'
+const PUBLIC_PREVIEW_URL = 'https://bullwaves-console.vercel.app/embed/prime-contest-preview.html'
 const LIVE_WIDGET_DEMO_PATH = '/embed/prime-contest-widget-demo.html'
 const LIVE_FULL_PREVIEW_PATH = '/embed/prime-contest-preview.html#leaderboard'
 const LIVE_WIDGET_DEMO_SRCDOC = `<!doctype html>
@@ -66,7 +65,7 @@ const PINNED_SNIPPET = `<div
 <script src="${EMBED_JS_PINNED}" defer></script>`
 
 const IFRAME_SNIPPET = `<iframe
-  src="${PREVIEW_HTML_PINNED}"
+  src="${PUBLIC_PREVIEW_URL}#leaderboard"
   style="width:100%;min-height:2200px;border:0;border-radius:16px;"
   loading="lazy"
 ></iframe>`
@@ -149,7 +148,8 @@ export default function PrimeChallengeWidgetPage() {
       {
         key: 'iframe',
         title: 'Full page embed (iframe)',
-        description: 'Use this only when you need the entire long Prime preview page.',
+        description:
+          'Use this only when you need the entire long Prime preview page. Keep a tall min-height instead of forcing 100vh.',
         value: IFRAME_SNIPPET,
       },
     ],
@@ -190,6 +190,23 @@ export default function PrimeChallengeWidgetPage() {
         <div
           style={{
             marginTop: 12,
+            padding: 12,
+            borderRadius: 12,
+            border: '1px solid rgba(248, 113, 113, 0.28)',
+            background: 'rgba(127, 29, 29, 0.18)',
+            color: '#fecaca',
+            fontSize: 12,
+            lineHeight: 1.5,
+          }}
+        >
+          Do not use <strong>/prime-challenge/widget</strong> as an iframe source. That route is an
+          authenticated console page and can fall back to the login screen when opened publicly. Use
+          the public embed URL below instead.
+        </div>
+
+        <div
+          style={{
+            marginTop: 12,
             padding: 10,
             borderRadius: 10,
             border: '1px solid rgba(148, 163, 184, 0.24)',
@@ -198,7 +215,7 @@ export default function PrimeChallengeWidgetPage() {
             fontSize: 12,
           }}
         >
-          Quick links: {EMBED_JS_MAIN} | {EMBED_JS_PINNED} | {PREVIEW_HTML_PINNED}
+          Quick links: {EMBED_JS_MAIN} | {EMBED_JS_PINNED} | {PUBLIC_PREVIEW_URL}
         </div>
       </section>
 
