@@ -193,6 +193,24 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       emoji: '⬆️',
       tone: 'accent',
     },
+    {
+      key: 'reportsHub',
+      title: 'Reports Hub',
+      desc: 'Apri i report esterni e interni direttamente dalla console.',
+      kicker: 'Operations',
+      area: 'Operations',
+      emoji: '📄',
+      tone: 'info',
+    },
+    {
+      key: 'creolabs',
+      title: t('sidebar.creolabs'),
+      desc: 'Breakdown mensile clienti e ranking Top 50.',
+      kicker: 'Sales',
+      area: 'Sales',
+      emoji: '🧪',
+      tone: 'accent',
+    },
   ]
 
   const areaOrder = ['Sales', 'Support', 'Operations', 'Finance', 'Marketing', 'Dealing']

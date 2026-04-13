@@ -55,6 +55,13 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     [safeFlowData?.edges, locale]
   )
 
+  const flowRenderKey = useMemo(() => {
+    const nodeSignature = (localizedNodes || [])
+      .map((node) => `${node?.id || ''}:${node?.position?.x ?? 0}:${node?.position?.y ?? 0}`)
+      .join('|')
+    return `${safeFlowData?.meta?.id || 'flow'}::${nodeSignature}`
+  }, [localizedNodes, safeFlowData?.meta?.id])
+
   const flowDescription = pickText(safeFlowData?.meta?.description)
   const flowGoal = pickText(safeFlowData?.meta?.goal)
   const segmentLabel = pickText(safeSegment?.label)
@@ -407,9 +414,11 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
 
             <div className="segment-journey-modal__diagram-wrap">
               <FlowDiagram
+                key={flowRenderKey}
                 nodes={localizedNodes}
                 edges={localizedEdges}
                 theme="solitics"
+                layoutMode="source"
                 height="100%"
                 selectedNodeId={selectedNodeId}
                 onSelectNode={(node) => setSelectedNodeId(node?.id || null)}

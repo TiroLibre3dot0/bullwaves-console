@@ -2,15 +2,27 @@
 // Journey objective: convert newly registered users with no deposits into first-time depositors
 // KPIs: FTD conversion | time to first deposit | first trade activation
 
-const CANVAS_WIDTH = 1600
-const axisX = 800
+const CANVAS_WIDTH = 2140
+const CANVAS_HEIGHT = 700
 
 const stateW = 290
 const decisionW = 130
 const outcomeW = 280
 const influenceW = 220
 
-const xCenter = (w) => Math.round(axisX - w / 2)
+const x = {
+  entrance: 80,
+  step1: 290,
+  decision1: 520,
+  noDeposit: 730,
+  depositTrade: 730,
+  decision2: 930,
+  recovery: 1130,
+  depositPush: 1130,
+  decision3: 1335,
+  outcomes: 1540,
+  followUp: 1760,
+}
 
 const nodeDefaults = {
   draggable: false,
@@ -18,23 +30,25 @@ const nodeDefaults = {
 }
 
 const y = {
-  entrance: 90,
-  step1: 230,
-  step1Decision: 380,
-  step2: 540,
-  step2Alt: 540,
-  step2Decision: 700,
-  step3: 860,
-  step3Alt: 860,
-  step3Decision: 1020,
-  outcomes: 1210,
-  followUp: 1390,
+  main: 170,
+  upper: 80,
+  lower: 260,
+  decision: 170,
+  upperDecision: 170,
+  topOutcome: 80,
+  middleOutcome: 170,
+  bottomOutcome: 260,
+  followUpTop: 80,
+  followUpMiddle: 170,
+  influences: 520,
 }
 
 const influences = {
-  top: 420,
-  leftX: 40,
-  rightX: 1110,
+  top: y.influences,
+  x1: 120,
+  x2: 390,
+  x3: 760,
+  x4: 1080,
 }
 
 const baseEdge = {
@@ -63,7 +77,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'E0',
     type: 'state',
-    position: { x: xCenter(stateW), y: y.entrance },
+    position: { x: x.entrance, y: y.main },
     data: {
       label: {
         en: 'Unfunded newcomer identified',
@@ -88,7 +102,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'S1',
     type: 'state',
-    position: { x: xCenter(stateW), y: y.step1 },
+    position: { x: x.step1, y: y.main },
     data: {
       label: { en: 'Welcome + value proposition', it: 'Welcome + proposta di valore' },
       templateId: 'unfunded_newcomers_welcome_value_email',
@@ -112,12 +126,15 @@ const nodes = [
     ...nodeDefaults,
     id: 'D1',
     type: 'decision',
-    position: { x: xCenter(decisionW), y: y.step1Decision },
+    position: { x: x.decision1, y: y.decision },
     data: {
-      label: { en: 'Logged in within 2 days?', it: 'Ha fatto login entro 2 giorni?' },
+      label: {
+        en: 'Deposit + trade within 48h?',
+        it: 'Deposito + trade entro 48h?',
+      },
       subLabel: {
-        en: 'YES when a portal or client-area login event is recorded within 48 hours from the welcome. NO when no login is recorded in that window.',
-        it: 'YES quando viene registrato un login in portale o area personale entro 48 ore dal welcome. NO quando nessun login viene registrato in quella finestra.',
+        en: 'YES when both events are tracked within 48 hours from welcome: first deposit confirmed and at least one trade opened. NO when no deposit is recorded in that window.',
+        it: 'YES quando entro 48 ore dal welcome risultano entrambi gli eventi: primo deposito confermato e almeno un trade aperto. NO quando in quella finestra non risulta alcun deposito.',
       },
       kind: 'primary',
     },
@@ -127,19 +144,22 @@ const nodes = [
     ...nodeDefaults,
     id: 'S2',
     type: 'state',
-    position: { x: xCenter(stateW), y: y.step2 },
+    position: { x: x.depositTrade, y: y.lower },
     data: {
-      label: { en: 'Post-login deposit activation', it: 'Attivazione deposito post-login' },
+      label: { en: '+48hr - Deposit + trade', it: '+48h - Deposito + trade' },
       templateId: 'unfunded_newcomers_post_login_deposit_activation_email',
-      timingBadge: 'Login +0d',
+      timingBadge: '+48hr',
       subLabel: {
-        en: 'Triggered immediately after login when no first-deposit confirmation exists yet. Content moves the user from platform access to cashier action.',
-        it: 'Scatta subito dopo il login quando non esiste ancora una conferma di primo deposito. Il contenuto accompagna dall accesso alla piattaforma all apertura del cashier.',
+        en: 'Triggered at +48h for users with confirmed first deposit and at least one open trade. This is the successful early-activation branch and hands off to dedicated account-manager support.',
+        it: 'Scatta a +48h per utenti con primo deposito confermato e almeno un trade aperto. Questo è il ramo di attivazione rapida e porta al supporto dedicato dell account manager.',
       },
       kind: 'primary',
       kpis: [
         {
-          label: { en: 'Deposit activation sent', it: 'Attivazione deposito inviata' },
+          label: {
+            en: 'Deposit+trade follow-up sent',
+            it: 'Follow-up deposito+trade inviato',
+          },
           value: { en: '—', it: '—' },
           metricKey: 'depositAssistSent',
         },
@@ -151,22 +171,22 @@ const nodes = [
     ...nodeDefaults,
     id: 'S1B',
     type: 'state',
-    position: { x: xCenter(stateW) + 360, y: y.step2Alt },
+    position: { x: x.noDeposit, y: y.upper },
     data: {
       label: {
-        en: 'No-login account activation reminder',
-        it: 'Reminder attivazione account no-login',
+        en: '+48hr - No deposit',
+        it: '+48h - Nessun deposito',
       },
       templateId: 'unfunded_newcomers_account_activation_reminder_email',
-      timingBadge: 'D2',
+      timingBadge: '+48hr',
       subLabel: {
-        en: 'Triggered only when no login event is recorded within 48 hours after the welcome. Content pushes the user to enter the portal before talking about funding.',
-        it: 'Scatta solo quando nessun evento di login viene registrato entro 48 ore dal welcome. Il contenuto spinge a entrare nel portale prima ancora di parlare di deposito.',
+        en: 'Triggered at +48h when no deposit event is recorded after welcome. Content pushes a clear first action to start funding.',
+        it: 'Scatta a +48h quando dopo il welcome non risulta alcun deposito. Il contenuto spinge una prima azione chiara per avviare il funding.',
       },
       kind: 'primary',
       kpis: [
         {
-          label: { en: 'Activation reminder sent', it: 'Reminder attivazione inviato' },
+          label: { en: 'No-deposit follow-up sent', it: 'Follow-up no-deposito inviato' },
           value: { en: '—', it: '—' },
           metricKey: 'activationReminderSent',
         },
@@ -178,15 +198,15 @@ const nodes = [
     ...nodeDefaults,
     id: 'D2',
     type: 'decision',
-    position: { x: xCenter(decisionW), y: y.step2Decision },
+    position: { x: x.decision2, y: y.upperDecision },
     data: {
       label: {
-        en: 'Deposit intent detected within 3 days?',
-        it: 'Intento di deposito rilevato entro 3 giorni?',
+        en: 'Funding-path activity within 3d?',
+        it: 'Attività percorso deposito entro 3g?',
       },
       subLabel: {
-        en: 'YES when one of these events is tracked: KYC started/completed, cashier opened, deposit page viewed, or payment method selected. NO if none of these events occurs within 3 days from the previous touch.',
-        it: 'YES quando viene tracciato almeno uno di questi eventi: KYC iniziata/completata, cashier aperto, pagina deposito visualizzata o metodo di pagamento selezionato. NO se nessuno di questi eventi avviene entro 3 giorni dal touch precedente.',
+        en: 'YES when at least one of these events is tracked after the no-deposit follow-up: deposit page opened, verification started or completed, or payment method selected. NO if no meaningful funding-path activity is recorded within 3 days.',
+        it: 'YES quando, dopo il touch no-deposito, viene tracciato almeno uno di questi eventi: pagina deposito aperta, verifica iniziata o completata, oppure metodo di pagamento selezionato. NO se entro 3 giorni non compare alcuna attività rilevante sul percorso di deposito.',
       },
       kind: 'primary',
     },
@@ -196,14 +216,14 @@ const nodes = [
     ...nodeDefaults,
     id: 'S2B',
     type: 'state',
-    position: { x: xCenter(stateW) + 360, y: y.step3Alt },
+    position: { x: x.recovery, y: y.lower },
     data: {
-      label: { en: 'Deposit intent recovery', it: 'Recupero intento deposito' },
+      label: { en: 'Funding-path recovery', it: 'Recupero percorso deposito' },
       templateId: 'unfunded_newcomers_deposit_intent_recovery_email',
-      timingBadge: 'D4',
+      timingBadge: '+3d',
       subLabel: {
-        en: 'Triggered when the user logged in or re-entered the account but did not open the funding path. Content re-frames the next action and removes hesitation.',
-        it: 'Scatta quando l utente ha effettuato login o e rientrato nell account ma non ha aperto il percorso di funding. Il contenuto riformula il prossimo passo e riduce l esitazione.',
+        en: 'Triggered 3 days after the no-deposit touch when the user still has not engaged with the deposit path. Content restores clarity, lowers friction, and makes the next step visible.',
+        it: 'Scatta 3 giorni dopo il touch no-deposito quando l utente non ha ancora interagito con il percorso di deposito. Il contenuto ripristina chiarezza, abbassa l attrito e rende visibile il prossimo passo.',
       },
       kind: 'primary',
       kpis: [
@@ -220,14 +240,14 @@ const nodes = [
     ...nodeDefaults,
     id: 'S3',
     type: 'state',
-    position: { x: xCenter(stateW), y: y.step3 },
+    position: { x: x.depositPush, y: y.main },
     data: {
-      label: { en: 'First deposit push', it: 'Spinta al primo deposito' },
+      label: { en: 'Deposit completion push', it: 'Spinta al completamento deposito' },
       templateId: 'unfunded_newcomers_first_deposit_push_email',
-      timingBadge: 'D5',
+      timingBadge: '+3d',
       subLabel: {
-        en: 'Triggered only after a deposit-intent event is detected. Content pushes completion of the first deposit while the user is already warm.',
-        it: 'Scatta solo dopo il rilevamento di un evento di intento deposito. Il contenuto spinge al completamento del primo deposito mentre l utente e gia caldo.',
+        en: 'Triggered only after clear funding-path activity is detected. Content focuses on completing the first deposit while the account is already warm.',
+        it: 'Scatta solo dopo un chiaro segnale di attività sul percorso di deposito. Il contenuto si concentra sul completamento del primo deposito mentre l account è già caldo.',
       },
       kind: 'primary',
       kpis: [
@@ -244,12 +264,12 @@ const nodes = [
     ...nodeDefaults,
     id: 'D3',
     type: 'decision',
-    position: { x: xCenter(decisionW), y: y.step3Decision },
+    position: { x: x.decision3, y: y.decision },
     data: {
-      label: { en: 'First deposit completed?', it: 'Ha completato il primo deposito?' },
+      label: { en: 'First deposit completed?', it: 'Primo deposito completato?' },
       subLabel: {
-        en: 'YES when an FTD success event is recorded within 14 days from entry. WARM when the user revisits funding, reopens cashier, or completes KYC without depositing. NO when no meaningful funding event is recorded.',
-        it: 'YES quando viene registrato un evento di FTD riuscito entro 14 giorni dall ingresso. WARM quando l utente rivisita il funding, riapre il cashier o completa la KYC senza depositare. NO quando nessun evento di funding rilevante viene registrato.',
+        en: 'YES when a successful first deposit is recorded within 14 days from segment entry. WARM when the user revisits the deposit path, reopens verification, or selects a payment method without completing the deposit. NO when no meaningful funding activity is recorded after recovery and push messages.',
+        it: 'YES quando viene registrato un primo deposito riuscito entro 14 giorni dall ingresso nel segmento. WARM quando l utente rivisita il percorso deposito, riapre la verifica o seleziona un metodo di pagamento senza completare il deposito. NO quando, dopo recovery e push, non compare alcuna attività rilevante sul funding.',
       },
       kind: 'primary',
     },
@@ -259,7 +279,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'O1',
     type: 'outcome',
-    position: { x: 390, y: y.outcomes },
+    position: { x: x.outcomes, y: y.topOutcome },
     data: {
       label: { en: 'FTD converted', it: 'FTD convertito' },
       kind: 'positive',
@@ -277,13 +297,13 @@ const nodes = [
     ...nodeDefaults,
     id: 'O2',
     type: 'outcome',
-    position: { x: 720, y: y.outcomes },
+    position: { x: x.outcomes, y: y.middleOutcome },
     data: {
       label: { en: 'Warm but not converted', it: 'Interessato ma non convertito' },
       kind: 'neutral',
       kpis: [
         {
-          label: { en: 'Cashier visits', it: 'Visite cashier' },
+          label: { en: 'Deposit-path revisits', it: 'Riaperture percorso deposito' },
           value: { en: '—', it: '—' },
           metricKey: 'cashierVisits',
         },
@@ -295,7 +315,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'O3',
     type: 'outcome',
-    position: { x: 1050, y: y.outcomes },
+    position: { x: x.outcomes, y: y.bottomOutcome },
     data: {
       label: { en: 'Cold drop-off', it: 'Drop-off freddo' },
       kind: 'negative',
@@ -306,14 +326,14 @@ const nodes = [
     ...nodeDefaults,
     id: 'F1',
     type: 'state',
-    position: { x: 390, y: y.followUp },
+    position: { x: x.followUp, y: y.followUpTop },
     data: {
-      label: { en: 'First trade onboarding', it: 'Onboarding al primo trade' },
+      label: { en: 'Post-deposit activation support', it: 'Supporto di attivazione post-deposito' },
       templateId: 'unfunded_newcomers_first_trade_onboarding_email',
       timingBadge: 'FTD +0d',
       subLabel: {
-        en: 'FTD +0d: move into activation journey immediately after successful first deposit',
-        it: 'FTD +0d: passaggio immediato al journey di activation dopo il primo deposito riuscito',
+        en: 'FTD +0d: immediate handoff after the first successful deposit to help the user move from funding into the first trading decisions with dedicated guidance.',
+        it: 'FTD +0d: handoff immediato dopo il primo deposito riuscito per accompagnare l utente dal funding alle prime decisioni operative con guida dedicata.',
       },
       kind: 'primary',
     },
@@ -323,14 +343,14 @@ const nodes = [
     ...nodeDefaults,
     id: 'F2',
     type: 'state',
-    position: { x: 720, y: y.followUp },
+    position: { x: x.followUp, y: y.followUpMiddle },
     data: {
       label: { en: 'Re-entry nurture loop', it: 'Loop di riattivazione soft' },
       templateId: 'unfunded_newcomers_reentry_nurture_email',
       timingBadge: 'D21',
       subLabel: {
-        en: 'D21: retry with a new angle after 21 days of no conversion',
-        it: 'D21: nuovo tentativo con un angolo diverso dopo 21 giorni senza conversione',
+        en: 'D21 from the last non-converted touch: re-enter with a softer, more relevant angle instead of repeating urgency.',
+        it: 'D21 dall ultimo touch non convertito: nuovo ingresso con un angolo più morbido e più rilevante, senza ripetere urgenza.',
       },
       kind: 'primary',
     },
@@ -340,7 +360,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'I1',
     type: 'communication',
-    position: { x: influences.leftX, y: influences.top },
+    position: { x: influences.x1, y: influences.top },
     data: {
       label: { en: '0 deposits / 0 trades', it: '0 depositi / 0 trade' },
       subLabel: { en: 'Pure registration state', it: 'Stato di sola registrazione' },
@@ -352,7 +372,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'I2',
     type: 'communication',
-    position: { x: influences.leftX, y: influences.top + 150 },
+    position: { x: influences.x2, y: influences.top },
     data: {
       label: { en: 'Trust and friction barriers', it: 'Barriere di fiducia e attrito' },
       subLabel: {
@@ -367,12 +387,12 @@ const nodes = [
     ...nodeDefaults,
     id: 'I3',
     type: 'communication',
-    position: { x: influences.rightX, y: influences.top },
+    position: { x: influences.x3, y: influences.top },
     data: {
       label: { en: 'Preferred payment routing', it: 'Routing pagamento preferito' },
       subLabel: {
-        en: 'Reduce steps to cashier completion',
-        it: 'Ridurre i passaggi fino al completamento',
+        en: 'Reduce steps to deposit completion',
+        it: 'Ridurre i passaggi fino al completamento del deposito',
       },
       kind: 'influence',
     },
@@ -382,7 +402,7 @@ const nodes = [
     ...nodeDefaults,
     id: 'I4',
     type: 'communication',
-    position: { x: influences.rightX, y: influences.top + 150 },
+    position: { x: influences.x4, y: influences.top },
     data: {
       label: { en: 'CRM urgency and social proof', it: 'Urgenza CRM e social proof' },
       subLabel: {
@@ -422,7 +442,7 @@ const edges = [
     label: { en: 'YES', it: 'SÌ' },
     data: {
       primary: { en: 'YES', it: 'SÌ' },
-      secondary: { en: 'login detected', it: 'login rilevato' },
+      secondary: { en: 'deposit + trade in 48h', it: 'deposito + trade in 48h' },
     },
     ...decisionLabel,
   },
@@ -436,7 +456,7 @@ const edges = [
     label: { en: 'NO', it: 'NO' },
     data: {
       primary: { en: 'NO', it: 'NO' },
-      secondary: { en: 'no login in 48h', it: 'nessun login in 48h' },
+      secondary: { en: 'no deposit in 48h', it: 'nessun deposito in 48h' },
     },
     ...decisionLabel,
     style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
@@ -449,14 +469,6 @@ const edges = [
     sourceHandle: 'out',
     targetHandle: 'in',
     style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
-  },
-  {
-    ...baseEdge,
-    id: 'e-S2-D2',
-    source: 'S2',
-    target: 'D2',
-    sourceHandle: 'out',
-    targetHandle: 'in',
   },
   {
     ...baseEdge,
@@ -606,11 +618,11 @@ export const meta = {
     it: 'Journey Unfunded Newcomers',
   },
   description: {
-    en: 'Acquisition-to-FTD path for newly registered accounts with zero deposits and zero trades: welcome, explicit login split, post-login deposit activation, no-login account activation reminder, deposit-intent detection, intent-recovery content when no intent is recorded, first-deposit push for warm users, and terminal outcomes. KPIs: FTD conversion, time to first deposit, and first-trade activation.',
-    it: 'Percorso acquisition-to-FTD per account appena registrati con zero depositi e zero trade: welcome, split esplicito sul login, attivazione deposito post-login, reminder di attivazione account per chi non entra, rilevazione dell intento deposito, contenuto di recupero quando l intento non viene registrato, spinta al primo deposito per gli utenti piu caldi e outcome finali. KPI: conversione FTD, tempo al primo deposito e attivazione al primo trade.',
+    en: 'Acquisition-to-FTD path for newly registered accounts with zero deposits and zero trades: welcome at D0, explicit +48h split between users with deposit+trade vs users with no deposit, then intent detection, recovery, first-deposit push, and terminal outcomes. KPIs: FTD conversion, time to first deposit, and first-trade activation.',
+    it: 'Percorso acquisition-to-FTD per account appena registrati con zero depositi e zero trade: welcome a D0, split esplicito a +48h tra utenti con deposito+trade e utenti senza deposito, poi rilevazione intento, recovery, spinta al primo deposito e outcome finali. KPI: conversione FTD, tempo al primo deposito e attivazione al primo trade.',
   },
   canvasWidth: CANVAS_WIDTH,
-  canvasHeight: 1520,
+  canvasHeight: CANVAS_HEIGHT,
   segment: 'new_unfunded',
   goal: {
     en: 'Convert newly registered accounts into first-time depositors',

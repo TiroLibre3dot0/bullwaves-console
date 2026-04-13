@@ -370,6 +370,7 @@ export function buildSegmentEmailHtml(
     bodyFour,
     ctaLabel,
     ctaHelper,
+    ctaUrl,
     supportLabel,
     supportHelper,
   },
@@ -401,7 +402,7 @@ export function buildSegmentEmailHtml(
   const normalizedCtaHelper = normalize(ctaHelper)
   const normalizedSupportLabel = normalize(supportLabel)
   const normalizedSupportHelper = normalize(supportHelper)
-  const ctaHref = mode === 'sendgrid' ? SENDGRID_CTA_HREF : DEFAULT_CTA_URL
+  const ctaHref = ctaUrl ? ctaUrl : mode === 'sendgrid' ? SENDGRID_CTA_HREF : DEFAULT_CTA_URL
   const iconContext = {
     title: normalizedTitle,
     heroTitle: normalizedHeroTitle,

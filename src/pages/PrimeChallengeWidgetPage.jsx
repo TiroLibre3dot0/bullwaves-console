@@ -6,6 +6,8 @@ const EMBED_JS_PINNED =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest.js'
 const PREVIEW_HTML_PINNED =
   'https://cdn.jsdelivr.net/gh/TiroLibre3dot0/bullwaves-console@43c7e92/public/embed/prime-contest-preview.html'
+const LIVE_WIDGET_DEMO_PATH = '/embed/prime-contest-widget-demo.html'
+const LIVE_FULL_PREVIEW_PATH = '/embed/prime-contest-preview.html#leaderboard'
 
 const BASE_SNIPPET = `<div
   data-bw-prime-contest
@@ -163,6 +165,64 @@ export default function PrimeChallengeWidgetPage() {
           }}
         >
           Quick links: {EMBED_JS_MAIN} | {EMBED_JS_PINNED} | {PREVIEW_HTML_PINNED}
+        </div>
+      </section>
+
+      <section
+        style={{
+          border: '1px solid rgba(148, 163, 184, 0.24)',
+          borderRadius: 14,
+          background: 'rgba(15, 23, 42, 0.64)',
+          padding: 14,
+          display: 'grid',
+          gap: 12,
+        }}
+      >
+        <h2 style={{ margin: 0, fontSize: 18, color: '#e2e8f0' }}>Live previews</h2>
+        <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>
+          View both assets directly: standalone widget and full Prime contest page.
+        </p>
+
+        <div style={{ display: 'grid', gap: 10 }}>
+          <a
+            href={LIVE_WIDGET_DEMO_PATH}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#93c5fd', fontSize: 12, fontWeight: 700 }}
+          >
+            Open widget demo in new tab
+          </a>
+          <iframe
+            title="Prime widget demo"
+            src={LIVE_WIDGET_DEMO_PATH}
+            style={{
+              width: '100%',
+              minHeight: 520,
+              border: '1px solid rgba(148, 163, 184, 0.22)',
+              borderRadius: 10,
+            }}
+          />
+        </div>
+
+        <div style={{ display: 'grid', gap: 10 }}>
+          <a
+            href={LIVE_FULL_PREVIEW_PATH}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#93c5fd', fontSize: 12, fontWeight: 700 }}
+          >
+            Open full preview page in new tab
+          </a>
+          <iframe
+            title="Prime full preview"
+            src={LIVE_FULL_PREVIEW_PATH}
+            style={{
+              width: '100%',
+              minHeight: 640,
+              border: '1px solid rgba(148, 163, 184, 0.22)',
+              borderRadius: 10,
+            }}
+          />
         </div>
       </section>
 

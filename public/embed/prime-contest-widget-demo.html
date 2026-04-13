@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prime Contest Widget Demo</title>
+    <style>
+      body {
+        margin: 0;
+        background: #0b1220;
+        color: #e2e8f0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px 16px 40px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 24px;
+      }
+
+      p {
+        margin: 0 0 16px;
+        color: #93a4bd;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Prime Challenge Widget Demo</h1>
+      <p>Reference demo page for Webflow embed validation.</p>
+
+      <div
+        data-bw-prime-contest
+        data-limit="10"
+        data-title="Prime Challenge Leaderboard"
+        data-subtitle="Monthly payout ranking"
+        data-cta-label="Start the challenge"
+        data-cta-url="https://prime.bullwaves.com/"
+        data-accent="#16a34a"
+      ></div>
+    </div>
+
+    <script src="./prime-contest.js" defer></script>
+  </body>
+</html>

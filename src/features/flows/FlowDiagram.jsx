@@ -446,6 +446,29 @@ function projectSoliticsLayout(nodes, edges) {
   return [...projectedPrimaryNodes, ...projectedCommunicationNodes]
 }
 
+function normalizeSoliticsSourceNodes(nodes) {
+  const safeNodes = Array.isArray(nodes) ? nodes : []
+
+  return safeNodes.map((node) => {
+    const size = getSoliticsNodeSize(node)
+    const isEntryNode = node?.data?.flowRole === 'entry' || node?.id === 'E0'
+
+    return {
+      ...node,
+      style: {
+        ...(node?.style || {}),
+        width: node?.style?.width ?? size.width,
+        height: node?.style?.height ?? size.height,
+      },
+      data: {
+        ...node?.data,
+        flowDirection: 'horizontal',
+        flowRole: isEntryNode ? 'entry' : node?.data?.flowRole,
+      },
+    }
+  })
+}
+
 const nodeTypes = {
   container: ContainerNode,
   state: StateNode,
@@ -467,8 +490,14 @@ export default function FlowDiagram({
   selectedNodeId,
   theme = 'default',
   height = 760,
+  layoutMode = 'projected',
 }) {
-  const baseNodes = theme === 'solitics' ? projectSoliticsLayout(nodes, edges) : nodes
+  const shouldProjectSoliticsLayout = theme === 'solitics' && layoutMode !== 'source'
+  const baseNodes = shouldProjectSoliticsLayout
+    ? projectSoliticsLayout(nodes, edges)
+    : theme === 'solitics'
+      ? normalizeSoliticsSourceNodes(nodes)
+      : nodes
   const nodeById = new Map(baseNodes.map((node) => [node.id, node]))
   const connectedNodeIds = new Set(
     (edges || [])

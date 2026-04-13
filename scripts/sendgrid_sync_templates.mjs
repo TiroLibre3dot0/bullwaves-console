@@ -28,7 +28,7 @@ const runtimeRegistryFile = path.join(
   'sendgridTemplateRegistry.js'
 )
 
-function stableTemplateName({ localTemplateId, locale, variant }) {
+function legacyTemplateName({ localTemplateId, locale, variant }) {
   return `BW ${localTemplateId} ${locale.toUpperCase()} ${variant.toUpperCase()}`.slice(0, 100)
 }
 
@@ -46,7 +46,8 @@ function buildCatalog() {
         if (!payload?.html || !payload?.subject) continue
 
         const extra = extrasVariants?.[variant] || {}
-        const sendgridTemplateName = stableTemplateName({ localTemplateId, locale, variant })
+        const sendgridTemplateName = payload.name.slice(0, 100)
+        const legacyName = legacyTemplateName({ localTemplateId, locale, variant })
         const plainTextHint = [payload.name, payload.description, extra.timing, extra.delay]
           .filter(Boolean)
           .join(' | ')
@@ -54,6 +55,7 @@ function buildCatalog() {
         records.push({
           localTemplateId,
           sendgridTemplateName,
+          legacyTemplateName: legacyName,
           channel: 'email',
           locale,
           variant,
@@ -138,11 +140,24 @@ async function ensureTemplate(record, existingByName) {
   let template = existingByName.get(record.sendgridTemplateName) || null
 
   if (!template) {
-    template = await sendgridRequest('POST', '/v3/templates', {
-      name: record.sendgridTemplateName,
-      generation: 'dynamic',
-    })
-    existingByName.set(record.sendgridTemplateName, template)
+    // Migration: try legacy stable name and rename in-place
+    const legacyTemplate = record.legacyTemplateName
+      ? existingByName.get(record.legacyTemplateName) || null
+      : null
+    if (legacyTemplate) {
+      await sendgridRequest('PATCH', `/v3/templates/${legacyTemplate.id}`, {
+        name: record.sendgridTemplateName,
+      })
+      template = { ...legacyTemplate, name: record.sendgridTemplateName }
+      existingByName.delete(record.legacyTemplateName)
+      existingByName.set(record.sendgridTemplateName, template)
+    } else {
+      template = await sendgridRequest('POST', '/v3/templates', {
+        name: record.sendgridTemplateName,
+        generation: 'dynamic',
+      })
+      existingByName.set(record.sendgridTemplateName, template)
+    }
   }
 
   const fullTemplate = await sendgridRequest('GET', `/v3/templates/${template.id}`)

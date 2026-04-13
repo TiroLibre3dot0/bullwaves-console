@@ -90,98 +90,68 @@ Questa sezione traduce il flow in una logica eseguibile piu precisa.
 
 Durante queste `48 ore` va monitorato il primo decision checkpoint:
 
-- `Visited deposit page?`
-- segnali: click CTA deposito, apertura cashier, ingresso deposit page o evento equivalente
+- `Deposit + trade completed within 48 hours?`
+- segnali: primo deposito riuscito e almeno un trade aperto nella finestra iniziale
 
 ### Branching consigliato subito dopo Step 1
 
-Per l implementazione Solitics conviene introdurre un branching intermedio basato sul `login/access event`, perche separa bene due problemi diversi:
+Il flow aggiornato separa subito due situazioni operative molto diverse:
 
-- chi non fa login dopo il welcome probabilmente non ha ancora superato il blocco di accesso, fiducia o orientamento
-- chi fa login ma non deposita ha gia superato il primo attrito e va spinto sul funding, non sul semplice accesso
+- chi entro `48 ore` ha gia completato deposito e primo trade
+- chi invece non ha ancora completato alcun deposito
 
-#### Ramo A. Nessun login registrato dopo Step 1
+#### Ramo A. Deposito + trade entro 48 ore
 
-- condizione: nessun evento `login`, `portal access`, `client area opened` o equivalente nella finestra di osservazione iniziale
-- interpretazione: il profilo non e ancora entrato davvero nella piattaforma; il problema non e il deposito ma l attivazione iniziale
-- messaggio da inviare: contenuto `access-first`
-
-Angolo consigliato del messaggio:
-
-- focus su accesso semplice e sicuro
-- reminder del valore dell account gia creato
-- istruzioni rapide: entra, verifica area personale, poi vai al deposito
-- CTA primaria: login portal
-- CTA secondaria: supporto WhatsApp per aiuto immediato
-
-Cosa dire, in pratica:
-
-- `il tuo account e pronto`
-- `entra in area personale in 1 minuto`
-- `se hai dubbi su accesso o credenziali ti aiutiamo noi`
-
-Obiettivo operativo:
-
-- ottenere il primo accesso/login
-- non chiedere ancora un deposito in modo aggressivo, perche il profilo non ha ancora mostrato attivazione reale
-
-#### Ramo B. Login registrato dopo Step 1
-
-- condizione: evento `login`, `portal access`, `client area opened` o equivalente registrato dopo il welcome
-- interpretazione: il profilo ha gia mostrato attivazione iniziale; il collo di bottiglia si sposta su deposito, KYC o scelta del metodo di pagamento
-- messaggio da inviare: `unfunded_newcomers_friction_reduction_email`
+- condizione: primo deposito confermato e almeno un trade aperto entro `48 ore` dal welcome
+- messaggio da inviare: `unfunded_newcomers_post_login_deposit_activation_email`
+- obiettivo: consolidare l attivazione iniziale e introdurre subito il supporto dedicato dell account manager
 
 Angolo consigliato del messaggio:
 
-- non vendere piu l accesso
-- ridurre l attrito sul funding
-- spiegare il prossimo step concreto: apri cashier, scegli metodo, completa deposito
-- evidenziare velocita, chiarezza, proof sui payment methods e supporto live
-- CTA primaria: deposito
-- CTA secondaria: supporto WhatsApp
+- riconoscere l avvio rapido senza tono celebrativo eccessivo
+- far percepire presenza e supporto, non pressione commerciale
+- offrire un riferimento umano per i prossimi passaggi operativi
 
-Cosa dire, in pratica:
+#### Ramo B. Nessun deposito entro 48 ore
 
-- `hai gia fatto accesso, ora completiamo il funding`
-- `ti mostriamo il modo piu semplice per depositare`
-- `se ti blocchi su metodo di pagamento o verifica, ti assistiamo`
+- condizione: nessun deposito registrato entro `48 ore` dal welcome
+- messaggio da inviare: `unfunded_newcomers_account_activation_reminder_email`
+- obiettivo: riportare il profilo su un primo passo concreto di funding
 
-Obiettivo operativo:
+Angolo consigliato del messaggio:
 
-- trasformare il login in `deposit intent`
-- spingere il profilo verso cashier open, payment method selection o KYC completion
+- ricordare che l account e pronto
+- rendere visibile il passo successivo senza aggressivita
+- lasciare WhatsApp come supporto rapido solo se emerge un blocco reale
 
 #### Regola pratica consigliata in Solitics
 
-- se entro `24 ore` dallo Step 1 non c e login: invia un touch breve orientato a `login/access recovery`
-- se invece entro `24 ore` o `48 ore` c e login ma non c e `visited deposit page`: invia il ramo `Friction Reduction`
-- se c e gia `visited deposit page` o `cashier open`: puoi anche evitare il touch access-first e tenere il profilo sul percorso funding
+- se entro `48 ore` ci sono sia deposito sia trade: invia il ramo `+48hr - Deposit + trade`
+- se entro `48 ore` non c e deposito: invia il ramo `+48hr - No deposit`
+- dal ramo `No deposit` osserva per `3 giorni` l attivita sul percorso di deposito prima di decidere tra recovery e push
 
-### Fase 2: Friction Reduction
+### Fase 2: Funding-path activity checkpoint
 
-- step key: `unfunded_newcomers_friction_reduction_email`
-- invio: a `T0 + 48 ore`
-- offset da ingresso: `2 giorni / 48 ore`
-- offset da Step 1: `2 giorni / 48 ore`
-- finestra di osservazione fino allo step successivo: `72 ore`
+- decision checkpoint: `Funding-path activity detected within 3 days?`
+- finestra di osservazione: `3 giorni / 72 ore` dal touch `+48hr - No deposit`
+- segnali validi: pagina deposito aperta, verifica iniziata/completata, metodo di pagamento selezionato o evento equivalente sul percorso di deposito
 
-Durante queste `72 ore` va monitorato il secondo decision checkpoint:
+#### Ramo 2A. Funding-path recovery
 
-- `Started deposit intent?`
-- segnali: KYC completata, cashier aperto, metodo di pagamento selezionato, avanzamento funding flow
+- step key: `unfunded_newcomers_deposit_intent_recovery_email`
+- invio: `+3 giorni` dopo il touch `No deposit`, solo se nessuna attivita rilevante e stata registrata
+- obiettivo: ridare chiarezza al percorso e rendere visibile il prossimo passo
 
-### Fase 3: First Deposit Push
+#### Ramo 2B. Deposit completion push
 
 - step key: `unfunded_newcomers_first_deposit_push_email`
-- invio: a `T0 + 120 ore`
-- offset da ingresso: `5 giorni / 120 ore`
-- offset da Step 2: `3 giorni / 72 ore`
-- finestra primaria di conversione residua fino a `D14`: `9 giorni / 216 ore`
+- invio: `+3 giorni` dopo il touch `No deposit`, solo se esiste gia un segnale chiaro di interesse sul percorso di deposito
+- obiettivo: completare il primo deposito mentre il profilo e ancora caldo
 
-Durante questa fase va monitorato il terzo decision checkpoint:
+### Fase 3: conversion checkpoint
 
-- `First deposit completed?`
-- segnale: evento `successful deposit` o `FTD`
+- decision checkpoint: `First deposit completed?`
+- segnale positivo: evento `successful deposit` o `FTD`
 - finestra massima esplicitata nel flow: `entro 14 giorni dall ingresso`
 
 ### Fase 4A: ramo positivo
@@ -190,7 +160,7 @@ Durante questa fase va monitorato il terzo decision checkpoint:
 - step successivo: `unfunded_newcomers_first_trade_onboarding_email`
 - timing: `FTD +0d`
 - attesa: `0 ore` dal verificarsi dell FTD
-- obiettivo: portare il profilo subito nel layer di activation al primo trade
+- obiettivo: accompagnare il profilo dal funding alle prime decisioni operative con supporto dedicato
 
 ### Fase 4B: ramo warm / non convertito
 
@@ -215,31 +185,41 @@ Durante questa fase va monitorato il terzo decision checkpoint:
 
 Decision checkpoint associato:
 
-- domanda: ha visitato la pagina deposito?
-- segnale operativo: click CRM o apertura cashier
-- finestra consigliata di osservazione prima dello Step 2: `48 ore`
+- domanda: deposito + trade sono stati completati entro 48 ore?
+- segnale operativo: primo deposito riuscito + almeno un trade aperto
+- finestra consigliata di osservazione prima dello step successivo: `48 ore`
 
-### Step 2
+### Step 2A
 
-- Step key: `unfunded_newcomers_friction_reduction_email`
-- Timing: `D2`
+- Step key: `unfunded_newcomers_post_login_deposit_activation_email`
+- Timing: `+48hr`
 - Tempo da ingresso: `2 giorni / 48 ore`
-- Tempo da Step 1: `2 giorni / 48 ore`
-- Obiettivo: rimuovere attrito e chiarire dubbi su deposito, pagamenti, percorso e supporto
+- Obiettivo: ramo positivo di attivazione rapida con supporto dedicato
 
-Decision checkpoint associato:
+### Step 2B
 
-- domanda: ha mostrato intento di deposito?
-- segnali operativi: KYC completata, cashier aperto, metodo di pagamento selezionato
-- finestra consigliata di osservazione prima dello Step 3: `72 ore`
+- Step key: `unfunded_newcomers_account_activation_reminder_email`
+- Timing: `+48hr`
+- Tempo da ingresso: `2 giorni / 48 ore`
+- Obiettivo: riportare il profilo verso il primo deposito con un messaggio chiaro e sobrio
 
-### Step 3
+Decision checkpoint associato a Step 2B:
+
+- domanda: c e stata attivita sul percorso di deposito entro 3 giorni?
+- segnali operativi: pagina deposito aperta, verifica iniziata/completata, metodo di pagamento selezionato
+- finestra consigliata di osservazione prima dello step successivo: `72 ore`
+
+### Step 3A
+
+- Step key: `unfunded_newcomers_deposit_intent_recovery_email`
+- Timing: `+3d` dal touch `No deposit`
+- Obiettivo: recovery del percorso di deposito quando non emerge ancora alcun segnale di attivita
+
+### Step 3B
 
 - Step key: `unfunded_newcomers_first_deposit_push_email`
-- Timing: `D5`
-- Tempo da ingresso: `5 giorni / 120 ore`
-- Tempo da Step 2: `3 giorni / 72 ore`
-- Obiettivo: spinta conversion-focused al primo deposito
+- Timing: `+3d` dal touch `No deposit`
+- Obiettivo: spinta al completamento del primo deposito quando il profilo ha gia mostrato interesse concreto
 
 Decision checkpoint associato:
 
@@ -296,8 +276,8 @@ Questi punti riflettono il flow locale e possono essere tradotti nella logica So
 
 ### Routing decisionale suggerito
 
-- `Visited deposit page`: usa click su CTA deposito, apertura cashier o evento equivalente
-- `Started deposit intent`: usa KYC completata, selezione payment method o cashier progress event
+- `Visited deposit page`: usa click su CTA deposito, apertura della pagina deposito o evento equivalente sul percorso di funding
+- `Started deposit intent`: usa verifica completata, selezione payment method o avanzamento rilevante nel percorso di deposito
 - `First deposit completed`: usa evento FTD/successful deposit
 
 ### Attese tra uno step e l altro da impostare in Solitics

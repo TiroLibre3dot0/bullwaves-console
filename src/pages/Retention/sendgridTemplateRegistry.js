@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-12T16:07:51.216Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-04-12T17:58:38.419Z'
 
 export const sendgridTemplateRegistry = {
   most_consistent_badge_award_email: {
@@ -443,45 +443,87 @@ export const sendgridTemplateRegistry = {
       },
     },
   },
-  unfunded_newcomers_account_activation_reminder_email: {
-    en: {
+  unfunded_newcomers_post_login_deposit_activation_email: {
+    it: {
       a: {
-        templateId: 'd-3ed7a5ef517f4297b9fe81e8292cb9a6',
-        versionId: '86ee0f3b-2479-4c06-87f2-2234f9ad5101',
-        name: 'Unfunded Newcomers - Account Activation Reminder A',
+        templateId: 'd-d9799893ebef49fc9a04e6c51936a68e',
+        versionId: '33bae03a-d1ad-4fab-8113-97d0cb94a7db',
+        name: 'Unfunded Newcomers - +48h Deposito + Trade A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is waiting. Log in and complete your setup.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account è attivo. Il tuo account manager dedicato è ora disponibile.',
+        timing: '+48h',
+        delay: '+48 ore dopo il welcome message',
       },
       b: {
-        templateId: 'd-143b22351278478a82eb973f6350a254',
-        versionId: 'e7bf3260-43b5-4ab0-94b6-cf3c9e2385cc',
-        name: 'Unfunded Newcomers - Account Activation Reminder B',
+        templateId: 'd-f34c1fe855694bf18a2ce16809c7ae8c',
+        versionId: '8b64e988-3d02-4077-9de7-4b1489a8e52a',
+        name: 'Unfunded Newcomers - +48h Deposito + Trade B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Do not leave your Bullwaves access unused. Enter your account now.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}La tua prima operatività è avviata. Ora hai una guida dedicata.',
+        timing: '+48h',
+        delay: '+48 ore dopo il welcome message',
       },
     },
+    en: {
+      a: {
+        templateId: 'd-b973f2a405424420a5ab3d8da289b499',
+        versionId: '2798fec1-4b60-4926-a288-d3b59430c2ab',
+        name: 'Unfunded Newcomers - +48hr Deposit + Trade A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your account is active. Your dedicated account manager is now available.',
+        timing: '+48hr',
+        delay: '+48 hours after welcome message',
+      },
+      b: {
+        templateId: 'd-044bcad122d84f1787438495aa1a3e57',
+        versionId: '6528dfe5-574e-4414-aa5a-9e61e9d4dee0',
+        name: 'Unfunded Newcomers - +48hr Deposit + Trade B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your first activity is in place. Dedicated guidance is now available.',
+        timing: '+48hr',
+        delay: '+48 hours after welcome message',
+      },
+    },
+  },
+  unfunded_newcomers_account_activation_reminder_email: {
     it: {
       a: {
         templateId: 'd-9e2bf1c75add478f93ddb6b248472882',
         versionId: 'ed5486ef-315b-494e-82a4-0e6c23db1c45',
-        name: 'Unfunded Newcomers - Reminder Attivazione Account A',
+        name: 'Unfunded Newcomers - +48h Nessun Deposito A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves ti aspetta. Entra e completa la configurazione.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Il deposito non è ancora stato completato. Il prossimo passo è ancora aperto.',
+        timing: '+48h',
+        delay: '+48 ore dopo il welcome message',
       },
       b: {
         templateId: 'd-c546f893dba145568a8d793a8a925263',
         versionId: '3925fe30-fd44-4bdf-b0c4-3d839369332c',
-        name: 'Unfunded Newcomers - Reminder Attivazione Account B',
+        name: 'Unfunded Newcomers - +48h Nessun Deposito B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Non lasciare inutilizzato il tuo accesso Bullwaves. Entra ora nel tuo account.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account è pronto. Il passaggio di deposito è ancora da completare.',
+        timing: '+48h',
+        delay: '+48 ore dopo il welcome message',
+      },
+    },
+    en: {
+      a: {
+        templateId: 'd-3ed7a5ef517f4297b9fe81e8292cb9a6',
+        versionId: '86ee0f3b-2479-4c06-87f2-2234f9ad5101',
+        name: 'Unfunded Newcomers - +48hr No Deposit A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}No deposit has been completed yet. Your next step is still open.',
+        timing: '+48hr',
+        delay: '+48 hours after welcome message',
+      },
+      b: {
+        templateId: 'd-143b22351278478a82eb973f6350a254',
+        versionId: 'e7bf3260-43b5-4ab0-94b6-cf3c9e2385cc',
+        name: 'Unfunded Newcomers - +48hr No Deposit B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your account is ready. The deposit step is still pending.',
+        timing: '+48hr',
+        delay: '+48 hours after welcome message',
       },
     },
   },
@@ -492,18 +534,18 @@ export const sendgridTemplateRegistry = {
         versionId: '3000e43d-5683-4944-a0f4-4a621a05c96b',
         name: 'Unfunded Newcomers - Deposit Intent Recovery A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}You entered the account, but the next step is still open.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Your account is ready to continue. The deposit path is still open.',
+        timing: '+3d',
+        delay: '+3 days after the no-deposit follow-up',
       },
       b: {
         templateId: 'd-706dade977124b1195c3fb8be35ce037',
         versionId: 'd575f14a-a7c2-4f40-bc76-b855b3a8c095',
         name: 'Unfunded Newcomers - Deposit Intent Recovery B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}You came back once. Use that momentum to open the funding path.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Your return is a good sign. The deposit path is still available.',
+        timing: '+3d',
+        delay: '+3 days after the no-deposit follow-up',
       },
     },
     it: {
@@ -512,18 +554,18 @@ export const sendgridTemplateRegistry = {
         versionId: '7a42467a-7c6d-4ce3-8bf5-cbe9396d2203',
         name: 'Unfunded Newcomers - Recupero Intento Deposito A',
         subject:
-          "{{#if first_name}}{{first_name}}, {{/if}}Sei entrato nell'account, ma il prossimo passo è ancora aperto.",
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account è pronto per continuare. Il percorso di deposito è ancora aperto.',
+        timing: '+3g',
+        delay: '+3 giorni dopo il touch no-deposito',
       },
       b: {
         templateId: 'd-17eb6df60f89453caec0df23b260c2bf',
         versionId: '7a3ec722-b63d-4ff9-bc6e-6af64502092b',
         name: 'Unfunded Newcomers - Recupero Intento Deposito B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Sei già tornato una volta. Usa quello slancio per aprire il funding.',
-        timing: null,
-        delay: null,
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo rientro è un segnale positivo. Il percorso di deposito è ancora disponibile.',
+        timing: '+3g',
+        delay: '+3 giorni dopo il touch no-deposito',
       },
     },
   },
@@ -534,7 +576,7 @@ export const sendgridTemplateRegistry = {
         versionId: '4d6a8306-2269-4ee4-a2e5-b42f24b0e036',
         name: 'Unfunded Newcomers - First Deposit Push A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves access is almost unlocked. Complete your first deposit now.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is ready. Completing your first deposit is the natural next step.',
         timing: 'D5',
         delay: '+3 days after friction-reduction message',
       },
@@ -543,7 +585,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'ece7d409-5b24-42b4-a2b5-5d003de3a822',
         name: 'Unfunded Newcomers - First Deposit Push B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Do not lose momentum. Finish the funding step today.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your setup is complete. The first deposit is the only step remaining.',
         timing: 'D5',
         delay: '+3 days after friction-reduction message',
       },
@@ -554,7 +596,7 @@ export const sendgridTemplateRegistry = {
         versionId: '05cf59b6-9cc9-4783-a550-a9faa3305626',
         name: 'Unfunded Newcomers - Primo Deposito A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo accesso Bullwaves è quasi sbloccato. Completa ora il primo deposito.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Completare il primo deposito è il passo naturale per proseguire.',
         timing: 'D5',
         delay: '+3 giorni dopo il messaggio di riduzione attriti',
       },
@@ -563,7 +605,7 @@ export const sendgridTemplateRegistry = {
         versionId: '2d89beee-9287-47c1-8237-58c62f0be736',
         name: 'Unfunded Newcomers - Primo Deposito B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Non perdere slancio. Completa oggi il deposito del tuo account.',
+          '{{#if first_name}}{{first_name}}, {{/if}}La configurazione è completa. Resta solo il primo deposito.',
         timing: 'D5',
         delay: '+3 giorni dopo il messaggio di riduzione attriti',
       },
@@ -576,7 +618,7 @@ export const sendgridTemplateRegistry = {
         versionId: '567f50be-6dd8-4120-a7d4-87ed1ab67417',
         name: 'Unfunded Newcomers - First Trade Onboarding A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your account is funded. Now make your first move.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your first deposit is complete. Your dedicated account manager is available.',
         timing: 'FTD +0d',
         delay: 'Immediately after successful first deposit',
       },
@@ -585,7 +627,7 @@ export const sendgridTemplateRegistry = {
         versionId: '65c51c8e-41ca-4f32-8ba0-2d93b79ba0fb',
         name: 'Unfunded Newcomers - First Trade Onboarding B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your first trade does not need to be complicated.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your account is now funded. Dedicated support is available for the next step.',
         timing: 'FTD +0d',
         delay: 'Immediately after successful first deposit',
       },
@@ -596,7 +638,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'b2122d15-7135-4cf9-b5cb-77b887b5bd77',
         name: 'Unfunded Newcomers - Onboarding Primo Trade A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account è finanziato. Ora fai il tuo primo passo.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo primo deposito è completato. Il tuo account manager dedicato è disponibile.',
         timing: 'FTD +0d',
         delay: 'Immediatamente dopo il primo deposito riuscito',
       },
@@ -605,7 +647,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'f998b653-f80b-48a8-afd3-fc4e7643926c',
         name: 'Unfunded Newcomers - Onboarding Primo Trade B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}La tua prima operazione non deve essere complicata.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account è ora finanziato. Hai un supporto dedicato per il prossimo passo.',
         timing: 'FTD +0d',
         delay: 'Immediatamente dopo il primo deposito riuscito',
       },
@@ -618,7 +660,7 @@ export const sendgridTemplateRegistry = {
         versionId: '7d929f01-6cf0-42be-989c-dd368e5e67e5',
         name: 'Unfunded Newcomers - Friction Reduction A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Questions before funding? Here is a simpler way forward.',
+          '{{#if first_name}}{{first_name}}, {{/if}}If you have questions before funding, here is a clearer way forward.',
         timing: 'D2',
         delay: '+2 days after welcome message',
       },
@@ -627,7 +669,7 @@ export const sendgridTemplateRegistry = {
         versionId: '7b381c67-9b72-4193-8f88-935b07931072',
         name: 'Unfunded Newcomers - Friction Reduction B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Still hesitating? The deposit step may be simpler than you think.',
+          '{{#if first_name}}{{first_name}}, {{/if}}The deposit step may be simpler than it seems.',
         timing: 'D2',
         delay: '+2 days after welcome message',
       },
@@ -638,7 +680,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'df257034-2601-4f6e-8d62-7f67addf055c',
         name: 'Unfunded Newcomers - Riduzione Attriti A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Hai dubbi prima di depositare? Ecco un modo più semplice per procedere.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Se hai dubbi prima di depositare, ecco un modo più chiaro per procedere.',
         timing: 'D2',
         delay: '+2 giorni dopo il welcome message',
       },
@@ -647,51 +689,9 @@ export const sendgridTemplateRegistry = {
         versionId: '2f0e6d0c-c3c8-465b-9354-97d8423c16a4',
         name: 'Unfunded Newcomers - Riduzione Attriti B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Sei ancora indeciso? Il deposito potrebbe essere più semplice di quanto pensi.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il deposito potrebbe essere più semplice di quanto sembri.',
         timing: 'D2',
         delay: '+2 giorni dopo il welcome message',
-      },
-    },
-  },
-  unfunded_newcomers_post_login_deposit_activation_email: {
-    en: {
-      a: {
-        templateId: 'd-b973f2a405424420a5ab3d8da289b499',
-        versionId: '2798fec1-4b60-4926-a288-d3b59430c2ab',
-        name: 'Unfunded Newcomers - Post-login Deposit Activation A',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}You are already inside. Open the funding path now.',
-        timing: null,
-        delay: null,
-      },
-      b: {
-        templateId: 'd-044bcad122d84f1787438495aa1a3e57',
-        versionId: '6528dfe5-574e-4414-aa5a-9e61e9d4dee0',
-        name: 'Unfunded Newcomers - Post-login Deposit Activation B',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your next step is already visible. Start the deposit flow.',
-        timing: null,
-        delay: null,
-      },
-    },
-    it: {
-      a: {
-        templateId: 'd-d9799893ebef49fc9a04e6c51936a68e',
-        versionId: '33bae03a-d1ad-4fab-8113-97d0cb94a7db',
-        name: 'Unfunded Newcomers - Attivazione Deposito Post-login A',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Sei già dentro. Apri ora il percorso di deposito.',
-        timing: null,
-        delay: null,
-      },
-      b: {
-        templateId: 'd-f34c1fe855694bf18a2ce16809c7ae8c',
-        versionId: '8b64e988-3d02-4077-9de7-4b1489a8e52a',
-        name: 'Unfunded Newcomers - Attivazione Deposito Post-login B',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo prossimo passo è già visibile. Avvia il flusso di deposito.',
-        timing: null,
-        delay: null,
       },
     },
   },
@@ -702,7 +702,7 @@ export const sendgridTemplateRegistry = {
         versionId: 'cf39ee05-5e3d-4117-892f-02ff01c33735',
         name: 'Unfunded Newcomers - Re-entry Nurture A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Still considering Bullwaves? Let us make the next step easier.',
+          '{{#if first_name}}{{first_name}}, {{/if}}If you are still considering Bullwaves, returning can be simpler than expected.',
         timing: 'D21',
         delay: '+21 days after last non-converted step',
       },
@@ -711,7 +711,7 @@ export const sendgridTemplateRegistry = {
         versionId: '492adbf6-da7b-4b4e-8728-6bcd15a6be43',
         name: 'Unfunded Newcomers - Re-entry Nurture B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your opportunity is still open. Re-enter with a clearer path.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves opportunity is still open. You can return with greater clarity.',
         timing: 'D21',
         delay: '+21 days after last non-converted step',
       },
@@ -722,7 +722,7 @@ export const sendgridTemplateRegistry = {
         versionId: '276a02fb-2a34-490a-892d-b825866784bf',
         name: 'Unfunded Newcomers - Riattivazione Soft A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Stai ancora valutando Bullwaves? Rendiamo il prossimo passo più semplice.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Se stai ancora valutando Bullwaves, tornare può essere più semplice di quanto sembri.',
         timing: 'D21',
         delay: '+21 giorni dopo l ultimo step non convertito',
       },
@@ -731,40 +731,20 @@ export const sendgridTemplateRegistry = {
         versionId: '580994e6-a223-431b-9029-c21ffa6a4879',
         name: 'Unfunded Newcomers - Riattivazione Soft B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}La tua opportunità è ancora aperta. Rientra con un percorso più chiaro.',
+          '{{#if first_name}}{{first_name}}, {{/if}}La tua opportunità con Bullwaves è ancora aperta. Puoi rientrare con maggiore chiarezza.',
         timing: 'D21',
         delay: '+21 giorni dopo l ultimo step non convertito',
       },
     },
   },
   unfunded_newcomers_welcome_value_email: {
-    en: {
-      a: {
-        templateId: 'd-6dbc11007c244c8ab87e2d4d8fa015e4',
-        versionId: '8f3f5fac-a2d8-4042-90e1-08b7fa82e8bb',
-        name: 'Unfunded Newcomers - Welcome + Value Proposition A',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is ready. When you are ready, the next step is simple.',
-        timing: 'D0',
-        delay: '0 days from segment entry',
-      },
-      b: {
-        templateId: 'd-26cf50cb8d944f58ae436eb14a13d687',
-        versionId: '756f8692-e74b-4452-af58-9b6eb32e1bb1',
-        name: 'Unfunded Newcomers - Welcome + Value Proposition B',
-        subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Your registration is complete. Your next step on Bullwaves is ready.',
-        timing: 'D0',
-        delay: '0 days from segment entry',
-      },
-    },
     it: {
       a: {
         templateId: 'd-48d554bff2534e92a62f33b936cd51ce',
         versionId: 'd6e95aeb-f3b0-4b51-9720-bb53c74461aa',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore A',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Quando vuoi, il prossimo passo è semplice.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Il tuo account Bullwaves è pronto. Il prossimo passo è disponibile quando vuoi.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
@@ -773,9 +753,29 @@ export const sendgridTemplateRegistry = {
         versionId: '6259cffa-0173-4176-a40f-6f1ccc1f05a5',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore B',
         subject:
-          '{{#if first_name}}{{first_name}}, {{/if}}Registrazione completata. Il tuo prossimo passaggio su Bullwaves è pronto.',
+          '{{#if first_name}}{{first_name}}, {{/if}}Registrazione completata. Il tuo account Bullwaves è pronto per il prossimo passo.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
+      },
+    },
+    en: {
+      a: {
+        templateId: 'd-6dbc11007c244c8ab87e2d4d8fa015e4',
+        versionId: '8f3f5fac-a2d8-4042-90e1-08b7fa82e8bb',
+        name: 'Unfunded Newcomers - Welcome + Value Proposition A',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your Bullwaves account is ready. The next step is available whenever you are.',
+        timing: 'D0',
+        delay: '0 days from segment entry',
+      },
+      b: {
+        templateId: 'd-26cf50cb8d944f58ae436eb14a13d687',
+        versionId: '756f8692-e74b-4452-af58-9b6eb32e1bb1',
+        name: 'Unfunded Newcomers - Welcome + Value Proposition B',
+        subject:
+          '{{#if first_name}}{{first_name}}, {{/if}}Your registration is complete. Your Bullwaves account is ready for the next step.',
+        timing: 'D0',
+        delay: '0 days from segment entry',
       },
     },
   },

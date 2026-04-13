@@ -42,6 +42,9 @@ const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonit
 const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMasterTemplatePage'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
+const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
+const CreolabsPage = lazy(() => import('./features/creolabs/pages/CreolabsPage'))
+const ExternalReportsHubPage = lazy(() => import('./features/reports/pages/ExternalReportsHubPage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
@@ -194,7 +197,10 @@ export default function AuthenticatedApp() {
       aiAssistant: '/support/ai-assistant',
       whatsappPerformance: '/support/whatsapp-performance',
       trustpilotGuide: '/trustpilot-guide',
+      creolabs: '/creolabs',
+      reportsHub: '/reports',
       whatsappTemplates: '/whatsapp-templates',
+      solitics: '/solitics',
       customEvents: '/custom-events',
       upload: '/upload',
       notion: '/notion',
@@ -235,7 +241,10 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
+    if (pathname.startsWith('/creolabs')) return 'creolabs'
+    if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
+    if (pathname.startsWith('/solitics')) return 'solitics'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
     if (pathname.startsWith('/notion')) return 'notion'
@@ -252,10 +261,6 @@ export default function AuthenticatedApp() {
     if (p && p.startsWith('/ranking')) {
       window.history.replaceState({ view: 'profitableRanking' }, '', routes.profitableRanking)
       setView('profitableRanking')
-    }
-    if (p && p.startsWith('/creolabs')) {
-      window.history.replaceState({ view: 'overview' }, '', routes.overview)
-      setView('overview')
     }
     if (p && p.startsWith('/marketing-plan')) {
       window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
@@ -569,7 +574,10 @@ export default function AuthenticatedApp() {
       aiAssistant: 'support-ai-assistant',
       whatsappPerformance: 'support-whatsapp-performance',
       trustpilotGuide: 'trustpilot-guide',
+      creolabs: 'creolabs',
+      reportsHub: 'reports-hub',
       whatsappTemplates: 'whatsapp-templates',
+      solitics: 'solitics-report',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
       admin: 'admin-panel',
@@ -653,7 +661,10 @@ export default function AuthenticatedApp() {
               {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
               {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
+              {view === 'creolabs' ? <CreolabsPage /> : null}
+              {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
+              {view === 'solitics' ? <SoliticsReportPage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}
               {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}

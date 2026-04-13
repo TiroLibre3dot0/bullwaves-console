@@ -317,6 +317,56 @@
   box-shadow: var(--shadow-glow);
 }
 
+.solitics-report__kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.solitics-report__kpiCard {
+  border: 1px solid var(--border-primary);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.solitics-report__kpiLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.solitics-report__kpiDetail {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.solitics-report__splitGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+.solitics-report__outcomeList {
+  display: grid;
+  gap: 10px;
+}
+
+.solitics-report__outcomeItem {
+  border: 1px solid var(--border-primary);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 1080px) {
+  .solitics-report__splitGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Profitable Ranking: premium/compact button language (scoped) */
 .profitable-ranking-page .pill-tab {
   padding: 6px 12px;
