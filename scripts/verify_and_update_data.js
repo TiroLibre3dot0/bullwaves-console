@@ -270,9 +270,6 @@ function main() {
         label: 'Generate trustpilot guidance',
       })
     } else {
-      console.log(
-        'INFO SKIP generate_trustpilot_guidance.js (missing local Trustpilot CSV and TRUSTPILOT_SOURCE_URL)'
-      )
       notes.push('SKIP generate_trustpilot_guidance.js (missing local CSV and TRUSTPILOT_SOURCE_URL)')
     }
 
@@ -336,8 +333,8 @@ function main() {
     if (!safeStat(r.artifact).exists) finalProblems.push(`Missing ${fmtRel(r.artifact)} (source present)`)
   }
 
-  if (notes.length && opts.verbose) {
-    console.log('\nNotes:')
+  if (notes.length) {
+    console.log(`\nNotes${opts.verbose ? ' (verbose)' : ''}:`)
     for (const n of notes) console.log(' -', n)
   }
 
