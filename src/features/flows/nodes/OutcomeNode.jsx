@@ -173,9 +173,9 @@ export default function OutcomeNode({ data }) {
 
   const backgroundByTone = isSolitics
     ? {
-        positive: 'linear-gradient(180deg, #ecfdf5, #dcfce7)',
-        neutral: 'linear-gradient(180deg, #ffffff, #f1f5f9)',
-        negative: 'linear-gradient(180deg, #fef2f2, #fee2e2)',
+        positive: 'linear-gradient(180deg, #def7ea, #ccefd9)',
+        neutral: 'linear-gradient(180deg, #edf3fc, #dde8f7)',
+        negative: 'linear-gradient(180deg, #fde6e6, #f9d7d7)',
       }
     : null
   const textColor = isSolitics ? '#0f172a' : '#e5e7eb'
@@ -227,6 +227,9 @@ export default function OutcomeNode({ data }) {
                 fontWeight: 800,
                 lineHeight: 1.2,
                 color: '#334155',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {data?.label}

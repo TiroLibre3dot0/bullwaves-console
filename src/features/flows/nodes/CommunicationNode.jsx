@@ -146,8 +146,8 @@ export default function CommunicationNode({ data }) {
             position: 'absolute',
             inset: 0,
             borderRadius: 14,
-            background: 'rgba(248,250,252,0.92)',
-            border: '1px dashed #cbd5e1',
+            background: 'rgba(225, 234, 246, 0.94)',
+            border: '1px dashed #9fb4d1',
           }}
         />
 
@@ -194,9 +194,12 @@ export default function CommunicationNode({ data }) {
                 marginTop: 5,
                 fontSize: 10,
                 fontWeight: 700,
-                color: '#64748b',
+                color: '#334155',
                 lineHeight: 1.2,
                 maxWidth: '100%',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {data?.label}
@@ -207,9 +210,12 @@ export default function CommunicationNode({ data }) {
                   marginTop: 4,
                   fontSize: 9,
                   fontWeight: 700,
-                  color: '#94a3b8',
+                  color: '#475569',
                   lineHeight: 1.2,
                   maxWidth: '100%',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {data.subLabel}

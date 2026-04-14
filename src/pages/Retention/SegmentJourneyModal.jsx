@@ -4,6 +4,43 @@ import { useI18n } from '../../i18n/I18nContext'
 import SegmentContentPreviewModal from './SegmentContentPreviewModal'
 import { segmentJourneyTemplatesById } from './segmentJourneyTemplates'
 
+function orientNodesHorizontal(nodes) {
+  if (!Array.isArray(nodes) || !nodes.length) return []
+
+  const uniqueX = [...new Set(nodes.map((node) => Number(node?.position?.x || 0)))].sort(
+    (a, b) => a - b
+  )
+  const uniqueY = [...new Set(nodes.map((node) => Number(node?.position?.y || 0)))].sort(
+    (a, b) => a - b
+  )
+
+  const rowCount = Math.max(1, uniqueX.length)
+  const columnCount = Math.max(1, uniqueY.length)
+  const laneSpacing = Math.max(92, Math.min(152, 740 / Math.max(1, rowCount - 1)))
+  const columnSpacing = Math.max(176, Math.min(276, 1660 / Math.max(1, columnCount - 1)))
+  const laneCenter = 292
+
+  return nodes.map((node) => {
+    const x = Number(node?.position?.x || 0)
+    const y = Number(node?.position?.y || 0)
+    const rowIndex = Math.max(0, uniqueX.indexOf(x))
+    const colIndex = Math.max(0, uniqueY.indexOf(y))
+    const laneIndex = rowIndex - (rowCount - 1) / 2
+
+    return {
+      ...node,
+      position: {
+        x: Math.round(112 + colIndex * columnSpacing),
+        y: Math.round(laneCenter + laneIndex * laneSpacing),
+      },
+      data: {
+        ...(node?.data || {}),
+        flowDirection: 'horizontal',
+      },
+    }
+  })
+}
+
 /**
  * SegmentJourneyModal - Visualizza il journey/flow di un segmento specifico
  * con React Flow diagram
@@ -50,42 +87,62 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     [safeFlowData?.nodes, locale]
   )
 
+  const horizontalNodes = useMemo(() => orientNodesHorizontal(localizedNodes), [localizedNodes])
+
   const localizedEdges = useMemo(
     () => localizeFlowValue(safeFlowData?.edges || []),
     [safeFlowData?.edges, locale]
   )
 
+  const visibleNodes = useMemo(
+    () => horizontalNodes.filter((node) => String(node?.type || '') !== 'communication'),
+    [horizontalNodes]
+  )
+
+  const visibleNodeIds = useMemo(
+    () => new Set(visibleNodes.map((node) => String(node?.id || ''))),
+    [visibleNodes]
+  )
+
+  const visibleEdges = useMemo(
+    () =>
+      localizedEdges.filter(
+        (edge) =>
+          visibleNodeIds.has(String(edge?.source || '')) &&
+          visibleNodeIds.has(String(edge?.target || ''))
+      ),
+    [localizedEdges, visibleNodeIds]
+  )
+
   const flowRenderKey = useMemo(() => {
-    const nodeSignature = (localizedNodes || [])
+    const nodeSignature = (visibleNodes || [])
       .map((node) => `${node?.id || ''}:${node?.position?.x ?? 0}:${node?.position?.y ?? 0}`)
       .join('|')
     return `${safeFlowData?.meta?.id || 'flow'}::${nodeSignature}`
-  }, [localizedNodes, safeFlowData?.meta?.id])
+  }, [visibleNodes, safeFlowData?.meta?.id])
 
-  const flowDescription = pickText(safeFlowData?.meta?.description)
   const flowGoal = pickText(safeFlowData?.meta?.goal)
   const segmentLabel = pickText(safeSegment?.label)
-  const flowTitle = pickText(safeFlowData?.meta?.title) || segmentLabel
   const selectedTemplate = selectedTemplateId
     ? segmentJourneyTemplatesById?.[selectedTemplateId]
     : null
 
   const journeyNodes = useMemo(
     () =>
-      [...localizedNodes]
+      [...visibleNodes]
         .filter(Boolean)
         .sort(
           (left, right) =>
-            (left?.position?.y ?? 0) - (right?.position?.y ?? 0) ||
-            (left?.position?.x ?? 0) - (right?.position?.x ?? 0)
+            (left?.position?.x ?? 0) - (right?.position?.x ?? 0) ||
+            (left?.position?.y ?? 0) - (right?.position?.y ?? 0)
         ),
-    [localizedNodes]
+    [visibleNodes]
   )
 
   const actionableNodes = useMemo(
     () =>
       journeyNodes.filter((node) =>
-        ['state', 'decision', 'outcome', 'communication'].includes(String(node?.type || ''))
+        ['state', 'decision', 'outcome'].includes(String(node?.type || ''))
       ),
     [journeyNodes]
   )
@@ -111,6 +168,25 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     [actionableNodes, selectedNodeId]
   )
 
+  const linkedTemplatePreview = useMemo(() => {
+    const templateId = String(selectedNode?.data?.templateId || '').trim()
+    if (!templateId) return null
+
+    const template = segmentJourneyTemplatesById?.[templateId]
+    if (!template) return null
+
+    const localePack = template?.locales?.[locale] || template?.locales?.en || template?.locales?.it
+    const variant = localePack?.variants?.a || localePack?.variants?.b || null
+    const html = variant?.html || {}
+
+    return {
+      subject: pickText(variant?.subject),
+      description: pickText(variant?.description),
+      title: pickText(html?.heroTitle || html?.title || html?.mainTitle),
+      body: pickText(html?.bodyOne || html?.introLead || html?.bodyThree),
+    }
+  }, [selectedNode, locale])
+
   const countByType = useMemo(
     () => ({
       steps: journeyNodes.filter((node) => node?.type === 'state').length,
@@ -124,10 +200,10 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     if (!selectedNodeId) return { incoming: [], outgoing: [] }
 
     return {
-      incoming: localizedEdges.filter((edge) => edge?.target === selectedNodeId),
-      outgoing: localizedEdges.filter((edge) => edge?.source === selectedNodeId),
+      incoming: visibleEdges.filter((edge) => edge?.target === selectedNodeId),
+      outgoing: visibleEdges.filter((edge) => edge?.source === selectedNodeId),
     }
-  }, [localizedEdges, selectedNodeId])
+  }, [visibleEdges, selectedNodeId])
 
   const getNodeLabel = (node) => {
     if (!node) return ''
@@ -174,6 +250,19 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     return pickText(edge?.label)
   }
 
+  const classifyBranch = (edgeLabel) => {
+    const normalized = String(edgeLabel || '')
+      .trim()
+      .toUpperCase()
+
+    if (!normalized) return 'other'
+    if (['YES', 'SI', 'SÌ', 'ON TRACK', 'STRONG', 'STABLE', 'WARM'].includes(normalized)) {
+      return 'yes'
+    }
+    if (['NO', 'DROP', 'CALO', 'RECOVERY'].includes(normalized)) return 'no'
+    return 'other'
+  }
+
   const buildConnectionSummary = (edge, direction) => {
     const counterpartId = direction === 'incoming' ? edge?.source : edge?.target
     const counterpart = actionableNodes.find((node) => node?.id === counterpartId)
@@ -190,6 +279,58 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
   const outgoingSummary = nodeConnections.outgoing.map((edge) =>
     buildConnectionSummary(edge, 'outgoing')
   )
+
+  const timelineSummary = useMemo(() => {
+    const lifecycleSteps = journeyNodes
+      .filter(
+        (node) =>
+          node?.type === 'state' && /_step\d+_email$/i.test(String(node?.data?.templateId || ''))
+      )
+      .sort((left, right) => (left?.position?.x ?? 0) - (right?.position?.x ?? 0))
+
+    const initialStep = lifecycleSteps[0] || null
+
+    return {
+      initialStep,
+      lifecycleSteps,
+    }
+  }, [journeyNodes])
+
+  const branchPlaybook = useMemo(() => {
+    const decisions = journeyNodes
+      .filter((node) => node?.type === 'decision')
+      .sort((left, right) => (left?.position?.x ?? 0) - (right?.position?.x ?? 0))
+
+    return decisions.map((decision) => {
+      const outgoing = visibleEdges.filter((edge) => edge?.source === decision?.id)
+
+      const grouped = { yes: [], no: [], other: [] }
+
+      outgoing.forEach((edge) => {
+        const target = actionableNodes.find((node) => node?.id === edge?.target) || null
+        const branchLabel = getEdgeLabel(edge)
+        const bucket = classifyBranch(branchLabel)
+
+        grouped[bucket].push({
+          id: edge?.id || `${decision?.id}-${edge?.target}`,
+          edgeLabel: branchLabel || 'Route',
+          title: getNodeLabel(target) || String(edge?.target || ''),
+          timing: getNodeTiming(target),
+          content: getNodeSubLabel(target),
+          templateId: String(target?.data?.templateId || ''),
+        })
+      })
+
+      return {
+        id: String(decision?.id || ''),
+        title: getNodeLabel(decision),
+        window: getNodeSubLabel(decision),
+        yes: grouped.yes,
+        no: grouped.no,
+        other: grouped.other,
+      }
+    })
+  }, [journeyNodes, visibleEdges, actionableNodes])
 
   const openTemplate = (templateId) => {
     const id = String(templateId || '').trim()
@@ -227,7 +368,7 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
               {segmentLabel} — Solitics View
             </h2>
             {flowGoal && (
-              <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 13 }}>
+              <p style={{ margin: '6px 0 0', color: 'var(--text-muted)', fontSize: 12 }}>
                 {flowGoal}
               </p>
             )}
@@ -243,23 +384,11 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
           </button>
         </div>
 
-        {flowDescription && (
-          <div className="segment-journey-modal__description">
-            <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              {flowDescription}
-            </p>
-          </div>
-        )}
-
         <div className="segment-journey-modal__workspace">
           <aside className="segment-journey-modal__sidebar">
             <section className="segment-journey-modal__panel">
               <div className="segment-journey-modal__eyebrow">Solitics format</div>
-              <h3 className="segment-journey-modal__panel-title">Journey blueprint</h3>
-              <p className="segment-journey-modal__panel-copy">
-                Ogni nodo mostra il corrispettivo operativo da replicare in Solitics: touch,
-                condizione, outcome e timing.
-              </p>
+              <h3 className="segment-journey-modal__panel-title">Journey map</h3>
               <div className="segment-journey-modal__legend">
                 <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--step">
                   <span />
@@ -273,10 +402,62 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
                   <span />
                   <strong>Outcome</strong>
                 </div>
-                <div className="segment-journey-modal__legend-item segment-journey-modal__legend-item--note">
-                  <span />
-                  <strong>Context</strong>
+              </div>
+            </section>
+
+            <section className="segment-journey-modal__panel">
+              <div className="segment-journey-modal__eyebrow">Operational brief</div>
+              <h3 className="segment-journey-modal__panel-title">Release, timing, YES/NO</h3>
+
+              {timelineSummary.initialStep ? (
+                <div className="segment-journey-modal__route-card" style={{ marginBottom: 10 }}>
+                  <strong>Initial release: {getNodeLabel(timelineSummary.initialStep)}</strong>
+                  <small>
+                    Expected at {getNodeTiming(timelineSummary.initialStep)}.{' '}
+                    {getNodeSubLabel(timelineSummary.initialStep)}
+                  </small>
                 </div>
+              ) : null}
+
+              <div className="segment-journey-modal__route-list" style={{ marginBottom: 12 }}>
+                {timelineSummary.lifecycleSteps.map((step) => (
+                  <div key={step.id} className="segment-journey-modal__route-card">
+                    <strong>{getNodeLabel(step)}</strong>
+                    <small>
+                      {getNodeTiming(step)} · {getNodeSubLabel(step)}
+                    </small>
+                  </div>
+                ))}
+              </div>
+
+              <div className="segment-journey-modal__route-list">
+                {branchPlaybook.map((item) => (
+                  <div key={item.id} className="segment-journey-modal__route-card">
+                    <strong>{item.title}</strong>
+                    <small>{item.window || 'Behavior checkpoint'}</small>
+
+                    {item.yes.map((route) => (
+                      <small key={`${route.id}-yes`}>
+                        YES action: {route.title} ({route.timing})
+                        {route.content ? ` · ${route.content}` : ''}
+                      </small>
+                    ))}
+
+                    {item.no.map((route) => (
+                      <small key={`${route.id}-no`}>
+                        NO action: {route.title} ({route.timing})
+                        {route.content ? ` · ${route.content}` : ''}
+                      </small>
+                    ))}
+
+                    {item.other.map((route) => (
+                      <small key={`${route.id}-other`}>
+                        {route.edgeLabel}: {route.title} ({route.timing})
+                        {route.content ? ` · ${route.content}` : ''}
+                      </small>
+                    ))}
+                  </div>
+                ))}
               </div>
             </section>
 
@@ -326,12 +507,10 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
                     </strong>
                   </div>
                   <div>
-                    <span className="segment-journey-modal__detail-label">Journey</span>
-                    <strong className="segment-journey-modal__detail-value">{flowTitle}</strong>
-                  </div>
-                  <div>
-                    <span className="segment-journey-modal__detail-label">Segment</span>
-                    <strong className="segment-journey-modal__detail-value">{segmentLabel}</strong>
+                    <span className="segment-journey-modal__detail-label">Node</span>
+                    <strong className="segment-journey-modal__detail-value">
+                      {getNodeLabel(selectedNode)}
+                    </strong>
                   </div>
                   <div>
                     <span className="segment-journey-modal__detail-label">Template</span>
@@ -341,7 +520,22 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
                   </div>
                 </div>
 
-                {selectedNode?.data?.templateId ? (
+                {linkedTemplatePreview ? (
+                  <div
+                    className="segment-journey-modal__route-card"
+                    style={{ marginTop: 12, marginBottom: 12 }}
+                  >
+                    <strong>{linkedTemplatePreview.subject || 'Template preview'}</strong>
+                    {linkedTemplatePreview.title ? (
+                      <small>{linkedTemplatePreview.title}</small>
+                    ) : null}
+                    {linkedTemplatePreview.body ? (
+                      <small>{linkedTemplatePreview.body}</small>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {selectedNode?.data?.templateId && linkedTemplatePreview ? (
                   <button
                     type="button"
                     className="btn"
@@ -415,8 +609,8 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
             <div className="segment-journey-modal__diagram-wrap">
               <FlowDiagram
                 key={flowRenderKey}
-                nodes={localizedNodes}
-                edges={localizedEdges}
+                nodes={visibleNodes}
+                edges={visibleEdges}
                 theme="solitics"
                 layoutMode="source"
                 height="100%"

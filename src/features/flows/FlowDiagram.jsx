@@ -593,7 +593,13 @@ export default function FlowDiagram({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: theme === 'solitics' ? 0.08 : 0.14 }}
+        fitViewOptions={{
+          padding: theme === 'solitics' ? 0.035 : 0.14,
+          minZoom: theme === 'solitics' ? 0.72 : 0.2,
+          maxZoom: 1.25,
+        }}
+        minZoom={theme === 'solitics' ? 0.65 : 0.2}
+        maxZoom={1.5}
         nodesDraggable={false}
         nodesConnectable={false}
         elementsSelectable

@@ -76,8 +76,8 @@ export default function DecisionNode({ data }) {
             position: 'absolute',
             inset: 0,
             borderRadius: 16,
-            background: 'linear-gradient(180deg, #ffffff, #f8fafc)',
-            border: '1px solid #cbd5e1',
+            background: 'linear-gradient(180deg, #edf3fc, #dde8f7)',
+            border: '1px solid #a8bdd9',
             boxShadow: '0 10px 22px rgba(15,23,42,0.10)',
           }}
         />
@@ -128,6 +128,9 @@ export default function DecisionNode({ data }) {
                 fontWeight: 800,
                 lineHeight: 1.22,
                 color: '#0f172a',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {triggerLabel || label}
@@ -140,7 +143,10 @@ export default function DecisionNode({ data }) {
                   fontSize: 10,
                   fontWeight: 700,
                   lineHeight: 1.2,
-                  color: '#64748b',
+                  color: '#334155',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {subLabel}

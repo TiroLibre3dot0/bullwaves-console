@@ -184,15 +184,15 @@ export default function StateNode({ data }) {
     const cardBackground = isEntryNode
       ? 'linear-gradient(180deg, #0f172a, #1e293b)'
       : isWaitNode
-        ? 'linear-gradient(180deg, #f8fafc, #eef2f7)'
-        : 'linear-gradient(180deg, #ffffff, #f8fafc)'
+        ? 'linear-gradient(180deg, #e6edf8, #d7e2f1)'
+        : 'linear-gradient(180deg, #edf3fc, #dde8f7)'
     const cardBorder = isEntryNode
       ? '1px solid #0f172a'
       : isWaitNode
         ? '1px dashed #cbd5e1'
         : '1px solid #cbd5e1'
     const titleColor = isEntryNode ? '#ffffff' : '#0f172a'
-    const metaColor = isEntryNode ? '#cbd5e1' : '#64748b'
+    const metaColor = isEntryNode ? '#cbd5e1' : '#334155'
     const eyebrowColor = isEntryNode ? '#99f6e4' : isWaitNode ? '#94a3b8' : '#0f766e'
     const shadow = isEntryNode
       ? '0 12px 28px rgba(15,23,42,0.18)'
@@ -279,6 +279,9 @@ export default function StateNode({ data }) {
                 color: titleColor,
                 lineHeight: 1.22,
                 maxWidth: '100%',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
               }}
             >
               {data?.label}
@@ -293,6 +296,9 @@ export default function StateNode({ data }) {
                   lineHeight: 1.2,
                   maxWidth: '100%',
                   opacity: data?.showDetails ? 1 : 0.82,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                 }}
               >
                 {data?.showDetails ? data.subLabel : null}

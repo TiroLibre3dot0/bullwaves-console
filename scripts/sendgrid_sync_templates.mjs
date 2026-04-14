@@ -113,6 +113,20 @@ async function sendgridRequest(method, resourcePath, body) {
   return json
 }
 
+function extractSendgridPageToken(nextValue) {
+  if (!nextValue) return null
+
+  const raw = String(nextValue).trim()
+  if (!raw) return null
+
+  try {
+    const parsed = raw.startsWith('http') ? new URL(raw) : new URL(raw, baseUrl)
+    return parsed.searchParams.get('page_token') || raw
+  } catch {
+    return raw
+  }
+}
+
 async function getAllDynamicTemplates() {
   const result = []
   let pageToken = null
@@ -130,7 +144,7 @@ async function getAllDynamicTemplates() {
     const payload = await sendgridRequest('GET', `/v3/templates?${params.toString()}`)
     const page = Array.isArray(payload?.result) ? payload.result : []
     result.push(...page)
-    pageToken = payload?._metadata?.next || null
+    pageToken = extractSendgridPageToken(payload?._metadata?.next)
   } while (pageToken)
 
   return result
