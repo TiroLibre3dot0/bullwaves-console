@@ -133,7 +133,11 @@ export default function BadgeEdge({
   const secondaryCompact = compactSecondaryLabel(secondaryRaw)
   const showSecondary =
     Boolean(secondaryCompact) &&
-    (!isSolitics || edgeVisibility === 'focus' || Boolean(data?.isConnected))
+    (!isSolitics ||
+      edgeVisibility === 'focus' ||
+      Boolean(data?.isConnected) ||
+      Boolean(data?.alwaysShowSecondary) ||
+      Boolean(data?.hasChoiceLabel))
   const plainTextColor = /no|not/i.test(primary) ? '#b91c1c' : '#2563eb'
   const isNoBranch = /\b(NO|NOT)\b/i.test(primaryText)
   const isYesBranch = /\b(YES|S[IÌ])\b/i.test(primaryText)

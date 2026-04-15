@@ -655,13 +655,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D0',
           delay: '0 days from segment entry',
           smsText:
-            'Bullwaves: we prepared a dedicated return review for your profile. In your area you can review manager support, bonus options, and trading tools access.',
+            'Bullwaves: your dedicated return review is open. Check the 100% bonus option, your account-manager support, and the new AI trading tools coming soon.',
         },
         {
           timing: 'D0',
           delay: '0 days from segment entry',
           smsText:
-            'Bullwaves: a dedicated return review is available. Open your client area to evaluate manager support, bonus options, and trading tools access.',
+            'Bullwaves: a more supportive return path is ready for you. Open your account to review bonus, manager support, and upcoming AI trading tools.',
         }
       ),
       it: localeVariants(
@@ -669,13 +669,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D0',
           delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: abbiamo preparato una revisione dedicata al tuo rientro. Nella tua area puoi valutare supporto manager, opzioni bonus e accesso ai trading tools.',
+            'Bullwaves: la tua revisione dedicata al rientro è aperta. Verifica bonus 100%, supporto del manager e nuovi AI trading tools in arrivo.',
         },
         {
           timing: 'D0',
           delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: e disponibile una revisione dedicata al ritorno. Apri la tua area cliente per valutare supporto manager, opzioni bonus e accesso ai trading tools.',
+            'Bullwaves: per te è pronto un percorso di rientro più supportato. Apri il tuo account per rivedere bonus, manager e nuovi AI trading tools.',
         }
       ),
     },
@@ -687,13 +687,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D3',
           delay: '+3 days after step 1',
           smsText:
-            'Bullwaves: reminder for your dedicated return review. Check manager support, bonus options, and available trading tools in your client area.',
+            'Bullwaves: we confirmed your deposit. Now review bonus, manager support, and the next practical step in your client area.',
         },
         {
           timing: 'D3',
           delay: '+3 days after step 1',
           smsText:
-            'Bullwaves: dedicated return review still open. Enter your client area to evaluate manager support, bonus options, and trading tools access.',
+            'Bullwaves: your account is moving again after the deposit. Open the client area and keep the return active with the right support.',
         }
       ),
       it: localeVariants(
@@ -701,13 +701,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D3',
           delay: '+3 giorni dopo step 1',
           smsText:
-            'Bullwaves: promemoria revisione dedicata al rientro. In area cliente puoi verificare supporto manager, opzioni bonus e trading tools disponibili.',
+            'Bullwaves: abbiamo confermato il tuo deposito. Ora rivedi bonus, supporto del manager e il prossimo passo pratico nella tua area cliente.',
         },
         {
           timing: 'D3',
           delay: '+3 giorni dopo step 1',
           smsText:
-            'Bullwaves: revisione dedicata al ritorno ancora aperta. Entra in area cliente per valutare supporto manager, opzioni bonus e accesso ai trading tools.',
+            'Bullwaves: dopo il deposito il tuo account si è rimesso in moto. Apri l area cliente e mantieni attivo il ritorno con il supporto giusto.',
         }
       ),
     },
@@ -719,13 +719,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D7',
           delay: '+4 days after step 2',
           smsText:
-            'Bullwaves: final review touch. Confirm from your client area whether to proceed with manager support, bonus options, and trading tools access.',
+            'Bullwaves: after the deposit, the next support phase is ready. Confirm bonus, manager guidance, and keep the return stable.',
         },
         {
           timing: 'D7',
           delay: '+4 days after step 2',
           smsText:
-            'Bullwaves: final review window open. Continue from your client area to confirm manager support, bonus options, and trading tools access.',
+            'Bullwaves: your deposit reopened the path. Continue from your client area and keep the account active with direct support.',
         }
       ),
       it: localeVariants(
@@ -733,13 +733,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D7',
           delay: '+4 giorni dopo step 2',
           smsText:
-            'Bullwaves: touch finale di revisione. Conferma dalla tua area cliente se procedere con supporto manager, opzioni bonus e accesso ai trading tools.',
+            'Bullwaves: dopo il deposito è pronta la prossima fase di supporto. Conferma bonus, guida del manager e mantieni stabile il ritorno.',
         },
         {
           timing: 'D7',
           delay: '+4 giorni dopo step 2',
           smsText:
-            'Bullwaves: finestra finale di revisione aperta. Continua dalla tua area cliente per confermare supporto manager, opzioni bonus e accesso ai trading tools.',
+            'Bullwaves: il tuo deposito ha riaperto il percorso. Continua dalla tua area cliente e mantieni attivo il conto con supporto diretto.',
         }
       ),
     },
@@ -751,13 +751,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'CHECKPOINT +0d',
           delay: 'Immediate follow-up after positive outcome',
           smsText:
-            'Bullwaves: excellent, your active return is confirmed. Continue from your client area and keep continuity stable.',
+            'Bullwaves: good news, your deposit has reactivated the path. Continue from your client area and keep the momentum stable.',
         },
         {
           timing: 'CHECKPOINT +0d',
           delay: 'Immediate follow-up after positive outcome',
           smsText:
-            'Bullwaves: your active status is restored. Open your account and keep this momentum disciplined.',
+            'Bullwaves: your path is active again after the recent action. Keep it supported with clear next steps and direct guidance.',
         }
       ),
       it: localeVariants(
@@ -765,13 +765,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'CHECKPOINT +0d',
           delay: 'Follow-up immediato dopo esito positivo',
           smsText:
-            'Bullwaves: ottimo, il tuo ritorno attivo e confermato. Continua da area cliente e mantieni stabile la continuita.',
+            'Bullwaves: buone notizie, il tuo deposito ha riattivato il percorso. Continua da area cliente e mantieni stabile il ritmo.',
         },
         {
           timing: 'CHECKPOINT +0d',
           delay: 'Follow-up immediato dopo esito positivo',
           smsText:
-            'Bullwaves: il tuo stato attivo e ripristinato. Apri account e mantieni questo slancio con disciplina.',
+            'Bullwaves: il tuo percorso è di nuovo attivo dopo l azione recente. Mantienilo supportato con passi chiari e guida diretta.',
         }
       ),
     },
@@ -783,13 +783,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D14',
           delay: '+7 days after missed outcome',
           smsText:
-            'Bullwaves: your high-value return is still open. Re-enter the platform and relaunch from the return path.',
+            'Bullwaves: no deposit has been completed yet, but the door is still open. Re-enter the platform and restart with support.',
         },
         {
           timing: 'D14',
           delay: '+7 days after missed outcome',
           smsText:
-            'Bullwaves: a lighter return route is now available. Open your client area and restart with less friction.',
+            'Bullwaves: still no action? A lighter reactivation route is available. Open your client area and restart with less friction.',
         }
       ),
       it: localeVariants(
@@ -797,13 +797,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D14',
           delay: '+7 giorni dopo esito non centrato',
           smsText:
-            'Bullwaves: il tuo ritorno ad alto valore e ancora aperto. Rientra in piattaforma e rilancia dal percorso di ritorno.',
+            'Bullwaves: nessun deposito ancora completato, ma la porta è ancora aperta. Rientra in piattaforma e riparti con supporto.',
         },
         {
           timing: 'D14',
           delay: '+7 giorni dopo esito non centrato',
           smsText:
-            'Bullwaves: e disponibile un percorso di ritorno piu leggero. Apri area cliente e riparti con meno attrito.',
+            'Bullwaves: ancora nessuna azione? È disponibile un percorso di riattivazione più leggero. Apri area cliente e riparti con meno attrito.',
         }
       ),
     },
@@ -829,13 +829,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D0',
           delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: il tuo account puo ripartire da una base piu forte. Apri area cliente e rivedi il percorso di riattivazione.',
+            'Bullwaves: il tuo account può ripartire da una base più forte. Apri l’area cliente e rivedi il percorso di riattivazione.',
         },
         {
           timing: 'D0',
           delay: "0 giorni dall'ingresso nel segmento",
           smsText:
-            'Bullwaves: il tuo profilo merita ancora un ritorno su misura. Rientra in piattaforma e continua da un setup piu semplice.',
+            'Bullwaves: il tuo profilo merita ancora un ritorno su misura. Rientra in piattaforma e continua da un setup più semplice.',
         }
       ),
     },
@@ -861,13 +861,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D3',
           delay: '+3 giorni dopo step 1',
           smsText:
-            'Bullwaves: il tuo piano guidato di ritorno e pronto. Apri la piattaforma e rivedi le prossime azioni.',
+            'Bullwaves: il tuo piano guidato di ritorno è pronto. Apri la piattaforma e rivedi le prossime azioni.',
         },
         {
           timing: 'D3',
           delay: '+3 giorni dopo step 1',
           smsText:
-            'Bullwaves: e attivo un percorso di ripartenza piu chiaro. Entra in area cliente e rilancia dal piano value.',
+            'Bullwaves: è attivo un percorso di ripartenza più chiaro. Entra in area cliente e rilancia dal piano value.',
         }
       ),
     },
@@ -893,13 +893,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D9',
           delay: '+6 giorni dopo step 2',
           smsText:
-            'Bullwaves: mantieni attivo il tuo ritorno. Apri area cliente e conferma il prossimo passo di continuita.',
+            'Bullwaves: mantieni attivo il tuo ritorno. Apri l’area cliente e conferma il prossimo passo di continuità.',
         },
         {
           timing: 'D9',
           delay: '+6 giorni dopo step 2',
           smsText:
-            'Bullwaves: il tuo rientro e ancora in corso. Rientra in piattaforma e consolida ora il prossimo passo.',
+            'Bullwaves: il tuo rientro è ancora in corso. Rientra in piattaforma e consolida ora il prossimo passo.',
         }
       ),
     },
@@ -925,13 +925,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'CHECKPOINT +0d',
           delay: 'Follow-up immediato dopo esito positivo',
           smsText:
-            'Bullwaves: ottimo risultato, il recupero dormant value e confermato. Continua da area cliente e mantieni il ritmo attivo.',
+            'Bullwaves: ottimo risultato, il recupero dormant value è confermato. Continua da area cliente e mantieni il ritmo attivo.',
         },
         {
           timing: 'CHECKPOINT +0d',
           delay: 'Follow-up immediato dopo esito positivo',
           smsText:
-            'Bullwaves: il tuo account e tornato in movimento. Apri la tua area e proteggi questa continuita.',
+            'Bullwaves: il tuo account è tornato in movimento. Apri la tua area e proteggi questa continuità.',
         }
       ),
     },
@@ -957,13 +957,13 @@ export const additionalSegmentJourneyTemplateExtrasById = {
           timing: 'D18',
           delay: '+9 giorni dopo esito non centrato',
           smsText:
-            'Bullwaves: il tuo percorso di ritorno e ancora aperto. Rientra in piattaforma e riparti dalla route value piu semplice.',
+            'Bullwaves: il tuo percorso di ritorno è ancora aperto. Rientra in piattaforma e riparti dalla route value più semplice.',
         },
         {
           timing: 'D18',
           delay: '+9 giorni dopo esito non centrato',
           smsText:
-            'Bullwaves: e pronta una riattivazione piu leggera. Apri area cliente e continua con meno attrito.',
+            'Bullwaves: è pronta una riattivazione più leggera. Apri area cliente e continua con meno attrito.',
         }
       ),
     },

@@ -109,14 +109,14 @@ function getSoliticsNodeSize(node) {
 
   if (node?.type === 'state') {
     if (node?.data?.flowRole === 'entry' || node?.id === 'E0') {
-      return { width: 196, height: 88 }
+      return { width: 220, height: 92 }
     }
 
     if (node?.data?.templateId) {
-      return { width: 196, height: 88 }
+      return { width: 280, height: 118 }
     }
 
-    return { width: 164, height: 72 }
+    return { width: 180, height: 76 }
   }
 
   return { width: 176, height: 84 }
@@ -348,10 +348,10 @@ function projectSoliticsLayout(nodes, edges) {
   const primaryLevels = [...new Set(primaryNodes.map((node) => levelMap.get(node.id) || 0))].sort(
     (a, b) => a - b
   )
-  const levelSpacing = 226
-  const laneSpacing = 176
+  const levelSpacing = 320
+  const laneSpacing = 210
   const startX = 96
-  const mainRowY = 258
+  const mainRowY = 280
 
   const projectedPrimaryNodes = primaryNodes.map((node) => {
     const nodeLevel = levelMap.get(node.id) || 0
@@ -516,7 +516,9 @@ export default function FlowDiagram({
       ...node?.data,
       theme,
       isSelected: node?.id === selectedNodeId,
-      showDetails: node?.id === selectedNodeId,
+      showDetails:
+        node?.id === selectedNodeId ||
+        (theme === 'solitics' && node?.type === 'state' && Boolean(node?.data?.templateId)),
     },
   }))
 

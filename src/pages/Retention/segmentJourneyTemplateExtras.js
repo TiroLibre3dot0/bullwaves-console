@@ -174,29 +174,30 @@ export const segmentJourneyTemplateExtrasById = {
     locales: {
       en: localeVariants(
         {
-          timing: 'D5',
-          delay: '+3 days after friction-reduction message',
+          timing: 'DEPOSIT OK +0d',
+          delay: 'Immediately after successful deposit confirmation',
           smsText:
-            'Bullwaves: your account is ready. Complete your first deposit to move from setup into activation.',
+            'Bullwaves: your first deposit is complete. Open your client area and continue with the next activation step.',
         },
         {
-          timing: 'D5',
-          delay: '+3 days after friction-reduction message',
+          timing: 'DEPOSIT OK +0d',
+          delay: 'Immediately after successful deposit confirmation',
           smsText:
-            'Bullwaves: your setup is complete. The first deposit is the only step remaining.',
+            'Bullwaves: your account is funded. Re-enter the platform and continue from the next active step.',
         }
       ),
       it: localeVariants(
         {
-          timing: 'D5',
-          delay: '+3 giorni dopo il messaggio di riduzione attriti',
+          timing: 'DEPOSIT OK +0d',
+          delay: 'Immediatamente dopo la conferma del deposito',
           smsText:
-            'Bullwaves: il tuo account è pronto. Completa il primo deposito per passare dal setup all attivazione.',
+            'Bullwaves: il tuo primo deposito è completato. Apri la tua area cliente e continua con il prossimo step di attivazione.',
         },
         {
-          timing: 'D5',
-          delay: '+3 giorni dopo il messaggio di riduzione attriti',
-          smsText: 'Bullwaves: la configurazione è completa. Resta solo il primo deposito.',
+          timing: 'DEPOSIT OK +0d',
+          delay: 'Immediatamente dopo la conferma del deposito',
+          smsText:
+            'Bullwaves: il tuo account è finanziato. Rientra in piattaforma e continua dal prossimo passo operativo.',
         }
       ),
     },

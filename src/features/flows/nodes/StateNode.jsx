@@ -181,6 +181,8 @@ export default function StateNode({ data }) {
       <EnvelopeIcon />
     )
     const iconBackground = isEntryNode ? '#14b8a6' : isWaitNode ? '#94a3b8' : '#0f766e'
+    const previewSubject = String(data?.previewSubject || '').trim()
+    const previewBody = String(data?.previewBody || '').trim()
     const cardBackground = isEntryNode
       ? 'linear-gradient(180deg, #0f172a, #1e293b)'
       : isWaitNode
@@ -279,29 +281,70 @@ export default function StateNode({ data }) {
                 color: titleColor,
                 lineHeight: 1.22,
                 maxWidth: '100%',
-                whiteSpace: 'nowrap',
+                whiteSpace: 'normal',
                 overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
               }}
             >
               {data?.label}
             </div>
-            {data?.subLabel ? (
+            {previewSubject ? (
               <div
                 style={{
                   marginTop: 5,
+                  fontSize: 10,
+                  fontWeight: 900,
+                  color: isEntryNode ? '#bfdbfe' : '#0f766e',
+                  lineHeight: 1.2,
+                  maxWidth: '100%',
+                  whiteSpace: 'normal',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                Send: {previewSubject}
+              </div>
+            ) : null}
+            {data?.subLabel ? (
+              <div
+                style={{
+                  marginTop: 4,
                   fontSize: 10,
                   fontWeight: 700,
                   color: metaColor,
                   lineHeight: 1.2,
                   maxWidth: '100%',
                   opacity: data?.showDetails ? 1 : 0.82,
-                  whiteSpace: 'nowrap',
+                  whiteSpace: 'normal',
                   overflow: 'hidden',
-                  textOverflow: 'ellipsis',
+                  display: '-webkit-box',
+                  WebkitLineClamp: previewSubject ? 1 : 2,
+                  WebkitBoxOrient: 'vertical',
                 }}
               >
-                {data?.showDetails ? data.subLabel : null}
+                {data?.showDetails ? data.subLabel || previewBody : null}
+              </div>
+            ) : previewBody ? (
+              <div
+                style={{
+                  marginTop: 4,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: metaColor,
+                  lineHeight: 1.2,
+                  maxWidth: '100%',
+                  whiteSpace: 'normal',
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
+                {previewBody}
               </div>
             ) : null}
           </div>

@@ -157,51 +157,155 @@ const BLUEPRINTS = {
     kpis: ['VIP retention', 'Capital protection adherence', 'Relationship continuity'],
   },
   churned_high_value: {
-    entry: 'Churned high-value profile detected',
+    entry: {
+      en: 'Return opportunity identified',
+      it: 'Opportunità di rientro identificata',
+    },
     step1: [
-      'High-value comeback touch',
+      { en: 'Client re-engagement touch', it: 'Touch di riavvicinamento cliente' },
       'D0',
-      'Re-open conversation with premium relevance framing',
+      {
+        en: 'Re-open the conversation with softer value, bonus support, and upcoming AI tools',
+        it: 'Riapre la conversazione con un tono più morbido, supporto bonus e nuovi AI tools in arrivo',
+      },
     ],
-    decision1: ['Comeback response detected?', 'Signal within first 3 days'],
+    decision1: [
+      { en: 'Positive response within 3 days?', it: 'Segnale positivo entro 3 giorni?' },
+      {
+        en: 'Open, click, login, or manager-interest signal after the first touch',
+        it: 'Apertura, click, login o interesse verso il manager dopo il primo touch',
+      },
+    ],
     step2: [
-      'Tailored return package',
+      { en: 'Deposit confirmed follow-up', it: 'Follow-up dopo deposito confermato' },
       'D3',
-      'Offer precise return structure for high-value profile',
+      {
+        en: 'Acknowledge the completed deposit and move the client into a better-supported return path',
+        it: 'Conferma il deposito completato e accompagna il cliente in un rientro meglio supportato',
+      },
     ],
-    decision2: ['Return package accepted?', 'Observed return intent and account activity'],
-    step3: ['Executive reactivation touch', 'D7', 'Stabilize profile after comeback attempt'],
-    decision3: ['Reactivated at 14d?', 'Recency and capital recovery checkpoints'],
-    outcomes: ['High-value reactivated', 'Partial reactivation', 'Churn confirmed'],
-    followups: ['VIP re-entry roadmap', 'Long-cycle reacquisition'],
-    influences: ['Inactive status and >90 days recency', 'Net deposit >= 1000'],
-    kpis: ['Reactivation 14d', 'Capital return', 'Comeback conversion'],
+    decision2: [
+      { en: 'Deposit completed after the review?', it: 'Deposito completato dopo la review?' },
+      {
+        en: 'Observed deposit, concrete return action, or renewed platform activity after the review',
+        it: 'Deposito osservato, azione concreta di rientro o nuova attività in piattaforma dopo la review',
+      },
+    ],
+    step3: [
+      { en: 'Post-deposit continuity support', it: 'Supporto di continuità post-deposito' },
+      'D7',
+      {
+        en: 'Keep the return stable after the deposit and prevent a new pause',
+        it: 'Mantiene stabile il rientro dopo il deposito ed evita una nuova pausa',
+      },
+    ],
+    decision3: [
+      { en: 'Return reactivated at 14d?', it: 'Rientro riattivato a 14 giorni?' },
+      {
+        en: 'Recency and activity improve back toward a healthy account rhythm',
+        it: 'Recency e attività tornano verso un ritmo account più sano',
+      },
+    ],
+    outcomes: [
+      { en: 'Return reactivated', it: 'Rientro riattivato' },
+      { en: 'Relationship warming', it: 'Relazione in riattivazione' },
+      { en: 'Relationship still paused', it: 'Relazione ancora in pausa' },
+    ],
+    followups: [
+      { en: 'Retention continuity review', it: 'Review di continuità retention' },
+      { en: 'Softer re-entry path', it: 'Percorso di rientro più morbido' },
+    ],
+    influences: [
+      {
+        en: 'Inactive client with prior deposited value',
+        it: 'Cliente inattivo con valore depositato pregresso',
+      },
+      { en: 'More than 90 days from last trade', it: 'Oltre 90 giorni dall ultimo trade' },
+    ],
+    kpis: [
+      { en: 'Return reactivation at 14d', it: 'Riattivazione del ritorno a 14 giorni' },
+      { en: 'Return acceptance', it: 'Accettazione del rientro' },
+      { en: 'Continuity quality', it: 'Qualità della continuità' },
+    ],
     followupRecoveryTiming: 'D14',
   },
   dormant_value: {
-    entry: 'Dormant value profile identified',
+    entry: {
+      en: 'Dormant value profile identified',
+      it: 'Profilo dormant value identificato',
+    },
     step1: [
-      'Value reactivation touch',
+      { en: 'Value reactivation touch', it: 'Touch di riattivazione value' },
       'D0',
-      'Re-open the relationship with a low-friction value reminder',
+      {
+        en: 'Re-open the relationship with a low-friction value reminder',
+        it: 'Riapre la relazione con un richiamo di valore a basso attrito',
+      },
     ],
-    decision1: ['Wake-up response?', 'Signal within first 72h'],
+    decision1: [
+      { en: 'Wake-up response within 72h?', it: 'Segnale di riattivazione entro 72h?' },
+      {
+        en: 'Open, click, login, or other early response to the first reactivation touch',
+        it: 'Apertura, click, login o altro segnale iniziale dopo il primo touch di riattivazione',
+      },
+    ],
     step2: [
-      'Guided return plan',
+      { en: 'Guided return plan', it: 'Piano guidato di rientro' },
       'D3',
-      'Offer a simple and credible restart path for value profiles',
+      {
+        en: 'Offer a simple, credible path back into platform activity',
+        it: 'Offre un percorso semplice e credibile per tornare attivi in piattaforma',
+      },
     ],
-    decision2: ['Return path started?', 'Platform revisit or reactivation intent observed'],
+    decision2: [
+      { en: 'Return path started?', it: 'Il percorso di rientro è partito?' },
+      {
+        en: 'Platform revisit, client-area activity, or reactivation intent observed',
+        it: 'Ritorno in piattaforma, attività in area cliente o intento di riattivazione osservato',
+      },
+    ],
     step3: [
-      'Continuity reinforcement',
+      { en: 'Continuity reinforcement', it: 'Rinforzo di continuità' },
       'D9',
-      'Keep the profile from cooling again after the first comeback signal',
+      {
+        en: 'Protect the first comeback signal and keep the profile from cooling again',
+        it: 'Protegge il primo segnale di ritorno ed evita un nuovo raffreddamento del profilo',
+      },
     ],
-    decision3: ['Recovered at 14d?', 'Recency and activity move back above dormant threshold'],
-    outcomes: ['Dormant value recovered', 'Dormant value warming', 'Dormant value unresolved'],
-    followups: ['Monthly retention check', 'Extended reactivation nurture'],
-    influences: ['Dormant status and net deposit >= 500', '31-90 day inactivity window'],
-    kpis: ['Dormant recovery 14d', 'Restart completion', 'Return continuity'],
+    decision3: [
+      {
+        en: 'Recovered at the 14-day checkpoint?',
+        it: 'Recupero confermato al checkpoint di 14 giorni?',
+      },
+      {
+        en: 'Recency and activity move back above the dormant threshold',
+        it: 'Recency e attività tornano sopra la soglia di dormancy',
+      },
+    ],
+    outcomes: [
+      { en: 'Dormant value recovered', it: 'Dormant value recuperato' },
+      { en: 'Dormant value warming', it: 'Dormant value in riscaldamento' },
+      { en: 'Dormant value unresolved', it: 'Dormant value non risolto' },
+    ],
+    followups: [
+      { en: 'Monthly retention check', it: 'Check mensile di retention' },
+      { en: 'Extended reactivation nurture', it: 'Nurture esteso di riattivazione' },
+    ],
+    influences: [
+      {
+        en: 'Dormant status with net deposit >= 500',
+        it: 'Stato dormant con net deposit >= 500',
+      },
+      {
+        en: 'Inactivity window between 31 and 90 days',
+        it: 'Finestra di inattività tra 31 e 90 giorni',
+      },
+    ],
+    kpis: [
+      { en: 'Dormant recovery at 14d', it: 'Recupero dormant a 14 giorni' },
+      { en: 'Restart completion', it: 'Completamento del rientro' },
+      { en: 'Return continuity', it: 'Continuità del ritorno' },
+    ],
     followupRecoveryTiming: 'D18',
   },
   high_volume_losing: {
@@ -337,6 +441,17 @@ function pickBlueprint(segmentKey) {
   return BLUEPRINTS[String(segmentKey || '').trim()] || null
 }
 
+function asLocaleText(value) {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const en = String(value.en ?? value.it ?? '').trim()
+    const it = String(value.it ?? value.en ?? '').trim()
+    return { en, it }
+  }
+
+  const text = String(value ?? '').trim()
+  return { en: text, it: text }
+}
+
 function templateIdFor(segmentKey, stepKey) {
   return `${String(segmentKey || '').trim()}_${stepKey}_email`
 }
@@ -355,8 +470,8 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
   const segmentGoal = String(segment?.goal || 'Drive progression and retention quality.').trim()
   const segmentGroup = String(segment?.group || 'Retention').trim()
 
-  const CANVAS_WIDTH = 2360
-  const CANVAS_HEIGHT = 1080
+  const CANVAS_WIDTH = 3680
+  const CANVAS_HEIGHT = 1120
 
   const stateW = 298
   const decisionW = 136
@@ -364,22 +479,22 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
 
   const x = {
     entrance: 80,
-    step1: 320,
-    decision1: 560,
-    step2: 760,
-    decision2: 1000,
-    step3: 1220,
-    decision3: 1460,
-    outcomes: 1700,
-    followUp: 1980,
+    step1: 450,
+    decision1: 880,
+    step2: 1260,
+    decision2: 1690,
+    step3: 2070,
+    decision3: 2500,
+    outcomes: 2810,
+    followUp: 3180,
   }
 
   const y = {
-    main: 460,
-    top: 250,
-    bottom: 680,
-    influenceTop: 110,
-    influenceBottom: 825,
+    main: 470,
+    top: 230,
+    bottom: 730,
+    influenceTop: 100,
+    influenceBottom: 865,
   }
 
   const decisionLabel = {
@@ -392,8 +507,37 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
     },
   }
 
+  const step2Label = {
+    en: 'Deposit confirmed · next-step support',
+    it: 'Deposito confermato · supporto al prossimo passo',
+  }
+  const step2NoLabel = {
+    en: 'No deposit yet · reactivation push',
+    it: 'Nessun deposito · spinta di riattivazione',
+  }
+  const step3Label = {
+    en: 'Post-deposit continuity',
+    it: 'Continuità post-deposito',
+  }
+  const step3NoLabel = {
+    en: 'Still no deposit · softer re-entry',
+    it: 'Ancora nessun deposito · rientro più morbido',
+  }
+  const decision3Label = asLocaleText(blueprint.decision3[0])
+  const retainedFollowupLabel = asLocaleText(blueprint.followups[0])
+  const recoveryFollowupLabel = asLocaleText(blueprint.followups[1])
+
+  const routeLabel = (prefixEn, prefixIt, target) => ({
+    en: `${prefixEn} → ${target.en}`,
+    it: `${prefixIt} → ${target.it}`,
+  })
+
   const nodeDefaults = { draggable: false, selectable: true }
-  const baseEdge = { animated: false, type: 'default' }
+  const baseEdge = {
+    animated: false,
+    type: 'smoothstep',
+    pathOptions: { offset: 28, borderRadius: 14 },
+  }
 
   const nodes = [
     {
@@ -402,7 +546,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       type: 'state',
       position: { x: x.entrance, y: y.main },
       data: {
-        label: { en: blueprint.entry, it: blueprint.entry },
+        label: asLocaleText(blueprint.entry),
         subLabel: {
           en: `Entered ${segmentLabel} segment`,
           it: `Entrato nel segmento ${segmentLabel}`,
@@ -417,16 +561,15 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       type: 'state',
       position: { x: x.step1, y: y.main },
       data: {
-        label: { en: blueprint.step1[0], it: blueprint.step1[0] },
+        label: asLocaleText(blueprint.step1[0]),
         templateId: templateIdFor(segmentKey, 'step1'),
         timingBadge: blueprint.step1[1],
-        subLabel: { en: blueprint.step1[2], it: blueprint.step1[2] },
+        subLabel: asLocaleText(blueprint.step1[2]),
         kind: 'primary',
         kpis: [
           {
             label: {
-              en: blueprint.kpis[0] || 'Primary KPI',
-              it: blueprint.kpis[0] || 'Primary KPI',
+              ...asLocaleText(blueprint.kpis[0] || 'Primary KPI'),
             },
             value: { en: '—', it: '—' },
             metricKey: 'step1Primary',
@@ -441,27 +584,29 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       type: 'decision',
       position: { x: x.decision1, y: y.main - 20 },
       data: {
-        label: { en: blueprint.decision1[0], it: blueprint.decision1[0] },
-        subLabel: { en: blueprint.decision1[1], it: blueprint.decision1[1] },
+        label: asLocaleText(blueprint.decision1[0]),
+        subLabel: asLocaleText(blueprint.decision1[1]),
       },
       style: { width: decisionW, height: decisionW, zIndex: 10 },
     },
     {
       ...nodeDefaults,
-      id: 'S2',
+      id: 'S2Y',
       type: 'state',
-      position: { x: x.step2, y: y.main },
+      position: { x: x.step2, y: y.top },
       data: {
-        label: { en: blueprint.step2[0], it: blueprint.step2[0] },
+        label: step2Label,
         templateId: templateIdFor(segmentKey, 'step2'),
         timingBadge: blueprint.step2[1],
-        subLabel: { en: blueprint.step2[2], it: blueprint.step2[2] },
+        subLabel: {
+          en: `YES send: ${asLocaleText(blueprint.step2[2]).en}`,
+          it: `Invio SI: ${asLocaleText(blueprint.step2[2]).it}`,
+        },
         kind: 'primary',
         kpis: [
           {
             label: {
-              en: blueprint.kpis[1] || 'Secondary KPI',
-              it: blueprint.kpis[1] || 'Secondary KPI',
+              ...asLocaleText(blueprint.kpis[1] || 'Secondary KPI'),
             },
             value: { en: '—', it: '—' },
             metricKey: 'step2Secondary',
@@ -472,31 +617,50 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
     },
     {
       ...nodeDefaults,
+      id: 'S2N',
+      type: 'state',
+      position: { x: x.step2, y: y.bottom },
+      data: {
+        label: step2NoLabel,
+        templateId: templateIdFor(segmentKey, 'followup_recovery'),
+        timingBadge: blueprint.step2[1],
+        subLabel: {
+          en: `NO send: no deposit completed yet, send a new reactivation push`,
+          it: `Invio NO: nessun deposito completato, invia un nuovo contenuto di riattivazione`,
+        },
+        kind: 'primary',
+      },
+      style: { width: stateW, zIndex: 10 },
+    },
+    {
+      ...nodeDefaults,
       id: 'D2',
       type: 'decision',
       position: { x: x.decision2, y: y.main - 20 },
       data: {
-        label: { en: blueprint.decision2[0], it: blueprint.decision2[0] },
-        subLabel: { en: blueprint.decision2[1], it: blueprint.decision2[1] },
+        label: asLocaleText(blueprint.decision2[0]),
+        subLabel: asLocaleText(blueprint.decision2[1]),
       },
       style: { width: decisionW, height: decisionW, zIndex: 10 },
     },
     {
       ...nodeDefaults,
-      id: 'S3',
+      id: 'S3Y',
       type: 'state',
-      position: { x: x.step3, y: y.main },
+      position: { x: x.step3, y: y.top },
       data: {
-        label: { en: blueprint.step3[0], it: blueprint.step3[0] },
+        label: step3Label,
         templateId: templateIdFor(segmentKey, 'step3'),
         timingBadge: blueprint.step3[1],
-        subLabel: { en: blueprint.step3[2], it: blueprint.step3[2] },
+        subLabel: {
+          en: `YES send: ${asLocaleText(blueprint.step3[2]).en}`,
+          it: `Invio SI: ${asLocaleText(blueprint.step3[2]).it}`,
+        },
         kind: 'primary',
         kpis: [
           {
             label: {
-              en: blueprint.kpis[2] || 'Outcome KPI',
-              it: blueprint.kpis[2] || 'Outcome KPI',
+              ...asLocaleText(blueprint.kpis[2] || 'Outcome KPI'),
             },
             value: { en: '—', it: '—' },
             metricKey: 'step3Outcome',
@@ -507,12 +671,29 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
     },
     {
       ...nodeDefaults,
+      id: 'S3N',
+      type: 'state',
+      position: { x: x.step3, y: y.bottom },
+      data: {
+        label: step3NoLabel,
+        templateId: templateIdFor(segmentKey, 'followup_recovery'),
+        timingBadge: blueprint.followupRecoveryTiming || 'D14',
+        subLabel: {
+          en: 'NO send: softer re-entry and recovery content',
+          it: 'Invio NO: contenuto di rientro morbido e recovery',
+        },
+        kind: 'primary',
+      },
+      style: { width: stateW, zIndex: 10 },
+    },
+    {
+      ...nodeDefaults,
       id: 'D3',
       type: 'decision',
       position: { x: x.decision3, y: y.main - 20 },
       data: {
-        label: { en: blueprint.decision3[0], it: blueprint.decision3[0] },
-        subLabel: { en: blueprint.decision3[1], it: blueprint.decision3[1] },
+        label: asLocaleText(blueprint.decision3[0]),
+        subLabel: asLocaleText(blueprint.decision3[1]),
       },
       style: { width: decisionW, height: decisionW, zIndex: 10 },
     },
@@ -521,7 +702,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       id: 'O1',
       type: 'outcome',
       position: { x: x.outcomes, y: y.top },
-      data: { label: { en: blueprint.outcomes[0], it: blueprint.outcomes[0] }, kind: 'positive' },
+      data: { label: asLocaleText(blueprint.outcomes[0]), kind: 'positive' },
       style: { width: outcomeW, zIndex: 10 },
     },
     {
@@ -529,7 +710,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       id: 'O2',
       type: 'outcome',
       position: { x: x.outcomes, y: y.main },
-      data: { label: { en: blueprint.outcomes[1], it: blueprint.outcomes[1] }, kind: 'neutral' },
+      data: { label: asLocaleText(blueprint.outcomes[1]), kind: 'neutral' },
       style: { width: outcomeW, zIndex: 10 },
     },
     {
@@ -537,7 +718,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       id: 'O3',
       type: 'outcome',
       position: { x: x.outcomes, y: y.bottom },
-      data: { label: { en: blueprint.outcomes[2], it: blueprint.outcomes[2] }, kind: 'negative' },
+      data: { label: asLocaleText(blueprint.outcomes[2]), kind: 'negative' },
       style: { width: outcomeW, zIndex: 10 },
     },
     {
@@ -546,12 +727,12 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       type: 'state',
       position: { x: x.followUp, y: y.top },
       data: {
-        label: { en: blueprint.followups[0], it: blueprint.followups[0] },
+        label: asLocaleText(blueprint.followups[0]),
         templateId: templateIdFor(segmentKey, 'followup_retained'),
         timingBadge: 'Cycle +0d',
         subLabel: {
-          en: 'Dedicated follow-up for retained or promoted users',
-          it: 'Follow-up dedicato per utenti trattenuti o promossi',
+          en: 'YES path follow-up for retained or reactivated users',
+          it: 'Follow-up del percorso SI per utenti trattenuti o riattivati',
         },
         kind: 'primary',
       },
@@ -563,12 +744,12 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       type: 'state',
       position: { x: x.followUp, y: y.main },
       data: {
-        label: { en: blueprint.followups[1], it: blueprint.followups[1] },
+        label: asLocaleText(blueprint.followups[1]),
         templateId: templateIdFor(segmentKey, 'followup_recovery'),
         timingBadge: blueprint.followupRecoveryTiming || 'D21',
         subLabel: {
-          en: 'Re-entry loop when core segment goal is not achieved',
-          it: 'Loop di rientro quando il goal principale non viene raggiunto',
+          en: 'NO/WARM path follow-up when the main return goal is not yet achieved',
+          it: 'Follow-up del percorso NO/CALDO quando l’obiettivo principale non è ancora raggiunto',
         },
         kind: 'primary',
       },
@@ -581,7 +762,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       position: { x: x.step2 - 40, y: y.influenceTop },
       data: {
         label: { en: 'Behavior context', it: 'Contesto comportamentale' },
-        subLabel: { en: blueprint.influences[0], it: blueprint.influences[0] },
+        subLabel: asLocaleText(blueprint.influences[0]),
         kind: 'influence',
       },
       style: { width: 255, zIndex: 10 },
@@ -593,7 +774,7 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       position: { x: x.step3 + 20, y: y.influenceBottom },
       data: {
         label: { en: 'Operational trigger', it: 'Trigger operativo' },
-        subLabel: { en: blueprint.influences[1], it: blueprint.influences[1] },
+        subLabel: asLocaleText(blueprint.influences[1]),
         kind: 'influence',
       },
       style: { width: 255, zIndex: 10 },
@@ -619,80 +800,115 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
     },
     {
       ...baseEdge,
-      id: 'e-D1-S2',
+      id: 'e-D1-S2Y',
       source: 'D1',
-      target: 'S2',
+      target: 'S2Y',
       sourceHandle: 'out-left',
       targetHandle: 'in',
-      label: { en: 'YES', it: 'SI' },
+      label: routeLabel('YES', 'SI', step2Label),
       data: {
         primary: { en: 'YES', it: 'SI' },
-        secondary: { en: blueprint.decision1[1], it: blueprint.decision1[1] },
+        secondary: {
+          en: `Positive signal detected, continue to ${step2Label.en}`,
+          it: `Segnale positivo rilevato, prosegui verso ${step2Label.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
     },
     {
       ...baseEdge,
-      id: 'e-D1-D2',
+      id: 'e-D1-S2N',
       source: 'D1',
-      target: 'D2',
+      target: 'S2N',
       sourceHandle: 'out-right',
       targetHandle: 'in',
-      label: { en: 'NO', it: 'NO' },
+      label: routeLabel('NO', 'NO', step2Label),
       data: {
         primary: { en: 'NO', it: 'NO' },
         secondary: {
-          en: 'No qualifying signal in window',
-          it: 'Nessun segnale utile nella finestra',
+          en: `No early signal yet, still escalate to ${step2Label.en}`,
+          it: `Nessun segnale iniziale, si passa comunque a ${step2Label.it}`,
         },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
       style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
     },
     {
       ...baseEdge,
-      id: 'e-S2-D2',
-      source: 'S2',
+      id: 'e-S2Y-D2',
+      source: 'S2Y',
       target: 'D2',
       sourceHandle: 'out',
       targetHandle: 'in',
     },
     {
       ...baseEdge,
-      id: 'e-D2-S3',
+      id: 'e-S2N-D2',
+      source: 'S2N',
+      target: 'D2',
+      sourceHandle: 'out',
+      targetHandle: 'in',
+      style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
+    },
+    {
+      ...baseEdge,
+      id: 'e-D2-S3Y',
       source: 'D2',
-      target: 'S3',
+      target: 'S3Y',
       sourceHandle: 'out-left',
       targetHandle: 'in',
-      label: { en: 'YES', it: 'SI' },
+      label: routeLabel('YES', 'SI', step3Label),
       data: {
         primary: { en: 'YES', it: 'SI' },
-        secondary: { en: 'On track', it: 'In linea' },
+        secondary: {
+          en: `Return intent confirmed, move to ${step3Label.en}`,
+          it: `Intento di rientro confermato, passa a ${step3Label.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
     },
     {
       ...baseEdge,
-      id: 'e-D2-D3',
+      id: 'e-D2-S3N',
       source: 'D2',
-      target: 'D3',
+      target: 'S3N',
       sourceHandle: 'out-right',
       targetHandle: 'in',
-      label: { en: 'NO', it: 'NO' },
+      label: routeLabel('NO', 'NO', step3NoLabel),
       data: {
         primary: { en: 'NO', it: 'NO' },
-        secondary: { en: 'Recovery needed', it: 'Recovery necessario' },
+        secondary: {
+          en: `Return path not accepted, send ${step3NoLabel.en}`,
+          it: `Percorso di rientro non accettato, invia ${step3NoLabel.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
       style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
     },
     {
       ...baseEdge,
-      id: 'e-S3-D3',
-      source: 'S3',
+      id: 'e-S3Y-D3',
+      source: 'S3Y',
       target: 'D3',
       sourceHandle: 'out',
       targetHandle: 'in',
+    },
+    {
+      ...baseEdge,
+      id: 'e-S3N-D3',
+      source: 'S3N',
+      target: 'D3',
+      sourceHandle: 'out',
+      targetHandle: 'in',
+      style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
     },
     {
       ...baseEdge,
@@ -701,10 +917,15 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       target: 'O1',
       sourceHandle: 'out-left',
       targetHandle: 'in',
-      label: { en: 'YES', it: 'SI' },
+      label: routeLabel('YES', 'SI', retainedFollowupLabel),
       data: {
         primary: { en: 'YES', it: 'SI' },
-        secondary: { en: 'Strong outcome', it: 'Esito forte' },
+        secondary: {
+          en: `Strong return signal, continue to ${retainedFollowupLabel.en}`,
+          it: `Rientro forte confermato, continua con ${retainedFollowupLabel.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
     },
@@ -715,10 +936,15 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       target: 'O2',
       sourceHandle: 'out-center',
       targetHandle: 'in',
-      label: { en: 'YES', it: 'SI' },
+      label: routeLabel('WARM', 'CALDO', recoveryFollowupLabel),
       data: {
-        primary: { en: 'YES', it: 'SI' },
-        secondary: { en: 'Stable outcome', it: 'Esito stabile' },
+        primary: { en: 'WARM', it: 'CALDO' },
+        secondary: {
+          en: `Partial recovery, continue with ${recoveryFollowupLabel.en}`,
+          it: `Recupero parziale, continua con ${recoveryFollowupLabel.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
     },
@@ -729,10 +955,15 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       target: 'O3',
       sourceHandle: 'out-right',
       targetHandle: 'in',
-      label: { en: 'NO', it: 'NO' },
+      label: routeLabel('NO', 'NO', recoveryFollowupLabel),
       data: {
         primary: { en: 'NO', it: 'NO' },
-        secondary: { en: 'Drop risk', it: 'Rischio calo' },
+        secondary: {
+          en: `No recovery yet, continue with ${recoveryFollowupLabel.en}`,
+          it: `Nessun recupero ancora, continua con ${recoveryFollowupLabel.it}`,
+        },
+        hasChoiceLabel: true,
+        alwaysShowSecondary: true,
       },
       ...decisionLabel,
     },
@@ -751,6 +982,15 @@ export function buildDedicatedSegmentLifecycleFlow(segment) {
       target: 'F2',
       sourceHandle: 'out',
       targetHandle: 'in',
+    },
+    {
+      ...baseEdge,
+      id: 'e-O3-F2',
+      source: 'O3',
+      target: 'F2',
+      sourceHandle: 'out',
+      targetHandle: 'in',
+      style: { stroke: 'rgba(148,163,184,0.45)', strokeWidth: 1.4 },
     },
     {
       ...baseEdge,

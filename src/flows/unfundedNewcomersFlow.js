@@ -2,7 +2,7 @@
 // Journey objective: convert newly registered users with no deposits into first-time depositors
 // KPIs: FTD conversion | time to first deposit | first trade activation
 
-const CANVAS_WIDTH = 2140
+const CANVAS_WIDTH = 2920
 const CANVAS_HEIGHT = 700
 
 const stateW = 290
@@ -12,16 +12,16 @@ const influenceW = 220
 
 const x = {
   entrance: 80,
-  step1: 290,
-  decision1: 520,
-  noDeposit: 730,
-  depositTrade: 730,
-  decision2: 930,
-  recovery: 1130,
-  depositPush: 1130,
-  decision3: 1335,
-  outcomes: 1540,
-  followUp: 1760,
+  step1: 360,
+  decision1: 710,
+  noDeposit: 980,
+  depositTrade: 980,
+  decision2: 1330,
+  recovery: 1600,
+  depositPush: 1600,
+  decision3: 1950,
+  outcomes: 2210,
+  followUp: 2520,
 }
 
 const nodeDefaults = {
@@ -222,8 +222,8 @@ const nodes = [
       templateId: 'unfunded_newcomers_deposit_intent_recovery_email',
       timingBadge: '+3d',
       subLabel: {
-        en: 'Triggered 3 days after the no-deposit touch when the user still has not engaged with the deposit path. Content restores clarity, lowers friction, and makes the next step visible.',
-        it: 'Scatta 3 giorni dopo il touch no-deposito quando l utente non ha ancora interagito con il percorso di deposito. Il contenuto ripristina chiarezza, abbassa l attrito e rende visibile il prossimo passo.',
+        en: 'Triggered 3 days after the no-deposit touch when the user still has not engaged with the deposit path. From here the path becomes explicit: deposit completed leads to the confirmation touch, softer intent stays warm, and no action goes to re-entry nurture.',
+        it: 'Scatta 3 giorni dopo il touch no-deposito quando l utente non ha ancora interagito con il percorso di deposito. Da qui il percorso è esplicito: se il deposito arriva si passa alla conferma, se l interesse resta tiepido si rimane warm, se non succede nulla si entra nella riattivazione soft.',
       },
       kind: 'primary',
       kpis: [
@@ -242,12 +242,12 @@ const nodes = [
     type: 'state',
     position: { x: x.depositPush, y: y.main },
     data: {
-      label: { en: 'Deposit completion push', it: 'Spinta al completamento deposito' },
+      label: { en: 'Deposit confirmed touch', it: 'Touch di conferma deposito' },
       templateId: 'unfunded_newcomers_first_deposit_push_email',
-      timingBadge: '+3d',
+      timingBadge: 'DEPOSIT OK +0d',
       subLabel: {
-        en: 'Triggered only after clear funding-path activity is detected. Content focuses on completing the first deposit while the account is already warm.',
-        it: 'Scatta solo dopo un chiaro segnale di attività sul percorso di deposito. Il contenuto si concentra sul completamento del primo deposito mentre l account è già caldo.',
+        en: 'Triggered immediately after a successful Deposit OK event on the funding path. The next clear handoff from here is post-deposit activation support with the account manager.',
+        it: 'Scatta subito dopo un evento Deposit OK sul funding path. Il passaggio successivo è chiaro: handoff al supporto di attivazione post-deposito con account manager.',
       },
       kind: 'primary',
       kpis: [
@@ -266,10 +266,13 @@ const nodes = [
     type: 'decision',
     position: { x: x.decision3, y: y.decision },
     data: {
-      label: { en: 'First deposit completed?', it: 'Primo deposito completato?' },
+      label: {
+        en: 'After recovery or Deposit OK, what happens next?',
+        it: 'Dopo recovery o Deposit OK, quale passo segue?',
+      },
       subLabel: {
-        en: 'YES when a successful first deposit is recorded within 14 days from segment entry. WARM when the user revisits the deposit path, reopens verification, or selects a payment method without completing the deposit. NO when no meaningful funding activity is recorded after recovery and push messages.',
-        it: 'YES quando viene registrato un primo deposito riuscito entro 14 giorni dall ingresso nel segmento. WARM quando l utente rivisita il percorso deposito, riapre la verifica o seleziona un metodo di pagamento senza completare il deposito. NO quando, dopo recovery e push, non compare alcuna attività rilevante sul funding.',
+        en: 'YES when the first deposit is completed and the user moves straight into post-deposit onboarding. WARM when funding intent reappears but the deposit is still pending. NO when the user stays inactive and should be recycled into the softer re-entry path.',
+        it: 'YES quando il primo deposito viene completato e l utente passa subito all onboarding post-deposito. WARM quando riappare l interesse sul funding ma il deposito resta in sospeso. NO quando l utente rimane inattivo e va riciclato nel percorso di riattivazione soft.',
       },
       kind: 'primary',
     },
@@ -282,6 +285,10 @@ const nodes = [
     position: { x: x.outcomes, y: y.topOutcome },
     data: {
       label: { en: 'FTD converted', it: 'FTD convertito' },
+      subLabel: {
+        en: 'Deposit completed successfully and ready for immediate activation support',
+        it: 'Deposito completato con successo e pronto per il supporto di attivazione',
+      },
       kind: 'positive',
       kpis: [
         {
@@ -300,6 +307,10 @@ const nodes = [
     position: { x: x.outcomes, y: y.middleOutcome },
     data: {
       label: { en: 'Warm but not converted', it: 'Interessato ma non convertito' },
+      subLabel: {
+        en: 'Interest is visible again, but the funding step still needs completion',
+        it: 'L interesse è tornato visibile, ma il funding deve ancora essere completato',
+      },
       kind: 'neutral',
       kpis: [
         {
@@ -318,6 +329,10 @@ const nodes = [
     position: { x: x.outcomes, y: y.bottomOutcome },
     data: {
       label: { en: 'Cold drop-off', it: 'Drop-off freddo' },
+      subLabel: {
+        en: 'No funding activity after recovery, so the user enters a softer recycle path',
+        it: 'Nessuna attività funding dopo la recovery, quindi l utente entra in un percorso più soft',
+      },
       kind: 'negative',
     },
     style: { width: outcomeW, zIndex: 10 },
@@ -345,7 +360,7 @@ const nodes = [
     type: 'state',
     position: { x: x.followUp, y: y.followUpMiddle },
     data: {
-      label: { en: 'Re-entry nurture loop', it: 'Loop di riattivazione soft' },
+      label: { en: 'Soft re-entry if still no FTD', it: 'Riattivazione soft se FTD assente' },
       templateId: 'unfunded_newcomers_reentry_nurture_email',
       timingBadge: 'D21',
       subLabel: {

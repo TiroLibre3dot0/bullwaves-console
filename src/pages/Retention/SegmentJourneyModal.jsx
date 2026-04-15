@@ -16,9 +16,9 @@ function orientNodesHorizontal(nodes) {
 
   const rowCount = Math.max(1, uniqueX.length)
   const columnCount = Math.max(1, uniqueY.length)
-  const laneSpacing = Math.max(92, Math.min(152, 740 / Math.max(1, rowCount - 1)))
-  const columnSpacing = Math.max(176, Math.min(276, 1660 / Math.max(1, columnCount - 1)))
-  const laneCenter = 292
+  const laneSpacing = Math.max(96, Math.min(168, 820 / Math.max(1, rowCount - 1)))
+  const columnSpacing = Math.max(220, Math.min(340, 2120 / Math.max(1, columnCount - 1)))
+  const laneCenter = 308
 
   return nodes.map((node) => {
     const x = Number(node?.position?.x || 0)
@@ -60,6 +60,25 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
     return value == null ? '' : String(value)
   }
 
+  function getTemplatePreview(templateId) {
+    const id = String(templateId || '').trim()
+    if (!id) return null
+
+    const template = segmentJourneyTemplatesById?.[id]
+    if (!template) return null
+
+    const localePack = template?.locales?.[locale] || template?.locales?.en || template?.locales?.it
+    const variant = localePack?.variants?.a || localePack?.variants?.b || null
+    const html = variant?.html || {}
+
+    return {
+      subject: pickText(variant?.subject),
+      description: pickText(variant?.description),
+      title: pickText(html?.heroTitle || html?.title || html?.mainTitle),
+      body: pickText(html?.bodyOne || html?.introLead || html?.bodyThree),
+    }
+  }
+
   const localizeFlowValue = (value) => {
     if (Array.isArray(value)) {
       return value.map((item) => localizeFlowValue(item))
@@ -83,7 +102,23 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
   }
 
   const localizedNodes = useMemo(
-    () => localizeFlowValue(safeFlowData?.nodes || []),
+    () =>
+      localizeFlowValue(safeFlowData?.nodes || []).map((node) => {
+        const templateId = String(node?.data?.templateId || '').trim()
+        if (!templateId) return node
+
+        const preview = getTemplatePreview(templateId)
+
+        return {
+          ...node,
+          data: {
+            ...(node?.data || {}),
+            previewSubject: preview?.subject || '',
+            previewBody: preview?.body || '',
+            showDetails: true,
+          },
+        }
+      }),
     [safeFlowData?.nodes, locale]
   )
 
@@ -169,22 +204,7 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
   )
 
   const linkedTemplatePreview = useMemo(() => {
-    const templateId = String(selectedNode?.data?.templateId || '').trim()
-    if (!templateId) return null
-
-    const template = segmentJourneyTemplatesById?.[templateId]
-    if (!template) return null
-
-    const localePack = template?.locales?.[locale] || template?.locales?.en || template?.locales?.it
-    const variant = localePack?.variants?.a || localePack?.variants?.b || null
-    const html = variant?.html || {}
-
-    return {
-      subject: pickText(variant?.subject),
-      description: pickText(variant?.description),
-      title: pickText(html?.heroTitle || html?.title || html?.mainTitle),
-      body: pickText(html?.bodyOne || html?.introLead || html?.bodyThree),
-    }
+    return getTemplatePreview(selectedNode?.data?.templateId)
   }, [selectedNode, locale])
 
   const countByType = useMemo(
@@ -266,10 +286,15 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
   const buildConnectionSummary = (edge, direction) => {
     const counterpartId = direction === 'incoming' ? edge?.source : edge?.target
     const counterpart = actionableNodes.find((node) => node?.id === counterpartId)
+    const edgePrimary = getEdgeLabel(edge)
+    const edgeSecondary = pickText(edge?.data?.secondary)
+
     return {
       id: edge?.id || `${direction}-${counterpartId}`,
       title: getNodeLabel(counterpart) || counterpartId,
-      caption: getEdgeLabel(edge) || (direction === 'incoming' ? 'Previous step' : 'Next step'),
+      caption:
+        [edgePrimary, edgeSecondary].filter(Boolean).join(' · ') ||
+        (direction === 'incoming' ? 'Previous step' : 'Next step'),
     }
   }
 
@@ -311,13 +336,16 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
         const branchLabel = getEdgeLabel(edge)
         const bucket = classifyBranch(branchLabel)
 
+        const templateId = String(target?.data?.templateId || '')
+
         grouped[bucket].push({
           id: edge?.id || `${decision?.id}-${edge?.target}`,
           edgeLabel: branchLabel || 'Route',
           title: getNodeLabel(target) || String(edge?.target || ''),
           timing: getNodeTiming(target),
           content: getNodeSubLabel(target),
-          templateId: String(target?.data?.templateId || ''),
+          templateId,
+          preview: getTemplatePreview(templateId),
         })
       })
 
@@ -437,24 +465,69 @@ export default function SegmentJourneyModal({ isOpen, onClose, segment, flowData
                     <small>{item.window || 'Behavior checkpoint'}</small>
 
                     {item.yes.map((route) => (
-                      <small key={`${route.id}-yes`}>
-                        YES action: {route.title} ({route.timing})
-                        {route.content ? ` · ${route.content}` : ''}
-                      </small>
+                      <div key={`${route.id}-yes`} className="segment-journey-modal__route-card">
+                        <strong>
+                          YES action: {route.title} ({route.timing})
+                        </strong>
+                        {route.content ? <small>{route.content}</small> : null}
+                        {route.preview?.subject ? (
+                          <small>Send: {route.preview.subject}</small>
+                        ) : null}
+                        {route.preview?.body ? <small>{route.preview.body}</small> : null}
+                        {route.templateId ? (
+                          <button
+                            type="button"
+                            className="pill-tab"
+                            onClick={() => openTemplate(route.templateId)}
+                          >
+                            Open YES content
+                          </button>
+                        ) : null}
+                      </div>
                     ))}
 
                     {item.no.map((route) => (
-                      <small key={`${route.id}-no`}>
-                        NO action: {route.title} ({route.timing})
-                        {route.content ? ` · ${route.content}` : ''}
-                      </small>
+                      <div key={`${route.id}-no`} className="segment-journey-modal__route-card">
+                        <strong>
+                          NO action: {route.title} ({route.timing})
+                        </strong>
+                        {route.content ? <small>{route.content}</small> : null}
+                        {route.preview?.subject ? (
+                          <small>Send: {route.preview.subject}</small>
+                        ) : null}
+                        {route.preview?.body ? <small>{route.preview.body}</small> : null}
+                        {route.templateId ? (
+                          <button
+                            type="button"
+                            className="pill-tab"
+                            onClick={() => openTemplate(route.templateId)}
+                          >
+                            Open NO content
+                          </button>
+                        ) : null}
+                      </div>
                     ))}
 
                     {item.other.map((route) => (
-                      <small key={`${route.id}-other`}>
-                        {route.edgeLabel}: {route.title} ({route.timing})
-                        {route.content ? ` · ${route.content}` : ''}
-                      </small>
+                      <div key={`${route.id}-other`} className="segment-journey-modal__route-card">
+                        <strong>
+                          {route.edgeLabel}: {route.title} ({route.timing})
+                        </strong>
+                        {route.content ? <small>{route.content}</small> : null}
+                        {route.preview?.subject ? (
+                          <small>Send: {route.preview.subject}</small>
+                        ) : null}
+                        {route.preview?.body ? <small>{route.preview.body}</small> : null}
+                        {route.templateId ? (
+                          <button
+                            type="button"
+                            className="pill-tab"
+                            onClick={() => openTemplate(route.templateId)}
+                          >
+                            Open content
+                          </button>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 ))}

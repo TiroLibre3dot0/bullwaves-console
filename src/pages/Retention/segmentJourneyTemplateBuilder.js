@@ -53,199 +53,147 @@ const SENDGRID_GROUP_UNSUBSCRIBE_RAW_URL = '<%asm_group_unsubscribe_raw_url%>'
 const SENDGRID_PREFERENCES_RAW_URL = '<%asm_preferences_raw_url%>'
 const SENDGRID_BULLWAVES_ICON_URL =
   'https://cdn.mcauto-images-production.sendgrid.net/c49e37cd579f1c08/60bf128f-a2f3-4d7d-a307-a75921400431/1185x1185.png'
-const BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Group%202087330250.svg'
+const SENDGRID_BULLWAVES_WORDMARK_URL = 'https://bullwaves-console.vercel.app/Logo.png'
 const STATIC_BULLWAVES_ICON_URL = '/Group%202087330261.svg'
+const STATIC_BULLWAVES_WORDMARK_URL = '/Logo.png'
 
 function getBullwavesBrandAssets(mode = 'static') {
   if (mode === 'sendgrid') {
     return {
       iconUrl: SENDGRID_BULLWAVES_ICON_URL,
-      wordmarkUrl: BULLWAVES_WORDMARK_URL,
+      wordmarkUrl: SENDGRID_BULLWAVES_WORDMARK_URL,
     }
   }
 
   return {
     iconUrl: STATIC_BULLWAVES_ICON_URL,
-    wordmarkUrl: BULLWAVES_WORDMARK_URL,
+    wordmarkUrl: STATIC_BULLWAVES_WORDMARK_URL,
   }
 }
 
 const ITALIAN_TEXT_REPLACEMENTS = [
-  [/ÃƒÂ¨/g, 'Ã¨'],
-  [/ÃƒÂ/g, 'Ã'],
-  [/ÃƒÂ©/g, 'Ã©'],
-  [/ÃƒÂ¬/g, 'Ã¬'],
-  [/ÃƒÂ²/g, 'Ã²'],
-  [/ÃƒÂ¹/g, 'Ã¹'],
-  [/ÃƒË†/g, 'Ãˆ'],
-  [/Ãƒâ€°/g, 'Ã‰'],
-  [/Ã¢â‚¬â„¢/g, "'"],
-  [/Ã¢â‚¬Ëœ/g, "'"],
-  [/\bc e\b/g, "c'Ã¨"],
-  [/\bC e\b/g, "C'Ã¨"],
-  [/\be abbastanza\b/g, 'Ã¨ abbastanza'],
-  [/\bE abbastanza\b/g, 'Ãˆ abbastanza'],
-  [/\b e pronta\b/g, ' Ã¨ pronta'],
-  [/\b E pronta\b/g, ' Ãˆ pronta'],
-  [/\b e ancora\b/g, ' Ã¨ ancora'],
-  [/\b E ancora\b/g, ' Ãˆ ancora'],
-  [/\b e ora\b/g, ' Ã¨ ora'],
-  [/\b E ora\b/g, ' Ãˆ ora'],
-  [/\b si e\b/g, ' si Ã¨'],
-  [/\b Si e\b/g, ' Si Ã¨'],
+  [/\u00C3\u00A8/g, 'è'],
+  [/\u00C3\u00A0/g, 'à'],
+  [/\u00C3\u00A9/g, 'é'],
+  [/\u00C3\u00AC/g, 'ì'],
+  [/\u00C3\u00B2/g, 'ò'],
+  [/\u00C3\u00B9/g, 'ù'],
+  [/\u00C3\u02C6/g, 'È'],
+  [/\u00C3\u2030/g, 'É'],
+  [/\u00E2\u20AC\u2122/g, "'"],
+  [/\u00E2\u20AC\u02DC/g, "'"],
+  [/\bc e\b/g, "c'è"],
+  [/\bC e\b/g, "C'è"],
+  [/\bnon e\b/g, 'non è'],
+  [/\bNon e\b/g, 'Non è'],
+  [/\bpiu\b/g, 'più'],
+  [/\bPiu\b/g, 'Più'],
+  [/\bpuo\b/g, 'può'],
+  [/\bPuo\b/g, 'Può'],
+  [/\bcosi\b/g, 'così'],
+  [/\bCosi\b/g, 'Così'],
+  [/\bgia\b/g, 'già'],
+  [/\bGia\b/g, 'Già'],
+  [/\bperche\b/g, 'perché'],
+  [/\bPerche\b/g, 'Perché'],
+  [/\bsocieta\b/g, 'società'],
+  [/\bSocieta\b/g, 'Società'],
+  [/\battivita\b/g, 'attività'],
+  [/\bAttivita\b/g, 'Attività'],
+  [/\bpriorita\b/g, 'priorità'],
+  [/\bPriorita\b/g, 'Priorità'],
+  [/\bcontinuita\b/g, 'continuità'],
+  [/\bContinuita\b/g, 'Continuità'],
+  [/\bstabilita\b/g, 'stabilità'],
+  [/\bStabilita\b/g, 'Stabilità'],
+  [/\bregolarita\b/g, 'regolarità'],
+  [/\bRegolarita\b/g, 'Regolarità'],
+  [/\bvelocita\b/g, 'velocità'],
+  [/\bVelocita\b/g, 'Velocità'],
+  [/\bvolatilita\b/g, 'volatilità'],
+  [/\bVolatilita\b/g, 'Volatilità'],
+  [/\bqualita\b/g, 'qualità'],
+  [/\bQualita\b/g, 'Qualità'],
+  [/\bopportunita\b/g, 'opportunità'],
+  [/\bOpportunita\b/g, 'Opportunità'],
+  [/\bidentita\b/g, 'identità'],
+  [/\bIdentita\b/g, 'Identità'],
+  [/\bvarieta\b/g, 'varietà'],
+  [/\bVarieta\b/g, 'Varietà'],
+  [/\bsemplicita\b/g, 'semplicità'],
+  [/\bSemplicita\b/g, 'Semplicità'],
+  [/\brealta\b/g, 'realtà'],
+  [/\bRealta\b/g, 'Realtà'],
+  [/\bidoneita\b/g, 'idoneità'],
+  [/\bIdoneita\b/g, 'Idoneità'],
   [/\bl account\b/g, "l'account"],
   [/\bL account\b/g, "L'account"],
   [/\bl area\b/g, "l'area"],
   [/\bL area\b/g, "L'area"],
   [/\bnell area\b/g, "nell'area"],
   [/\bNell area\b/g, "Nell'area"],
-  [/\bdall ingresso\b/g, "dall'ingresso"],
-  [/\bDall ingresso\b/g, "Dall'ingresso"],
-  [/\bl ambiente\b/g, "l'ambiente"],
-  [/\bL ambiente\b/g, "L'ambiente"],
-  [/\bl engagement\b/g, "l'engagement"],
-  [/\bL engagement\b/g, "L'engagement"],
-  [/\bl obiettivo\b/g, "l'obiettivo"],
-  [/\bL obiettivo\b/g, "L'obiettivo"],
-  [/\bl ultimo\b/g, "l'ultimo"],
-  [/\bL ultimo\b/g, "L'ultimo"],
-  [/\bpiu\b/g, 'piÃ¹'],
-  [/\bPiu\b/g, 'PiÃ¹'],
-  [/\bpuo\b/g, 'puÃ²'],
-  [/\bPuo\b/g, 'PuÃ²'],
-  [/\bcosi\b/g, 'cosÃ¬'],
-  [/\bCosi\b/g, 'CosÃ¬'],
-  [/\bgia\b/g, 'giÃ'],
-  [/\bGia\b/g, 'GiÃ'],
-  [/\bperche\b/g, 'perchÃ©'],
-  [/\bPerche\b/g, 'PerchÃ©'],
-  [/\bsocieta\b/g, 'societÃ'],
-  [/\bSocieta\b/g, 'SocietÃ'],
-  [/\battivita\b/g, 'attivitÃ'],
-  [/\bAttivita\b/g, 'AttivitÃ'],
-  [/\bpriorita\b/g, 'prioritÃ'],
-  [/\bPriorita\b/g, 'PrioritÃ'],
-  [/\bcontinuita\b/g, 'continuitÃ'],
-  [/\bContinuita\b/g, 'ContinuitÃ'],
-  [/\bsemplicita\b/g, 'semplicitÃ'],
-  [/\bSemplicita\b/g, 'SemplicitÃ'],
-  [/\bidentita\b/g, 'identitÃ'],
-  [/\bIdentita\b/g, 'IdentitÃ'],
-  [/\bstabilita\b/g, 'stabilitÃ'],
-  [/\bStabilita\b/g, 'StabilitÃ'],
-  [/\bopportunita\b/g, 'opportunitÃ'],
-  [/\bOpportunita\b/g, 'OpportunitÃ'],
-  [/\bqualita\b/g, 'qualitÃ'],
-  [/\bQualita\b/g, 'QualitÃ'],
-  [/\brealta\b/g, 'realtÃ'],
-  [/\bRealta\b/g, 'RealtÃ'],
-  [/\bvarieta\b/g, 'varietÃ'],
-  [/\bVarieta\b/g, 'VarietÃ'],
-  [/\bIl tuo account e\b/g, 'Il tuo account Ã¨'],
-  [/\bIl tuo profilo e\b/g, 'Il tuo profilo Ã¨'],
-  [/\bIl prossimo passo e\b/g, 'Il prossimo passo Ã¨'],
-  [/\bLa registrazione e\b/g, 'La registrazione Ã¨'],
-  [/\bLa mossa principale e\b/g, 'La mossa principale Ã¨'],
-  [/\bLa mossa migliore e\b/g, 'La mossa migliore Ã¨'],
-  [/\bQuesto badge non e\b/g, 'Questo badge non Ã¨'],
-  [/\bQuesto messaggio esiste perche\b/g, 'Questo messaggio esiste perchÃ©'],
-  [/\bQuesto e il ruolo\b/g, 'Questo Ã¨ il ruolo'],
-  [/\bIl punto e\b/g, 'Il punto Ã¨'],
-  [/\bLa costanza e\b/g, 'La costanza Ã¨'],
-  [/\bIl tuo pattern e\b/g, 'Il tuo pattern Ã¨'],
-  [/\bCosa ti da\b/g, 'Cosa ti dÃ'],
-  [/\bfinche\b/g, 'finchÃ©'],
-  [/\bFinche\b/g, 'FinchÃ©'],
-  [/\bperche li\b/g, 'perchÃ© lÃ¬'],
-  [/\bPerche li\b/g, 'PerchÃ© lÃ¬'],
-  [/\bperchÃ© li\b/g, 'perchÃ© lÃ¬'],
-  [/\bPerchÃ© li\b/g, 'PerchÃ© lÃ¬'],
-  [/\bverso l alto\b/g, "verso l'alto"],
-  [/\bVerso l alto\b/g, "Verso l'alto"],
-  [/\bun altra\b/g, "un'altra"],
-  [/\bUn altra\b/g, "Un'altra"],
-  [/\bl abitudine\b/g, "l'abitudine"],
-  [/\bL abitudine\b/g, "L'abitudine"],
-  [/\bnell interpretare\b/g, "nell'interpretare"],
-  [/\bNell interpretare\b/g, "Nell'interpretare"],
-  [/\bun interpretazione\b/g, "un'interpretazione"],
-  [/\bUn interpretazione\b/g, "Un'interpretazione"],
-  [/\bL offerta\b/g, "L'offerta"],
-  [/\bl offerta\b/g, "l'offerta"],
-  [/\bdell offerta\b/g, "dell'offerta"],
-  [/\bl account\b/g, "l'account"],
-  [/\bL account\b/g, "L'account"],
-  [/\bnell account\b/g, "nell'account"],
-  [/\bNell account\b/g, "Nell'account"],
-  [/\ball azione\b/g, "all'azione"],
-  [/\bAll azione\b/g, "All'azione"],
-  [/\bL aiuto\b/g, "L'aiuto"],
-  [/\bl aiuto\b/g, "l'aiuto"],
   [/\bdall area\b/g, "dall'area"],
   [/\bDall area\b/g, "Dall'area"],
-  [/\bnon e\b/g, 'non Ã¨'],
-  [/\bNon e\b/g, 'Non Ã¨'],
-  [/\bE un ambiente\b/g, 'Ãˆ un ambiente'],
-  [/\bE un meccanismo\b/g, 'Ãˆ un meccanismo'],
-  [/\bE continuita\b/g, 'Ãˆ continuitÃ'],
-  [/\bE continuitÃ\b/g, 'Ãˆ continuitÃ'],
-  [/\bQuesto e il momento\b/g, 'Questo Ã¨ il momento'],
-  [/\bIl punto migliore spesso e\b/g, 'Il punto migliore spesso Ã¨'],
-  [/\bOra che l account e\b/g, "Ora che l'account Ã¨"],
-  [/\bora che l account e\b/g, "ora che l'account Ã¨"],
-  [/\bla mossa migliore e\b/g, 'la mossa migliore Ã¨'],
-  [/\bLa mossa migliore e\b/g, 'La mossa migliore Ã¨'],
-  [/\bIl valore della prima operazione e\b/g, 'Il valore della prima operazione Ã¨'],
-  [
-    /\bIl supporto resta secondario rispetto all azione\b/g,
-    "Il supporto resta secondario rispetto all'azione",
-  ],
-  [/\bE un rientro chiaro\b/g, 'Ã¨ un rientro chiaro'],
-  [/\bil deposito e piu semplice\b/g, 'il deposito Ã¨ piÃ¹ semplice'],
-  [/\bIl deposito e piu semplice\b/g, 'Il deposito Ã¨ piÃ¹ semplice'],
-  [/\bQuesto loop e\b/g, 'Questo loop Ã¨'],
-  [/\bQuesta migrazione e\b/g, 'Questa migrazione Ã¨'],
-  [/\bQuesto e il tuo\b/g, 'Questo Ã¨ il tuo'],
-  [/\bIl supporto e opzionale\b/g, 'Il supporto Ã¨ opzionale'],
-  [/\bIl supporto umano e opzionale\b/g, 'Il supporto umano Ã¨ opzionale'],
-  [/\bIl supporto umano e\b/g, 'Il supporto umano Ã¨'],
-  [/\bL upgrade\b/g, "L'upgrade"],
-  [/\bl upgrade\b/g, "l'upgrade"],
-  [/\bl azione\b/g, "l'azione"],
-  [/\bL azione\b/g, "L'azione"],
-  [/\bda al\b/g, 'dÃ al'],
-  [/\be per trader\b/g, 'Ã¨ per trader'],
-  [/\bstoria e finita\b/g, 'storia Ã¨ finita'],
-  [/\bla mossa giusta e\b/g, 'la mossa giusta Ã¨'],
-  [
-    /\bIl supporto c'Ã¨ se utile, ma l area cliente viene prima\.\b/g,
-    "Il supporto c'Ã¨ se utile, ma l'area cliente viene prima.",
-  ],
-  [
-    /\bIl supporto c'Ã¨ solo se aiuta a sbloccare il ritorno\.\b/g,
-    "Il supporto c'Ã¨ solo se aiuta a sbloccare il ritorno.",
-  ],
-  [
-    /\bIl supporto c'Ã¨ se utile, ma la piattaforma deve restare al primo posto\.\b/g,
-    "Il supporto c'Ã¨ se utile, ma la piattaforma deve restare al primo posto.",
-  ],
-  [
-    /\bIl supporto c'Ã¨ se utile, ma il passo dopo resta sbloccare l account\.\b/g,
-    "Il supporto c'Ã¨ se utile, ma il passo dopo resta sbloccare l'account.",
-  ],
-  [/\bWhatsApp e\b/g, 'WhatsApp Ã¨'],
-  [
-    /\bIl tuo comportamento recente ti colloca tra i profili da trattenere con piu attenzione\.\b/g,
-    'Il tuo comportamento recente ti colloca tra i profili da trattenere con piÃ¹ attenzione.',
-  ],
+  [/\bdall ingresso\b/g, "dall'ingresso"],
+  [/\bDall ingresso\b/g, "Dall'ingresso"],
+  [/\bl obiettivo\b/g, "l'obiettivo"],
+  [/\bL obiettivo\b/g, "L'obiettivo"],
+  [/\ball azione\b/g, "all'azione"],
+  [/\bAll azione\b/g, "All'azione"],
+  [/\bun altra\b/g, "un'altra"],
+  [/\bUn altra\b/g, "Un'altra"],
+  [/\bIl tuo account e\b/g, 'Il tuo account è'],
+  [/\bIl tuo profilo e\b/g, 'Il tuo profilo è'],
+  [/\bIl prossimo passo e\b/g, 'Il prossimo passo è'],
+  [/\bLa registrazione e\b/g, 'La registrazione è'],
+  [/\bLa mossa principale e\b/g, 'La mossa principale è'],
+  [/\bLa mossa migliore e\b/g, 'La mossa migliore è'],
+  [/\bQuesto badge non e\b/g, 'Questo badge non è'],
+  [/\bQuesto messaggio esiste perche\b/g, 'Questo messaggio esiste perché'],
+  [/\bQuesto e il ruolo\b/g, 'Questo è il ruolo'],
+  [/\bIl punto e\b/g, 'Il punto è'],
+  [/\bLa costanza e\b/g, 'La costanza è'],
+  [/\bIl tuo pattern e\b/g, 'Il tuo pattern è'],
+  [/\bCosa ti da\b/g, 'Cosa ti dà'],
+  [/\bfinche\b/g, 'finché'],
+  [/\bFinche\b/g, 'Finché'],
+  [/\bE un ambiente\b/g, 'È un ambiente'],
+  [/\bE un meccanismo\b/g, 'È un meccanismo'],
+  [/\bQuesto e il momento\b/g, 'Questo è il momento'],
+  [/\bIl punto migliore spesso e\b/g, 'Il punto migliore spesso è'],
+  [/\bOra che l account e\b/g, "Ora che l'account è"],
+  [/\bora che l account e\b/g, "ora che l'account è"],
+  [/\bla mossa migliore e\b/g, 'la mossa migliore è'],
+  [/\bLa mossa migliore e\b/g, 'La mossa migliore è'],
+  [/\bIl valore della prima operazione e\b/g, 'Il valore della prima operazione è'],
+  [/\bIl supporto e opzionale\b/g, 'Il supporto è opzionale'],
+  [/\bIl supporto umano e opzionale\b/g, 'Il supporto umano è opzionale'],
+  [/\bIl supporto umano e\b/g, 'Il supporto umano è'],
+  [/\bWhatsApp e\b/g, 'WhatsApp è'],
 ]
+
+function repairMojibake(value) {
+  if (typeof value !== 'string' || !/[Ãâ]/.test(value)) return value
+
+  try {
+    const Decoder = globalThis?.TextDecoder
+    if (!Decoder) return value
+
+    const bytes = Uint8Array.from(Array.from(value).map((char) => char.charCodeAt(0)))
+    return new Decoder('utf-8').decode(bytes)
+  } catch {
+    return value
+  }
+}
 
 function normalizeLocalizedText(lang, value) {
   if (lang !== 'it' || typeof value !== 'string' || !value) return value
 
+  const repaired = repairMojibake(value)
+
   return ITALIAN_TEXT_REPLACEMENTS.reduce(
     (current, [pattern, replacement]) => current.replace(pattern, replacement),
-    value
+    repaired
   )
 }
 
@@ -253,12 +201,12 @@ function getLanguageContent(lang) {
   if (lang === 'it') {
     return {
       legalBrandSubtitle: 'Informazioni normative e avvertenza essenziale sui rischi',
-      legalCompanyTitle: 'Informazioni sulla societÃ',
+      legalCompanyTitle: 'Informazioni sulla società',
       legalRiskTitle: 'Avvertenza sui rischi',
       legalCompanyCopy:
-        'Bullwaves Ã¨ un marchio commerciale utilizzato da piÃ¹ entitÃ autorizzate in diverse giurisdizioni, tra cui Equitex Capital Limited (Registration No. 8434948-1), societÃ autorizzata e regolamentata dalla Financial Services Authority (FSA, licence no. SD185), e Moonance LLC, societÃ regolamentata da MISA nelle Isole Comore.',
+        'Bullwaves è un marchio commerciale utilizzato da più entità autorizzate in diverse giurisdizioni, tra cui Equitex Capital Limited (Registration No. 8434948-1), società autorizzata e regolamentata dalla Financial Services Authority (FSA, licence no. SD185), e Moonance LLC, società regolamentata da MISA nelle Isole Comore.',
       legalRiskCopy:
-        'I derivati over-the-counter sono strumenti complessi e comportano un elevato rischio di perdere rapidamente il capitale iniziale a causa della leva finanziaria. Dovresti valutare se comprendi il funzionamento dei derivati over-the-counter e se puoi permetterti di sostenere un livello di rischio cosÃ¬ elevato sul tuo capitale. Investire in derivati over-the-counter comporta rischi significativi e non Ã¨ adatto a tutti gli investitori.',
+        'I derivati over-the-counter sono strumenti complessi e comportano un elevato rischio di perdere rapidamente il capitale iniziale a causa della leva finanziaria. Dovresti valutare se comprendi il funzionamento dei derivati over-the-counter e se puoi permetterti di sostenere un livello di rischio così elevato sul tuo capitale. Investire in derivati over-the-counter comporta rischi significativi e non è adatto a tutti gli investitori.',
       unsubscribe: 'Disiscriviti',
       unsubscribePreferences: 'Preferenze di disiscrizione',
       preparedFor: 'Preparato per',
@@ -269,7 +217,7 @@ function getLanguageContent(lang) {
       signatureFallback: 'Il team Bullwaves',
       brandTagline: 'Bonus 100%. Account Manager. AI Tools in arrivo.',
       metricChips: ['Bonus 100%', 'Account Manager', 'AI Tools (presto)'],
-      panelTitle: 'PerchÃ© questo passaggio conta adesso',
+      panelTitle: 'Perché questo passaggio conta adesso',
       offerTitle: 'Cosa puoi attivare oggi',
       offerBody:
         'In questo momento la proposta concreta include bonus 100%, account manager dedicato e accesso prioritario ai trading tools avanzati con intelligenza artificiale in arrivo a breve.',
@@ -339,7 +287,7 @@ function buildLegalFooterHtml(mode, content) {
 
       <div class="legal-links">
         <a href="${unsubscribeHref}">${content.unsubscribe}</a>
-        <span class="legal-link-divider">Â·</span>
+        <span class="legal-link-divider">&middot;</span>
         <a href="${unsubscribePreferencesHref}">${content.unsubscribePreferences}</a>
       </div>
     </div>
@@ -516,7 +464,6 @@ export function buildSegmentEmailHtml(
   const normalizedBoxThreeTitle = normalize(boxThreeTitle)
   const normalizedBoxThreeCopy = normalize(boxThreeCopy)
   const normalizedBodyThree = normalize(bodyThree)
-  const normalizedBodyFour = normalize(bodyFour)
   const normalizedCtaLabel = normalize(ctaLabel)
   const offerMessaging = getOfferMessaging(lang, templateKey)
   const ctaHref = ctaUrl ? ctaUrl : mode === 'sendgrid' ? SENDGRID_CTA_HREF : DEFAULT_CTA_URL
@@ -644,9 +591,9 @@ export function buildSegmentEmailHtml(
   .header-logo {
     display:block;
     width:170px;
-    max-width:170px;
+    height:auto;
+    border:0
     border:0;
-    filter:brightness(0) invert(1);
   }
   .minimal-brand-line {
     margin-top:8px;
@@ -964,7 +911,7 @@ export function buildSegmentEmailHtml(
 <table class="container" data-skin="${normalizedSkin}">
 <tr>
 <td class="minimal-header">
-  <img src="${wordmarkUrl}" width="170" alt="${content.logoAlt}" class="header-logo" style="display:block; width:170px; max-width:170px; height:auto; border:0; filter:brightness(0) invert(1);" />
+  <img src="${wordmarkUrl}" width="170" alt="${content.logoAlt}" class="header-logo" style="display:block; width:170px; max-width:170px; height:auto; border:0;" />
   <div class="minimal-brand-line">Bullwaves Client Communication</div>
 </td>
 </tr>
