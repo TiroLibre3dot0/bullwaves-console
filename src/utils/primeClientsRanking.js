@@ -6,6 +6,7 @@ const COLUMN_VARIANTS = {
   brand: ['brand'],
   client_id: ['client_id', 'clientid', 'id'],
   client_name: ['client_name', 'clientname', 'name', 'client'],
+  client_email: ['client_email', 'email', 'e_mail', 'e-mail', 'mail'],
   country: ['country', 'geo'],
   status: ['status', 'client_status', 'account_status'],
   date: ['date', 'day', 'report_date', 'trade_date'],
@@ -170,6 +171,9 @@ export function buildPrimeClientsRankingDataset({ rows = [], headers = [] } = {}
     const clientName = coerceString(
       getRowValue(row, schema.client_name, headerIndex, ['clientName', 'client_name'])
     )
+    const clientEmail = coerceString(
+      getRowValue(row, schema.client_email, headerIndex, ['clientEmail', 'client_email', 'email'])
+    )
     const country = coerceString(getRowValue(row, schema.country, headerIndex, ['country']))
     if (country && country !== '-') countriesSet.add(country)
 
@@ -180,6 +184,7 @@ export function buildPrimeClientsRankingDataset({ rows = [], headers = [] } = {}
           brand: '',
           clientId,
           clientName: clientName || '',
+          clientEmail: '',
           agentUser: 'Prime Challenge',
           sourceStatus: '',
           country: country && country !== '-' ? country : '',
@@ -210,6 +215,12 @@ export function buildPrimeClientsRankingDataset({ rows = [], headers = [] } = {}
       next.sourceStatus = coerceString(getRowValue(row, schema.status, headerIndex))
     }
     if (clientName && clientName.length > next.clientName.length) next.clientName = clientName
+    if (clientEmail) {
+      if (!next.clientEmail) next.clientEmail = clientEmail
+      else if (!String(next.clientEmail).includes('@') && String(clientEmail).includes('@')) {
+        next.clientEmail = clientEmail
+      }
+    }
     if (country && country !== '-' && !next.country) next.country = country
 
     const closedPL = parseNumberSafe(
@@ -309,6 +320,8 @@ export function buildPrimeRankingsV1({
   minTrades = 0,
   countries = [],
   activityRecencyDays = 0,
+  onlyPositivePayout = false,
+  minPositivePayout = 0,
   today,
 } = {}) {
   const list = Array.isArray(dataset?.clients) ? dataset.clients : []
@@ -339,6 +352,7 @@ export function buildPrimeRankingsV1({
 
     base.push({
       ...metric,
+      clientEmail: String(client?.clientEmail || '').trim(),
       brand: String(client?.brand || '').trim(),
       sourceStatus: String(client?.sourceStatus || '').trim(),
       payoutCount: Number(client?.payoutCount || 0),
@@ -352,6 +366,14 @@ export function buildPrimeRankingsV1({
 
   const payoutUsers = base
     .filter((metric) => hasPrimePayoutSignal(metric))
+    .filter((metric) => {
+      const payout = Number(metric?.primaryPayoutAmount || 0)
+      if (onlyPositivePayout && payout <= 0) return false
+      if (Number(minPositivePayout || 0) > 0 && payout < Number(minPositivePayout || 0)) {
+        return false
+      }
+      return true
+    })
     .map((metric) => ({
       ...metric,
       payoutSignalLabel: payoutSignalLabel(metric),

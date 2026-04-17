@@ -529,6 +529,8 @@ function countActiveFilters({
   hasActivityRecencyFilter,
   hasCountryFilter,
   hasAgentFilter,
+  hasPositivePayoutFilter,
+  hasMinPayoutAmountFilter,
 }) {
   return [
     hasMinDepositFilter,
@@ -536,6 +538,8 @@ function countActiveFilters({
     hasActivityRecencyFilter,
     hasCountryFilter,
     hasAgentFilter,
+    hasPositivePayoutFilter,
+    hasMinPayoutAmountFilter,
   ].filter(Boolean).length
 }
 
@@ -546,6 +550,8 @@ function buildFilterSummary({
   activityRecencyDays,
   selectedCountries,
   selectedAgents,
+  onlyPositivePayout,
+  minPayoutAmount,
 }) {
   const bits = []
 
@@ -555,8 +561,14 @@ function buildFilterSummary({
   if (Number(minTrades) > 0) {
     bits.push(`Min trades ${fmtInt(minTrades)}`)
   }
+  if (definitionFilters.positivePayoutOnly && onlyPositivePayout) {
+    bits.push('Only WD > 0')
+  }
+  if (definitionFilters.minPayoutAmount && Number(minPayoutAmount) > 0) {
+    bits.push(`Min WD ${fmtMoney0(minPayoutAmount)}`)
+  }
   if (definitionFilters.activityRecency && Number(activityRecencyDays) > 0) {
-    bits.push(`Activity ${fmtInt(activityRecencyDays)}d`)
+    bits.push(`Max inactivity ${fmtInt(activityRecencyDays)}d`)
   }
   if (
     definitionFilters.countries &&
@@ -1628,6 +1640,14 @@ const PRIME_TAB_CONFIGS = [
       }),
       sourceStatusColumn(),
       {
+        key: 'clientEmail',
+        label: 'Email',
+        help: 'Client email from the Prime Clients Ranking source file.',
+        align: 'left',
+        width: 220,
+        render: (r) => String(r?.clientEmail || '—'),
+      },
+      {
         key: 'closedPL',
         label: 'Closed PL',
         help: 'Closed profit/loss from the Prime report.',
@@ -1750,6 +1770,8 @@ const RANKING_DEFINITIONS = {
       minTrades: true,
       countries: true,
       activityRecency: true,
+      positivePayoutOnly: true,
+      minPayoutAmount: true,
     },
     kpis(summary, dataset) {
       return [
@@ -2649,6 +2671,14 @@ export default function ProfitableRanking({
       ? Number(initialState?.activityRecencyDays)
       : 0
   )
+  const [onlyPositivePayout, setOnlyPositivePayout] = useState(
+    Boolean(initialState?.onlyPositivePayout || initialState?.payoutOnly || false)
+  )
+  const [minPayoutAmount, setMinPayoutAmount] = useState(
+    Number.isFinite(Number(initialState?.minPayoutAmount))
+      ? Number(initialState?.minPayoutAmount)
+      : 0
+  )
   const [selectedCountries, setSelectedCountries] = useState(
     Array.isArray(initialState?.selectedCountries) ? initialState.selectedCountries : []
   )
@@ -2661,6 +2691,10 @@ export default function ProfitableRanking({
   const hasMinTradesFilter = Number(minTrades) > 0
   const hasActivityRecencyFilter =
     Boolean(definitionFilters.activityRecency) && Number(activityRecencyDays) > 0
+  const hasPositivePayoutFilter =
+    Boolean(definitionFilters.positivePayoutOnly) && Boolean(onlyPositivePayout)
+  const hasMinPayoutAmountFilter =
+    Boolean(definitionFilters.minPayoutAmount) && Number(minPayoutAmount) > 0
   const hasCountryFilter =
     Boolean(definitionFilters.countries) &&
     Array.isArray(selectedCountries) &&
@@ -2671,6 +2705,8 @@ export default function ProfitableRanking({
     hasMinDepositFilter ||
     hasMinTradesFilter ||
     hasActivityRecencyFilter ||
+    hasPositivePayoutFilter ||
+    hasMinPayoutAmountFilter ||
     hasCountryFilter ||
     hasAgentFilter
   const activeFiltersCount = countActiveFilters({
@@ -2679,6 +2715,8 @@ export default function ProfitableRanking({
     hasActivityRecencyFilter,
     hasCountryFilter,
     hasAgentFilter,
+    hasPositivePayoutFilter,
+    hasMinPayoutAmountFilter,
   })
   const filterSummary = useMemo(
     () =>
@@ -2689,6 +2727,8 @@ export default function ProfitableRanking({
         activityRecencyDays,
         selectedCountries,
         selectedAgents,
+        onlyPositivePayout,
+        minPayoutAmount,
       }),
     [
       activityRecencyDays,
@@ -2697,6 +2737,8 @@ export default function ProfitableRanking({
       minTrades,
       selectedAgents,
       selectedCountries,
+      onlyPositivePayout,
+      minPayoutAmount,
     ]
   )
 
@@ -2835,6 +2877,8 @@ export default function ProfitableRanking({
         md: Number(minDeposit) || 0,
         mt: Number(minTrades) || 0,
         r: Number(activityRecencyDays) || 0,
+        op: Boolean(onlyPositivePayout),
+        mp: Number(minPayoutAmount) || 0,
         c: Array.isArray(selectedCountries) ? selectedCountries : [],
         tab: String(activeTab || ''),
         tf: String(timeframe || 'all'),
@@ -2848,6 +2892,8 @@ export default function ProfitableRanking({
       activityRecencyDays,
       minDeposit,
       minTrades,
+      onlyPositivePayout,
+      minPayoutAmount,
       rankingDefinition.key,
       selectedCountries,
       selectedMonthKey,
@@ -2991,13 +3037,17 @@ export default function ProfitableRanking({
       minDeposit: Number(minDeposit) || 0,
       countries: Array.isArray(selectedCountries) ? selectedCountries : [],
       activityRecencyDays: Number(activityRecencyDays) || 0,
+      onlyPositivePayout,
+      minPositivePayout: Number(minPayoutAmount) || 0,
       today: todayRef.current,
     })
   }, [
     activityRecencyDays,
     datasetForRanking,
     minDeposit,
+    minPayoutAmount,
     minTrades,
+    onlyPositivePayout,
     rankingDefinition,
     selectedCountries,
   ])
@@ -3048,6 +3098,25 @@ export default function ProfitableRanking({
       }
     })
   }, [activeList, agentByClientId])
+
+  const filteredActiveList = useMemo(() => {
+    return activeListWithSortKeys.filter((row) => {
+      const payoutAmount = Number(row?.primaryPayoutAmount || row?.totalWithdrawals || 0)
+      if (definitionFilters.positivePayoutOnly && onlyPositivePayout && payoutAmount <= 0) {
+        return false
+      }
+      if (definitionFilters.minPayoutAmount && Number(minPayoutAmount) > 0) {
+        if (!Number.isFinite(payoutAmount) || payoutAmount < Number(minPayoutAmount)) return false
+      }
+      return true
+    })
+  }, [
+    activeListWithSortKeys,
+    definitionFilters.minPayoutAmount,
+    definitionFilters.positivePayoutOnly,
+    minPayoutAmount,
+    onlyPositivePayout,
+  ])
 
   const kpis = useMemo(() => {
     return rankingDefinition.kpis(v1?.summary, dataset)
@@ -3158,8 +3227,8 @@ export default function ProfitableRanking({
       tieBreakers.push({ key: 'totalTrades', dir: 'desc' }, { key: 'closedPL', dir: 'desc' })
     }
 
-    return sortByKey(activeListWithSortKeys, s, tieBreakers)
-  }, [activeListWithSortKeys, activeTab, activeTabConfig, sortByTab])
+    return sortByKey(filteredActiveList, s, tieBreakers)
+  }, [filteredActiveList, activeTab, activeTabConfig, sortByTab])
 
   const totalRow = useMemo(() => {
     if (rankingDefinition.sectionLabel !== 'Prime Challenge') return null
@@ -3201,6 +3270,74 @@ export default function ProfitableRanking({
       },
     }
   }, [activeTab, rankingDefinition.sectionLabel, sortedForDisplay])
+
+  const onExportCurrentView = useCallback(() => {
+    if (
+      typeof window === 'undefined' ||
+      !Array.isArray(sortedForDisplay) ||
+      !sortedForDisplay.length
+    ) {
+      return
+    }
+
+    const csvEscape = (value) => {
+      const s = String(value ?? '')
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
+    }
+
+    const header = [
+      'rank',
+      'client_id',
+      'client_name',
+      'client_email',
+      'country',
+      'agent_user',
+      'source_status',
+      'wd_payout',
+      'total_trades',
+      'avg_trades_per_month',
+      'days_since_last_trade',
+      'total_deposit',
+      'net_deposit',
+      'closed_pl',
+      'open_pl',
+    ]
+
+    const lines = [header.join(',')]
+    sortedForDisplay.forEach((row, index) => {
+      lines.push(
+        [
+          index + 1,
+          csvEscape(row?.clientId || ''),
+          csvEscape(row?.clientName || ''),
+          csvEscape(row?.clientEmail || ''),
+          csvEscape(row?.country || ''),
+          csvEscape(row?.agentUser || ''),
+          csvEscape(row?.sourceStatus || ''),
+          Number(row?.primaryPayoutAmount || row?.totalWithdrawals || 0).toFixed(2),
+          Math.floor(Number(row?.totalTrades || 0)),
+          Number(row?.tradesPerMonth || 0).toFixed(2),
+          row?.daysSinceLastTrade == null ? '' : Math.floor(Number(row.daysSinceLastTrade || 0)),
+          Number(row?.totalDeposit || 0).toFixed(2),
+          Number(row?.netDeposit || 0).toFixed(2),
+          Number(row?.closedPL || 0).toFixed(2),
+          Number(row?.openPL || 0).toFixed(2),
+        ].join(',')
+      )
+    })
+
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
+    const fileName = `${rankingDefinition.key}_${activeTab}_${stamp}.csv`
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = fileName
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+  }, [activeTab, rankingDefinition.key, sortedForDisplay])
 
   const setSort = (tabKey, colKey) => {
     setSortByTab((prev) => {
@@ -3553,6 +3690,15 @@ export default function ProfitableRanking({
                           Copy Contest Embed
                         </button>
                       ) : null}
+                      <button
+                        type="button"
+                        className="pill-tab"
+                        onClick={onExportCurrentView}
+                        disabled={loading || !dataset || !sortedForDisplay.length}
+                        title="Download the current filtered ranking as CSV"
+                      >
+                        Export CSV
+                      </button>
                     </>
                   ) : null}
 
@@ -3775,6 +3921,8 @@ export default function ProfitableRanking({
                         setMinDeposit(0)
                         setMinTrades(0)
                         setActivityRecencyDays(0)
+                        setOnlyPositivePayout(false)
+                        setMinPayoutAmount(0)
                         setSelectedCountries([])
                         setSelectedAgents([])
                         setAgentSearch('')
@@ -3955,30 +4103,75 @@ export default function ProfitableRanking({
                     style={{ marginTop: 10 }}
                   >
                     <div className="ranking-filters-grid ranking-filters-grid--advanced">
+                      {definitionFilters.positivePayoutOnly ? (
+                        <label
+                          className={`ranking-filter-field${
+                            hasPositivePayoutFilter ? ' ranking-filter-field--active' : ''
+                          }`}
+                        >
+                          <span className="ranking-filter-label">WD filter</span>
+                          <label
+                            style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 40 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={onlyPositivePayout}
+                              onChange={(e) => {
+                                triggerUpdate()
+                                setOnlyPositivePayout(Boolean(e.target.checked))
+                              }}
+                            />
+                            <span>Only positive WD / Payout</span>
+                          </label>
+                        </label>
+                      ) : null}
+
+                      {definitionFilters.minPayoutAmount ? (
+                        <label
+                          className={`ranking-filter-field${
+                            hasMinPayoutAmountFilter ? ' ranking-filter-field--active' : ''
+                          }`}
+                        >
+                          <span className="ranking-filter-label">Min WD / Payout</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            className={`search-hero-input ranking-filter-input${
+                              hasMinPayoutAmountFilter ? ' ranking-filter-input--active' : ''
+                            }`}
+                            value={minPayoutAmount}
+                            onChange={(e) => {
+                              triggerUpdate()
+                              setMinPayoutAmount(Number(e.target.value || 0))
+                            }}
+                            aria-label="Minimum WD or payout amount"
+                          />
+                        </label>
+                      ) : null}
+
                       {definitionFilters.activityRecency ? (
                         <label
                           className={`ranking-filter-field${
                             hasActivityRecencyFilter ? ' ranking-filter-field--active' : ''
                           }`}
                         >
-                          <span className="ranking-filter-label">Activity Recency</span>
-                          <select
+                          <span className="ranking-filter-label">Max inactivity (days)</span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
                             className={`search-hero-input ranking-filter-input${
                               hasActivityRecencyFilter ? ' ranking-filter-input--active' : ''
                             }`}
-                            value={String(activityRecencyDays)}
+                            value={activityRecencyDays}
                             onChange={(e) => {
                               triggerUpdate()
                               setActivityRecencyDays(Number(e.target.value || 0))
                             }}
-                            aria-label="Activity recency filter"
-                          >
-                            <option value="0">Any</option>
-                            <option value="7">Last 7 days</option>
-                            <option value="30">Last 30 days</option>
-                            <option value="90">Last 90 days</option>
-                            <option value="365">Last 12 months</option>
-                          </select>
+                            placeholder="0 = any"
+                            aria-label="Maximum inactivity days filter"
+                          />
                         </label>
                       ) : null}
                     </div>

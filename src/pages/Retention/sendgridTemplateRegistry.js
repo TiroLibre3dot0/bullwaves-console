@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-15T08:36:31.397Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-04-15T15:01:55.724Z'
 
 export const sendgridTemplateRegistry = {
   churned_high_value_step3_email: {

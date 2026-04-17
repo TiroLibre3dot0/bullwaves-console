@@ -2810,11 +2810,11 @@ export const additionalSegmentJourneyTemplatesById = {
             heroTitle: 'We prepared a calmer way back in',
             heroSubtitle:
               'With a 100% bonus, dedicated account manager support, and AI trading tools coming soon.',
-            mainTitle: 'This is about restarting with clarity and better support.',
+            mainTitle: 'A stronger return starts with clearer support.',
             introLead:
-              'If the timing was not right before, the next move can now feel simpler, better supported, and more worthwhile.',
+              'If the timing was not right before, you can now review a simpler and more supportive way back.',
             bodyOne:
-              'We prepared a more consultative return path built around real value, not pressure.',
+              'We have prepared a more reassuring return path built around practical value, not pressure.',
             bodyTwo: 'What you can review now:',
             boxOneTitle: '100% Bonus',
             boxOneCopy: 'A concrete bonus option for eligible return activation',
@@ -2839,11 +2839,10 @@ export const additionalSegmentJourneyTemplatesById = {
             eyebrow: 'Bullwaves',
             title: 'Return with a cleaner setup',
             heroTitle: 'A better return starts with the right support',
-            heroSubtitle:
-              'The next step is designed to feel lighter, clearer, and more relevant to you.',
-            mainTitle: 'You do not need pressure. You need a return path that makes sense.',
+            heroSubtitle: 'The next step can now feel lighter, clearer, and more relevant to you.',
+            mainTitle: 'You do not need pressure. You need a return path that feels right.',
             introLead:
-              'This touch is designed to help you evaluate a softer, more concrete way back into the platform.',
+              'This is a practical opportunity to review a calmer and more concrete way back into the platform.',
             bodyOne:
               'Use this window to review the available support and restart from a stronger client experience.',
             bodyTwo: 'In this phase, you can review:',
@@ -2875,11 +2874,11 @@ export const additionalSegmentJourneyTemplatesById = {
             heroTitle: 'Abbiamo preparato un modo più semplice per tornare',
             heroSubtitle:
               'Con bonus del 100%, account manager dedicato e accesso prioritario ai nuovi trading tools con AI in arrivo.',
-            mainTitle: 'Qui si parla di ripartire con chiarezza e con un supporto migliore.',
+            mainTitle: 'Un ritorno migliore parte da più chiarezza e dal supporto giusto.',
             introLead:
-              'Se prima il momento non era quello giusto, oggi il prossimo passo può essere più semplice, più utile e più interessante.',
+              'Se prima il momento non era quello giusto, oggi puoi valutare un rientro più semplice, più utile e meglio accompagnato.',
             bodyOne:
-              'Abbiamo costruito un percorso di rientro più consultivo e meno aggressivo, basato su valore reale e non su pressione.',
+              'Abbiamo preparato un percorso di rientro più rassicurante, basato su valore concreto e non su pressione.',
             bodyTwo: 'Cosa puoi valutare ora:',
             boxOneTitle: 'Bonus 100%',
             boxOneCopy: 'Una proposta concreta di bonus per i profili idonei al rientro',
@@ -2905,10 +2904,10 @@ export const additionalSegmentJourneyTemplatesById = {
             title: 'Rientra con un setup più pulito',
             heroTitle: 'Un ritorno migliore parte dal supporto giusto',
             heroSubtitle:
-              'Il prossimo passo è pensato per essere più leggero, più chiaro e più rilevante per te.',
-            mainTitle: 'Non serve pressione. Serve un percorso di rientro che abbia senso.',
+              'Il prossimo passo può ora essere più leggero, più chiaro e più rilevante per te.',
+            mainTitle: 'Non serve pressione. Serve un percorso di rientro che ti convinca davvero.',
             introLead:
-              'Questo touch ti aiuta a valutare un modo più morbido e concreto per rientrare in piattaforma.',
+              'Qui puoi valutare un modo più morbido e concreto per rientrare in piattaforma.',
             bodyOne:
               'Usa questa finestra per rivedere il supporto disponibile e ripartire da un’esperienza cliente più forte.',
             bodyTwo: 'In questa fase puoi valutare:',
@@ -2943,14 +2942,14 @@ export const additionalSegmentJourneyTemplatesById = {
             lang: 'en',
             eyebrow: 'Bullwaves',
             title: 'Your return is now active',
-            heroTitle: 'We saw the deposit on your account',
+            heroTitle: 'Thank you for your recent deposit',
             heroSubtitle:
-              'Now the focus shifts from reactivation to support, continuity, and a cleaner next step.',
-            mainTitle: 'You completed the first concrete action. Now build on it.',
+              'Now the focus shifts to support, continuity, and a clearer next step for your account.',
+            mainTitle: 'You have already taken an important step. Now make the most of it.',
             introLead:
-              'Since you already moved, this message is here to reinforce the restart and help you continue with more clarity.',
+              'Your recent activity is a positive sign, and this is the right moment to move forward with more clarity and support.',
             bodyOne:
-              'This is no longer a reminder to come back. It is a support step built for a client who already reactivated and now needs continuity.',
+              'We are now ready to help you turn that step into a steadier and more valuable return experience.',
             bodyTwo: 'From here, prioritize:',
             boxOneTitle: '100% Bonus',
             boxOneCopy:
@@ -2962,7 +2961,7 @@ export const additionalSegmentJourneyTemplatesById = {
             bodyThree:
               'Open your client area and confirm the best next action after the deposit already completed.',
             bodyFour:
-              'The objective now is simple: protect the positive action you already took and keep the return stable.',
+              'The next phase is about keeping this positive momentum stable, supported, and worthwhile.',
             ctaLabel: 'Continue My Return',
           },
         },
@@ -3008,14 +3007,14 @@ export const additionalSegmentJourneyTemplatesById = {
             lang: 'it',
             eyebrow: 'Bullwaves',
             title: 'Il tuo ritorno è ora attivo',
-            heroTitle: 'Abbiamo visto il deposito sul tuo account',
+            heroTitle: 'Grazie per il deposito recente',
             heroSubtitle:
-              'Ora il focus passa dalla riattivazione alla continuità, al supporto e a un prossimo passo più pulito.',
-            mainTitle: 'Hai completato la prima azione concreta. Adesso costruiscici sopra.',
+              'Ora il focus passa al supporto, alla continuità e a un prossimo passo più chiaro per il tuo account.',
+            mainTitle: 'Hai già compiuto un passo importante. Adesso valorizzalo al meglio.',
             introLead:
-              'Dal momento che ti sei già mosso, questo messaggio serve a rinforzare la ripartenza e aiutarti a continuare con più chiarezza.',
+              'La tua recente attività è un segnale positivo, e questo è il momento giusto per proseguire con più chiarezza e supporto.',
             bodyOne:
-              'Non è più un promemoria per tornare. È uno step di supporto pensato per un cliente che si è già riattivato e ora ha bisogno di continuità.',
+              'Ora possiamo aiutarti a trasformare quel passo in un ritorno più stabile, più ordinato e più utile.',
             bodyTwo: 'Da qui in avanti, dai priorità a:',
             boxOneTitle: 'Bonus 100%',
             boxOneCopy:
@@ -3027,7 +3026,7 @@ export const additionalSegmentJourneyTemplatesById = {
             bodyThree:
               'Apri la tua area cliente e conferma la prossima azione migliore dopo il deposito già completato.',
             bodyFour:
-              'L’obiettivo ora è semplice: proteggere l’azione positiva che hai già compiuto e mantenere stabile il ritorno.',
+              'La prossima fase serve a mantenere questo slancio positivo stabile, supportato e più utile nel tempo.',
             ctaLabel: 'Continua Il Mio Ritorno',
           },
         },
@@ -3114,7 +3113,7 @@ export const additionalSegmentJourneyTemplatesById = {
               'A short final review can help the restart remain stable, supported, and worthwhile.',
             mainTitle: 'The important thing now is continuity after the action already taken.',
             introLead:
-              'This step is for a client who has already completed the deposit and now needs a stronger path forward.',
+              'You have already completed the deposit, and now you can continue with a steadier and more supported path forward.',
             bodyOne:
               'Complete this phase and keep the relationship aligned with the better support now available to you.',
             bodyTwo: 'Focus now on:',
@@ -3179,7 +3178,7 @@ export const additionalSegmentJourneyTemplatesById = {
               'Una breve review finale può aiutare la ripartenza a restare stabile, supportata e più utile.',
             mainTitle: 'Ora conta la continuità dopo l’azione che hai già compiuto.',
             introLead:
-              'Questo step è pensato per un cliente che ha già completato il deposito e ora ha bisogno di un percorso più solido in avanti.',
+              'Hai già completato il deposito, e ora puoi proseguire con un percorso più stabile e meglio supportato.',
             bodyOne:
               'Completa questa fase e mantieni la relazione allineata al migliore supporto oggi disponibile per te.',
             bodyTwo: 'Ora concentrati su:',
@@ -3349,7 +3348,7 @@ export const additionalSegmentJourneyTemplatesById = {
               'This path keeps the relationship open and gives you a simpler way to reactivate.',
             mainTitle: 'If no deposit happened yet, the opportunity is still open.',
             introLead:
-              'We noticed the account has not yet completed the restart step. This message is here to reactivate the user with more support and less friction.',
+              'If you have not completed the next step yet, the opportunity is still open and the return can now feel simpler and more supported.',
             bodyOne:
               'Use this option when you feel ready and restart from a more reassuring setup.',
             bodyTwo: 'This reactivation path gives you:',
@@ -3377,9 +3376,9 @@ export const additionalSegmentJourneyTemplatesById = {
             heroTitle: 'A softer comeback can work better when no action has happened yet',
             heroSubtitle:
               'Sometimes the best return is the one that feels simple and well supported.',
-            mainTitle: 'The objective now is a clean and practical re-entry.',
+            mainTitle: 'A practical and lower-pressure way back is still available.',
             introLead:
-              'This option is meant to keep the relationship open and make the next move easier to consider when the deposit has not been completed yet.',
+              'If the deposit has not been completed yet, you can still return through a simpler and more reassuring next step.',
             bodyOne:
               'Use the lighter path to reactivate step by step and come back with more confidence.',
             bodyTwo: 'Focus on:',
@@ -3412,7 +3411,7 @@ export const additionalSegmentJourneyTemplatesById = {
               'Questo percorso mantiene aperta la relazione e ti offre un modo più semplice per riattivarti.',
             mainTitle: 'Se il deposito non è ancora avvenuto, l’opportunità resta aperta.',
             introLead:
-              'Abbiamo notato che il conto non ha ancora completato lo step di ripartenza. Questo messaggio serve a riattivare l’utente con più supporto e meno attrito.',
+              'Se non hai ancora completato il prossimo passo, l’opportunità resta aperta e il rientro può ora essere più semplice e meglio supportato.',
             bodyOne:
               'Usa questa opzione quando ti senti pronto e riparti da un setup più rassicurante.',
             bodyTwo: 'Questo percorso di riattivazione ti offre:',
@@ -3443,9 +3442,9 @@ export const additionalSegmentJourneyTemplatesById = {
               'Un ritorno più morbido può funzionare meglio quando non c’è ancora stata azione',
             heroSubtitle:
               'A volte la ripartenza migliore è quella che si sente semplice e ben supportata.',
-            mainTitle: 'L’obiettivo ora è un rientro pratico e pulito.',
+            mainTitle: 'È ancora disponibile un modo pratico e più leggero per rientrare.',
             introLead:
-              'Questa opzione serve a mantenere aperta la relazione e a rendere più facile valutare il prossimo passo.',
+              'Se il deposito non è ancora arrivato, puoi ancora valutare un prossimo passo più semplice, più chiaro e meno impegnativo.',
             bodyOne:
               'Usa il percorso più leggero per riattivarti passo dopo passo e tornare con maggiore fiducia.',
             bodyTwo: 'Concentrati su:',

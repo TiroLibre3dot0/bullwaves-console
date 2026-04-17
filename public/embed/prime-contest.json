@@ -1,13 +1,13 @@
 {
   "kind": "prime-contest-embed",
-  "generatedAt": "2026-04-15T05:51:27.714Z",
-  "sourceGeneratedAt": "2026-04-15T05:51:20.881Z",
+  "generatedAt": "2026-04-16T21:06:41.498Z",
+  "sourceGeneratedAt": "2026-04-16T21:06:21.232Z",
   "periodKey": "2026-03",
   "periodLabel": "Active in last 180 days",
-  "updatedAtLabel": "15 Apr 2026, 05:51",
+  "updatedAtLabel": "16 Apr 2026, 21:06",
   "summary": {
-    "totalContestants": 231,
-    "totalPayoutAmount": 323093
+    "totalContestants": 235,
+    "totalPayoutAmount": 325556
   },
   "rows": [
     {
@@ -15,7 +15,7 @@
       "displayName": "Miles C.",
       "country": "GB",
       "payoutAmount": 9349,
-      "totalTrades": 145
+      "totalTrades": 159
     },
     {
       "rank": 2,
@@ -71,7 +71,7 @@
       "displayName": "Ayodeji O.",
       "country": "CA",
       "payoutAmount": 5558,
-      "totalTrades": 1856
+      "totalTrades": 1857
     },
     {
       "rank": 10,
@@ -92,7 +92,7 @@
       "displayName": "Oleg C.",
       "country": "MD",
       "payoutAmount": 5520,
-      "totalTrades": 163
+      "totalTrades": 190
     },
     {
       "rank": 13,
@@ -106,7 +106,7 @@
       "displayName": "Jordi R.",
       "country": "ES",
       "payoutAmount": 5193,
-      "totalTrades": 363
+      "totalTrades": 367
     },
     {
       "rank": 15,
@@ -120,7 +120,7 @@
       "displayName": "Wayne H.",
       "country": "GB",
       "payoutAmount": 4813,
-      "totalTrades": 444
+      "totalTrades": 454
     },
     {
       "rank": 17,
@@ -134,7 +134,7 @@
       "displayName": "Alessandro S.",
       "country": "IT",
       "payoutAmount": 4725,
-      "totalTrades": 214
+      "totalTrades": 221
     },
     {
       "rank": 19,
