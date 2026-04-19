@@ -20,6 +20,7 @@ import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import { useI18n } from '../../../i18n/I18nContext'
 import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
+import { withReportsVersion } from '../../../lib/fetchCache'
 import AffiliatePayoutUnifiedTable from './AffiliatePayoutUnifiedTable'
 import StickyMetricsTable from './StickyMetricsTable'
 import { formatMonthReference } from '../utils/formatMonthReference'
@@ -389,7 +390,7 @@ export default function InvestmentsDashboard(props) {
     } catch {
       // ignore
     }
-    return 'single'
+    return 'unified'
   })
 
   useEffect(() => {
@@ -478,13 +479,16 @@ export default function InvestmentsDashboard(props) {
   const [displaySource, setDisplaySource] = useState(dataSource)
   const [softSwitchLoading, setSoftSwitchLoading] = useState(false)
 
+  const effectiveRequestedSource = viewMode === 'unified' ? 'mixed' : dataSource
+  const effectiveDisplaySource = displayViewMode === 'unified' ? 'mixed' : displaySource
+
   const shouldLoadCreolabsClients =
     viewMode === 'unified' ||
     displayViewMode === 'unified' ||
-    dataSource === 'creolabs' ||
-    displaySource === 'creolabs' ||
-    dataSource === 'mixed' ||
-    displaySource === 'mixed'
+    effectiveRequestedSource === 'creolabs' ||
+    effectiveDisplaySource === 'creolabs' ||
+    effectiveRequestedSource === 'mixed' ||
+    effectiveDisplaySource === 'mixed'
 
   const [creolabsClientRows, setCreolabsClientRows] = useState([])
   const [creolabsClientsLoading, setCreolabsClientsLoading] = useState(false)
@@ -520,16 +524,16 @@ export default function InvestmentsDashboard(props) {
     }
   }, [shouldLoadCreolabsClients])
 
-  const selectedActiveData = dataSource === 'creolabs' ? creolabs : cellxpert
+  const selectedActiveData = effectiveRequestedSource === 'creolabs' ? creolabs : cellxpert
   const selectedLoading =
-    dataSource === 'mixed'
+    effectiveRequestedSource === 'mixed'
       ? Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)
       : Boolean(selectedActiveData?.loading)
 
-  const displayActiveData = displaySource === 'creolabs' ? creolabs : cellxpert
+  const displayActiveData = effectiveDisplaySource === 'creolabs' ? creolabs : cellxpert
   const { payments, mediaRows, loading: rawLoading } = displayActiveData
   const loading =
-    displaySource === 'mixed'
+    effectiveDisplaySource === 'mixed'
       ? Boolean(cellxpert?.loading) || Boolean(creolabs?.loading)
       : Boolean(rawLoading)
 
@@ -635,7 +639,7 @@ export default function InvestmentsDashboard(props) {
     }
   }
 
-  const cacheKey = displaySource === 'mixed' ? 'cellxpert' : displaySource
+  const cacheKey = effectiveDisplaySource === 'mixed' ? 'cellxpert' : effectiveDisplaySource
   const cached = dataCache[cacheKey] || { payments: [], mediaRows: [] }
   const shownPayments = loading ? cached.payments : payments
   const shownMediaRows = loading ? cached.mediaRows : mediaRows
@@ -658,7 +662,9 @@ export default function InvestmentsDashboard(props) {
   useEffect(() => {
     async function loadDataStatus() {
       try {
-        const resp = await fetch('/Payments Report.csv')
+        const resp = await fetch(withReportsVersion('/Payments Report.csv'), {
+          cache: 'no-store',
+        })
         if (!resp.ok) return
         const text = await resp.text()
         const lines = text.split(/\r?\n/).filter((line) => line.trim())
@@ -697,7 +703,7 @@ export default function InvestmentsDashboard(props) {
     setSelectedMonth,
     search,
     setSearch,
-    dataSource,
+    dataSource: effectiveRequestedSource,
     requestDataSource,
     showCommissionColumns,
     viewMode,
@@ -713,9 +719,9 @@ export default function InvestmentsDashboard(props) {
         : t('investments.viewMode.single')
       : displayViewMode === 'unified'
         ? t('investments.viewMode.unified')
-        : displaySource === 'mixed'
+        : effectiveDisplaySource === 'mixed'
           ? t('investments.source.mixed')
-          : displaySource === 'creolabs'
+          : effectiveDisplaySource === 'creolabs'
             ? t('investments.source.creolabs')
             : t('investments.source.cellxpert'),
     hideTimelineChart,
@@ -2920,7 +2926,7 @@ function InvestmentsDashboardUnifiedContent({
           >
             <button
               type="button"
-              className="btn secondary"
+              className={dataSource === 'mixed' ? 'btn' : 'btn secondary'}
               onClick={switchToMixedSingle}
               style={{
                 padding: '6px 12px',
@@ -2928,8 +2934,12 @@ function InvestmentsDashboardUnifiedContent({
                 fontWeight: 800,
                 borderRadius: 999,
                 whiteSpace: 'nowrap',
-                background: 'transparent',
-                opacity: 0.9,
+                ...(dataSource === 'mixed'
+                  ? {}
+                  : {
+                      background: 'transparent',
+                      opacity: 0.9,
+                    }),
               }}
               title={t('investments.viewMode.single')}
             >

@@ -8,6 +8,7 @@ import {
 } from '../lib/formatters'
 import AffiliatePayments2 from '../features/affiliate/components/AffiliatePayments2'
 import { parseCsv, parseMonthLabel, parseMonthFirstDate } from '../lib/csv'
+import { withReportsVersion } from '../lib/fetchCache'
 import FullPageLoader from '../components/FullPageLoader'
 import { useI18n } from '../i18n/I18nContext'
 import { track } from '../utils/analytics'
@@ -22,10 +23,36 @@ export default function Report() {
   const [mode, setMode] = useState('global') // global | annual | monthly
   const [selectedMonth, setSelectedMonth] = useState('')
   const [loading, setLoading] = useState(true)
+  const [reportsVersion, setReportsVersion] = useState(() => {
+    try {
+      return String(window?.localStorage?.getItem('bw_reports_version') || '')
+    } catch {
+      return ''
+    }
+  })
+
+  useEffect(() => {
+    const sync = (e) => {
+      if (!e || e.key === 'bw_reports_version') {
+        try {
+          setReportsVersion(String(window?.localStorage?.getItem('bw_reports_version') || ''))
+        } catch {
+          setReportsVersion('')
+        }
+      }
+    }
+    window.addEventListener('bw-reports-updated', sync)
+    window.addEventListener('storage', sync)
+    return () => {
+      window.removeEventListener('bw-reports-updated', sync)
+      window.removeEventListener('storage', sync)
+    }
+  }, [])
 
   useEffect(() => {
     async function loadReports() {
       try {
+        setLoading(true)
         const mediaCandidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
         const paymentsCandidates = ['/Payments Report.csv', '/commissions.csv']
 
@@ -44,7 +71,7 @@ export default function Report() {
 
         let mediaText = ''
         for (const path of mediaCandidates) {
-          const resp = await fetch(path)
+          const resp = await fetch(withReportsVersion(path), { cache: 'no-store' })
           if (resp.ok) {
             mediaText = await resp.text()
             break
@@ -53,7 +80,7 @@ export default function Report() {
 
         let paymentsText = ''
         for (const path of paymentsCandidates) {
-          const resp = await fetch(path)
+          const resp = await fetch(withReportsVersion(path), { cache: 'no-store' })
           if (resp.ok) {
             paymentsText = await resp.text()
             break
@@ -112,7 +139,7 @@ export default function Report() {
     }
 
     loadReports()
-  }, [])
+  }, [reportsVersion])
 
   useEffect(() => {
     track('page_view', { page: 'Report', access: 'console' })

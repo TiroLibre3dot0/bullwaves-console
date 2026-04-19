@@ -1,6 +1,7 @@
 // supportUserCheckService.js
 // Coherent implementation of support helpers used by the Support UI.
 import Papa from 'papaparse'
+import { withReportsVersion } from '../../../lib/fetchCache'
 
 const SUPPORT_USERS_INDEX_URL = '/support_users_index.json'
 
@@ -252,6 +253,23 @@ function getReportsVersionSafe() {
   } catch {
     return ''
   }
+}
+
+function syncReportDependentCaches() {
+  const versionNow = getReportsVersionSafe()
+  if (_reportsVersion !== versionNow) {
+    _reportsVersion = versionNow
+    _mediaCache = null
+    _mediaByNameKey = null
+    _paymentsCache = null
+    _paymentsAffiliateMap = null
+    _paymentsAffiliateMapById = null
+    _paymentsAffiliateMapByName = null
+    _commentsCache = null
+    _affiliateMovesByUserId = null
+    _affiliateDebugInfo = null
+  }
+  return versionNow
 }
 
 function looksLikeHtml(text) {
@@ -522,9 +540,12 @@ export function getAuditLog() {
 }
 
 export async function loadMediaReport(force = false) {
+  syncReportDependentCaches()
   if (_mediaCache && !force) return _mediaCache
   try {
-    const res = await fetch(encodeURI('/Media Report.csv'))
+    const res = await fetch(withReportsVersion('/Media Report.csv'), {
+      cache: force ? 'no-store' : 'default',
+    })
     if (!res.ok) {
       _mediaCache = []
       _mediaByNameKey = {}
@@ -564,9 +585,12 @@ export async function loadMediaReport(force = false) {
 }
 
 export async function loadPaymentsReport(force = false) {
+  syncReportDependentCaches()
   if (_paymentsCache && !force) return _paymentsCache
   try {
-    const res = await fetch(encodeURI('/Payments Report.csv'))
+    const res = await fetch(withReportsVersion('/Payments Report.csv'), {
+      cache: force ? 'no-store' : 'default',
+    })
     if (!res.ok) {
       _paymentsCache = []
       _paymentsAffiliateMap = {}
@@ -629,18 +653,13 @@ export async function loadPaymentsReport(force = false) {
 }
 
 export async function loadCommentsReport(force = false) {
-  // Keep in sync with the registrations cache invalidation.
-  const versionNow = getReportsVersionSafe()
-  if (_reportsVersion !== versionNow) {
-    _reportsVersion = versionNow
-    _commentsCache = null
-    _affiliateMovesByUserId = null
-    // do not clear other caches here (they are force-refreshed by the UI when needed)
-  }
+  syncReportDependentCaches()
 
   if (_commentsCache && !force) return _commentsCache
   try {
-    const res = await fetch(encodeURI('/comments.csv'))
+    const res = await fetch(withReportsVersion('/comments.csv'), {
+      cache: force ? 'no-store' : 'default',
+    })
     if (!res.ok) {
       _commentsCache = []
       _affiliateMovesByUserId = {}

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-04-16T21:33:13.338Z",
+  "generatedAt": "2026-04-19T09:03:17.325Z",
   "source": {
     "trustpilotSourceKind": "remote",
     "trustpilotCsv": null,
@@ -268,7 +268,7 @@
       "status": "Reviewed",
       "dateReviewed": "Feb 6, 2025",
       "trustpilotLink": "https://www.trustpilot.com/reviews/67a46c4ed30d74da5a3449ac",
-      "reviewSummary": "User’s crypto withdrawal has been pending for several days with no support response.",
+      "reviewSummary": "",
       "actionNeeded": "Escalate to finance and support to process the withdrawal promptly and provide status updates.",
       "followupNotes": "",
       "contacted": "",
@@ -595,7 +595,7 @@
         "volume": "135,000.0000",
         "lots": "13.5",
         "pl": "-361.2100",
-        "status": "Call Back",
+        "status": "Trustpilot",
         "country": "Australia"
       }
     },
@@ -1201,7 +1201,7 @@
         "volume": "288,800.0000",
         "lots": "28.88",
         "pl": "614.7338",
-        "status": "Call Back",
+        "status": "Trustpilot",
         "country": "Netherlands"
       }
     },
@@ -2527,9 +2527,9 @@
         "totaldeposits": "1,144.0000",
         "netdeposits": "1,144.00",
         "withdrawals": "0.00",
-        "volume": "30,000.0000",
-        "lots": "3",
-        "pl": "-135.0000",
+        "volume": "147,000.0000",
+        "lots": "14.7",
+        "pl": "423.0000",
         "status": "New",
         "country": "Australia"
       }
@@ -2887,7 +2887,7 @@
         "volume": "46,700.0000",
         "lots": "4.67",
         "pl": "1,730.1018",
-        "status": "Call Back",
+        "status": "Trustpilot",
         "country": "United Kingdom"
       }
     },
@@ -9941,9 +9941,9 @@
         "totaldeposits": "13,950.0000",
         "netdeposits": "13,950.00",
         "withdrawals": "0.00",
-        "volume": "1,777,200.0000",
-        "lots": "177.72",
-        "pl": "13,680.8300",
+        "volume": "1,789,700.0000",
+        "lots": "178.97",
+        "pl": "13,631.0800",
         "status": "New",
         "country": "New Zealand"
       }
@@ -19188,10 +19188,10 @@
         "totaldeposits": "11,167.0000",
         "netdeposits": "11,049.17",
         "withdrawals": "117.83",
-        "volume": "3,004,000.0000",
-        "lots": "300.4",
-        "pl": "10,277.9300",
-        "status": "New",
+        "volume": "3,031,100.0000",
+        "lots": "303.11",
+        "pl": "10,181.7700",
+        "status": "Call Back",
         "country": "Australia"
       }
     },
@@ -21378,9 +21378,9 @@
         "totaldeposits": "2,214.0600",
         "netdeposits": "2,214.06",
         "withdrawals": "0.00",
-        "volume": "234,600.0000",
-        "lots": "23.46",
-        "pl": "1,778.1247",
+        "volume": "235,100.0000",
+        "lots": "23.51",
+        "pl": "1,745.5831",
         "status": "New",
         "country": "Spain"
       }
@@ -26476,9 +26476,9 @@
         "totaldeposits": "54,943.1499",
         "netdeposits": "39,698.77",
         "withdrawals": "15,244.38",
-        "volume": "5,590,400.0000",
-        "lots": "559.04",
-        "pl": "39,535.4634",
+        "volume": "6,068,900.0000",
+        "lots": "606.89",
+        "pl": "43,749.7865",
         "status": "Deposited",
         "country": "United Kingdom"
       }
@@ -27296,9 +27296,9 @@
         "totaldeposits": "1,159.8999",
         "netdeposits": "-1,286.76",
         "withdrawals": "2,446.66",
-        "volume": "193,300.0000",
-        "lots": "19.33",
-        "pl": "-945.0167",
+        "volume": "205,100.0000",
+        "lots": "20.51",
+        "pl": "-912.9110",
         "status": "New",
         "country": "Italy"
       }
@@ -27894,9 +27894,9 @@
         "totaldeposits": "1,900.0000",
         "netdeposits": "1,900.00",
         "withdrawals": "0.00",
-        "volume": "610,000.0000",
-        "lots": "61",
-        "pl": "333.1900",
+        "volume": "635,000.0000",
+        "lots": "63.5",
+        "pl": "-41.3100",
         "status": "New",
         "country": "Australia"
       }

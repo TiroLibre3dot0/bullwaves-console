@@ -3,6 +3,7 @@ import useAffiliatePayments from '../hooks/useAffiliatePayments'
 import { formatEuro, formatEuroFull } from '../../../lib/formatters'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
+import { withReportsVersion } from '../../../lib/fetchCache'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
 
@@ -422,7 +423,9 @@ export default function AffiliatePayments2() {
   useEffect(() => {
     async function loadDataStatus() {
       try {
-        const resp = await fetch('/Payments Report.csv')
+        const resp = await fetch(withReportsVersion('/Payments Report.csv'), {
+          cache: 'no-store',
+        })
         if (!resp.ok) return
         const text = await resp.text()
         const lines = text.split(/\r?\n/).filter((line) => line.trim())

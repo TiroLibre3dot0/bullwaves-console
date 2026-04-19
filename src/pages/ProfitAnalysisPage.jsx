@@ -27,7 +27,7 @@ const numberFmt = new Intl.NumberFormat('en-GB', {
 })
 const FILTER_SOURCE_VALUES = ['both', 'creolabs', 'cellxpert']
 
-// Current (partial) month — excluded from charts and delta comparisons
+// Current (partial) month — excluded by default, but can be included from the UI
 const NOW_MONTH_KEY = (() => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
@@ -170,6 +170,23 @@ function monthRangeLabel(keys) {
   return `${monthKeyToLabel(keys[0])} - ${monthKeyToLabel(keys[keys.length - 1])}`
 }
 
+function normalizeJsonRows(payload) {
+  const headers = Array.isArray(payload?.headers) ? payload.headers : []
+  const rows = Array.isArray(payload?.rows) ? payload.rows : []
+
+  if (!rows.length) return []
+  if (!Array.isArray(rows[0])) return rows
+  if (!headers.length) return []
+
+  return rows.map((row) => {
+    const obj = {}
+    headers.forEach((header, idx) => {
+      obj[String(header || '').trim()] = row[idx]
+    })
+    return obj
+  })
+}
+
 function buildComparisonEntry({ current, previous, currentLabel, previousLabel }) {
   return {
     pct: pctChange(current, previous),
@@ -186,13 +203,24 @@ function readFiltersFromUrl() {
     const source = String(params.get('source') || '').trim()
     const kpi = String(params.get('kpi') || '').trim()
     const normalizedSource = source === 'combined' ? 'both' : source
+    const includeCurrentMonth = ['1', 'true', 'yes'].includes(
+      String(params.get('includeCurrentMonth') || '')
+        .trim()
+        .toLowerCase()
+    )
     return {
       timeRange: 'last24',
       sourceMode: FILTER_SOURCE_VALUES.includes(normalizedSource) ? normalizedSource : 'both',
       selectedKpi: FILTER_KPI_VALUES.includes(kpi) ? kpi : 'all',
+      includeCurrentMonth,
     }
   } catch {
-    return { timeRange: 'last24', sourceMode: 'both', selectedKpi: 'all' }
+    return {
+      timeRange: 'last24',
+      sourceMode: 'both',
+      selectedKpi: 'all',
+      includeCurrentMonth: false,
+    }
   }
 }
 
@@ -348,6 +376,9 @@ export default function ProfitAnalysisPage() {
   const [timeRange, setTimeRange] = useState(initialFilters.timeRange)
   const [sourceMode, setSourceMode] = useState(initialFilters.sourceMode)
   const [selectedKpi, setSelectedKpi] = useState(initialFilters.selectedKpi)
+  const [includeCurrentMonth, setIncludeCurrentMonth] = useState(
+    Boolean(initialFilters.includeCurrentMonth)
+  )
 
   useEffect(() => {
     track('page_view', { page: 'OverviewExecutiveCompass', access: 'console' })
@@ -358,9 +389,11 @@ export default function ProfitAnalysisPage() {
     params.set('range', timeRange)
     params.set('source', sourceMode)
     params.set('kpi', selectedKpi)
+    if (includeCurrentMonth) params.set('includeCurrentMonth', '1')
+    else params.delete('includeCurrentMonth')
     const next = `${window.location.pathname}?${params.toString()}`
     window.history.replaceState(window.history.state, '', next)
-  }, [timeRange, sourceMode, selectedKpi])
+  }, [timeRange, sourceMode, selectedKpi, includeCurrentMonth])
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -427,7 +460,7 @@ export default function ProfitAnalysisPage() {
           withReportsVersion('/traders_ranking_rewards_table.json')
         )
         const tradersJson = JSON.parse(tradersRaw)
-        const rows = Array.isArray(tradersJson?.rows) ? tradersJson.rows : []
+        const rows = normalizeJsonRows(tradersJson)
 
         const nextCreo = {}
         const activeByMonth = new Map()
@@ -527,6 +560,7 @@ export default function ProfitAnalysisPage() {
             }
           }
           nextCreo[key].activeUsers = clientsSet.size
+          nextCreo[key].activeUserIds = Array.from(clientsSet)
         }
 
         for (const [key, clientsSet] of registrationsByMonth.entries()) {
@@ -639,8 +673,9 @@ export default function ProfitAnalysisPage() {
     ).sort((a, b) => monthToIndex(a) - monthToIndex(b))
 
     const keysInScope = getPeriodRange(allMonthKeys, timeRange)
-    // Exclude the current (partial) month from charts and comparisons; keep it in period totals
-    const completedKeysInScope = keysInScope.filter((k) => k !== NOW_MONTH_KEY)
+    const displayKeysInScope = includeCurrentMonth
+      ? keysInScope
+      : keysInScope.filter((k) => k !== NOW_MONTH_KEY)
 
     const hasFromCreo = {}
     const hasFromMedia = {}
@@ -652,12 +687,12 @@ export default function ProfitAnalysisPage() {
     const rows = KPI_CONFIG.filter(
       (cfg) => cfg.key !== 'churn60' && (selectedKpi === 'all' || cfg.key === selectedKpi)
     ).map((cfg) => {
-      const labels = completedKeysInScope.map(
+      const labels = displayKeysInScope.map(
         (k) => mediaMonthly[k]?.label || creoMonthly[k]?.label || k
       )
 
-      const creoSeries = completedKeysInScope.map((k) => Number(creoMonthly[k]?.[cfg.key] || 0))
-      const mediaSeries = completedKeysInScope.map((k) => Number(mediaMonthly[k]?.[cfg.key] || 0))
+      const creoSeries = displayKeysInScope.map((k) => Number(creoMonthly[k]?.[cfg.key] || 0))
+      const mediaSeries = displayKeysInScope.map((k) => Number(mediaMonthly[k]?.[cfg.key] || 0))
 
       const showCreo =
         sourceMode === 'both'
@@ -669,13 +704,13 @@ export default function ProfitAnalysisPage() {
           : sourceMode === 'cellxpert' && hasFromMedia[cfg.key]
 
       const comparisonsCellxpert = buildComparisons({
-        keysInScope: completedKeysInScope,
+        keysInScope: displayKeysInScope,
         allKeys: allMonthKeys,
         monthMap: mediaMonthly,
         metric: cfg.key,
       })
       const comparisonsCreolabs = buildComparisons({
-        keysInScope: completedKeysInScope,
+        keysInScope: displayKeysInScope,
         allKeys: allMonthKeys,
         monthMap: creoMonthly,
         metric: cfg.key,
@@ -694,7 +729,7 @@ export default function ProfitAnalysisPage() {
         labels,
         creoSeries,
         mediaSeries,
-        tooltipData: completedKeysInScope.map((k, idx) => ({
+        tooltipData: displayKeysInScope.map((k, idx) => ({
           key: k,
           label: mediaMonthly[k]?.label || creoMonthly[k]?.label || k,
           creolabs: creoSeries[idx] || 0,
@@ -714,42 +749,57 @@ export default function ProfitAnalysisPage() {
         (acc, key) => acc + Number(mediaMonthly[key]?.[cfg.key] || 0),
         0
       )
-      const creoTotal = keysInScope.reduce(
-        (acc, key) => acc + Number(creoMonthly[key]?.[cfg.key] || 0),
-        0
-      )
-      return { ...cfg, cellxTotal, creoTotal }
+      const creoTotal =
+        cfg.key === 'activeUsers'
+          ? (() => {
+              const uniqueIds = new Set()
+              keysInScope.forEach((key) => {
+                for (const clientId of creoMonthly[key]?.activeUserIds || []) {
+                  if (clientId) uniqueIds.add(String(clientId))
+                }
+              })
+              return uniqueIds.size
+            })()
+          : keysInScope.reduce((acc, key) => acc + Number(creoMonthly[key]?.[cfg.key] || 0), 0)
+
+      let displayTotal = cellxTotal
+      if (sourceMode === 'creolabs') displayTotal = creoTotal
+      else if (sourceMode === 'cellxpert') displayTotal = cellxTotal
+      else if (!hasFromMedia[cfg.key] && hasFromCreo[cfg.key]) displayTotal = creoTotal
+      else if (!hasFromCreo[cfg.key] && hasFromMedia[cfg.key]) displayTotal = cellxTotal
+
+      return { ...cfg, cellxTotal, creoTotal, displayTotal }
     })
 
     const ftdQftd = {
-      labels: completedKeysInScope.map((k) => mediaMonthly[k]?.label || k),
-      ftd: completedKeysInScope.map((k) => Number(mediaMonthly[k]?.ftdCount || 0)),
-      qftd: completedKeysInScope.map((k) => Number(mediaMonthly[k]?.qftd || 0)),
+      labels: displayKeysInScope.map((k) => mediaMonthly[k]?.label || k),
+      ftd: displayKeysInScope.map((k) => Number(mediaMonthly[k]?.ftdCount || 0)),
+      qftd: displayKeysInScope.map((k) => Number(mediaMonthly[k]?.qftd || 0)),
       comparisonsFtd: buildComparisons({
-        keysInScope: completedKeysInScope,
+        keysInScope: displayKeysInScope,
         allKeys: allMonthKeys,
         monthMap: mediaMonthly,
         metric: 'ftdCount',
       }),
       comparisonsQftd: buildComparisons({
-        keysInScope: completedKeysInScope,
+        keysInScope: displayKeysInScope,
         allKeys: allMonthKeys,
         monthMap: mediaMonthly,
         metric: 'qftd',
       }),
-      hasData: completedKeysInScope.some(
+      hasData: displayKeysInScope.some(
         (k) => Number(mediaMonthly[k]?.ftdCount || 0) > 0 || Number(mediaMonthly[k]?.qftd || 0) > 0
       ),
     }
 
     const churnTrend = {
-      labels: completedKeysInScope.map((k) => creoMonthly[k]?.label || k),
-      churn60: completedKeysInScope.map((k) => Number(creoMonthly[k]?.churn60 || 0)),
-      hasData: completedKeysInScope.some((k) => Number(creoMonthly[k]?.churn60 || 0) > 0),
+      labels: displayKeysInScope.map((k) => creoMonthly[k]?.label || k),
+      churn60: displayKeysInScope.map((k) => Number(creoMonthly[k]?.churn60 || 0)),
+      hasData: displayKeysInScope.some((k) => Number(creoMonthly[k]?.churn60 || 0) > 0),
     }
 
     const comparisonsChurn60 = buildComparisons({
-      keysInScope: completedKeysInScope,
+      keysInScope: displayKeysInScope,
       allKeys: allMonthKeys,
       monthMap: creoMonthly,
       metric: 'churn60',
@@ -758,6 +808,7 @@ export default function ProfitAnalysisPage() {
     return {
       allMonthKeys,
       keysInScope,
+      displayKeysInScope,
       rows,
       topCards,
       hasFromCreo,
@@ -766,7 +817,7 @@ export default function ProfitAnalysisPage() {
       churnTrend,
       comparisonsChurn60,
     }
-  }, [mediaMonthly, creoMonthly, sourceMode, timeRange, selectedKpi])
+  }, [mediaMonthly, creoMonthly, sourceMode, timeRange, selectedKpi, includeCurrentMonth])
 
   if (loading) {
     return <FullPageLoader progress={35} subtitle={t('profitAnalysis.loader.mediaReport')} />
@@ -861,6 +912,28 @@ export default function ProfitAnalysisPage() {
               </option>
             ))}
           </select>
+
+          <label
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: '#0f172a',
+              color: 'var(--text)',
+              fontSize: 12,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={includeCurrentMonth}
+              onChange={(e) => setIncludeCurrentMonth(e.target.checked)}
+            />
+            Include current month
+          </label>
         </div>
       </div>
 
@@ -876,13 +949,13 @@ export default function ProfitAnalysisPage() {
             key={card.key}
             size="sm"
             label={card.label}
-            value={formatMetricValue(card.cellxTotal, card.kind)}
+            value={formatMetricValue(card.displayTotal, card.kind)}
             helper={
               card.key === 'activeUsers'
-                ? 'Unique clients per month with trades > 0'
+                ? `Distinct CreoLabs traders active in the selected period: ${formatMetricValue(card.creoTotal, card.kind)}`
                 : `CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`
             }
-            fullValue={`Cellxpert: ${formatMetricValue(card.cellxTotal, card.kind)} | CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
+            fullValue={`Displayed: ${formatMetricValue(card.displayTotal, card.kind)} | Cellxpert: ${formatMetricValue(card.cellxTotal, card.kind)} | CreoLabs: ${formatMetricValue(card.creoTotal, card.kind)}`}
             tone={card.tone}
             style={{ minWidth: 140 }}
           />

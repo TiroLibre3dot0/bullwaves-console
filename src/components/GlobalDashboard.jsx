@@ -16,6 +16,7 @@ import {
   normalizeKey,
 } from '../lib/formatters'
 import { monthMetaFromDate, parseCsv, parseMonthFirstDate, parseMonthLabel } from '../lib/csv'
+import { withReportsVersion } from '../lib/fetchCache'
 import { useI18n } from '../i18n/I18nContext'
 
 const formatNumberFull = (value) => formatNumber(value)
@@ -59,7 +60,7 @@ export default function GlobalDashboard() {
         const candidates = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
         let text = ''
         for (const path of candidates) {
-          const resp = await fetch(path)
+          const resp = await fetch(withReportsVersion(path), { cache: 'no-store' })
           if (resp.ok) {
             text = await resp.text()
             break
@@ -140,7 +141,9 @@ export default function GlobalDashboard() {
   useEffect(() => {
     async function loadPayments() {
       try {
-        const resp = await fetch('/Payments Report.csv')
+        const resp = await fetch(withReportsVersion('/Payments Report.csv'), {
+          cache: 'no-store',
+        })
         if (!resp.ok) return
         const text = await resp.text()
         const parsed = parseCsv(text).map((r) => {
