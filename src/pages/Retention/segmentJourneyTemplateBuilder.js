@@ -7,6 +7,10 @@ const WHATSAPP_TEXT = {
   en: 'Hi Bullwaves, I would like help with the next step on my account.',
   it: 'Ciao Bullwaves, vorrei supporto per il prossimo passo sul mio account.',
 }
+const DORMANT_BONUS_WHATSAPP_TEXT = {
+  en: 'Hi Bullwaves, I would like to request the 100 USD free bonus. My keyword is BONUS100. Please connect me with my account manager on WhatsApp.',
+  it: 'Ciao Bullwaves, vorrei richiedere il bonus gratuito da 100 USD. La mia keyword è BONUS100. Per favore mettetemi in contatto con il mio account manager su WhatsApp.',
+}
 
 function getWhatsAppHref(lang = 'en') {
   const normalizedLang = lang === 'it' ? 'it' : 'en'
@@ -27,6 +31,11 @@ function getContextualSupportWhatsAppHref(lang = 'en', context = {}) {
       : `Hi Bullwaves, I need support regarding the email "${contextLabel}". I would like help with the next step on my account.`
 
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`
+}
+
+function getDormantBonusWhatsAppHref(lang = 'en') {
+  const normalizedLang = lang === 'it' ? 'it' : 'en'
+  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(DORMANT_BONUS_WHATSAPP_TEXT[normalizedLang])}`
 }
 
 function getJourneyIconHref(iconUrl, lang = 'en', context = {}) {
@@ -466,7 +475,13 @@ export function buildSegmentEmailHtml(
   const normalizedBodyThree = normalize(bodyThree)
   const normalizedCtaLabel = normalize(ctaLabel)
   const offerMessaging = getOfferMessaging(lang, templateKey)
-  const ctaHref = ctaUrl ? ctaUrl : mode === 'sendgrid' ? SENDGRID_CTA_HREF : DEFAULT_CTA_URL
+  const ctaHref = ctaUrl
+    ? ctaUrl
+    : templateKey.startsWith('dormant_120d_bonus_')
+      ? getDormantBonusWhatsAppHref(lang)
+      : mode === 'sendgrid'
+        ? SENDGRID_CTA_HREF
+        : DEFAULT_CTA_URL
   const iconContext = {
     title: normalizedTitle,
     heroTitle: normalizedHeroTitle,

@@ -2059,6 +2059,31 @@ const EXCLUSIVE_SEGMENT_CONFIGS = [
     },
   },
   {
+    key: 'dormant_120d_bonus',
+    label: 'Dormant 120d Bonus Reactivation',
+    group: 'Winback',
+    priority: 15,
+    goal: 'Re-engage long-inactive users with a manager-led 100 USD free-bonus offer.',
+    description:
+      'Any dormant or inactive user with at least 120 days of inactivity, regardless of past trading volume or deposit size.',
+    statusBuckets: buildStatusBuckets(['dormant', 'inactive']),
+    rules:
+      'status IN (Dormant, Inactive); daysSinceLastTrade >= 120; no minimum deposit or trade threshold',
+    rulesList: [
+      'status IN (Dormant, Inactive)',
+      'daysSinceLastTrade >= 120',
+      'No minimum deposit requirement',
+      'No minimum trade requirement',
+    ],
+    matches: ({ metric, statusKey }) => {
+      const d = Number(metric?.recencyDays)
+      return (
+        (statusKey === 'inactive' || statusKey === 'dormant') &&
+        (Number.isFinite(d) ? d >= 120 : true)
+      )
+    },
+  },
+  {
     key: 'dormant_value',
     label: 'Dormant Value Traders',
     group: 'Winback',

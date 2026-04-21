@@ -21,6 +21,7 @@ const Papa = require('papaparse')
 
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
 const OUT_PATH = path.join(PUBLIC_DIR, 'support_users_index.json')
+const QUICK_OUT_PATH = path.join(PUBLIC_DIR, 'support_users_search_index.json')
 
 const FORCE = process.argv.includes('--force')
 
@@ -183,8 +184,10 @@ function main() {
       byEmail: {},
       rows: [],
     }
-    fs.writeFileSync(OUT_PATH, JSON.stringify(out, null, 2), 'utf8')
-    console.log(`No registrations CSV found. Wrote empty index -> ${path.relative(process.cwd(), OUT_PATH)}`)
+    const quickOut = { ...out, rows: [] }
+    fs.writeFileSync(OUT_PATH, JSON.stringify(out), 'utf8')
+    fs.writeFileSync(QUICK_OUT_PATH, JSON.stringify(quickOut), 'utf8')
+    console.log(`No registrations CSV found. Wrote empty indexes -> ${path.relative(process.cwd(), OUT_PATH)}, ${path.relative(process.cwd(), QUICK_OUT_PATH)}`)
     return
   }
 
@@ -323,9 +326,10 @@ function main() {
     if (emailKey) addIndex(byEmail, emailKey, i)
   }
 
+  const generatedAt = new Date().toISOString()
   const out = {
-    version: 2,
-    generatedAt: new Date().toISOString(),
+    version: 3,
+    generatedAt,
     source: path.basename(inputPath),
     total: rows.length,
     byUserId,
@@ -334,8 +338,35 @@ function main() {
     rows,
   }
 
-  fs.writeFileSync(OUT_PATH, JSON.stringify(out, null, 2), 'utf8')
-  console.log(`Generated ${rows.length} support users -> ${path.relative(process.cwd(), OUT_PATH)}`)
+  const quickOut = {
+    version: 1,
+    generatedAt,
+    source: path.basename(inputPath),
+    total: rows.length,
+    rows: rows.map((row) => ({
+      customername: row.customername || '',
+      userid: row.userid || '',
+      mt5account: row.mt5account || '',
+      affiliateid: row.affiliateid || '',
+      status: row.status || '',
+      country: row.country || '',
+      totaldeposits: row.totaldeposits || '',
+      netdeposits: row.netdeposits || '',
+      withdrawals: row.withdrawals || '',
+      volume: row.volume || '',
+      pl: row.pl || '',
+      __searchIndex: row.__searchIndex || '',
+    })),
+  }
+
+  fs.writeFileSync(OUT_PATH, JSON.stringify(out), 'utf8')
+  fs.writeFileSync(QUICK_OUT_PATH, JSON.stringify(quickOut), 'utf8')
+
+  const fullSizeMb = (fs.statSync(OUT_PATH).size / (1024 * 1024)).toFixed(2)
+  const quickSizeMb = (fs.statSync(QUICK_OUT_PATH).size / (1024 * 1024)).toFixed(2)
+  console.log(
+    `Generated ${rows.length} support users -> ${path.relative(process.cwd(), OUT_PATH)} (${fullSizeMb} MB), ${path.relative(process.cwd(), QUICK_OUT_PATH)} (${quickSizeMb} MB)`
+  )
 }
 
 main()

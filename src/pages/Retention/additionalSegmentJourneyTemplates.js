@@ -3462,6 +3462,674 @@ export const additionalSegmentJourneyTemplatesById = {
       ),
     },
   },
+  dormant_120d_bonus_step1_email: {
+    id: 'dormant_120d_bonus_step1_email',
+    channel: 'email',
+    locales: {
+      en: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step1_email',
+        {
+          name: 'Dormant 120d - Free Bonus Invite A',
+          description:
+            'Reactivation opener for deeply inactive users built around a 100 USD free-bonus experience requested on WhatsApp.',
+          subject: 'A 100 USD Bullwaves bonus can now help you restart.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'A lighter way back is open',
+            heroTitle: 'You can restart with a 100 USD free bonus',
+            heroSubtitle:
+              'Your account manager can guide the request directly on WhatsApp with one simple keyword.',
+            mainTitle: 'Return without needing to fund the first step yourself.',
+            introLead:
+              'If your account has been inactive for a long time, this is a practical way to test the platform again with lower friction.',
+            bodyOne:
+              'Eligible clients can request a 100 USD bonus to trade again in a more relaxed and supported way.',
+            bodyTwo: 'What this includes:',
+            boxOneTitle: '100 USD Bonus',
+            boxOneCopy: 'A free-bonus trading experience activated by your manager',
+            boxTwoTitle: 'Profit Withdrawal',
+            boxTwoCopy: 'If results are positive, profits can be withdrawn',
+            boxThreeTitle: 'WhatsApp Request',
+            boxThreeCopy: 'Send the keyword BONUS100 to your account manager',
+            bodyThree:
+              'To request it, contact your account manager on WhatsApp and send the keyword BONUS100.',
+            bodyFour:
+              'This is designed to make your return simpler, more concrete, and worth trying again.',
+            ctaLabel: 'Message My Manager On WhatsApp',
+          },
+        },
+        {
+          name: 'Dormant 120d - Free Bonus Invite B',
+          description:
+            'Alternative re-entry angle focused on a no-pressure 100 USD bonus and direct manager support.',
+          subject: 'Your account is eligible for a 100 USD reactivation bonus.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Restart with more confidence',
+            heroTitle: 'A free-bonus experience is available for your account',
+            heroSubtitle:
+              'A simple WhatsApp message can reopen the conversation and activate your next step.',
+            mainTitle:
+              'Sometimes the easiest return is the one that feels risk-light and well supported.',
+            introLead:
+              'This invitation is for clients who have been away for a while and want a simpler reason to come back.',
+            bodyOne:
+              'With the 100 USD bonus, you can explore a fresh trading experience without extra pressure and with direct manager guidance.',
+            bodyTwo: 'Your re-entry path includes:',
+            boxOneTitle: 'Free Bonus Access',
+            boxOneCopy: 'A concrete 100 USD restart opportunity',
+            boxTwoTitle: 'Manager Support',
+            boxTwoCopy: 'One direct WhatsApp contact for the activation',
+            boxThreeTitle: 'Keyword BONUS100',
+            boxThreeCopy: 'One message is enough to start the request',
+            bodyThree:
+              'Open the conversation on WhatsApp with your account manager and send BONUS100 to request the offer.',
+            bodyFour:
+              'It is a simple way to return, test the platform again, and see whether this is the right time to reactivate.',
+            ctaLabel: 'Request My Bonus On WhatsApp',
+          },
+        }
+      ),
+      it: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step1_email',
+        {
+          name: 'Dormant 120d - Invito Bonus Gratuito A IT',
+          description:
+            'Apertura di riattivazione per utenti molto inattivi basata su un bonus gratuito da 100 USD richiedibile su WhatsApp.',
+          subject: 'Un bonus Bullwaves da 100 USD puo aiutarti a ripartire.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'E disponibile un rientro piu leggero',
+            heroTitle: 'Puoi ripartire con un bonus gratuito da 100 USD',
+            heroSubtitle:
+              'Il tuo account manager puo guidare la richiesta direttamente su WhatsApp con una parola chiave molto semplice.',
+            mainTitle: 'Rientra senza dover finanziare subito il primo passo con fondi tuoi.',
+            introLead:
+              'Se il tuo account e fermo da tempo, questa puo essere una modalita pratica per provare di nuovo la piattaforma con meno attrito.',
+            bodyOne:
+              'I clienti idonei possono richiedere un bonus da 100 USD per tornare a fare esperienza di trading in modo piu sereno e supportato.',
+            bodyTwo: 'Cosa include questa proposta:',
+            boxOneTitle: 'Bonus 100 USD',
+            boxOneCopy: 'Una esperienza di trading supportata e attivata dal manager',
+            boxTwoTitle: 'Profitti Prelevabili',
+            boxTwoCopy: 'Se il risultato e positivo, i profitti possono essere prelevati',
+            boxThreeTitle: 'Richiesta WhatsApp',
+            boxThreeCopy: 'Invia la keyword BONUS100 al tuo account manager',
+            bodyThree:
+              'Per richiederlo, contatta il tuo account manager su WhatsApp e invia la keyword BONUS100.',
+            bodyFour:
+              'L idea e rendere il tuo ritorno piu semplice, piu concreto e piu facile da valutare.',
+            ctaLabel: 'Scrivi Al Mio Manager Su WhatsApp',
+          },
+        },
+        {
+          name: 'Dormant 120d - Invito Bonus Gratuito B IT',
+          description:
+            'Variante di rientro orientata a bonus gratuito da 100 USD e supporto diretto del manager.',
+          subject: 'Per il tuo account e disponibile un bonus di riattivazione da 100 USD.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Riparti con piu fiducia',
+            heroTitle: 'Per il tuo account e disponibile una esperienza con bonus gratuito',
+            heroSubtitle:
+              'Un semplice messaggio WhatsApp puo riaprire la conversazione e attivare il tuo prossimo passo.',
+            mainTitle:
+              'A volte il rientro migliore e quello che si sente leggero e ben supportato.',
+            introLead:
+              'Questo invito e pensato per clienti che sono stati lontani per un po e vogliono un motivo semplice e concreto per tornare.',
+            bodyOne:
+              'Con il bonus da 100 USD puoi fare una nuova esperienza di trading con meno pressione e con il supporto diretto del manager.',
+            bodyTwo: 'Il percorso include:',
+            boxOneTitle: 'Accesso Bonus',
+            boxOneCopy: 'Una opportunita concreta di ripartenza da 100 USD',
+            boxTwoTitle: 'Supporto Manager',
+            boxTwoCopy: 'Un contatto WhatsApp diretto per attivare la richiesta',
+            boxThreeTitle: 'Keyword BONUS100',
+            boxThreeCopy: 'Un solo messaggio basta per iniziare',
+            bodyThree:
+              'Apri la conversazione su WhatsApp con il tuo account manager e invia BONUS100 per richiedere l offerta.',
+            bodyFour:
+              'E un modo semplice per rientrare, riprovare la piattaforma e capire se questo e il momento giusto per riattivarti.',
+            ctaLabel: 'Richiedi Il Mio Bonus Su WhatsApp',
+          },
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_step2_email: {
+    id: 'dormant_120d_bonus_step2_email',
+    channel: 'email',
+    locales: {
+      en: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step2_email',
+        {
+          name: 'Dormant 120d - Bonus Activation Reminder A',
+          description:
+            'Reminder explaining how to request the 100 USD bonus through the account manager on WhatsApp.',
+          subject: 'To request the 100 USD bonus, send BONUS100 on WhatsApp.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Your bonus request is one message away',
+            heroTitle: 'Send BONUS100 to your account manager',
+            heroSubtitle:
+              'That simple WhatsApp message is enough to ask for your 100 USD bonus activation.',
+            mainTitle: 'This is the easiest way to restart the experience.',
+            introLead:
+              'If you want to come back without a heavy first step, this manager-led route is the cleanest option available now.',
+            bodyOne:
+              'There is no complex process: just contact your manager on WhatsApp and send the keyword BONUS100.',
+            bodyTwo: 'Why this route works:',
+            boxOneTitle: 'Fast Request',
+            boxOneCopy: 'One keyword starts the conversation',
+            boxTwoTitle: 'Manager Guidance',
+            boxTwoCopy: 'You are supported from request to activation',
+            boxThreeTitle: 'Useful Experience',
+            boxThreeCopy: 'You can test the platform again with a practical bonus',
+            bodyThree:
+              'If approved, the bonus can be used for a fresh trading experience and positive results may be withdrawn.',
+            bodyFour: 'If you were waiting for a simple reason to return, this is it.',
+            ctaLabel: 'Send BONUS100 On WhatsApp',
+          },
+        },
+        {
+          name: 'Dormant 120d - Bonus Activation Reminder B',
+          description:
+            'Alternative reminder focused on simplicity, manager support, and profit-withdrawal upside.',
+          subject: 'A simpler return starts with one WhatsApp keyword: BONUS100.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Your manager can activate the next step',
+            heroTitle: 'The 100 USD route is still open for you',
+            heroSubtitle:
+              'Message your account manager on WhatsApp and use BONUS100 to request the reactivation offer.',
+            mainTitle: 'A return becomes easier when the first step is already prepared.',
+            introLead:
+              'This reminder is here to keep the path clear, simple, and worth considering again.',
+            bodyOne:
+              'The bonus offer is designed to let you re-enter in a lighter way and see whether a new cycle feels right for you.',
+            bodyTwo: 'Remember:',
+            boxOneTitle: '100 USD Available',
+            boxOneCopy: 'A concrete bonus can be requested now',
+            boxTwoTitle: 'WhatsApp Only',
+            boxTwoCopy: 'The request goes directly through your manager',
+            boxThreeTitle: 'Profits Can Stay Yours',
+            boxThreeCopy: 'If the outcome is positive, profits may be withdrawn',
+            bodyThree:
+              'Start with one message, get the guidance you need, and decide your next step with more confidence.',
+            bodyFour: 'Send BONUS100 and let your manager guide the rest.',
+            ctaLabel: 'Contact My Manager Now',
+          },
+        }
+      ),
+      it: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step2_email',
+        {
+          name: 'Dormant 120d - Reminder Attivazione Bonus A IT',
+          description:
+            'Reminder che spiega come richiedere il bonus da 100 USD tramite account manager su WhatsApp.',
+          subject: 'Per richiedere il bonus da 100 USD, invia BONUS100 su WhatsApp.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'La tua richiesta bonus e a un messaggio di distanza',
+            heroTitle: 'Invia BONUS100 al tuo account manager',
+            heroSubtitle:
+              'Quel semplice messaggio WhatsApp basta per chiedere l attivazione del bonus da 100 USD.',
+            mainTitle: 'E il modo piu semplice per ripartire con una nuova esperienza.',
+            introLead:
+              'Se vuoi tornare senza un primo passo troppo impegnativo, questa via guidata dal manager e oggi una delle opzioni piu chiare.',
+            bodyOne:
+              'Non c e un processo complicato: contatta il tuo manager su WhatsApp e invia la keyword BONUS100.',
+            bodyTwo: 'Perche funziona:',
+            boxOneTitle: 'Richiesta Rapida',
+            boxOneCopy: 'Una keyword basta per aprire la conversazione',
+            boxTwoTitle: 'Guida Del Manager',
+            boxTwoCopy: 'Sei seguito dalla richiesta fino alla possibile attivazione',
+            boxThreeTitle: 'Esperienza Utile',
+            boxThreeCopy: 'Puoi riprovare la piattaforma con un bonus pratico',
+            bodyThree:
+              'Se approvato, il bonus puo essere usato per una nuova esperienza di trading e gli eventuali risultati positivi possono essere prelevati.',
+            bodyFour:
+              'Se aspettavi un motivo semplice per tornare, questo e un buon punto di ripartenza.',
+            ctaLabel: 'Invia BONUS100 Su WhatsApp',
+          },
+        },
+        {
+          name: 'Dormant 120d - Reminder Attivazione Bonus B IT',
+          description:
+            'Variante reminder focalizzata su semplicita, supporto manager e lato positivo del bonus.',
+          subject: 'Un rientro piu semplice parte da una keyword WhatsApp: BONUS100.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Il tuo manager puo attivare il prossimo passo',
+            heroTitle: 'La route da 100 USD e ancora aperta per te',
+            heroSubtitle:
+              'Scrivi al tuo account manager su WhatsApp e usa BONUS100 per richiedere l offerta di riattivazione.',
+            mainTitle: 'Il ritorno diventa piu facile quando il primo passo e gia pronto.',
+            introLead:
+              'Questo reminder serve a tenere il percorso chiaro, semplice e concreto da valutare.',
+            bodyOne:
+              'L offerta bonus e pensata per farti rientrare in modo piu leggero e capire se un nuovo ciclo puo essere interessante per te.',
+            bodyTwo: 'Ricorda:',
+            boxOneTitle: '100 USD Disponibili',
+            boxOneCopy: 'Un bonus concreto puo essere richiesto ora',
+            boxTwoTitle: 'Solo Su WhatsApp',
+            boxTwoCopy: 'La richiesta passa direttamente dal tuo manager',
+            boxThreeTitle: 'Profitti Prelevabili',
+            boxThreeCopy: 'Se il risultato e positivo, i profitti possono essere prelevati',
+            bodyThree:
+              'Inizia con un solo messaggio, ottieni la guida necessaria e valuta il tuo prossimo passo con piu fiducia.',
+            bodyFour: 'Invia BONUS100 e lascia che il manager ti accompagni nel resto.',
+            ctaLabel: 'Contatta Il Mio Manager Ora',
+          },
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_step3_email: {
+    id: 'dormant_120d_bonus_step3_email',
+    channel: 'email',
+    locales: {
+      en: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step3_email',
+        {
+          name: 'Dormant 120d - Last Call Bonus Support A',
+          description: 'Final supportive re-entry touch for the 100 USD dormant-bonus journey.',
+          subject: 'If you want a low-friction return, your 100 USD bonus path is still open.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Your easiest return option is still available',
+            heroTitle: 'The bonus invitation is still open',
+            heroSubtitle:
+              'A simple WhatsApp request can still unlock the 100 USD experience for your account.',
+            mainTitle: 'If you want to test the waters again, this is the cleanest way to do it.',
+            introLead:
+              'There is still time to come back with a lighter first step and direct support from your manager.',
+            bodyOne:
+              'The purpose of this offer is simple: give you a practical reason to restart without unnecessary pressure.',
+            bodyTwo: 'Why it is worth considering:',
+            boxOneTitle: 'Low-Frictions Start',
+            boxOneCopy: 'A simpler comeback route after a long pause',
+            boxTwoTitle: 'Manager Contact',
+            boxTwoCopy: 'Direct WhatsApp support when you are ready',
+            boxThreeTitle: 'Real Upside',
+            boxThreeCopy: 'Positive trading results may be withdrawn',
+            bodyThree:
+              'If you want the activation, message your account manager now and send BONUS100.',
+            bodyFour:
+              'Sometimes one simple conversation is enough to put the account back in motion.',
+            ctaLabel: 'Activate My WhatsApp Request',
+          },
+        },
+        {
+          name: 'Dormant 120d - Last Call Bonus Support B',
+          description:
+            'Alternative closing touch for long-inactive users who still have not claimed the manager-led bonus.',
+          subject: 'The 100 USD bonus offer is still available for your account.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Do not overcomplicate your comeback',
+            heroTitle: 'A simple manager-led return is still on the table',
+            heroSubtitle:
+              'Your next step can begin with a WhatsApp message instead of a heavy commitment.',
+            mainTitle: 'This is a practical way to see whether you are ready to reactivate.',
+            introLead:
+              'If the timing feels better now, your manager can still help you access the 100 USD bonus route.',
+            bodyOne:
+              'You do not need a complex plan to start again. You only need one clear action and the right support.',
+            bodyTwo: 'The route stays simple:',
+            boxOneTitle: 'Message BONUS100',
+            boxOneCopy: 'Use the keyword on WhatsApp',
+            boxTwoTitle: 'Receive Support',
+            boxTwoCopy: 'Let your manager guide the request',
+            boxThreeTitle: 'Try The Experience',
+            boxThreeCopy: 'Use the bonus and evaluate your return calmly',
+            bodyThree:
+              'The opportunity is still available if you want to take a fresh look at the market with lower friction.',
+            bodyFour: 'Send BONUS100 whenever you are ready.',
+            ctaLabel: 'Take The First Step On WhatsApp',
+          },
+        }
+      ),
+      it: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_step3_email',
+        {
+          name: 'Dormant 120d - Supporto Finale Bonus A IT',
+          description:
+            'Ultimo touch di supporto per il journey dormant legato al bonus da 100 USD.',
+          subject:
+            'Se vuoi un rientro piu leggero, il tuo percorso bonus da 100 USD e ancora aperto.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'La tua opzione di ritorno piu semplice e ancora disponibile',
+            heroTitle: 'L invito bonus e ancora aperto',
+            heroSubtitle:
+              'Una semplice richiesta su WhatsApp puo ancora sbloccare la esperienza da 100 USD per il tuo account.',
+            mainTitle:
+              'Se vuoi riprovare senza appesantire il primo passo, questa e la via piu pulita.',
+            introLead:
+              'Hai ancora tempo per tornare con un approccio piu leggero e con il supporto diretto del tuo manager.',
+            bodyOne:
+              'L obiettivo di questa proposta e semplice: darti un motivo pratico per ripartire senza pressione inutile.',
+            bodyTwo: 'Perche puo valerne la pena:',
+            boxOneTitle: 'Partenza Leggera',
+            boxOneCopy: 'Un percorso di ritorno piu semplice dopo una lunga pausa',
+            boxTwoTitle: 'Contatto Manager',
+            boxTwoCopy: 'Supporto diretto su WhatsApp quando vuoi',
+            boxThreeTitle: 'Lato Positivo',
+            boxThreeCopy: 'Gli eventuali risultati positivi possono essere prelevati',
+            bodyThree: 'Se vuoi l attivazione, scrivi ora al tuo account manager e invia BONUS100.',
+            bodyFour: 'A volte basta una conversazione semplice per rimettere in moto il conto.',
+            ctaLabel: 'Attiva La Mia Richiesta Su WhatsApp',
+          },
+        },
+        {
+          name: 'Dormant 120d - Supporto Finale Bonus B IT',
+          description:
+            'Variante finale per utenti molto inattivi che non hanno ancora richiesto il bonus tramite manager.',
+          subject: 'Per il tuo account il bonus da 100 USD e ancora disponibile.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Non complicare il tuo rientro',
+            heroTitle: 'E ancora disponibile un ritorno semplice guidato dal manager',
+            heroSubtitle:
+              'Il tuo prossimo passo puo iniziare da un messaggio WhatsApp invece che da un impegno pesante.',
+            mainTitle: 'E un modo pratico per capire se sei pronto a riattivarti.',
+            introLead:
+              'Se oggi il timing ti sembra migliore, il tuo manager puo ancora aiutarti ad accedere al percorso bonus da 100 USD.',
+            bodyOne:
+              'Non serve un piano complesso per ricominciare. Serve solo un azione chiara e il supporto giusto.',
+            bodyTwo: 'Il percorso resta semplice:',
+            boxOneTitle: 'Invia BONUS100',
+            boxOneCopy: 'Usa la keyword su WhatsApp',
+            boxTwoTitle: 'Ricevi Supporto',
+            boxTwoCopy: 'Lascia che il manager guidi la richiesta',
+            boxThreeTitle: 'Prova L Esperienza',
+            boxThreeCopy: 'Usa il bonus e valuta il ritorno con calma',
+            bodyThree:
+              'L opportunita e ancora disponibile se vuoi guardare al mercato con piu leggerezza e meno attrito.',
+            bodyFour: 'Invia BONUS100 quando ti senti pronto.',
+            ctaLabel: 'Fai Il Primo Passo Su WhatsApp',
+          },
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_followup_retained_email: {
+    id: 'dormant_120d_bonus_followup_retained_email',
+    channel: 'email',
+    locales: {
+      en: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_followup_retained_email',
+        {
+          name: 'Dormant 120d - Bonus Request Confirmed A',
+          description:
+            'Positive follow-up after the user responds to the WhatsApp bonus invitation or reopens the conversation.',
+          subject: 'Your Bullwaves bonus request has reopened the path.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Your return is moving again',
+            heroTitle: 'The conversation is active again',
+            heroSubtitle:
+              'Your manager can now guide the next steps around the 100 USD bonus and your comeback path.',
+            mainTitle: 'A positive signal is already there. Now keep it moving.',
+            introLead:
+              'By replying or reopening the conversation, you have already taken the most important first step.',
+            bodyOne:
+              'From here, the goal is simple: make the activation smooth and turn the bonus opportunity into a useful return experience.',
+            bodyTwo: 'What matters now:',
+            boxOneTitle: 'Manager Follow-Through',
+            boxOneCopy: 'Keep the WhatsApp conversation active',
+            boxTwoTitle: 'Bonus Activation',
+            boxTwoCopy: 'Confirm the practical details of your request',
+            boxThreeTitle: 'Fresh Experience',
+            boxThreeCopy: 'Use the bonus to test the platform again with confidence',
+            bodyThree:
+              'Stay in contact with your manager and complete the activation in the simplest possible way.',
+            bodyFour: 'This is the best moment to turn initial interest into a real comeback.',
+            ctaLabel: 'Continue With My Manager',
+          },
+        },
+        {
+          name: 'Dormant 120d - Bonus Request Confirmed B',
+          description:
+            'Warm continuation touch after the dormant user accepts the manager-led bonus path.',
+          subject: 'Good news: your bonus path is now back in motion.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'You are already back in the conversation',
+            heroTitle: 'Your bonus route is now open again',
+            heroSubtitle:
+              'Keep the momentum simple and let your manager guide the remaining steps.',
+            mainTitle: 'The hardest part is already done: you reopened the door.',
+            introLead:
+              'This positive follow-up is here to keep the path warm and help you complete the experience calmly.',
+            bodyOne:
+              'Use this phase to confirm the bonus request, review the next step, and decide how you want to re-enter.',
+            bodyTwo: 'Keep attention on:',
+            boxOneTitle: 'Clarity',
+            boxOneCopy: 'One simple step at a time',
+            boxTwoTitle: 'Support',
+            boxTwoCopy: 'Direct manager contact for quick answers',
+            boxThreeTitle: 'Opportunity',
+            boxThreeCopy: 'A fresh trading experience with practical upside',
+            bodyThree:
+              'You are now much closer to reactivation than before. Keep the dialogue active and complete the route.',
+            bodyFour: 'A small follow-through now can create a much stronger restart.',
+            ctaLabel: 'Keep My Return Active',
+          },
+        }
+      ),
+      it: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_followup_retained_email',
+        {
+          name: 'Dormant 120d - Richiesta Bonus Confermata A IT',
+          description:
+            'Follow-up positivo dopo la risposta alla proposta bonus su WhatsApp o la riapertura della conversazione.',
+          subject: 'La tua richiesta bonus Bullwaves ha riaperto il percorso.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Il tuo ritorno si sta rimettendo in moto',
+            heroTitle: 'La conversazione e di nuovo attiva',
+            heroSubtitle:
+              'Il tuo manager puo ora guidarti nei prossimi passi legati al bonus da 100 USD e al tuo rientro.',
+            mainTitle: 'C e gia un segnale positivo. Adesso mantienilo vivo.',
+            introLead:
+              'Rispondendo o riaprendo la conversazione hai gia compiuto il passo piu importante.',
+            bodyOne:
+              'Da qui in avanti l obiettivo e semplice: rendere fluida la richiesta e trasformare il bonus in una esperienza di ritorno davvero utile.',
+            bodyTwo: 'Ora conta soprattutto:',
+            boxOneTitle: 'Follow-Through Manager',
+            boxOneCopy: 'Mantieni attiva la conversazione su WhatsApp',
+            boxTwoTitle: 'Attivazione Bonus',
+            boxTwoCopy: 'Conferma i dettagli pratici della richiesta',
+            boxThreeTitle: 'Nuova Esperienza',
+            boxThreeCopy: 'Usa il bonus per riprovare la piattaforma con piu fiducia',
+            bodyThree:
+              'Resta in contatto con il tuo manager e completa l attivazione nel modo piu semplice possibile.',
+            bodyFour:
+              'Questo e il momento migliore per trasformare un primo interesse in un ritorno reale.',
+            ctaLabel: 'Continua Con Il Mio Manager',
+          },
+        },
+        {
+          name: 'Dormant 120d - Richiesta Bonus Confermata B IT',
+          description:
+            'Variante di continuita dopo che l utente accetta il percorso bonus guidato dal manager.',
+          subject: 'Buone notizie: il tuo percorso bonus si e rimesso in moto.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Sei gia tornato nella conversazione',
+            heroTitle: 'La tua route bonus e di nuovo aperta',
+            heroSubtitle:
+              'Mantieni lo slancio semplice e lascia che il tuo manager ti guidi nei passaggi rimanenti.',
+            mainTitle: 'La parte piu difficile e gia fatta: hai riaperto la porta.',
+            introLead:
+              'Questo follow-up positivo serve a mantenere caldo il percorso e aiutarti a completare l esperienza con calma.',
+            bodyOne:
+              'Usa questa fase per confermare la richiesta bonus, rivedere il prossimo passo e decidere come vuoi rientrare.',
+            bodyTwo: 'Mantieni attenzione su:',
+            boxOneTitle: 'Chiarezza',
+            boxOneCopy: 'Un passo semplice alla volta',
+            boxTwoTitle: 'Supporto',
+            boxTwoCopy: 'Contatto diretto del manager per risposte rapide',
+            boxThreeTitle: 'Opportunita',
+            boxThreeCopy: 'Una nuova esperienza di trading con un lato positivo concreto',
+            bodyThree:
+              'Ora sei molto piu vicino alla riattivazione. Tieni vivo il dialogo e completa il percorso.',
+            bodyFour: 'Un piccolo follow-through oggi puo creare una ripartenza molto piu solida.',
+            ctaLabel: 'Mantieni Attivo Il Mio Ritorno',
+          },
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_followup_recovery_email: {
+    id: 'dormant_120d_bonus_followup_recovery_email',
+    channel: 'email',
+    locales: {
+      en: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_followup_recovery_email',
+        {
+          name: 'Dormant 120d - Bonus Recovery Follow-up A',
+          description:
+            'Low-pressure recovery follow-up when the user has not yet claimed the 100 USD bonus.',
+          subject: 'Your 100 USD WhatsApp bonus route is still available.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'The free-bonus invitation is still open',
+            heroTitle: 'You can still request the 100 USD route',
+            heroSubtitle:
+              'If you have not replied yet, a simple WhatsApp message can still reopen the account path.',
+            mainTitle: 'The opportunity is still here if you want a lighter re-entry.',
+            introLead:
+              'There is still time to contact your manager, send BONUS100, and explore a simpler way back.',
+            bodyOne:
+              'This follow-up keeps the offer clear and low-pressure for clients who have been away for a longer time.',
+            bodyTwo: 'What remains available:',
+            boxOneTitle: '100 USD Offer',
+            boxOneCopy: 'The bonus route can still be requested',
+            boxTwoTitle: 'WhatsApp Contact',
+            boxTwoCopy: 'Your manager remains available to help',
+            boxThreeTitle: 'Extra Experience',
+            boxThreeCopy: 'A practical chance to test the platform again',
+            bodyThree: 'If you want to use it, message your manager on WhatsApp and send BONUS100.',
+            bodyFour: 'One simple message can be enough to restart the relationship.',
+            ctaLabel: 'Request The Bonus Now',
+          },
+        },
+        {
+          name: 'Dormant 120d - Bonus Recovery Follow-up B',
+          description:
+            'Alternative recovery continuation for long-inactive users needing one more low-friction prompt.',
+          subject: 'Still inactive? Your manager-led 100 USD bonus option remains open.',
+          html: {
+            lang: 'en',
+            eyebrow: 'Bullwaves',
+            title: 'Your comeback can still begin from WhatsApp',
+            heroTitle: 'A smaller first step is still possible',
+            heroSubtitle:
+              'The simplest route back is still to contact your manager and ask for BONUS100.',
+            mainTitle: 'There is no need to overthink the restart.',
+            introLead:
+              'If you want to give the platform another look, this bonus route keeps the pressure low and the value clear.',
+            bodyOne:
+              'The offer was created for exactly this moment: when the user is interested in returning but wants a more accessible first move.',
+            bodyTwo: 'You still have access to:',
+            boxOneTitle: 'Manager Help',
+            boxOneCopy: 'Direct human support for the request',
+            boxTwoTitle: 'Bonus Experience',
+            boxTwoCopy: 'A practical re-entry option without a heavy start',
+            boxThreeTitle: 'Potential Upside',
+            boxThreeCopy: 'If results are positive, profits may be withdrawn',
+            bodyThree:
+              'Whenever you are ready, send BONUS100 on WhatsApp and let your manager do the rest.',
+            bodyFour: 'The route remains open for you.',
+            ctaLabel: 'Open WhatsApp And Start',
+          },
+        }
+      ),
+      it: makeAdditionalLocaleVariants(
+        'dormant_120d_bonus_followup_recovery_email',
+        {
+          name: 'Dormant 120d - Follow-up Recovery Bonus A IT',
+          description:
+            'Follow-up recovery a bassa pressione quando il bonus da 100 USD non e ancora stato richiesto.',
+          subject: 'Il tuo percorso bonus da 100 USD su WhatsApp e ancora disponibile.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'L invito al bonus gratuito e ancora aperto',
+            heroTitle: 'Puoi ancora richiedere la route da 100 USD',
+            heroSubtitle:
+              'Se non hai ancora risposto, un semplice messaggio WhatsApp puo ancora riaprire il percorso account.',
+            mainTitle: 'L opportunita e ancora qui se vuoi un rientro piu leggero.',
+            introLead:
+              'Hai ancora tempo per contattare il tuo manager, inviare BONUS100 e valutare un modo piu semplice per tornare.',
+            bodyOne:
+              'Questo follow-up mantiene l offerta chiara e senza pressione per clienti che sono stati lontani piu a lungo.',
+            bodyTwo: 'Cosa resta disponibile:',
+            boxOneTitle: 'Offerta 100 USD',
+            boxOneCopy: 'Il percorso bonus puo ancora essere richiesto',
+            boxTwoTitle: 'Contatto WhatsApp',
+            boxTwoCopy: 'Il tuo manager resta disponibile per aiutarti',
+            boxThreeTitle: 'Esperienza Extra',
+            boxThreeCopy: 'Una occasione pratica per riprovare la piattaforma',
+            bodyThree: 'Se vuoi usarla, scrivi al tuo manager su WhatsApp e invia BONUS100.',
+            bodyFour: 'Un messaggio semplice puo bastare per riavviare la relazione.',
+            ctaLabel: 'Richiedi Il Bonus Ora',
+          },
+        },
+        {
+          name: 'Dormant 120d - Follow-up Recovery Bonus B IT',
+          description:
+            'Continuazione recovery per utenti molto inattivi che hanno bisogno di un ultimo invito semplice.',
+          subject:
+            'Ancora inattivo? La tua opzione bonus da 100 USD guidata dal manager e ancora aperta.',
+          html: {
+            lang: 'it',
+            eyebrow: 'Bullwaves',
+            title: 'Il tuo ritorno puo ancora iniziare da WhatsApp',
+            heroTitle: 'E ancora possibile un primo passo piu leggero',
+            heroSubtitle:
+              'La via piu semplice per tornare resta contattare il manager e chiedere BONUS100.',
+            mainTitle: 'Non serve complicare la ripartenza.',
+            introLead:
+              'Se vuoi dare un altra occhiata alla piattaforma, questa route bonus mantiene bassa la pressione e chiaro il valore.',
+            bodyOne:
+              'L offerta e stata creata proprio per questo momento: quando c e curiosita di tornare ma serve un primo passo piu accessibile.',
+            bodyTwo: 'Hai ancora accesso a:',
+            boxOneTitle: 'Aiuto Del Manager',
+            boxOneCopy: 'Supporto umano diretto per la richiesta',
+            boxTwoTitle: 'Esperienza Bonus',
+            boxTwoCopy: 'Una opzione di rientro concreta e piu leggera',
+            boxThreeTitle: 'Potenziale Positivo',
+            boxThreeCopy: 'Se il risultato e positivo, i profitti possono essere prelevati',
+            bodyThree:
+              'Quando vuoi, invia BONUS100 su WhatsApp e lascia che il manager ti accompagni nel resto.',
+            bodyFour: 'Il percorso resta aperto per te.',
+            ctaLabel: 'Apri WhatsApp E Inizia',
+          },
+        }
+      ),
+    },
+  },
   dormant_value_step1_email: {
     id: 'dormant_value_step1_email',
     channel: 'email',

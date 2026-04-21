@@ -229,6 +229,85 @@ const BLUEPRINTS = {
     ],
     followupRecoveryTiming: 'D14',
   },
+  dormant_120d_bonus: {
+    entry: {
+      en: '120-day dormant bonus audience identified',
+      it: 'Audience bonus dormienti 120 giorni identificata',
+    },
+    step1: [
+      { en: 'Free bonus invitation', it: 'Invito bonus gratuito' },
+      'D0',
+      {
+        en: 'Offer a 100 USD free-bonus experience to deeply inactive users through manager-led WhatsApp outreach',
+        it: 'Propone un bonus gratuito da 100 USD ai clienti molto inattivi tramite contatto WhatsApp con il manager',
+      },
+    ],
+    decision1: [
+      { en: 'WhatsApp keyword sent within 72h?', it: 'Keyword WhatsApp inviata entro 72h?' },
+      {
+        en: 'Manager conversation, WhatsApp reply, or keyword BONUS100 sent after the first touch',
+        it: 'Conversazione con il manager, risposta su WhatsApp o keyword BONUS100 inviata dopo il primo touch',
+      },
+    ],
+    step2: [
+      { en: 'Bonus activation reminder', it: 'Reminder attivazione bonus' },
+      'D4',
+      {
+        en: 'Explain how the free-bonus experience works and invite the user to request it directly on WhatsApp',
+        it: 'Spiega come funziona il bonus gratuito e invita l utente a richiederlo direttamente su WhatsApp',
+      },
+    ],
+    decision2: [
+      {
+        en: 'Bonus request or account return observed?',
+        it: 'Richiesta bonus o ritorno su account osservato?',
+      },
+      {
+        en: 'Keyword sent, manager handoff started, login, or early return behavior detected',
+        it: 'Keyword inviata, passaggio al manager avviato, login o primi segnali di ritorno osservati',
+      },
+    ],
+    step3: [
+      { en: 'Last-call re-entry support', it: 'Supporto finale di rientro' },
+      'D10',
+      {
+        en: 'Keep the offer clear and low-friction so the client can restart with a simple first step',
+        it: 'Mantiene l offerta chiara e a basso attrito per favorire un primo passo di rientro semplice',
+      },
+    ],
+    decision3: [
+      { en: 'Reactivated at 21d checkpoint?', it: 'Riattivato al checkpoint di 21 giorni?' },
+      {
+        en: 'Conversation reopened, bonus activated, or account activity improves after the journey',
+        it: 'Conversazione riaperta, bonus attivato o attivita account in miglioramento dopo il journey',
+      },
+    ],
+    outcomes: [
+      { en: 'Bonus journey activated', it: 'Journey bonus attivato' },
+      { en: 'Relationship warming', it: 'Relazione in riattivazione' },
+      { en: 'Still deeply inactive', it: 'Ancora molto inattivo' },
+    ],
+    followups: [
+      { en: 'Manager bonus follow-through', it: 'Follow-through bonus con manager' },
+      { en: 'Long-cycle low-pressure winback', it: 'Winback soft di lungo periodo' },
+    ],
+    influences: [
+      {
+        en: '120+ days inactive regardless of previous trading intensity',
+        it: 'Oltre 120 giorni di inattivita a prescindere dall intensita di trading passata',
+      },
+      {
+        en: 'Reactivation driven by a 100 USD free-bonus offer requested on WhatsApp',
+        it: 'Riattivazione guidata da un bonus gratuito da 100 USD richiesto su WhatsApp',
+      },
+    ],
+    kpis: [
+      { en: 'WhatsApp request rate', it: 'Tasso richieste WhatsApp' },
+      { en: 'Bonus activation rate', it: 'Tasso attivazione bonus' },
+      { en: '21d reactivation', it: 'Riattivazione a 21 giorni' },
+    ],
+    followupRecoveryTiming: 'D21',
+  },
   dormant_value: {
     entry: {
       en: 'Dormant value profile identified',

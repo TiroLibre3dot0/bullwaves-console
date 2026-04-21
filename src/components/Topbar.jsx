@@ -7,6 +7,176 @@ import { CONSOLE_TOOLS } from '../config/tools'
 import { withReportsVersion } from '../lib/fetchCache'
 import DataInfoModal from './DataInfoModal'
 
+const SUPPORT_NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
+const SUPPORT_USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
+const SUPPORT_MT5_KEYS = ['mt5account', 'mt5_account', 'mt5']
+const SUPPORT_REGDATE_KEYS = [
+  'registrationdate',
+  'registrationDate',
+  'regdate',
+  'regDate',
+  'externaldate',
+  'externalDate',
+  'registered',
+  'registeredAt',
+  'registration_at',
+  'registration_date',
+]
+const SUPPORT_FIRST_DEPOSIT_KEYS = [
+  'firstdeposit',
+  'firstDeposit',
+  'first_deposit',
+  'first deposit',
+  'firstDepositAmount',
+]
+const SUPPORT_QUALIFY_KEYS = [
+  'qualificationdate',
+  'qualificationDate',
+  'qualification_date',
+  'qualifydate',
+  'qftd',
+]
+const SUPPORT_DEPOSIT_COUNT_KEYS = [
+  'depositcount',
+  'depositCount',
+  'deposit_count',
+  'depositscount',
+  'depositsCount',
+  'deposits_count',
+]
+const SUPPORT_TOTAL_DEPOSITS_KEYS = [
+  'totaldeposits',
+  'totalDeposits',
+  'total_deposits',
+  'totaldeposit',
+  'totalDeposit',
+  'total_deposit',
+]
+const SUPPORT_NET_DEPOSITS_KEYS = ['netdeposits', 'netDeposits', 'net_deposits']
+const SUPPORT_WITHDRAWALS_KEYS = ['withdrawals', 'totalwithdrawals', 'total_withdrawals']
+const SUPPORT_AFFILIATE_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
+const SUPPORT_STATUS_KEYS = ['status']
+const SUPPORT_COUNTRY_KEYS = ['country']
+const SUPPORT_ACTION_KEYS = ['action']
+const SUPPORT_POSITION_COUNT_KEYS = ['positioncount', 'position_count', 'position count']
+const SUPPORT_LOTS_KEYS = ['lots', 'total_lots']
+const SUPPORT_VOLUME_KEYS = ['volume', 'turnover']
+const SUPPORT_PL_KEYS = ['pl', 'profitloss', 'netpl', 'net_pl']
+const SUPPORT_SPREAD_KEYS = ['spread']
+const SUPPORT_ROI_KEYS = ['roi']
+const SUPPORT_COMMISSIONS_KEYS = ['commissions', 'affiliatecommissions', 'affiliate_commissions']
+const SUPPORT_AFF_COMM_KEYS = ['affiliatecommissions', 'affiliate_commissions']
+const SUPPORT_SUB_AFF_COMM_KEYS = [
+  'subaffiliatecommissions',
+  'sub_affiliate_commissions',
+  'sub_aff_commissions',
+]
+const SUPPORT_CPA_KEYS = ['cpacommission', 'cpa_commission', 'cpa']
+const SUPPORT_CPL_KEYS = ['cplcommission', 'cpl_commission', 'cpl']
+const SUPPORT_REVSHARE_KEYS = ['revshare', 'revsharecommission', 'revshare_commission']
+
+function pickSupportField(row, candidates) {
+  if (!row) return ''
+  for (const key of candidates) {
+    const value = row?.[key]
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
+      return String(value).trim()
+    }
+  }
+  return ''
+}
+
+function toSupportNum(value) {
+  if (value === null || value === undefined) return 0
+  const n = Number(String(value).replace(/[^0-9.-]+/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+function mapSupportUser(row) {
+  if (!row) return null
+  return {
+    raw: row,
+    name: pickSupportField(row, SUPPORT_NAME_KEYS),
+    userId: pickSupportField(row, SUPPORT_USERID_KEYS),
+    mt5: pickSupportField(row, SUPPORT_MT5_KEYS),
+    regDate: pickSupportField(row, SUPPORT_REGDATE_KEYS),
+    firstDeposit: pickSupportField(row, SUPPORT_FIRST_DEPOSIT_KEYS),
+    qualificationDate: pickSupportField(row, SUPPORT_QUALIFY_KEYS),
+    depositCount: pickSupportField(row, SUPPORT_DEPOSIT_COUNT_KEYS),
+    totalDeposits: pickSupportField(row, SUPPORT_TOTAL_DEPOSITS_KEYS),
+    depositNum: toSupportNum(pickSupportField(row, SUPPORT_TOTAL_DEPOSITS_KEYS)),
+    netDeposits: pickSupportField(row, SUPPORT_NET_DEPOSITS_KEYS),
+    withdrawals: pickSupportField(row, SUPPORT_WITHDRAWALS_KEYS),
+    affiliateId: pickSupportField(row, SUPPORT_AFFILIATE_KEYS),
+    status: pickSupportField(row, SUPPORT_STATUS_KEYS),
+    country: pickSupportField(row, SUPPORT_COUNTRY_KEYS),
+    action: pickSupportField(row, SUPPORT_ACTION_KEYS),
+    lots: pickSupportField(row, SUPPORT_LOTS_KEYS),
+    volume: pickSupportField(row, SUPPORT_VOLUME_KEYS),
+    positionCount: pickSupportField(row, SUPPORT_POSITION_COUNT_KEYS),
+    pl: pickSupportField(row, SUPPORT_PL_KEYS),
+    spread: pickSupportField(row, SUPPORT_SPREAD_KEYS),
+    roi: pickSupportField(row, SUPPORT_ROI_KEYS),
+    commissions: pickSupportField(row, SUPPORT_COMMISSIONS_KEYS),
+    affiliateCommissions: pickSupportField(row, SUPPORT_AFF_COMM_KEYS),
+    subAffiliateCommissions: pickSupportField(row, SUPPORT_SUB_AFF_COMM_KEYS),
+    commission_cpa: pickSupportField(row, SUPPORT_CPA_KEYS),
+    commission_cpl: pickSupportField(row, SUPPORT_CPL_KEYS),
+    revshare: pickSupportField(row, SUPPORT_REVSHARE_KEYS),
+  }
+}
+
+function formatSupportEuro(value) {
+  if (value === null || value === undefined || String(value).trim() === '') return '—'
+  const n = toSupportNum(value)
+  return `€${n.toLocaleString()}`
+}
+
+function suggestedSupportReply(t, mapped) {
+  if (!mapped) return ''
+  const name = mapped.name || mapped.userId || t('support.reply.customerFallback')
+  return t('support.reply.fallback', { name })
+}
+
+const CRM_QUICK_INDEX_URL = '/support_users_search_index.json'
+let crmQuickRowsCache = null
+let crmQuickRowsPromise = null
+
+async function loadCrmQuickRows() {
+  if (Array.isArray(crmQuickRowsCache)) return crmQuickRowsCache
+
+  if (!crmQuickRowsPromise) {
+    crmQuickRowsPromise = (async () => {
+      try {
+        const res = await fetch(withReportsVersion(CRM_QUICK_INDEX_URL), { cache: 'force-cache' })
+        if (!res.ok) return null
+        const data = await res.json()
+        const rows = Array.isArray(data?.rows) ? data.rows : []
+        crmQuickRowsCache = rows
+        return rows
+      } catch {
+        return null
+      }
+    })()
+  }
+
+  const rows = await crmQuickRowsPromise
+  return Array.isArray(rows) ? rows : null
+}
+
+function normalizeCrmQuery(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+}
+
+function parseMoneyLoose(value) {
+  if (value == null || value === '') return 0
+  const n = Number(String(value).replace(/[^0-9.-]+/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
 function parseReviewDate(input) {
   const str = String(input || '').trim()
   if (!str) return null
@@ -227,8 +397,32 @@ export default function Topbar({
     changedFields: 0,
     highlights: [],
   })
+  const [crmQuery, setCrmQuery] = useState('')
+  const [crmResults, setCrmResults] = useState([])
+  const [crmSearchOpen, setCrmSearchOpen] = useState(false)
+  const [crmLoading, setCrmLoading] = useState(false)
+  const [crmSelectedRaw, setCrmSelectedRaw] = useState(null)
+  const [crmCopiedKey, setCrmCopiedKey] = useState('')
   const notificationsWrapRef = useRef(null)
+  const crmWrapRef = useRef(null)
+  const crmInputRef = useRef(null)
+  const crmDebounceRef = useRef(null)
+  const crmCopyTimerRef = useRef(null)
+  const crmLastReqRef = useRef(0)
+  const crmCacheRef = useRef(new Map())
   const hasNav = Boolean(children)
+  const crmSelected = useMemo(
+    () => (crmSelectedRaw ? mapSupportUser(crmSelectedRaw) : null),
+    [crmSelectedRaw]
+  )
+  const crmResultsToShow = useMemo(
+    () =>
+      (Array.isArray(crmResults) ? crmResults : []).slice(0, 8).map((raw) => ({
+        raw,
+        mapped: mapSupportUser(raw),
+      })),
+    [crmResults]
+  )
 
   const openTrustpilotGuide = () => {
     if (typeof window === 'undefined') return
@@ -247,6 +441,111 @@ export default function Topbar({
       window.location.replace(url.toString())
     } catch {
       window.location.reload()
+    }
+  }
+
+  const runCrmSearch = async (value) => {
+    const trimmed = String(value || '').trim()
+    const digits = trimmed.replace(/\D+/g, '')
+    const isReady = digits ? digits.length >= 3 : trimmed.length >= 2
+
+    if (!trimmed || !isReady) {
+      setCrmResults([])
+      setCrmLoading(false)
+      return
+    }
+
+    if (crmCacheRef.current.has(trimmed)) {
+      setCrmResults(crmCacheRef.current.get(trimmed) || [])
+      setCrmLoading(false)
+      setCrmSearchOpen(true)
+      return
+    }
+
+    const reqId = Date.now()
+    crmLastReqRef.current = reqId
+    setCrmLoading(true)
+
+    try {
+      const qNorm = normalizeCrmQuery(trimmed)
+      const quickRows = await loadCrmQuickRows()
+
+      let out = []
+      if (Array.isArray(quickRows) && quickRows.length) {
+        out = quickRows
+          .filter((row) => {
+            const userId = String(row?.userid || '').trim()
+            const mt5 = String(row?.mt5account || '').trim()
+            const haystack = String(row?.__searchIndex || '').toLowerCase()
+            if (digits) return userId.includes(digits) || mt5.includes(digits)
+            return haystack.includes(qNorm)
+          })
+          .sort((a, b) => {
+            const aUser = String(a?.userid || '')
+            const bUser = String(b?.userid || '')
+            const aMt5 = String(a?.mt5account || '')
+            const bMt5 = String(b?.mt5account || '')
+            const aName = String(a?.customername || '').toLowerCase()
+            const bName = String(b?.customername || '').toLowerCase()
+
+            const score = (rowUser, rowMt5, rowName, row) => {
+              let total = 0
+              if (digits) {
+                if (rowUser === digits) total += 1000
+                else if (rowUser.startsWith(digits)) total += 700
+                else if (rowUser.includes(digits)) total += 500
+                if (rowMt5 === digits) total += 950
+                else if (rowMt5.startsWith(digits)) total += 680
+                else if (rowMt5.includes(digits)) total += 480
+              } else {
+                if (rowName === qNorm) total += 900
+                else if (rowName.startsWith(qNorm)) total += 700
+                else if (
+                  String(row?.__searchIndex || '')
+                    .toLowerCase()
+                    .includes(qNorm)
+                )
+                  total += 420
+              }
+              total += Math.min(parseMoneyLoose(row?.totaldeposits) / 1000, 60)
+              return total
+            }
+
+            return score(bUser, bMt5, bName, b) - score(aUser, aMt5, aName, a)
+          })
+          .slice(0, 8)
+      }
+
+      if (crmLastReqRef.current !== reqId) return
+      crmCacheRef.current.set(trimmed, out)
+      setCrmResults(out)
+      setCrmSearchOpen(true)
+    } catch {
+      if (crmLastReqRef.current !== reqId) return
+      setCrmResults([])
+    } finally {
+      if (crmLastReqRef.current === reqId) setCrmLoading(false)
+    }
+  }
+
+  const handleSelectCrmUser = (raw) => {
+    if (!raw) return
+    const mapped = mapSupportUser(raw)
+    setCrmQuery(mapped?.name || mapped?.userId || '')
+    setCrmSelectedRaw(raw)
+    setCrmSearchOpen(false)
+  }
+
+  const copyCrmValue = async (key, value) => {
+    const text = String(value || '').trim()
+    if (!text || text === '—') return
+    try {
+      await navigator.clipboard.writeText(text)
+      setCrmCopiedKey(key)
+      if (crmCopyTimerRef.current) window.clearTimeout(crmCopyTimerRef.current)
+      crmCopyTimerRef.current = window.setTimeout(() => setCrmCopiedKey(''), 1400)
+    } catch {
+      // ignore
     }
   }
 
@@ -435,6 +734,78 @@ export default function Topbar({
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [showTools])
+
+  useEffect(() => {
+    const trimmed = String(crmQuery || '').trim()
+    if (crmDebounceRef.current) window.clearTimeout(crmDebounceRef.current)
+
+    if (!trimmed) {
+      setCrmResults([])
+      setCrmLoading(false)
+      return undefined
+    }
+
+    crmDebounceRef.current = window.setTimeout(() => {
+      runCrmSearch(trimmed)
+    }, 180)
+
+    return () => {
+      if (crmDebounceRef.current) window.clearTimeout(crmDebounceRef.current)
+    }
+  }, [crmQuery])
+
+  useEffect(() => {
+    return () => {
+      if (crmCopyTimerRef.current) window.clearTimeout(crmCopyTimerRef.current)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const onMouseDown = (event) => {
+      if (!crmWrapRef.current) return
+      if (!crmWrapRef.current.contains(event.target)) {
+        setCrmSearchOpen(false)
+      }
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setCrmSearchOpen(false)
+        if (crmSelectedRaw) setCrmSelectedRaw(null)
+      }
+
+      if (event.key === '/' && document.activeElement !== crmInputRef.current) {
+        const tag = document.activeElement?.tagName
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) {
+          return
+        }
+        event.preventDefault()
+        crmInputRef.current?.focus()
+        if (String(crmQuery || '').trim()) setCrmSearchOpen(true)
+      }
+    }
+
+    window.addEventListener('mousedown', onMouseDown)
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown)
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [crmQuery, crmSelectedRaw])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+    if (!crmSelectedRaw) return undefined
+
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [crmSelectedRaw])
 
   useEffect(() => {
     try {
@@ -769,6 +1140,80 @@ export default function Topbar({
           )}
         </div>
         <div className="topbar-nav-slot">
+          <div className="topbar-crm-shell" ref={crmWrapRef}>
+            <div className={`topbar-crm-input-wrap${crmSearchOpen ? ' is-open' : ''}`}>
+              <span className="topbar-crm-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                  <path
+                    d="M21 21l-4.35-4.35"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle cx="11" cy="11" r="6" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              </span>
+              <input
+                ref={crmInputRef}
+                value={crmQuery}
+                onChange={(e) => {
+                  setCrmQuery(e.target.value)
+                  setCrmSearchOpen(true)
+                }}
+                onFocus={() => {
+                  if (String(crmQuery || '').trim() || crmResultsToShow.length) {
+                    setCrmSearchOpen(true)
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (crmResultsToShow[0]?.raw) handleSelectCrmUser(crmResultsToShow[0].raw)
+                    else runCrmSearch(crmQuery)
+                  }
+                }}
+                className="topbar-crm-input"
+                placeholder={t('support.search.placeholder')}
+                aria-label={t('support.search.ariaLabel')}
+              />
+              {crmLoading ? <span className="topbar-crm-spinner" aria-hidden="true" /> : null}
+            </div>
+
+            {crmSearchOpen && (crmLoading || String(crmQuery || '').trim()) ? (
+              <div className="topbar-crm-dropdown hide-scrollbar">
+                {crmLoading ? (
+                  <div className="topbar-crm-empty">Searching user data…</div>
+                ) : crmResultsToShow.length ? (
+                  crmResultsToShow.map(({ raw, mapped }, index) => (
+                    <button
+                      key={`${mapped?.userId || mapped?.mt5 || 'user'}-${index}`}
+                      type="button"
+                      className="topbar-crm-result"
+                      onClick={() => handleSelectCrmUser(raw)}
+                    >
+                      <span className="topbar-crm-result-main">
+                        <span className="topbar-crm-result-name">
+                          {mapped?.name || mapped?.userId || '—'}
+                        </span>
+                        <span className="topbar-crm-result-meta">
+                          {mapped?.userId || '—'}
+                          {mapped?.mt5 ? ` · MT5 ${mapped.mt5}` : ''}
+                          {mapped?.affiliateId ? ` · AFF ${mapped.affiliateId}` : ''}
+                        </span>
+                      </span>
+                      <span className="topbar-crm-result-side">
+                        {mapped?.totalDeposits ? formatSupportEuro(mapped.totalDeposits) : '—'}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="topbar-crm-empty">{t('support.userCheck.noResults')}</div>
+                )}
+              </div>
+            ) : null}
+          </div>
+
           {/* Hamburger Menu Button - Mobile Only (render only when viewport is mobile) */}
           {hasNav && typeof window !== 'undefined' && isMobile() && (
             <button
@@ -1052,6 +1497,139 @@ export default function Topbar({
           )}
         </div>
       </header>
+
+      {crmSelected ? (
+        <div
+          className="topbar-crm-modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="CRM user details"
+        >
+          <div className="topbar-crm-modal-backdrop" onClick={() => setCrmSelectedRaw(null)} />
+          {crmCopiedKey ? <div className="topbar-crm-toast">Copiato</div> : null}
+          <div className="topbar-crm-modal-panel">
+            <button
+              type="button"
+              className="topbar-crm-modal-close"
+              onClick={() => setCrmSelectedRaw(null)}
+              aria-label="Close CRM modal"
+            >
+              ×
+            </button>
+            <div className="topbar-crm-profile">
+              <div className="topbar-crm-profile-header">
+                <div>
+                  <div className="topbar-crm-profile-name-row">
+                    <div className="topbar-crm-profile-name">{crmSelected.name || '—'}</div>
+                    {crmSelected.name ? (
+                      <button
+                        type="button"
+                        className="topbar-crm-copy-btn"
+                        onClick={() => copyCrmValue('name', crmSelected.name)}
+                        title={crmCopiedKey === 'name' ? 'Copiato' : 'Copia nome'}
+                      >
+                        {crmCopiedKey === 'name' ? '✓' : '⧉'}
+                      </button>
+                    ) : null}
+                  </div>
+                  <div className="topbar-crm-profile-subtitle">
+                    <span className="topbar-crm-meta-pill">
+                      <span>{crmSelected.userId || '—'}</span>
+                      {crmSelected.userId ? (
+                        <button
+                          type="button"
+                          className="topbar-crm-copy-btn"
+                          onClick={() => copyCrmValue('userId', crmSelected.userId)}
+                          title={crmCopiedKey === 'userId' ? 'Copiato' : 'Copia ID'}
+                        >
+                          {crmCopiedKey === 'userId' ? '✓' : '⧉'}
+                        </button>
+                      ) : null}
+                    </span>
+                    {crmSelected.mt5 ? (
+                      <span className="topbar-crm-meta-pill">
+                        <span>{`MT5 ${crmSelected.mt5}`}</span>
+                        <button
+                          type="button"
+                          className="topbar-crm-copy-btn"
+                          onClick={() => copyCrmValue('mt5', crmSelected.mt5)}
+                          title={crmCopiedKey === 'mt5' ? 'Copiato' : 'Copia MT5'}
+                        >
+                          {crmCopiedKey === 'mt5' ? '✓' : '⧉'}
+                        </button>
+                      </span>
+                    ) : null}
+                    {crmSelected.country ? (
+                      <span className="topbar-crm-meta-pill is-static">{crmSelected.country}</span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="topbar-crm-profile-badge">{crmSelected.status || 'Client'}</div>
+              </div>
+
+              <div className="topbar-crm-kpis">
+                <div className="topbar-crm-kpi">
+                  <span>Affiliate</span>
+                  <strong className="topbar-crm-kpi-copy-row">
+                    <span>{crmSelected.affiliateId || '—'}</span>
+                    {crmSelected.affiliateId ? (
+                      <button
+                        type="button"
+                        className="topbar-crm-copy-btn"
+                        onClick={() => copyCrmValue('affiliate', crmSelected.affiliateId)}
+                        title={crmCopiedKey === 'affiliate' ? 'Copiato' : 'Copia affiliate'}
+                      >
+                        {crmCopiedKey === 'affiliate' ? '✓' : '⧉'}
+                      </button>
+                    ) : null}
+                  </strong>
+                </div>
+                <div className="topbar-crm-kpi">
+                  <span>Total deposits</span>
+                  <strong>{formatSupportEuro(crmSelected.totalDeposits)}</strong>
+                </div>
+                <div className="topbar-crm-kpi">
+                  <span>Net deposits</span>
+                  <strong>{formatSupportEuro(crmSelected.netDeposits)}</strong>
+                </div>
+                <div className="topbar-crm-kpi">
+                  <span>Withdrawals</span>
+                  <strong>{formatSupportEuro(crmSelected.withdrawals)}</strong>
+                </div>
+                <div className="topbar-crm-kpi">
+                  <span>Volume</span>
+                  <strong>{crmSelected.volume || '—'}</strong>
+                </div>
+                <div className="topbar-crm-kpi">
+                  <span>P/L</span>
+                  <strong>{formatSupportEuro(crmSelected.pl)}</strong>
+                </div>
+              </div>
+
+              <div className="topbar-crm-modal-actions">
+                <button
+                  type="button"
+                  className="topbar-crm-secondary-btn"
+                  onClick={() =>
+                    copyCrmValue(
+                      'deepLink',
+                      `${window.location.origin}/support/user-check?q=${encodeURIComponent(crmSelected.userId || crmSelected.name || '')}`
+                    )
+                  }
+                >
+                  {crmCopiedKey === 'deepLink' ? 'Link copiato' : 'Copia link'}
+                </button>
+                <a
+                  className="topbar-crm-open-link"
+                  href={`/support/user-check?q=${encodeURIComponent(crmSelected.userId || crmSelected.name || '')}`}
+                >
+                  Open full User Check ↗
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Data Info Modal */}
       <DataInfoModal

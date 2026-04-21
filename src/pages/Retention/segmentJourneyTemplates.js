@@ -110,6 +110,11 @@ const UNFUNDED_ICON_SETS = {
 }
 
 export const RECENTLY_UPDATED_SEGMENT_TEMPLATE_IDS = new Set([
+  'dormant_120d_bonus_step1_email',
+  'dormant_120d_bonus_step2_email',
+  'dormant_120d_bonus_step3_email',
+  'dormant_120d_bonus_followup_retained_email',
+  'dormant_120d_bonus_followup_recovery_email',
   'unfunded_newcomers_welcome_value_email',
   'unfunded_newcomers_friction_reduction_email',
   'unfunded_newcomers_account_activation_reminder_email',

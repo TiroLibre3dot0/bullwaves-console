@@ -808,6 +808,166 @@ export const additionalSegmentJourneyTemplateExtrasById = {
       ),
     },
   },
+  dormant_120d_bonus_step1_email: {
+    locales: {
+      en: localeVariants(
+        {
+          timing: 'D0',
+          delay: '0 days from segment entry',
+          smsText:
+            'Bullwaves: a 100 USD free bonus is available for your account. Message your account manager on WhatsApp and send BONUS100 to request it.',
+        },
+        {
+          timing: 'D0',
+          delay: '0 days from segment entry',
+          smsText:
+            'Bullwaves: your easier way back starts on WhatsApp. Send BONUS100 to your manager and ask for the 100 USD bonus route.',
+        }
+      ),
+      it: localeVariants(
+        {
+          timing: 'D0',
+          delay: "0 giorni dall'ingresso nel segmento",
+          smsText:
+            'Bullwaves: per il tuo account e disponibile un bonus gratuito da 100 USD. Scrivi al tuo manager su WhatsApp e invia BONUS100 per richiederlo.',
+        },
+        {
+          timing: 'D0',
+          delay: "0 giorni dall'ingresso nel segmento",
+          smsText:
+            'Bullwaves: la via piu semplice per tornare parte da WhatsApp. Invia BONUS100 al tuo manager e chiedi il bonus da 100 USD.',
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_step2_email: {
+    locales: {
+      en: localeVariants(
+        {
+          timing: 'D4',
+          delay: '+4 days after step 1',
+          smsText:
+            'Bullwaves: to activate the 100 USD bonus, message your manager on WhatsApp and send BONUS100.',
+        },
+        {
+          timing: 'D4',
+          delay: '+4 days after step 1',
+          smsText:
+            'Bullwaves: your manager can still help you restart. Send BONUS100 on WhatsApp to request the free-bonus experience.',
+        }
+      ),
+      it: localeVariants(
+        {
+          timing: 'D4',
+          delay: '+4 giorni dopo step 1',
+          smsText:
+            'Bullwaves: per attivare il bonus da 100 USD, scrivi al tuo manager su WhatsApp e invia BONUS100.',
+        },
+        {
+          timing: 'D4',
+          delay: '+4 giorni dopo step 1',
+          smsText:
+            'Bullwaves: il tuo manager puo ancora aiutarti a ripartire. Invia BONUS100 su WhatsApp per richiedere il bonus gratuito.',
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_step3_email: {
+    locales: {
+      en: localeVariants(
+        {
+          timing: 'D10',
+          delay: '+6 days after step 2',
+          smsText:
+            'Bullwaves: your 100 USD bonus route is still open. Send BONUS100 to your manager on WhatsApp if you want to restart now.',
+        },
+        {
+          timing: 'D10',
+          delay: '+6 days after step 2',
+          smsText:
+            'Bullwaves: one WhatsApp message can still reopen the account path. Contact your manager and use BONUS100.',
+        }
+      ),
+      it: localeVariants(
+        {
+          timing: 'D10',
+          delay: '+6 giorni dopo step 2',
+          smsText:
+            'Bullwaves: il tuo percorso bonus da 100 USD e ancora aperto. Invia BONUS100 al tuo manager su WhatsApp se vuoi ripartire ora.',
+        },
+        {
+          timing: 'D10',
+          delay: '+6 giorni dopo step 2',
+          smsText:
+            'Bullwaves: un messaggio WhatsApp puo ancora riaprire il percorso account. Contatta il tuo manager e usa BONUS100.',
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_followup_retained_email: {
+    locales: {
+      en: localeVariants(
+        {
+          timing: 'CHECKPOINT +0d',
+          delay: 'Immediate follow-up after positive outcome',
+          smsText:
+            'Bullwaves: your bonus conversation is active again. Keep in touch with your manager and complete the next step.',
+        },
+        {
+          timing: 'CHECKPOINT +0d',
+          delay: 'Immediate follow-up after positive outcome',
+          smsText:
+            'Bullwaves: good news, your return path is back in motion. Stay in contact with your manager to complete the bonus route.',
+        }
+      ),
+      it: localeVariants(
+        {
+          timing: 'CHECKPOINT +0d',
+          delay: 'Follow-up immediato dopo esito positivo',
+          smsText:
+            'Bullwaves: la conversazione bonus e di nuovo attiva. Resta in contatto con il tuo manager e completa il prossimo passo.',
+        },
+        {
+          timing: 'CHECKPOINT +0d',
+          delay: 'Follow-up immediato dopo esito positivo',
+          smsText:
+            'Bullwaves: buone notizie, il tuo percorso di ritorno si e rimesso in moto. Resta in contatto con il manager per completare la route bonus.',
+        }
+      ),
+    },
+  },
+  dormant_120d_bonus_followup_recovery_email: {
+    locales: {
+      en: localeVariants(
+        {
+          timing: 'D21',
+          delay: '+11 days after missed outcome',
+          smsText:
+            'Bullwaves: the 100 USD bonus option is still available. Message your manager on WhatsApp and send BONUS100 if you want to restart.',
+        },
+        {
+          timing: 'D21',
+          delay: '+11 days after missed outcome',
+          smsText:
+            'Bullwaves: still interested in a lighter return? Ask your manager for BONUS100 on WhatsApp and reopen the path.',
+        }
+      ),
+      it: localeVariants(
+        {
+          timing: 'D21',
+          delay: '+11 giorni dopo esito non centrato',
+          smsText:
+            'Bullwaves: il bonus da 100 USD e ancora disponibile. Scrivi al tuo manager su WhatsApp e invia BONUS100 se vuoi ripartire.',
+        },
+        {
+          timing: 'D21',
+          delay: '+11 giorni dopo esito non centrato',
+          smsText:
+            'Bullwaves: vuoi ancora un ritorno piu leggero? Chiedi BONUS100 al tuo manager su WhatsApp e riapri il percorso.',
+        }
+      ),
+    },
+  },
   dormant_value_step1_email: {
     locales: {
       en: localeVariants(
