@@ -1,7 +1,7 @@
 export default function TemplateVariablesCard({ variables }) {
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-      <h3 className="text-sm font-semibold text-slate-200">Variables</h3>
+    <section className="rounded-xl border border-gray-600 bg-gray-700/70 p-4">
+      <h3 className="text-sm font-semibold text-gray-200">Variables</h3>
       <div className="mt-3 flex flex-wrap gap-2">
         {variables.map((item) => (
           <span

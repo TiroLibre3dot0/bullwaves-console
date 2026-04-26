@@ -1,3 +1,4 @@
+/* global AbortController */
 import { useEffect, useState } from 'react'
 import ConvrsDiagnosticPanel from '../components/ConvrsDiagnosticPanel'
 import TemplateKpiTable from '../components/TemplateKpiTable'
@@ -63,8 +64,8 @@ export default function WhatsAppTemplatesPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-base font-semibold text-slate-100">WhatsApp Templates</h1>
-          <p className="mt-0.5 text-xs text-slate-400">
+          <h1 className="text-base font-semibold text-gray-100">WhatsApp Templates</h1>
+          <p className="mt-0.5 text-xs text-gray-400">
             Monitoring performance template · KPI da callback Convrs real-time
           </p>
         </div>
@@ -78,7 +79,7 @@ export default function WhatsAppTemplatesPage() {
       />
 
       {/* Tab switcher */}
-      <div className="flex gap-1 border-b border-slate-800 pb-0">
+      <div className="flex gap-1 border-b border-gray-600 pb-0">
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -86,8 +87,8 @@ export default function WhatsAppTemplatesPage() {
             onClick={() => setActiveTab(tab.id)}
             className={`px-4 py-2 text-xs font-medium rounded-t-lg transition-colors ${
               activeTab === tab.id
-                ? 'bg-slate-800 text-slate-100 border border-b-0 border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-gray-700 text-gray-100 border border-b-0 border-gray-600'
+                : 'text-gray-400 hover:text-gray-200'
             }`}
           >
             {tab.label}

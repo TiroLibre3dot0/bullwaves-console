@@ -40,7 +40,7 @@ export default function KpiCards({ userAgg, simulation }: any) {
     const deltaView = (s: number, b: number) => {
       const d = Number(s) - Number(b)
       if (!Number.isFinite(d) || Math.abs(d) < 0.01) {
-        return <span className="text-sm text-slate-400">(—)</span>
+        return <span className="text-sm text-gray-400">(—)</span>
       }
       const up = d > 0
       return (
@@ -52,13 +52,13 @@ export default function KpiCards({ userAgg, simulation }: any) {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
+        <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-5 shadow-sm">
           <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">{t('traderPoints.kpi.activity.label')}</div>
-          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
+          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-gray-100">
             {fmtSigned(activityDelta, 2)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.activity.unit')}</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-gray-300">{t('traderPoints.kpi.activity.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">
+          <div className="mt-1 text-[12px] text-gray-400">
             {t('traderPoints.kpi.deltaLine', {
               baseline: baselineLabel,
               value: Number(sim.activity).toFixed(1),
@@ -66,18 +66,18 @@ export default function KpiCards({ userAgg, simulation }: any) {
             })}{' '}
             {deltaView(sim.activity, base.activity)}
           </div>
-          <div className="mt-2 text-sm text-slate-200 line-clamp-1">{activityLine}</div>
-          <div className="mt-1 text-[12px] text-slate-400">{t('traderPoints.why.bullet3')}</div>
+          <div className="mt-2 text-sm text-gray-200 line-clamp-1">{activityLine}</div>
+          <div className="mt-1 text-[12px] text-gray-400">{t('traderPoints.why.bullet3')}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-blue-400/60" />
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
+        <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-5 shadow-sm">
           <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">{t('traderPoints.kpi.retention.label')}</div>
-          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
+          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-gray-100">
             {fmtSigned(retentionDelta, 1)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.retention.unit')}</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-gray-300">{t('traderPoints.kpi.retention.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">
+          <div className="mt-1 text-[12px] text-gray-400">
             {t('traderPoints.kpi.deltaLine', {
               baseline: baselineLabel,
               value: Number(sim.retention).toFixed(1),
@@ -85,18 +85,18 @@ export default function KpiCards({ userAgg, simulation }: any) {
             })}{' '}
             {deltaView(sim.retention, base.retention)}
           </div>
-          <div className="mt-2 text-sm text-slate-200 line-clamp-1">{retentionLine}</div>
-          <div className="mt-1 text-[12px] text-slate-400">{t('traderPoints.why.bullet3')}</div>
+          <div className="mt-2 text-sm text-gray-200 line-clamp-1">{retentionLine}</div>
+          <div className="mt-1 text-[12px] text-gray-400">{t('traderPoints.why.bullet3')}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-emerald-400/60" />
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 shadow-sm">
+        <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-5 shadow-sm">
           <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">{t('traderPoints.kpi.risk.label')}</div>
-          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-slate-100">
+          <div className="mt-2 text-3xl md:text-4xl font-black tracking-tight text-gray-100">
             {fmtSigned(riskDelta, 2)}
-            <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.kpi.risk.unit')}</span>
+            <span className="ml-2 text-base md:text-lg font-semibold text-gray-300">{t('traderPoints.kpi.risk.unit')}</span>
           </div>
-          <div className="mt-1 text-[12px] text-slate-400">
+          <div className="mt-1 text-[12px] text-gray-400">
             {t('traderPoints.kpi.deltaLine', {
               baseline: baselineLabel,
               value: Number(sim.risk).toFixed(2),
@@ -104,7 +104,7 @@ export default function KpiCards({ userAgg, simulation }: any) {
             })}{' '}
             {deltaView(sim.risk, base.risk)}
           </div>
-          <div className="mt-2 text-sm text-slate-200 line-clamp-1">{riskLine}</div>
+          <div className="mt-2 text-sm text-gray-200 line-clamp-1">{riskLine}</div>
           <div className="mt-3 h-0.5 w-10 rounded-full bg-amber-400/70" />
         </div>
       </div>
@@ -126,22 +126,22 @@ export default function KpiCards({ userAgg, simulation }: any) {
     : days;
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.avgTradesPerUser')}</div>
-        <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
-          {avgTradesSim.toFixed(1)} <span className="text-sm text-slate-400">({delta(avgTradesSim, avgTrades)})</span>
+      <div className="rounded-xl border border-white/10 bg-gray-700/70 p-4">
+        <div className="text-xs font-semibold text-gray-400">{t('traderPoints.legacy.avgTradesPerUser')}</div>
+        <div className="mt-1 text-3xl font-black tracking-tight text-gray-100">
+          {avgTradesSim.toFixed(1)} <span className="text-sm text-gray-400">({delta(avgTradesSim, avgTrades)})</span>
         </div>
       </div>
-      <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.riskIndicator')}</div>
-        <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
-          {riskSim.toFixed(2)} <span className="text-sm text-slate-400">({delta(riskSim, risk)})</span>
+      <div className="rounded-xl border border-white/10 bg-gray-700/70 p-4">
+        <div className="text-xs font-semibold text-gray-400">{t('traderPoints.legacy.riskIndicator')}</div>
+        <div className="mt-1 text-3xl font-black tracking-tight text-gray-100">
+          {riskSim.toFixed(2)} <span className="text-sm text-gray-400">({delta(riskSim, risk)})</span>
         </div>
       </div>
-      <div className="rounded-xl border border-white/10 bg-slate-900/70 p-4">
-        <div className="text-xs font-semibold text-slate-400">{t('traderPoints.legacy.activeDays')}</div>
-        <div className="mt-1 text-3xl font-black tracking-tight text-slate-100">
-          {daysSim.toFixed(1)} <span className="text-sm text-slate-400">({delta(daysSim, days)})</span>
+      <div className="rounded-xl border border-white/10 bg-gray-700/70 p-4">
+        <div className="text-xs font-semibold text-gray-400">{t('traderPoints.legacy.activeDays')}</div>
+        <div className="mt-1 text-3xl font-black tracking-tight text-gray-100">
+          {daysSim.toFixed(1)} <span className="text-sm text-gray-400">({delta(daysSim, days)})</span>
         </div>
       </div>
     </div>

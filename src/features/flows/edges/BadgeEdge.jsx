@@ -255,7 +255,7 @@ export default function BadgeEdge({
                   background: '#ffffff',
                   border: '1px solid #cbd5e1',
                   boxShadow: '0 10px 22px rgba(15,23,42,0.12)',
-                  color: '#0f172a',
+                  color: '#111827',
                   fontSize: 11,
                   lineHeight: 1,
                   maxWidth: width,
@@ -265,7 +265,7 @@ export default function BadgeEdge({
               >
                 <span style={{ fontWeight: 950, letterSpacing: 0.25 }}>{primary}</span>
                 {showSecondary ? (
-                  <span style={{ fontWeight: 800, color: '#475569' }}>{secondaryCompact}</span>
+                  <span style={{ fontWeight: 800, color: '#4b5563' }}>{secondaryCompact}</span>
                 ) : null}
               </div>
             )}

@@ -12,7 +12,7 @@ function initials(name) {
 function Card({ children, className = '' }) {
   return (
     <div
-      className={`bg-slate-900/40 border border-slate-800/80 rounded-2xl shadow-sm backdrop-blur-md ${className}`}
+      className={`bg-gray-700/40 border border-gray-600/80 rounded-2xl shadow-sm backdrop-blur-md ${className}`}
     >
       {children}
     </div>
@@ -23,7 +23,7 @@ function Avatar({ name, accentClassName }) {
   return (
     <div
       aria-hidden="true"
-      className={`h-9 w-9 rounded-full bg-slate-800/70 text-slate-100 flex items-center justify-center text-xs font-bold ring-1 ${accentClassName}`}
+      className={`h-9 w-9 rounded-full bg-gray-700/70 text-gray-100 flex items-center justify-center text-xs font-bold ring-1 ${accentClassName}`}
       title={name}
     >
       {initials(name)}
@@ -36,8 +36,8 @@ function PersonCard({ name, role, accent }) {
     <Card className="p-5 flex items-center gap-3">
       <Avatar name={name} accentClassName={accent} />
       <div className="min-w-0">
-        <div className="text-xs text-slate-400">{role}</div>
-        <div className="text-base font-semibold text-slate-100 truncate" title={name}>
+        <div className="text-xs text-gray-400">{role}</div>
+        <div className="text-base font-semibold text-gray-100 truncate" title={name}>
           {name}
         </div>
       </div>
@@ -52,8 +52,8 @@ function HeadsBlock({ heads = [], accent }) {
         <div key={`${h.name}-${h.role}`} className="flex items-center gap-3">
           <Avatar name={h.name} accentClassName={accent.ring} />
           <div className="min-w-0">
-            <div className="text-xs text-slate-400">{h.role}</div>
-            <div className="text-sm font-semibold text-slate-100 truncate" title={h.name}>
+            <div className="text-xs text-gray-400">{h.role}</div>
+            <div className="text-sm font-semibold text-gray-100 truncate" title={h.name}>
               {h.name}
             </div>
           </div>
@@ -69,7 +69,7 @@ function DomainCard({ domain, accent }) {
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+            <div className="text-[11px] uppercase tracking-[0.18em] text-gray-400">
               {domain.title}
             </div>
             {domain.heads?.length ? <HeadsBlock heads={domain.heads} accent={accent} /> : null}
@@ -78,9 +78,9 @@ function DomainCard({ domain, accent }) {
               <div className="mt-3 flex items-center gap-3">
                 <Avatar name={domain.headName} accentClassName={accent.ring} />
                 <div className="min-w-0">
-                  <div className="text-xs text-slate-400">{domain.headRole}</div>
+                  <div className="text-xs text-gray-400">{domain.headRole}</div>
                   <div
-                    className="text-sm font-semibold text-slate-100 truncate"
+                    className="text-sm font-semibold text-gray-100 truncate"
                     title={domain.headName}
                   >
                     {domain.headName}
@@ -90,9 +90,9 @@ function DomainCard({ domain, accent }) {
             ) : null}
 
             {domain.secondaryLabel ? (
-              <div className="mt-3 text-xs text-slate-300">
+              <div className="mt-3 text-xs text-gray-300">
                 <span
-                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-slate-950/30 ${accent.pillBorder} text-slate-100`}
+                  className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-gray-900/30 ${accent.pillBorder} text-gray-100`}
                 >
                   {domain.secondaryLabel}
                 </span>
@@ -103,11 +103,11 @@ function DomainCard({ domain, accent }) {
         </div>
 
         {domain.areas?.length ? (
-          <div className="mt-4 pt-4 border-t border-slate-800/70">
+          <div className="mt-4 pt-4 border-t border-gray-600/70">
             <div className="space-y-1.5">
               {domain.areas.map((a) => (
-                <div key={`${domain.title}-${a}`} className="text-xs text-slate-300">
-                  <span className="text-slate-500 mr-2">•</span>
+                <div key={`${domain.title}-${a}`} className="text-xs text-gray-300">
+                  <span className="text-gray-500 mr-2">•</span>
                   {a}
                 </div>
               ))}
@@ -121,12 +121,12 @@ function DomainCard({ domain, accent }) {
 
 function VLine({ h = 10, className = '' }) {
   return (
-    <div className={`w-px bg-slate-500/35 ${className}`} style={{ height: h }} aria-hidden="true" />
+    <div className={`w-px bg-gray-500/35 ${className}`} style={{ height: h }} aria-hidden="true" />
   )
 }
 
 function HLine({ className = '' }) {
-  return <div className={`h-px bg-slate-500/35 ${className}`} aria-hidden="true" />
+  return <div className={`h-px bg-gray-500/35 ${className}`} aria-hidden="true" />
 }
 
 export default function ShareOrgChartTreeBoardView() {
@@ -220,15 +220,15 @@ export default function ShareOrgChartTreeBoardView() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100">
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-10">
         <header className="flex flex-col items-center text-center">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
           </h1>
-          <p className="mt-2 text-sm text-slate-400">High-level structure overview (Board view)</p>
+          <p className="mt-2 text-sm text-gray-400">High-level structure overview (Board view)</p>
           <div className="mt-4">
-            <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/50 px-3 py-1 text-xs text-slate-200">
+            <span className="inline-flex items-center rounded-full border border-gray-600 bg-gray-700/50 px-3 py-1 text-xs text-gray-200">
               Names only · No contact details
             </span>
           </div>
@@ -303,7 +303,7 @@ export default function ShareOrgChartTreeBoardView() {
         </main>
 
         <footer className="mt-12 flex justify-center">
-          <div className="text-xs text-slate-400 border border-slate-800/80 bg-slate-900/35 rounded-full px-4 py-2">
+          <div className="text-xs text-gray-400 border border-gray-600/80 bg-gray-700/35 rounded-full px-4 py-2">
             Public view: names only · No contact details
           </div>
         </footer>

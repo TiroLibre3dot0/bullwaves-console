@@ -468,20 +468,20 @@ export default function TraderPointsSimulatorPage() {
 
   return (
     <div className="w-full">
-      <header className="px-4 py-6 border-b border-white/5 bg-slate-900/20 backdrop-blur">
+      <header className="px-4 py-6 border-b border-white/5 bg-gray-700/20 backdrop-blur">
         <div className="w-full flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-6">
           <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-100">{t('traderPoints.page.title')}</h1>
-            <div className="text-sm md:text-base text-slate-300 mt-1">{t('traderPoints.page.subtitle')}</div>
+            <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-100">{t('traderPoints.page.title')}</h1>
+            <div className="text-sm md:text-base text-gray-300 mt-1">{t('traderPoints.page.subtitle')}</div>
           </div>
 
           <div className="md:text-right">
             <div className="flex flex-wrap items-center gap-2 md:justify-end">
-              <label className="text-sm font-semibold text-slate-200">{t('traderPoints.dataSource.label')}</label>
+              <label className="text-sm font-semibold text-gray-200">{t('traderPoints.dataSource.label')}</label>
               <select
                 value={dataSource}
                 onChange={(e) => setDataSource(e.target.value as 'console' | 'csv')}
-                className="bg-slate-900/70 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+                className="bg-gray-700/70 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
               >
                 <option value="console">{t('traderPoints.dataSource.console')}</option>
                 <option value="csv">{t('traderPoints.dataSource.csv')}</option>
@@ -490,7 +490,7 @@ export default function TraderPointsSimulatorPage() {
 
             {dataSource === 'console' && (
               <div className="mt-1 flex flex-wrap items-center gap-2 md:justify-end">
-                <span className="text-xs text-slate-400">
+                <span className="text-xs text-gray-400">
                   {consoleLoading
                     ? t('traderPoints.console.loading')
                     : consoleSource === 'support'
@@ -510,58 +510,58 @@ export default function TraderPointsSimulatorPage() {
         </div>
 
         <div className="w-full mt-3 flex flex-wrap items-center gap-2">
-          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.spread')}</span>
-          <span className="px-3 py-1 rounded-full border border-white/10 bg-slate-900/60 text-slate-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.leverage')}</span>
+          <span className="px-3 py-1 rounded-full border border-white/10 bg-gray-700/60 text-gray-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.spread')}</span>
+          <span className="px-3 py-1 rounded-full border border-white/10 bg-gray-700/60 text-gray-200 text-xs font-semibold shadow-sm">{t('traderPoints.chips.leverage')}</span>
         </div>
 
         {/* Data source moved to top-right */}
       </header>
       <main className="w-full py-5 px-0 flex flex-col gap-4">
         {/* STEP 1–4 — Executive Board View (always visible, no controls) */}
-        <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.exec.title')}</div>
+        <section className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
+          <div className="text-sm font-semibold text-gray-200">{t('traderPoints.exec.title')}</div>
 
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
+            <div className="rounded-2xl border border-white/10 bg-gray-700/60 p-5 shadow-sm">
               <div className="text-xs font-extrabold tracking-wide uppercase text-emerald-200/90">{t('traderPoints.exec.retention.label')}</div>
-              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">
+              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-gray-100">
                 {fmtSignedInt(execRetentionDeltaDaysRounded)}
-                <span className="ml-2 text-base md:text-lg font-semibold text-slate-300">{t('traderPoints.exec.retention.unitDays')}</span>
+                <span className="ml-2 text-base md:text-lg font-semibold text-gray-300">{t('traderPoints.exec.retention.unitDays')}</span>
               </div>
-              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.retention.caption')}</div>
+              <div className="mt-2 text-sm text-gray-200">{t('traderPoints.exec.retention.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-emerald-400/60" />
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
+            <div className="rounded-2xl border border-white/10 bg-gray-700/60 p-5 shadow-sm">
               <div className="text-xs font-extrabold tracking-wide uppercase text-blue-200/90">{t('traderPoints.exec.activity.label')}</div>
-              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">{t('traderPoints.exec.activity.value')}</div>
-              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.activity.caption')}</div>
+              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-gray-100">{t('traderPoints.exec.activity.value')}</div>
+              <div className="mt-2 text-sm text-gray-200">{t('traderPoints.exec.activity.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-blue-400/60" />
             </div>
 
-            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-sm">
+            <div className="rounded-2xl border border-white/10 bg-gray-700/60 p-5 shadow-sm">
               <div className="text-xs font-extrabold tracking-wide uppercase text-amber-200/90">{t('traderPoints.exec.risk.label')}</div>
-              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-slate-100">{t('traderPoints.exec.risk.value')}</div>
-              <div className="mt-2 text-sm text-slate-200">{t('traderPoints.exec.risk.caption')}</div>
+              <div className="mt-2 text-4xl md:text-5xl font-black tracking-tight text-gray-100">{t('traderPoints.exec.risk.value')}</div>
+              <div className="mt-2 text-sm text-gray-200">{t('traderPoints.exec.risk.caption')}</div>
               <div className="mt-3 h-0.5 w-10 rounded-full bg-amber-400/70" />
             </div>
           </div>
 
           {/* STEP 2 — Single causal statement */}
-          <div className="mt-4 text-center text-sm md:text-base font-semibold text-slate-100">
+          <div className="mt-4 text-center text-sm md:text-base font-semibold text-gray-100">
             <div>{t('traderPoints.exec.causal.line1')}</div>
-            <div className="text-slate-200">{t('traderPoints.exec.causal.line2')}</div>
+            <div className="text-gray-200">{t('traderPoints.exec.causal.line2')}</div>
           </div>
 
           {/* STEP 3 — Value mechanics */}
           <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
+            <div className="rounded-xl border border-white/10 bg-gray-700/50 p-3 text-[12px] text-gray-200">
               {t('traderPoints.exec.mechanics.1')}
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
+            <div className="rounded-xl border border-white/10 bg-gray-700/50 p-3 text-[12px] text-gray-200">
               {t('traderPoints.exec.mechanics.2')}
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/50 p-3 text-[12px] text-slate-200">
+            <div className="rounded-xl border border-white/10 bg-gray-700/50 p-3 text-[12px] text-gray-200">
               {t('traderPoints.exec.mechanics.3')}
             </div>
           </div>
@@ -569,28 +569,28 @@ export default function TraderPointsSimulatorPage() {
           {/* STEP 4 — Executive takeaway */}
           <div className="mt-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-4 shadow-sm">
             <div className="text-sm font-semibold text-cyan-100">{t('traderPoints.exec.takeaway.title')}</div>
-            <div className="mt-2 text-[12px] text-slate-100">{t('traderPoints.exec.takeaway.text')}</div>
+            <div className="mt-2 text-[12px] text-gray-100">{t('traderPoints.exec.takeaway.text')}</div>
           </div>
         </section>
 
         {/* STEP 5 — Deep dive (collapsed by default) */}
-        <details className="rounded-2xl border border-white/10 bg-slate-900/50 p-3 shadow-sm">
-          <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.deepDive.title')}</summary>
+        <details className="rounded-2xl border border-white/10 bg-gray-700/50 p-3 shadow-sm">
+          <summary className="cursor-pointer select-none text-sm font-semibold text-gray-200">{t('traderPoints.deepDive.title')}</summary>
           <div className="mt-4 flex flex-col gap-4">
             {/* Section A — What changes */}
-            <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
+            <section className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-slate-200">{t('traderPoints.section.whatChanges')}</div>
-                  <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.deltaVs', { baseline: baselineLabel, oneLiner: baselineOneLiner })}</div>
+                  <div className="text-sm font-semibold text-gray-200">{t('traderPoints.section.whatChanges')}</div>
+                  <div className="mt-1 text-[11px] text-gray-400">{t('traderPoints.deltaVs', { baseline: baselineLabel, oneLiner: baselineOneLiner })}</div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <label className="text-xs font-semibold text-slate-300">{t('traderPoints.baseline.label')}</label>
+                  <label className="text-xs font-semibold text-gray-300">{t('traderPoints.baseline.label')}</label>
                   <select
                     value={compareBaseline}
                     onChange={(e) => setCompareBaseline(e.target.value as any)}
-                    className="bg-slate-900/70 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-slate-100 focus:outline-none focus:border-cyan-400/50"
+                    className="bg-gray-700/70 border border-white/10 rounded-lg px-2.5 py-2 text-xs text-gray-100 focus:outline-none focus:border-cyan-400/50"
                   >
                     <option value="no_incentive">{t('traderPoints.baseline.noIncentive')}</option>
                     <option value="classic_bonus">{t('traderPoints.baseline.classicBonus')}</option>
@@ -600,17 +600,17 @@ export default function TraderPointsSimulatorPage() {
                     label={t('traderPoints.baseline.tooltip.label')}
                     content={
                       <div>
-                        <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.title')}</div>
+                        <div className="font-semibold text-gray-100">{t('traderPoints.baseline.tooltip.title')}</div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.noIncentive.title')}</div>
+                          <div className="font-semibold text-gray-100">{t('traderPoints.baseline.tooltip.noIncentive.title')}</div>
                           <div className="mt-1">{t('traderPoints.baseline.tooltip.noIncentive.desc')}</div>
                         </div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.classicBonus.title')}</div>
+                          <div className="font-semibold text-gray-100">{t('traderPoints.baseline.tooltip.classicBonus.title')}</div>
                           <div className="mt-1">{t('traderPoints.baseline.tooltip.classicBonus.desc')}</div>
                         </div>
                         <div className="mt-2">
-                          <div className="font-semibold text-slate-100">{t('traderPoints.baseline.tooltip.tp.title')}</div>
+                          <div className="font-semibold text-gray-100">{t('traderPoints.baseline.tooltip.tp.title')}</div>
                           <div className="mt-1">{t('traderPoints.baseline.tooltip.tp.desc')}</div>
                         </div>
                       </div>
@@ -624,20 +624,20 @@ export default function TraderPointsSimulatorPage() {
               </div>
 
               {/* Narrative bridge: why points jump when daily activity barely moves (UI-only) */}
-              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
+              <div className="mt-4 rounded-2xl border border-white/10 bg-gray-700/60 p-4 shadow-sm">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.narrativeBridge.title')}</div>
+                    <div className="text-sm font-semibold text-gray-200">{t('traderPoints.narrativeBridge.title')}</div>
                   </div>
                 </div>
 
-                <div className="mt-3 text-[12px] leading-relaxed text-slate-300">
+                <div className="mt-3 text-[12px] leading-relaxed text-gray-300">
                   <div>{t('traderPoints.narrativeBridge.line1')}</div>
                   <div>{t('traderPoints.narrativeBridge.line2')}</div>
                   <div>{t('traderPoints.narrativeBridge.line3')}</div>
                 </div>
 
-                <div className="mt-3 text-[12px] font-semibold text-slate-200">
+                <div className="mt-3 text-[12px] font-semibold text-gray-200">
                   {t('traderPoints.narrativeBridge.formula.totalPoints')} ≈ {t('traderPoints.narrativeBridge.formula.dailyActivity')} × {t('traderPoints.narrativeBridge.formula.activeDays')}
                 </div>
               </div>
@@ -650,10 +650,10 @@ export default function TraderPointsSimulatorPage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
               <div className="lg:col-span-7 flex flex-col gap-4">
                 {/* Scenario controls (kept, but visually secondary) */}
-                <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
+                <div className="rounded-2xl border border-white/10 bg-gray-700/60 p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.scenarioControls.title')}</div>
-                    <div className="text-[11px] text-slate-400">{t('traderPoints.scenarioControls.subtitle')}</div>
+                    <div className="text-sm font-semibold text-gray-200">{t('traderPoints.scenarioControls.title')}</div>
+                    <div className="text-[11px] text-gray-400">{t('traderPoints.scenarioControls.subtitle')}</div>
                   </div>
                   <div className="mt-3">
                     {dataSource === 'csv' && <CsvUploader onData={handleCsv} parseInfo={parseInfo} />}
@@ -671,54 +671,54 @@ export default function TraderPointsSimulatorPage() {
 
               <div className="lg:col-span-5 flex flex-col gap-4">
                 {/* Business-only sidebar card */}
-                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-                  <div className="text-sm font-semibold text-slate-200">{t('traderPoints.economicLogic.title')}</div>
-                  <ul className="mt-3 space-y-1 text-[12px] text-slate-300">
+                <section className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
+                  <div className="text-sm font-semibold text-gray-200">{t('traderPoints.economicLogic.title')}</div>
+                  <ul className="mt-3 space-y-1 text-[12px] text-gray-300">
                     <li>• {t('traderPoints.economicLogic.bullet1')}</li>
                     <li>• {t('traderPoints.economicLogic.bullet2')}</li>
                     <li>• {t('traderPoints.economicLogic.bullet3')}</li>
                   </ul>
                 </section>
 
-                <section className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
+                <section className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <div className="text-sm font-semibold text-slate-200">{t('traderPoints.why.title')}</div>
+                    <div className="text-sm font-semibold text-gray-200">{t('traderPoints.why.title')}</div>
                     <InfoTooltip
                       label={t('traderPoints.why.tooltip.label')}
                       content={
                         <div>
-                          <div className="font-semibold text-slate-100">{t('traderPoints.why.tooltip.title')}</div>
+                          <div className="font-semibold text-gray-100">{t('traderPoints.why.tooltip.title')}</div>
                           <div className="mt-1">{t('traderPoints.why.tooltip.desc')}</div>
                         </div>
                       }
                     />
                   </div>
 
-                  <div className="mt-2 text-sm font-semibold text-slate-100">{t('traderPoints.why.heading')}</div>
-                  <ul className="mt-2 space-y-1 text-[12px] text-slate-300">
+                  <div className="mt-2 text-sm font-semibold text-gray-100">{t('traderPoints.why.heading')}</div>
+                  <ul className="mt-2 space-y-1 text-[12px] text-gray-300">
                     <li>• {t('traderPoints.why.bullet1')}</li>
                     <li>• {t('traderPoints.why.bullet2')}</li>
                     <li>• {t('traderPoints.why.bullet3')}</li>
                   </ul>
-                  <div className="mt-3 rounded-lg border border-white/10 bg-slate-900/40 p-2.5 text-[12px] text-slate-200">
+                  <div className="mt-3 rounded-lg border border-white/10 bg-gray-700/40 p-2.5 text-[12px] text-gray-200">
                     {reachabilityChanged && (
-                      <div className="mb-1 text-[11px] text-slate-400">{t('traderPoints.reachability.micro')}</div>
+                      <div className="mb-1 text-[11px] text-gray-400">{t('traderPoints.reachability.micro')}</div>
                     )}
                     {whyDynamicLine}
                   </div>
                 </section>
 
                 {/* Section C — Model confidence (optional) */}
-                <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
-                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.reliability')}</summary>
+                <details className="rounded-2xl border border-white/10 bg-gray-700/60 p-4 shadow-sm">
+                  <summary className="cursor-pointer select-none text-sm font-semibold text-gray-200">{t('traderPoints.optional.reliability')}</summary>
                   <div className="mt-3">
                     <RegressionSummary regression={regression} />
                   </div>
                 </details>
 
                 {/* Advanced metrics hidden by default */}
-                <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
-                  <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.datasetOverview')}</summary>
+                <details className="rounded-2xl border border-white/10 bg-gray-700/60 p-4 shadow-sm">
+                  <summary className="cursor-pointer select-none text-sm font-semibold text-gray-200">{t('traderPoints.optional.datasetOverview')}</summary>
                   <div className="mt-3">
                     <WorkingSetCards stats={workingSetStats} />
                   </div>
@@ -726,15 +726,15 @@ export default function TraderPointsSimulatorPage() {
               </div>
             </div>
 
-            <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-sm">
-              <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">{t('traderPoints.optional.tables')}</summary>
+            <details className="rounded-2xl border border-white/10 bg-gray-700/60 p-3 shadow-sm">
+              <summary className="cursor-pointer select-none text-sm font-semibold text-gray-200">{t('traderPoints.optional.tables')}</summary>
               <div className="mt-3">
                 <Tables userAgg={userFeatures} simulation={simulation} />
               </div>
             </details>
 
-            <details className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 shadow-sm">
-              <summary className="cursor-pointer select-none text-sm font-semibold text-slate-200">
+            <details className="rounded-2xl border border-white/10 bg-gray-700/60 p-3 shadow-sm">
+              <summary className="cursor-pointer select-none text-sm font-semibold text-gray-200">
                 {t('traderPoints.optional.export')}
               </summary>
               <div className="mt-3">

@@ -102,11 +102,11 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-slate-200">{t('traderPoints.controls.preset.title')}</div>
-            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.preset.micro')}</div>
+            <div className="text-sm font-semibold text-gray-200">{t('traderPoints.controls.preset.title')}</div>
+            <div className="mt-1 text-[11px] text-gray-400">{t('traderPoints.controls.preset.micro')}</div>
           </div>
           <div className="flex items-center gap-2">
             <select
@@ -119,7 +119,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
                 }
                 applyPreset(v)
               }}
-              className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+              className="bg-gray-700 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
             >
               <option value="custom">{t('traderPoints.controls.preset.custom')}</option>
               <option value="commission_only">{t('traderPoints.controls.preset.commissionOnly')}</option>
@@ -130,7 +130,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
               label={t('traderPoints.controls.preset.tooltip.label')}
               content={
                 <div>
-                  <div className="font-semibold text-slate-100">{t('traderPoints.controls.preset.tooltip.title')}</div>
+                  <div className="font-semibold text-gray-100">{t('traderPoints.controls.preset.tooltip.title')}</div>
                   <div className="mt-1">{t('traderPoints.controls.preset.tooltip.desc')}</div>
                 </div>
               }
@@ -139,34 +139,34 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         </div>
         {presetLabel && presetSub && (
           <div className="mt-2">
-            <div className="text-[11px] text-slate-300 font-semibold">{t('traderPoints.controls.preset.whatMeans')} {presetLabel}</div>
-            <div className="mt-0.5 text-[11px] text-slate-400 line-clamp-1">{presetSub}</div>
+            <div className="text-[11px] text-gray-300 font-semibold">{t('traderPoints.controls.preset.whatMeans')} {presetLabel}</div>
+            <div className="mt-0.5 text-[11px] text-gray-400 line-clamp-1">{presetSub}</div>
           </div>
         )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-200">
               {t('traderPoints.controls.reachability.label')}
               <InfoTooltip
                 label={t('traderPoints.controls.reachability.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.reachability.label')}</div>
+                    <div className="font-semibold text-gray-100">{t('traderPoints.controls.reachability.label')}</div>
                     <div className="mt-1">{t('traderPoints.controls.reachability.tooltip.desc')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">
+            <div className="mt-1 text-[11px] text-gray-400">
               {t('traderPoints.reachability.micro')}
             </div>
 
             {typeof pointsMultiplierReachabilityDeltaPct === 'number' && Number.isFinite(pointsMultiplierReachabilityDeltaPct) && (
-              <div className="mt-2 text-[11px] text-slate-300">
+              <div className="mt-2 text-[11px] text-gray-300">
                 {pointsMultiplierReachabilityDeltaPct >= 0
                   ? t('traderPoints.controls.reachability.delta.more', {
                       mult: pointsMultiplier.toFixed(2).replace(/\.00$/, ''),
@@ -189,28 +189,28 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
               setPreset('custom')
               onChange({ ...scenario, points_multiplier: parseFloat(e.target.value) })
             }}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+            className="bg-gray-700 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
           />
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-200">
               {t('traderPoints.controls.goal.label')}
               <InfoTooltip
                 label={t('traderPoints.controls.goal.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.goal.tooltip.title')}</div>
+                    <div className="font-semibold text-gray-100">{t('traderPoints.controls.goal.tooltip.title')}</div>
                     <div className="mt-1">{t('traderPoints.controls.goal.tooltip.line1')}</div>
                     <div className="mt-1">{t('traderPoints.controls.goal.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.goal.micro')}</div>
+            <div className="mt-1 text-[11px] text-gray-400">{t('traderPoints.controls.goal.micro')}</div>
           </div>
           <input
             type="number"
@@ -224,7 +224,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
                 ? { ...scenario, required_points_to_unlock: v, bonus_amount: v }
                 : { ...scenario, required_points_to_unlock: v })
             }}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 w-28 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+            className="bg-gray-700 border border-white/10 rounded-lg px-3 py-2 w-28 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
           />
         </div>
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -245,23 +245,23 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-200">
               {t('traderPoints.controls.bonus.label')}
               <InfoTooltip
                 label={t('traderPoints.controls.bonus.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.bonus.tooltip.title')}</div>
+                    <div className="font-semibold text-gray-100">{t('traderPoints.controls.bonus.tooltip.title')}</div>
                     <div className="mt-1">{t('traderPoints.controls.bonus.tooltip.line1')}</div>
                     <div className="mt-1">{t('traderPoints.controls.bonus.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.controls.bonus.micro')}</div>
+            <div className="mt-1 text-[11px] text-gray-400">{t('traderPoints.controls.bonus.micro')}</div>
           </div>
           <input
             type="number"
@@ -275,28 +275,28 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
                 ? { ...scenario, bonus_amount: v, required_points_to_unlock: v }
                 : { ...scenario, bonus_amount: v })
             }}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+            className="bg-gray-700 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
           />
         </div>
       </div>
 
-      <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <div className="inline-flex items-center gap-2 text-sm font-semibold text-gray-200">
               {t('traderPoints.controls.unlockRate.label')}
               <InfoTooltip
                 label={t('traderPoints.controls.unlockRate.tooltip.label')}
                 content={
                   <div>
-                    <div className="font-semibold text-slate-100">{t('traderPoints.controls.unlockRate.tooltip.title')}</div>
+                    <div className="font-semibold text-gray-100">{t('traderPoints.controls.unlockRate.tooltip.title')}</div>
                     <div className="mt-1">{t('traderPoints.controls.unlockRate.tooltip.line1')}</div>
                     <div className="mt-1">{t('traderPoints.controls.unlockRate.tooltip.line2')}</div>
                   </div>
                 }
               />
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">{helperUnlockRate(t, unlockRate, guardrailOn)}</div>
+            <div className="mt-1 text-[11px] text-gray-400">{helperUnlockRate(t, unlockRate, guardrailOn)}</div>
           </div>
           <input
             type="number"
@@ -308,22 +308,22 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
               setPreset('custom')
               onChange({ ...scenario, unlock_rate_pct: parseInt(e.target.value) })
             }}
-            className="bg-slate-900 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-slate-100 focus:outline-none focus:border-cyan-400/50"
+            className="bg-gray-700 border border-white/10 rounded-lg px-3 py-2 w-24 text-sm text-gray-100 focus:outline-none focus:border-cyan-400/50"
           />
         </div>
       </div>
 
-      <div className="sm:col-span-2 rounded-xl border border-white/10 bg-slate-900/40 p-3">
+      <div className="sm:col-span-2 rounded-xl border border-white/10 bg-gray-700/40 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-200">
+              <span className="inline-flex items-center gap-2 text-sm font-semibold text-gray-200">
                 {t('traderPoints.controls.guardrail.label')}
                 <InfoTooltip
                   label={t('traderPoints.controls.guardrail.tooltip.label')}
                   content={
                     <div>
-                      <div className="font-semibold text-slate-100">{t('traderPoints.controls.guardrail.tooltip.title')}</div>
+                      <div className="font-semibold text-gray-100">{t('traderPoints.controls.guardrail.tooltip.title')}</div>
                       <div className="mt-1">{t('traderPoints.controls.guardrail.tooltip.line1')}</div>
                       <div className="mt-1">{t('traderPoints.controls.guardrail.tooltip.line2')}</div>
                     </div>
@@ -336,7 +336,7 @@ export default function ScenarioControls({ scenario, onChange, pointsMultiplierR
                 </span>
               )}
             </div>
-            <div className="mt-1 text-[11px] text-slate-400">
+            <div className="mt-1 text-[11px] text-gray-400">
               {guardrailOn
                 ? t('traderPoints.controls.guardrail.micro.on')
                 : t('traderPoints.controls.guardrail.micro.off')}

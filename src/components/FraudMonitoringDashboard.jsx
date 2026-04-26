@@ -1577,7 +1577,7 @@ export default function FraudMonitoringDashboard() {
   const palette = {
     surface: '#071025',
     card: '#0b1724',
-    muted: '#94a3b8',
+    muted: '#9ca3af',
     danger: '#ef4444',
     warning: '#fb923c',
     info: '#60a5fa',
@@ -2636,7 +2636,7 @@ export default function FraudMonitoringDashboard() {
                           stroke="rgba(255,255,255,0.04)"
                           strokeDasharray="4 6"
                         />
-                        <text x={sepX + 6} y={padT - 12} fontSize={12} fill="#94a3b8">
+                        <text x={sepX + 6} y={padT - 12} fontSize={12} fill="#9ca3af">
                           Forecast
                         </text>
                       </g>
@@ -2758,7 +2758,7 @@ export default function FraudMonitoringDashboard() {
                           x={x}
                           y={H - padB + 26}
                           fontSize={11}
-                          fill="#94a3b8"
+                          fill="#9ca3af"
                           textAnchor="middle"
                         >
                           {label}
@@ -2778,7 +2778,7 @@ export default function FraudMonitoringDashboard() {
                       x={padL - 14}
                       y={y + 4}
                       fontSize={12}
-                      fill="#94a3b8"
+                      fill="#9ca3af"
                       textAnchor="end"
                     >
                       {formatShort(v)}
@@ -2796,7 +2796,7 @@ export default function FraudMonitoringDashboard() {
                       x={W - padR + 14}
                       y={y + 4}
                       fontSize={12}
-                      fill="#94a3b8"
+                      fill="#9ca3af"
                       textAnchor="start"
                     >
                       {formatShort(v)}
@@ -2866,40 +2866,40 @@ export default function FraudMonitoringDashboard() {
                       ) : null
                     })()}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ color: '#94a3b8' }}>Registrations (cum)</div>
+                      <div style={{ color: '#9ca3af' }}>Registrations (cum)</div>
                       <div style={{ fontWeight: 800 }}>{(s.regsCum || 0).toLocaleString()}</div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ color: '#94a3b8' }}>Registrations (month)</div>
+                      <div style={{ color: '#9ca3af' }}>Registrations (month)</div>
                       <div style={{ fontWeight: 700 }}>{(s.regsM || 0).toLocaleString()}</div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ color: '#94a3b8' }}>FTD (cum)</div>
+                      <div style={{ color: '#9ca3af' }}>FTD (cum)</div>
                       <div style={{ fontWeight: 800, color: colors.ftd }}>
                         {s.ftdCum.toLocaleString()}
                       </div>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <div style={{ color: '#94a3b8' }}>QFTD (cum)</div>
+                      <div style={{ color: '#9ca3af' }}>QFTD (cum)</div>
                       <div style={{ fontWeight: 800, color: colors.qftd }}>
                         {s.qftdCum.toLocaleString()}
                       </div>
                     </div>
                     <div style={{ height: 6 }} />
                     <div
-                      style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}
                     >
                       <div style={{ fontSize: 12 }}>Regs (month)</div>
                       <div style={{ fontWeight: 700 }}>{s.regsM.toLocaleString()}</div>
                     </div>
                     <div
-                      style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}
                     >
                       <div style={{ fontSize: 12 }}>FTD (month)</div>
                       <div style={{ fontWeight: 700 }}>{s.ftdM.toLocaleString()}</div>
                     </div>
                     <div
-                      style={{ display: 'flex', justifyContent: 'space-between', color: '#94a3b8' }}
+                      style={{ display: 'flex', justifyContent: 'space-between', color: '#9ca3af' }}
                     >
                       <div style={{ fontSize: 12 }}>QFTD (month)</div>
                       <div style={{ fontWeight: 700 }}>{s.qftdM.toLocaleString()}</div>
@@ -2909,7 +2909,7 @@ export default function FraudMonitoringDashboard() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: '#94a3b8',
+                          color: '#9ca3af',
                         }}
                       >
                         <div style={{ fontSize: 12 }}>FTD Rate</div>
@@ -2921,7 +2921,7 @@ export default function FraudMonitoringDashboard() {
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
-                          color: '#94a3b8',
+                          color: '#9ca3af',
                         }}
                       >
                         <div style={{ fontSize: 12 }}>QFTD Rate</div>
@@ -2940,7 +2940,7 @@ export default function FraudMonitoringDashboard() {
                               paddingTop: 8,
                             }}
                           >
-                            <div style={{ color: '#94a3b8', fontSize: 12 }}>
+                            <div style={{ color: '#9ca3af', fontSize: 12 }}>
                               Projected (Dec 2026)
                             </div>
                             <div
@@ -2950,19 +2950,19 @@ export default function FraudMonitoringDashboard() {
                                 marginTop: 6,
                               }}
                             >
-                              <div style={{ color: '#94a3b8' }}>Regs</div>
+                              <div style={{ color: '#9ca3af' }}>Regs</div>
                               <div style={{ fontWeight: 800 }}>
                                 {(lastProj.regsCum || 0).toLocaleString()}
                               </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <div style={{ color: '#94a3b8' }}>FTD</div>
+                              <div style={{ color: '#9ca3af' }}>FTD</div>
                               <div style={{ fontWeight: 800, color: colors.ftd }}>
                                 {(lastProj.ftdCum || 0).toLocaleString()}
                               </div>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <div style={{ color: '#94a3b8' }}>QFTD</div>
+                              <div style={{ color: '#9ca3af' }}>QFTD</div>
                               <div style={{ fontWeight: 800, color: colors.qftd }}>
                                 {(lastProj.qftdCum || 0).toLocaleString()}
                               </div>
@@ -3028,13 +3028,13 @@ export default function FraudMonitoringDashboard() {
                 onChange={(e) => setUseMtdScaling(!!e.target.checked)}
                 style={{ width: 16, height: 16 }}
               />
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>
                 MTD scaling (estendi mese corrente)
               </span>
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Feb</label>
+                <label style={{ color: '#9ca3af', fontSize: 11 }}>FTD Feb</label>
                 <input
                   type="number"
                   value={ftdUpliftFeb}
@@ -3050,7 +3050,7 @@ export default function FraudMonitoringDashboard() {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>FTD Mar</label>
+                <label style={{ color: '#9ca3af', fontSize: 11 }}>FTD Mar</label>
                 <input
                   type="number"
                   value={ftdUpliftMar}
@@ -3066,7 +3066,7 @@ export default function FraudMonitoringDashboard() {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Feb</label>
+                <label style={{ color: '#9ca3af', fontSize: 11 }}>QFTD Feb</label>
                 <input
                   type="number"
                   value={qftdUpliftFeb}
@@ -3082,7 +3082,7 @@ export default function FraudMonitoringDashboard() {
                 />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <label style={{ color: '#94a3b8', fontSize: 11 }}>QFTD Mar</label>
+                <label style={{ color: '#9ca3af', fontSize: 11 }}>QFTD Mar</label>
                 <input
                   type="number"
                   value={qftdUpliftMar}
@@ -3344,7 +3344,7 @@ export default function FraudMonitoringDashboard() {
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
               Unique Visitors (Media)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3388,7 +3388,7 @@ export default function FraudMonitoringDashboard() {
             <path d="M19 8v6m3-3h-6"></path>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
               Registrations (Media)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3431,7 +3431,7 @@ export default function FraudMonitoringDashboard() {
             <circle cx="12" cy="7" r="4"></circle>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
               Unique registered accounts (app)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3472,7 +3472,7 @@ export default function FraudMonitoringDashboard() {
             <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Registration Gap</div>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Registration Gap</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
               {mediaLoaded && csvLoaded && displayCsvRecap
                 ? Math.round(
@@ -3518,7 +3518,7 @@ export default function FraudMonitoringDashboard() {
             <path d="M12 18V6"></path>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>FTD (Media)</div>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>FTD (Media)</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
               {mediaLoaded ? Math.round(mediaSummary.ftd || 0) : '—'}
             </div>
@@ -3557,7 +3557,7 @@ export default function FraudMonitoringDashboard() {
             <polygon points="12,2 15,8 22,9 17,14 18,21 12,18 6,21 7,14 2,9 9,8"></polygon>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>QFTD (Media)</div>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>QFTD (Media)</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
               {mediaLoaded ? Math.round(mediaSummary.qftd || 0) : '—'}
             </div>
@@ -3600,7 +3600,7 @@ export default function FraudMonitoringDashboard() {
             <line x1="12" y1="3" x2="12" y2="21"></line>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Losing ratio %</div>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Losing ratio %</div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
               {csvLoaded && displayCsvRecap
                 ? displayCsvRecap.losingUsersPercentage.toFixed(1) + '%'
@@ -3642,7 +3642,7 @@ export default function FraudMonitoringDashboard() {
             <line x1="2" y1="10" x2="22" y2="10"></line>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
               Total deposits (count)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3686,7 +3686,7 @@ export default function FraudMonitoringDashboard() {
             <path d="M18 9l-5 5-3-3-5 5"></path>
           </svg>
           <div>
-            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+            <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
               Avg deposits (depositors)
             </div>
             <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3735,7 +3735,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M8 12h8m-4-4v8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total Deposits</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Total Deposits</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded ? `${formatShort(extendedMediaSummary.deposits || 0)} EUR` : '—'}
               </div>
@@ -3775,7 +3775,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M8 12h8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
                 Total Withdrawals
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3818,7 +3818,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M8 12h8"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Net Deposits</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Net Deposits</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded ? `${formatShort(extendedMediaSummary.netDeposits || 0)} EUR` : '—'}
               </div>
@@ -3858,7 +3858,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M18 9l-5 5-3-3-5 5"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Total PL</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Total PL</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded ? `${formatShort(extendedMediaSummary.pl || 0)} EUR` : '—'}
               </div>
@@ -3899,7 +3899,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M16 11l2 2 4-4"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>ARPU</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>ARPU</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded ? `${formatShort(extendedMediaSummary.arpu || 0)} EUR` : '—'}
               </div>
@@ -3941,7 +3941,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
                 Total Commissions
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -3985,7 +3985,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>
                 Total Commissions (Media)
               </div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
@@ -4026,7 +4026,7 @@ export default function FraudMonitoringDashboard() {
               <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Commissions Gap</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Commissions Gap</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded && displayRegCommissionsSummary
                   ? `${formatShort((extendedMediaSummary.commissions || 0) - (displayRegCommissionsSummary.total || 0))} EUR`
@@ -4070,7 +4070,7 @@ export default function FraudMonitoringDashboard() {
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
             <div>
-              <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 500 }}>Avg CPA</div>
+              <div style={{ color: '#9ca3af', fontSize: 11, fontWeight: 500 }}>Avg CPA</div>
               <div style={{ fontSize: 17, fontWeight: 800, color: '#dbeafe' }}>
                 {mediaLoaded ? `${formatShort(extendedMediaSummary.cpa || 0)} EUR` : '—'}
               </div>
@@ -4741,7 +4741,7 @@ export default function FraudMonitoringDashboard() {
                       style={{
                         padding: '10px 12px',
                         borderBottom: '1px solid rgba(255,255,255,0.06)',
-                        color: '#94a3b8',
+                        color: '#9ca3af',
                         fontSize: 12,
                       }}
                     >

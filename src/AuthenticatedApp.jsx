@@ -43,7 +43,6 @@ const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMaster
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
 const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
-const CreolabsPage = lazy(() => import('./features/creolabs/pages/CreolabsPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
@@ -199,7 +198,6 @@ export default function AuthenticatedApp() {
       aiAssistant: '/support/ai-assistant',
       whatsappPerformance: '/support/whatsapp-performance',
       trustpilotGuide: '/trustpilot-guide',
-      creolabs: '/creolabs',
       reportsHub: '/reports',
       whatsappTemplates: '/whatsapp-templates',
       solitics: '/solitics',
@@ -243,7 +241,6 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
-    if (pathname.startsWith('/creolabs')) return 'creolabs'
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
     if (pathname.startsWith('/solitics')) return 'solitics'
@@ -265,6 +262,10 @@ export default function AuthenticatedApp() {
       setView('profitableRanking')
     }
     if (p && p.startsWith('/marketing-plan')) {
+      window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
+      setView('commandCenter')
+    }
+    if (p && p.startsWith('/creolabs')) {
       window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
       setView('commandCenter')
     }
@@ -576,7 +577,6 @@ export default function AuthenticatedApp() {
       aiAssistant: 'support-ai-assistant',
       whatsappPerformance: 'support-whatsapp-performance',
       trustpilotGuide: 'trustpilot-guide',
-      creolabs: 'creolabs',
       reportsHub: 'reports-hub',
       whatsappTemplates: 'whatsapp-templates',
       solitics: 'solitics-report',
@@ -663,7 +663,6 @@ export default function AuthenticatedApp() {
               {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
               {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
-              {view === 'creolabs' ? <CreolabsPage /> : null}
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'solitics' ? <SoliticsReportPage /> : null}

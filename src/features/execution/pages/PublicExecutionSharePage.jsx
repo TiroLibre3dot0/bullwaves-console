@@ -93,7 +93,7 @@ export default function PublicExecutionSharePage({ token }) {
 
   if (!isValid) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: '#111827', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <div
             style={{
@@ -115,7 +115,7 @@ export default function PublicExecutionSharePage({ token }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070b14' }}>
+    <div style={{ minHeight: '100vh', background: '#111827' }}>
       <div style={{ maxWidth: 1600, margin: '0 auto', padding: 'clamp(12px, 3vw, 16px)' }}>
         <div
           style={{

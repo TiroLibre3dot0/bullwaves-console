@@ -181,7 +181,7 @@ function PublicShareFiltersRow({
       />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <span style={{ fontSize: 12, color: '#94a3b8' }}>{t('investments.filters.month')}</span>
+        <span style={{ fontSize: 12, color: '#9ca3af' }}>{t('investments.filters.month')}</span>
         <select
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
@@ -1473,7 +1473,7 @@ function InvestmentsDashboardContent({
                   }}
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                  <span style={{ fontSize: 12, color: '#9ca3af' }}>
                     {t('investments.filters.month')}
                   </span>
                   <select
@@ -1954,7 +1954,7 @@ function InvestmentsDashboardContent({
               <tbody>
                 <tr style={{ background: 'rgba(255,255,255,0.03)', fontWeight: 600 }}>
                   <td>Totals</td>
-                  <td style={{ textAlign: 'right', color: '#94a3b8' }}>—</td>
+                  <td style={{ textAlign: 'right', color: '#9ca3af' }}>—</td>
                   {isSingleVisible('netDepositsMonth') ? (
                     <td
                       style={{
@@ -2108,7 +2108,7 @@ function InvestmentsDashboardContent({
                           return name || id || a.affiliateName
                         })()}
                       </td>
-                      <td style={{ textAlign: 'right', color: '#94a3b8' }} className="num">
+                      <td style={{ textAlign: 'right', color: '#9ca3af' }} className="num">
                         {a.rank}
                       </td>
                       {isSingleVisible('netDepositsMonth') ? (
@@ -2177,7 +2177,7 @@ function InvestmentsDashboardContent({
                               }
 
                               const latest = scopeLatestByAffiliate.get(a.affiliateId)
-                              if (!latest) return '#94a3b8'
+                              if (!latest) return '#9ca3af'
                               const canonicalId = canonicalizeAffiliateId
                                 ? canonicalizeAffiliateId(a?.affiliateId)
                                 : String(a?.affiliateId || '').trim() || '—'
@@ -2536,7 +2536,7 @@ function InvestmentsDashboardContent({
                                                   {formatRoiCell(v)}
                                                 </span>
                                               ) : (
-                                                <span style={{ color: '#94a3b8', fontWeight: 700 }}>
+                                                <span style={{ color: '#9ca3af', fontWeight: 700 }}>
                                                   —
                                                 </span>
                                               )}
@@ -2596,7 +2596,7 @@ function InvestmentsDashboardContent({
                                   <tr>
                                     <td
                                       colSpan={16}
-                                      style={{ textAlign: 'center', color: '#94a3b8' }}
+                                      style={{ textAlign: 'center', color: '#9ca3af' }}
                                     >
                                       No monthly rows for this affiliate.
                                     </td>
@@ -2614,7 +2614,7 @@ function InvestmentsDashboardContent({
                   <tr>
                     <td
                       colSpan={singleVisibleColSpan}
-                      style={{ textAlign: 'center', color: '#94a3b8' }}
+                      style={{ textAlign: 'center', color: '#9ca3af' }}
                     >
                       No affiliates found
                     </td>
@@ -2836,7 +2836,7 @@ function InvestmentsDashboardUnifiedContent({
                 }}
               />
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                <span style={{ fontSize: 12, color: '#9ca3af' }}>
                   {t('investments.filters.month')}
                 </span>
                 <select

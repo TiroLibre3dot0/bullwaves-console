@@ -1,6 +1,38 @@
-import React, { useMemo } from 'react'
+import { useMemo } from 'react'
 
 import { useI18n } from '../i18n/I18nContext'
+import { getTopSectionsForUser } from '../services/trackingService'
+
+// Inverse of AuthenticatedApp viewToSection — maps sectionId → viewKey
+const SECTION_TO_VIEW = {
+  overview: 'overview',
+  affiliate: 'affiliate',
+  executive: 'executive',
+  'fraud-monitoring': 'fraud',
+  'project-board': 'projectBoard',
+  notion: 'notion',
+  summary: 'summary',
+  'retention-profitable-ranking': 'profitableRanking',
+  'prime-challenge-ranking': 'primeChallengeRanking',
+  'prime-challenge-widget': 'primeChallengeWidget',
+  'retention-segment-composition': 'segmentComposition',
+  'retention-sales-agents-monitor': 'salesAgentsMonitor',
+  'retention-email-master-template': 'emailMasterTemplate',
+  'org-chart': 'orgChart',
+  'platform-usage-billing': 'platformUsageBilling',
+  'finance-tool-organigram': 'financeToolOrganigram',
+  'support-user-check': 'supportUserCheck',
+  'support-ai-assistant': 'aiAssistant',
+  'support-whatsapp-performance': 'whatsappPerformance',
+  'trustpilot-guide': 'trustpilotGuide',
+  'reports-hub': 'reportsHub',
+  'whatsapp-templates': 'whatsappTemplates',
+  'solitics-report': 'solitics',
+  upload: 'upload',
+  'trader-points': 'traderPointsSimulator',
+  'admin-panel': 'admin',
+  'command-center': 'commandCenter',
+}
 
 function normalizeRoleText(user) {
   if (!user) return ''
@@ -202,15 +234,6 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       emoji: '📄',
       tone: 'info',
     },
-    {
-      key: 'creolabs',
-      title: t('sidebar.creolabs'),
-      desc: 'Breakdown mensile clienti e ranking Top 50.',
-      kicker: 'Sales',
-      area: 'Sales',
-      emoji: '🧪',
-      tone: 'accent',
-    },
   ]
 
   const areaOrder = ['Sales', 'Support', 'Operations', 'Finance', 'Marketing', 'Dealing']
@@ -221,6 +244,25 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
       cards: sectionCards.filter((card) => card.area === area),
     }))
     .filter((section) => section.cards.length > 0)
+
+  // Smart quick access: top visited sections for the current user
+  const smartCards = useMemo(() => {
+    const email = user?.email || user?.userEmail || ''
+    if (!email) return []
+    const topSections = getTopSectionsForUser(email, 6)
+    return topSections
+      .map(({ sectionId, count }) => {
+        const viewKey = SECTION_TO_VIEW[sectionId]
+        if (!viewKey) return null
+        const card = sectionCards.find((c) => c.key === viewKey)
+        if (!card) return null
+        return { ...card, visitCount: count }
+      })
+      .filter(Boolean)
+      .filter((card) => canGo(card.key))
+  }, [user?.email, user?.userEmail])
+
+  const hasSmartCards = smartCards.length >= 2
 
   return (
     <div className="console-home">
@@ -235,6 +277,47 @@ export default function ConsoleHomePage({ user, supportOnly, allowedViews, onNav
 
         <div className="console-home__welcome">{welcome}</div>
         <div className="console-home__roleText">{roleText || t('home.role.default')}</div>
+
+        {/* ── Smart Quick Access ── */}
+        <div className="console-home__quickAccess">
+          <div className="console-home__quickAccess-header">
+            <span className="console-home__quickAccess-icon" aria-hidden="true">
+              ⚡
+            </span>
+            <span className="console-home__quickAccess-title">Quick Access</span>
+            <span className="console-home__quickAccess-badge">personalizzato per te</span>
+          </div>
+
+          {hasSmartCards ? (
+            <div className="card-columns console-home__actions" role="list">
+              {smartCards.map((card) => (
+                <button
+                  key={card.key}
+                  type="button"
+                  className={`card card-global console-home__action console-home__action--${card.tone} console-home__action--smart`}
+                  onClick={() => go(card.key)}
+                  disabled={!canGo(card.key)}
+                  role="listitem"
+                >
+                  <div className="console-home__actionTop">
+                    <div className="console-home__actionEmoji" aria-hidden="true">
+                      {card.emoji}
+                    </div>
+                    <div className="console-home__smartVisits">
+                      {card.visitCount} {card.visitCount === 1 ? 'visita' : 'visite'}
+                    </div>
+                  </div>
+                  <h3 className="console-home__actionTitle">{card.title}</h3>
+                  <div className="console-home__actionDesc">{card.desc}</div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="console-home__quickAccess-empty">
+              Naviga la console per sbloccare i tuoi accessi rapidi intelligenti.
+            </div>
+          )}
+        </div>
 
         <div className="console-home__sectionLabel">Areas</div>
 

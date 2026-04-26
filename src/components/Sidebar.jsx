@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useI18n } from '../i18n/I18nContext'
 
 const RECENT_SECTION_KEYS = new Set([
@@ -203,6 +204,7 @@ export default function Sidebar({
   goAffiliateSection,
 }) {
   const { t } = useI18n()
+  const [isStandbyOpen, setIsStandbyOpen] = useState(false)
 
   const disabled = (key) => {
     if (customEventsDisabled && key === 'customEvents') return true
@@ -275,14 +277,6 @@ export default function Sidebar({
           onClick: () => navigate('emailMasterTemplate'),
           disabled: disabled('emailMasterTemplate'),
         },
-        {
-          key: 'creolabs',
-          label: t('sidebar.creolabs'),
-          icon: 'chart',
-          active: view === 'creolabs',
-          onClick: () => navigate('creolabs'),
-          disabled: disabled('creolabs'),
-        },
       ],
     },
     {
@@ -296,14 +290,6 @@ export default function Sidebar({
           active: view === 'supportUserCheck',
           onClick: () => navigate('supportUserCheck'),
           disabled: disabled('supportUserCheck'),
-        },
-        {
-          key: 'aiAssistant',
-          label: t('sidebar.aiAssistant'),
-          icon: 'chat',
-          active: view === 'aiAssistant',
-          onClick: () => navigate('aiAssistant'),
-          disabled: disabled('aiAssistant'),
         },
       ],
     },
@@ -364,14 +350,6 @@ export default function Sidebar({
           active: view === 'upload',
           onClick: () => navigate('upload'),
           disabled: disabled('upload'),
-        },
-        {
-          key: 'reportsHub',
-          label: 'Reports Hub',
-          icon: 'layout',
-          active: view === 'reportsHub',
-          onClick: () => navigate('reportsHub'),
-          disabled: disabled('reportsHub'),
         },
       ],
     },
@@ -508,17 +486,70 @@ export default function Sidebar({
         },
       ],
     },
+    {
+      key: 'standby',
+      title: 'Standby',
+      items: [
+        {
+          key: 'standbyClientsMoved',
+          label: 'Cleints moved',
+          icon: 'chart',
+          active: view === 'affiliate' && affiliateSection === 'clientsMoved',
+          onClick: () => goAffiliateSection('clientsMoved'),
+          disabled: disabled('affiliate'),
+        },
+        {
+          key: 'standbyAiAssistant',
+          label: t('sidebar.aiAssistant'),
+          icon: 'chat',
+          active: view === 'aiAssistant',
+          onClick: () => navigate('aiAssistant'),
+          disabled: disabled('aiAssistant'),
+        },
+        {
+          key: 'standbyReportsHub',
+          label: 'Reports hub',
+          icon: 'layout',
+          active: view === 'reportsHub',
+          onClick: () => navigate('reportsHub'),
+          disabled: disabled('reportsHub'),
+        },
+      ],
+    },
   ]
 
   return (
     <div className="sidebar">
       {sectionGroups.map((section) => (
         <section key={section.key} className={`sidebar-section sidebar-section--${section.key}`}>
-          <div className="sidebar-title">
-            <span>{section.title}</span>
-          </div>
+          {section.key === 'standby' ? (
+            <button
+              type="button"
+              className="sidebar-title"
+              onClick={() => setIsStandbyOpen((open) => !open)}
+              aria-expanded={isStandbyOpen}
+              style={{
+                width: '100%',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <span>{section.title}</span>
+              <span aria-hidden="true" style={{ opacity: 0.8 }}>
+                {isStandbyOpen ? '▾' : '▸'}
+              </span>
+            </button>
+          ) : (
+            <div className="sidebar-title">
+              <span>{section.title}</span>
+            </div>
+          )}
 
-          <div className="sidebar-list">
+          <div
+            className="sidebar-list"
+            style={section.key === 'standby' && !isStandbyOpen ? { display: 'none' } : undefined}
+          >
             {section.items.map((item) => (
               <div key={item.key}>
                 <button

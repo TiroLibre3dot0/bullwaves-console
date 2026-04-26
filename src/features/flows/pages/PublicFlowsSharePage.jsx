@@ -90,7 +90,7 @@ export default function PublicFlowsSharePage({ token }) {
 
   if (error) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: '#111827', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <div style={{ fontSize: 22, fontWeight: 950 }}>{t('sidebar.flows')}</div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>
@@ -104,7 +104,7 @@ export default function PublicFlowsSharePage({ token }) {
   // payload is currently used only as an access gate and for future-proofing.
   // The flows themselves are embedded in the client bundle.
   return (
-    <div style={{ minHeight: '100vh', background: '#070b14' }}>
+    <div style={{ minHeight: '100vh', background: '#111827' }}>
       <div style={{ maxWidth: 1400, margin: '0 auto', padding: 16 }}>
         <FlowsPage publicMode sharePayload={payload} />
       </div>

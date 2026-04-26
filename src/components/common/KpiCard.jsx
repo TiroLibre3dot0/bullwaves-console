@@ -38,7 +38,7 @@ export default function KpiCard({
         ...style,
       }}
     >
-      <div style={{ fontSize: labelFontSize, color: '#94a3b8', marginBottom: labelMarginBottom }}>
+      <div style={{ fontSize: labelFontSize, color: '#9ca3af', marginBottom: labelMarginBottom }}>
         {label}
       </div>
       <div
@@ -94,7 +94,7 @@ export default function KpiCard({
         )}
       </div>
       {helper ? (
-        <div style={{ fontSize: helperFontSize, color: '#94a3b8', marginTop: helperMarginTop }}>
+        <div style={{ fontSize: helperFontSize, color: '#9ca3af', marginTop: helperMarginTop }}>
           {helper}
         </div>
       ) : null}

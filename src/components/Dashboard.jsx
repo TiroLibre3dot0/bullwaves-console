@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import BreakEvenChart from './BreakEvenChart'
 import PnLTrendChart from './PnLTrendChart'
 import CohortDecayView from './CohortDecayView'
@@ -58,9 +58,9 @@ const formatNumberShort = (value) => {
   return formatter.format(Math.round(num))
 }
 
-const formatEuro = (value) => `€${formatNumberShort(value)}`
+const formatEuro = (value) => `�${formatNumberShort(value)}`
 // Keep consistent K/M formatting everywhere (including tooltips).
-const formatEuroFull = (value) => `€${formatNumberShort(value)}`
+const formatEuroFull = (value) => `�${formatNumberShort(value)}`
 const formatNumberFull = (value) => formatter.format(Number(value || 0))
 const formatPercent = (value) => `${Number(value || 0).toFixed(1)}%`
 const normalizeKey = (str = '') => str.trim().toLowerCase()
@@ -359,10 +359,10 @@ export default function Dashboard() {
     const byType = new Map()
 
     commissionsData.forEach((c) => {
-      const key = c.affiliateId || c.affiliate || 'ÔÇö'
+      const key = c.affiliateId || c.affiliate || '���'
       const acc = byAffiliate.get(key) || {
-        affiliate: c.affiliate || 'ÔÇö',
-        affiliateId: c.affiliateId || 'ÔÇö',
+        affiliate: c.affiliate || '���',
+        affiliateId: c.affiliateId || '���',
         total: 0,
         count: 0,
       }
@@ -390,7 +390,7 @@ export default function Dashboard() {
     const agg = Array.from(
       mediaRows
         .reduce((map, r) => {
-          const key = r.affiliate || 'ÔÇö'
+          const key = r.affiliate || '���'
           const acc = map.get(key) || {
             affiliate: key,
             registrations: 0,
@@ -470,7 +470,7 @@ export default function Dashboard() {
   const affiliateOptionGroups = useMemo(() => {
     const specialAffiliates = Object.keys(affiliateCohortFiles || {})
 
-    let names = topAffiliates.map((a) => a.affiliate || 'ÔÇö')
+    let names = topAffiliates.map((a) => a.affiliate || '���')
     // ensure dedicated-file affiliates are always selectable even if not in top list
     specialAffiliates.forEach((name) => {
       if (name && !names.includes(name)) names.push(name)
@@ -479,7 +479,7 @@ export default function Dashboard() {
       const rows = cohortsDetail.filter((d) => (d.affiliate || '').trim() !== '')
       const stats = new Map()
       rows.forEach((d) => {
-        const name = d.affiliate || 'ÔÇö'
+        const name = d.affiliate || '���'
         const total = (d.months || []).reduce((acc, v) => acc + (v || 0), 0)
         const score = Math.abs(total) + (d.cohortSize || 0)
         const current = stats.get(name) || { name, score: 0 }
@@ -847,7 +847,7 @@ export default function Dashboard() {
         }
 
         const parsed = rows.map((r) => ({
-          affiliate: (pick(r, ['Affiliate', 'affiliate']) ?? '').toString().trim() || 'ÔÇö',
+          affiliate: (pick(r, ['Affiliate', 'affiliate']) ?? '').toString().trim() || '���',
           registrations: cleanNumber(pick(r, ['Registrations', 'registrations', 'Leads', 'leads'])),
           pl: cleanNumber(pick(r, ['PL', 'pl'])),
           netDeposits: cleanNumber(pick(r, ['Net Deposits', 'net_deposits', 'netdeposits'])),
@@ -1021,7 +1021,7 @@ export default function Dashboard() {
             date: d,
             monthIndex,
             affiliateId: (r['Affiliate Id'] ?? '').toString().trim(),
-            affiliate: (r['Affiliate'] ?? '').toString().trim() || 'ÔÇö',
+            affiliate: (r['Affiliate'] ?? '').toString().trim() || '���',
             amount: cleanNumber(r['Payment amount'] ?? r.amount),
             type: (r['Payment Range'] ?? r['Commission Type'] ?? '').toString().trim() || 'Other',
           }
@@ -1525,7 +1525,7 @@ export default function Dashboard() {
   const breakEvenDisplay =
     breakEvenIndex >= 0
       ? `${breakEvenLabels[breakEvenIndex]} (${breakEvenMonthsToHit} mesi)`
-      : 'ÔÇö'
+      : '���'
 
   const displayKpis = {
     cohortUsers: kpiOverrides.cohortUsers ?? cohortUsers,
@@ -1554,7 +1554,7 @@ export default function Dashboard() {
     textAlign: 'right',
   }
 
-  const kpiLabelStyle = { fontSize: 12, color: '#94a3b8', display: 'block' }
+  const kpiLabelStyle = { fontSize: 12, color: '#9ca3af', display: 'block' }
 
   function generateLocalReport() {
     setReportLoading(true)
@@ -1623,8 +1623,8 @@ export default function Dashboard() {
         key: 'netDepToCommission',
         label: `${cohortAnalysisMetric === 'deposits' ? 'Dep' : 'Net dep'} / Commission`,
         value: displayKpis.netDepToCommission,
-        formatter: (v) => (v === null ? 'ÔÇö' : v.toFixed(2)),
-        helper: 'If < 1.5: commission posticipata allÔÇÖaffiliato',
+        formatter: (v) => (v === null ? '���' : v.toFixed(2)),
+        helper: 'If < 1.5: commission posticipata all���affiliato',
         overrideKey: null,
         type: 'ratio',
         hideIfZero: true,
@@ -1673,7 +1673,7 @@ export default function Dashboard() {
         key: 'roi',
         label: 'ROI',
         value: displayKpis.roi,
-        formatter: (v) => (v === null ? 'ÔÇö' : formatPercent(v)),
+        formatter: (v) => (v === null ? '���' : formatPercent(v)),
         helper: 'ROI = (P&L - Cohort cost) / Cohort cost',
         overrideKey: null,
         type: 'percent',
@@ -1684,7 +1684,7 @@ export default function Dashboard() {
         label: 'Break-even month',
         value: displayKpis.breakEvenLabel,
         formatter: (v) => v,
-        helper: 'First month where cumulative P&L - cumulative commissions ÔëÑ 0',
+        helper: 'First month where cumulative P&L - cumulative commissions ��� 0',
         overrideKey: 'breakEvenLabel',
         type: 'text',
         hideIfZero: false,
@@ -1814,7 +1814,7 @@ export default function Dashboard() {
             const isHealth = card.key === 'health'
             const formatted =
               card.value === null
-                ? '—'
+                ? '�'
                 : isHealth
                   ? (() => {
                       const label = String(card.value || '').toUpperCase()
@@ -1882,15 +1882,15 @@ export default function Dashboard() {
             <li>
               {retainedMetricLabel}: M1{' '}
               {overviewKpis.econ?.retainedM1 === null || overviewKpis.econ?.retainedM1 === undefined
-                ? '—'
+                ? '�'
                 : `${overviewKpis.econ.retainedM1.toFixed(1)}%`}
               , M3{' '}
               {overviewKpis.econ?.retainedM3 === null || overviewKpis.econ?.retainedM3 === undefined
-                ? '—'
+                ? '�'
                 : `${overviewKpis.econ.retainedM3.toFixed(1)}%`}
               , M6{' '}
               {overviewKpis.econ?.retainedM6 === null || overviewKpis.econ?.retainedM6 === undefined
-                ? '—'
+                ? '�'
                 : `${overviewKpis.econ.retainedM6.toFixed(1)}%`}
             </li>
             <li>
@@ -2004,7 +2004,7 @@ export default function Dashboard() {
                     <div
                       style={{
                         fontSize: 11,
-                        color: '#94a3b8',
+                        color: '#9ca3af',
                         marginBottom: 6,
                         background: 'rgba(255,255,255,0.02)',
                         border: '1px solid rgba(255,255,255,0.06)',
@@ -2063,7 +2063,7 @@ export default function Dashboard() {
                             </div>
                           </div>
                           {card.helper && (
-                            <div style={{ fontSize: 11, color: '#64748b', marginTop: 2 }}>
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
                               {card.helper}
                             </div>
                           )}
@@ -2103,7 +2103,7 @@ export default function Dashboard() {
                   {showMonthlyInfo && (
                     <div
                       style={{
-                        color: '#94a3b8',
+                        color: '#9ca3af',
                         fontSize: 12,
                         marginTop: 4,
                         background: 'rgba(255,255,255,0.02)',
@@ -2138,7 +2138,7 @@ export default function Dashboard() {
                     }}
                   >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>
                         {t('dashboard.monthlyAggregates.cohortLabel')}
                       </span>
                       <select
@@ -2162,7 +2162,7 @@ export default function Dashboard() {
                       >
                         {!cohortsSummary.length && (
                           <option value="" disabled>
-                            —
+                            �
                           </option>
                         )}
                         <option value="all">{t('dashboard.monthlyAggregates.cohort.all')}</option>
@@ -2181,7 +2181,7 @@ export default function Dashboard() {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>
                         {t('dashboard.monthlyAggregates.affiliateLabel')}
                       </span>
                       <select
@@ -2217,7 +2217,7 @@ export default function Dashboard() {
                       </select>
                     </div>
 
-                    <div style={{ fontSize: 12, color: '#94a3b8', maxWidth: 260 }}>
+                    <div style={{ fontSize: 12, color: '#9ca3af', maxWidth: 260 }}>
                       {t('dashboard.monthlyAggregates.tableAutoFillHint', { cohortMetricLabel })}
                     </div>
                   </div>
@@ -2380,15 +2380,15 @@ export default function Dashboard() {
                                 textAlign: 'right',
                                 color:
                                   breakEvenRow[idx] === null || breakEvenRow[idx] === undefined
-                                    ? '#94a3b8'
+                                    ? '#9ca3af'
                                     : (breakEvenRow[idx] || 0) >= 0
                                       ? '#34d399'
                                       : '#f87171',
                               }}
                             >
                               {breakEvenRow[idx] === null || breakEvenRow[idx] === undefined ? (
-                                <span className="num" style={{ color: '#94a3b8' }}>
-                                  —
+                                <span className="num" style={{ color: '#9ca3af' }}>
+                                  �
                                 </span>
                               ) : (
                                 <span
@@ -2413,7 +2413,7 @@ export default function Dashboard() {
                               className="num"
                             >
                               {lastBreakEvenValue === null
-                                ? '—'
+                                ? '�'
                                 : formatEuro(lastBreakEvenValue || 0)}
                             </span>
                           </td>
@@ -2441,7 +2441,7 @@ export default function Dashboard() {
                 {showCohortDbInfo && (
                   <p
                     style={{
-                      color: '#94a3b8',
+                      color: '#9ca3af',
                       fontSize: 13,
                       marginTop: 6,
                       background: 'rgba(255,255,255,0.02)',
@@ -2730,7 +2730,7 @@ export default function Dashboard() {
                           <tr key={`${a.affiliate}-${idx}`}>
                             <td>{idx + 1}</td>
                             <td style={{ color: '#60a5fa', fontWeight: 600 }}>
-                              {a.affiliate || '—'}
+                              {a.affiliate || '�'}
                             </td>
                             <td
                               style={{ textAlign: 'right' }}
@@ -2777,7 +2777,7 @@ export default function Dashboard() {
                       })}
                       {!topAffiliates.length && (
                         <tr>
-                          <td colSpan={5} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                          <td colSpan={5} style={{ textAlign: 'center', color: '#9ca3af' }}>
                             {t('dashboard.topAffiliates.none')}
                           </td>
                         </tr>
@@ -2805,7 +2805,7 @@ export default function Dashboard() {
                   <p
                     style={{
                       fontSize: 12,
-                      color: '#94a3b8',
+                      color: '#9ca3af',
                       marginTop: 0,
                       background: 'rgba(255,255,255,0.02)',
                       border: '1px solid rgba(255,255,255,0.06)',

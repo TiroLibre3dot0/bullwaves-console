@@ -16,7 +16,10 @@ export default function TemplateKpiGrid({ template, capabilities }) {
       value: conversionAvailable ? formatPercent(stats.conversionRate) : 'N/A',
       highlight: true,
     },
-    { label: 'Avg. Time to Reply', value: replyLatencyAvailable ? (stats.avgReplyTime || 'N/A') : 'N/A' },
+    {
+      label: 'Avg. Time to Reply',
+      value: replyLatencyAvailable ? stats.avgReplyTime || 'N/A' : 'N/A',
+    },
   ]
 
   return (
@@ -26,12 +29,12 @@ export default function TemplateKpiGrid({ template, capabilities }) {
           key={kpi.label}
           className={`rounded-lg border p-3 ${
             kpi.highlight
-              ? 'border-sky-400/30 bg-linear-to-br from-sky-500/10 to-slate-900/90'
-              : 'border-slate-800 bg-slate-950/60'
+              ? 'border-sky-400/30 bg-linear-to-br from-sky-500/10 to-gray-700/90'
+              : 'border-gray-600 bg-gray-900/60'
           }`}
         >
           <p className="text-[11px] uppercase tracking-[0.08em] text-slate-500">{kpi.label}</p>
-          <p className="mt-1 text-base font-semibold text-slate-100">{kpi.value}</p>
+          <p className="mt-1 text-base font-semibold text-gray-100">{kpi.value}</p>
         </article>
       ))}
     </section>

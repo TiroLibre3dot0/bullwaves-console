@@ -1172,7 +1172,7 @@ export default function WeeklyMapView({
                         )
                       })}
                       {(byStatus[col.id] || []).length === 0 ? (
-                        <div style={{ color: '#64748b', fontSize: 12 }}>
+                        <div style={{ color: '#6b7280', fontSize: 12 }}>
                           {t('weeklyMap.empty.noTasks')}
                         </div>
                       ) : null}

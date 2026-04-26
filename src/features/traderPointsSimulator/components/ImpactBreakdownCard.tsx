@@ -104,17 +104,17 @@ export default function ImpactBreakdownCard({
   const perUserEffect = before.unlockedPct * perUnlockedUplift
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-sm">
+    <div className="rounded-2xl border border-white/10 bg-gray-700/60 p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.impact.whereRetentionTitle')}</div>
-          <div className="mt-1 text-[11px] text-slate-400">{t('traderPoints.impact.micro')}</div>
+          <div className="text-sm font-semibold text-gray-200">{t('traderPoints.impact.whereRetentionTitle')}</div>
+          <div className="mt-1 text-[11px] text-gray-400">{t('traderPoints.impact.micro')}</div>
         </div>
         <InfoTooltip
           label={t('traderPoints.impact.howCalc.label')}
           content={
             <div>
-              <div className="font-semibold text-slate-100">{t('traderPoints.impact.howCalc.title')}</div>
+              <div className="font-semibold text-gray-100">{t('traderPoints.impact.howCalc.title')}</div>
               <div className="mt-2">{t('traderPoints.impact.howCalc.step1')}</div>
               <div className="mt-1">{t('traderPoints.impact.howCalc.step2')}</div>
               <div className="mt-1">{t('traderPoints.impact.howCalc.step3')}</div>
@@ -124,50 +124,50 @@ export default function ImpactBreakdownCard({
       </div>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.reachability')}</div>
+        <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
+          <div className="text-xs font-extrabold tracking-wide uppercase text-gray-300">{t('traderPoints.impact.reachability')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.eligibleUsers')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
-                {fmtInt(after.eligibleCount)} <span className="text-slate-400 font-semibold">({fmtPct(after.eligiblePct)})</span>
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.eligibleUsers')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
+                {fmtInt(after.eligibleCount)} <span className="text-gray-400 font-semibold">({fmtPct(after.eligiblePct)})</span>
               </div>
               <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.eligibleDesc')}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.unlockedUsers')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
-                {fmtInt(after.unlockedCount)} <span className="text-slate-400 font-semibold">({fmtPct(after.unlockedPct)})</span>
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.unlockedUsers')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
+                {fmtInt(after.unlockedCount)} <span className="text-gray-400 font-semibold">({fmtPct(after.unlockedPct)})</span>
               </div>
               <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.unlockedDesc')}</div>
             </div>
           </div>
 
-          <div className="mt-2 text-[11px] text-slate-400">
+          <div className="mt-2 text-[11px] text-gray-400">
             {t('traderPoints.impact.definitions')}
           </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.retention')}</div>
+        <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
+          <div className="text-xs font-extrabold tracking-wide uppercase text-gray-300">{t('traderPoints.impact.retention')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionBaseline')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.retentionBaseline')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
                 {fmtDays(baseRetention)} {t('traderPoints.kpi.retention.unit')}
               </div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionScenario')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.retentionScenario')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
                 {fmtDays(scRetention)} {t('traderPoints.kpi.retention.unit')}
               </div>
             </div>
           </div>
 
-          <div className="mt-2 rounded-lg border border-white/10 bg-slate-900/30 p-2">
-            <div className="text-[11px] text-slate-400">{t('traderPoints.impact.retentionUplift')}</div>
-            <div className="mt-0.5 text-sm font-bold text-slate-100">
+          <div className="mt-2 rounded-lg border border-white/10 bg-gray-700/30 p-2">
+            <div className="text-[11px] text-gray-400">{t('traderPoints.impact.retentionUplift')}</div>
+            <div className="mt-0.5 text-sm font-bold text-gray-100">
               {fmtSignedDays(uplift)} {t('traderPoints.kpi.retention.unit')}
             </div>
           </div>
@@ -175,19 +175,19 @@ export default function ImpactBreakdownCard({
       </div>
 
       <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <div className="text-xs font-extrabold tracking-wide uppercase text-slate-300">{t('traderPoints.impact.whereRetentionTitle')}</div>
+        <div className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
+          <div className="text-xs font-extrabold tracking-wide uppercase text-gray-300">{t('traderPoints.impact.whereRetentionTitle')}</div>
           <div className="mt-2 grid grid-cols-1 gap-2">
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.compositionTitle')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.compositionTitle')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
                 {fmtSignedDays(compositionEffect)} {t('traderPoints.kpi.retention.unit')}
               </div>
               <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.compositionDesc')}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.perUserTitle')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.perUserTitle')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">
                 {fmtSignedDays(perUserEffect)} {t('traderPoints.kpi.retention.unit')}
               </div>
               <div className="mt-0.5 text-[11px] text-slate-500">{t('traderPoints.impact.perUserDesc')}</div>
@@ -195,35 +195,35 @@ export default function ImpactBreakdownCard({
           </div>
         </div>
 
-        <details className="rounded-xl border border-white/10 bg-slate-900/40 p-3">
-          <summary className="cursor-pointer select-none text-xs font-extrabold tracking-wide uppercase text-slate-300">
+        <details className="rounded-xl border border-white/10 bg-gray-700/40 p-3">
+          <summary className="cursor-pointer select-none text-xs font-extrabold tracking-wide uppercase text-gray-300">
             {t('traderPoints.impact.sanity.title')}
           </summary>
-          <div className="mt-2 text-[11px] text-slate-400">{t('traderPoints.impact.sanity.note')}</div>
+          <div className="mt-2 text-[11px] text-gray-400">{t('traderPoints.impact.sanity.note')}</div>
           <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.avgPointsBefore')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtInt(avgPoints)}</div>
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.sanity.avgPointsBefore')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">{fmtInt(avgPoints)}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.avgPointsAfter')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtInt(avgPointsSim)}</div>
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.sanity.avgPointsAfter')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">{fmtInt(avgPointsSim)}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">{t('traderPoints.impact.sanity.aboveThreshold1x')}</div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtPct(before.eligiblePct)}</div>
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">{t('traderPoints.impact.sanity.aboveThreshold1x')}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">{fmtPct(before.eligiblePct)}</div>
             </div>
-            <div className="rounded-lg border border-white/5 bg-slate-900/30 p-2">
-              <div className="text-[11px] text-slate-400">
+            <div className="rounded-lg border border-white/5 bg-gray-700/30 p-2">
+              <div className="text-[11px] text-gray-400">
                 {t('traderPoints.impact.sanity.aboveThresholdMx', {
                   mult: pointsMultiplier.toFixed(2).replace(/\.00$/, ''),
                 })}
               </div>
-              <div className="mt-0.5 text-sm font-bold text-slate-100">{fmtPct(after.eligiblePct)}</div>
+              <div className="mt-0.5 text-sm font-bold text-gray-100">{fmtPct(after.eligiblePct)}</div>
             </div>
           </div>
 
-          <div className="mt-2 text-[11px] text-slate-400">
+          <div className="mt-2 text-[11px] text-gray-400">
             {t('traderPoints.impact.sanity.footer')}
           </div>
         </details>

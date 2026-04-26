@@ -27,7 +27,11 @@ function StatusDot({ ok }) {
 }
 
 function SectionTitle({ children }) {
-  return <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">{children}</h3>
+  return (
+    <h3 className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-2">
+      {children}
+    </h3>
+  )
 }
 
 export default function ConvrsDiagnosticPanel({ livePayload }) {
@@ -106,14 +110,16 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
   return (
     <div className="space-y-4">
       {/* Configurazione */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+      <section className="rounded-2xl border border-gray-600 bg-gray-700/75 p-5">
         <SectionTitle>Configurazione</SectionTitle>
         <div className="space-y-1.5 text-xs">
           <p>
             <StatusDot ok={configured} />
             API Token:{' '}
             <span className={configured ? 'text-emerald-300' : 'text-red-300'}>
-              {configured ? 'configurato' : 'mancante — imposta CONVRS_API_TOKEN in .env.server.local'}
+              {configured
+                ? 'configurato'
+                : 'mancante — imposta CONVRS_API_TOKEN in .env.server.local'}
             </span>
           </p>
           <p>
@@ -124,42 +130,52 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
             </span>
           </p>
           <p className="text-slate-500">
-            Persistence: <span className="text-slate-400">{status.persistence || '—'}</span>
-            {' · '}API URL: <span className="text-slate-400">{status.apiUrl || '—'}</span>
+            Persistence: <span className="text-gray-400">{status.persistence || '—'}</span>
+            {' · '}API URL: <span className="text-gray-400">{status.apiUrl || '—'}</span>
           </p>
           {tracking ? (
             <p className="text-slate-500 mt-2">
-              Messaggi tracciati: <span className="text-slate-300">{tracking.trackedMessages}</span>
-              {' · '}Attribuiti: <span className="text-slate-300">{tracking.attributedMessages}</span>
-              {' · '}Template distinti: <span className="text-slate-300">{tracking.trackedTemplates}</span>
+              Messaggi tracciati: <span className="text-gray-300">{tracking.trackedMessages}</span>
+              {' · '}Attribuiti:{' '}
+              <span className="text-gray-300">{tracking.attributedMessages}</span>
+              {' · '}Template distinti:{' '}
+              <span className="text-gray-300">{tracking.trackedTemplates}</span>
             </p>
           ) : null}
         </div>
 
-        <div className="mt-4 rounded-xl border border-slate-700 bg-slate-800/40 p-3 text-xs text-slate-400">
-          <p className="font-semibold text-slate-300 mb-1.5">URL endpoint webhook da configurare su Convrs</p>
+        <div className="mt-4 rounded-xl border border-gray-600 bg-gray-700/40 p-3 text-xs text-gray-400">
+          <p className="font-semibold text-gray-300 mb-1.5">
+            URL endpoint webhook da configurare su Convrs
+          </p>
           <div className="space-y-1">
             <p>
               <span className="text-sky-400">Callback ACK:</span>{' '}
-              <code className="text-slate-300">https://[tuo-dominio]/api/convrs/whatsapp-callback?secret=BWconvrsSecret_2026_3515055023_ok</code>
+              <code className="text-gray-300">
+                https://[tuo-dominio]/api/convrs/whatsapp-callback?secret=BWconvrsSecret_2026_3515055023_ok
+              </code>
             </p>
             <p>
               <span className="text-sky-400">Webhook eventi:</span>{' '}
-              <code className="text-slate-300">https://[tuo-dominio]/api/convrs/webhook?secret=BWconvrsSecret_2026_3515055023_ok</code>
+              <code className="text-gray-300">
+                https://[tuo-dominio]/api/convrs/webhook?secret=BWconvrsSecret_2026_3515055023_ok
+              </code>
             </p>
           </div>
           <p className="mt-2 text-slate-500">
-            In locale usa <code>http://localhost:4000</code> come base. In produzione sostituisci con il dominio del server.
+            In locale usa <code>http://localhost:4000</code> come base. In produzione sostituisci
+            con il dominio del server.
           </p>
         </div>
       </section>
 
       {/* Register Send */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+      <section className="rounded-2xl border border-gray-600 bg-gray-700/75 p-5">
         <SectionTitle>Registra invio template</SectionTitle>
-        <p className="text-xs text-slate-400 mb-3">
-          Dopo ogni invio template via Convrs API, chiama questo endpoint per tracciare il <code className="text-slate-300">mid</code> restituito.
-          Senza questo passaggio i callback successivi non possono essere attribuiti al template corretto.
+        <p className="text-xs text-gray-400 mb-3">
+          Dopo ogni invio template via Convrs API, chiama questo endpoint per tracciare il{' '}
+          <code className="text-gray-300">mid</code> restituito. Senza questo passaggio i callback
+          successivi non possono essere attribuiti al template corretto.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <div className="flex-1">
@@ -171,7 +187,7 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
               value={sendMid}
               onChange={(e) => setSendMid(e.target.value)}
               placeholder="es. 987654321"
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-gray-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
             />
           </div>
           <div className="flex-1">
@@ -183,7 +199,7 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
               value={sendTemplate}
               onChange={(e) => setSendTemplate(e.target.value)}
               placeholder="es. dormant_account"
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-gray-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
             />
           </div>
           <button
@@ -205,11 +221,11 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
       </section>
 
       {/* Test Callback (solo dev) */}
-      <section className="rounded-2xl border border-slate-700/60 bg-slate-900/40 p-5">
+      <section className="rounded-2xl border border-gray-600/60 bg-gray-700/40 p-5">
         <SectionTitle>Simula callback ACK (solo dev)</SectionTitle>
-        <p className="text-xs text-slate-400 mb-3">
-          Simula un callback di cambiamento stato da Convrs su un mid già registrato.
-          Non disponibile in produzione.
+        <p className="text-xs text-gray-400 mb-3">
+          Simula un callback di cambiamento stato da Convrs su un mid già registrato. Non
+          disponibile in produzione.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
           <div className="flex-1">
@@ -221,7 +237,7 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
               value={cbMid}
               onChange={(e) => setCbMid(e.target.value)}
               placeholder="es. 987654321"
-              className="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
+              className="w-full rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-gray-200 placeholder-slate-600 focus:border-sky-500 focus:outline-none"
             />
           </div>
           <div>
@@ -231,7 +247,7 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
             <select
               value={cbAck}
               onChange={(e) => setCbAck(e.target.value)}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs text-slate-200 focus:border-sky-500 focus:outline-none"
+              className="rounded-lg border border-gray-600 bg-gray-700 px-3 py-2 text-xs text-gray-200 focus:border-sky-500 focus:outline-none"
             >
               {Object.entries(ACK_LABELS).map(([val, label]) => (
                 <option key={val} value={val}>
@@ -259,14 +275,14 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
       </section>
 
       {/* Debug State */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/75 p-5">
+      <section className="rounded-2xl border border-gray-600 bg-gray-700/75 p-5">
         <div className="flex items-center justify-between mb-3">
           <SectionTitle>Messaggi recenti tracciati</SectionTitle>
           <button
             type="button"
             onClick={handleLoadDebug}
             disabled={debugLoading}
-            className="rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-1.5 text-[10px] font-medium text-slate-300 transition hover:border-slate-500 disabled:opacity-40"
+            className="rounded-lg border border-gray-600 bg-gray-700/60 px-3 py-1.5 text-[10px] font-medium text-gray-300 transition hover:border-slate-500 disabled:opacity-40"
           >
             {debugLoading ? 'Caricamento...' : 'Carica debug'}
           </button>
@@ -279,24 +295,28 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-slate-800 text-left text-slate-500 uppercase tracking-wider">
+                  <tr className="border-b border-gray-600 text-left text-slate-500 uppercase tracking-wider">
                     <th className="pb-2 pr-4 font-medium">mid</th>
                     <th className="pb-2 pr-4 font-medium">ack</th>
                     <th className="pb-2 pr-4 font-medium">Template</th>
                     <th className="pb-2 pr-4 font-medium">Timestamp</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/40">
+                <tbody className="divide-y divide-gray-700/40">
                   {(debugData.debug?.recentMessages || []).map((msg) => (
-                    <tr key={msg.mid} className="text-slate-400">
-                      <td className="py-1.5 pr-4 font-mono text-slate-300">{msg.mid}</td>
+                    <tr key={msg.mid} className="text-gray-400">
+                      <td className="py-1.5 pr-4 font-mono text-gray-300">{msg.mid}</td>
                       <td className="py-1.5 pr-4">
-                        <span className={`${msg.ack >= 3 ? 'text-emerald-400' : msg.ack >= 2 ? 'text-sky-400' : msg.ack < 0 ? 'text-red-400' : 'text-slate-400'}`}>
+                        <span
+                          className={`${msg.ack >= 3 ? 'text-emerald-400' : msg.ack >= 2 ? 'text-sky-400' : msg.ack < 0 ? 'text-red-400' : 'text-gray-400'}`}
+                        >
                           {msg.ack} — {ACK_LABELS[String(msg.ack)] || '?'}
                         </span>
                       </td>
-                      <td className="py-1.5 pr-4 text-slate-300">
-                        {msg.templateName || msg.templateId || <span className="text-slate-600">—</span>}
+                      <td className="py-1.5 pr-4 text-gray-300">
+                        {msg.templateName || msg.templateId || (
+                          <span className="text-slate-600">—</span>
+                        )}
                       </td>
                       <td className="py-1.5 text-slate-500">
                         {msg.timestamp ? new Date(msg.timestamp).toLocaleString('it-IT') : '—'}
@@ -311,7 +331,9 @@ export default function ConvrsDiagnosticPanel({ livePayload }) {
             </div>
           )
         ) : (
-          <p className="text-xs text-slate-600">Clicca &ldquo;Carica debug&rdquo; per vedere i messaggi tracciati.</p>
+          <p className="text-xs text-slate-600">
+            Clicca &ldquo;Carica debug&rdquo; per vedere i messaggi tracciati.
+          </p>
         )}
       </section>
     </div>

@@ -1238,7 +1238,7 @@ export default function Topbar({
 
           {/* Mobile Navigation Menu */}
           {hasNav && showMobileMenu && (
-            <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-linear-to-b from-slate-900/98 to-slate-800/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
+            <div className="mobile-nav-menu absolute top-full left-0 right-0 bg-linear-to-b from-gray-700/98 to-gray-700/98 backdrop-blur-lg border-b border-white/10 shadow-2xl md:hidden z-50">
               <div className="px-4 py-4 max-h-96 overflow-y-auto">
                 {React.cloneElement(children, {
                   onItemClick: () => setShowMobileMenu(false),
@@ -1313,10 +1313,10 @@ export default function Topbar({
                         right: 0,
                         width: 360,
                         maxWidth: 'min(92vw, 360px)',
-                        border: '1px solid #1f2937',
+                        border: '1px solid #374151',
                         borderRadius: 12,
-                        background: '#0b1220',
-                        boxShadow: '0 14px 36px rgba(2, 6, 23, 0.52)',
+                        background: '#374151',
+                        boxShadow: '0 14px 36px rgba(0, 0, 0, 0.40)',
                         padding: 10,
                         zIndex: 60,
                         display: 'grid',
@@ -1334,14 +1334,14 @@ export default function Topbar({
                             <div
                               key={item.id}
                               style={{
-                                border: hasChanges ? '1px solid #f59e0b' : '1px solid #1f2937',
+                                border: hasChanges ? '1px solid #f59e0b' : '1px solid #374151',
                                 borderRadius: 10,
                                 padding: 10,
                                 background: hasChanges
                                   ? 'linear-gradient(180deg, rgba(245,158,11,0.16), rgba(30,41,59,0.9))'
                                   : isRead
-                                    ? '#0f172a'
-                                    : 'rgba(30, 64, 175, 0.16)',
+                                    ? '#374151'
+                                    : 'rgba(37, 99, 235, 0.18)',
                               }}
                             >
                               <div
@@ -1360,7 +1360,7 @@ export default function Topbar({
                                     fontSize: 10,
                                     borderRadius: 999,
                                     padding: '2px 8px',
-                                    background: isRead ? '#1f2937' : '#1d4ed8',
+                                    background: isRead ? '#374151' : '#2563eb',
                                     color: isRead ? '#cbd5e1' : '#dbeafe',
                                     fontWeight: 700,
                                   }}
@@ -1414,8 +1414,8 @@ export default function Topbar({
                                   type="button"
                                   onClick={openTrustpilotGuide}
                                   style={{
-                                    border: '1px solid #334155',
-                                    background: '#0b1220',
+                                    border: '1px solid #374151',
+                                    background: '#374151',
                                     color: '#e2e8f0',
                                     borderRadius: 8,
                                     padding: '5px 8px',
@@ -1431,7 +1431,7 @@ export default function Topbar({
                                     onClick={() => markNotificationRead(item.id)}
                                     style={{
                                       border: '1px solid #1e40af',
-                                      background: '#0f172a',
+                                      background: '#374151',
                                       color: '#bfdbfe',
                                       borderRadius: 8,
                                       padding: '5px 8px',
@@ -1447,7 +1447,7 @@ export default function Topbar({
                           )
                         })
                       ) : (
-                        <div style={{ color: '#94a3b8', fontSize: 12 }}>
+                        <div style={{ color: '#9ca3af', fontSize: 12 }}>
                           {notificationsText.empty}
                         </div>
                       )}

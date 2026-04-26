@@ -11,52 +11,53 @@ export default {
         sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
-        // Enhanced brand colors from trading-platform
+        // Enhanced brand colors — vivid blue readable on dark backgrounds
         brand: {
-          50: "#e8edff",
-          100: "#cfd8ff",
-          200: "#a2b4ff",
-          300: "#6c8cff",
-          400: "#3f63ff",
-          500: "#1f4cff",
-          600: "#0036ff",
-          700: "#0a2dd1",
-          800: "#0c2aa8",
-          900: "#0d257f",
+          50: "#eff6ff",
+          100: "#dbeafe",
+          200: "#bfdbfe",
+          300: "#93c5fd",
+          400: "#60a5fa",
+          500: "#3b82f6",
+          600: "#2563eb",
+          700: "#1d4ed8",
+          800: "#1e40af",
+          900: "#1e3a8a",
         },
+        // Navy palette remapped to Charcoal Pro (gray scale)
         navy: {
-          50: "#e9ecf5",
-          100: "#cfd5e6",
-          200: "#a4b0cd",
-          300: "#7c8cb4",
-          400: "#556692",
-          500: "#33456f",
-          600: "#1f2f54",
-          700: "#162541",
-          800: "#0f1c33",
-          900: "#0a122a",
+          50: "#f9fafb",
+          100: "#f3f4f6",
+          200: "#e5e7eb",
+          300: "#d1d5db",
+          400: "#9ca3af",
+          500: "#6b7280",
+          600: "#4b5563",
+          700: "#374151",
+          800: "#1f2937",
+          900: "#111827",
         },
         slate: {
           925: "#0b1220",
         },
-        // Design tokens (light defaults, dark via .dark using Tailwind's dark: utilities)
+        // Design tokens — updated for high-contrast Charcoal Pro
         surface: {
           DEFAULT: '#ffffff',
-          alt: '#f8fafc', // slate-50-ish
+          alt: '#f9fafb',
         },
         border: {
-          DEFAULT: '#e5e7eb', // gray-200
-          strong: '#d1d5db', // gray-300
+          DEFAULT: '#4b5563', // gray-600 on dark
+          strong: '#6b7280', // gray-500
         },
         text: {
-          primary: '#0f172a', // slate-900
-          secondary: '#475569', // slate-600
-          muted: '#64748b', // slate-500
+          primary: '#f9fafb',
+          secondary: '#d1d5db',
+          muted: '#9ca3af',
         },
         accent: {
-          primary: '#0036ff', // Brand blue
-          secondary: '#1f4cff',
-          ring: '#a2b4ff', // brand-200
+          primary: '#3b82f6', // blue-500
+          secondary: '#60a5fa', // blue-400
+          ring: '#93c5fd', // blue-300
         },
         success: {
           soft: '#dcfce7',
@@ -80,17 +81,17 @@ export default {
         pill: '9999px',
       },
       boxShadow: {
-        card: "0 14px 45px rgba(15,30,60,0.12)",
-        'card-hover': "0 20px 60px rgba(15,30,60,0.18)",
-        glow: "0 0 20px rgba(0, 54, 255, 0.15)",
-        'glow-danger': "0 0 20px rgba(239, 68, 68, 0.15)",
-        'glow-warning': "0 0 20px rgba(245, 158, 11, 0.15)",
-        'glow-success': "0 0 20px rgba(22, 163, 74, 0.15)",
+        card: "0 14px 45px rgba(0,0,0,0.25)",
+        'card-hover': "0 20px 60px rgba(0,0,0,0.35)",
+        glow: "0 0 20px rgba(59, 130, 246, 0.25)",
+        'glow-danger': "0 0 20px rgba(239, 68, 68, 0.20)",
+        'glow-warning': "0 0 20px rgba(245, 158, 11, 0.20)",
+        'glow-success': "0 0 20px rgba(22, 163, 74, 0.20)",
       },
       backgroundImage: {
         "hero-grid": "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.12) 1px, transparent 0)",
         "theme-gradient": "linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%)",
-        "card-gradient": "linear-gradient(135deg, rgba(15, 28, 51, 0.95) 0%, rgba(31, 47, 84, 0.9) 100%)",
+        "card-gradient": "linear-gradient(135deg, rgba(55, 65, 81, 0.92) 0%, rgba(75, 85, 99, 0.88) 100%)",
       },
       animation: {
         'slide-in-right': 'slide-in-right 0.5s ease-out',

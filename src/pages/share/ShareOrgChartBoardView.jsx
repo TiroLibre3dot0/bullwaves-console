@@ -13,7 +13,7 @@ function Avatar({ name, accentClassName = 'ring-cyan-400/30' }) {
   return (
     <div
       aria-hidden="true"
-      className={`h-9 w-9 rounded-full bg-slate-800/70 text-slate-100 flex items-center justify-center text-xs font-bold ring-1 ${accentClassName}`}
+      className={`h-9 w-9 rounded-full bg-gray-700/70 text-gray-100 flex items-center justify-center text-xs font-bold ring-1 ${accentClassName}`}
       title={name}
     >
       {initials(name)}
@@ -21,7 +21,7 @@ function Avatar({ name, accentClassName = 'ring-cyan-400/30' }) {
   )
 }
 
-function Pill({ children, accentClassName = 'border-slate-700 text-slate-200' }) {
+function Pill({ children, accentClassName = 'border-gray-600 text-gray-200' }) {
   return (
     <span
       className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${accentClassName}`}
@@ -33,12 +33,12 @@ function Pill({ children, accentClassName = 'border-slate-700 text-slate-200' })
 
 function LeadershipCard({ name, role, accent }) {
   return (
-    <div className="bg-slate-900/40 border border-slate-800/80 rounded-2xl shadow-sm backdrop-blur-md">
+    <div className="bg-gray-700/40 border border-gray-600/80 rounded-2xl shadow-sm backdrop-blur-md">
       <div className="p-5 flex items-center gap-3">
         <Avatar name={name} accentClassName={accent} />
         <div className="min-w-0">
-          <div className="text-xs text-slate-400">{role}</div>
-          <div className="text-base font-semibold text-slate-100 truncate" title={name}>
+          <div className="text-xs text-gray-400">{role}</div>
+          <div className="text-base font-semibold text-gray-100 truncate" title={name}>
             {name}
           </div>
         </div>
@@ -50,8 +50,8 @@ function LeadershipCard({ name, role, accent }) {
 function MiniRow({ role, name }) {
   return (
     <div className="flex items-start justify-between gap-3">
-      <div className="text-xs text-slate-400">{role}</div>
-      <div className="text-sm text-slate-100 font-semibold text-right">{name}</div>
+      <div className="text-xs text-gray-400">{role}</div>
+      <div className="text-sm text-gray-100 font-semibold text-right">{name}</div>
     </div>
   )
 }
@@ -61,14 +61,14 @@ function ClusterCard({ domain, accent }) {
 
   return (
     <section
-      className="bg-slate-900/40 border border-slate-800/80 rounded-2xl shadow-sm backdrop-blur-md overflow-hidden"
+      className="bg-gray-700/40 border border-gray-600/80 rounded-2xl shadow-sm backdrop-blur-md overflow-hidden"
       aria-labelledby={`domain-${title}`}
     >
       <div className="p-6">
         <div className="flex items-start justify-between gap-3">
           <h2
             id={`domain-${title}`}
-            className="text-[11px] uppercase tracking-[0.18em] text-slate-400"
+            className="text-[11px] uppercase tracking-[0.18em] text-gray-400"
           >
             {title}
           </h2>
@@ -78,8 +78,8 @@ function ClusterCard({ domain, accent }) {
         <div className="mt-5 flex items-center gap-3">
           <Avatar name={headName} accentClassName={accent.ring} />
           <div className="min-w-0">
-            <div className="text-xs text-slate-400">{executiveLabel}</div>
-            <div className="text-sm font-semibold text-slate-100 truncate" title={headName}>
+            <div className="text-xs text-gray-400">{executiveLabel}</div>
+            <div className="text-sm font-semibold text-gray-100 truncate" title={headName}>
               {headName}
             </div>
           </div>
@@ -87,14 +87,14 @@ function ClusterCard({ domain, accent }) {
 
         {sponsorName ? (
           <div className="mt-3">
-            <Pill accentClassName={`border ${accent.pillBorder} text-slate-100 bg-slate-950/30`}>
+            <Pill accentClassName={`border ${accent.pillBorder} text-gray-100 bg-gray-900/30`}>
               Executive Sponsor: {sponsorName}
             </Pill>
           </div>
         ) : null}
 
         {keyLeads.length ? (
-          <div className="mt-6 pt-5 border-t border-slate-800/70">
+          <div className="mt-6 pt-5 border-t border-gray-600/70">
             <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Key Leads</div>
             <div className="mt-3 space-y-2">
               {keyLeads.slice(0, 3).map((k) => (
@@ -104,13 +104,13 @@ function ClusterCard({ domain, accent }) {
           </div>
         ) : null}
 
-        <div className="mt-6 pt-5 border-t border-slate-800/70">
+        <div className="mt-6 pt-5 border-t border-gray-600/70">
           <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">Areas</div>
           <div className="mt-3 flex flex-wrap gap-2">
             {areas.map((a) => (
               <Pill
                 key={`${title}-${a}`}
-                accentClassName={`border ${accent.pillBorder} text-slate-200`}
+                accentClassName={`border ${accent.pillBorder} text-gray-200`}
               >
                 {a}
               </Pill>
@@ -241,16 +241,16 @@ export default function ShareOrgChartBoardView() {
   }, [])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100">
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-10">
         {/* 1) Header */}
         <header className="flex flex-col items-center text-center">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
           </h1>
-          <p className="mt-2 text-sm text-slate-400">High-level structure overview (Board view)</p>
+          <p className="mt-2 text-sm text-gray-400">High-level structure overview (Board view)</p>
           <div className="mt-4">
-            <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/50 px-3 py-1 text-xs text-slate-200">
+            <span className="inline-flex items-center rounded-full border border-gray-600 bg-gray-700/50 px-3 py-1 text-xs text-gray-200">
               Names only · No contact details
             </span>
           </div>
@@ -259,7 +259,7 @@ export default function ShareOrgChartBoardView() {
         {/* 2) Group level (top) */}
         <section className="mt-12" aria-label="Group leadership">
           <div className="flex flex-col items-center">
-            <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-slate-900/45 px-5 py-2 text-sm font-semibold">
+            <div className="inline-flex items-center rounded-full border border-cyan-400/30 bg-gray-700/45 px-5 py-2 text-sm font-semibold">
               Bullwaves Group
             </div>
 
@@ -286,7 +286,7 @@ export default function ShareOrgChartBoardView() {
 
         {/* 4) Legend */}
         <footer className="mt-12 flex justify-center">
-          <div className="text-xs text-slate-400 border border-slate-800/80 bg-slate-900/35 rounded-full px-4 py-2">
+          <div className="text-xs text-gray-400 border border-gray-600/80 bg-gray-700/35 rounded-full px-4 py-2">
             Public view: names only · No contact details
           </div>
         </footer>

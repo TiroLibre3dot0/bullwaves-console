@@ -457,7 +457,7 @@ function badgeStyle(kind, value) {
   if (kind === 'priority') {
     if (value === 'high') return { ...base, background: '#3f1d1d', color: '#fca5a5' }
     if (value === 'medium') return { ...base, background: '#3a2b14', color: '#fcd34d' }
-    return { ...base, background: '#1f2937', color: '#93c5fd' }
+    return { ...base, background: '#374151', color: '#93c5fd' }
   }
 
   if (kind === 'match') {
@@ -468,7 +468,7 @@ function badgeStyle(kind, value) {
 
   if (kind === 'action') {
     if (value === 'direct_contact') return { ...base, background: '#0f2540', color: '#93c5fd' }
-    if (value === 'public_reply') return { ...base, background: '#1f2937', color: '#cbd5e1' }
+    if (value === 'public_reply') return { ...base, background: '#374151', color: '#cbd5e1' }
     if (value === 'manual_review') return { ...base, background: '#3a1616', color: '#fca5a5' }
     return { ...base, background: '#213126', color: '#86efac' }
   }
@@ -1230,7 +1230,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
       pendingWindow = window.open('', '_blank')
       if (pendingWindow && pendingWindow.document) {
         pendingWindow.document.title = txt.shareCtaLoading
-        pendingWindow.document.body.style.background = '#070b14'
+        pendingWindow.document.body.style.background = '#0f172a'
         pendingWindow.document.body.style.color = '#e2e8f0'
         pendingWindow.document.body.style.fontFamily =
           'system-ui, -apple-system, Segoe UI, sans-serif'
@@ -1318,9 +1318,9 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
     <div style={{ display: 'grid', gap: 12 }}>
       <div
         style={{
-          border: '1px solid #1f2937',
+          border: '1px solid #374151',
           borderRadius: 12,
-          background: '#0b1220',
+          background: '#1e293b',
           padding: 14,
         }}
       >
@@ -1407,7 +1407,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
 
           <div
             style={{
-              border: '1px solid #1f2937',
+              border: '1px solid #374151',
               borderRadius: 12,
               padding: 10,
               display: 'grid',
@@ -1420,7 +1420,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
               onChange={(e) => setQuery(e.target.value)}
               placeholder={txt.filter.searchPlaceholder}
               style={{
-                background: '#0b1220',
+                background: '#1e293b',
                 color: '#e5e7eb',
                 border: '1px solid #334155',
                 borderRadius: 8,
@@ -1487,7 +1487,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
           >
             <div
               style={{
-                border: '1px solid #1f2937',
+                border: '1px solid #374151',
                 borderRadius: 12,
                 overflow: 'hidden',
                 display: 'flex',
@@ -1518,7 +1518,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                           cursor: 'pointer',
                           background:
                             row.reviewLine === selected?.reviewLine ? '#111827' : 'transparent',
-                          borderTop: '1px solid #1f2937',
+                          borderTop: '1px solid #374151',
                         }}
                       >
                         <Td>{row.reviewLine}</Td>
@@ -1550,10 +1550,10 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
 
             <div
               style={{
-                border: '1px solid #1f2937',
+                border: '1px solid #374151',
                 borderRadius: 12,
                 padding: 12,
-                background: '#0b1220',
+                background: '#1e293b',
                 minHeight: 0,
                 overflowY: 'auto',
               }}
@@ -1563,7 +1563,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                   <div
                     style={{
                       marginBottom: 10,
-                      border: '1px solid #1f2937',
+                      border: '1px solid #374151',
                       borderRadius: 10,
                       background: '#0f172a',
                       padding: 10,
@@ -1861,7 +1861,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                   overflow: 'auto',
                   border: '1px solid #334155',
                   borderRadius: 14,
-                  background: '#0b1220',
+                  background: '#1e293b',
                   boxShadow: '0 18px 46px rgba(2, 6, 23, 0.55)',
                   padding: 0,
                 }}
@@ -1876,8 +1876,8 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                     justifyContent: 'space-between',
                     gap: 12,
                     padding: '14px 16px 12px',
-                    borderBottom: '1px solid #1f2937',
-                    background: '#0b1220',
+                    borderBottom: '1px solid #374151',
+                    background: '#1e293b',
                   }}
                 >
                   <div>
@@ -2062,14 +2062,14 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                             profileData.creolabs.timeline.length ? (
                               <div
                                 style={{
-                                  border: '1px solid #1f2937',
+                                  border: '1px solid #374151',
                                   borderRadius: 10,
                                   overflow: 'auto',
                                 }}
                               >
                                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                   <thead>
-                                    <tr style={{ background: '#0b1220' }}>
+                                    <tr style={{ background: '#1e293b' }}>
                                       <Th>{txt.modal.creolabs.period}</Th>
                                       <Th>{txt.modal.creolabs.deposit}</Th>
                                       <Th>{txt.modal.creolabs.withdrawals}</Th>
@@ -2082,7 +2082,7 @@ export default function TrustpilotGuidePage({ publicMode = false, sharePayload =
                                     {profileData.creolabs.timeline.map((row) => (
                                       <tr
                                         key={row.period}
-                                        style={{ borderTop: '1px solid #1f2937' }}
+                                        style={{ borderTop: '1px solid #374151' }}
                                       >
                                         <Td>{row.period || txt.modal.noValue}</Td>
                                         <Td>{formatNumber(row.deposit)}</Td>
@@ -2130,10 +2130,10 @@ function MetricCard({ title, value, color = '#93c5fd' }) {
   return (
     <div
       style={{
-        border: '1px solid #1f2937',
+        border: '1px solid #374151',
         borderRadius: 12,
         padding: '10px 12px',
-        background: '#0b1220',
+        background: '#1e293b',
         display: 'grid',
         gap: 4,
       }}
@@ -2152,7 +2152,7 @@ function SelectFilter({ value, onChange, options }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       style={{
-        background: '#0b1220',
+        background: '#1e293b',
         color: '#e5e7eb',
         border: '1px solid #334155',
         borderRadius: 8,
@@ -2215,7 +2215,7 @@ function FlowDiagram({ txt, steps }) {
   return (
     <div
       style={{
-        border: '1px solid #1f2937',
+        border: '1px solid #374151',
         borderRadius: 10,
         background: '#0f172a',
         padding: 10,
@@ -2281,7 +2281,7 @@ function FlowDiagram({ txt, steps }) {
                     alignItems: 'center',
                     borderRadius: 999,
                     border: `1px solid ${colors.border}`,
-                    background: '#0b1220',
+                    background: '#1e293b',
                     color: colors.text,
                     fontSize: 10,
                     fontWeight: 700,
@@ -2336,7 +2336,7 @@ function ProfileField({ label, value }) {
   return (
     <div
       style={{
-        border: '1px solid #1f2937',
+        border: '1px solid #374151',
         borderRadius: 10,
         padding: '8px 10px',
         background: '#0f172a',
@@ -2352,7 +2352,7 @@ function ModalSection({ title, children }) {
   return (
     <section
       style={{
-        border: '1px solid #1f2937',
+        border: '1px solid #374151',
         borderRadius: 12,
         background: '#0f172a',
         padding: 10,
@@ -2370,10 +2370,10 @@ function CompactMetric({ label, value }) {
   return (
     <div
       style={{
-        border: '1px solid #1f2937',
+        border: '1px solid #374151',
         borderRadius: 10,
         padding: '8px 10px',
-        background: '#0b1220',
+        background: '#1e293b',
       }}
     >
       <div style={{ color: '#94a3b8', fontSize: 11 }}>{label}</div>

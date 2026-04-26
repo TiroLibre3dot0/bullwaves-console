@@ -7,7 +7,7 @@ function safeLoad() {
     if (!raw) return []
     const parsed = JSON.parse(raw)
     return Array.isArray(parsed) ? parsed : []
-  } catch (err) {
+  } catch (_err) {
     return []
   }
 }
@@ -16,7 +16,7 @@ function persist(events) {
   if (typeof window === 'undefined') return
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
-  } catch (err) {
+  } catch (_err) {
     // Swallow storage errors; best-effort only
   }
 }
@@ -92,7 +92,13 @@ export function getOnlineUsers(events = [], now = new Date(), onlineWindowMinute
       if (!ev.userEmail) return acc
       const key = ev.userEmail.toLowerCase()
       const ts = ev.timestamp ? new Date(ev.timestamp).getTime() : 0
-      const current = acc.get(key) || { email: ev.userEmail, name: ev.userName, role: ev.userRole, lastSeen: null, lastSection: null }
+      const current = acc.get(key) || {
+        email: ev.userEmail,
+        name: ev.userName,
+        role: ev.userRole,
+        lastSeen: null,
+        lastSection: null,
+      }
       if (ts && (!current.lastSeen || ts > new Date(current.lastSeen).getTime())) {
         current.lastSeen = ev.timestamp
         if (ev.type === 'NAVIGATE' && ev.section) current.lastSection = ev.section
@@ -112,4 +118,28 @@ export function getOnlineUsers(events = [], now = new Date(), onlineWindowMinute
 export function clearEvents() {
   if (typeof window === 'undefined') return
   window.localStorage.removeItem(STORAGE_KEY)
+}
+
+/**
+ * Returns the top N most visited sections for a specific user, sorted by visit count descending.
+ * @param {string} userEmail
+ * @param {number} limit  – max number of results (default 5)
+ * @returns {{ sectionId: string, count: number }[]}
+ */
+export function getTopSectionsForUser(userEmail, limit = 5) {
+  if (!userEmail) return []
+  const events = safeLoad()
+  const emailLower = String(userEmail).toLowerCase()
+  const counts = new Map()
+  events.forEach((ev) => {
+    if (ev.type !== 'NAVIGATE' || !ev.section) return
+    if (String(ev.userEmail || '').toLowerCase() !== emailLower) return
+    // exclude the 'home' section itself from the quick access list
+    if (ev.section === 'home') return
+    counts.set(ev.section, (counts.get(ev.section) || 0) + 1)
+  })
+  return Array.from(counts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+    .map(([sectionId, count]) => ({ sectionId, count }))
 }

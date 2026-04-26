@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import Papa from 'papaparse'
 import FullPageLoader from '../../../components/FullPageLoader'
 import { useI18n } from '../../../i18n/I18nContext'
@@ -511,7 +511,7 @@ const buildMonthLabel = (row) => {
     ]
     return `${monthNames[m]} ${y}`
   }
-  return '—'
+  return '�'
 }
 
 const formatDelta = (value) => {
@@ -662,18 +662,18 @@ const formatMonthYear = (year, monthIndex) => {
   ]
   const m = Number(monthIndex)
   const y = Number(year)
-  if (!Number.isFinite(m) || !Number.isFinite(y) || m < 0 || m > 11) return '—'
+  if (!Number.isFinite(m) || !Number.isFinite(y) || m < 0 || m > 11) return '�'
   return `${monthNames[m]} ${y}`
 }
 
 const formatMonthRange = (startId, endId) => {
-  if (startId === null || endId === null) return '—'
+  if (startId === null || endId === null) return '�'
   const s = partsFromMonthId(startId)
   const e = partsFromMonthId(endId)
   const a = formatMonthYear(s.year, s.monthIndex)
   const b = formatMonthYear(e.year, e.monthIndex)
   if (a === b) return a
-  return `${a} — ${b}`
+  return `${a} � ${b}`
 }
 
 function buildRollingPeriodContext(rows, periodType, t) {
@@ -711,7 +711,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
       type: periodType,
       startId: null,
       endId: null,
-      label: '—',
+      label: '�',
       hasPrevious: false,
       prevStartId: null,
       prevEndId: null,
@@ -772,7 +772,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
       type: 'ytd',
       startId,
       endId,
-      label: `${t('shareAffiliateReports.period.ytd') || 'Year to date'}: ${jan} — ${formatMonthYear(end.year, end.monthIndex)}`,
+      label: `${t('shareAffiliateReports.period.ytd') || 'Year to date'}: ${jan} � ${formatMonthYear(end.year, end.monthIndex)}`,
       hasPrevious,
       prevStartId: hasPrevious ? prevStartId : null,
       prevEndId: hasPrevious ? prevEndId : null,
@@ -783,7 +783,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
     type: periodType,
     startId: null,
     endId: null,
-    label: '—',
+    label: '�',
     hasPrevious: false,
     prevStartId: null,
     prevEndId: null,
@@ -825,18 +825,18 @@ function periodSortValue(row, periodType) {
 }
 
 function labelForPeriodKey(periodType, key, fallbackLabel) {
-  if (periodType === 'monthly') return fallbackLabel || String(key || '—')
+  if (periodType === 'monthly') return fallbackLabel || String(key || '�')
   const k = String(key || '')
   if (periodType === 'quarterly') {
     const m = k.match(/^(\d{4})-Q([1-4])$/)
-    return m ? `Q${m[2]} ${m[1]}` : k || '—'
+    return m ? `Q${m[2]} ${m[1]}` : k || '�'
   }
   if (periodType === 'semi-annual') {
     const m = k.match(/^(\d{4})-H([1-2])$/)
-    return m ? `H${m[2]} ${m[1]}` : k || '—'
+    return m ? `H${m[2]} ${m[1]}` : k || '�'
   }
-  if (periodType === 'annual') return k || '—'
-  return k || '—'
+  if (periodType === 'annual') return k || '�'
+  return k || '�'
 }
 
 function directionFromDelta(delta, deadband = 0.00001) {
@@ -849,7 +849,7 @@ function trendWord(t, dir) {
   if (dir === 'up') return t('shareAffiliateAnalysis.comparison.up') || 'Up'
   if (dir === 'down') return t('shareAffiliateAnalysis.comparison.down') || 'Down'
   if (dir === 'flat') return t('shareAffiliateAnalysis.comparison.flat') || 'Flat'
-  return '—'
+  return '�'
 }
 
 function AffiliateExecutiveCumulativeChart({
@@ -863,7 +863,7 @@ function AffiliateExecutiveCumulativeChart({
 }) {
   if (!data || data.length === 0) return null
 
-  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
 
   const colors = {
     regs: '#ffffff',
@@ -1025,10 +1025,10 @@ function AffiliateExecutiveCumulativeChart({
   const step = Math.max(1, Math.ceil(series.length / maxXlabels))
 
   const formatEuroShort = (v) => {
-    if (maskFinancials) return '•••'
+    if (maskFinancials) return '���'
     const n = Number(v || 0)
     const sign = n < 0 ? '-' : ''
-    return `${sign}€${formatNumberShort(Math.abs(n))}`
+    return `${sign}�${formatNumberShort(Math.abs(n))}`
   }
 
   const conversionMarker = (() => {
@@ -1315,7 +1315,7 @@ function AffiliateExecutiveCumulativeChart({
                   const gap = 6
 
                   const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
-                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} · Never dep. (Avg)`
+                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} � Never dep. (Avg)`
 
                   const maxX = W - padR - 6
                   const minX = padL + 6
@@ -1586,7 +1586,7 @@ function PublicAffiliateReportsEntryView({
   shareBase,
   maskFinancials = false,
 }) {
-  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
 
   const maskedBadge = maskFinancials ? (
     <span
@@ -1645,7 +1645,7 @@ function PublicAffiliateReportsEntryView({
                 margin: '6px 0 4px',
               }}
             >
-              {t('shareAffiliateReports.header.title') || 'Affiliate Performance — Board View'}
+              {t('shareAffiliateReports.header.title') || 'Affiliate Performance � Board View'}
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
               {t('shareAffiliateReports.header.note') ||
@@ -1667,7 +1667,7 @@ function PublicAffiliateReportsEntryView({
             const status = statusFromProfit(t, a.profit || 0)
             const rank = typeof a.rank === 'number' ? a.rank : idx + 1
             const total = affiliates.length || 20
-            const weightLabel = Number.isFinite(a.weightPct) ? formatPercent(a.weightPct, 1) : '—'
+            const weightLabel = Number.isFinite(a.weightPct) ? formatPercent(a.weightPct, 1) : '�'
 
             const rightTag = (
               <div
@@ -1708,7 +1708,7 @@ function PublicAffiliateReportsEntryView({
               <Card
                 key={a.affiliate}
                 title={a.affiliate}
-                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${fmtEuro(a.netDeposits || 0)} · ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${fmtEuro(a.pl || 0)} · ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
+                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${fmtEuro(a.netDeposits || 0)} � ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${fmtEuro(a.pl || 0)} � ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
                 rightTag={rightTag}
                 onClick={() => {
                   const next = `${shareBase}/${encodeAffiliateId(a.affiliate)}`
@@ -1721,7 +1721,7 @@ function PublicAffiliateReportsEntryView({
 
         <div style={{ marginTop: 14, fontSize: 11, color: 'var(--muted)' }}>
           {t('shareAffiliateReports.footer.note') ||
-            'Board view is read-only. Data source: internal Affiliate → Analysis.'}
+            'Board view is read-only. Data source: internal Affiliate ? Analysis.'}
         </div>
       </div>
     </div>
@@ -1753,9 +1753,9 @@ function PublicAffiliateReportsDetailView({
   const current = report?.currentKpis || null
   const previous = report?.previousKpis || null
 
-  const fmtEuro = (value) => (maskFinancials ? '•••' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
   const fmtSensitivePercent = (value, decimals = 1) =>
-    maskFinancials ? '•••' : formatPercent(value, decimals)
+    maskFinancials ? '���' : formatPercent(value, decimals)
 
   const maskedBadge = maskFinancials ? (
     <span
@@ -2149,7 +2149,7 @@ function PublicAffiliateReportsDetailView({
         {strengths.map((s, idx) => (
           <React.Fragment key={idx}>
             {renderParts(s)}
-            {idx < strengths.length - 1 ? <span style={{ opacity: 0.6 }}> · </span> : null}
+            {idx < strengths.length - 1 ? <span style={{ opacity: 0.6 }}> � </span> : null}
           </React.Fragment>
         ))}
       </>
@@ -2270,7 +2270,7 @@ function PublicAffiliateReportsDetailView({
     const n = Number(v || 0)
     if (n > 0) return '#22c55e'
     if (n < 0) return n > -1000 ? '#f59e0b' : '#ef4444'
-    return '#94a3b8'
+    return '#9ca3af'
   }
 
   const periodTrends = useMemo(() => {
@@ -2865,7 +2865,7 @@ function PublicAffiliateReportsDetailView({
                     {selectedAffiliateName}
                   </span>
                   <span aria-hidden="true" style={{ fontSize: 14, opacity: 0.75 }}>
-                    ▾
+                    ?
                   </span>
                 </button>
                 <span
@@ -2942,7 +2942,7 @@ function PublicAffiliateReportsDetailView({
                       }}
                       aria-label={t('common.close') || 'Close'}
                     >
-                      ×
+                      �
                     </button>
                   </div>
 
@@ -3015,7 +3015,7 @@ function PublicAffiliateReportsDetailView({
                               }}
                               title={t('shareAffiliateReports.kpi.rank') || 'Rank'}
                             >
-                              #{rank || '—'}
+                              #{rank || '�'}
                             </span>
                             <div style={{ minWidth: 0 }}>
                               <div
@@ -3043,15 +3043,15 @@ function PublicAffiliateReportsDetailView({
                               >
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-                                  : {nd === null ? '—' : fmtEuro(nd)}
+                                  : {nd === null ? '�' : fmtEuro(nd)}
                                 </span>
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.pl') || 'P&L'}:{' '}
-                                  {pl === null ? '—' : fmtEuro(pl)}
+                                  {pl === null ? '�' : fmtEuro(pl)}
                                 </span>
                                 <span>
                                   {t('shareAffiliateAnalysis.metric.roi') || 'ROI'}:{' '}
-                                  {roi === null ? '—' : fmtSensitivePercent(roi, 1)}
+                                  {roi === null ? '�' : fmtSensitivePercent(roi, 1)}
                                 </span>
                               </div>
                             </div>
@@ -3086,10 +3086,10 @@ function PublicAffiliateReportsDetailView({
                 'Affiliate registrations'
               }
               value={
-                affiliateRegistrations === null ? '—' : formatNumberShort(affiliateRegistrations)
+                affiliateRegistrations === null ? '�' : formatNumberShort(affiliateRegistrations)
               }
               tone={'rgba(34,211,238,0.95)'}
-              meta={selectedPeriodLabel || '—'}
+              meta={selectedPeriodLabel || '�'}
             />
             <CompactMetric
               label={
@@ -3097,7 +3097,7 @@ function PublicAffiliateReportsDetailView({
               }
               value={
                 companyRegistrations === null || companyRegistrations === undefined
-                  ? '—'
+                  ? '�'
                   : formatNumberShort(companyRegistrations)
               }
               tone={'var(--text)'}
@@ -3157,7 +3157,7 @@ function PublicAffiliateReportsDetailView({
                 padding: '6px 0',
               }}
             >
-              <span aria-hidden="true">←</span>
+              <span aria-hidden="true">?</span>
               <span>{t('shareAffiliateAnalysis.back')}</span>
             </a>
 
@@ -3207,7 +3207,7 @@ function PublicAffiliateReportsDetailView({
               ))}
             </select>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.60)', fontWeight: 850 }}>
-              {selectedPeriodLabel || '—'}
+              {selectedPeriodLabel || '�'}
             </div>
           </div>
 
@@ -3253,12 +3253,12 @@ function PublicAffiliateReportsDetailView({
           >
             <StripItem
               label={t('shareAffiliateReports.metric.ftdClients') || 'FTD clients'}
-              value={ftd === null ? '—' : formatNumberShort(ftd)}
+              value={ftd === null ? '�' : formatNumberShort(ftd)}
               tone={'#10b981'}
             />
             <StripItem
               label={t('shareAffiliateReports.metric.qftdClients') || 'QFTD clients'}
-              value={qftd === null ? '—' : formatNumberShort(qftd)}
+              value={qftd === null ? '�' : formatNumberShort(qftd)}
               tone={'#f59e0b'}
             />
             <StripItem
@@ -3267,24 +3267,24 @@ function PublicAffiliateReportsDetailView({
                 depositsCount === null || depositsCount === undefined
                   ? registrationsDepositsAgg.error
                     ? 'N/A'
-                    : '—'
+                    : '�'
                   : formatNumberShort(depositsCount)
               }
               tone={'rgba(148,163,184,0.95)'}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-              value={netDeposits === null ? '—' : fmtEuro(netDeposits)}
+              value={netDeposits === null ? '�' : fmtEuro(netDeposits)}
               tone={toneForSigned(netDeposits)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.pl') || 'P&L'}
-              value={pl === null ? '—' : fmtEuro(pl)}
+              value={pl === null ? '�' : fmtEuro(pl)}
               tone={toneForSigned(pl)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.payments') || 'Payments'}
-              value={paymentsTotal === null ? '—' : fmtEuro(paymentsTotal)}
+              value={paymentsTotal === null ? '�' : fmtEuro(paymentsTotal)}
               tone={
                 paymentsTotal !== null && Number(paymentsTotal) < 0
                   ? toneForSigned(paymentsTotal)
@@ -3293,7 +3293,7 @@ function PublicAffiliateReportsDetailView({
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.roi') || 'ROI'}
-              value={roi === null ? '—' : fmtSensitivePercent(roi, 1)}
+              value={roi === null ? '�' : fmtSensitivePercent(roi, 1)}
               tone={roi !== null && roi < 0 ? '#ef4444' : '#22c55e'}
             />
           </div>
@@ -3407,11 +3407,11 @@ function PublicAffiliateReportsDetailView({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               <Badge
                 label={t('shareAffiliateReports.metric.cr') || 'CR%'}
-                value={conversionRate === null ? '—' : formatPercent(conversionRate, 1)}
+                value={conversionRate === null ? '�' : formatPercent(conversionRate, 1)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.losingRatio') || 'Losing ratio% (P&L/ND)'}
-                value={losingRatioPct === null ? '—' : fmtSensitivePercent(losingRatioPct, 2)}
+                value={losingRatioPct === null ? '�' : fmtSensitivePercent(losingRatioPct, 2)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.arpu') || 'ARPU'}
@@ -3434,7 +3434,7 @@ function PublicAffiliateReportsDetailView({
                 }
                 value={
                   avgDepositsCountPerFtdUser === null
-                    ? '—'
+                    ? '�'
                     : Number(avgDepositsCountPerFtdUser || 0).toFixed(1)
                 }
               />
@@ -3578,7 +3578,7 @@ function PublicAffiliateReportsDetailView({
             }}
           >
             {t('shareAffiliateReports.footer.note') ||
-              'Board view is read-only. Data source: internal Affiliate → Analysis.'}
+              'Board view is read-only. Data source: internal Affiliate ? Analysis.'}
           </div>
         </div>
       </div>
@@ -3825,7 +3825,7 @@ export default function PublicAffiliateAnalysisSharePage({
   const top20Affiliates = useMemo(() => {
     const byAffiliate = new Map()
     const ensure = (name) => {
-      const key = String(name || '—')
+      const key = String(name || '�')
       if (!byAffiliate.has(key)) byAffiliate.set(key, { affiliate: key, media: [], payments: [] })
       return byAffiliate.get(key)
     }
@@ -3845,7 +3845,7 @@ export default function PublicAffiliateAnalysisSharePage({
           roi: kpis.roi || 0,
         }
       })
-      .filter((a) => a.affiliate && a.affiliate !== '—')
+      .filter((a) => a.affiliate && a.affiliate !== '�')
       .filter((a) => (a.netDeposits || 0) !== 0 || (a.pl || 0) !== 0 || (a.payments || 0) !== 0)
 
     const totalAbsPayments = all.reduce((acc, a) => acc + Math.abs(Number(a.payments || 0)), 0)
@@ -4359,7 +4359,7 @@ export default function PublicAffiliateAnalysisSharePage({
       setPeriodType={setPeriodType}
       onSelectAffiliate={onSelectAffiliate}
       onSelectPeriod={onSelectPeriod}
-      selectedPeriodLabel={periodContext?.label || '—'}
+      selectedPeriodLabel={periodContext?.label || '�'}
       highlightStartId={effectivePeriodType !== 'since-ever' ? periodContext?.startId : null}
       highlightEndId={effectivePeriodType !== 'since-ever' ? periodContext?.endId : null}
       companyRegistrations={companyRegistrations}

@@ -11,7 +11,7 @@ function channelBadgeClass(channel) {
   const c = String(channel || '').toLowerCase()
   if (c === 'email') return 'bg-blue-100 text-blue-700'
   if (c === 'whatsapp') return 'bg-green-100 text-green-700'
-  return 'bg-slate-100 text-slate-700'
+  return 'bg-gray-100 text-gray-600'
 }
 
 export default function CommunicationTemplateModal({ isOpen, onClose, template }) {
@@ -103,7 +103,7 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
           </div>
         </div>
 
-        <div className="p-4 border-b border-slate-200 flex items-center justify-between gap-3 flex-wrap">
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex gap-2">
             <button
               type="button"
@@ -111,7 +111,7 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                 tab === 'preview'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-slate-50'
               }`}
             >
               Preview
@@ -122,7 +122,7 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                 tab === 'raw'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  : 'bg-white text-gray-600 border-gray-300 hover:bg-slate-50'
               }`}
             >
               Raw
@@ -133,7 +133,7 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
             <button
               type="button"
               onClick={doCopy}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-gray-300 text-gray-600 hover:bg-slate-50"
               disabled={!rawValue}
               title={!rawValue ? 'No content to copy' : 'Copy raw content'}
             >
@@ -157,15 +157,15 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
                   title="Email preview"
                   sandbox=""
                   srcDoc={template?.content?.html || ''}
-                  className="w-full h-[420px] rounded-lg border border-slate-200 bg-white"
+                  className="w-full h-[420px] rounded-lg border border-gray-200 bg-white"
                 />
               ) : null}
 
               {isWhatsApp ? (
-                <div className="w-full rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="w-full rounded-lg border border-gray-200 bg-slate-50 p-4">
                   <div className="max-w-[520px]">
-                    <div className="inline-block rounded-2xl rounded-tl-sm bg-white border border-slate-200 px-4 py-3 shadow-sm">
-                      <div className="text-sm text-slate-800 whitespace-pre-wrap">
+                    <div className="inline-block rounded-2xl rounded-tl-sm bg-white border border-gray-200 px-4 py-3 shadow-sm">
+                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
                         {template?.content?.text || '—'}
                       </div>
                     </div>
@@ -178,7 +178,7 @@ export default function CommunicationTemplateModal({ isOpen, onClose, template }
               ) : null}
             </div>
           ) : (
-            <pre className="w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-mono text-slate-800 whitespace-pre-wrap break-words">
+            <pre className="w-full rounded-lg border border-gray-200 bg-slate-50 p-3 text-xs font-mono text-gray-700 whitespace-pre-wrap break-words">
               {rawValue || '—'}
             </pre>
           )}

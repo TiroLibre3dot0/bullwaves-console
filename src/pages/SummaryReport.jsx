@@ -389,7 +389,7 @@ export default function SummaryReport() {
         Summary report · Media Report + Payments
       </div>
 
-      <aside className="card w-full" style={{ background: '#0d1524' }}>
+      <aside className="card w-full" style={{ background: '#1e293b' }}>
         <h3 style={{ marginTop: 0 }}>Quick insights (aligned with quadrants)</h3>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
           {quickInsights.map((q, idx) => (

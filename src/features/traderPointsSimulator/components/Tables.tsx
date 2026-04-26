@@ -27,7 +27,7 @@ function userMeta(u: any, idPrefix: string): string {
 }
 
 function symbolBadge(symbol: string) {
-  const base = "inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-slate-900/60 text-[11px] font-semibold text-slate-200"
+  const base = "inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-gray-700/60 text-[11px] font-semibold text-gray-200"
   if (symbol === 'XAUUSD') return <span className={`${base}`}>Au</span>
   if (symbol === 'BTCUSD') return <span className={`${base}`}>₿</span>
   if (symbol === 'EURUSD') return <span className={`${base}`}>€$</span>
@@ -126,14 +126,14 @@ export default function Tables({ userAgg }: any) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
+      <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
         <div className="flex items-center justify-between gap-2">
-          <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.symbolsTop')}</div>
+          <div className="text-sm font-semibold text-gray-200">{t('traderPoints.tables.symbolsTop')}</div>
           <InfoTooltip
             label={t('traderPoints.tables.symbolsTooltip.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">{t('traderPoints.tables.symbolsTooltip.title')}</div>
+                <div className="font-semibold text-gray-100">{t('traderPoints.tables.symbolsTooltip.title')}</div>
                 <div className="mt-1">{t('traderPoints.tables.symbolsTooltip.line1')}</div>
                 <div className="mt-2">{t('traderPoints.tables.symbolsTooltip.line2')}</div>
               </div>
@@ -143,7 +143,7 @@ export default function Tables({ userAgg }: any) {
 
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-400">
+            <tr className="text-xs text-gray-400">
               <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.symbol')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.weight')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.estimatedPoints')}</th>
@@ -155,22 +155,22 @@ export default function Tables({ userAgg }: any) {
                 <td className="py-1.5">
                   <div className="flex items-center gap-2">
                     {symbolBadge(sym)}
-                    <div className="font-medium text-slate-100">{sym}</div>
+                    <div className="font-medium text-gray-100">{sym}</div>
                   </div>
                 </td>
-                <td className="py-1.5 text-right tabular-nums text-slate-200">{`${(vol * 100).toFixed(1)}%`}</td>
-                <td className="py-1.5 text-right tabular-nums text-slate-100 font-semibold">{Math.round(totalPoints * vol).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums text-gray-200">{`${(vol * 100).toFixed(1)}%`}</td>
+                <td className="py-1.5 text-right tabular-nums text-gray-100 font-semibold">{Math.round(totalPoints * vol).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.usersTop')}</div>
+      <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-gray-200">{t('traderPoints.tables.usersTop')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-400">
+            <tr className="text-xs text-gray-400">
               <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
@@ -180,22 +180,22 @@ export default function Tables({ userAgg }: any) {
             {topUsers.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-gray-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-gray-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
-                <td className="py-1.5 text-right tabular-nums text-slate-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
-                <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">{Math.round(pointsValue(u)).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums text-gray-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums font-semibold text-gray-100">{Math.round(pointsValue(u)).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.topByPositions')}</div>
+      <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-gray-200">{t('traderPoints.tables.topByPositions')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-400">
+            <tr className="text-xs text-gray-400">
               <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
@@ -205,22 +205,22 @@ export default function Tables({ userAgg }: any) {
             {topTrades.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-gray-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-gray-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
-                <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">{Number(u?.position_count ?? 0).toLocaleString()}</td>
-                <td className="py-1.5 text-right tabular-nums text-slate-200">{Math.round(pointsValue(u)).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums font-semibold text-gray-100">{Number(u?.position_count ?? 0).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums text-gray-200">{Math.round(pointsValue(u)).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
-        <div className="text-sm font-semibold text-slate-200">{t('traderPoints.tables.usersLow')}</div>
+      <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
+        <div className="text-sm font-semibold text-gray-200">{t('traderPoints.tables.usersLow')}</div>
         <table className="mt-3 w-full text-sm">
           <thead>
-            <tr className="text-xs text-slate-400">
+            <tr className="text-xs text-gray-400">
               <th className="py-2 text-left font-semibold">{t('traderPoints.tables.col.user')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.positions')}</th>
               <th className="py-2 text-right font-semibold">{t('traderPoints.tables.col.points')}</th>
@@ -230,14 +230,14 @@ export default function Tables({ userAgg }: any) {
             {lowUsers.map((u: any) => (
               <tr key={userId(u)} className="border-t border-white/5 hover:bg-white/5">
                 <td className="py-1.5">
-                  <div className="truncate max-w-[260px] font-semibold text-slate-100">{userLabel(u, unknownUser)}</div>
-                  <div className="text-xs text-slate-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
+                  <div className="truncate max-w-[260px] font-semibold text-gray-100">{userLabel(u, unknownUser)}</div>
+                  <div className="text-xs text-gray-400 truncate max-w-[260px]">{userMeta(u, idPrefix) || '—'}</div>
                 </td>
-                <td className="py-1.5 text-right tabular-nums text-slate-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
-                <td className="py-1.5 text-right tabular-nums font-semibold text-slate-100">
+                <td className="py-1.5 text-right tabular-nums text-gray-200">{Number(u?.position_count ?? 0).toLocaleString()}</td>
+                <td className="py-1.5 text-right tabular-nums font-semibold text-gray-100">
                   {Math.round(pointsValue(u)).toLocaleString()}
                   {pointsValue(u) <= 0 && (
-                    <span className="ml-1 text-[10px] text-slate-400">{t('traderPoints.tables.pointsFloored')}</span>
+                    <span className="ml-1 text-[10px] text-gray-400">{t('traderPoints.tables.pointsFloored')}</span>
                   )}
                 </td>
               </tr>

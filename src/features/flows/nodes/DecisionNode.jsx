@@ -1,7 +1,7 @@
 import React from 'react'
 import { Handle, Position } from '../reactflowCompat'
 
-function TriggerIcon({ color = '#94a3b8' }) {
+function TriggerIcon({ color = '#9ca3af' }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
@@ -60,7 +60,7 @@ export default function DecisionNode({ data }) {
       ? 'rgba(15, 23, 42, 0.96)'
       : 'rgba(15, 23, 42, 0.9)'
   const cardBorder = isSolitics
-    ? '1px solid #94a3b8'
+    ? '1px solid #9ca3af'
     : isPrimary
       ? '1px solid rgba(226,232,240,0.26)'
       : '1px solid rgba(148, 163, 184, 0.28)'
@@ -127,7 +127,7 @@ export default function DecisionNode({ data }) {
                 fontSize: 12,
                 fontWeight: 800,
                 lineHeight: 1.22,
-                color: '#0f172a',
+                color: '#111827',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -143,7 +143,7 @@ export default function DecisionNode({ data }) {
                   fontSize: 10,
                   fontWeight: 700,
                   lineHeight: 1.2,
-                  color: '#334155',
+                  color: '#374151',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -263,7 +263,7 @@ export default function DecisionNode({ data }) {
           textAlign: 'center',
           padding: isSolitics ? '26px 12px 12px' : 6,
           transform: isSolitics ? `scale(${textScale})` : `rotate(-45deg) scale(${textScale})`,
-          color: isSolitics ? '#0f172a' : '#e5e7eb',
+          color: isSolitics ? '#111827' : '#e5e7eb',
           fontWeight: 900,
           fontSize: labelFontSize,
           letterSpacing: 0.2,
@@ -297,7 +297,7 @@ export default function DecisionNode({ data }) {
               style={{
                 fontSize: subLabelFontSize,
                 fontWeight: 700,
-                color: isSolitics ? '#475569' : 'rgba(226,232,240,0.74)',
+                color: isSolitics ? '#4b5563' : 'rgba(226,232,240,0.74)',
                 lineHeight: 1.15,
               }}
             >

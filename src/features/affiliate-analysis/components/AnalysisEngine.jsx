@@ -82,7 +82,7 @@ export default function AnalysisEngine({ affiliateName, periodLabel, kpis }) {
         title={t('affiliateAnalysis.engine.empty.title')}
         subtitle={t('affiliateAnalysis.engine.empty.subtitle')}
       >
-        <div className="card card-global" style={{ padding: 14, color: '#94a3b8' }}>
+        <div className="card card-global" style={{ padding: 14, color: '#9ca3af' }}>
           {t('affiliateAnalysis.engine.empty.body')}
         </div>
       </CardSection>
@@ -165,7 +165,7 @@ export default function AnalysisEngine({ affiliateName, periodLabel, kpis }) {
           label={t('affiliateAnalysis.engine.kpi.cohortBreakEven')}
           value={cohortValue}
           helper={cohortHelper}
-          tone={kpis?.cohortHasData ? undefined : '#94a3b8'}
+          tone={kpis?.cohortHasData ? undefined : '#9ca3af'}
         />
       </div>
 
@@ -239,7 +239,7 @@ export default function AnalysisEngine({ affiliateName, periodLabel, kpis }) {
         </div>
       )}
 
-      <div style={{ fontSize: 11, color: '#64748b', marginTop: 8 }}>
+      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
         ROI {formatPercent(kpis?.roi || 0)} · CPA {formatEuro(Math.round(kpis?.cpa || 0))} · ARPU{' '}
         {formatEuro(Math.round(kpis?.arpu || 0))}
       </div>

@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { track, trackPublicShareOpen } from '../../utils/analytics'
 
-function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
+function Card({ title, lines = [], accentDotClass = 'bg-gray-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
   return (
     <div
       className={
-        `relative bg-slate-900/35 border border-slate-800/80 ring-1 ring-slate-800/30 rounded-2xl shadow-sm backdrop-blur-md ` +
+        `relative bg-gray-700/35 border border-gray-600/80 ring-1 ring-gray-500/30 rounded-2xl shadow-sm backdrop-blur-md ` +
         (isSm ? 'px-4 py-3 min-h-[60px]' : 'px-5 py-4 min-h-[84px]')
       }
     >
@@ -16,9 +16,7 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
       />
       <div
         className={
-          (isSm
-            ? 'text-sm font-semibold text-slate-100'
-            : 'text-base font-semibold text-slate-100') +
+          (isSm ? 'text-sm font-semibold text-gray-100' : 'text-base font-semibold text-gray-100') +
           ' min-w-0 whitespace-normal break-normal leading-snug tracking-tight'
         }
         title={typeof title === 'string' ? title : undefined}
@@ -35,7 +33,7 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
                   : `${idx}-${String(l?.text || l?.title || '')}`
               }
               className={
-                (isSm ? 'text-xs text-slate-300' : 'text-sm text-slate-300') +
+                (isSm ? 'text-xs text-gray-300' : 'text-sm text-gray-300') +
                 ' min-w-0 whitespace-normal break-normal leading-snug'
               }
               title={typeof l === 'object' && l ? l.title : undefined}
@@ -52,12 +50,12 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
 
 function VLine({ h, className = '' }) {
   return (
-    <div className={`w-px bg-slate-500/35 ${className}`} style={{ height: h }} aria-hidden="true" />
+    <div className={`w-px bg-gray-500/35 ${className}`} style={{ height: h }} aria-hidden="true" />
   )
 }
 
 function HLine({ className = '' }) {
-  return <div className={`h-px bg-slate-500/35 ${className}`} aria-hidden="true" />
+  return <div className={`h-px bg-gray-500/35 ${className}`} aria-hidden="true" />
 }
 
 function SpotlightAreaConnections({ containerRef, areaRefs, spotlight }) {
@@ -175,8 +173,8 @@ function SpotlightAreaConnections({ containerRef, areaRefs, spotlight }) {
 function SubCard({
   title,
   lines = [],
-  borderClass = 'border-slate-800/70',
-  headBadgeClass = 'border-slate-300/25 text-slate-200/80 bg-slate-950/20',
+  borderClass = 'border-gray-600/70',
+  headBadgeClass = 'border-gray-300/25 text-gray-200/80 bg-gray-900/20',
   people = [],
   showPeople = false,
   areaId,
@@ -199,7 +197,7 @@ function SubCard({
   return (
     <div
       className={
-        `bg-slate-900/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal transition-opacity ` +
+        `bg-gray-700/20 border ${borderClass} rounded-xl px-3 py-2 whitespace-normal transition-opacity ` +
         (shouldDim ? 'opacity-30 ' : 'opacity-100 ') +
         (shouldRing ? 'ring-2 ring-brand-400/50 ' : '') +
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50'
@@ -211,11 +209,11 @@ function SubCard({
       onBlur={() => onClearSpotlight?.()}
       aria-label={title}
     >
-      <div className="text-xs text-slate-200 font-semibold leading-snug">{title}</div>
+      <div className="text-xs text-gray-200 font-semibold leading-snug">{title}</div>
       {filtered.length ? (
         <div className="mt-1 space-y-0.5">
           {filtered.map((l) => (
-            <div key={`${title}-${l}`} className="text-[11px] text-slate-400 leading-snug">
+            <div key={`${title}-${l}`} className="text-[11px] text-gray-400 leading-snug">
               {l}
             </div>
           ))}
@@ -253,8 +251,8 @@ function SubCard({
                     'min-w-0 rounded-lg border ' +
                     (isCustomerSupport ? 'px-2 py-1.5 ' : 'px-2.5 py-2 ') +
                     (p.isHead
-                      ? 'border-slate-600/55 bg-slate-950/45'
-                      : 'border-slate-700/40 bg-slate-950/30') +
+                      ? 'border-gray-500/55 bg-gray-900/45'
+                      : 'border-gray-600/40 bg-gray-900/30') +
                     (isFacilitator ? ' border-dashed border-brand-400' : '')
                   )
                 })()}
@@ -274,7 +272,7 @@ function SubCard({
                       <div
                         className={
                           'text-[11px] leading-snug ' +
-                          (p.isHead ? 'font-bold text-slate-100' : 'font-semibold text-slate-100')
+                          (p.isHead ? 'font-bold text-gray-100' : 'font-semibold text-gray-100')
                         }
                         title={fp.displayName}
                       >
@@ -283,7 +281,7 @@ function SubCard({
                       <div
                         className={
                           (isCustomerSupport ? 'mt-0.5 text-[10px] ' : 'mt-0.5 text-[11px] ') +
-                          'text-slate-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0'
+                          'text-gray-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0'
                         }
                       >
                         <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
@@ -312,7 +310,7 @@ function SubCard({
             ))}
           </div>
         ) : (
-          <div className="text-[10px] text-slate-500">No people mapped</div>
+          <div className="text-[10px] text-gray-500">No people mapped</div>
         )}
       </div>
     </div>
@@ -342,10 +340,10 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
       onMouseLeave={() => onClearSpotlight?.()}
     >
       <div className="border-t border-dashed border-brand-400" />
-      <div className="absolute left-2 -top-3 text-[10px] text-brand-200 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400">
+      <div className="absolute left-2 -top-3 text-[10px] text-brand-200 bg-gray-900/70 px-2 py-0.5 rounded-full border border-brand-400">
         Customer Support
       </div>
-      <div className="absolute right-2 -top-3 text-[10px] text-brand-200 bg-slate-950/70 px-2 py-0.5 rounded-full border border-brand-400">
+      <div className="absolute right-2 -top-3 text-[10px] text-brand-200 bg-gray-900/70 px-2 py-0.5 rounded-full border border-brand-400">
         Sales
       </div>
 
@@ -361,7 +359,7 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
                 return (
                   <div
                     className={
-                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
+                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-gray-900/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
                       (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
                     }
                     tabIndex={0}
@@ -370,12 +368,12 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
                     onBlur={() => onClearSpotlight?.()}
                   >
                     <div
-                      className="text-[11px] font-semibold text-slate-100 leading-snug"
+                      className="text-[11px] font-semibold text-gray-100 leading-snug"
                       title={fp.displayName}
                     >
                       {fp.displayName}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                    <div className="mt-0.5 text-[11px] text-gray-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
                       <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                         {fp.shortenedTitle || fp.fullTitle}
                       </span>
@@ -390,7 +388,7 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
 
           {a && b ? (
             <div className="flex flex-col items-center justify-center px-1">
-              <div className="text-[9px] font-semibold tracking-wide text-brand-200 bg-slate-950/60 px-2 py-0.5 rounded-full border border-dashed border-brand-400 whitespace-nowrap">
+              <div className="text-[9px] font-semibold tracking-wide text-brand-200 bg-gray-900/60 px-2 py-0.5 rounded-full border border-dashed border-brand-400 whitespace-nowrap">
                 Interaction ↔
               </div>
               <div className="mt-1 flex items-center">
@@ -411,7 +409,7 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
                 return (
                   <div
                     className={
-                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-slate-950/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
+                      'min-w-[12rem] max-w-[14rem] rounded-xl border border-dashed border-brand-400 bg-gray-900/70 px-3 py-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400/50 ' +
                       (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
                     }
                     tabIndex={0}
@@ -420,12 +418,12 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
                     onBlur={() => onClearSpotlight?.()}
                   >
                     <div
-                      className="text-[11px] font-semibold text-slate-100 leading-snug"
+                      className="text-[11px] font-semibold text-gray-100 leading-snug"
                       title={fp.displayName}
                     >
                       {fp.displayName}
                     </div>
-                    <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                    <div className="mt-0.5 text-[11px] text-gray-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
                       <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                         {fp.shortenedTitle || fp.fullTitle}
                       </span>
@@ -446,16 +444,16 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
 }
 
 const ACCENTS = {
-  root: 'bg-slate-400/60',
-  governance: 'bg-slate-400/60',
-  operations: 'bg-slate-300/50',
+  root: 'bg-gray-400/60',
+  governance: 'bg-gray-400/60',
+  operations: 'bg-gray-300/50',
   revenue: 'bg-indigo-300/45',
   trading: 'bg-amber-300/40',
   corporate: 'bg-emerald-300/40',
 }
 
 const BORDERS = {
-  operations: 'border-slate-300/20',
+  operations: 'border-gray-300/20',
   revenue: 'border-indigo-300/20',
   trading: 'border-amber-300/18',
   corporate: 'border-emerald-300/18',
@@ -1172,7 +1170,7 @@ export default function ShareOrgChartTrueTree() {
   }, [macroAreas, peopleIndex, showPeople])
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100">
       {/* Fixed logo top-left */}
       <a href="/" className="fixed left-5 top-5 z-20" aria-label="Bullwaves">
         <img src="/Logo.png" alt="Bullwaves" className="h-7 w-auto opacity-95" />
@@ -1183,18 +1181,18 @@ export default function ShareOrgChartTrueTree() {
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
           </h1>
-          <p className="mt-2 text-sm text-slate-400">Board-level view</p>
+          <p className="mt-2 text-sm text-gray-400">Board-level view</p>
 
           {/* Mode toggle (structure ↔ people) */}
-          <div className="mt-5 inline-flex rounded-full border border-slate-700/50 bg-slate-950/40 p-1">
+          <div className="mt-5 inline-flex rounded-full border border-gray-600/50 bg-gray-900/40 p-1">
             <button
               type="button"
               onClick={() => setMode(VIEW_MODES.structure)}
               className={
                 'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
                 (mode === VIEW_MODES.structure
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-300 hover:text-white')
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'text-gray-300 hover:text-white')
               }
               aria-pressed={mode === VIEW_MODES.structure}
             >
@@ -1206,8 +1204,8 @@ export default function ShareOrgChartTrueTree() {
               className={
                 'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
                 (mode === VIEW_MODES.people
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-300 hover:text-white')
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'text-gray-300 hover:text-white')
               }
               aria-pressed={mode === VIEW_MODES.people}
             >
@@ -1216,9 +1214,9 @@ export default function ShareOrgChartTrueTree() {
           </div>
 
           {mode === VIEW_MODES.people ? (
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-slate-400">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-gray-400">
               <span className="inline-flex items-center gap-1">
-                <span className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-slate-300/25 text-slate-200/80 bg-slate-950/20">
+                <span className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-gray-300/25 text-gray-200/80 bg-gray-900/20">
                   Head
                 </span>
                 <span>Operational head</span>
@@ -1233,7 +1231,7 @@ export default function ShareOrgChartTrueTree() {
           ) : null}
 
           {showPeople ? (
-            <p className="mt-2 text-xs text-slate-500">
+            <p className="mt-2 text-xs text-gray-500">
               {isPeopleLoading
                 ? 'Loading people…'
                 : isPeopleError
@@ -1241,7 +1239,7 @@ export default function ShareOrgChartTrueTree() {
                   : 'Names + role titles only · No emails'}
             </p>
           ) : (
-            <p className="mt-2 text-xs text-slate-500">No people · Structure only</p>
+            <p className="mt-2 text-xs text-gray-500">No people · Structure only</p>
           )}
         </header>
 
@@ -1250,7 +1248,7 @@ export default function ShareOrgChartTrueTree() {
             {/* ROOT */}
             <div className="flex flex-col items-center">
               <div
-                className="rounded-2xl border border-slate-800/80 bg-slate-950/40 px-6 py-4 backdrop-blur-md"
+                className="rounded-2xl border border-gray-600/80 bg-gray-900/40 px-6 py-4 backdrop-blur-md"
                 aria-label={ORG_TREE.label}
               >
                 <img src="/Logo.png" alt={ORG_TREE.label} className="h-10 w-auto opacity-95" />
@@ -1258,14 +1256,14 @@ export default function ShareOrgChartTrueTree() {
             </div>
 
             <div className="flex justify-center">
-              <VLine h={36} className="bg-slate-500/40" />
+              <VLine h={36} className="bg-gray-500/40" />
             </div>
 
             {/* LEVEL 1 — GOVERNANCE */}
             <div className="w-full max-w-6xl">
               {/* Founders line label (indicator only) */}
               <div className="flex justify-center md:hidden">
-                <div className="px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
+                <div className="px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
                   {governance?.label || 'Founders'}
                 </div>
               </div>
@@ -1274,7 +1272,7 @@ export default function ShareOrgChartTrueTree() {
               <div className="hidden md:block">
                 <div className="relative w-full">
                   <HLine className="w-full" />
-                  <div className="absolute left-0 -top-3 px-3 py-1 rounded-full border border-slate-600/30 bg-slate-950/70 text-[11px] text-slate-300">
+                  <div className="absolute left-0 -top-3 px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
                     {governance?.label || 'Founders'}
                   </div>
                 </div>
@@ -1329,7 +1327,7 @@ export default function ShareOrgChartTrueTree() {
             </div>
 
             <div className="flex justify-center">
-              <VLine h={40} className="bg-slate-500/40" />
+              <VLine h={40} className="bg-gray-500/40" />
             </div>
 
             {/* LEVEL 2 — MACRO AREAS (ONLY 4) */}
@@ -1381,11 +1379,11 @@ export default function ShareOrgChartTrueTree() {
               {showPeople && salesSupportBridgeFacilitators.length ? (
                 <div className="mt-6 xl:hidden">
                   <div
-                    className="rounded-2xl border border-slate-800/60 bg-slate-900/20 px-4 py-3"
+                    className="rounded-2xl border border-gray-600/60 bg-gray-700/20 px-4 py-3"
                     onMouseEnter={() => setSpotlightFromPayload({ kind: 'bridge' })}
                     onMouseLeave={() => setSpotlight(null)}
                   >
-                    <div className="text-[10px] font-semibold text-slate-400">
+                    <div className="text-[10px] font-semibold text-gray-400">
                       Sales ↔ Customer Support facilitators
                     </div>
                     <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
@@ -1406,7 +1404,7 @@ export default function ShareOrgChartTrueTree() {
                           <div
                             key={`bridge-compact-${p.name}-${p.title}`}
                             className={
-                              'min-w-0 rounded-xl border border-dashed border-brand-400 bg-slate-950/50 px-3 py-2 transition-opacity ' +
+                              'min-w-0 rounded-xl border border-dashed border-brand-400 bg-gray-900/50 px-3 py-2 transition-opacity ' +
                               (isActive && !isRelated ? 'opacity-30 ' : 'opacity-100 ') +
                               (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
                             }
@@ -1416,12 +1414,12 @@ export default function ShareOrgChartTrueTree() {
                             onMouseLeave={() => setSpotlight(null)}
                           >
                             <div
-                              className="text-[11px] font-semibold text-slate-100 leading-snug"
+                              className="text-[11px] font-semibold text-gray-100 leading-snug"
                               title={fp.displayName}
                             >
                               {fp.displayName}
                             </div>
-                            <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                            <div className="mt-0.5 text-[11px] text-gray-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
                               <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                                 {fp.shortenedTitle || fp.fullTitle}
                               </span>
@@ -1456,14 +1454,14 @@ export default function ShareOrgChartTrueTree() {
                       ? (() => {
                           const fp = formatPersonText(paoloVulloPerson, { maxTitleLen: 32 })
                           return (
-                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400 bg-slate-950/70 px-3 py-2">
+                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400 bg-gray-900/70 px-3 py-2">
                               <div
-                                className="text-[11px] font-semibold text-slate-100 leading-snug"
+                                className="text-[11px] font-semibold text-gray-100 leading-snug"
                                 title={fp.displayName}
                               >
                                 {fp.displayName}
                               </div>
-                              <div className="mt-0.5 text-[11px] text-slate-400 leading-snug min-w-0">
+                              <div className="mt-0.5 text-[11px] text-gray-400 leading-snug min-w-0">
                                 <span className="min-w-0 break-normal" title={fp.titleTooltip}>
                                   {fp.shortenedTitle || fp.fullTitle}
                                 </span>
@@ -1472,7 +1470,7 @@ export default function ShareOrgChartTrueTree() {
                           )
                         })()
                       : null}
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400 bg-slate-950/70 text-[11px] text-slate-300">
+                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400 bg-gray-900/70 text-[11px] text-gray-300">
                       Operations as a Servant Organization (Agile Model)
                     </div>
                   </div>
@@ -1483,7 +1481,7 @@ export default function ShareOrgChartTrueTree() {
         </main>
 
         <footer className="mt-12 flex justify-center">
-          <div className="text-xs text-slate-400 border border-slate-800/80 bg-slate-900/35 rounded-full px-4 py-2">
+          <div className="text-xs text-gray-400 border border-gray-600/80 bg-gray-700/35 rounded-full px-4 py-2">
             {showPeople
               ? 'Public view: people + roles · No emails / no personal metadata'
               : 'Public view: structure only · No people'}
@@ -1590,7 +1588,7 @@ function MacroAreaColumn({
 
   const iconTone =
     area.id === 'operations'
-      ? 'text-slate-200/70'
+      ? 'text-gray-200/70'
       : area.id === 'revenue'
         ? 'text-indigo-200/70'
         : area.id === 'trading-risk'
@@ -1599,7 +1597,7 @@ function MacroAreaColumn({
 
   const headBadgeClass =
     area.id === 'operations'
-      ? 'border-slate-300/25 text-slate-200/80 bg-slate-950/20'
+      ? 'border-gray-300/25 text-gray-200/80 bg-gray-900/20'
       : area.id === 'revenue'
         ? 'border-indigo-300/25 text-indigo-200/80 bg-indigo-950/20'
         : area.id === 'trading-risk'
@@ -1635,7 +1633,7 @@ function MacroAreaColumn({
           <div>
             {area.showPeople && safeFacilitators.length ? (
               <div className="mt-2">
-                <div className="text-[10px] font-semibold text-slate-400">Facilitators</div>
+                <div className="text-[10px] font-semibold text-gray-400">Facilitators</div>
                 <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
                   {safeFacilitators.map((p) =>
                     (() => {
@@ -1658,7 +1656,7 @@ function MacroAreaColumn({
                         <div
                           key={`fac-${area.id}-${p.name}-${p.title}`}
                           className={
-                            'rounded-xl border border-dashed border-brand-400 bg-slate-950/30 px-3 py-2 transition-opacity ' +
+                            'rounded-xl border border-dashed border-brand-400 bg-gray-900/30 px-3 py-2 transition-opacity ' +
                             (shouldDim ? 'opacity-30 ' : 'opacity-100 ') +
                             (shouldRing ? 'ring-2 ring-brand-400/50 ' : '')
                           }
@@ -1667,10 +1665,10 @@ function MacroAreaColumn({
                           }
                           onMouseLeave={() => onClearSpotlight?.()}
                         >
-                          <div className="text-[11px] leading-snug font-semibold text-slate-100">
+                          <div className="text-[11px] leading-snug font-semibold text-gray-100">
                             <span title={fp.displayName}>{fp.displayName}</span>
                           </div>
-                          <div className="text-[11px] text-slate-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
+                          <div className="text-[11px] text-gray-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
                             <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                               {fp.shortenedTitle || fp.fullTitle}
                             </span>
@@ -1678,7 +1676,7 @@ function MacroAreaColumn({
                               Facilitator
                             </span>
                             {targetsText ? (
-                              <span className="text-[9px] text-slate-500 break-normal">
+                              <span className="text-[9px] text-gray-500 break-normal">
                                 {targetsText}
                               </span>
                             ) : null}
@@ -1693,7 +1691,7 @@ function MacroAreaColumn({
 
             {area.showPeople && safeAreaPeople.length ? (
               <div className={(safeFacilitators.length ? 'mt-4 ' : 'mt-2 ') + 'space-y-1'}>
-                <div className="text-[10px] font-semibold text-slate-400">Key roles</div>
+                <div className="text-[10px] font-semibold text-gray-400">Key roles</div>
                 <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
                   {safeAreaPeople.map((p) =>
                     (() => {
@@ -1716,8 +1714,8 @@ function MacroAreaColumn({
                           className={
                             'rounded-xl border px-3 py-2 transition-opacity ' +
                             (p.isHead
-                              ? 'border-slate-700/70 bg-slate-950/45'
-                              : 'border-slate-800/60 bg-slate-950/30') +
+                              ? 'border-gray-600/70 bg-gray-900/45'
+                              : 'border-gray-600/60 bg-gray-900/30') +
                             (shouldDim ? ' opacity-30' : '') +
                             (shouldRing ? ' ring-2 ring-brand-400/50' : '')
                           }
@@ -1729,15 +1727,13 @@ function MacroAreaColumn({
                           <div
                             className={
                               'text-[11px] leading-snug ' +
-                              (p.isHead
-                                ? 'font-bold text-slate-100'
-                                : 'font-semibold text-slate-100')
+                              (p.isHead ? 'font-bold text-gray-100' : 'font-semibold text-gray-100')
                             }
                             title={fp.displayName}
                           >
                             {fp.displayName}
                           </div>
-                          <div className="mt-0.5 text-[11px] text-slate-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0">
+                          <div className="mt-0.5 text-[11px] text-gray-400 leading-snug flex flex-wrap items-center gap-1.5 min-w-0">
                             <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
                               {fp.shortenedTitle || fp.fullTitle}
                             </span>
@@ -1779,9 +1775,7 @@ function MacroAreaColumn({
                 return (
                   <div key={`${area.id}-${cluster.label}`}>
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-[10px] font-semibold text-slate-400">
-                        {cluster.label}
-                      </div>
+                      <div className="text-[10px] font-semibold text-gray-400">{cluster.label}</div>
                       <button
                         type="button"
                         onClick={() =>
@@ -1790,7 +1784,7 @@ function MacroAreaColumn({
                             [clusterKey]: !prev?.[clusterKey],
                           }))
                         }
-                        className="text-[10px] font-semibold text-slate-400 hover:text-slate-200 rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5"
+                        className="text-[10px] font-semibold text-gray-400 hover:text-gray-200 rounded-full border border-gray-600/60 bg-gray-900/30 px-2 py-0.5"
                         aria-expanded={!isCollapsed}
                         aria-controls={clusterGridId}
                       >

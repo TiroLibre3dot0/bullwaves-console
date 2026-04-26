@@ -4,7 +4,7 @@ import { Handle, Position } from '../reactflowCompat'
 function OutcomeIcon({ tone = 'neutral' }) {
   const palette = {
     positive: { bg: '#16a34a', stroke: '#ffffff' },
-    neutral: { bg: '#94a3b8', stroke: '#ffffff' },
+    neutral: { bg: '#9ca3af', stroke: '#ffffff' },
     negative: { bg: '#ef4444', stroke: '#ffffff' },
   }
 
@@ -178,7 +178,7 @@ export default function OutcomeNode({ data }) {
         negative: 'linear-gradient(180deg, #fde6e6, #f9d7d7)',
       }
     : null
-  const textColor = isSolitics ? '#0f172a' : '#e5e7eb'
+  const textColor = isSolitics ? '#111827' : '#e5e7eb'
   const shadow = isSolitics ? '0 12px 24px rgba(15,23,42,0.10)' : '0 10px 30px rgba(0,0,0,0.24)'
 
   if (isSolitics) {
@@ -213,7 +213,7 @@ export default function OutcomeNode({ data }) {
                 fontWeight: 900,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: '#94a3b8',
+                color: '#9ca3af',
                 lineHeight: 1,
               }}
             >
@@ -226,7 +226,7 @@ export default function OutcomeNode({ data }) {
                 fontSize: 11,
                 fontWeight: 800,
                 lineHeight: 1.2,
-                color: '#334155',
+                color: '#374151',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',

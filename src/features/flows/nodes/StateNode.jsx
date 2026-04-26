@@ -46,7 +46,7 @@ function StepIcon({ color = '#ffffff' }) {
   )
 }
 
-function ClockIcon({ color = '#94a3b8' }) {
+function ClockIcon({ color = '#9ca3af' }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <circle cx="12" cy="12" r="8" stroke={color} strokeWidth="1.8" />
@@ -77,8 +77,8 @@ function ChatIcon({ color = '#ffffff' }) {
 function getUtilityIcon(label) {
   const text = String(label || '').toLowerCase()
   if (text.includes('wait') || text.includes('day')) return <ClockIcon />
-  if (text.includes('message')) return <ChatIcon color="#94a3b8" />
-  return <StepIcon color="#94a3b8" />
+  if (text.includes('message')) return <ChatIcon color="#9ca3af" />
+  return <StepIcon color="#9ca3af" />
 }
 
 export default function StateNode({ data }) {
@@ -136,7 +136,7 @@ export default function StateNode({ data }) {
 
   const baseSurface = isSolitics
     ? isEntryNode
-      ? 'linear-gradient(180deg, #0f172a, #1e293b)'
+      ? 'linear-gradient(180deg, #111827, #374151)'
       : isPrimary
         ? 'linear-gradient(180deg, #ffffff, #f8fafc)'
         : 'linear-gradient(180deg, #f8fafc, #eef2f7)'
@@ -146,19 +146,19 @@ export default function StateNode({ data }) {
 
   const baseBorder = isSolitics
     ? isEntryNode
-      ? '1px solid #0f172a'
+      ? '1px solid #111827'
       : isPrimary
-        ? '1px solid #94a3b8'
+        ? '1px solid #9ca3af'
         : '1px solid #cbd5e1'
     : isPrimary
       ? '1px solid rgba(226,232,240,0.28)'
       : '1px solid rgba(148, 163, 184, 0.28)'
 
-  const baseColor = isSolitics ? (isEntryNode ? '#ffffff' : '#0f172a') : '#f8fafc'
+  const baseColor = isSolitics ? (isEntryNode ? '#ffffff' : '#111827') : '#f8fafc'
   const subLabelColor = isSolitics
     ? isEntryNode
       ? '#cbd5e1'
-      : '#475569'
+      : '#4b5563'
     : 'rgba(226,232,240,0.78)'
   const nodeShadow = isSolitics
     ? isEntryNode
@@ -180,22 +180,22 @@ export default function StateNode({ data }) {
     ) : (
       <EnvelopeIcon />
     )
-    const iconBackground = isEntryNode ? '#14b8a6' : isWaitNode ? '#94a3b8' : '#0f766e'
+    const iconBackground = isEntryNode ? '#14b8a6' : isWaitNode ? '#9ca3af' : '#0f766e'
     const previewSubject = String(data?.previewSubject || '').trim()
     const previewBody = String(data?.previewBody || '').trim()
     const cardBackground = isEntryNode
-      ? 'linear-gradient(180deg, #0f172a, #1e293b)'
+      ? 'linear-gradient(180deg, #111827, #374151)'
       : isWaitNode
         ? 'linear-gradient(180deg, #e6edf8, #d7e2f1)'
         : 'linear-gradient(180deg, #edf3fc, #dde8f7)'
     const cardBorder = isEntryNode
-      ? '1px solid #0f172a'
+      ? '1px solid #111827'
       : isWaitNode
         ? '1px dashed #cbd5e1'
         : '1px solid #cbd5e1'
-    const titleColor = isEntryNode ? '#ffffff' : '#0f172a'
-    const metaColor = isEntryNode ? '#cbd5e1' : '#334155'
-    const eyebrowColor = isEntryNode ? '#99f6e4' : isWaitNode ? '#94a3b8' : '#0f766e'
+    const titleColor = isEntryNode ? '#ffffff' : '#111827'
+    const metaColor = isEntryNode ? '#cbd5e1' : '#374151'
+    const eyebrowColor = isEntryNode ? '#99f6e4' : isWaitNode ? '#9ca3af' : '#0f766e'
     const shadow = isEntryNode
       ? '0 12px 28px rgba(15,23,42,0.18)'
       : '0 10px 22px rgba(15,23,42,0.10)'
@@ -223,7 +223,7 @@ export default function StateNode({ data }) {
               borderRadius: 999,
               background: isEntryNode ? 'rgba(255,255,255,0.10)' : 'rgba(241,245,249,0.96)',
               border: isEntryNode ? '1px solid rgba(255,255,255,0.14)' : '1px solid #dbe4ee',
-              color: isEntryNode ? '#e2e8f0' : '#64748b',
+              color: isEntryNode ? '#e2e8f0' : '#6b7280',
               fontSize: 9,
               fontWeight: 900,
               letterSpacing: '0.06em',
@@ -640,7 +640,7 @@ export default function StateNode({ data }) {
             transform: 'translate(-50%, 12px)',
             padding: '6px 12px',
             borderRadius: 999,
-            background: '#0f172a',
+            background: '#111827',
             color: '#ffffff',
             border: '1px solid #1e3a8a',
             fontSize: 10,

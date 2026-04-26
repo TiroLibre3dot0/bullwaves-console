@@ -1,5 +1,10 @@
 import React, { useMemo, useState } from 'react'
-import { getAllEvents, getUserStats, getSectionStats, getOnlineUsers } from '../services/trackingService'
+import {
+  getAllEvents,
+  getUserStats,
+  getSectionStats,
+  getOnlineUsers,
+} from '../services/trackingService'
 import { sections } from '../pages/orgChartData'
 
 function formatTime(ts) {
@@ -41,13 +46,21 @@ export default function AdminPanel() {
     return map
   }, [userStats])
 
-  const onlineSet = useMemo(() => new Set(onlineUsers.map((u) => (u.email || '').toLowerCase())), [onlineUsers])
+  const onlineSet = useMemo(
+    () => new Set(onlineUsers.map((u) => (u.email || '').toLowerCase())),
+    [onlineUsers]
+  )
 
   const tools = [
-    { name: 'Creolabs · Qlik Cloud', href: 'https://login.qlik.com/login?state=hKFo2SBsNGtYOEs4eXM0MTQyal9qZlZZd2JxVUxGRTNvOFk4eKFupWxvZ2luo3RpZNkgSTRORnUzNW5iSl9YR2NXVTZmQ0pKV1VkeVVJeXZFMDSjY2lk2SBQRjVZa0Nhem9qUGQ2OGhHVGhXVHhMNk4wcWw3RUVKYQ&client=PF5YkCazojPd68hGThWTxL6N0ql7EEJa&protocol=oauth2&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fqlk6ufzb2vk9dn9.uk.qlikcloud.com%2Flogin%2Fcallback&nonce=cMBZFdQmCwCyxd61Cz3Ios9DY-kDPwRIHfL0PgmmhYU&code_challenge=hHRAyjfogYyP8cEyDbZGNxEG8OiGaRulBWTmBBqH-G0&code_challenge_method=S256' },
-    { name: 'CellXpert · Affiliate Hub', href: 'https://partner.trackingaffiliates.com/v2/adminv2/#!/app/pending-affiliates/' },
+    {
+      name: 'CellXpert · Affiliate Hub',
+      href: 'https://partner.trackingaffiliates.com/v2/adminv2/#!/app/pending-affiliates/',
+    },
     { name: 'Skale CRM · Console', href: 'https://bul934907.skalecrm.com/index.php' },
-    { name: 'Skale App · Brand Manager', href: 'https://fbom.skaleapps.io/company-management/brands' },
+    {
+      name: 'Skale App · Brand Manager',
+      href: 'https://fbom.skaleapps.io/company-management/brands',
+    },
     { name: 'Brokeree · Social Trading', href: 'http://77.76.9.111:8080/admin/' },
     { name: 'BullwavesPrime · Prop Admin', href: 'https://bwpadmin.bullwaves.com/login' },
   ]
@@ -72,7 +85,11 @@ export default function AdminPanel() {
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 style={{ margin: 0 }}>Tools</h2>
-            <button className="btn secondary" style={{ padding: '6px 10px' }} onClick={() => setShowTools((v) => !v)}>
+            <button
+              className="btn secondary"
+              style={{ padding: '6px 10px' }}
+              onClick={() => setShowTools((v) => !v)}
+            >
               {showTools ? 'Hide' : 'Show'}
             </button>
           </div>
@@ -99,7 +116,11 @@ export default function AdminPanel() {
           ) : (
             <div className="stack" style={{ gap: 10 }}>
               {onlineUsers.slice(0, 6).map((u) => (
-                <div key={u.email} className="list-item" style={{ justifyContent: 'flex-start', gap: 10 }}>
+                <div
+                  key={u.email}
+                  className="list-item"
+                  style={{ justifyContent: 'flex-start', gap: 10 }}
+                >
                   <span className="status-dot online" aria-hidden="true" />
                   <div>
                     <div className="user-name">{u.name || u.email}</div>
@@ -121,7 +142,11 @@ export default function AdminPanel() {
           ) : (
             <div className="stack" style={{ gap: 8 }}>
               {sectionStats.map((s) => (
-                <div key={s.sectionId} className="list-item" style={{ gap: 10, justifyContent: 'space-between' }}>
+                <div
+                  key={s.sectionId}
+                  className="list-item"
+                  style={{ gap: 10, justifyContent: 'space-between' }}
+                >
                   <div className="pill">{sectionLabels[s.sectionId] || s.sectionId}</div>
                   <div className="num">{s.count}</div>
                 </div>

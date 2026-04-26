@@ -90,22 +90,22 @@ export default function PpdGaussianChart({
   });
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 shadow-sm">
+    <div className="rounded-2xl border border-white/10 bg-gray-700/70 p-4 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold text-slate-200">{titleText}</div>
+          <div className="text-sm font-semibold text-gray-200">{titleText}</div>
           <InfoTooltip
             label={t('traderPoints.chart.tooltip.label')}
             content={
               <div>
-                <div className="font-semibold text-slate-100">{t('traderPoints.chart.tooltip.title')}</div>
+                <div className="font-semibold text-gray-100">{t('traderPoints.chart.tooltip.title')}</div>
                 <div className="mt-1">{t('traderPoints.chart.tooltip.line1')}</div>
                 <div className="mt-2">{t('traderPoints.chart.tooltip.line2')}</div>
               </div>
             }
           />
         </div>
-        <div className="text-xs text-slate-400 whitespace-nowrap">
+        <div className="text-xs text-gray-400 whitespace-nowrap">
           {t('traderPoints.chart.stats', {
             n: n.toLocaleString(),
             mu: mu.toFixed(2),
@@ -122,7 +122,7 @@ export default function PpdGaussianChart({
           aria-label={t('traderPoints.chart.aria')}
         >
           {/* grid + axes */}
-          <rect x={padL} y={padT} width={plotW} height={plotH} fill="#0b1220" opacity={0.55} />
+          <rect x={padL} y={padT} width={plotW} height={plotH} fill="#1e293b" opacity={0.55} />
 
           {yTicks.map((y, i) => {
             const yy = yScale(y);
@@ -158,7 +158,7 @@ export default function PpdGaussianChart({
                   x2={xx}
                   y1={padT}
                   y2={padT + plotH}
-                  stroke="#1f2937"
+                  stroke="#374151"
                   strokeWidth={1}
                 />
                 <text

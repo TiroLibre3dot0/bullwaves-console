@@ -208,7 +208,7 @@ export default function PublicProfitableRankingSharePage({ token }) {
 
   if (!isValid) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: '#0f172a', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 820, margin: '0 auto' }}>
           <div style={{ fontSize: 22, fontWeight: 950 }}>Profitable Ranking (Public)</div>
           <div style={{ marginTop: 8, color: 'rgba(148,163,184,0.95)', fontWeight: 700 }}>

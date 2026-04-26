@@ -1,7 +1,7 @@
 import React from 'react'
 import { Handle, Position } from '../reactflowCompat'
 
-function LightningIcon({ color = '#94a3b8' }) {
+function LightningIcon({ color = '#9ca3af' }) {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path d="M13 2 6 13h4l-1 9 7-11h-4l1-9Z" fill={color} stroke={color} strokeLinejoin="round" />
@@ -183,7 +183,7 @@ export default function CommunicationNode({ data }) {
                 fontWeight: 900,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: '#94a3b8',
+                color: '#9ca3af',
                 lineHeight: 1,
               }}
             >
@@ -194,7 +194,7 @@ export default function CommunicationNode({ data }) {
                 marginTop: 5,
                 fontSize: 10,
                 fontWeight: 700,
-                color: '#334155',
+                color: '#374151',
                 lineHeight: 1.2,
                 maxWidth: '100%',
                 whiteSpace: 'nowrap',
@@ -210,7 +210,7 @@ export default function CommunicationNode({ data }) {
                   marginTop: 4,
                   fontSize: 9,
                   fontWeight: 700,
-                  color: '#475569',
+                  color: '#4b5563',
                   lineHeight: 1.2,
                   maxWidth: '100%',
                   whiteSpace: 'nowrap',
@@ -258,7 +258,7 @@ export default function CommunicationNode({ data }) {
           ? `1px solid ${linkPalette.border}`
           : isInfluence
             ? isSolitics
-              ? '1px dashed #94a3b8'
+              ? '1px dashed #9ca3af'
               : '1px dashed rgba(148, 163, 184, 0.38)'
             : isSolitics
               ? '1px dashed #cbd5e1'
@@ -267,7 +267,7 @@ export default function CommunicationNode({ data }) {
         outlineOffset: isClickable ? 2 : 0,
         borderRadius: 10,
         color: isSolitics
-          ? '#334155'
+          ? '#374151'
           : isInfluence
             ? 'rgba(226,232,240,0.68)'
             : 'rgba(226,232,240,0.95)',
@@ -386,7 +386,7 @@ export default function CommunicationNode({ data }) {
             marginTop: 4,
             fontSize: 10,
             fontWeight: 800,
-            color: isSolitics ? '#64748b' : 'rgba(148,163,184,0.9)',
+            color: isSolitics ? '#6b7280' : 'rgba(148,163,184,0.9)',
           }}
         >
           {data.subLabel}

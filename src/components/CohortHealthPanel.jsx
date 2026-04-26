@@ -33,9 +33,10 @@ const normalizeRow = (row, friendlyCohortLabel, calendarMonths) => {
     return (Number(v || 0) / base) * 100
   })
 
-  const fallbackLabel = row?.monthIndex !== undefined && row?.monthIndex !== null
-    ? calendarMonths[row.monthIndex] || `Month ${row.monthIndex}`
-    : 'Cohort'
+  const fallbackLabel =
+    row?.monthIndex !== undefined && row?.monthIndex !== null
+      ? calendarMonths[row.monthIndex] || `Month ${row.monthIndex}`
+      : 'Cohort'
 
   return {
     ...row,
@@ -54,11 +55,13 @@ const computeChurn = (normalizedRows) => {
   const score = available.length ? available.reduce((s, v) => s + v, 0) / available.length : null
 
   if (score === null) {
-    return { m1, m3, m6, score: null, status: 'No data', tone: 'neutral', color: '#94a3b8' }
+    return { m1, m3, m6, score: null, status: 'No data', tone: 'neutral', color: '#9ca3af' }
   }
 
-  if (score >= 75) return { m1, m3, m6, score, status: 'Healthy', tone: 'positive', color: '#22c55e' }
-  if (score >= 50) return { m1, m3, m6, score, status: 'Warning', tone: 'warning', color: '#eab308' }
+  if (score >= 75)
+    return { m1, m3, m6, score, status: 'Healthy', tone: 'positive', color: '#22c55e' }
+  if (score >= 50)
+    return { m1, m3, m6, score, status: 'Warning', tone: 'warning', color: '#eab308' }
   return { m1, m3, m6, score, status: 'Red flag', tone: 'negative', color: '#ef4444' }
 }
 
@@ -88,25 +91,34 @@ const buildInsights = ({ normalizedRows, churn, baseStats, yoyTrend }) => {
 
   if (m3 !== null && m6 !== null) {
     const drift = m6 - m3
-    if (drift < -8) insights.push('Economic value keeps decaying after Month 3; long-tail retention is weak.')
-    else if (Math.abs(drift) <= 5) insights.push('Value stabilizes after Month 3; decay slows in later months.')
+    if (drift < -8)
+      insights.push('Economic value keeps decaying after Month 3; long-tail retention is weak.')
+    else if (Math.abs(drift) <= 5)
+      insights.push('Value stabilizes after Month 3; decay slows in later months.')
   }
 
   if (baseStats?.stable && m1 !== null && m1 < 70) {
-    insights.push('Deposit average remains stable; decay is driven by a reduction in active users/retention.')
+    insights.push(
+      'Deposit average remains stable; decay is driven by a reduction in active users/retention.'
+    )
   }
 
   if (yoyTrend) {
     const { delta, latest, prev } = yoyTrend
-    const trendLabel = delta >= 5
-      ? `Recent cohorts show improvement vs ${prev} (M3: ${formatPercent(yoyTrend.latestAvg, 0)} vs ${formatPercent(yoyTrend.prevAvg, 0)}).`
-      : `Recent cohorts show no improvement vs ${prev}; M3 retention changed by ${formatPercent(delta, 0)}.`
+    const trendLabel =
+      delta >= 5
+        ? `Recent cohorts show improvement vs ${prev} (M3: ${formatPercent(yoyTrend.latestAvg, 0)} vs ${formatPercent(yoyTrend.prevAvg, 0)}).`
+        : `Recent cohorts show no improvement vs ${prev}; M3 retention changed by ${formatPercent(delta, 0)}.`
     insights.push(trendLabel)
   }
 
   if (!insights.length) {
-    if (status === 'Healthy') insights.push('Retention is holding well; consider scaling acquisition on similar cohorts.')
-    else insights.push('Retention is middling; target onboarding or reactivation to lift Month 1 and Month 3 value.')
+    if (status === 'Healthy')
+      insights.push('Retention is holding well; consider scaling acquisition on similar cohorts.')
+    else
+      insights.push(
+        'Retention is middling; target onboarding or reactivation to lift Month 1 and Month 3 value.'
+      )
   }
 
   return insights
@@ -125,13 +137,17 @@ export default function CohortHealthPanel({
 
   const normalizedForAffiliate = useMemo(() => {
     return (cohortRows || [])
-      .filter((row) => (affiliateKey === 'all' ? true : normalizeKey(row.affiliate || '') === affiliateKey))
+      .filter((row) =>
+        affiliateKey === 'all' ? true : normalizeKey(row.affiliate || '') === affiliateKey
+      )
       .map((row) => normalizeRow(row, friendlyCohortLabel, calendarMonths))
       .filter((row) => row.base !== 0)
   }, [cohortRows, affiliateKey, friendlyCohortLabel, calendarMonths])
 
   const normalizedRows = useMemo(() => {
-    return normalizedForAffiliate.filter((row) => (selectedYear === 'all' ? true : row.cohortYear === selectedYear))
+    return normalizedForAffiliate.filter((row) =>
+      selectedYear === 'all' ? true : row.cohortYear === selectedYear
+    )
   }, [normalizedForAffiliate, selectedYear])
 
   const rowsByYear = useMemo(() => {
@@ -174,10 +190,15 @@ export default function CohortHealthPanel({
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h3 className="text-sm font-semibold text-slate-200 m-0">Cohort health & retention</h3>
-          <p className="text-xs text-slate-400 m-0">Normalized net deposits (Month 0 = 100%) with economic churn checkpoints.</p>
+          <p className="text-xs text-slate-400 m-0">
+            Normalized net deposits (Month 0 = 100%) with economic churn checkpoints.
+          </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-300">
-          <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-800/60" style={{ color: churn.color }}>
+          <span
+            className="px-3 py-1 rounded-full border border-slate-700 bg-slate-800/60"
+            style={{ color: churn.color }}
+          >
             Status: {churn.status}
           </span>
           <span className="px-3 py-1 rounded-full border border-slate-700 bg-slate-800/60">
@@ -191,12 +212,16 @@ export default function CohortHealthPanel({
           <label className="text-xs text-slate-400">Year</label>
           <select
             value={selectedYear}
-            onChange={(e) => onYearChange(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            onChange={(e) =>
+              onYearChange(e.target.value === 'all' ? 'all' : Number(e.target.value))
+            }
             className="bg-slate-900 border border-slate-700 text-slate-100 text-sm rounded-lg px-3 py-2"
           >
             <option value="all">All years</option>
             {availableYears.map((y) => (
-              <option key={y} value={y}>{y}</option>
+              <option key={y} value={y}>
+                {y}
+              </option>
             ))}
           </select>
         </div>
@@ -206,7 +231,11 @@ export default function CohortHealthPanel({
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-        {[{ key: 'm1', label: 'Month 1' }, { key: 'm3', label: 'Month 3' }, { key: 'm6', label: 'Month 6' }].map((c) => {
+        {[
+          { key: 'm1', label: 'Month 1' },
+          { key: 'm3', label: 'Month 3' },
+          { key: 'm6', label: 'Month 6' },
+        ].map((c) => {
           const value = churn[c.key]
           return (
             <div key={c.key} className="rounded-xl border border-slate-700 bg-slate-900/70 p-3">
@@ -223,7 +252,9 @@ export default function CohortHealthPanel({
         <div className="flex items-center justify-between mb-2">
           <div>
             <h4 className="text-xs font-semibold text-slate-300 m-0">Cohort decay matrix</h4>
-            <p className="text-[11px] text-slate-500 m-0">Cells show retained economic value vs Month 0 (100%).</p>
+            <p className="text-[11px] text-slate-500 m-0">
+              Cells show retained economic value vs Month 0 (100%).
+            </p>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -232,7 +263,9 @@ export default function CohortHealthPanel({
               <tr>
                 <th className="text-left">Cohort</th>
                 {matrixMonths.map((m) => (
-                  <th key={m} className="text-center text-xs text-slate-400">{m}</th>
+                  <th key={m} className="text-center text-xs text-slate-400">
+                    {m}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -243,7 +276,11 @@ export default function CohortHealthPanel({
                   {matrixMonths.map((_, idx) => {
                     const value = row.normalized[idx]
                     return (
-                      <td key={`${row.cohortLabel}-${idx}`} className="text-center text-xs" style={{ background: heatColor(value), color: heatText(value) }}>
+                      <td
+                        key={`${row.cohortLabel}-${idx}`}
+                        className="text-center text-xs"
+                        style={{ background: heatColor(value), color: heatText(value) }}
+                      >
                         {value === null ? '—' : `${Math.round(value)}%`}
                       </td>
                     )
@@ -252,7 +289,10 @@ export default function CohortHealthPanel({
               ))}
               {!normalizedRows.length && (
                 <tr>
-                  <td colSpan={matrixMonths.length + 1} className="text-center text-slate-500 text-sm py-4">
+                  <td
+                    colSpan={matrixMonths.length + 1}
+                    className="text-center text-slate-500 text-sm py-4"
+                  >
                     No cohorts match the selected filters.
                   </td>
                 </tr>

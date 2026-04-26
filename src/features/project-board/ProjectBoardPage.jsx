@@ -959,7 +959,7 @@ function Card({ task, onOpen, draggable, onDragStart }) {
   const { t } = useI18n()
   const iconName = resolveStoryIcon(task)
   const category = STRATEGIC_CATEGORIES[task.strategicCategory] || {
-    color: '#64748b',
+    color: '#6b7280',
     labelKey: null,
   }
   const impact = IMPACT_LEVELS[task.impactLevel] || IMPACT_LEVELS.Medium

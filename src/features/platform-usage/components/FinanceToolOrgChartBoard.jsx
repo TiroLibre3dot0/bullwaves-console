@@ -1,12 +1,12 @@
 import React, { useMemo } from 'react'
 
-function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'md', extra }) {
+function Card({ title, lines = [], accentDotClass = 'bg-gray-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
 
   return (
     <div
       className={
-        `relative bg-slate-900/35 border border-slate-800/80 ring-1 ring-slate-800/30 rounded-2xl shadow-sm backdrop-blur-md ` +
+        `relative bg-gray-700/35 border border-gray-600/80 ring-1 ring-gray-500/30 rounded-2xl shadow-sm backdrop-blur-md ` +
         (isSm ? 'px-4 py-3 min-h-[60px]' : 'px-5 py-4 min-h-[84px]')
       }
     >
@@ -16,9 +16,7 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
       />
       <div
         className={
-          (isSm
-            ? 'text-sm font-semibold text-slate-100'
-            : 'text-base font-semibold text-slate-100') +
+          (isSm ? 'text-sm font-semibold text-gray-100' : 'text-base font-semibold text-gray-100') +
           ' min-w-0 whitespace-normal break-normal leading-snug tracking-tight'
         }
         title={typeof title === 'string' ? title : undefined}
@@ -31,7 +29,7 @@ function Card({ title, lines = [], accentDotClass = 'bg-slate-400/60', size = 'm
             <div
               key={`${index}-${typeof line === 'string' ? line : String(line?.text || '')}`}
               className={
-                (isSm ? 'text-xs text-slate-300' : 'text-sm text-slate-300') +
+                (isSm ? 'text-xs text-gray-300' : 'text-sm text-gray-300') +
                 ' min-w-0 whitespace-normal break-normal leading-snug'
               }
               title={typeof line === 'object' && line ? line.title : undefined}
@@ -58,7 +56,7 @@ function HLine({ className = '' }) {
 
 function CollapsePill({ label }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-slate-700/60 bg-slate-950/30 px-2 py-0.5 text-[10px] text-slate-400">
+    <span className="inline-flex items-center rounded-full border border-gray-600/60 bg-gray-900/30 px-2 py-0.5 text-[10px] text-gray-400">
       {label}
     </span>
   )
@@ -66,9 +64,9 @@ function CollapsePill({ label }) {
 
 function ToolChip({ title, lines = [], accentDotClass, exploded = false }) {
   return (
-    <div className="bg-slate-900/20 border border-slate-800/70 rounded-xl px-3 py-2 whitespace-normal">
+    <div className="bg-gray-700/20 border border-gray-600/70 rounded-xl px-3 py-2 whitespace-normal">
       <div className="flex items-start justify-between gap-3">
-        <div className="text-xs text-slate-200 font-semibold leading-snug">{title}</div>
+        <div className="text-xs text-gray-200 font-semibold leading-snug">{title}</div>
         <span
           className={`mt-1 h-2 w-2 shrink-0 rounded-full ${accentDotClass}`}
           aria-hidden="true"
@@ -80,7 +78,7 @@ function ToolChip({ title, lines = [], accentDotClass, exploded = false }) {
           {lines.map((line, index) => (
             <div
               key={`${title}-${index}-${typeof line === 'string' ? line : String(line?.text || '')}`}
-              className="text-[11px] text-slate-400 leading-snug"
+              className="text-[11px] text-gray-400 leading-snug"
               title={typeof line === 'object' && line ? line.title : undefined}
             >
               {typeof line === 'string' ? line : line.text}
@@ -120,32 +118,30 @@ function GroupCluster({ cluster, accent, exploded }) {
 function MacroAreaCard({ area, accent, exploded }) {
   return (
     <section
-      className="bg-slate-900/35 border border-slate-800/80 ring-1 ring-slate-800/30 rounded-2xl shadow-sm backdrop-blur-md overflow-hidden"
+      className="bg-gray-700/35 border border-gray-600/80 ring-1 ring-gray-500/30 rounded-2xl shadow-sm backdrop-blur-md overflow-hidden"
       aria-labelledby={`finance-area-${area.id}`}
       data-macro-area-id={area.id}
     >
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <div id={`finance-area-${area.id}`} className="text-base font-semibold text-slate-100">
+            <div id={`finance-area-${area.id}`} className="text-base font-semibold text-gray-100">
               {area.label}
             </div>
-            <div className="mt-1 text-[11px] text-slate-400 leading-relaxed">
-              {area.description}
-            </div>
+            <div className="mt-1 text-[11px] text-gray-400 leading-relaxed">{area.description}</div>
           </div>
           <span className={`mt-1 h-2.5 w-2.5 rounded-full ${accent.dot}`} aria-hidden="true" />
         </div>
 
         <div className="mt-4">
           <span
-            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-slate-950/30 ${accent.pillBorder} text-slate-100`}
+            className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold bg-gray-900/30 ${accent.pillBorder} text-gray-100`}
           >
             {area.summary}
           </span>
         </div>
 
-        <div className="mt-4 space-y-4 border-t border-slate-800/70 pt-4">
+        <div className="mt-4 space-y-4 border-t border-gray-600/70 pt-4">
           {area.clusters.map((cluster) => (
             <GroupCluster
               key={`${area.id}-${cluster.id}`}
@@ -265,23 +261,23 @@ export default function FinanceToolOrgChartBoard({ groups, t, mode = 'overview',
   const exploded = mode === 'details'
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-100 rounded-3xl overflow-hidden">
+    <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100 rounded-3xl overflow-hidden">
       <div className="mx-auto max-w-[140rem] px-3 sm:px-4 md:px-6 2xl:px-10 pt-10 pb-6">
         <header className="flex flex-col items-center text-center">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             {t('platformUsageBilling.operational.financeTitle') || 'Finance Tool Organigram'}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">Board-level view</p>
+          <p className="mt-2 text-sm text-gray-400">Board-level view</p>
 
-          <div className="mt-5 inline-flex rounded-full border border-slate-700/50 bg-slate-950/40 p-1">
+          <div className="mt-5 inline-flex rounded-full border border-gray-600/50 bg-gray-900/40 p-1">
             <button
               type="button"
               onClick={() => onModeChange?.('overview')}
               className={
                 'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
                 (mode === 'overview'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-300 hover:text-white')
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'text-gray-300 hover:text-white')
               }
               aria-pressed={mode === 'overview'}
             >
@@ -293,8 +289,8 @@ export default function FinanceToolOrgChartBoard({ groups, t, mode = 'overview',
               className={
                 'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
                 (mode === 'details'
-                  ? 'bg-slate-100 text-slate-900'
-                  : 'text-slate-300 hover:text-white')
+                  ? 'bg-gray-100 text-gray-800'
+                  : 'text-gray-300 hover:text-white')
               }
               aria-pressed={mode === 'details'}
             >
@@ -314,7 +310,7 @@ export default function FinanceToolOrgChartBoard({ groups, t, mode = 'overview',
         <main className="mt-12" aria-label="Finance organizational tree">
           <div className="flex flex-col items-center">
             <div className="flex flex-col items-center">
-              <div className="rounded-2xl border border-slate-800/80 bg-slate-950/40 px-6 py-4 backdrop-blur-md">
+              <div className="rounded-2xl border border-gray-600/80 bg-gray-900/40 px-6 py-4 backdrop-blur-md">
                 <img src="/Logo.png" alt="Bullwaves" className="h-10 w-auto opacity-95" />
               </div>
             </div>
@@ -373,7 +369,7 @@ export default function FinanceToolOrgChartBoard({ groups, t, mode = 'overview',
         </main>
 
         <footer className="mt-12 flex justify-center">
-          <div className="text-xs text-slate-400 border border-slate-800/80 bg-slate-900/35 rounded-full px-4 py-2">
+          <div className="text-xs text-gray-400 border border-gray-600/80 bg-gray-700/35 rounded-full px-4 py-2">
             {exploded
               ? t('platformUsageBilling.operational.board.footerDetails') ||
                 'Public view: expanded tool specs'

@@ -81,6 +81,34 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // Skip per-chunk gzip size reporting — saves 3-5s on large builds
+    reportCompressedSize: false,
+    // Raise the warning threshold to avoid noise (we know about the large chunks)
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // Core React runtime → tiny, always-cached chunk
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/scheduler/')) {
+            return 'vendor-react'
+          }
+          // ReactFlow / XY-flow — large graph library
+          if (id.includes('node_modules/@reactflow/') || id.includes('node_modules/@xyflow/') || id.includes('node_modules/reactflow/')) {
+            return 'vendor-reactflow'
+          }
+          // Charting
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3') || id.includes('node_modules/victory')) {
+            return 'vendor-charts'
+          }
+          // Date / utility libs
+          if (id.includes('node_modules/date-fns') || id.includes('node_modules/dayjs') || id.includes('node_modules/lodash')) {
+            return 'vendor-utils'
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5174,
     strictPort: true,

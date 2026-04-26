@@ -6,24 +6,50 @@ import FullPageLoader from '../../../components/FullPageLoader'
 import ExecutiveAnalysisEngine from '../../executive-summary/components/ExecutiveAnalysisEngine'
 import { useLeaderboard } from '../hooks/useLeaderboard'
 import { useMediaPaymentsData } from '../hooks/useMediaPaymentsData'
-import { formatEuro, formatEuroFull, formatNumber, formatNumberShort, formatPercent, normalizeKey } from '../../../lib/formatters'
+import {
+  formatEuro,
+  formatEuroFull,
+  formatNumber,
+  formatNumberShort,
+  formatPercent,
+  normalizeKey,
+} from '../../../lib/formatters'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
 import { useI18n } from '../../../i18n/I18nContext'
 
 const formatNumberFull = (value) => formatNumber(value)
 const formatPercentDisplay = (value) => formatPercent(value, 2)
-const selectStyle = { minWidth: 160, background: '#0d1a2c', color: 'var(--text)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px' }
+const selectStyle = {
+  minWidth: 160,
+  background: '#0d1a2c',
+  color: 'var(--text)',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 8,
+  padding: '8px 10px',
+}
 
 export default function GlobalDashboard() {
   const { t } = useI18n()
-  const { mediaRows, payments, loading, monthOptions = [], affiliateOptions = [] } = useMediaPaymentsData()
+  const {
+    mediaRows,
+    payments,
+    loading,
+    monthOptions = [],
+    affiliateOptions = [],
+  } = useMediaPaymentsData()
 
   const yearOptions = useMemo(() => {
     const set = new Set()
-    mediaRows.forEach((r) => { if (r.year !== undefined && r.year !== null) set.add(r.year) })
-    payments.forEach((p) => { if (p.year !== undefined && p.year !== null) set.add(p.year) })
-    return Array.from(set).filter((y) => !Number.isNaN(Number(y))).sort((a, b) => a - b)
+    mediaRows.forEach((r) => {
+      if (r.year !== undefined && r.year !== null) set.add(r.year)
+    })
+    payments.forEach((p) => {
+      if (p.year !== undefined && p.year !== null) set.add(p.year)
+    })
+    return Array.from(set)
+      .filter((y) => !Number.isNaN(Number(y)))
+      .sort((a, b) => a - b)
   }, [mediaRows, payments])
 
   const [selectedMonth, setSelectedMonth] = useState('all')
@@ -33,19 +59,29 @@ export default function GlobalDashboard() {
 
   const selectedAffiliateKey = normalizeKey(selectedAffiliate)
 
-  const filteredMedia = useMemo(() => mediaRows.filter((r) => {
-    const matchYear = selectedYear === 'all' ? true : r.year === Number(selectedYear)
-    const matchMonth = selectedMonth === 'all' ? true : r.monthKey === selectedMonth
-    const matchAff = selectedAffiliate === 'all' ? true : normalizeKey(r.affiliate) === selectedAffiliateKey
-    return matchYear && matchMonth && matchAff
-  }), [mediaRows, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear])
+  const filteredMedia = useMemo(
+    () =>
+      mediaRows.filter((r) => {
+        const matchYear = selectedYear === 'all' ? true : r.year === Number(selectedYear)
+        const matchMonth = selectedMonth === 'all' ? true : r.monthKey === selectedMonth
+        const matchAff =
+          selectedAffiliate === 'all' ? true : normalizeKey(r.affiliate) === selectedAffiliateKey
+        return matchYear && matchMonth && matchAff
+      }),
+    [mediaRows, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear]
+  )
 
-  const filteredPayments = useMemo(() => payments.filter((p) => {
-    const matchYear = selectedYear === 'all' ? true : p.year === Number(selectedYear)
-    const matchMonth = selectedMonth === 'all' ? true : p.monthKey === selectedMonth
-    const matchAff = selectedAffiliate === 'all' ? true : normalizeKey(p.affiliate) === selectedAffiliateKey
-    return matchYear && matchMonth && matchAff
-  }), [payments, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear])
+  const filteredPayments = useMemo(
+    () =>
+      payments.filter((p) => {
+        const matchYear = selectedYear === 'all' ? true : p.year === Number(selectedYear)
+        const matchMonth = selectedMonth === 'all' ? true : p.monthKey === selectedMonth
+        const matchAff =
+          selectedAffiliate === 'all' ? true : normalizeKey(p.affiliate) === selectedAffiliateKey
+        return matchYear && matchMonth && matchAff
+      }),
+    [payments, selectedAffiliate, selectedAffiliateKey, selectedMonth, selectedYear]
+  )
 
   const totals = useMemo(() => {
     const sum = (field) => filteredMedia.reduce((acc, r) => acc + (Number(r[field]) || 0), 0)
@@ -65,7 +101,9 @@ export default function GlobalDashboard() {
     return {
       impressions: sum('impressions'),
       uniqueImpressions: sum('uniqueImpressions'),
-      ctrAvg: filteredMedia.length ? (filteredMedia.reduce((acc, r) => acc + (r.ctr || 0), 0) / filteredMedia.length) : 0,
+      ctrAvg: filteredMedia.length
+        ? filteredMedia.reduce((acc, r) => acc + (r.ctr || 0), 0) / filteredMedia.length
+        : 0,
       visitors,
       uniqueVisitors: sum('uniqueVisitors'),
       leads: sum('leads'),
@@ -144,7 +182,7 @@ export default function GlobalDashboard() {
   const breakEven = useMemo(() => {
     const months = [...perMonth]
       .filter((m) => m.monthIndex >= 0)
-      .sort((a, b) => (a.year - b.year) || (a.monthIndex - b.monthIndex))
+      .sort((a, b) => a.year - b.year || a.monthIndex - b.monthIndex)
 
     const labels = months.map((m) => m.monthLabel)
     const cumulativeProfit = []
@@ -161,10 +199,21 @@ export default function GlobalDashboard() {
       cumulativeProfit.push(plSum - paySum)
     })
 
-    const firstActive = cumulativeProfit.findIndex((v, idx) => idx === 0 || months[idx].pl || months[idx].payments)
-    const beIndex = cumulativeProfit.findIndex((v, idx) => idx >= (firstActive >= 0 ? firstActive : 0) && v >= 0)
+    const firstActive = cumulativeProfit.findIndex(
+      (v, idx) => idx === 0 || months[idx].pl || months[idx].payments
+    )
+    const beIndex = cumulativeProfit.findIndex(
+      (v, idx) => idx >= (firstActive >= 0 ? firstActive : 0) && v >= 0
+    )
     const beLabel = beIndex >= 0 ? labels[beIndex] : null
-    return { labels, curve: cumulativeProfit, cumulativePl, cumulativePayments, breakEvenIndex: beIndex, breakEvenLabel: beLabel }
+    return {
+      labels,
+      curve: cumulativeProfit,
+      cumulativePl,
+      cumulativePayments,
+      breakEvenIndex: beIndex,
+      breakEvenLabel: beLabel,
+    }
   }, [perMonth])
 
   const perMonthTotals = useMemo(() => {
@@ -196,36 +245,90 @@ export default function GlobalDashboard() {
 
   const acquisitionSteps = useMemo(() => {
     const steps = [
-      { key: 'uniqueVisitors', label: 'Unique visitors', value: totals.uniqueVisitors || totals.visitors, note: 'Top of funnel' },
-      { key: 'registrations', label: 'Registrations / Leads', value: totals.registrations || totals.leads, note: `${formatPercentDisplay(totals.conversion)} CVR` },
-      { key: 'ftd', label: 'FTD', value: totals.ftd, note: totals.visitors ? `${formatPercentDisplay((totals.ftd / Math.max(totals.visitors, 1)) * 100)} of visitors` : 'FTD' },
-      { key: 'qftd', label: 'QFTD', value: totals.qftd, note: totals.ftd ? `${formatPercentDisplay((totals.qftd / Math.max(totals.ftd, 1)) * 100)} of FTD` : 'Qualified' },
-      { key: 'payments', label: 'Payments (payout)', value: totals.paymentsTotal, note: totals.ftd ? `${formatEuroFull(totals.paymentsTotal / Math.max(totals.ftd, 1))} per FTD` : 'Payouts' },
+      {
+        key: 'uniqueVisitors',
+        label: 'Unique visitors',
+        value: totals.uniqueVisitors || totals.visitors,
+        note: 'Top of funnel',
+      },
+      {
+        key: 'registrations',
+        label: 'Registrations / Leads',
+        value: totals.registrations || totals.leads,
+        note: `${formatPercentDisplay(totals.conversion)} CVR`,
+      },
+      {
+        key: 'ftd',
+        label: 'FTD',
+        value: totals.ftd,
+        note: totals.visitors
+          ? `${formatPercentDisplay((totals.ftd / Math.max(totals.visitors, 1)) * 100)} of visitors`
+          : 'FTD',
+      },
+      {
+        key: 'qftd',
+        label: 'QFTD',
+        value: totals.qftd,
+        note: totals.ftd
+          ? `${formatPercentDisplay((totals.qftd / Math.max(totals.ftd, 1)) * 100)} of FTD`
+          : 'Qualified',
+      },
+      {
+        key: 'payments',
+        label: 'Payments (payout)',
+        value: totals.paymentsTotal,
+        note: totals.ftd
+          ? `${formatEuroFull(totals.paymentsTotal / Math.max(totals.ftd, 1))} per FTD`
+          : 'Payouts',
+      },
     ]
     const max = Math.max(...steps.map((s) => s.value || 0), 1)
-    return steps.map((s, idx) => ({ ...s, width: ((s.value || 0) / max) * 100, color: ['#38bdf8', '#a855f7', '#22d3ee', '#f97316', '#fbbf24'][idx % 5] }))
+    return steps.map((s, idx) => ({
+      ...s,
+      width: ((s.value || 0) / max) * 100,
+      color: ['#38bdf8', '#a855f7', '#22d3ee', '#f97316', '#fbbf24'][idx % 5],
+    }))
   }, [totals])
 
   const moneySteps = useMemo(() => {
     const steps = [
       { key: 'deposits', label: 'Deposits', value: totals.deposits, note: 'Gross inflow' },
       { key: 'withdrawals', label: 'Withdrawals', value: totals.withdrawals, note: 'Cash out' },
-      { key: 'netDeposits', label: 'Net deposits', value: totals.netDeposits, note: 'Deposits - Withdrawals' },
+      {
+        key: 'netDeposits',
+        label: 'Net deposits',
+        value: totals.netDeposits,
+        note: 'Deposits - Withdrawals',
+      },
       { key: 'pl', label: 'PL', value: totals.pl, note: 'P&L (trading)' },
     ]
     const max = Math.max(...steps.map((s) => Math.abs(s.value || 0)), 1)
-    return steps.map((s, idx) => ({ ...s, width: (Math.abs(s.value || 0) / max) * 100, color: ['#10b981', '#f59e0b', '#22d3ee', '#a855f7'][idx % 4] }));
+    return steps.map((s, idx) => ({
+      ...s,
+      width: (Math.abs(s.value || 0) / max) * 100,
+      color: ['#10b981', '#f59e0b', '#22d3ee', '#a855f7'][idx % 4],
+    }))
   }, [totals])
 
   const insights = useMemo(() => {
     const list = []
-    if (totals.conversion) list.push(`Conversion: ${formatPercentDisplay(totals.conversion)} from visitors to reg.`)
+    if (totals.conversion)
+      list.push(`Conversion: ${formatPercentDisplay(totals.conversion)} from visitors to reg.`)
     if (totals.ftd && totals.registrations) {
-      list.push(`FTD rate: ${formatPercentDisplay((totals.ftd / Math.max(totals.registrations, 1)) * 100)} from reg to FTD.`)
+      list.push(
+        `FTD rate: ${formatPercentDisplay((totals.ftd / Math.max(totals.registrations, 1)) * 100)} from reg to FTD.`
+      )
     }
-    if (totals.qftd && totals.ftd) list.push(`QFTD quality: ${formatPercentDisplay((totals.qftd / Math.max(totals.ftd, 1)) * 100)} of FTD are qualified.`)
-    if (totals.paymentsTotal && totals.ftd) list.push(`Payout per FTD: ${formatEuroFull(totals.paymentsTotal / Math.max(totals.ftd, 1))}.`)
-    if (Number.isFinite(totals.profit)) list.push(`Profit: ${formatEuroFull(totals.profit)} (P&L - payments).`)
+    if (totals.qftd && totals.ftd)
+      list.push(
+        `QFTD quality: ${formatPercentDisplay((totals.qftd / Math.max(totals.ftd, 1)) * 100)} of FTD are qualified.`
+      )
+    if (totals.paymentsTotal && totals.ftd)
+      list.push(
+        `Payout per FTD: ${formatEuroFull(totals.paymentsTotal / Math.max(totals.ftd, 1))}.`
+      )
+    if (Number.isFinite(totals.profit))
+      list.push(`Profit: ${formatEuroFull(totals.profit)} (P&L - payments).`)
     return list
   }, [totals])
 
@@ -263,23 +366,25 @@ export default function GlobalDashboard() {
         subtitle={t('globalDashboard.subtitle.panorama')}
         sticky
         stickyTop={12}
-        actions={(
+        actions={
           <FilterBar>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <span style={{ fontSize: 12, color: '#94a3b8' }}>Anno</span>
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  style={{ ...selectStyle, minWidth: 120 }}
-                >
-                  <option value="all">Tutti</option>
-                  {yearOptions.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-              </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Mese</span>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Anno</span>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                style={{ ...selectStyle, minWidth: 120 }}
+              >
+                <option value="all">Tutti</option>
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Mese</span>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -287,12 +392,14 @@ export default function GlobalDashboard() {
               >
                 <option value="all">Tutti</option>
                 {monthOptions.map((m) => (
-                  <option key={m.key} value={m.key}>{m.label}</option>
+                  <option key={m.key} value={m.key}>
+                    {m.label}
+                  </option>
                 ))}
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Affiliate</span>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Affiliate</span>
               <select
                 value={selectedAffiliate}
                 onChange={(e) => setSelectedAffiliate(e.target.value)}
@@ -300,34 +407,79 @@ export default function GlobalDashboard() {
               >
                 <option value="all">Tutti</option>
                 {affiliateOptions.map((a) => (
-                  <option key={a} value={a}>{a}</option>
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
                 ))}
               </select>
             </div>
-            <button className="btn secondary" style={{ padding: '8px 12px', fontSize: 12 }} onClick={() => { setSelectedAffiliate('all'); setSelectedMonth('all'); setSelectedYear('all') }}>
+            <button
+              className="btn secondary"
+              style={{ padding: '8px 12px', fontSize: 12 }}
+              onClick={() => {
+                setSelectedAffiliate('all')
+                setSelectedMonth('all')
+                setSelectedYear('all')
+              }}
+            >
               Reset filtri
             </button>
           </FilterBar>
-        )}
+        }
       />
 
       {/* PRIMARY KPI strip */}
       <div className="card card-global" style={{ padding: 14 }}>
         <h3 style={{ margin: 0, marginBottom: 10 }}>Executive KPIs</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10 }}>
-          {[{
-            label: 'Net deposits', value: totals.netDeposits, helper: 'Net dep', formatter: formatEuro,
-          }, {
-            label: 'P&L', value: totals.pl, helper: 'Total P&L', formatter: formatEuro,
-          }, {
-            label: 'Payments', value: totals.paymentsTotal, helper: 'Total payments', formatter: formatEuro,
-          }, {
-            label: 'Profit', value: totals.profit, helper: 'Profit = P&L – payments', formatter: formatEuro,
-          }, {
-            label: 'ROI avg', value: totals.roiAvg, helper: 'Avg ROI', formatter: formatPercentDisplay,
-          }].map((kpi) => (
-            <div key={kpi.label} style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.03)', borderRadius: 12, padding: 12 }}>
-              <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>{kpi.helper}</div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {[
+            {
+              label: 'Net deposits',
+              value: totals.netDeposits,
+              helper: 'Net dep',
+              formatter: formatEuro,
+            },
+            {
+              label: 'P&L',
+              value: totals.pl,
+              helper: 'Total P&L',
+              formatter: formatEuro,
+            },
+            {
+              label: 'Payments',
+              value: totals.paymentsTotal,
+              helper: 'Total payments',
+              formatter: formatEuro,
+            },
+            {
+              label: 'Profit',
+              value: totals.profit,
+              helper: 'Profit = P&L – payments',
+              formatter: formatEuro,
+            },
+            {
+              label: 'ROI avg',
+              value: totals.roiAvg,
+              helper: 'Avg ROI',
+              formatter: formatPercentDisplay,
+            },
+          ].map((kpi) => (
+            <div
+              key={kpi.label}
+              style={{
+                border: '1px solid rgba(255,255,255,0.12)',
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: 12,
+                padding: 12,
+              }}
+            >
+              <div style={{ fontSize: 12, color: '#9ca3af', marginBottom: 6 }}>{kpi.helper}</div>
               <div style={{ fontWeight: 700, fontSize: 24 }}>{kpi.formatter(kpi.value)}</div>
               <div style={{ fontSize: 13, color: '#cbd5e1' }}>{kpi.label}</div>
             </div>
@@ -343,9 +495,17 @@ export default function GlobalDashboard() {
           profit: totals.profit,
           avgROI: totals.roiAvg,
           conversionRate: totals.conversion,
-          marginPct: totals.netDeposits ? (totals.profit / Math.max(Math.abs(totals.netDeposits), 1)) * 100 : 0,
-          bestMonth: perMonth.reduce((best, m) => (best === null || m.profit > best.profit ? m : best), null),
-          worstMonth: perMonth.reduce((worst, m) => (worst === null || m.profit < worst.profit ? m : worst), null),
+          marginPct: totals.netDeposits
+            ? (totals.profit / Math.max(Math.abs(totals.netDeposits), 1)) * 100
+            : 0,
+          bestMonth: perMonth.reduce(
+            (best, m) => (best === null || m.profit > best.profit ? m : best),
+            null
+          ),
+          worstMonth: perMonth.reduce(
+            (worst, m) => (worst === null || m.profit < worst.profit ? m : worst),
+            null
+          ),
           volatility: (() => {
             const profits = perMonth.map((m) => m.profit)
             if (profits.length < 2) return 0
@@ -367,23 +527,61 @@ export default function GlobalDashboard() {
 
       {/* SECONDARY KPI row */}
       <div className="card card-global" style={{ padding: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
           <h3 style={{ margin: 0 }}>Acquisition & quality</h3>
           <span style={badgeStyle}>Funnel health</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10 }}>
-          {[{
-            label: 'Visitors', value: totals.visitors, formatter: formatNumberShort,
-          }, {
-            label: 'Registrations', value: totals.registrations, formatter: formatNumberShort,
-          }, {
-            label: 'FTD', value: totals.ftd, formatter: formatNumberShort,
-          }, {
-            label: 'QFTD', value: totals.qftd, formatter: formatNumberShort,
-          }, {
-            label: 'Conversion', value: totals.conversion, formatter: formatPercentDisplay,
-          }].map((kpi) => (
-            <div key={kpi.label} className="kpi" style={{ padding: 10, borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: 10,
+          }}
+        >
+          {[
+            {
+              label: 'Visitors',
+              value: totals.visitors,
+              formatter: formatNumberShort,
+            },
+            {
+              label: 'Registrations',
+              value: totals.registrations,
+              formatter: formatNumberShort,
+            },
+            {
+              label: 'FTD',
+              value: totals.ftd,
+              formatter: formatNumberShort,
+            },
+            {
+              label: 'QFTD',
+              value: totals.qftd,
+              formatter: formatNumberShort,
+            },
+            {
+              label: 'Conversion',
+              value: totals.conversion,
+              formatter: formatPercentDisplay,
+            },
+          ].map((kpi) => (
+            <div
+              key={kpi.label}
+              className="kpi"
+              style={{
+                padding: 10,
+                borderRadius: 10,
+                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'rgba(255,255,255,0.02)',
+              }}
+            >
               <span>{kpi.label}</span>
               <strong>{kpi.formatter(kpi.value)}</strong>
             </div>
@@ -392,63 +590,168 @@ export default function GlobalDashboard() {
       </div>
 
       <div className="grid-global" style={{ alignItems: 'start', rowGap: 12 }}>
-        <div className="card card-global" style={{ background: 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.10))' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div
+          className="card card-global"
+          style={{
+            background: 'linear-gradient(135deg, rgba(56,189,248,0.12), rgba(168,85,247,0.10))',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Acquisition funnel</h3>
             <span style={badgeStyle}>Visitors → Reg → FTD → QFTD</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {acquisitionSteps.map((s) => (
               <div key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: 4, background: s.color, display: 'inline-block' }} />
+                    <span
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 4,
+                        background: s.color,
+                        display: 'inline-block',
+                      }}
+                    />
                     <strong style={{ fontSize: 13 }}>{s.label}</strong>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#cbd5e1', fontSize: 13 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      color: '#cbd5e1',
+                      fontSize: 13,
+                    }}
+                  >
                     <span title={formatNumberFull(s.value)}>{formatNumberShort(s.value)}</span>
                     <span style={{ color: '#9fb3c8' }}>{s.note}</span>
                   </div>
                 </div>
-                <div style={{ width: '100%', height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ width: `${Math.max(s.width, 6)}%`, height: '100%', background: s.color, boxShadow: '0 6px 18px rgba(0,0,0,0.3)' }} />
+                <div
+                  style={{
+                    width: '100%',
+                    height: 12,
+                    background: 'rgba(255,255,255,0.06)',
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.max(s.width, 6)}%`,
+                      height: '100%',
+                      background: s.color,
+                      boxShadow: '0 6px 18px rgba(0,0,0,0.3)',
+                    }}
+                  />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="card card-global" style={{ background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,211,238,0.10))' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div
+          className="card card-global"
+          style={{
+            background: 'linear-gradient(135deg, rgba(34,197,94,0.12), rgba(34,211,238,0.10))',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+          >
             <h3 style={{ margin: 0 }}>Money flow</h3>
             <span style={badgeStyle}>Deposits → Withdrawals → Net → PL</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {moneySteps.map((s) => (
               <div key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ width: 12, height: 12, borderRadius: 4, background: s.color, display: 'inline-block' }} />
+                    <span
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 4,
+                        background: s.color,
+                        display: 'inline-block',
+                      }}
+                    />
                     <strong style={{ fontSize: 13 }}>{s.label}</strong>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#cbd5e1', fontSize: 13 }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      color: '#cbd5e1',
+                      fontSize: 13,
+                    }}
+                  >
                     <span title={formatEuroFull(s.value)}>{formatEuro(s.value)}</span>
                     <span style={{ color: '#9fb3c8' }}>{s.note}</span>
                   </div>
                 </div>
-                <div style={{ width: '100%', height: 12, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div style={{ width: `${Math.max(s.width, 6)}%`, height: '100%', background: s.color, boxShadow: '0 6px 18px rgba(0,0,0,0.25)' }} />
+                <div
+                  style={{
+                    width: '100%',
+                    height: 12,
+                    background: 'rgba(255,255,255,0.06)',
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                    border: '1px solid rgba(255,255,255,0.06)',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.max(s.width, 6)}%`,
+                      height: '100%',
+                      background: s.color,
+                      boxShadow: '0 6px 18px rgba(0,0,0,0.25)',
+                    }}
+                  />
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="card card-global" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div
+          className="card card-global"
+          style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
             <div>
               <h3 style={{ margin: 0 }}>Best affiliates</h3>
-              <p style={{ margin: 0, fontSize: 12, color: '#9fb3c8' }}>Top 15 per net deposits, clicca per filtrare</p>
+              <p style={{ margin: 0, fontSize: 12, color: '#9fb3c8' }}>
+                Top 15 per net deposits, clicca per filtrare
+              </p>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <span style={badgeStyle}>Top 10 + Next 5 + Others</span>
@@ -462,9 +765,29 @@ export default function GlobalDashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 10 }}>
-            <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 10,
+            }}
+          >
+            <div
+              style={{
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 10,
+                padding: 10,
+                background: 'rgba(255,255,255,0.02)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
                 <strong style={{ fontSize: 13 }}>Top 10</strong>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -473,21 +796,45 @@ export default function GlobalDashboard() {
                     key={`top10-${r.affiliate}`}
                     onClick={() => setSelectedAffiliate(r.affiliate)}
                     className="btn secondary"
-                    style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center', padding: '6px 10px', fontSize: 12, background: selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#0f172a' }}
+                    style={{
+                      justifyContent: 'space-between',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      background:
+                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#111827',
+                    }}
                     title={`Net dep ${formatEuroFull(r.netDeposits)} | P&L ${formatEuroFull(r.pl)} | Profit ${formatEuroFull(r.profit)}`}
                   >
                     <span style={{ fontWeight: 600 }}>{r.affiliate}</span>
-                    <span style={{ color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }}>{formatEuro(r.netDeposits)}</span>
+                    <span style={{ color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                      {formatEuro(r.netDeposits)}
+                    </span>
                   </button>
                 ))}
                 {(affiliateLeaderboard?.top10 || []).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Nessun dato</span>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>Nessun dato</span>
                 )}
               </div>
             </div>
 
-            <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div
+              style={{
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 10,
+                padding: 10,
+                background: 'rgba(255,255,255,0.02)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
                 <strong style={{ fontSize: 13 }}>Next 5</strong>
               </div>
               <div style={{ display: 'grid', gap: 6 }}>
@@ -496,38 +843,80 @@ export default function GlobalDashboard() {
                     key={`mid5-${r.affiliate}`}
                     onClick={() => setSelectedAffiliate(r.affiliate)}
                     className="btn secondary"
-                    style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center', padding: '6px 10px', fontSize: 12, background: selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#0f172a' }}
+                    style={{
+                      justifyContent: 'space-between',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '6px 10px',
+                      fontSize: 12,
+                      background:
+                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#111827',
+                    }}
                     title={`Net dep ${formatEuroFull(r.netDeposits)} | P&L ${formatEuroFull(r.pl)} | Profit ${formatEuroFull(r.profit)}`}
                   >
                     <span style={{ fontWeight: 600 }}>{r.affiliate}</span>
-                    <span style={{ color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }}>{formatEuro(r.netDeposits)}</span>
+                    <span style={{ color: (r.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }}>
+                      {formatEuro(r.netDeposits)}
+                    </span>
                   </button>
                 ))}
                 {(affiliateLeaderboard?.mid5 || []).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>
                 )}
               </div>
             </div>
 
-            <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 10, padding: 10, background: 'rgba(255,255,255,0.02)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+            <div
+              style={{
+                border: '1px solid rgba(255,255,255,0.06)',
+                borderRadius: 10,
+                padding: 10,
+                background: 'rgba(255,255,255,0.02)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
                 <strong style={{ fontSize: 13 }}>Others</strong>
                 {affiliateLeaderboard?.othersAgg && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>{affiliateLeaderboard.othersAgg.count} affiliates</span>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>
+                    {affiliateLeaderboard.othersAgg.count} affiliates
+                  </span>
                 )}
               </div>
               {affiliateLeaderboard?.othersAgg ? (
                 <button
                   onClick={() => setSelectedAffiliate('all')}
                   className="btn secondary"
-                  style={{ justifyContent: 'space-between', display: 'flex', alignItems: 'center', padding: '6px 10px', fontSize: 12, background: '#0f172a' }}
+                  style={{
+                    justifyContent: 'space-between',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '6px 10px',
+                    fontSize: 12,
+                    background: '#111827',
+                  }}
                   title={`Net dep ${formatEuroFull(affiliateLeaderboard.othersAgg.netDeposits)} | P&L ${formatEuroFull(affiliateLeaderboard.othersAgg.pl)} | Profit ${formatEuroFull(affiliateLeaderboard.othersAgg.profit)}`}
                 >
                   <span style={{ fontWeight: 600 }}>Others</span>
-                  <span style={{ color: (affiliateLeaderboard.othersAgg.netDeposits || 0) >= 0 ? '#34d399' : '#f87171' }}>{formatEuro(affiliateLeaderboard.othersAgg.netDeposits)}</span>
+                  <span
+                    style={{
+                      color:
+                        (affiliateLeaderboard.othersAgg.netDeposits || 0) >= 0
+                          ? '#34d399'
+                          : '#f87171',
+                    }}
+                  >
+                    {formatEuro(affiliateLeaderboard.othersAgg.netDeposits)}
+                  </span>
                 </button>
               ) : (
-                <span style={{ color: '#94a3b8', fontSize: 12 }}>Nessun dato aggiuntivo</span>
+                <span style={{ color: '#9ca3af', fontSize: 12 }}>Nessun dato aggiuntivo</span>
               )}
             </div>
           </div>
@@ -535,16 +924,43 @@ export default function GlobalDashboard() {
       </div>
 
       <div className="card card-global" style={{ padding: 14 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
           <h3 style={{ margin: 0 }}>Performance charts</h3>
           <span style={badgeStyle}>Filtri attivi: {periodLabel}</span>
         </div>
-        <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 4 }}>Le serie riflettono anno/mese/affiliate selezionati. Se scegli un singolo mese viene mostrato solo quel punto.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 12, marginTop: 10 }}>
-          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>
+          Le serie riflettono anno/mese/affiliate selezionati. Se scegli un singolo mese viene
+          mostrato solo quel punto.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 12,
+            marginTop: 10,
+          }}
+        >
+          <div
+            style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
+              }}
+            >
               <h4 style={{ margin: 0 }}>P&L by month</h4>
-              <span style={{ color: '#94a3b8', fontSize: 12 }}>€</span>
+              <span style={{ color: '#9ca3af', fontSize: 12 }}>€</span>
             </div>
             <div style={{ height: 220 }}>
               <PnLTrendChart
@@ -555,13 +971,24 @@ export default function GlobalDashboard() {
                 tooltipFormatter={({ value, label }) => `${label}: ${formatEuroFull(value)}`}
               />
             </div>
-            <p style={{ color: '#94a3b8', fontSize: 12, marginTop: 6 }}>Break-even: {breakEven.breakEvenLabel || 'non raggiunto'}.</p>
+            <p style={{ color: '#9ca3af', fontSize: 12, marginTop: 6 }}>
+              Break-even: {breakEven.breakEvenLabel || 'non raggiunto'}.
+            </p>
           </div>
 
-          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div
+            style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
+              }}
+            >
               <h4 style={{ margin: 0 }}>Margin % by month</h4>
-              <span style={{ color: '#94a3b8', fontSize: 12 }}>%</span>
+              <span style={{ color: '#9ca3af', fontSize: 12 }}>%</span>
             </div>
             <div style={{ height: 220 }}>
               <PnLTrendChart
@@ -578,10 +1005,19 @@ export default function GlobalDashboard() {
             </div>
           </div>
 
-          <div style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <div
+            style={{ border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 10 }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
+              }}
+            >
               <h4 style={{ margin: 0 }}>ROI % by month</h4>
-              <span style={{ color: '#94a3b8', fontSize: 12 }}>%</span>
+              <span style={{ color: '#9ca3af', fontSize: 12 }}>%</span>
             </div>
             <div style={{ height: 220 }}>
               <PnLTrendChart
@@ -622,7 +1058,9 @@ export default function GlobalDashboard() {
               <tbody>
                 {perMonth.length === 0 && (
                   <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>Nessun dato per i filtri selezionati</td>
+                    <td colSpan={10} style={{ textAlign: 'center', color: '#9ca3af' }}>
+                      Nessun dato per i filtri selezionati
+                    </td>
                   </tr>
                 )}
                 {perMonth.map((m) => (
@@ -647,14 +1085,25 @@ export default function GlobalDashboard() {
 
       {SHOW_BOTTOM_KPI_ROLLUP && (
         <div className="card card-global" style={{ marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              flexWrap: 'wrap',
+            }}
+          >
             <div>
               <h3 style={{ margin: 0 }}>KPI roll-up (per-month agg)</h3>
-              <p style={{ margin: 0, color: '#94a3b8', fontSize: 12 }}>Sommatoria mese filtrato</p>
+              <p style={{ margin: 0, color: '#9ca3af', fontSize: 12 }}>Sommatoria mese filtrato</p>
             </div>
             <span style={badgeStyle}>Conversion, ROI, Profit</span>
           </div>
-          <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}>
+          <div
+            className="kpi-grid"
+            style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))' }}
+          >
             <div className="kpi">
               <span>Visitors</span>
               <strong>{formatNumberShort(perMonthTotals.visitors)}</strong>
@@ -699,12 +1148,13 @@ export default function GlobalDashboard() {
         <div className="card card-global">
           <h3 style={{ marginBottom: 8 }}>Quick insights</h3>
           <ul style={{ color: '#cbd5e1', margin: 0, paddingLeft: 18 }}>
-            {insights.length === 0 && <li style={{ color: '#94a3b8' }}>Nessun dato</li>}
-            {insights.map((i, idx) => (<li key={idx}>{i}</li>))}
+            {insights.length === 0 && <li style={{ color: '#9ca3af' }}>Nessun dato</li>}
+            {insights.map((i, idx) => (
+              <li key={idx}>{i}</li>
+            ))}
           </ul>
         </div>
       )}
-
     </div>
   )
 }

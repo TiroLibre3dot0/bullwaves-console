@@ -38,25 +38,25 @@ const eurFmt0 = new Intl.NumberFormat('en-GB', {
 
 function fmtMoney0(v) {
   const n = Number(v || 0)
-  if (!Number.isFinite(n)) return 'â€”'
+  if (!Number.isFinite(n)) return '--'
   return eurFmt0.format(n)
 }
 
 function fmtInt(v) {
   const n = Math.floor(Number(v || 0))
-  if (!Number.isFinite(n)) return 'â€”'
+  if (!Number.isFinite(n)) return '--'
   return numberFmt0.format(n)
 }
 
 function fmtNum2(v) {
   const n = Number(v)
-  if (!Number.isFinite(n)) return 'â€”'
+  if (!Number.isFinite(n)) return '--'
   return numberFmt2.format(n)
 }
 
 function fmtSignedMoney0(v) {
   const n = Number(v || 0)
-  if (!Number.isFinite(n)) return 'â€”'
+  if (!Number.isFinite(n)) return '--'
   const abs = eurFmt0.format(Math.abs(n))
   if (n > 0) return `+${abs}`
   if (n < 0) return `-${abs}`
@@ -82,16 +82,6 @@ function yearMonthIndex(y, m) {
   return y * 12 + (m - 1)
 }
 
-function daysFromDate(date, today) {
-  if (!(date instanceof Date)) return null
-  const ms = date.getTime()
-  if (!Number.isFinite(ms)) return null
-  const base = today instanceof Date ? today : new Date()
-  const delta = base.getTime() - ms
-  if (!Number.isFinite(delta)) return null
-  return Math.max(0, Math.floor(delta / 86400000))
-}
-
 const PIE_COLORS = [
   'rgba(59, 130, 246, 0.82)',
   'rgba(16, 185, 129, 0.82)',
@@ -105,18 +95,11 @@ const PIE_COLORS = [
 function formatPeriodLabel(periodKey) {
   const raw = String(periodKey || '').trim()
   const match = raw.match(/^(\d{4})-(\d{2})$/)
-  if (!match) return raw || '—'
+  if (!match) return raw || '--'
   const year = Number(match[1])
   const month = Number(match[2])
   const dt = new Date(year, Math.max(0, month - 1), 1)
   return dt.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
-}
-
-function formatMonthLabel(monthNumber) {
-  const month = Number(monthNumber)
-  if (!Number.isFinite(month) || month < 1 || month > 12) return '—'
-  const dt = new Date(2026, month - 1, 1)
-  return dt.toLocaleDateString('it-IT', { month: 'long' })
 }
 
 export default function SalesAgentsMonitor() {
@@ -318,15 +301,6 @@ export default function SalesAgentsMonitor() {
     return [...set].sort((a, b) => b - a)
   }, [extractPeriod, rawRows])
 
-  const monthOptions = useMemo(() => {
-    const set = new Set()
-    for (const r of rawRows) {
-      const p = extractPeriod(r)
-      if (p?.periodKey) set.add(p.periodKey)
-    }
-    return [...set].sort((a, b) => (a < b ? 1 : -1))
-  }, [extractPeriod, rawRows])
-
   const monthOptionsForSelectedYear = useMemo(() => {
     const targetYear = Number(selectedYear)
     if (!Number.isFinite(targetYear)) return []
@@ -400,7 +374,6 @@ export default function SalesAgentsMonitor() {
     return buildTradersRankingRewardsDataset({ rows: filteredRows, headers: rawHeaders })
   }, [artifact, filteredRows, rawHeaders])
 
-  const countryOptions = dataset?.countries || []
   const agentOptions = dataset?.agentUsers || []
 
   const agentSearchLower = String(agentSearch || '')
@@ -801,10 +774,47 @@ export default function SalesAgentsMonitor() {
     textUnderlineOffset: 3,
   }
 
+  const sectionCardStyle = {
+    padding: 16,
+    borderRadius: 18,
+    border: '1px solid rgba(148,163,184,0.14)',
+    background: 'linear-gradient(180deg, rgba(15,23,42,0.88), rgba(8,15,30,0.78))',
+    boxShadow: '0 18px 44px rgba(2, 8, 23, 0.24)',
+  }
+
+  const sectionEyebrowStyle = {
+    margin: 0,
+    color: 'rgba(148,163,184,0.88)',
+    fontSize: 11,
+    fontWeight: 900,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  }
+
+  const sectionTitleStyle = {
+    margin: '4px 0 0',
+    fontSize: 18,
+    fontWeight: 900,
+    color: 'var(--text-primary)',
+  }
+
+  const sectionSubtitleStyle = {
+    margin: '6px 0 0',
+    color: 'var(--text-muted)',
+    fontSize: 12,
+    fontWeight: 600,
+  }
+
+  const activeRatePct =
+    salesAgentKpis.clients > 0 ? (salesAgentKpis.activeClients / salesAgentKpis.clients) * 100 : 0
+  const selectedAgentCount = selectedAgents.length
+  const personalCountryMetricLabel =
+    selectedAgentCountryBreakdown[0]?.metricLabel === 'net' ? 'net deposit' : 'deposit'
+
   return (
     <div
       ref={pageRootRef}
-      className="page-shell profitable-ranking-page profitable-ranking-dashboard profitable-ranking-compact"
+      className="page-shell profitable-ranking-page sales-agent-monitor-page sales-agent-monitor-layout"
       style={{ height: 'auto', maxHeight: 'none', overflow: 'visible', minHeight: '100%' }}
     >
       {showOverlayLoader ? (
@@ -812,39 +822,53 @@ export default function SalesAgentsMonitor() {
           className="logo-tools-backdrop"
           role="status"
           aria-live="polite"
-          aria-label="Loadingâ€¦"
+          aria-label="Loading..."
           style={{ zIndex: 210, display: 'grid', placeItems: 'center', padding: 14 }}
         >
           <div style={{ width: 'min(420px, 92vw)' }}>
-            <FullPageLoader progress={40} subtitle="Loadingâ€¦" minHeight="auto" />
+            <FullPageLoader progress={40} subtitle="Loading..." minHeight="auto" />
           </div>
         </div>
       ) : null}
 
-      <div
-        className="profitable-ranking-dashboard-content"
-        style={{ display: 'block', height: 'auto', minHeight: 'auto', overflow: 'visible' }}
-      >
-        <div className="profitable-ranking-fixed">
-          <header
-            className="page-header ranking-header ranking-sticky-header"
-            style={{ display: 'flex', flexDirection: 'column', gap: 12 }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 16,
-                flexWrap: 'wrap',
-              }}
-            >
-              <div>
-                <p className="page-label">{t('salesAgentsMonitor.section')}</p>
-                <h1 className="page-title">{t('salesAgentsMonitor.title')}</h1>
-                <p className="page-subtitle">{t('salesAgentsMonitor.subtitle')}</p>
-                <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 700 }}>
+      <div className="sales-agent-monitor-main">
+        <header
+          className="page-header sales-agent-monitor-header"
+          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        >
+          <div className="sales-agent-monitor-hero">
+            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--intro">
+              <p className="page-label">{t('salesAgentsMonitor.section')}</p>
+              <h1 className="page-title">{t('salesAgentsMonitor.title')}</h1>
+              <p className="page-subtitle">{t('salesAgentsMonitor.subtitle')}</p>
+              <div className="sales-agent-monitor-sourceRow">
+                <span className="sales-agent-monitor-sourceLabel">Source</span>
+                <span className="sales-agent-monitor-sourceValue">
                   {fileName || t('salesAgentsMonitor.dataSource')}
+                </span>
+              </div>
+              <div className="sales-agent-monitor-chipRow">
+                <span className="sales-agent-monitor-chip">Periodo: {periodSummaryText}</span>
+                <span className="sales-agent-monitor-chip">
+                  Agenti visibili: {fmtInt(salesAgentKpis.agents)}
+                </span>
+                <span className="sales-agent-monitor-chip">
+                  Clienti attivi: {fmtInt(activeRatePct)}%
+                </span>
+                <span className="sales-agent-monitor-chip sales-agent-monitor-chip--accent">
+                  {isPersonalMode ? `Focus: ${selectedAgentName}` : 'Vista team'}
+                </span>
+              </div>
+            </section>
+
+            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--filters">
+              <div className="sales-agent-monitor-panelHeader">
+                <div>
+                  <p style={sectionEyebrowStyle}>Controlli</p>
+                  <h2 style={sectionTitleStyle}>Filtro e focus</h2>
+                  <p style={sectionSubtitleStyle}>
+                    Riduci il rumore scegliendo periodo, team o singolo agente.
+                  </p>
                 </div>
               </div>
               <div
@@ -852,8 +876,7 @@ export default function SalesAgentsMonitor() {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
                   gap: 12,
-                  width: 'min(720px, 100%)',
-                  flex: '1 1 480px',
+                  width: '100%',
                 }}
               >
                 <div
@@ -1042,7 +1065,7 @@ export default function SalesAgentsMonitor() {
                   ) : null}
                 </div>
 
-                <label
+                <div
                   className="ranking-filter-field ranking-filter-field--agent"
                   style={{ minWidth: 0, flexShrink: 0 }}
                 >
@@ -1094,18 +1117,22 @@ export default function SalesAgentsMonitor() {
                       </option>
                     ))}
                   </select>
-                </label>
+                </div>
               </div>
+            </section>
+          </div>
+
+          <section className="sales-agent-monitor-kpiShell">
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 10 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Sintesi</p>
+                <h2 style={sectionTitleStyle}>Snapshot operativo</h2>
+              </div>
+              <p className="sales-agent-monitor-kpiNote">
+                Depositi, net e copertura attiva aggiornati sul perimetro filtrato.
+              </p>
             </div>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
-                gap: 8,
-                width: '100%',
-                maxWidth: 820,
-              }}
-            >
+            <div className="sales-agent-monitor-kpiGrid">
               <KpiCard
                 label={t('salesAgentsMonitor.kpi.agents')}
                 value={fmtInt(salesAgentKpis.agents)}
@@ -1137,385 +1164,380 @@ export default function SalesAgentsMonitor() {
                 density="compact"
               />
             </div>
-          </header>
+          </section>
+        </header>
 
-          {error ? (
+        {error ? (
+          <div
+            style={{
+              marginTop: 12,
+              padding: '10px 12px',
+              borderRadius: 12,
+              background: 'rgba(248, 113, 113, 0.08)',
+              border: '1px solid rgba(248, 113, 113, 0.18)',
+              color: 'rgba(248, 113, 113, 0.95)',
+              fontWeight: 800,
+            }}
+          >
+            {error}
+          </div>
+        ) : null}
+
+        {/* ── HERO SECTION: overview vs personal ── */}
+        {!isPersonalMode ? (
+          <section
+            className="sales-agent-monitor-section"
+            style={{
+              ...sectionCardStyle,
+              padding: 18,
+            }}
+          >
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Overview</p>
+                <h2 style={sectionTitleStyle}>{t('salesAgentsMonitor.top6.title')}</h2>
+                <p style={sectionSubtitleStyle}>{t('salesAgentsMonitor.top6.subtitle')}</p>
+              </div>
+              <div className="sales-agent-monitor-miniStat">
+                <span className="sales-agent-monitor-miniStatLabel">Net totale</span>
+                <span className="sales-agent-monitor-miniStatValue">
+                  {fmtMoney0(salesAgentKpis.totalNet)}
+                </span>
+              </div>
+            </div>
             <div
               style={{
-                marginTop: 12,
-                padding: '10px 12px',
-                borderRadius: 12,
-                background: 'rgba(248, 113, 113, 0.08)',
-                border: '1px solid rgba(248, 113, 113, 0.18)',
-                color: 'rgba(248, 113, 113, 0.95)',
-                fontWeight: 800,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                gap: 8,
               }}
             >
-              {error}
+              {bestSixAgents.map((agent) => {
+                const tone = toneFromDelta(agent.delta)
+                const toneColor =
+                  tone === 'up'
+                    ? 'rgba(16,185,129,0.95)'
+                    : tone === 'down'
+                      ? 'rgba(248,113,113,0.95)'
+                      : 'var(--text-muted)'
+                return (
+                  <article
+                    key={`top-${agent.agent}`}
+                    style={{
+                      borderRadius: 10,
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      background: 'rgba(9,14,22,0.6)',
+                      padding: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 6,
+                        gap: 6,
+                      }}
+                    >
+                      <span style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 13 }}>
+                        #{agent.rank} {agent.agent}
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)' }}>
+                        {fmtNum2(agent.weightPct)}%
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 4 }}>
+                      {fmtMoney0(agent.net)}
+                    </div>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: 6,
+                        fontSize: 11,
+                        color: 'var(--text-muted)',
+                      }}
+                    >
+                      <span>
+                        {fmtInt(agent.clients)} | {fmtInt(agent.trades)}
+                      </span>
+                      <span style={{ fontWeight: 800, color: toneColor }}>
+                        {fmtSignedMoney0(agent.delta)}
+                      </span>
+                    </div>
+                  </article>
+                )
+              })}
+              {!bestSixAgents.length ? (
+                <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
+                  {t('salesAgentsMonitor.top6.empty')}
+                </div>
+              ) : null}
             </div>
-          ) : null}
-
-          {/* ── HERO SECTION: overview vs personal ── */}
-          {!isPersonalMode ? (
-            <section
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background:
-                  'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 10,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 14 }}>
-                  {t('salesAgentsMonitor.top6.title')}
-                </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
-                  {t('salesAgentsMonitor.top6.subtitle')}
-                </div>
+          </section>
+        ) : (
+          <section
+            className="sales-agent-monitor-section"
+            style={{
+              ...sectionCardStyle,
+              padding: 18,
+            }}
+          >
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Focus agente</p>
+                <h2 style={sectionTitleStyle}>
+                  {t('salesAgentsMonitor.personal.title', { name: selectedAgentName })}
+                </h2>
+                <p style={sectionSubtitleStyle}>{t('salesAgentsMonitor.personal.subtitle')}</p>
               </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-                  gap: 8,
-                }}
-              >
-                {bestSixAgents.map((agent) => {
-                  const tone = toneFromDelta(agent.delta)
-                  const toneColor =
-                    tone === 'up'
-                      ? 'rgba(16,185,129,0.95)'
-                      : tone === 'down'
-                        ? 'rgba(248,113,113,0.95)'
-                        : 'var(--text-muted)'
-                  return (
+              <div className="sales-agent-monitor-miniStat">
+                <span className="sales-agent-monitor-miniStatLabel">Trend mese</span>
+                <span className="sales-agent-monitor-miniStatValue">
+                  {selectedAgentSnapshot ? fmtSignedMoney0(selectedAgentSnapshot.delta) : '--'}
+                </span>
+              </div>
+            </div>
+            {selectedAgentSnapshot ? (
+              <>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                    gap: 8,
+                    marginBottom: 10,
+                  }}
+                >
+                  <KpiCard
+                    label={t('salesAgentsMonitor.personal.kpi.clients')}
+                    value={fmtInt(selectedAgentSnapshot.clients)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.personal.kpi.activeRate')}
+                    value={`${fmtInt(selectedAgentSnapshot.activeRate)}%`}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.personal.kpi.net')}
+                    value={fmtMoney0(selectedAgentSnapshot.net)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.personal.kpi.netPerClient')}
+                    value={fmtMoney0(selectedAgentSnapshot.netPerClient)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.personal.kpi.momDelta')}
+                    value={fmtSignedMoney0(selectedAgentSnapshot.delta)}
+                    size="sm"
+                    density="compact"
+                  />
+                </div>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  {selectedAgentSnapshot.insights.map((ins, insIdx) => (
                     <article
-                      key={`top-${agent.agent}`}
+                      key={`personal-ins-${insIdx}`}
                       style={{
                         borderRadius: 10,
                         border: '1px solid rgba(255,255,255,0.1)',
-                        background: 'rgba(9,14,22,0.6)',
+                        background: 'rgba(9,14,22,0.55)',
                         padding: 10,
                       }}
                     >
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: 6,
-                          gap: 6,
-                        }}
-                      >
-                        <span
-                          style={{ fontWeight: 900, color: 'var(--text-primary)', fontSize: 13 }}
-                        >
-                          #{agent.rank} {agent.agent}
-                        </span>
-                        <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--text-muted)' }}>
-                          {fmtNum2(agent.weightPct)}%
-                        </span>
+                      <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ marginRight: 6 }}>{ins.icon}</span>
+                        {ins.title}
                       </div>
-                      <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 4 }}>
-                        {fmtMoney0(agent.net)}
-                      </div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: 6,
-                          fontSize: 11,
-                          color: 'var(--text-muted)',
-                        }}
-                      >
-                        <span>
-                          {fmtInt(agent.clients)} | {fmtInt(agent.trades)}
-                        </span>
-                        <span style={{ fontWeight: 800, color: toneColor }}>
-                          {fmtSignedMoney0(agent.delta)}
-                        </span>
-                      </div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>{ins.desc}</div>
                     </article>
-                  )
-                })}
-                {!bestSixAgents.length ? (
-                  <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
-                    {t('salesAgentsMonitor.top6.empty')}
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          ) : (
-            <section
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.08)',
-                background:
-                  'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: 10,
-                  marginBottom: 10,
-                  flexWrap: 'wrap',
-                }}
-              >
-                <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 14 }}>
-                  {t('salesAgentsMonitor.personal.title', { name: selectedAgentName })}
+                  ))}
                 </div>
-                <div style={{ color: 'var(--text-muted)', fontSize: 11, fontWeight: 700 }}>
-                  {t('salesAgentsMonitor.personal.subtitle')}
-                </div>
-              </div>
-              {selectedAgentSnapshot ? (
-                <>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                      gap: 8,
-                      marginBottom: 10,
-                    }}
-                  >
-                    <KpiCard
-                      label={t('salesAgentsMonitor.personal.kpi.clients')}
-                      value={fmtInt(selectedAgentSnapshot.clients)}
-                      size="sm"
-                      density="compact"
-                    />
-                    <KpiCard
-                      label={t('salesAgentsMonitor.personal.kpi.activeRate')}
-                      value={`${fmtInt(selectedAgentSnapshot.activeRate)}%`}
-                      size="sm"
-                      density="compact"
-                    />
-                    <KpiCard
-                      label={t('salesAgentsMonitor.personal.kpi.net')}
-                      value={fmtMoney0(selectedAgentSnapshot.net)}
-                      size="sm"
-                      density="compact"
-                    />
-                    <KpiCard
-                      label={t('salesAgentsMonitor.personal.kpi.netPerClient')}
-                      value={fmtMoney0(selectedAgentSnapshot.netPerClient)}
-                      size="sm"
-                      density="compact"
-                    />
-                    <KpiCard
-                      label={t('salesAgentsMonitor.personal.kpi.momDelta')}
-                      value={fmtSignedMoney0(selectedAgentSnapshot.delta)}
-                      size="sm"
-                      density="compact"
-                    />
-                  </div>
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                      gap: 8,
-                    }}
-                  >
-                    {selectedAgentSnapshot.insights.map((ins, insIdx) => (
-                      <article
-                        key={`personal-ins-${insIdx}`}
-                        style={{
-                          borderRadius: 10,
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          background: 'rgba(9,14,22,0.55)',
-                          padding: 10,
-                        }}
-                      >
-                        <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 4 }}>
-                          <span style={{ marginRight: 6 }}>{ins.icon}</span>
-                          {ins.title}
-                        </div>
-                        <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>{ins.desc}</div>
-                      </article>
-                    ))}
-                  </div>
 
-                  <div
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                    gap: 12,
+                    marginTop: 12,
+                  }}
+                >
+                  <section
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-                      gap: 12,
-                      marginTop: 12,
+                      ...sectionCardStyle,
+                      padding: 14,
                     }}
                   >
-                    <section
-                      style={{
-                        padding: 12,
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        background:
-                          'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
-                      }}
-                    >
-                      <div style={{ marginBottom: 8 }}>
-                        <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 13 }}>
-                          Performance by country
-                        </div>
-                        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}>
-                          Small percentages are grouped into one slice.
-                        </div>
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 13 }}>
+                        Performance by country
                       </div>
-                      <div style={{ height: 260, position: 'relative' }}>
-                        {selectedAgentCountryPie ? (
-                          <Pie
-                            data={selectedAgentCountryPie}
-                            options={{
-                              responsive: true,
-                              maintainAspectRatio: false,
-                              plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                  callbacks: {
-                                    title: (items) => {
-                                      const row =
-                                        selectedAgentCountryBreakdown[items?.[0]?.dataIndex || 0]
-                                      return row?.country || ''
-                                    },
-                                    label: (context) => {
-                                      const row = selectedAgentCountryBreakdown[context.dataIndex]
-                                      const share = Number(row?.sharePct || 0)
-                                      const value =
-                                        row?.metricLabel === 'net'
-                                          ? fmtMoney0(row?.net)
-                                          : fmtMoney0(row?.deposit)
-                                      return `${value} · ${fmtNum2(share)}%`
-                                    },
+                      <div style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}>
+                        Small percentages are grouped into one slice.
+                      </div>
+                    </div>
+                    <div style={{ height: 260, position: 'relative' }}>
+                      {selectedAgentCountryPie ? (
+                        <Pie
+                          data={selectedAgentCountryPie}
+                          options={{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              legend: { display: false },
+                              tooltip: {
+                                callbacks: {
+                                  title: (items) => {
+                                    const row =
+                                      selectedAgentCountryBreakdown[items?.[0]?.dataIndex || 0]
+                                    return row?.country || ''
+                                  },
+                                  label: (context) => {
+                                    const row = selectedAgentCountryBreakdown[context.dataIndex]
+                                    const share = Number(row?.sharePct || 0)
+                                    const value =
+                                      row?.metricLabel === 'net'
+                                        ? fmtMoney0(row?.net)
+                                        : fmtMoney0(row?.deposit)
+                                    return `${value} · ${fmtNum2(share)}%`
                                   },
                                 },
                               },
-                            }}
-                          />
-                        ) : (
-                          <div
-                            style={{
-                              textAlign: 'center',
-                              color: 'var(--text-muted)',
-                              paddingTop: 32,
-                            }}
-                          >
-                            No country breakdown available for this agent.
-                          </div>
-                        )}
-                      </div>
-                    </section>
+                            },
+                          }}
+                        />
+                      ) : (
+                        <div
+                          style={{
+                            textAlign: 'center',
+                            color: 'var(--text-muted)',
+                            paddingTop: 32,
+                          }}
+                        >
+                          No country breakdown available for this agent.
+                        </div>
+                      )}
+                    </div>
+                  </section>
 
-                    <section
-                      style={{
-                        padding: 12,
-                        borderRadius: 12,
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        background:
-                          'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
-                      }}
-                    >
-                      <div style={{ marginBottom: 8 }}>
-                        <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 13 }}>
-                          Top countries detail
-                        </div>
-                        <div style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}>
-                          Ranked by{' '}
-                          {selectedAgentCountryBreakdown[0]?.metricLabel === 'net'
-                            ? 'net deposit'
-                            : 'deposit'}{' '}
-                          contribution.
-                        </div>
+                  <section
+                    style={{
+                      ...sectionCardStyle,
+                      padding: 14,
+                    }}
+                  >
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ fontWeight: 900, letterSpacing: 0.2, fontSize: 13 }}>
+                        Top countries detail
                       </div>
-                      <div style={{ display: 'grid', gap: 8 }}>
-                        {selectedAgentCountryBreakdown.map((row, idx) => (
-                          <div
-                            key={`country-${row.country}`}
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: '1fr auto',
-                              gap: 10,
-                              alignItems: 'center',
-                              padding: '9px 10px',
-                              borderRadius: 10,
-                              background: 'rgba(9,14,22,0.55)',
-                              border: '1px solid rgba(255,255,255,0.08)',
-                            }}
-                          >
-                            <div style={{ minWidth: 0 }}>
-                              <div
-                                title={row.country}
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 8,
-                                  fontWeight: 900,
-                                  fontSize: 12,
-                                  minWidth: 0,
-                                }}
-                              >
-                                <span
-                                  aria-hidden="true"
-                                  style={{
-                                    width: 10,
-                                    height: 10,
-                                    borderRadius: 999,
-                                    background: PIE_COLORS[idx % PIE_COLORS.length],
-                                    flex: '0 0 auto',
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {row.country}
-                                </span>
-                              </div>
-                              <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
-                                {fmtInt(row.clients)} clients · {fmtMoney0(row.net)} net
-                              </div>
-                            </div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 10, fontWeight: 700 }}>
+                        Ranked by {personalCountryMetricLabel} contribution.
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gap: 8 }}>
+                      {selectedAgentCountryBreakdown.map((row, idx) => (
+                        <div
+                          key={`country-${row.country}`}
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr auto',
+                            gap: 10,
+                            alignItems: 'center',
+                            padding: '9px 10px',
+                            borderRadius: 10,
+                            background: 'rgba(9,14,22,0.55)',
+                            border: '1px solid rgba(255,255,255,0.08)',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
                             <div
+                              title={row.country}
                               style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
                                 fontWeight: 900,
                                 fontSize: 12,
-                                color: 'rgba(34,211,238,0.95)',
+                                minWidth: 0,
                               }}
                             >
-                              {fmtNum2(row.sharePct)}%
+                              <span
+                                aria-hidden="true"
+                                style={{
+                                  width: 10,
+                                  height: 10,
+                                  borderRadius: 999,
+                                  background: PIE_COLORS[idx % PIE_COLORS.length],
+                                  flex: '0 0 auto',
+                                }}
+                              />
+                              <span
+                                style={{
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {row.country}
+                              </span>
+                            </div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                              {fmtInt(row.clients)} clients · {fmtMoney0(row.net)} net
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </section>
-                  </div>
-                </>
-              ) : (
-                <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
-                  {t('salesAgentsMonitor.personal.noData')}
+                          <div
+                            style={{
+                              fontWeight: 900,
+                              fontSize: 12,
+                              color: 'rgba(34,211,238,0.95)',
+                            }}
+                          >
+                            {fmtNum2(row.sharePct)}%
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
                 </div>
-              )}
-            </section>
-          )}
+              </>
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
+                {t('salesAgentsMonitor.personal.noData')}
+              </div>
+            )}
+          </section>
+        )}
 
-          {/* ── CHARTS (overview only) ── */}
-          {!isPersonalMode ? (
+        {/* ── CHARTS (overview only) ── */}
+        {!isPersonalMode ? (
+          <section
+            className="sales-agent-monitor-section"
+            style={{
+              ...sectionCardStyle,
+              padding: 18,
+            }}
+          >
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Grafici</p>
+                <h2 style={sectionTitleStyle}>Performance maps</h2>
+                <p style={sectionSubtitleStyle}>
+                  Due letture veloci per capire chi porta volume e chi genera risultato.
+                </p>
+              </div>
+            </div>
             <div
               style={{
                 display: 'grid',
@@ -1526,10 +1548,9 @@ export default function SalesAgentsMonitor() {
               <section
                 style={{
                   padding: 12,
-                  borderRadius: 12,
+                  borderRadius: 14,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  background:
-                    'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
+                  background: 'rgba(255,255,255,0.03)',
                 }}
               >
                 <div style={{ marginBottom: 8 }}>
@@ -1614,10 +1635,9 @@ export default function SalesAgentsMonitor() {
               <section
                 style={{
                   padding: 12,
-                  borderRadius: 12,
+                  borderRadius: 14,
                   border: '1px solid rgba(255,255,255,0.08)',
-                  background:
-                    'linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 62%)',
+                  background: 'rgba(255,255,255,0.03)',
                 }}
               >
                 <div style={{ marginBottom: 8 }}>
@@ -1705,9 +1725,115 @@ export default function SalesAgentsMonitor() {
                 </div>
               </section>
             </div>
-          ) : null}
+          </section>
+        ) : null}
 
-          {isPersonalMode ? (
+        {!isPersonalMode ? (
+          <section
+            className="sales-agent-monitor-section"
+            style={{
+              ...sectionCardStyle,
+              padding: 18,
+            }}
+          >
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Alert</p>
+                <h2 style={sectionTitleStyle}>{t('salesAgentsMonitor.alerts.title')}</h2>
+                <p style={sectionSubtitleStyle}>{t('salesAgentsMonitor.alerts.subtitle')}</p>
+              </div>
+              <div className="sales-agent-monitor-miniStat">
+                <span className="sales-agent-monitor-miniStatLabel">Agenti in alert</span>
+                <span className="sales-agent-monitor-miniStatValue">
+                  {fmtInt(agentsWithAlerts.length)}
+                </span>
+              </div>
+            </div>
+
+            {agentsWithAlerts.length ? (
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                  gap: 10,
+                }}
+              >
+                {agentsWithAlerts.map((alert) => (
+                  <article
+                    key={`alert-${alert.agent}`}
+                    style={{
+                      borderRadius: 12,
+                      border: '1px solid rgba(248,113,113,0.24)',
+                      background: 'linear-gradient(180deg, rgba(127,29,29,0.2), rgba(9,14,22,0.5))',
+                      padding: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 8,
+                        marginBottom: 8,
+                      }}
+                    >
+                      <div style={{ fontWeight: 900, fontSize: 13 }}>{alert.agent}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', fontWeight: 800 }}>
+                        {fmtSignedMoney0(alert.momDelta)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gap: 6 }}>
+                      {alert.issues.slice(0, 3).map((issue, idx) => (
+                        <div
+                          key={`issue-${alert.agent}-${idx}`}
+                          style={{
+                            borderRadius: 8,
+                            border: '1px solid rgba(255,255,255,0.08)',
+                            padding: '8px 9px',
+                            background: 'rgba(9,14,22,0.45)',
+                          }}
+                        >
+                          <div style={{ fontWeight: 800, fontSize: 12, marginBottom: 2 }}>
+                            <span style={{ marginRight: 6 }}>{issue.icon}</span>
+                            {issue.title}
+                          </div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                            {issue.desc}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
+                {t('salesAgentsMonitor.alerts.empty')}
+              </div>
+            )}
+          </section>
+        ) : null}
+
+        {isPersonalMode ? (
+          <section
+            className="sales-agent-monitor-section"
+            style={{ ...sectionCardStyle, padding: 18 }}
+          >
+            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+              <div>
+                <p style={sectionEyebrowStyle}>Dettaglio</p>
+                <h2 style={sectionTitleStyle}>Tabella comparativa</h2>
+                <p style={sectionSubtitleStyle}>
+                  Metriche complete per confrontare gli agenti sul perimetro attuale.
+                </p>
+              </div>
+              <div className="sales-agent-monitor-miniStat">
+                <span className="sales-agent-monitor-miniStatLabel">Agenti selezionati</span>
+                <span className="sales-agent-monitor-miniStatValue">
+                  {fmtInt(selectedAgentCount)}
+                </span>
+              </div>
+            </div>
             <div
               className="ranking-table-scroll hide-scrollbar"
               tabIndex={0}
@@ -1915,24 +2041,26 @@ export default function SalesAgentsMonitor() {
                 </tbody>
               </table>
             </div>
-          ) : (
-            <section
-              style={{
-                padding: 12,
-                borderRadius: 12,
-                border: '1px dashed rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.015)',
-              }}
-            >
-              <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
-                {t('salesAgentsMonitor.personal.ctaTitle')}
-              </div>
-              <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>
-                {t('salesAgentsMonitor.personal.ctaSubtitle')}
-              </div>
-            </section>
-          )}
-        </div>
+          </section>
+        ) : (
+          <section
+            className="sales-agent-monitor-section sales-agent-monitor-cta"
+            style={{
+              padding: 16,
+              borderRadius: 18,
+              border: '1px dashed rgba(96,165,250,0.26)',
+              background: 'linear-gradient(180deg, rgba(30,41,59,0.54), rgba(15,23,42,0.3))',
+            }}
+          >
+            <p style={sectionEyebrowStyle}>Prossimo step</p>
+            <div style={{ fontSize: 13, fontWeight: 800, marginBottom: 4 }}>
+              {t('salesAgentsMonitor.personal.ctaTitle')}
+            </div>
+            <div style={{ color: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}>
+              {t('salesAgentsMonitor.personal.ctaSubtitle')}
+            </div>
+          </section>
+        )}
       </div>
 
       <button

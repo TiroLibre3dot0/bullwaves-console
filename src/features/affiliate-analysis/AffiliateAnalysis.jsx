@@ -497,7 +497,7 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
                 {t('affiliateAnalysis.topAffiliates.profit', { value: formatEuro(a.profit || 0) })}
               </div>
               <div
-                style={{ fontSize: 11, color: a.hasCohort ? '#22d3ee' : '#94a3b8', marginTop: 4 }}
+                style={{ fontSize: 11, color: a.hasCohort ? '#22d3ee' : '#9ca3af', marginTop: 4 }}
               >
                 {a.hasCohort
                   ? t('affiliateAnalysis.topAffiliates.cohortYes')
@@ -538,14 +538,14 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
               onChange={(val) => setSelectedYear(val)}
             />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ color: '#94a3b8', fontSize: 12 }}>
+              <label style={{ color: '#9ca3af', fontSize: 12 }}>
                 {t('affiliateAnalysis.filters.affiliate')}
               </label>
               <select
                 value={selectedAffiliate}
                 onChange={(e) => setSelectedAffiliate(e.target.value)}
                 style={{
-                  background: '#0f172a',
+                  background: '#111827',
                   color: 'var(--text)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 8,
@@ -756,7 +756,7 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
             <div style={{ fontWeight: 800, color: 'var(--text)' }}>
               {t('affiliateAnalysis.share.button') || 'Share report'}
             </div>
-            <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>
+            <div style={{ fontSize: 12, color: '#9ca3af', marginTop: 4 }}>
               {t('affiliateAnalysis.share.hint') || 'Creates a public, read-only board report link'}
             </div>
           </div>
@@ -795,7 +795,7 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
       {!selectedAffiliate && (
         <div
           className="card card-global"
-          style={{ textAlign: 'center', color: '#94a3b8', padding: 16 }}
+          style={{ textAlign: 'center', color: '#9ca3af', padding: 16 }}
         >
           {t('affiliateAnalysis.empty.selectAffiliate')}
         </div>

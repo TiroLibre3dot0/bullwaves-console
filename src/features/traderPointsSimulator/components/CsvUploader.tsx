@@ -25,9 +25,9 @@ export default function CsvUploader({ onData, parseInfo }: CsvUploaderProps) {
     });
   };
   return (
-    <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4 mb-2">
-      <div className="font-semibold mb-2 text-slate-200">{t('traderPoints.csvUploader.title')}</div>
-      <input type="file" accept=".csv" onChange={handleFile} className="mb-2 text-sm text-slate-200" />
+    <div className="rounded-xl border border-white/10 bg-gray-700/60 p-4 mb-2">
+      <div className="font-semibold mb-2 text-gray-200">{t('traderPoints.csvUploader.title')}</div>
+      <input type="file" accept=".csv" onChange={handleFile} className="mb-2 text-sm text-gray-200" />
       <div className="text-sm text-emerald-300">
         {parseInfo.parsed > 0 && t('traderPoints.csvUploader.rowsLoaded', { count: parseInfo.parsed })}
         {parseInfo.skipped > 0 && t('traderPoints.csvUploader.rowsSkipped', { count: parseInfo.skipped })}

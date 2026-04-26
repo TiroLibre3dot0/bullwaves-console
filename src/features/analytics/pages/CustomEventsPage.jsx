@@ -3,7 +3,7 @@ const EVENT_COLORS = {
   public_share_open: '#6366f1',
   page_view: '#10b981',
   support_botlist: '#f59e42',
-  default: '#64748b',
+  default: '#6b7280',
 }
 
 // Icona per tipo evento
@@ -75,7 +75,7 @@ function describeEvent(eventName, props) {
         <span
           style={{
             background: '#f1f5f9',
-            color: '#334155',
+            color: '#374151',
             borderRadius: 6,
             padding: '2px 7px',
             marginRight: 4,

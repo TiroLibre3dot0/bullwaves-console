@@ -190,11 +190,11 @@ export default function ShareOrgChart() {
             <img src="/Logo.png" alt="Bullwaves" className="h-9 w-auto" />
           </a>
 
-          <div className="text-xs text-slate-400 hidden sm:block">{t('orgChart.title')}</div>
+          <div className="text-xs text-gray-400 hidden sm:block">{t('orgChart.title')}</div>
 
           <button
             type="button"
-            className="px-3 py-2 rounded-lg border border-slate-700 text-slate-200 bg-slate-900/70 hover:border-cyan-400 hover:text-white text-sm"
+            className="px-3 py-2 rounded-lg border border-gray-600 text-gray-200 bg-gray-700/70 hover:border-cyan-400 hover:text-white text-sm"
             onClick={() => {
               resetView()
             }}
@@ -206,7 +206,7 @@ export default function ShareOrgChart() {
       </div>
 
       <div className="w-full px-4 md:px-6 pb-6">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-gray-700/60 border border-gray-600 rounded-xl shadow-sm overflow-hidden">
           <div className="relative" style={{ height: 'calc(100vh - 110px)' }}>
             <div
               ref={containerRef}
@@ -218,19 +218,19 @@ export default function ShareOrgChart() {
               onPointerCancel={stopDrag}
               onWheel={onWheel}
             >
-              <div className="absolute left-4 top-4 z-10 text-xs text-slate-300 bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2">
+              <div className="absolute left-4 top-4 z-10 text-xs text-gray-300 bg-gray-700/60 border border-gray-600 rounded-lg px-3 py-2">
                 Drag to move • Scroll to zoom • No contact details
               </div>
 
-              <div className="absolute left-4 bottom-4 z-10 text-xs text-slate-300 bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2">
+              <div className="absolute left-4 bottom-4 z-10 text-xs text-gray-300 bg-gray-700/60 border border-gray-600 rounded-lg px-3 py-2">
                 <div className="flex flex-wrap gap-3">
                   <span>
-                    <span className="inline-block w-3 h-[2px] bg-slate-400/60 align-middle mr-2" />
+                    <span className="inline-block w-3 h-[2px] bg-gray-400/60 align-middle mr-2" />
                     Solid = reporting
                   </span>
                   {hasCrossEdges ? (
                     <span>
-                      <span className="inline-block w-3 h-[2px] border-t-2 border-dashed border-slate-400/60 align-middle mr-2" />
+                      <span className="inline-block w-3 h-[2px] border-t-2 border-dashed border-gray-400/60 align-middle mr-2" />
                       Dashed = cross-functional
                     </span>
                   ) : null}

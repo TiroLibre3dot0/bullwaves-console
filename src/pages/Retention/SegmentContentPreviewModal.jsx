@@ -70,9 +70,7 @@ function IconGuideCard({ title, meta }) {
 
   return (
     <div className="rounded-xl border border-slate-300 bg-white p-3">
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-        {title}
-      </div>
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">{title}</div>
       <div className="mt-2 flex items-start gap-3">
         <img
           src={meta.url}
@@ -80,9 +78,9 @@ function IconGuideCard({ title, meta }) {
           className="h-10 w-10 shrink-0 rounded-lg border border-slate-300 bg-slate-100 p-1.5"
         />
         <div className="min-w-0">
-          <div className="text-sm font-bold text-slate-900">{meta.label}</div>
+          <div className="text-sm font-bold text-gray-800">{meta.label}</div>
           <div className="mt-1 text-xs font-semibold text-blue-700">{meta.category}</div>
-          <div className="mt-1 text-xs leading-5 text-slate-700">{meta.usage}</div>
+          <div className="mt-1 text-xs leading-5 text-gray-600">{meta.usage}</div>
         </div>
       </div>
     </div>
@@ -252,8 +250,8 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                 onClick={() => setLocale(entry)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                   activeLocale === entry
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    ? 'bg-gray-700 text-white border-gray-600'
+                    : 'bg-white text-gray-600 border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 {localeLabel(entry)}
@@ -268,7 +266,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                   activeVariant === entry
                     ? 'bg-emerald-600 text-white border-emerald-600'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    : 'bg-white text-gray-600 border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 {String(entry || '').toUpperCase()}
@@ -283,7 +281,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                   activeChannel === entry
                     ? 'bg-violet-600 text-white border-violet-600'
-                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    : 'bg-white text-gray-600 border-slate-300 hover:bg-slate-50'
                 }`}
               >
                 {entry.toUpperCase()}
@@ -296,7 +294,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                 tab === 'preview'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  : 'bg-white text-gray-600 border-slate-300 hover:bg-slate-50'
               }`}
             >
               Preview
@@ -308,7 +306,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
               className={`px-3 py-1.5 rounded-lg text-sm font-semibold border ${
                 tab === 'raw'
                   ? 'bg-blue-600 text-white border-blue-600'
-                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                  : 'bg-white text-gray-600 border-slate-300 hover:bg-slate-50'
               }`}
             >
               {activeChannel === 'sms' ? 'Raw Text' : 'Raw HTML'}
@@ -319,7 +317,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
             <button
               type="button"
               onClick={doCopy}
-              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-300 text-slate-700 hover:bg-slate-50"
+              className="px-3 py-1.5 rounded-lg text-sm font-semibold border border-slate-300 text-gray-600 hover:bg-slate-50"
               disabled={!rawValue}
             >
               {copied ? 'Copied' : activeChannel === 'sms' ? 'Copy Text' : 'Copy HTML'}
@@ -337,37 +335,37 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
         <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(86vh - 162px)' }}>
           <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
             <div className="rounded-xl border border-slate-300 bg-slate-100 p-4 h-fit">
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Nome
               </div>
-              <div className="mt-1 text-sm font-bold text-slate-900">{localized?.name || '—'}</div>
+              <div className="mt-1 text-sm font-bold text-gray-800">{localized?.name || '—'}</div>
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Descrizione
               </div>
-              <div className="mt-1 text-sm text-slate-700 leading-6">
+              <div className="mt-1 text-sm text-gray-600 leading-6">
                 {localized?.description || '—'}
               </div>
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Subject
               </div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">{subject}</div>
+              <div className="mt-1 text-sm font-semibold text-gray-800">{subject}</div>
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Timing
               </div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">{timing}</div>
+              <div className="mt-1 text-sm font-semibold text-gray-800">{timing}</div>
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Delay
               </div>
-              <div className="mt-1 text-sm text-slate-700 leading-6">{delay}</div>
+              <div className="mt-1 text-sm text-gray-600 leading-6">{delay}</div>
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 Channel
               </div>
-              <div className="mt-1 text-sm font-semibold text-slate-900">
+              <div className="mt-1 text-sm font-semibold text-gray-800">
                 {activeChannel.toUpperCase()}
               </div>
 
@@ -375,7 +373,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                 <>
                   {currentIconCards.length ? (
                     <>
-                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                         <span className="inline-flex items-center gap-2">
                           <span>Icone attive</span>
                           {templateIsRecent ? <NewBadge /> : null}
@@ -391,7 +389,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
 
                   {recommendedGroups.length ? (
                     <>
-                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                      <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                         <span className="inline-flex items-center gap-2">
                           <span>Selezione guidata</span>
                           {templateIsRecent ? <NewBadge /> : null}
@@ -408,14 +406,14 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                             key={group.key}
                             className="rounded-xl border border-slate-300 bg-white p-3"
                           >
-                            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
+                            <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-600">
                               {group.label}
                             </div>
                             <div className="mt-2 flex flex-wrap gap-2">
                               {group.icons.map((icon) => (
                                 <div
                                   key={icon.key}
-                                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800"
+                                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-gray-700"
                                 >
                                   <img
                                     src={icon.url}
@@ -432,7 +430,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                     </>
                   ) : null}
 
-                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Placeholders
                   </div>
                   <div className="mt-2 flex flex-wrap gap-2">
@@ -440,17 +438,17 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                       templatePlaceholders.map((entry) => (
                         <span
                           key={entry}
-                          className="inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 border border-slate-300"
+                          className="inline-flex items-center rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-gray-700 border border-slate-300"
                         >
                           {entry}
                         </span>
                       ))
                     ) : (
-                      <div className="text-sm text-slate-700">—</div>
+                      <div className="text-sm text-gray-600">—</div>
                     )}
                   </div>
 
-                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  <div className="mt-4 text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Links
                   </div>
                   <div className="mt-2 space-y-2">
@@ -461,13 +459,13 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                           href={entry.startsWith('{{') ? undefined : entry}
                           target={entry.startsWith('{{') ? undefined : '_blank'}
                           rel={entry.startsWith('{{') ? undefined : 'noreferrer'}
-                          className="block rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-800 break-all"
+                          className="block rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-gray-700 break-all"
                         >
                           {entry}
                         </a>
                       ))
                     ) : (
-                      <div className="text-sm text-slate-700">—</div>
+                      <div className="text-sm text-gray-600">—</div>
                     )}
                   </div>
                 </>
@@ -480,7 +478,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                   <div className="w-full h-[620px] rounded-xl border border-slate-300 bg-slate-100 p-6">
                     <div className="mx-auto max-w-[520px]">
                       <div className="inline-block rounded-2xl rounded-tl-sm bg-white border border-slate-300 px-4 py-3 shadow-sm">
-                        <div className="text-sm text-slate-800 whitespace-pre-wrap">
+                        <div className="text-sm text-gray-700 whitespace-pre-wrap">
                           {rawValue || '—'}
                         </div>
                       </div>
@@ -495,7 +493,7 @@ export default function SegmentContentPreviewModal({ isOpen, onClose, template }
                   />
                 )
               ) : (
-                <pre className="w-full h-[620px] overflow-auto rounded-xl border border-slate-300 bg-slate-100 p-3 text-xs font-mono text-slate-900 whitespace-pre-wrap wrap-break-word">
+                <pre className="w-full h-[620px] overflow-auto rounded-xl border border-slate-300 bg-slate-100 p-3 text-xs font-mono text-gray-800 whitespace-pre-wrap wrap-break-word">
                   {rawValue || '—'}
                 </pre>
               )}

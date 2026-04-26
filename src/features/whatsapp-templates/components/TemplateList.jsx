@@ -3,9 +3,9 @@ import TemplateListItem from './TemplateListItem'
 export default function TemplateList({ templates, selectedTemplateId, onSelect, onClearFilters }) {
   if (!templates.length) {
     return (
-      <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-6 text-center">
-        <p className="text-sm font-semibold text-slate-200">No templates match your filters</p>
-        <p className="mt-1 text-xs text-slate-400">
+      <div className="rounded-xl border border-gray-600 bg-gray-700/70 p-6 text-center">
+        <p className="text-sm font-semibold text-gray-200">No templates match your filters</p>
+        <p className="mt-1 text-xs text-gray-400">
           Adjust search criteria or clear filters to restore the full library.
         </p>
         <button

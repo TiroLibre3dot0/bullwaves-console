@@ -13,12 +13,12 @@ export default function TemplateDetailPanel({ template }) {
   }
 
   return (
-    <section className="space-y-3 rounded-2xl border border-slate-800 bg-linear-to-br from-slate-900/95 via-slate-900/85 to-slate-950/90 p-4 shadow-2xl shadow-black/20">
-      <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+    <section className="space-y-3 rounded-2xl border border-gray-600 bg-linear-to-br from-gray-700/95 via-gray-700/85 to-gray-900/90 p-4 shadow-2xl shadow-black/20">
+      <div className="rounded-xl border border-gray-600 bg-gray-700/70 p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-100">{template.name}</h2>
-            <p className="mt-1 text-xs text-slate-400">Created by {template.createdBy}</p>
+            <h2 className="text-lg font-semibold text-gray-100">{template.name}</h2>
+            <p className="mt-1 text-xs text-gray-400">Created by {template.createdBy}</p>
           </div>
           <div className="rounded-full border border-sky-400/35 bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-200">
             {template.category}
@@ -26,13 +26,13 @@ export default function TemplateDetailPanel({ template }) {
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-slate-200">
+          <span className="rounded-full border border-gray-600 bg-gray-900/60 px-2.5 py-1 text-gray-200">
             Status: {template.status}
           </span>
-          <span className="rounded-full border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-slate-200">
+          <span className="rounded-full border border-gray-600 bg-gray-900/60 px-2.5 py-1 text-gray-200">
             Tone: {template.tone}
           </span>
-          <span className="rounded-full border border-slate-700 bg-slate-950/60 px-2.5 py-1 text-slate-300">
+          <span className="rounded-full border border-gray-600 bg-gray-900/60 px-2.5 py-1 text-gray-300">
             Updated: {formatDate(template.updatedAt)}
           </span>
         </div>
@@ -42,14 +42,14 @@ export default function TemplateDetailPanel({ template }) {
       <TemplateVariablesCard variables={template.variables} />
       <TemplateUsageStrategyCard template={template} />
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
-        <h3 className="text-sm font-semibold text-slate-200">Actions</h3>
+      <div className="rounded-xl border border-gray-600 bg-gray-700/70 p-4">
+        <h3 className="text-sm font-semibold text-gray-200">Actions</h3>
         <div className="mt-3 flex flex-wrap gap-2">
           {ACTIONS.map((action) => (
             <button
               key={action}
               type="button"
-              className="rounded-lg border border-slate-700 bg-slate-950/70 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:border-sky-400/50 hover:text-sky-200"
+              className="rounded-lg border border-gray-600 bg-gray-900/70 px-3 py-2 text-xs font-semibold text-gray-200 transition hover:border-sky-400/50 hover:text-sky-200"
             >
               {action}
             </button>

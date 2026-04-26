@@ -442,7 +442,7 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
 
   if (!isValid) {
     return (
-      <div style={{ minHeight: '100vh', background: '#070b14', color: '#e2e8f0', padding: 24 }}>
+      <div style={{ minHeight: '100vh', background: '#0f172a', color: '#e2e8f0', padding: 24 }}>
         <div style={{ maxWidth: 960, margin: '0 auto' }}>
           <div
             style={{
@@ -464,7 +464,7 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#070b14' }}>
+    <div style={{ minHeight: '100vh', background: '#0f172a' }}>
       <div style={{ width: '100%', padding: 'clamp(10px, 1.8vw, 24px)' }}>
         <div
           style={{
@@ -550,9 +550,9 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
                   right: 0,
                   width: 380,
                   maxWidth: 'min(94vw, 380px)',
-                  border: '1px solid #1f2937',
+                  border: '1px solid #374151',
                   borderRadius: 12,
-                  background: '#0b1220',
+                  background: '#1e293b',
                   boxShadow: '0 14px 36px rgba(2, 6, 23, 0.52)',
                   padding: 10,
                   zIndex: 80,
@@ -569,7 +569,7 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
                       <div
                         key={item.id}
                         style={{
-                          border: hasChanges ? '1px solid #f59e0b' : '1px solid #1f2937',
+                          border: hasChanges ? '1px solid #f59e0b' : '1px solid #374151',
                           borderRadius: 10,
                           padding: 10,
                           background: hasChanges
@@ -595,7 +595,7 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
                               fontSize: 10,
                               borderRadius: 999,
                               padding: '2px 8px',
-                              background: isRead ? '#1f2937' : '#1d4ed8',
+                              background: isRead ? '#374151' : '#1d4ed8',
                               color: isRead ? '#cbd5e1' : '#dbeafe',
                               fontWeight: 700,
                             }}
@@ -639,7 +639,7 @@ export default function PublicTrustpilotGuideSharePage({ token = '' }) {
                             onClick={jumpToGuide}
                             style={{
                               border: '1px solid #334155',
-                              background: '#0b1220',
+                              background: '#1e293b',
                               color: '#e2e8f0',
                               borderRadius: 8,
                               padding: '5px 8px',

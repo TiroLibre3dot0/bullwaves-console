@@ -555,7 +555,7 @@ export default function GlobalDashboard() {
         actions={
           <FilterBar>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Mese</span>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Mese</span>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -570,7 +570,7 @@ export default function GlobalDashboard() {
               </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <span style={{ fontSize: 12, color: '#94a3b8' }}>Affiliate</span>
+              <span style={{ fontSize: 12, color: '#9ca3af' }}>Affiliate</span>
               <select
                 value={selectedAffiliate}
                 onChange={(e) => setSelectedAffiliate(e.target.value)}
@@ -812,7 +812,7 @@ export default function GlobalDashboard() {
                       padding: '6px 10px',
                       fontSize: 12,
                       background:
-                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#0f172a',
+                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#111827',
                     }}
                     title={`Net dep ${formatEuroFull(r.netDeposits)} | P&L ${formatEuroFull(r.pl)} | Profit ${formatEuroFull(r.profit)}`}
                   >
@@ -823,7 +823,7 @@ export default function GlobalDashboard() {
                   </button>
                 ))}
                 {(affiliateLeaderboard?.top10 || []).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>Nessun dato</span>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>Nessun dato</span>
                 )}
               </div>
             </div>
@@ -859,7 +859,7 @@ export default function GlobalDashboard() {
                       padding: '6px 10px',
                       fontSize: 12,
                       background:
-                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#0f172a',
+                        selectedAffiliate === r.affiliate ? 'rgba(96,165,250,0.16)' : '#111827',
                     }}
                     title={`Net dep ${formatEuroFull(r.netDeposits)} | P&L ${formatEuroFull(r.pl)} | Profit ${formatEuroFull(r.profit)}`}
                   >
@@ -870,7 +870,7 @@ export default function GlobalDashboard() {
                   </button>
                 ))}
                 {(affiliateLeaderboard?.mid5 || []).length === 0 && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>—</span>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>—</span>
                 )}
               </div>
             </div>
@@ -893,7 +893,7 @@ export default function GlobalDashboard() {
               >
                 <strong style={{ fontSize: 13 }}>Others</strong>
                 {affiliateLeaderboard?.othersAgg && (
-                  <span style={{ color: '#94a3b8', fontSize: 12 }}>
+                  <span style={{ color: '#9ca3af', fontSize: 12 }}>
                     {affiliateLeaderboard.othersAgg.count} affiliates
                   </span>
                 )}
@@ -908,7 +908,7 @@ export default function GlobalDashboard() {
                     alignItems: 'center',
                     padding: '6px 10px',
                     fontSize: 12,
-                    background: '#0f172a',
+                    background: '#111827',
                   }}
                   title={`Net dep ${formatEuroFull(affiliateLeaderboard.othersAgg.netDeposits)} | P&L ${formatEuroFull(affiliateLeaderboard.othersAgg.pl)} | Profit ${formatEuroFull(affiliateLeaderboard.othersAgg.profit)}`}
                 >
@@ -925,7 +925,7 @@ export default function GlobalDashboard() {
                   </span>
                 </button>
               ) : (
-                <span style={{ color: '#94a3b8', fontSize: 12 }}>Nessun dato aggiuntivo</span>
+                <span style={{ color: '#9ca3af', fontSize: 12 }}>Nessun dato aggiuntivo</span>
               )}
             </div>
           </div>
@@ -1069,7 +1069,7 @@ export default function GlobalDashboard() {
                 </div>
               ))
             ) : (
-              <div style={{ color: '#94a3b8', fontSize: 13 }}>
+              <div style={{ color: '#9ca3af', fontSize: 13 }}>
                 Nessun insight disponibile per questi filtri.
               </div>
             )}
@@ -1262,7 +1262,7 @@ export default function GlobalDashboard() {
                 )}
                 {!perMonth.length && (
                   <tr>
-                    <td colSpan={10} style={{ textAlign: 'center', color: '#94a3b8' }}>
+                    <td colSpan={10} style={{ textAlign: 'center', color: '#9ca3af' }}>
                       Nessun dato per i filtri correnti.
                     </td>
                   </tr>
