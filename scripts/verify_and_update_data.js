@@ -27,6 +27,23 @@ const ORG_DATA = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
 const TRADERS_REWARDS_XLSX = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
 const PRIME_CLIENTS_RANKING_XLSX = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
 
+function listCreolabsBreakdownSources() {
+  let entries = []
+  try {
+    entries = fs.readdirSync(CREOLABS_DIR, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  return entries
+    .filter((ent) => ent && ent.isFile && ent.isFile())
+    .map((ent) => ent.name)
+    .filter((name) => /\.xlsx$/i.test(name))
+    .filter((name) => !/^~\$/i.test(name))
+    .filter((name) => /creolabs/i.test(name))
+    .map((name) => path.join(CREOLABS_DIR, name))
+}
+
 function parseArgs(argv) {
   const out = { verbose: false }
   for (const raw of argv || []) {
@@ -125,6 +142,7 @@ function main() {
   const sourceTrustpilot = path.join(ROOT, 'Trustpilot', 'TrustPilot Review Tracker.csv')
   const trustpilotRemoteSourceUrl = String(process.env.TRUSTPILOT_SOURCE_URL || '').trim()
   const hasTrustpilotSource = safeStat(sourceTrustpilot).exists || Boolean(trustpilotRemoteSourceUrl)
+  const sourceCreolabsBreakdowns = listCreolabsBreakdownSources()
 
   const allTopLevelPublicFiles = fs.existsSync(PUBLIC) ? fs.readdirSync(PUBLIC).map((n) => path.join(PUBLIC, n)) : []
   const publicCsvFiles = allTopLevelPublicFiles.filter((p) => /\.csv$/i.test(p))
@@ -138,6 +156,9 @@ function main() {
     affiliateKpiIndex: path.join(PUBLIC, 'affiliate_kpi_index.json'),
     rankingsIndex: path.join(PUBLIC, 'rankings_index.json'),
     rankingsUsersTable: path.join(PUBLIC, 'rankings_users_table.json'),
+    creolabsIndex: path.join(PUBLIC, 'creolabs_index.json'),
+    creolabsClientsTable: path.join(PUBLIC, 'creolabs_clients_table.json'),
+    creolabsAffiliateMonth: path.join(PUBLIC, 'creolabs_affiliate_month.json'),
     cellxAffiliateMonth: path.join(PUBLIC, 'cellx_affiliate_month.json'),
     tradersRankingRewardsTable: path.join(PUBLIC, 'traders_ranking_rewards_table.json'),
     primeClientsRankingTable: path.join(PUBLIC, 'prime_clients_ranking_table.json'),
@@ -185,6 +206,24 @@ function main() {
     { artifact: artifacts.fraudPatternsIndex, sources: [sourceFraud, sourceChargebacks], name: 'fraud_patterns_index.json' },
     { artifact: artifacts.rankingsIndex, sources: [sourceRegistrations], name: 'rankings_index.json' },
     { artifact: artifacts.rankingsUsersTable, sources: [sourceRegistrations], name: 'rankings_users_table.json' },
+    {
+      artifact: artifacts.creolabsIndex,
+      sources: sourceCreolabsBreakdowns,
+      name: 'creolabs_index.json',
+      optional: true,
+    },
+    {
+      artifact: artifacts.creolabsClientsTable,
+      sources: sourceCreolabsBreakdowns,
+      name: 'creolabs_clients_table.json',
+      optional: true,
+    },
+    {
+      artifact: artifacts.creolabsAffiliateMonth,
+      sources: sourceCreolabsBreakdowns,
+      name: 'creolabs_affiliate_month.json',
+      optional: true,
+    },
     { artifact: artifacts.cellxAffiliateMonth, sources: [sourceMedia], name: 'cellx_affiliate_month.json' },
     { artifact: artifacts.shareOrgPeople, sources: [ORG_DATA], name: 'share/org-chart-people.json' },
     {
@@ -256,6 +295,7 @@ function main() {
       { p: 'generate_fraud_patterns_index.js', label: 'Generate fraud patterns index' },
       { p: 'generate_affiliate_kpi_index.js', label: 'Generate affiliate KPI index' },
       { p: 'generate_rankings_index.js', label: 'Generate rankings index' },
+      { p: 'generate_creolabs_index.js', label: 'Generate Creolabs artifacts' },
       { p: 'generate_traders_ranking_rewards_table.js', label: 'Generate Traders Ranking Rewards artifact' },
       { p: 'generate_prime_clients_ranking_table.js', label: 'Generate Prime Clients Ranking artifact' },
       { p: 'generate_prime_contest_embed.js', label: 'Generate Prime Contest embed feed' },

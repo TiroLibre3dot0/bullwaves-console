@@ -278,8 +278,8 @@ function runNodeScript(scriptFile, { cwd, timeoutMs } = {}) {
 async function runPostUploadGenerators(type, emit) {
   const cwd = path.join(__dirname, '..')
   const scripts = [
-    path.join(__dirname, 'generate_reports_meta.js'),
     path.join(__dirname, 'generate_affiliate_index.js'),
+    path.join(__dirname, 'generate_creolabs_index.js'),
     // Investments dashboard relies on this precomputed artifact.
     // It aggregates Media Report.csv into a lightweight CellX affiliate+month table.
     ...(type === 'media' ? [path.join(__dirname, 'generate_cellx_affiliate_month.js')] : []),
@@ -288,6 +288,8 @@ async function runPostUploadGenerators(type, emit) {
     path.join(__dirname, 'generate_support_users_index.js'),
     path.join(__dirname, 'generate_fraud_patterns_index.js'),
     path.join(__dirname, 'generate_affiliate_kpi_index.js'),
+    // Generate meta LAST so frontend cache-busting reflects all regenerated artifacts.
+    path.join(__dirname, 'generate_reports_meta.js'),
   ]
 
   // Fraud Monitoring dashboard also relies on these precomputed artifacts.
