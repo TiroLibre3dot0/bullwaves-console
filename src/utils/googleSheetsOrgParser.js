@@ -12,6 +12,8 @@
 
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1UXKOLw0o9gQvTYoWr0BlPzxguMTiC4YEqFuXhZc9Kk4/export?format=csv&gid=0'
+const SHEET_URL_GVIZ =
+  'https://docs.google.com/spreadsheets/d/1UXKOLw0o9gQvTYoWr0BlPzxguMTiC4YEqFuXhZc9Kk4/gviz/tq?tqx=out:csv&gid=0'
 
 const KNOWN_DIVISIONS = new Set(['Operations', 'Revenue', 'Trading & Risk', 'Corporate'])
 
@@ -210,17 +212,35 @@ function groupIntoSections(people) {
 }
 
 export async function fetchOrgChartFromGoogleSheets() {
-  const res = await fetch(SHEET_URL, { cache: 'no-store' })
-  if (!res.ok) throw new Error(`Google Sheets fetch failed: HTTP ${res.status}`)
+  let csv = ''
+  let sourceRef = SHEET_URL
+  let lastError = null
 
-  const csv = await res.text()
+  for (const url of [SHEET_URL, SHEET_URL_GVIZ]) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      csv = await res.text()
+      sourceRef = url
+      break
+    } catch (e) {
+      lastError = e
+    }
+  }
+
+  if (!csv) {
+    throw new Error(
+      `Google Sheets fetch failed on all endpoints: ${String(lastError?.message || 'unknown error')}`
+    )
+  }
+
   const people = parsePeopleFromCSV(csv)
 
   if (!people.length) throw new Error('No people found in Google Sheets data')
 
   return {
     sections: groupIntoSections(people),
-    sourceRef: SHEET_URL,
+    sourceRef,
     timestamp: new Date().toISOString(),
   }
 }

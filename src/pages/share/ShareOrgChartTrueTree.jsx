@@ -870,6 +870,54 @@ function sortPeople(a, b) {
   return String(a?.name || '').localeCompare(String(b?.name || ''))
 }
 
+function snapshotPeoplePayload(payload) {
+  const rows = []
+  for (const section of payload?.sections || []) {
+    const sid = normalizeKey(section?.id)
+    for (const role of section?.roles || []) {
+      const name = normalizeKey(role?.name)
+      const title = normalizeKey(role?.title)
+      if (!name) continue
+      const division = normalizeKey(role?.division)
+      const department = normalizeKey(role?.department)
+      rows.push(`${sid}|${name}|${title}|${division}|${department}`)
+    }
+  }
+  rows.sort()
+  return { rows, set: new Set(rows) }
+}
+
+function countDetectedChanges(prevPayload, nextPayload) {
+  const prev = snapshotPeoplePayload(prevPayload)
+  const next = snapshotPeoplePayload(nextPayload)
+  let changes = 0
+  for (const row of next.set) {
+    if (!prev.set.has(row)) changes++
+  }
+  for (const row of prev.set) {
+    if (!next.set.has(row)) changes++
+  }
+  return { changes, total: next.rows.length }
+}
+
+async function fetchPeoplePayloadWithFallback() {
+  try {
+    const sheetData = await fetchOrgChartFromGoogleSheets()
+    if (sheetData?.sections?.length) {
+      return { payload: sheetData, source: 'google_sheets' }
+    }
+  } catch (sheetError) {
+    console.warn('Google Sheets fetch failed, falling back to static data:', sheetError?.message)
+  }
+
+  const res = await fetch('/share/org-chart-people.json', { cache: 'no-store' })
+  if (!res.ok) {
+    throw new Error(`Failed to load people data (${res.status})`)
+  }
+  const json = await res.json()
+  return { payload: json, source: 'static_json' }
+}
+
 function isInternalRoleEligible(sectionId, role) {
   // Do not infer or reinterpret. Skip non-person placeholders / area-layer summaries.
   if (!role) return false
@@ -994,6 +1042,8 @@ export default function ShareOrgChartTrueTree() {
   const [selectedAreaId, setSelectedAreaId] = useState('revenue')
   const [peoplePayload, setPeoplePayload] = useState(null)
   const [peopleLoadError, setPeopleLoadError] = useState(null)
+  const [refreshingPeople, setRefreshingPeople] = useState(false)
+  const [peopleRefreshToast, setPeopleRefreshToast] = useState(null)
   const [spotlight, setSpotlight] = useState(null)
   const pillarsWrapRef = useRef(null)
   const macroAreaRefs = useRef(Object.create(null))
@@ -1102,6 +1152,46 @@ export default function ShareOrgChartTrueTree() {
     setSpotlight(null)
   }
 
+  const showPeopleToast = (kind, message) => {
+    setPeopleRefreshToast({ kind, message, key: Date.now() })
+  }
+
+  useEffect(() => {
+    if (!peopleRefreshToast) return
+    const t = setTimeout(() => setPeopleRefreshToast(null), 2800)
+    return () => clearTimeout(t)
+  }, [peopleRefreshToast])
+
+  const refreshPeopleData = async () => {
+    if (refreshingPeople) return
+    setRefreshingPeople(true)
+    setPeopleLoadError(null)
+
+    try {
+      const { payload: nextPayload, source } = await fetchPeoplePayloadWithFallback()
+      const { changes, total } = countDetectedChanges(peoplePayload, nextPayload)
+
+      if (changes > 0 || !peoplePayload) {
+        setPeoplePayload(nextPayload)
+      }
+
+      if (changes > 0) {
+        showPeopleToast('success', `Refresh completato: ${changes} cambi rilevati (${total} righe)`)
+      } else {
+        showPeopleToast('info', 'Nessun cambiamento rilevato')
+      }
+
+      if (source !== 'google_sheets') {
+        showPeopleToast('warn', 'Refresh completato con fallback locale')
+      }
+    } catch (e) {
+      setPeopleLoadError(e)
+      showPeopleToast('error', 'Refresh fallito: impossibile aggiornare i nominativi')
+    } finally {
+      setRefreshingPeople(false)
+    }
+  }
+
   useEffect(() => {
     if (mode !== VIEW_MODES.people) return
     if (peoplePayload) return
@@ -1111,29 +1201,8 @@ export default function ShareOrgChartTrueTree() {
 
     async function loadPeople() {
       try {
-        // Try to fetch live data from Google Sheets first
-        try {
-          const sheetData = await fetchOrgChartFromGoogleSheets()
-          if (!cancelled && sheetData?.sections?.length) {
-            // Successfully loaded from Google Sheets
-            if (!cancelled) setPeoplePayload(sheetData)
-            return
-          }
-        } catch (sheetError) {
-          // Google Sheets fetch failed or returned no data — fall back to static JSON
-          console.warn(
-            'Google Sheets fetch failed, falling back to static data:',
-            sheetError?.message
-          )
-        }
-
-        // Fall back to static JSON export
-        const res = await fetch('/share/org-chart-people.json', { cache: 'no-store' })
-        if (!res.ok) {
-          throw new Error(`Failed to load people data (${res.status})`)
-        }
-        const json = await res.json()
-        if (!cancelled) setPeoplePayload(json)
+        const { payload } = await fetchPeoplePayloadWithFallback()
+        if (!cancelled) setPeoplePayload(payload)
       } catch (e) {
         if (!cancelled) setPeopleLoadError(e)
       }
@@ -1422,6 +1491,25 @@ export default function ShareOrgChartTrueTree() {
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100">
       <ViewModeDock mode={mode} onChange={setMode} />
 
+      {peopleRefreshToast ? (
+        <div
+          aria-live="polite"
+          className={
+            'fixed top-4 left-1/2 z-40 -translate-x-1/2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-lg backdrop-blur-md ' +
+            (peopleRefreshToast.kind === 'success'
+              ? 'border-emerald-300/40 bg-emerald-500/15 text-emerald-100'
+              : peopleRefreshToast.kind === 'error'
+                ? 'border-rose-300/40 bg-rose-500/15 text-rose-100'
+                : peopleRefreshToast.kind === 'warn'
+                  ? 'border-amber-300/40 bg-amber-500/15 text-amber-100'
+                  : 'border-gray-300/30 bg-gray-900/60 text-gray-100')
+          }
+          key={peopleRefreshToast.key}
+        >
+          {peopleRefreshToast.message}
+        </div>
+      ) : null}
+
       {/* Fixed logo top-left */}
       <a href="/" className="fixed left-5 top-5 z-20" aria-label="Bullwaves">
         <img src="/Logo.png" alt="Bullwaves" className="h-7 w-auto opacity-95" />
@@ -1462,6 +1550,31 @@ export default function ShareOrgChartTrueTree() {
           ) : (
             <p className="mt-2 text-xs text-gray-500">No people · Structure only</p>
           )}
+
+          {showPeople ? (
+            <div className="mt-3 flex items-center justify-center">
+              <button
+                type="button"
+                onClick={refreshPeopleData}
+                disabled={refreshingPeople}
+                className={
+                  'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition ' +
+                  (refreshingPeople
+                    ? 'cursor-not-allowed border-gray-500/50 bg-gray-800/60 text-gray-400'
+                    : 'border-brand-300/40 bg-brand-500/10 text-brand-100 hover:bg-brand-500/20')
+                }
+                aria-label="Refresh nominativi"
+              >
+                <span
+                  className={
+                    'inline-block h-2 w-2 rounded-full ' +
+                    (refreshingPeople ? 'bg-amber-300 animate-pulse' : 'bg-emerald-300')
+                  }
+                />
+                {refreshingPeople ? 'Refresh in corso…' : 'Refresh nominativi'}
+              </button>
+            </div>
+          ) : null}
         </header>
 
         <main className="mt-12" aria-label="Organizational tree">

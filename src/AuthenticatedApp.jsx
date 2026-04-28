@@ -42,6 +42,7 @@ const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonit
 const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMasterTemplatePage'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
+const CommissionValidationRulesPage = lazy(() => import('./pages/CommissionValidationRulesPage'))
 const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
@@ -118,6 +119,7 @@ export default function AuthenticatedApp() {
         'aiAssistant',
         'whatsappPerformance',
         'trustpilotGuide',
+        'commissionValidationRules',
         'orgChart',
         'upload',
       ])
@@ -127,6 +129,7 @@ export default function AuthenticatedApp() {
       'aiAssistant',
       'whatsappPerformance',
       'trustpilotGuide',
+      'commissionValidationRules',
       'orgChart',
     ])
   }, [isSupportOnly])
@@ -187,6 +190,7 @@ export default function AuthenticatedApp() {
       profitableRanking: '/retention/profitable-ranking',
       primeChallengeRanking: '/prime-challenge/ranking',
       primeChallengeWidget: '/prime-challenge/widget',
+      commissionValidationRules: '/compliance/commission-validation-rules',
       segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
       emailMasterTemplate: '/retention/email-master-template',
@@ -230,6 +234,8 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/prime-challenge/ranking')) return 'primeChallengeRanking'
     if (pathname.startsWith('/prime-challenge/widget')) return 'primeChallengeWidget'
+    if (pathname.startsWith('/compliance/commission-validation-rules'))
+      return 'commissionValidationRules'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
     if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
@@ -567,6 +573,7 @@ export default function AuthenticatedApp() {
       profitableRanking: 'retention-profitable-ranking',
       primeChallengeRanking: 'prime-challenge-ranking',
       primeChallengeWidget: 'prime-challenge-widget',
+      commissionValidationRules: 'commission-validation-rules',
       segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
       emailMasterTemplate: 'retention-email-master-template',
@@ -651,6 +658,7 @@ export default function AuthenticatedApp() {
                 <ProfitableRanking definitionKey="prime_challenge" />
               ) : null}
               {view === 'primeChallengeWidget' ? <PrimeChallengeWidgetPage /> : null}
+              {view === 'commissionValidationRules' ? <CommissionValidationRulesPage /> : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
               {view === 'emailMasterTemplate' ? <EmailMasterTemplatePage /> : null}

@@ -218,6 +218,7 @@ export default function Sidebar({
             'aiAssistant',
             'whatsappPerformance',
             'trustpilotGuide',
+            'commissionValidationRules',
             'orgChart',
             'upload',
           ])
@@ -268,6 +269,14 @@ export default function Sidebar({
           active: view === 'salesAgentsMonitor',
           onClick: () => navigate('salesAgentsMonitor'),
           disabled: disabled('salesAgentsMonitor'),
+        },
+        {
+          key: 'commissionValidationRules',
+          label: 'Commission Validation Rules',
+          icon: 'shield',
+          active: view === 'commissionValidationRules',
+          onClick: () => navigate('commissionValidationRules'),
+          disabled: disabled('commissionValidationRules'),
         },
         {
           key: 'emailMasterTemplate',

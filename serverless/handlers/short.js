@@ -38,6 +38,7 @@ async function resolveShare(req, token) {
       'pboard',
       'exec',
       'tpguide',
+      'comval',
       'prank',
       'sb50',
       'suc',
@@ -60,7 +61,9 @@ function destinationFor(prefix, token, payload) {
   if (prefix === 'mplan') return `/share/marketing-plan/${encodeURIComponent(token)}`
   if (prefix === 'pboard') return `/share/project-board/${encodeURIComponent(token)}`
   if (prefix === 'exec') return `/share/execution/${encodeURIComponent(token)}`
-    if (prefix === 'tpguide') return `/share/trustpilot-guide/${encodeURIComponent(token)}`
+  if (prefix === 'tpguide') return `/share/trustpilot-guide/${encodeURIComponent(token)}`
+  if (prefix === 'comval')
+    return `/share/commission-validation-rules/${encodeURIComponent(token)}`
   if (prefix === 'prank') return `/share/profitable-ranking/${encodeURIComponent(token)}`
   if (prefix === 'sb50') return `/share/support-botlist/${encodeURIComponent(token)}`
   if (prefix === 'suc') return `/share/support-user-check/${encodeURIComponent(token)}`

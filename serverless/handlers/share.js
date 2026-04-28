@@ -230,6 +230,10 @@ async function routeShare(req, res, parts) {
     return handleShareTokenGet(req, res, 'tpguide', getTokenFrom(parts, 1))
   }
 
+  if (head === 'commission-validation-rules' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'comval', getTokenFrom(parts, 1))
+  }
+
   if (head === 'profitable-ranking' && parts.length === 2) {
     return handleShareTokenGet(req, res, 'prank', getTokenFrom(parts, 1))
   }
@@ -276,6 +280,10 @@ async function routeShare(req, res, parts) {
 
   if (head === 'create-trustpilot-guide') {
     return handleCreateShare(req, res, 'tpguide', 'tpguide', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-commission-validation-rules') {
+    return handleCreateShare(req, res, 'comval', 'comval', 60 * 60 * 24 * 90)
   }
 
   if (head === 'create-profitable-ranking') {
