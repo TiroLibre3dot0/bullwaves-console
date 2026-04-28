@@ -1,124 +1,227 @@
-/**
+﻿/**
  * Parse Google Sheets CSV export → org chart sections format
+ * Compatible with mapInternalRoleToPublicNode() sectionIds in ShareOrgChartTrueTree.jsx
+ *
  * Source: https://docs.google.com/spreadsheets/d/1UXKOLw0o9gQvTYoWr0BlPzxguMTiC4YEqFuXhZc9Kk4/export?format=csv&gid=0
+ *
+ * Sheet columns (0-based):
+ *   0: Employee Name  1: Job Title  2: Division  3: Sub Division  4: Department  5: Status
+ *   6: (empty)        7: Topics/extra person name (sometimes a second person)
+ *   8-12: extra person's Job Title, Division, Sub Division, Department, Status
  */
 
 const SHEET_URL =
   'https://docs.google.com/spreadsheets/d/1UXKOLw0o9gQvTYoWr0BlPzxguMTiC4YEqFuXhZc9Kk4/export?format=csv&gid=0'
 
-// Map Division → org chart area
-const DIVISION_TO_AREA = {
-  Operations: 'operations-area',
-  Revenue: 'revenue-area',
-  'Trading & Risk': 'trading-risk',
-  Corporate: 'corporate-area',
+const KNOWN_DIVISIONS = new Set(['Operations', 'Revenue', 'Trading & Risk', 'Corporate'])
+
+/**
+ * Map Google Sheets Department/Division → sectionId used by mapInternalRoleToPublicNode()
+ */
+function departmentToSectionId(division, subDivision, department) {
+  const dept = (department || '').trim()
+  const sub = (subDivision || '').trim()
+  const div = (division || '').trim()
+
+  if (dept === 'Customer Support') return 'support-team'
+  if (dept === 'Compliance') return 'compliance'
+  if (dept === 'Dealing') return 'dealing'
+  if (dept === 'Risk Management' || dept === 'MT5 Operations') return 'dealing'
+  if (dept === 'Prop Trading') return 'dealing'
+  if (dept === 'Finance' || dept === 'Banking') return 'finance'
+  if (dept === 'Affiliates & IBs') return 'affiliation'
+  if (dept === 'Marketing & Branding' || dept === 'Marketing - BW Prime') return 'marketing'
+  if (dept === 'Reputation') return 'marketing'
+  if (dept === 'HR & Talent Acquisition') return 'operations'
+  if (dept === 'Sales' || dept === 'MENA - BW Prime') return 'business-development'
+  if (dept === 'Tech Operations') return 'operations'
+
+  // Fallback by sub-division
+  if (sub === 'Support') return 'support-team'
+  if (sub === 'Compliance') return 'compliance'
+  if (sub === 'Finance & Banking') return 'finance'
+  if (sub === 'Sales & Growth') return 'business-development'
+  if (sub === 'Channels') return 'affiliation'
+  if (sub === 'Marketing') return 'marketing'
+  if (sub === 'Trading' || sub === 'Risk & Platforms') return 'dealing'
+  if (sub === 'Human Resource') return 'operations'
+
+  // Fallback by division
+  if (div === 'Trading & Risk') return 'dealing'
+  if (div === 'Corporate') return 'finance'
+  if (div === 'Revenue') return 'business-development'
+
+  return 'management-team'
 }
 
-// Map Department → org chart area (more specific)
-const DEPARTMENT_TO_AREA = {
-  'Business Operations': 'operations-area',
-  'Customer Support': 'customer-support-area',
-  Sales: 'revenue-area',
-  'MENA - BW Prime': 'revenue-area',
-  'Affiliates & IBs': 'affiliates-area',
-  'Marketing & Branding': 'marketing-area',
-  'HR & Talent Acquisition': 'hr-area',
-  Finance: 'finance-area',
-  Banking: 'finance-area',
-  Compliance: 'compliance-area',
-  'Risk Management': 'trading-risk',
-  'MT5 Operations': 'trading-risk',
-  Dealing: 'trading-risk',
-  'Prop Trading': 'trading-risk',
-  'Tech Operations': 'operations-area',
-  Reputation: 'marketing-area',
+/**
+ * Normalize the department field to match what mapInternalRoleToPublicNode() checks
+ */
+function normalizeDepartment(dept) {
+  const d = (dept || '').trim()
+  if (d === 'HR & Talent Acquisition') return 'HR'
+  if (d === 'Customer Support') return 'Support Team'
+  if (d === 'Affiliates & IBs') return 'Affiliate Manager'
+  return d
 }
 
-function parseCSV(raw) {
-  const lines = String(raw || '')
-    .split('\n')
-    .filter((l) => l.trim())
-  if (!lines.length) return []
+/**
+ * Parse a single CSV line into an array of fields (handles quoted fields).
+ */
+function parseCsvLine(line) {
+  const result = []
+  let current = ''
+  let inQuote = false
 
-  const header = lines[0].split(',').map((h) => h.trim())
-  const rows = []
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (ch === '"') {
+      if (inQuote && line[i + 1] === '"') {
+        current += '"'
+        i++
+      } else {
+        inQuote = !inQuote
+      }
+    } else if (ch === ',' && !inQuote) {
+      result.push(current.trim())
+      current = ''
+    } else {
+      current += ch
+    }
+  }
+  result.push(current.trim())
+  return result
+}
 
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i]
-    if (!line.trim()) continue
+/**
+ * Extract people from a parsed CSV row.
+ * Handles rows where two people are stored side-by-side (cols 0-5 and 7-11).
+ */
+function extractPeopleFromRow(cols) {
+  const people = []
 
-    const values = line.split(',').map((v) => v.trim())
-    const row = {}
-    header.forEach((h, idx) => {
-      row[h] = values[idx] || ''
+  const name0 = (cols[0] || '').replace(/^\*+/, '').trim()
+  const title0 = (cols[1] || '').trim()
+  const division0 = (cols[2] || '').trim()
+  const subDiv0 = (cols[3] || '').trim()
+  const dept0 = (cols[4] || '').trim()
+
+  if (name0 && title0) {
+    people.push({
+      name: name0,
+      title: title0,
+      division: division0,
+      subDivision: subDiv0,
+      department: dept0,
     })
-    rows.push(row)
   }
 
-  return rows
-}
+  // Check if cols 7-11 contain a second person (Division must be a known value)
+  const name1 = (cols[7] || '').replace(/^\*+/, '').trim()
+  const title1 = (cols[8] || '').trim()
+  const division1 = (cols[9] || '').trim()
+  const subDiv1 = (cols[10] || '').trim()
+  const dept1 = (cols[11] || '').trim()
 
-function getAreaForPerson(person) {
-  const dept = (person['Department'] || '').trim()
-  if (DEPARTMENT_TO_AREA[dept]) return DEPARTMENT_TO_AREA[dept]
-
-  const div = (person['Division'] || '').trim()
-  if (DIVISION_TO_AREA[div]) return DIVISION_TO_AREA[div]
-
-  return 'operations-area' // default
-}
-
-function buildSectionMap(rows) {
-  const map = {}
-
-  rows.forEach((row) => {
-    if (!row['Employee Name'] || !row['Employee Name'].trim()) return
-
-    const area = getAreaForPerson(row)
-    if (!map[area]) {
-      map[area] = []
-    }
-
-    map[area].push({
-      name: row['Employee Name'].replace(/^\*+/, '').trim(),
-      title: row['Job Ttle'] || row['Job Title'] || '',
-      division: row['Division'] || '',
-      department: row['Department'] || '',
-      region: '—',
-      email: '',
-      focus: row['Department'] || '',
-      duties: `${row['Sub Division'] || ''} - ${row['Department'] || ''}`.trim(),
+  if (name1 && title1 && KNOWN_DIVISIONS.has(division1)) {
+    people.push({
+      name: name1,
+      title: title1,
+      division: division1,
+      subDivision: subDiv1,
+      department: dept1,
     })
-  })
+  }
 
-  return map
+  return people
+}
+
+/**
+ * Parse raw CSV text → array of person objects with sectionId.
+ */
+function parsePeopleFromCSV(csv) {
+  const lines = String(csv || '')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .split('\n')
+  if (lines.length < 2) return []
+
+  const people = []
+  const seenNames = new Set()
+
+  // Skip header row (index 0)
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line) continue
+
+    const cols = parseCsvLine(line)
+    const extracted = extractPeopleFromRow(cols)
+
+    for (const p of extracted) {
+      if (!p.name || p.name.length < 2) continue
+      const nameKey = p.name.toLowerCase().replace(/\s+/g, ' ')
+      if (seenNames.has(nameKey)) continue
+      seenNames.add(nameKey)
+
+      const sectionId = departmentToSectionId(p.division, p.subDivision, p.department)
+
+      people.push({
+        name: p.name,
+        title: p.title,
+        division: p.division,
+        department: normalizeDepartment(p.department),
+        region: '—',
+        email: '',
+        focus: p.department,
+        duties: [p.subDivision, p.department].filter(Boolean).join(' – '),
+        _sectionId: sectionId,
+      })
+    }
+  }
+
+  return people
+}
+
+/**
+ * Group people by sectionId and return in sections format.
+ */
+function groupIntoSections(people) {
+  const sectionOrder = [
+    'management-team',
+    'support-team',
+    'business-development',
+    'affiliation',
+    'marketing',
+    'finance',
+    'operations',
+    'compliance',
+    'dealing',
+  ]
+
+  const map = {}
+  for (const p of people) {
+    const sid = p._sectionId || 'management-team'
+    if (!map[sid]) map[sid] = []
+    const { _sectionId, ...role } = p
+    map[sid].push(role)
+  }
+
+  return sectionOrder.filter((id) => map[id]).map((id) => ({ id, title: id, roles: map[id] }))
 }
 
 export async function fetchOrgChartFromGoogleSheets() {
-  try {
-    const res = await fetch(SHEET_URL, { cache: 'no-store' })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const res = await fetch(SHEET_URL, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`Google Sheets fetch failed: HTTP ${res.status}`)
 
-    const csv = await res.text()
-    const rows = parseCSV(csv)
+  const csv = await res.text()
+  const people = parsePeopleFromCSV(csv)
 
-    if (!rows.length) throw new Error('No data rows found')
+  if (!people.length) throw new Error('No people found in Google Sheets data')
 
-    const sectionMap = buildSectionMap(rows)
-
-    // Return as simplified sections format (compatible with existing org chart)
-    return {
-      sections: Object.entries(sectionMap).map(([areaId, people]) => ({
-        id: areaId,
-        title: areaId.replace(/-/g, ' ').toUpperCase(),
-        roles: people,
-      })),
-      sourceRef: SHEET_URL,
-      timestamp: new Date().toISOString(),
-    }
-  } catch (e) {
-    console.error('Failed to fetch Google Sheets org data:', e)
-    throw e
+  return {
+    sections: groupIntoSections(people),
+    sourceRef: SHEET_URL,
+    timestamp: new Date().toISOString(),
   }
 }
 
