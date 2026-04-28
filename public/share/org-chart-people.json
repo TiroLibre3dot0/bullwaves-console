@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-03-10T13:10:10.853Z",
+  "generatedAt": "2026-04-28T05:46:38.126Z",
   "source": "src/pages/orgChartData.js",
   "sections": [
     {
@@ -8,21 +8,15 @@
       "roles": [
         {
           "name": "Emanuele Braha",
-          "title": "COO",
-          "division": "Operations",
-          "department": "Operations"
+          "title": "Shareholder",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
         },
         {
           "name": "Francesco Ceccarini",
           "title": "Shareholder",
           "division": "Operations",
           "department": "Operations"
-        },
-        {
-          "name": "Filippo",
-          "title": "Shareholder",
-          "division": "Shareholder",
-          "department": "Shareholder"
         },
         {
           "name": "Renato Pezzi",
@@ -38,7 +32,7 @@
         },
         {
           "name": "Filippo De Rosa",
-          "title": "Non Executive Director",
+          "title": "Shareholder & Non-Executive Director",
           "division": "Shareholder",
           "department": "Shareholder"
         },
@@ -90,12 +84,6 @@
           "department": "Affiliate Manager"
         },
         {
-          "name": "Payments / PSP (Area)",
-          "title": "Responsible: Tamara",
-          "division": "Finance",
-          "department": "PSP"
-        },
-        {
           "name": "Compliance (Area)",
           "title": "Responsible: Terina",
           "division": "Compliance",
@@ -109,15 +97,15 @@
         },
         {
           "name": "Marketing (Area)",
-          "title": "Responsible: Daniel",
+          "title": "Responsible: Chrystalla Zezou",
           "division": "Acquisition",
           "department": "Marketing"
         },
         {
           "name": "Finance (Area)",
-          "title": "Responsible: (Unassigned)",
+          "title": "Responsible: Rodoula Xenofontos",
           "division": "Finance",
-          "department": "Finance"
+          "department": "Accounting"
         }
       ]
     },
@@ -298,12 +286,6 @@
           "department": "Sales - Dubai"
         },
         {
-          "name": "Ziba Yazdanfar",
-          "title": "Business Development Manager - Dubai",
-          "division": "Acquisition",
-          "department": "BDM - Dubai"
-        },
-        {
           "name": "Mohammed Fayiz Abdurahiman",
           "title": "Business Development Manager - Dubai",
           "division": "Acquisition",
@@ -314,12 +296,6 @@
           "title": "Business Development Manager",
           "division": "Acquisition",
           "department": "BDM"
-        },
-        {
-          "name": "Omar Saeed",
-          "title": "Business Development Manager - Dubai",
-          "division": "Acquisition",
-          "department": "BDM - Dubai"
         },
         {
           "name": "Uros Radic",
@@ -370,8 +346,14 @@
       "title": "Marketing",
       "roles": [
         {
+          "name": "Chrystalla Zezou",
+          "title": "Head of Marketing",
+          "division": "Acquisition",
+          "department": "Marketing"
+        },
+        {
           "name": "Daniel Taddei",
-          "title": "Marketing Lead",
+          "title": "Marketing Operations",
           "division": "Acquisition",
           "department": "Marketing"
         },
@@ -395,50 +377,33 @@
       "roles": [
         {
           "name": "Rodoula Xenofontos",
-          "title": "Senior Controller",
+          "title": "Head of Finance",
           "division": "Finance",
-          "department": "Finance"
+          "department": "Accounting"
         },
         {
           "name": "Georgia Kleovoulou",
           "title": "Finance Officer",
           "division": "Finance",
-          "department": "Reconciliation"
-        },
-        {
-          "name": "Finance Scope",
-          "title": "Scope (Area Layer)",
-          "division": "Finance",
-          "department": "Finance"
-        }
-      ]
-    },
-    {
-      "id": "payments",
-      "title": "Payments / PSP",
-      "roles": [
-        {
-          "name": "Tamara Popovic Yakimov",
-          "title": "Head of Support / PSP Oversight",
-          "division": "Operations",
-          "department": "PSP",
-          "crossTeamRole": "Facilitator",
-          "facilitatorFor": [
-            "Sales",
-            "Customer Support"
-          ]
+          "department": "Accounting"
         },
         {
           "name": "Konstantina Zafeiropoulou",
           "title": "PSP Specialist",
           "division": "Finance",
-          "department": "PSP"
+          "department": "Accounting"
         },
         {
           "name": "Maria Loizou",
           "title": "Banking & Reconciliation Officer",
           "division": "Finance",
-          "department": "PSP"
+          "department": "Accounting"
+        },
+        {
+          "name": "Finance Scope",
+          "title": "Scope (Area Layer)",
+          "division": "Finance",
+          "department": "Accounting"
         }
       ]
     },

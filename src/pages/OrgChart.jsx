@@ -115,7 +115,6 @@ function HierarchyBlock({ selected, t }) {
     'business-development': t('orgChart.hierarchyItem.businessDev'),
     marketing: t('orgChart.hierarchyItem.marketing'),
     finance: t('orgChart.hierarchyItem.financePayments'),
-    payments: t('orgChart.hierarchyItem.financePayments'),
     compliance: t('orgChart.hierarchyItem.compliance'),
   }
 
@@ -169,7 +168,6 @@ function TableOfContents({ selected, onSelect, t }) {
     { id: 'business-development', label: t('orgChart.toc.businessDev') },
     { id: 'marketing', label: t('orgChart.toc.marketing') },
     { id: 'finance', label: t('orgChart.toc.finance') },
-    { id: 'payments', label: t('orgChart.toc.payments') },
     { id: 'compliance', label: t('orgChart.toc.compliance') },
     { id: 'dealing', label: t('orgChart.toc.dealing') },
   ]

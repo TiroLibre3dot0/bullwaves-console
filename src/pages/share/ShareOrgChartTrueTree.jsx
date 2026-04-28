@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { track, trackPublicShareOpen } from '../../utils/analytics'
+import { fetchOrgChartFromGoogleSheets } from '../../utils/googleSheetsOrgParser'
 
 function Card({ title, lines = [], accentDotClass = 'bg-gray-400/60', size = 'md', extra }) {
   const isSm = size === 'sm'
@@ -446,17 +447,27 @@ function SalesSupportFacilitatorBridge({ people = [], spotlight, onSpotlight, on
 const ACCENTS = {
   root: 'bg-gray-400/60',
   governance: 'bg-gray-400/60',
-  operations: 'bg-gray-300/50',
   revenue: 'bg-indigo-300/45',
+  affiliates: 'bg-orange-300/45',
   trading: 'bg-amber-300/40',
-  corporate: 'bg-emerald-300/40',
+  marketing: 'bg-pink-300/40',
+  finance: 'bg-teal-300/40',
+  compliance: 'bg-slate-300/45',
+  hr: 'bg-violet-300/40',
+  support: 'bg-sky-300/40',
+  operations: 'bg-gray-300/50',
 }
 
 const BORDERS = {
-  operations: 'border-gray-300/20',
   revenue: 'border-indigo-300/20',
+  affiliates: 'border-orange-300/20',
   trading: 'border-amber-300/18',
-  corporate: 'border-emerald-300/18',
+  marketing: 'border-pink-300/20',
+  finance: 'border-teal-300/20',
+  compliance: 'border-slate-300/20',
+  hr: 'border-violet-300/20',
+  support: 'border-sky-300/20',
+  operations: 'border-gray-300/20',
 }
 
 // Structure-only view. HR-owned role assignment.
@@ -478,24 +489,9 @@ const ORG_TREE = {
     },
     {
       id: 'macro-areas',
-      label: 'Macro Areas',
+      label: 'Departments',
       type: 'macro-group',
       children: [
-        {
-          id: 'operations',
-          label: 'Operations',
-          type: 'macro',
-          icon: 'operations',
-          children: [
-            { id: 'business-ops', label: 'Business Operations', type: 'function' },
-            { id: 'marketing-ops', label: 'Marketing Operations', type: 'function' },
-            { id: 'tech-ops', label: 'Tech Operations', type: 'function' },
-            { id: 'customer-support', label: 'Customer Support', type: 'function' },
-            { id: 'payments', label: 'Payments', type: 'function' },
-            { id: 'reporting', label: 'Reporting', type: 'function' },
-            { id: 'platforms-tools', label: 'CRM & Tools', type: 'function' },
-          ],
-        },
         {
           id: 'revenue',
           label: 'Revenue',
@@ -504,9 +500,17 @@ const ORG_TREE = {
           children: [
             { id: 'sales', label: 'Sales', type: 'function' },
             { id: 'retention', label: 'Retention', type: 'function' },
+            { id: 'mena', label: 'MENA', type: 'function' },
+          ],
+        },
+        {
+          id: 'affiliates',
+          label: 'Affiliation & IB',
+          type: 'macro',
+          icon: 'affiliates',
+          children: [
             { id: 'affiliates-ib', label: 'Affiliates & IB', type: 'function' },
             { id: 'performance', label: 'Performance Channels', type: 'function' },
-            { id: 'mena', label: 'MENA', type: 'function' },
           ],
         },
         {
@@ -522,14 +526,52 @@ const ORG_TREE = {
           ],
         },
         {
-          id: 'corporate',
-          label: 'Corporate',
+          id: 'marketing',
+          label: 'Marketing',
+          type: 'macro',
+          icon: 'marketing',
+          children: [{ id: 'marketing-ops', label: 'Marketing & Brand', type: 'function' }],
+        },
+        {
+          id: 'finance',
+          label: 'Finance',
           type: 'macro',
           icon: 'corporate',
+          children: [{ id: 'accounting', label: 'Accounting & Payments', type: 'function' }],
+        },
+        {
+          id: 'compliance',
+          label: 'Compliance & Legal',
+          type: 'macro',
+          icon: 'compliance',
+          children: [{ id: 'compliance-legal', label: 'Compliance & Legal', type: 'function' }],
+        },
+        {
+          id: 'hr',
+          label: 'HR & People',
+          type: 'macro',
+          icon: 'hr',
+          children: [{ id: 'hr-recruiting', label: 'HR & Recruiting', type: 'function' }],
+        },
+        {
+          id: 'customer-support-area',
+          label: 'Support',
+          type: 'macro',
+          icon: 'support',
           children: [
-            { id: 'accounting', label: 'Accounting', type: 'function' },
-            { id: 'compliance-legal', label: 'Compliance & Legal', type: 'function' },
-            { id: 'hr-recruiting', label: 'HR & Recruiting', type: 'function' },
+            { id: 'customer-support', label: 'Customer Support', type: 'function' },
+            { id: 'tech-ops', label: 'Tech Operations', type: 'function' },
+          ],
+        },
+        {
+          id: 'operations-area',
+          label: 'Operations',
+          type: 'macro',
+          icon: 'operations',
+          children: [
+            { id: 'business-ops', label: 'Business Operations', type: 'function' },
+            { id: 'reporting', label: 'Reporting', type: 'function' },
+            { id: 'platforms-tools', label: 'CRM & Tools', type: 'function' },
           ],
         },
       ],
@@ -540,6 +582,156 @@ const ORG_TREE = {
 const VIEW_MODES = {
   structure: 'structure',
   people: 'people',
+  department: 'department',
+}
+
+const VIEW_MODE_META = {
+  [VIEW_MODES.structure]: {
+    label: 'Structure only',
+    shortLabel: 'Structure',
+    description: 'Generic organizational structure',
+  },
+  [VIEW_MODES.people]: {
+    label: 'People',
+    shortLabel: 'People',
+    description: 'Detailed org view with people',
+  },
+  [VIEW_MODES.department]: {
+    label: 'Department focus',
+    shortLabel: 'Department',
+    description: 'Single department spotlight',
+  },
+}
+
+function ViewModeIcon({ mode, className = '' }) {
+  const common = {
+    className: `h-4 w-4 ${className}`,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    strokeWidth: 1.8,
+    strokeLinecap: 'round',
+    strokeLinejoin: 'round',
+  }
+
+  if (mode === VIEW_MODES.people) {
+    return (
+      <svg {...common}>
+        <circle cx="8" cy="8" r="3" />
+        <circle cx="16" cy="9" r="2.5" />
+        <path d="M3.5 18c0-2.8 2.3-5 5-5h1" />
+        <path d="M12 18c.2-2 1.9-3.5 4-3.5 2.2 0 4 1.8 4 4" />
+      </svg>
+    )
+  }
+
+  if (mode === VIEW_MODES.department) {
+    return (
+      <svg {...common}>
+        <rect x="3" y="4" width="7" height="16" rx="1.5" />
+        <path d="M14 7h7" />
+        <path d="M14 12h7" />
+        <path d="M14 17h7" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg {...common}>
+      <rect x="4" y="5" width="16" height="4" rx="1" />
+      <rect x="4" y="11" width="16" height="8" rx="1" />
+    </svg>
+  )
+}
+
+function ViewModeDock({ mode, onChange }) {
+  const items = [VIEW_MODES.structure, VIEW_MODES.people, VIEW_MODES.department]
+  return (
+    <div className="fixed left-5 top-16 z-30 rounded-2xl border border-gray-600/50 bg-gray-900/70 p-1.5 backdrop-blur-md shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
+      <div className="flex items-center gap-1">
+        {items.map((item) => {
+          const active = mode === item
+          return (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onChange(item)}
+              className={
+                'inline-flex h-9 w-9 items-center justify-center rounded-xl border transition ' +
+                (active
+                  ? 'border-brand-400/40 bg-brand-400/15 text-brand-100'
+                  : 'border-transparent text-gray-300 hover:border-gray-500/40 hover:bg-gray-800/70 hover:text-white')
+              }
+              aria-label={VIEW_MODE_META[item].label}
+              aria-pressed={active}
+              title={VIEW_MODE_META[item].label}
+            >
+              <ViewModeIcon mode={item} />
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Small inline badges showing which founder(s) an area reports to
+function FounderBadges({ areaId, className = '' }) {
+  const founders = FOUNDER_BY_AREA[areaId] || []
+  if (!founders.length) return null
+  return (
+    <div className={`flex flex-wrap items-center gap-1 ${className}`}>
+      <span className="text-[9px] font-semibold uppercase tracking-wide text-gray-600">
+        reports to
+      </span>
+      {founders.map((f) => {
+        const first = f.split(' ')[0]
+        return (
+          <span
+            key={f}
+            title={f}
+            className="inline-flex items-center gap-1 rounded-full border border-gray-500/40 bg-gray-800/60 px-2 py-0.5 text-[9px] font-semibold text-gray-300"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-gray-400/60 flex-shrink-0" />
+            {first}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
+
+function DepartmentSidebar({ areas = [], selectedAreaId, onSelect }) {
+  return (
+    <aside className="xl:sticky xl:top-24">
+      <div className="rounded-2xl border border-gray-600/40 bg-gray-900/45 p-3 backdrop-blur-md">
+        <div className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-gray-500">
+          Departments
+        </div>
+        <div className="flex flex-col gap-2">
+          {areas.map((area) => {
+            const active = area.id === selectedAreaId
+            return (
+              <button
+                key={area.id}
+                type="button"
+                onClick={() => onSelect(area.id)}
+                className={
+                  'w-full rounded-lg border px-3 py-2 text-left text-xs font-medium transition ' +
+                  (active
+                    ? 'border-brand-400/40 bg-brand-400/12 text-white'
+                    : 'border-gray-600/35 bg-white/5 text-gray-300 hover:border-gray-500/40 hover:bg-white/8 hover:text-white')
+                }
+                aria-pressed={active}
+              >
+                {area.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    </aside>
+  )
 }
 
 const TITLE_ABBREVIATIONS = [
@@ -592,26 +784,45 @@ function formatPersonText(person, { maxTitleLen = 28 } = {}) {
   }
 }
 
+// Derived from orgChartData.js area-responsibility section.
+// Maps each macro-area to the founder(s) responsible for it.
+const FOUNDER_BY_AREA = {
+  revenue: ['Francesco Ceccarini'],
+  affiliates: ['Stefan Popovski', 'Emanuele Braha'],
+  'trading-risk': ['Renato Pezzi'],
+  marketing: [],
+  finance: [],
+  compliance: ['Filippo De Rosa'],
+  hr: ['Francesco Ceccarini'],
+  'customer-support-area': ['Emanuele Braha'],
+  'operations-area': ['Francesco Ceccarini'],
+}
+
 const HUB_CLUSTERS = {
-  operations: [
-    {
-      label: 'Core Ops',
-      fnIds: ['business-ops', 'payments', 'reporting', 'platforms-tools'],
-    },
-    { label: 'Enablement', fnIds: ['tech-ops', 'marketing-ops'] },
-    { label: 'Support', fnIds: ['customer-support'] },
-  ],
   revenue: [
-    { label: 'Sales & Retention', fnIds: ['sales', 'retention', 'mena'] },
-    { label: 'Channels', fnIds: ['affiliates-ib', 'performance'] },
+    { label: 'Sales & Conversion', fnIds: ['sales'] },
+    { label: 'Retention', fnIds: ['retention'] },
+    { label: 'MENA', fnIds: ['mena'] },
+  ],
+  affiliates: [
+    { label: 'Affiliates & IB', fnIds: ['affiliates-ib'] },
+    { label: 'Performance Channels', fnIds: ['performance'] },
   ],
   'trading-risk': [
     { label: 'Trading', fnIds: ['dealing', 'prop'] },
     { label: 'Risk & Platforms', fnIds: ['risk', 'mt5'] },
   ],
-  corporate: [
-    { label: 'Finance', fnIds: ['accounting'] },
-    { label: 'People & Compliance', fnIds: ['hr-recruiting', 'compliance-legal'] },
+  marketing: [{ label: 'Marketing & Brand', fnIds: ['marketing-ops'] }],
+  finance: [{ label: 'Accounting & Payments', fnIds: ['accounting'] }],
+  compliance: [{ label: 'Compliance & Legal', fnIds: ['compliance-legal'] }],
+  hr: [{ label: 'HR & Recruiting', fnIds: ['hr-recruiting'] }],
+  'customer-support-area': [
+    { label: 'Customer Support', fnIds: ['customer-support'] },
+    { label: 'Tech Operations', fnIds: ['tech-ops'] },
+  ],
+  'operations-area': [
+    { label: 'Business Ops', fnIds: ['business-ops'] },
+    { label: 'Reporting & Tools', fnIds: ['reporting', 'platforms-tools'] },
   ],
 }
 
@@ -631,11 +842,10 @@ function makeIdMap(ids) {
 }
 
 const EXPLICIT_HEADS_BY_NODE = {
-  // Confirmed department heads
   sales: ['orlin simovonyan'],
   accounting: ['rodoula xenofontos'],
-
-  // Area/sub-area heads
+  'marketing-ops': ['chrystalla zezou'],
+  'affiliates-ib': ['emanuele braha', 'stefan popovski'],
   'customer-support': ['tamara popovic yakimov'],
   risk: ['chris psomas'],
   mt5: ['chris psomas'],
@@ -683,8 +893,8 @@ function mapInternalRoleToPublicNode(sectionId, role) {
 
   // Manual, explicit placements requested (do not change structure)
   if (name === 'emanuele braha') {
-    // Requested: do not show on the board; keep in Operations only
-    return { kind: 'node', nodeId: 'business-ops' }
+    // Affiliate Manager role → Affiliates & IB
+    return { kind: 'node', nodeId: 'affiliates-ib' }
   }
   if (name === 'ivana jelic' || name === 'nevena planic') {
     // Requested: Technology-side support (systems/users) — place under Tech Operations
@@ -720,7 +930,7 @@ function mapInternalRoleToPublicNode(sectionId, role) {
   // Fixed mapping: people are mapped to the existing public structure.
   // If a role touches multiple areas, assign to primary operational area by deterministic rules.
   if (sectionId === 'support-team') return { kind: 'node', nodeId: 'customer-support' }
-  if (sectionId === 'payments') return { kind: 'node', nodeId: 'payments' }
+  if (sectionId === 'payments') return { kind: 'node', nodeId: 'accounting' }
   if (sectionId === 'compliance') return { kind: 'node', nodeId: 'compliance-legal' }
   if (sectionId === 'dealing') return { kind: 'node', nodeId: 'dealing' }
 
@@ -731,14 +941,12 @@ function mapInternalRoleToPublicNode(sectionId, role) {
   }
 
   if (sectionId === 'affiliation') {
-    // Keep under Affiliates & IB (do not duplicate across areas).
     return { kind: 'node', nodeId: 'affiliates-ib' }
   }
 
   if (sectionId === 'marketing') {
-    // Marketing in internal chart is acquisition/performance.
     if (department === 'support team') return { kind: 'node', nodeId: 'customer-support' }
-    return { kind: 'node', nodeId: 'performance' }
+    return { kind: 'node', nodeId: 'marketing-ops' }
   }
 
   if (sectionId === 'finance') {
@@ -748,7 +956,7 @@ function mapInternalRoleToPublicNode(sectionId, role) {
   if (sectionId === 'operations' || sectionId === 'management-team') {
     if (department === 'hr') return { kind: 'node', nodeId: 'hr-recruiting' }
     if (department === 'support team') return { kind: 'node', nodeId: 'customer-support' }
-    if (department === 'psp') return { kind: 'node', nodeId: 'payments' }
+    if (department === 'psp') return { kind: 'node', nodeId: 'accounting' }
     if (department === 'dealing') return { kind: 'node', nodeId: 'dealing' }
     if (department === 'affiliate manager') return { kind: 'node', nodeId: 'affiliates-ib' }
     if (division === 'technology' || department === 'technology')
@@ -756,7 +964,6 @@ function mapInternalRoleToPublicNode(sectionId, role) {
     return { kind: 'node', nodeId: 'business-ops' }
   }
 
-  // Safe fallback: Operations/Business Operations (primary operational area)
   return { kind: 'node', nodeId: 'business-ops' }
 }
 
@@ -769,13 +976,12 @@ function getNodeLines(node) {
 
 function buildPublicNodeLabelLookup(tree) {
   const out = new Map()
-  const macroGroup = tree?.children?.find((c) => c?.id === 'macro-areas')
-  for (const macro of macroGroup?.children || []) {
-    const areaId = macro?.id
-    for (const fn of macro?.children || []) {
+  const group = tree?.children?.find((c) => c?.id === 'macro-areas')
+  for (const area of group?.children || []) {
+    const areaId = area?.id
+    for (const fn of area?.children || []) {
       const labelKey = normalizeKey(fn?.label)
       if (labelKey) out.set(labelKey, { nodeId: fn?.id, areaId })
-
       const idKey = normalizeKey(fn?.id)
       if (idKey) out.set(idKey, { nodeId: fn?.id, areaId })
     }
@@ -785,6 +991,7 @@ function buildPublicNodeLabelLookup(tree) {
 
 export default function ShareOrgChartTrueTree() {
   const [mode, setMode] = useState(VIEW_MODES.structure)
+  const [selectedAreaId, setSelectedAreaId] = useState('revenue')
   const [peoplePayload, setPeoplePayload] = useState(null)
   const [peopleLoadError, setPeopleLoadError] = useState(null)
   const [spotlight, setSpotlight] = useState(null)
@@ -806,7 +1013,14 @@ export default function ShareOrgChartTrueTree() {
 
   const governance = ORG_TREE.children.find((c) => c.id === 'governance')
   const macroGroup = ORG_TREE.children.find((c) => c.id === 'macro-areas')
-  const macroAreas = (macroGroup?.children || []).slice(0, 4)
+  const macroAreas = macroGroup?.children || []
+
+  useEffect(() => {
+    if (!macroAreas.length) return
+    if (!macroAreas.some((area) => area.id === selectedAreaId)) {
+      setSelectedAreaId(macroAreas[0].id)
+    }
+  }, [macroAreas, selectedAreaId])
 
   const publicNodeLookup = useMemo(() => buildPublicNodeLabelLookup(ORG_TREE), [])
 
@@ -897,6 +1111,23 @@ export default function ShareOrgChartTrueTree() {
 
     async function loadPeople() {
       try {
+        // Try to fetch live data from Google Sheets first
+        try {
+          const sheetData = await fetchOrgChartFromGoogleSheets()
+          if (!cancelled && sheetData?.sections?.length) {
+            // Successfully loaded from Google Sheets
+            if (!cancelled) setPeoplePayload(sheetData)
+            return
+          }
+        } catch (sheetError) {
+          // Google Sheets fetch failed or returned no data — fall back to static JSON
+          console.warn(
+            'Google Sheets fetch failed, falling back to static data:',
+            sheetError?.message
+          )
+        }
+
+        // Fall back to static JSON export
         const res = await fetch('/share/org-chart-people.json', { cache: 'no-store' })
         if (!res.ok) {
           throw new Error(`Failed to load people data (${res.status})`)
@@ -1098,10 +1329,15 @@ export default function ShareOrgChartTrueTree() {
 
   const facilitatorsByArea = useMemo(() => {
     const out = {
-      operations: [],
       revenue: [],
+      affiliates: [],
       'trading-risk': [],
-      corporate: [],
+      marketing: [],
+      finance: [],
+      compliance: [],
+      hr: [],
+      'customer-support-area': [],
+      'operations-area': [],
     }
 
     const seen = new Set()
@@ -1141,7 +1377,7 @@ export default function ShareOrgChartTrueTree() {
     return out
   }, [peopleIndex.facilitators, publicNodeLookup, salesSupportBridgeFacilitatorKeys])
 
-  const showPeople = mode === VIEW_MODES.people
+  const showPeople = mode === VIEW_MODES.people || mode === VIEW_MODES.department
   const isPeopleLoading = showPeople && !peoplePayload && !peopleLoadError
   const isPeopleError = showPeople && Boolean(peopleLoadError)
   const governanceDisplayCount = 3
@@ -1151,7 +1387,7 @@ export default function ShareOrgChartTrueTree() {
     governanceDisplayCount
   )
 
-  // Inject people into the SAME structure (no node changes).
+  // Inject people into departments.
   const macroAreasPopulated = useMemo(() => {
     const attach = (area) => {
       if (!area) return area
@@ -1169,8 +1405,23 @@ export default function ShareOrgChartTrueTree() {
     return (macroAreas || []).map(attach)
   }, [macroAreas, peopleIndex, showPeople])
 
+  const selectedArea = useMemo(
+    () =>
+      macroAreasPopulated.find((area) => area.id === selectedAreaId) ||
+      macroAreasPopulated[0] ||
+      null,
+    [macroAreasPopulated, selectedAreaId]
+  )
+
+  const viewSummary =
+    mode === VIEW_MODES.department && selectedArea
+      ? `${VIEW_MODE_META[mode].description} · ${selectedArea.label}`
+      : VIEW_MODE_META[mode].description
+
   return (
     <div className="min-h-screen w-full bg-gradient-to-b from-gray-900 via-gray-900 to-gray-700 text-gray-100">
+      <ViewModeDock mode={mode} onChange={setMode} />
+
       {/* Fixed logo top-left */}
       <a href="/" className="fixed left-5 top-5 z-20" aria-label="Bullwaves">
         <img src="/Logo.png" alt="Bullwaves" className="h-7 w-auto opacity-95" />
@@ -1181,39 +1432,9 @@ export default function ShareOrgChartTrueTree() {
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">
             Company Organizational Chart
           </h1>
-          <p className="mt-2 text-sm text-gray-400">Board-level view</p>
+          <p className="mt-2 text-sm text-gray-400">{viewSummary}</p>
 
-          {/* Mode toggle (structure ↔ people) */}
-          <div className="mt-5 inline-flex rounded-full border border-gray-600/50 bg-gray-900/40 p-1">
-            <button
-              type="button"
-              onClick={() => setMode(VIEW_MODES.structure)}
-              className={
-                'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
-                (mode === VIEW_MODES.structure
-                  ? 'bg-gray-100 text-gray-800'
-                  : 'text-gray-300 hover:text-white')
-              }
-              aria-pressed={mode === VIEW_MODES.structure}
-            >
-              Structure only
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode(VIEW_MODES.people)}
-              className={
-                'px-4 py-1.5 text-xs font-semibold rounded-full transition ' +
-                (mode === VIEW_MODES.people
-                  ? 'bg-gray-100 text-gray-800'
-                  : 'text-gray-300 hover:text-white')
-              }
-              aria-pressed={mode === VIEW_MODES.people}
-            >
-              People
-            </button>
-          </div>
-
-          {mode === VIEW_MODES.people ? (
+          {showPeople ? (
             <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-[11px] text-gray-400">
               <span className="inline-flex items-center gap-1">
                 <span className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-gray-300/25 text-gray-200/80 bg-gray-900/20">
@@ -1244,238 +1465,220 @@ export default function ShareOrgChartTrueTree() {
         </header>
 
         <main className="mt-12" aria-label="Organizational tree">
-          <div className="flex flex-col items-center">
-            {/* ROOT */}
+          <div
+            className={
+              mode === VIEW_MODES.department
+                ? 'grid grid-cols-1 xl:grid-cols-[13rem_minmax(0,1fr)] gap-6 xl:gap-8 items-start'
+                : ''
+            }
+          >
+            {mode === VIEW_MODES.department ? (
+              <DepartmentSidebar
+                areas={macroAreasPopulated}
+                selectedAreaId={selectedArea?.id}
+                onSelect={setSelectedAreaId}
+              />
+            ) : null}
+
             <div className="flex flex-col items-center">
-              <div
-                className="rounded-2xl border border-gray-600/80 bg-gray-900/40 px-6 py-4 backdrop-blur-md"
-                aria-label={ORG_TREE.label}
-              >
-                <img src="/Logo.png" alt={ORG_TREE.label} className="h-10 w-auto opacity-95" />
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <VLine h={36} className="bg-gray-500/40" />
-            </div>
-
-            {/* LEVEL 1 — GOVERNANCE */}
-            <div className="w-full max-w-6xl">
-              {/* Founders line label (indicator only) */}
-              <div className="flex justify-center md:hidden">
-                <div className="px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
-                  {governance?.label || 'Founders'}
-                </div>
-              </div>
-
-              {/* Horizontal spine (desktop+) with inline label */}
-              <div className="hidden md:block">
-                <div className="relative w-full">
-                  <HLine className="w-full" />
-                  <div className="absolute left-0 -top-3 px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
-                    {governance?.label || 'Founders'}
+              {/* ROOT — hidden in department focus */}
+              {mode !== VIEW_MODES.department && (
+                <>
+                  <div className="flex flex-col items-center">
+                    <div
+                      className="rounded-2xl border border-gray-600/80 bg-gray-900/40 px-6 py-4 backdrop-blur-md"
+                      aria-label={ORG_TREE.label}
+                    >
+                      <img
+                        src="/Logo.png"
+                        alt={ORG_TREE.label}
+                        className="h-10 w-auto opacity-95"
+                      />
+                    </div>
                   </div>
-                </div>
-                {!showPeople ? (
-                  <div className="grid grid-cols-3 gap-6">
-                    {governanceSeatsToShow.map((seat) => (
-                      <div key={`seat-stub-${seat.id}`} className="flex justify-center">
-                        <VLine h={18} />
+
+                  <div className="flex justify-center">
+                    <VLine h={36} className="bg-gray-500/40" />
+                  </div>
+                </>
+              )}
+
+              {/* LEVEL 1 — GOVERNANCE (hidden in department focus) */}
+              {mode !== VIEW_MODES.department && (
+                <div className="w-full max-w-6xl">
+                  <div className="flex justify-center md:hidden">
+                    <div className="px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
+                      {governance?.label || 'Founders'}
+                    </div>
+                  </div>
+
+                  <div className="hidden md:block">
+                    <div className="relative w-full">
+                      <HLine className="w-full" />
+                      <div className="absolute left-0 -top-3 px-3 py-1 rounded-full border border-gray-500/30 bg-gray-900/70 text-[11px] text-gray-300">
+                        {governance?.label || 'Founders'}
                       </div>
-                    ))}
+                    </div>
+                    {!showPeople ? (
+                      <div className="grid grid-cols-3 gap-6">
+                        {governanceSeatsToShow.map((seat) => (
+                          <div key={`seat-stub-${seat.id}`} className="flex justify-center">
+                            <VLine h={18} />
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-3">
-                {showPeople
-                  ? (isPeopleLoading
-                      ? Array.from({ length: governanceDisplayCount }, (_, idx) => ({
-                          name: 'Loading…',
-                          title: idx === 0 ? 'Fetching people data' : '',
-                        }))
-                      : governancePeopleToShow
-                    ).map((p, idx) => (
-                      <div key={`gov-card-${idx}-${p.name}-${p.title}`} className="min-w-0">
-                        {(() => {
-                          const fp = formatPersonText(p, { maxTitleLen: 30 })
-                          const line = fp.shortenedTitle
-                            ? [{ text: fp.shortenedTitle, title: fp.titleTooltip }]
-                            : []
-                          return (
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-3">
+                    {showPeople
+                      ? (isPeopleLoading
+                          ? Array.from({ length: governanceDisplayCount }, (_, idx) => ({
+                              name: 'Loading…',
+                              title: idx === 0 ? 'Fetching people data' : '',
+                            }))
+                          : governancePeopleToShow
+                        ).map((p, idx) => (
+                          <div key={`gov-card-${idx}-${p.name}-${p.title}`} className="min-w-0">
+                            {(() => {
+                              const fp = formatPersonText(p, { maxTitleLen: 30 })
+                              const line = fp.shortenedTitle
+                                ? [{ text: fp.shortenedTitle, title: fp.titleTooltip }]
+                                : []
+                              return (
+                                <Card
+                                  title={fp.displayName}
+                                  lines={p.title ? line : []}
+                                  accentDotClass={ACCENTS.governance}
+                                  size="md"
+                                />
+                              )
+                            })()}
+                          </div>
+                        ))
+                      : governanceSeatsToShow.map((seat) => (
+                          <div key={seat.id} className="min-w-0">
                             <Card
-                              title={fp.displayName}
-                              lines={p.title ? line : []}
+                              title={seat.label}
+                              lines={getNodeLines(seat)}
                               accentDotClass={ACCENTS.governance}
                               size="md"
                             />
-                          )
-                        })()}
-                      </div>
-                    ))
-                  : governanceSeatsToShow.map((seat) => (
-                      <div key={seat.id} className="min-w-0">
-                        <Card
-                          title={seat.label}
-                          lines={getNodeLines(seat)}
-                          accentDotClass={ACCENTS.governance}
-                          size="md"
-                        />
-                      </div>
-                    ))}
-              </div>
-            </div>
-
-            <div className="flex justify-center">
-              <VLine h={40} className="bg-gray-500/40" />
-            </div>
-
-            {/* LEVEL 2 — MACRO AREAS (ONLY 4) */}
-            <div className="w-full max-w-[140rem]">
-              {/* Structure spine only on very large screens (4 pillars in one row) */}
-              <div className="hidden xl:block">
-                <HLine className="w-full" />
-                <div className="grid grid-cols-4 gap-6">
-                  {macroAreasPopulated.map((a) => (
-                    <div key={`macro-stub-${a.id}`} className="flex justify-center">
-                      <VLine h={18} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pillar hubs (responsive: 1 → 2 → 4) */}
-              <div ref={pillarsWrapRef} className="relative mt-3">
-                <div
-                  className="relative z-0 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 2xl:gap-6"
-                  style={{ alignItems: 'start' }}
-                >
-                  {macroAreasPopulated.map((area) => {
-                    const areaRef =
-                      macroAreaRefs.current[area.id] ||
-                      (macroAreaRefs.current[area.id] = React.createRef())
-                    return (
-                      <MacroAreaColumn
-                        key={area.id}
-                        area={area}
-                        facilitators={facilitatorsByArea?.[area.id] || []}
-                        spotlight={spotlight}
-                        onSpotlight={setSpotlightFromPayload}
-                        onClearSpotlight={() => setSpotlight(null)}
-                        containerRef={areaRef}
-                      />
-                    )
-                  })}
-                </div>
-
-                <SpotlightAreaConnections
-                  containerRef={pillarsWrapRef}
-                  areaRefs={macroAreaRefs.current}
-                  spotlight={spotlight}
-                />
-              </div>
-
-              {/* Sales ↔ Support bridge (compact for <xl) */}
-              {showPeople && salesSupportBridgeFacilitators.length ? (
-                <div className="mt-6 xl:hidden">
-                  <div
-                    className="rounded-2xl border border-gray-600/60 bg-gray-700/20 px-4 py-3"
-                    onMouseEnter={() => setSpotlightFromPayload({ kind: 'bridge' })}
-                    onMouseLeave={() => setSpotlight(null)}
-                  >
-                    <div className="text-[10px] font-semibold text-gray-400">
-                      Sales ↔ Customer Support facilitators
-                    </div>
-                    <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
-                      {salesSupportBridgeFacilitators.slice(0, 2).map((p) => {
-                        const fp = formatPersonText(p, { maxTitleLen: 28 })
-                        const isActive = Boolean(spotlight)
-                        const isRelated =
-                          !isActive ||
-                          spotlight?.highlightBridge ||
-                          spotlight?.personNameKey === normalizeKey(p?.name) ||
-                          spotlight?.relatedNodeIdMap?.sales ||
-                          spotlight?.relatedNodeIdMap?.['customer-support']
-                        const isHighlighted =
-                          isActive &&
-                          (spotlight?.kind === 'bridge' ||
-                            spotlight?.personNameKey === normalizeKey(p?.name))
-                        return (
-                          <div
-                            key={`bridge-compact-${p.name}-${p.title}`}
-                            className={
-                              'min-w-0 rounded-xl border border-dashed border-brand-400 bg-gray-900/50 px-3 py-2 transition-opacity ' +
-                              (isActive && !isRelated ? 'opacity-30 ' : 'opacity-100 ') +
-                              (isHighlighted ? 'ring-2 ring-brand-400/50 ' : '')
-                            }
-                            onMouseEnter={() =>
-                              setSpotlightFromPayload({ kind: 'person', person: p })
-                            }
-                            onMouseLeave={() => setSpotlight(null)}
-                          >
-                            <div
-                              className="text-[11px] font-semibold text-gray-100 leading-snug"
-                              title={fp.displayName}
-                            >
-                              {fp.displayName}
-                            </div>
-                            <div className="mt-0.5 text-[11px] text-gray-400 leading-snug flex items-center gap-1.5 flex-wrap min-w-0">
-                              <span className="min-w-0 flex-1 break-normal" title={fp.titleTooltip}>
-                                {fp.shortenedTitle || fp.fullTitle}
-                              </span>
-                              <span className="inline-flex items-center whitespace-nowrap rounded-full border border-dashed px-1.5 py-0.5 text-[9px] font-semibold tracking-wide border-brand-400 text-brand-100/90 bg-brand-900/15">
-                                Facilitator
-                              </span>
-                            </div>
                           </div>
-                        )
-                      })}
-                    </div>
+                        ))}
                   </div>
                 </div>
-              ) : null}
+              )}
 
-              {/* Facilitation line label (NOT reporting). Keep only when pillars are in one row. */}
-              <div className="mt-8 hidden xl:grid grid-cols-4 gap-6 items-center">
-                <div className="col-span-2">
-                  {showPeople ? (
-                    <SalesSupportFacilitatorBridge
-                      people={salesSupportBridgeFacilitators}
-                      spotlight={spotlight}
-                      onSpotlight={setSpotlightFromPayload}
-                      onClearSpotlight={() => setSpotlight(null)}
-                    />
-                  ) : null}
+              {mode !== VIEW_MODES.department && (
+                <div className="flex justify-center">
+                  <VLine h={40} className="bg-gray-500/40" />
                 </div>
-                <div className="col-span-2">
-                  <div className="relative w-full">
-                    <div className="border-t border-dashed border-brand-400" />
-                    {showPeople && paoloVulloPerson
-                      ? (() => {
-                          const fp = formatPersonText(paoloVulloPerson, { maxTitleLen: 32 })
+              )}
+
+              {mode === VIEW_MODES.department ? (
+                <div className="w-full max-w-[110rem] rounded-[24px] border border-dashed border-brand-400/35 bg-white/[0.03] p-4 md:p-6 overflow-hidden">
+                  <DepartmentFocusPanel
+                    area={selectedArea}
+                    facilitators={facilitatorsByArea?.[selectedArea?.id] || []}
+                    spotlight={spotlight}
+                    onSpotlight={setSpotlightFromPayload}
+                    onClearSpotlight={() => setSpotlight(null)}
+                    isPeopleLoading={isPeopleLoading}
+                    isPeopleError={isPeopleError}
+                  />
+                </div>
+              ) : (
+                <>
+                  <div className="w-full max-w-[160rem]">
+                    <div className={showPeople ? 'hidden' : 'hidden xl:block'}>
+                      <HLine className="w-full" />
+                      <div className="grid grid-cols-9 gap-4">
+                        {macroAreasPopulated.map((a) => (
+                          <div key={`macro-stub-${a.id}`} className="flex justify-center">
+                            <VLine h={18} />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div ref={pillarsWrapRef} className="relative mt-3">
+                      <div
+                        className={
+                          'relative z-0 grid ' +
+                          (showPeople
+                            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4 2xl:gap-5'
+                            : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9 gap-4 2xl:gap-5')
+                        }
+                        style={{ alignItems: 'start' }}
+                      >
+                        {macroAreasPopulated.map((area) => {
+                          const areaRef =
+                            macroAreaRefs.current[area.id] ||
+                            (macroAreaRefs.current[area.id] = React.createRef())
                           return (
-                            <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400 bg-gray-900/70 px-3 py-2">
-                              <div
-                                className="text-[11px] font-semibold text-gray-100 leading-snug"
-                                title={fp.displayName}
-                              >
-                                {fp.displayName}
-                              </div>
-                              <div className="mt-0.5 text-[11px] text-gray-400 leading-snug min-w-0">
-                                <span className="min-w-0 break-normal" title={fp.titleTooltip}>
-                                  {fp.shortenedTitle || fp.fullTitle}
-                                </span>
-                              </div>
-                            </div>
+                            <MacroAreaColumn
+                              key={area.id}
+                              area={area}
+                              facilitators={facilitatorsByArea?.[area.id] || []}
+                              spotlight={spotlight}
+                              onSpotlight={setSpotlightFromPayload}
+                              onClearSpotlight={() => setSpotlight(null)}
+                              containerRef={areaRef}
+                            />
                           )
-                        })()
-                      : null}
-                    <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400 bg-gray-900/70 text-[11px] text-gray-300">
-                      Operations as a Servant Organization (Agile Model)
+                        })}
+                      </div>
+
+                      <SpotlightAreaConnections
+                        containerRef={pillarsWrapRef}
+                        areaRefs={macroAreaRefs.current}
+                        spotlight={spotlight}
+                      />
+                    </div>
+
+                    <div className="mt-10">
+                      {showPeople && salesSupportBridgeFacilitators.length ? (
+                        <div className="mt-10">
+                          <SalesSupportFacilitatorBridge
+                            people={salesSupportBridgeFacilitators}
+                            spotlight={spotlight}
+                            onSpotlight={setSpotlightFromPayload}
+                            onClearSpotlight={() => setSpotlight(null)}
+                          />
+                        </div>
+                      ) : null}
+
+                      <div className="relative mt-12 w-full">
+                        <div className="border-t border-dashed border-brand-400" />
+                        {showPeople && paoloVulloPerson
+                          ? (() => {
+                              const fp = formatPersonText(paoloVulloPerson, { maxTitleLen: 32 })
+                              return (
+                                <div className="absolute left-6 -top-7 min-w-[12rem] max-w-[14rem] rounded-xl border border-brand-400 bg-gray-900/70 px-3 py-2">
+                                  <div
+                                    className="text-[11px] font-semibold text-gray-100 leading-snug"
+                                    title={fp.displayName}
+                                  >
+                                    {fp.displayName}
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] text-gray-400 leading-snug min-w-0">
+                                    <span className="min-w-0 break-normal" title={fp.titleTooltip}>
+                                      {fp.shortenedTitle || fp.fullTitle}
+                                    </span>
+                                  </div>
+                                </div>
+                              )
+                            })()
+                          : null}
+                        <div className="absolute left-1/2 -translate-x-1/2 -top-3 px-3 py-1 rounded-full border border-brand-400 bg-gray-900/70 text-[11px] text-gray-300 whitespace-nowrap">
+                          Operations as a Servant Organization (Agile Model)
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           </div>
         </main>
@@ -1487,6 +1690,245 @@ export default function ShareOrgChartTrueTree() {
               : 'Public view: structure only · No people'}
           </div>
         </footer>
+      </div>
+    </div>
+  )
+}
+
+function DepartmentFocusPanel({
+  area,
+  facilitators = [],
+  spotlight,
+  onSpotlight,
+  onClearSpotlight,
+  isPeopleLoading = false,
+  isPeopleError = false,
+}) {
+  if (!area) {
+    return (
+      <div className="rounded-xl border border-gray-600/40 bg-gray-900/35 px-4 py-6 text-center text-sm text-gray-400">
+        Department not available.
+      </div>
+    )
+  }
+
+  const DEPT_STYLES = {
+    revenue: {
+      accent: ACCENTS.revenue,
+      border: BORDERS.revenue,
+      icon: 'text-indigo-200/70',
+      head: 'border-indigo-300/25 text-indigo-200/80 bg-indigo-950/20',
+    },
+    affiliates: {
+      accent: ACCENTS.affiliates,
+      border: BORDERS.affiliates,
+      icon: 'text-orange-200/70',
+      head: 'border-orange-300/25 text-orange-200/80 bg-orange-950/20',
+    },
+    'trading-risk': {
+      accent: ACCENTS.trading,
+      border: BORDERS.trading,
+      icon: 'text-amber-200/70',
+      head: 'border-amber-300/25 text-amber-200/80 bg-amber-950/20',
+    },
+    marketing: {
+      accent: ACCENTS.marketing,
+      border: BORDERS.marketing,
+      icon: 'text-pink-200/70',
+      head: 'border-pink-300/25 text-pink-200/80 bg-pink-950/20',
+    },
+    finance: {
+      accent: ACCENTS.finance,
+      border: BORDERS.finance,
+      icon: 'text-teal-200/70',
+      head: 'border-teal-300/25 text-teal-200/80 bg-teal-950/20',
+    },
+    compliance: {
+      accent: ACCENTS.compliance,
+      border: BORDERS.compliance,
+      icon: 'text-slate-200/70',
+      head: 'border-slate-300/25 text-slate-200/80 bg-slate-900/20',
+    },
+    hr: {
+      accent: ACCENTS.hr,
+      border: BORDERS.hr,
+      icon: 'text-violet-200/70',
+      head: 'border-violet-300/25 text-violet-200/80 bg-violet-950/20',
+    },
+    'customer-support-area': {
+      accent: ACCENTS.support,
+      border: BORDERS.support,
+      icon: 'text-sky-200/70',
+      head: 'border-sky-300/25 text-sky-200/80 bg-sky-950/20',
+    },
+    'operations-area': {
+      accent: ACCENTS.operations,
+      border: BORDERS.operations,
+      icon: 'text-gray-200/70',
+      head: 'border-gray-300/25 text-gray-200/80 bg-gray-900/20',
+    },
+  }
+  const s = DEPT_STYLES[area.id] || {
+    accent: ACCENTS.operations,
+    border: BORDERS.operations,
+    icon: 'text-gray-200/70',
+    head: 'border-gray-300/25 text-gray-200/80 bg-gray-900/20',
+  }
+
+  const childrenById = new Map()
+  for (const fn of area.children || []) {
+    if (fn?.id) childrenById.set(fn.id, fn)
+  }
+  const clusters = HUB_CLUSTERS[area.id] || [
+    { label: 'Team', fnIds: (area.children || []).map((c) => c?.id).filter(Boolean) },
+  ]
+  const clustersWithPeople = clusters.map((cluster) => ({
+    ...cluster,
+    people: cluster.fnIds.flatMap((fnId) => {
+      const fn = childrenById.get(fnId)
+      return (fn?.people || []).filter((p) => p?.name && p?.title)
+    }),
+  }))
+
+  const safeFacilitators = (facilitators || []).filter((p) => p && p.name && p.title)
+  const totalPeople = clustersWithPeople.reduce((sum, c) => sum + c.people.length, 0)
+  const hasRenderablePeople = totalPeople > 0 || safeFacilitators.length > 0
+
+  return (
+    <div className="w-full max-w-[110rem]">
+      {/* Department header */}
+      <div className="mb-5 flex items-center gap-3 rounded-2xl border border-gray-600/40 bg-gray-900/60 px-5 py-3">
+        <span className={s.icon}>
+          <MacroIcon kind={area.icon} />
+        </span>
+        <div className="flex flex-col gap-1 min-w-0">
+          <span className="text-sm font-semibold text-gray-100">{area.label}</span>
+          <FounderBadges areaId={area.id} />
+        </div>
+        {totalPeople > 0 && (
+          <span className="ml-auto text-[11px] text-gray-500 flex-shrink-0">
+            {totalPeople} members
+          </span>
+        )}
+      </div>
+
+      {!hasRenderablePeople ? (
+        <div className="mb-4 rounded-xl border border-gray-600/40 bg-gray-900/35 px-4 py-3 text-xs text-gray-300">
+          {isPeopleLoading
+            ? 'Loading people for this department...'
+            : isPeopleError
+              ? 'People data unavailable right now for this department.'
+              : 'No people mapped to this department yet.'}
+        </div>
+      ) : null}
+
+      {/* Facilitators row */}
+      {safeFacilitators.length > 0 && (
+        <div className="mb-5">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            Facilitators
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {safeFacilitators.map((p) => {
+              const fp = formatPersonText(p, { maxTitleLen: 28 })
+              const isActive = Boolean(spotlight)
+              const isPersonHighlighted =
+                isActive && spotlight?.personNameKey === normalizeKey(p?.name)
+              const shouldDim = isActive && !isPersonHighlighted
+              return (
+                <div
+                  key={`fac-${area.id}-${p.name}`}
+                  className={
+                    'rounded-xl border border-dashed border-brand-400 bg-gray-900/30 px-3 py-2 transition-opacity ' +
+                    (shouldDim ? 'opacity-30' : 'opacity-100')
+                  }
+                  onMouseEnter={() =>
+                    onSpotlight?.({ kind: 'person', person: p, hostAreaId: area.id })
+                  }
+                  onMouseLeave={() => onClearSpotlight?.()}
+                >
+                  <div className="text-[11px] font-semibold leading-snug text-gray-100">
+                    {fp.displayName}
+                  </div>
+                  <div className="mt-0.5 text-[10px] leading-snug text-gray-400">
+                    {fp.shortenedTitle || fp.fullTitle}
+                  </div>
+                  <span className="mt-1 inline-flex items-center rounded-full border border-dashed border-brand-400 bg-brand-900/15 px-1.5 py-0.5 text-[8px] font-semibold tracking-wide text-brand-100/90">
+                    Facilitator
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Horizontal clusters */}
+      <div className="flex gap-4 items-start flex-wrap xl:flex-nowrap">
+        {clustersWithPeople.map((cluster) => (
+          <div key={cluster.label} className="flex-1 min-w-[12rem]">
+            <div className="mb-3 flex items-center gap-1.5">
+              <div className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${s.accent}`} />
+              <span className="text-[11px] font-semibold text-gray-300">{cluster.label}</span>
+              <span className="ml-auto text-[10px] text-gray-600">{cluster.people.length}</span>
+            </div>
+            <div className={`rounded-xl border ${s.border} bg-white/[0.015] p-3`}>
+              {cluster.people.length > 0 ? (
+                <div className="grid gap-2 [grid-template-columns:repeat(auto-fill,minmax(12rem,1fr))]">
+                  {cluster.people.map((p) => {
+                    const fp = formatPersonText(p, { maxTitleLen: 26 })
+                    const isActive = Boolean(spotlight)
+                    const isPersonHighlighted =
+                      isActive && spotlight?.personNameKey === normalizeKey(p?.name)
+                    const shouldDim = isActive && !isPersonHighlighted
+                    const shouldRing = isActive && isPersonHighlighted
+                    return (
+                      <div
+                        key={`${cluster.label}-${p.name}-${p.title}`}
+                        className={
+                          'cursor-default rounded-lg border px-3 py-2 transition-opacity ' +
+                          (p.isHead
+                            ? 'border-gray-500/60 bg-gray-900/50'
+                            : 'border-gray-600/40 bg-gray-900/30') +
+                          (shouldDim ? ' opacity-30' : '') +
+                          (shouldRing ? ' ring-2 ring-brand-400/50' : '')
+                        }
+                        onMouseEnter={() =>
+                          onSpotlight?.({ kind: 'person', person: p, hostAreaId: area.id })
+                        }
+                        onMouseLeave={() => onClearSpotlight?.()}
+                      >
+                        <div
+                          className={
+                            'text-[11px] leading-snug ' +
+                            (p.isHead ? 'font-bold text-white' : 'font-semibold text-gray-100')
+                          }
+                        >
+                          {fp.displayName}
+                        </div>
+                        <div className="mt-0.5 text-[10px] leading-snug text-gray-400">
+                          {fp.shortenedTitle || fp.fullTitle}
+                        </div>
+                        {p.isHead ? (
+                          <span
+                            className={
+                              'mt-1 inline-flex items-center rounded-full border px-1.5 py-0.5 text-[8px] font-semibold tracking-wide ' +
+                              s.head
+                            }
+                          >
+                            Head
+                          </span>
+                        ) : null}
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="py-2 text-center text-[11px] text-gray-600">—</div>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1531,6 +1973,25 @@ function MacroIcon({ kind, className = '' }) {
     )
   }
 
+  if (kind === 'affiliates') {
+    return (
+      <svg {...common}>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+      </svg>
+    )
+  }
+
+  if (kind === 'marketing') {
+    return (
+      <svg {...common}>
+        <path d="M3 11l19-9-9 19-2-8-8-2z" />
+      </svg>
+    )
+  }
+
   if (kind === 'trading') {
     return (
       <svg {...common}>
@@ -1544,14 +2005,52 @@ function MacroIcon({ kind, className = '' }) {
     )
   }
 
-  // corporate
+  // corporate / finance
+  if (kind === 'corporate' || kind === 'finance') {
+    return (
+      <svg {...common}>
+        <path d="M3 21h18" />
+        <path d="M5 21V8l7-4 7 4v13" />
+        <path d="M9 21v-8h6v8" />
+        <path d="M9 10h.01" />
+        <path d="M15 10h.01" />
+      </svg>
+    )
+  }
+
+  if (kind === 'compliance') {
+    return (
+      <svg {...common}>
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
+      </svg>
+    )
+  }
+
+  if (kind === 'hr') {
+    return (
+      <svg {...common}>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+        <path d="M17 13l2 2 4-4" />
+      </svg>
+    )
+  }
+
+  if (kind === 'support') {
+    return (
+      <svg {...common}>
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <path d="M12 9h.01" />
+        <path d="M10 13c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2" />
+      </svg>
+    )
+  }
+
+  // fallback
   return (
     <svg {...common}>
-      <path d="M3 21h18" />
-      <path d="M5 21V8l7-4 7 4v13" />
-      <path d="M9 21v-8h6v8" />
-      <path d="M9 10h.01" />
-      <path d="M15 10h.01" />
+      <circle cx="12" cy="12" r="9" />
     </svg>
   )
 }
@@ -1568,41 +2067,73 @@ function MacroAreaColumn({
   const safeAreaPeople = (area.people || []).filter((p) => p && p.name && p.title)
   const safeFacilitators = (facilitators || []).filter((p) => p && p.name && p.title)
   const [collapsedClusters, setCollapsedClusters] = useState(() => Object.create(null))
-  const accent =
-    area.id === 'operations'
-      ? ACCENTS.operations
-      : area.id === 'revenue'
-        ? ACCENTS.revenue
-        : area.id === 'trading-risk'
-          ? ACCENTS.trading
-          : ACCENTS.corporate
 
-  const border =
-    area.id === 'operations'
-      ? BORDERS.operations
-      : area.id === 'revenue'
-        ? BORDERS.revenue
-        : area.id === 'trading-risk'
-          ? BORDERS.trading
-          : BORDERS.corporate
-
-  const iconTone =
-    area.id === 'operations'
-      ? 'text-gray-200/70'
-      : area.id === 'revenue'
-        ? 'text-indigo-200/70'
-        : area.id === 'trading-risk'
-          ? 'text-amber-200/70'
-          : 'text-emerald-200/70'
-
-  const headBadgeClass =
-    area.id === 'operations'
-      ? 'border-gray-300/25 text-gray-200/80 bg-gray-900/20'
-      : area.id === 'revenue'
-        ? 'border-indigo-300/25 text-indigo-200/80 bg-indigo-950/20'
-        : area.id === 'trading-risk'
-          ? 'border-amber-300/25 text-amber-200/80 bg-amber-950/20'
-          : 'border-emerald-300/25 text-emerald-200/80 bg-emerald-950/20'
+  const AREA_STYLES = {
+    revenue: {
+      accent: ACCENTS.revenue,
+      border: BORDERS.revenue,
+      icon: 'text-indigo-200/70',
+      head: 'border-indigo-300/25 text-indigo-200/80 bg-indigo-950/20',
+    },
+    affiliates: {
+      accent: ACCENTS.affiliates,
+      border: BORDERS.affiliates,
+      icon: 'text-orange-200/70',
+      head: 'border-orange-300/25 text-orange-200/80 bg-orange-950/20',
+    },
+    'trading-risk': {
+      accent: ACCENTS.trading,
+      border: BORDERS.trading,
+      icon: 'text-amber-200/70',
+      head: 'border-amber-300/25 text-amber-200/80 bg-amber-950/20',
+    },
+    marketing: {
+      accent: ACCENTS.marketing,
+      border: BORDERS.marketing,
+      icon: 'text-pink-200/70',
+      head: 'border-pink-300/25 text-pink-200/80 bg-pink-950/20',
+    },
+    finance: {
+      accent: ACCENTS.finance,
+      border: BORDERS.finance,
+      icon: 'text-teal-200/70',
+      head: 'border-teal-300/25 text-teal-200/80 bg-teal-950/20',
+    },
+    compliance: {
+      accent: ACCENTS.compliance,
+      border: BORDERS.compliance,
+      icon: 'text-slate-200/70',
+      head: 'border-slate-300/25 text-slate-200/80 bg-slate-900/20',
+    },
+    hr: {
+      accent: ACCENTS.hr,
+      border: BORDERS.hr,
+      icon: 'text-violet-200/70',
+      head: 'border-violet-300/25 text-violet-200/80 bg-violet-950/20',
+    },
+    'customer-support-area': {
+      accent: ACCENTS.support,
+      border: BORDERS.support,
+      icon: 'text-sky-200/70',
+      head: 'border-sky-300/25 text-sky-200/80 bg-sky-950/20',
+    },
+    'operations-area': {
+      accent: ACCENTS.operations,
+      border: BORDERS.operations,
+      icon: 'text-gray-200/70',
+      head: 'border-gray-300/25 text-gray-200/80 bg-gray-900/20',
+    },
+  }
+  const s = AREA_STYLES[area.id] || {
+    accent: ACCENTS.operations,
+    border: BORDERS.operations,
+    icon: 'text-gray-200/70',
+    head: 'border-gray-300/25 text-gray-200/80 bg-gray-900/20',
+  }
+  const accent = s.accent
+  const border = s.border
+  const iconTone = s.icon
+  const headBadgeClass = s.head
 
   const childrenById = new Map()
   for (const fn of area.children || []) {
@@ -1619,11 +2150,14 @@ function MacroAreaColumn({
     <div ref={containerRef} data-macro-area-id={area.id} className="flex flex-col min-w-0">
       <Card
         title={
-          <div className="flex items-center gap-2">
-            <span className={iconTone} aria-hidden="true">
-              <MacroIcon kind={area.icon} />
-            </span>
-            <span>{area.label}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className={iconTone} aria-hidden="true">
+                <MacroIcon kind={area.icon} />
+              </span>
+              <span>{area.label}</span>
+            </div>
+            <FounderBadges areaId={area.id} className="mt-0.5" />
           </div>
         }
         lines={getNodeLines(area)}
@@ -1634,10 +2168,10 @@ function MacroAreaColumn({
             {area.showPeople && safeFacilitators.length ? (
               <div className="mt-2">
                 <div className="text-[10px] font-semibold text-gray-400">Facilitators</div>
-                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))]">
                   {safeFacilitators.map((p) =>
                     (() => {
-                      const fp = formatPersonText(p, { maxTitleLen: 26 })
+                      const fp = formatPersonText(p, { maxTitleLen: 28 })
                       const targets = Array.isArray(p.facilitatorFor) ? p.facilitatorFor : []
                       const targetsText = targets.length ? `→ ${targets.join(' · ')}` : ''
                       const isActive = Boolean(spotlight)
@@ -1692,10 +2226,10 @@ function MacroAreaColumn({
             {area.showPeople && safeAreaPeople.length ? (
               <div className={(safeFacilitators.length ? 'mt-4 ' : 'mt-2 ') + 'space-y-1'}>
                 <div className="text-[10px] font-semibold text-gray-400">Key roles</div>
-                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(15rem,1fr))]">
+                <div className="mt-2 grid gap-2 [grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))]">
                   {safeAreaPeople.map((p) =>
                     (() => {
-                      const fp = formatPersonText(p, { maxTitleLen: 26 })
+                      const fp = formatPersonText(p, { maxTitleLen: 28 })
                       const isActive = Boolean(spotlight)
                       const isAreaRelated =
                         !isActive || (area?.id && spotlight?.relatedAreaIdMap?.[area.id])
