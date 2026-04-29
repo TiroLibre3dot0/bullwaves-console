@@ -72,14 +72,6 @@ const FAQ_ITEMS = [
   },
 ]
 
-function Tooltip({ label, text }) {
-  return (
-    <span className="commission-rules__tooltip" role="img" aria-label={label} title={text}>
-      i
-    </span>
-  )
-}
-
 function RuleAccordion({ id, title, children, defaultOpen = false, alert = false }) {
   const [open, setOpen] = useState(defaultOpen)
 
@@ -124,6 +116,23 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
       else next.add(idx)
       return next
     })
+  }
+
+  const navItems = [
+    { id: 'commission-hero', label: 'Overview' },
+    { id: 'commission-rules', label: 'Rules' },
+    { id: 'commission-matrix', label: 'Channel Matrix' },
+    { id: 'commission-audit', label: 'Audit & Controls' },
+    { id: 'commission-faq', label: 'FAQ' },
+    ...(!publicMode ? [{ id: 'commission-future', label: 'Future Widget' }] : []),
+  ]
+
+  const scrollToSection = (id) => {
+    if (typeof window === 'undefined') return
+    const target = document.getElementById(id)
+    if (!target) return
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    window.history.replaceState(null, '', `#${id}`)
   }
 
   async function createPublicShareLink() {
@@ -231,16 +240,25 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
       <div className="commission-rules__layout">
         <aside className="commission-rules__stickyNav" aria-label="Section navigation">
           <h3>Navigation</h3>
-          <a href="#commission-hero">Overview</a>
-          <a href="#commission-rules">Rules</a>
-          <a href="#commission-matrix">Channel Matrix</a>
-          <a href="#commission-audit">Audit & Controls</a>
-          <a href="#commission-faq">FAQ</a>
-          <a href="#commission-future">Future Widget</a>
+          {navItems.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              onClick={(e) => {
+                e.preventDefault()
+                scrollToSection(item.id)
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
         </aside>
 
         <div className="commission-rules__content">
-          <article id="commission-hero" className="commission-rules__hero card-block">
+          <article
+            id="commission-hero"
+            className="commission-rules__hero commission-rules__scrollTarget card-block"
+          >
             <div className="commission-rules__heroText">
               <p className="page-label">Compliance Control</p>
               <h1 className="page-title">Sales Commission Validation Framework</h1>
@@ -257,9 +275,7 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
                   >
                     {isSharing ? 'Creating public link...' : 'Share Public Page'}
                   </button>
-                ) : (
-                  <span className="commission-rules__publicBadge">Public Shared View</span>
-                )}
+                ) : null}
                 {shareStatus ? (
                   <span className="commission-rules__shareStatus">{shareStatus}</span>
                 ) : null}
@@ -297,13 +313,7 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
                 defaultOpen
               >
                 <ul className="commission-rules__list">
-                  <li>
-                    documented contact within 30 days{' '}
-                    <Tooltip
-                      label="Validation window"
-                      text="Contact evidence must be within a rolling 30-day period before deposit."
-                    />
-                  </li>
+                  <li>documented contact within 30 days</li>
                   <li>accepted validation methods:</li>
                   <li className="commission-rules__subpoint">Voiso effective calls (&gt;90 sec)</li>
                   <li className="commission-rules__subpoint">
@@ -363,14 +373,14 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
 
                 <div className="commission-rules__examples">
                   <div className="commission-rules__example is-valid">
-                    <p>✅ acceptable voicemail</p>
+                    <p>{publicMode ? 'Acceptable voicemail' : '✅ acceptable voicemail'}</p>
                     <span>
                       12-second courtesy voicemail noting call-back availability, followed by proper
                       two-way interaction in a separate contact.
                     </span>
                   </div>
                   <div className="commission-rules__example is-invalid">
-                    <p>❌ manipulation example</p>
+                    <p>{publicMode ? 'Manipulation example' : '❌ manipulation example'}</p>
                     <span>
                       Repeated long voicemail drops logged as “effective calls” to force commission
                       validation status.
@@ -407,7 +417,7 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
                         <span
                           className={`commission-rules__status ${row.qualifies ? 'is-ok' : 'is-no'}`}
                         >
-                          {row.qualifies ? '🟢 Yes' : '🔴 Conditional / No'}
+                          {row.qualifies ? 'Yes' : 'Conditional / No'}
                         </span>
                       </td>
                       <td>{row.conditions}</td>
@@ -475,28 +485,30 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
             </article>
           </section>
 
-          <section id="commission-future" className="commission-rules__section">
-            <article className="card-block">
-              <div className="card-block-header">
-                <div>
-                  <p className="eyebrow">Future Integration</p>
-                  <h3>Compliance Dashboard (Backend Ready)</h3>
-                  <p className="muted">
-                    Placeholder structure prepared for future API-driven compliance signals.
-                  </p>
-                </div>
-              </div>
-
-              <div className="commission-rules__futureGrid">
-                {futureMetrics.map((metric) => (
-                  <div key={metric.label} className="commission-rules__futureCard">
-                    <p>{metric.label}</p>
-                    <strong>{metric.value}</strong>
+          {!publicMode ? (
+            <section id="commission-future" className="commission-rules__section">
+              <article className="card-block">
+                <div className="card-block-header">
+                  <div>
+                    <p className="eyebrow">Future Integration</p>
+                    <h3>Compliance Dashboard (Backend Ready)</h3>
+                    <p className="muted">
+                      Placeholder structure prepared for future API-driven compliance signals.
+                    </p>
                   </div>
-                ))}
-              </div>
-            </article>
-          </section>
+                </div>
+
+                <div className="commission-rules__futureGrid">
+                  {futureMetrics.map((metric) => (
+                    <div key={metric.label} className="commission-rules__futureCard">
+                      <p>{metric.label}</p>
+                      <strong>{metric.value}</strong>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </section>
+          ) : null}
 
           <section className="commission-rules__section">
             <article className="card-block commission-rules__actions">

@@ -4,127 +4,690 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bullwaves Trustpilot Popup</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap" rel="stylesheet" />
     <style>
       :root {
-        --page-bg: #eaf5ff;
-        --card-bg: #ffffff;
-        --card-border: #d9e8f7;
-        --logo-panel: #0e1b2f;
-        --text-main: #101828;
-        --text-sub: #344054;
-        --star-yellow: #f5c518;
+        --bg:           #07111f;
+        --card:         #0d1e34;
+        --card-border:  rgba(255,255,255,0.07);
+        --green:        #00b67a;
+        --green-glow:   rgba(0, 182, 122, 0.22);
+        --green-btn:    #00c986;
+        --gold:         #fbbf24;
+        --gold-glow:    rgba(251, 191, 36, 0.18);
+        --text-0:       #ffffff;
+        --text-1:       rgba(255,255,255,0.72);
+        --text-2:       rgba(255,255,255,0.38);
+        --accent-line:  linear-gradient(90deg, #00b67a 0%, #0066ff 100%);
       }
 
-      * {
-        box-sizing: border-box;
-      }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       body {
-        margin: 0;
         min-height: 100vh;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        color: var(--text-main);
-        background: radial-gradient(circle at 20% 10%, #ffffff 0%, var(--page-bg) 46%, #dceeff 100%);
+        font-family: "Inter", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse 70% 55% at 15% -10%, #0a2a4a 0%, transparent 55%),
+          radial-gradient(ellipse 50% 60% at 88% 110%, #001933 0%, transparent 55%),
+          var(--bg);
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 18px;
+        padding: 24px;
       }
 
+      /* ── floating orbs behind card ─────────── */
+      .scene {
+        position: relative;
+        width: min(100%, 800px);
+      }
+
+      .orb {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(48px);
+        pointer-events: none;
+        z-index: 0;
+      }
+      .orb-green {
+        width: 220px; height: 220px;
+        background: var(--green-glow);
+        top: -60px; right: -50px;
+      }
+      .orb-gold {
+        width: 160px; height: 160px;
+        background: var(--gold-glow);
+        bottom: -40px; left: 60px;
+      }
+
+      /* ── Card ───────────────────────────────── */
       .popup {
-        background: var(--card-bg);
+        position: relative;
+        z-index: 1;
+        background: var(--card);
         border: 1px solid var(--card-border);
-        border-radius: 18px;
-        box-shadow: 0 14px 38px rgba(16, 24, 40, 0.12);
-        width: min(100%, 760px);
-        min-height: 210px;
-        padding: 20px;
-        display: grid;
-        grid-template-columns: 190px 1fr;
-        column-gap: 22px;
-        align-items: center;
+        border-radius: 28px;
+        overflow: hidden;
+        box-shadow:
+          0 0   0  1px rgba(0,182,122,0.08),
+          0 4px 16px rgba(0,0,0,0.5),
+          0 32px 80px rgba(0,0,0,0.55);
+        animation: rise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
 
-      .logo-panel {
-        height: 100%;
-        border-radius: 14px;
-        background: linear-gradient(165deg, #14284a 0%, var(--logo-panel) 100%);
+      /* top accent line */
+      .popup::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--accent-line);
+        z-index: 2;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(20px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0)    scale(1);    }
+      }
+
+      /* ── Inner grid ─────────────────────────── */
+      .inner {
         display: grid;
-        place-items: center;
-        padding: 18px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      /* ── Left: stars hero ───────────────────── */
+      .left {
+        padding: 44px 36px 44px 44px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-right: 1px solid var(--card-border);
+        gap: 24px;
+        position: relative;
+      }
+
+      /* faint dot grid */
+      .left::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 20px 20px;
+        pointer-events: none;
       }
 
       .brand-logo {
-        width: 146px;
-        max-width: 100%;
+        width: 120px;
         height: auto;
+        /* If logo is dark: invert it to white */
+        filter: brightness(0) invert(1);
+        opacity: 0.9;
+        position: relative;
+        z-index: 1;
       }
 
-      .title {
-        margin: 0;
-        font-size: clamp(28px, 3.2vw, 40px);
-        line-height: 1.08;
-        letter-spacing: -0.2px;
-        font-weight: 700;
-      }
-
-      .stars {
-        margin: 10px 0 12px;
+      .stars-hero {
         display: flex;
+        gap: 6px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .stars-hero svg {
+        display: block;
+        filter: drop-shadow(0 0 6px rgba(251,191,36,0.6));
+        animation: pop 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
+        animation-delay: var(--d, 0s);
+      }
+
+      @keyframes pop {
+        from { opacity:0; transform: scale(0.2) rotate(-20deg); }
+        to   { opacity:1; transform: scale(1)   rotate(0deg);   }
+      }
+
+      .score-block {
+        position: relative;
+        z-index: 1;
+      }
+
+      .score-num {
+        font-size: 42px;
+        font-weight: 900;
+        color: var(--text-0);
+        line-height: 1;
+        letter-spacing: -2px;
+      }
+
+      .score-num span {
+        font-size: 20px;
+        font-weight: 500;
+        color: var(--text-2);
+        letter-spacing: -0.5px;
+      }
+
+      .score-label {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+        color: var(--green);
+        margin-top: 4px;
+      }
+
+      .review-count {
+        font-size: 11px;
+        color: var(--text-2);
+        font-weight: 500;
+        margin-top: 2px;
+      }
+
+      /* ── Right: call to action ──────────────── */
+      .right {
+        padding: 44px 44px 44px 40px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0;
+      }
+
+      .eyebrow {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--green);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
         gap: 6px;
       }
 
+      .eyebrow::before {
+        content: "";
+        display: inline-block;
+        width: 16px;
+        height: 2px;
+        background: var(--green);
+        border-radius: 2px;
+      }
+
+      .title {
+        font-size: clamp(22px, 2.6vw, 30px);
+        font-weight: 900;
+        line-height: 1.08;
+        letter-spacing: -0.8px;
+        color: var(--text-0);
+        margin-bottom: 10px;
+      }
+
       .subtitle {
-        margin: 0;
-        font-size: clamp(18px, 2.1vw, 28px);
-        line-height: 1.2;
-        color: var(--text-sub);
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--text-1);
+        line-height: 1.55;
+        margin-bottom: 32px;
       }
 
-      svg {
-        display: block;
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        background: var(--green-btn);
+        color: #021a0f;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 800;
+        letter-spacing: -0.1px;
+        padding: 14px 24px;
+        border: none;
+        border-radius: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        align-self: flex-start;
+        transition: filter 0.18s, transform 0.18s, box-shadow 0.18s;
+        box-shadow:
+          0 0 0 1px rgba(0,201,134,0.3),
+          0 6px 20px rgba(0,182,122,0.4);
       }
 
-      @media (max-width: 760px) {
-        .popup {
+      .cta-btn:hover {
+        filter: brightness(1.08);
+        transform: translateY(-2px);
+        box-shadow:
+          0 0 0 1px rgba(0,201,134,0.4),
+          0 10px 28px rgba(0,182,122,0.5);
+      }
+
+      .cta-btn:active {
+        transform: translateY(0);
+        filter: brightness(0.96);
+      }
+
+      .cta-btn .arrow {
+        transition: transform 0.18s;
+      }
+
+      .cta-btn:hover .arrow {
+        transform: translateX(4px);
+      }
+
+      /* Trustpilot wordmark */
+      .tp-wordmark {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 20px;
+      }
+
+      .tp-wordmark-text {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-2);
+      }
+
+      .tp-star-icon {
+        width: 14px;
+        height: 14px;
+        background: var(--green);
+        border-radius: 2px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      /* ── Responsive ────────────────────────── */
+      @media (max-width: 640px) {
+        .inner {
           grid-template-columns: 1fr;
-          min-height: auto;
-          row-gap: 16px;
         }
 
-        .logo-panel {
-          min-height: 92px;
+        .left {
+          padding: 32px 28px 28px;
+          border-right: none;
+          border-bottom: 1px solid var(--card-border);
+          flex-direction: row;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 16px;
         }
 
         .brand-logo {
-          width: 132px;
+          width: 90px;
+        }
+
+        .stars-hero {
+          order: 3;
+          width: 100%;
+        }
+
+        .score-block {
+          order: 4;
+          width: 100%;
+        }
+
+        .right {
+          padding: 28px 28px 32px;
         }
 
         .title {
-          font-size: clamp(26px, 7vw, 36px);
+          font-size: clamp(20px, 5.5vw, 26px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene">
+      <div class="orb orb-green"></div>
+      <div class="orb orb-gold"></div>
+
+      <section class="popup" role="dialog" aria-label="Richiesta feedback Trustpilot">
+        <div class="inner">
+
+          <!-- Left: stars as visual hero -->
+          <div class="left">
+            <img class="brand-logo" src="/Logo.png" alt="Bullwaves" />
+
+            <div class="stars-hero" aria-label="5 stelle su 5">
+              <svg style="--d:.06s" width="36" height="36" viewBox="0 0 24 24"><path fill="#fbbf24" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+              <svg style="--d:.14s" width="36" height="36" viewBox="0 0 24 24"><path fill="#fbbf24" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+              <svg style="--d:.22s" width="36" height="36" viewBox="0 0 24 24"><path fill="#fbbf24" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+              <svg style="--d:.30s" width="36" height="36" viewBox="0 0 24 24"><path fill="#fbbf24" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+              <svg style="--d:.38s" width="36" height="36" viewBox="0 0 24 24"><path fill="#fbbf24" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+            </div>
+
+            <div class="score-block">
+              <div class="score-num">4.9<span> / 5</span></div>
+              <div class="score-label">Eccellente</div>
+              <div class="review-count">1.200+ recensioni verificate</div>
+            </div>
+          </div>
+
+          <!-- Right: headline + CTA -->
+          <div class="right">
+            <p class="eyebrow">La tua opinione conta</p>
+            <h1 class="title">Cosa ne pensi<br>di Bullwaves?</h1>
+            <p class="subtitle">Condividi la tua esperienza e aiuta altri trader a scegliere meglio.</p>
+
+            <a
+              class="cta-btn"
+              href="https://www.trustpilot.com/review/bullwaves.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Scrivi una recensione su Trustpilot"
+            >
+              Scrivi una recensione
+              <svg class="arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3 8h10M9 4l4 4-4 4" stroke="#021a0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </a>
+
+            <div class="tp-wordmark" aria-label="Powered by Trustpilot">
+              <span class="tp-star-icon" aria-hidden="true">
+                <svg width="9" height="9" viewBox="0 0 24 24"><path fill="#fff" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+              </span>
+              <span class="tp-wordmark-text">Powered by <strong style="color:rgba(255,255,255,0.55)">Trustpilot</strong></span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
+
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: "Inter", system-ui, sans-serif;
+        color: var(--text-main);
+        background:
+          radial-gradient(ellipse 80% 60% at 10% 0%,   #e8f4ff 0%, transparent 60%),
+          radial-gradient(ellipse 60% 80% at 90% 100%,  #d6ecff 0%, transparent 60%),
+          #f0f7ff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 24px;
+      }
+
+      /* ── Card ─────────────────────────────── */
+      .popup {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        box-shadow:
+          0 2px  4px  rgba(13, 31, 56, 0.04),
+          0 8px  24px rgba(13, 31, 56, 0.08),
+          0 32px 64px rgba(13, 31, 56, 0.10);
+        width: min(100%, 780px);
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        overflow: hidden;
+        animation: rise 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(16px) scale(0.98); }
+        to   { opacity: 1; transform: translateY(0)    scale(1);    }
+      }
+
+      /* ── Left panel ───────────────────────── */
+      .logo-panel {
+        background:
+          radial-gradient(ellipse 140% 80% at 50% 110%, #1a3a6b 0%, transparent 55%),
+          linear-gradient(170deg, #162d4f 0%, var(--navy) 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 24px;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* subtle dot-grid texture */
+      .logo-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255,255,255,0.045) 1px, transparent 1px);
+        background-size: 18px 18px;
+        pointer-events: none;
+      }
+
+      .brand-logo {
+        width: 130px;
+        max-width: 100%;
+        height: auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* live Trustpilot badge pill */
+      .tp-pill {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 100px;
+        padding: 5px 10px 5px 6px;
+        font-size: 11px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.72);
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        position: relative;
+        z-index: 1;
+      }
+
+      .tp-dot {
+        width: 7px;
+        height: 7px;
+        background: var(--tp-green);
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(0, 182, 122, 0.28);
+        animation: pulse 2.2s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(0, 182, 122, 0.28); }
+        50%       { box-shadow: 0 0 0 5px rgba(0, 182, 122, 0.10); }
+      }
+
+      /* ── Right content ────────────────────── */
+      .content {
+        padding: 36px 36px 32px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 10px;
+      }
+
+      .title {
+        font-size: clamp(24px, 2.8vw, 34px);
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.5px;
+        color: var(--text-main);
+        margin-bottom: 20px;
+      }
+
+      /* stars + score in one row */
+      .stars-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 6px;
+      }
+
+      .stars {
+        display: flex;
+        gap: 3px;
+      }
+
+      /* staggered pop-in for each star */
+      .stars svg {
+        display: block;
+        animation: pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        animation-delay: var(--d, 0s);
+      }
+
+      @keyframes pop {
+        from { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+        to   { opacity: 1; transform: scale(1)   rotate(0deg);   }
+      }
+
+      .score-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-sub);
+        white-space: nowrap;
+      }
+
+      .score-label strong {
+        color: var(--text-main);
+        font-size: 15px;
+      }
+
+      .review-count {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        margin-bottom: 26px;
+        margin-top: 2px;
+      }
+
+      /* CTA button */
+      .cta-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--tp-green);
+        color: #fff;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.1px;
+        padding: 13px 22px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        text-decoration: none;
+        align-self: flex-start;
+        transition: background 0.18s, transform 0.18s, box-shadow 0.18s;
+        box-shadow: 0 4px 14px rgba(0, 182, 122, 0.35);
+      }
+
+      .cta-btn:hover {
+        background: var(--tp-green-dark);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(0, 182, 122, 0.45);
+      }
+
+      .cta-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(0, 182, 122, 0.28);
+      }
+
+      .cta-btn .arrow {
+        transition: transform 0.18s;
+      }
+
+      .cta-btn:hover .arrow {
+        transform: translateX(3px);
+      }
+
+      /* ── Responsive ───────────────────────── */
+      @media (max-width: 620px) {
+        .popup {
+          grid-template-columns: 1fr;
+          border-radius: 20px;
+        }
+
+        .logo-panel {
+          flex-direction: row;
+          padding: 18px 22px;
+          gap: 14px;
+          justify-content: flex-start;
+        }
+
+        .brand-logo {
+          width: 100px;
+        }
+
+        .content {
+          padding: 22px 22px 26px;
+        }
+
+        .title {
+          font-size: clamp(22px, 6vw, 28px);
         }
       }
     </style>
   </head>
   <body>
     <section class="popup" role="dialog" aria-label="Richiesta feedback Trustpilot">
+
+      <!-- Left: brand panel -->
       <div class="logo-panel" aria-hidden="true">
         <img class="brand-logo" src="/Logo.png" alt="Bullwaves" />
+        <div class="tp-pill">
+          <span class="tp-dot"></span>
+          Trustpilot
+        </div>
       </div>
 
-      <div>
-        <h1 class="title">Cosa ne pensi di Bullwaves?</h1>
+      <!-- Right: content -->
+      <div class="content">
+        <p class="eyebrow">La tua opinione conta</p>
+        <h1 class="title">Cosa ne pensi<br>di Bullwaves?</h1>
 
-        <div class="stars" aria-label="Valutazione a cinque stelle">
-          <svg width="34" height="34" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="var(--star-yellow)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
-          <svg width="34" height="34" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="var(--star-yellow)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
-          <svg width="34" height="34" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="var(--star-yellow)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
-          <svg width="34" height="34" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="var(--star-yellow)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
-          <svg width="34" height="34" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="var(--star-yellow)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+        <div class="stars-row">
+          <div class="stars" aria-label="5 stelle su 5">
+            <svg style="--d:.07s" width="28" height="28" viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+            <svg style="--d:.15s" width="28" height="28" viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+            <svg style="--d:.23s" width="28" height="28" viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+            <svg style="--d:.31s" width="28" height="28" viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+            <svg style="--d:.39s" width="28" height="28" viewBox="0 0 24 24"><path fill="var(--star)" d="M12 2.8L14.73 8.33L20.83 9.22L16.42 13.52L17.46 19.6L12 16.73L6.54 19.6L7.58 13.52L3.17 9.22L9.27 8.33L12 2.8Z"/></svg>
+          </div>
+          <span class="score-label"><strong>Eccellente</strong> · 4.9 / 5</span>
         </div>
 
-        <p class="subtitle">Lascia il tuo feedback su Trustpilot</p>
+        <p class="review-count">Basato su 1.200+ recensioni verificate</p>
+
+        <a
+          class="cta-btn"
+          href="https://www.trustpilot.com/review/bullwaves.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Scrivi una recensione su Trustpilot"
+        >
+          Scrivi una recensione
+          <svg class="arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </a>
       </div>
+
     </section>
   </body>
 </html>

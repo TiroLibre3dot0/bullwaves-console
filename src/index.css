@@ -474,8 +474,9 @@
   background: rgba(127, 29, 29, 0.28);
 }
 
-.commission-rules__section {
-  scroll-margin-top: 12px;
+.commission-rules__section,
+.commission-rules__scrollTarget {
+  scroll-margin-top: 72px;
 }
 
 .commission-rules__accordion {
@@ -856,6 +857,76 @@
 
   .commission-rules__layout {
     display: block;
+  }
+}
+
+/* Public document refinements (Commission Validation Rules) */
+.commission-public-shell .commission-rules {
+  padding: 14px 16px 22px;
+  background:
+    radial-gradient(1000px 420px at -12% -14%, rgba(56, 189, 248, 0.08), transparent 58%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.22), rgba(15, 23, 42, 0.12));
+}
+
+.commission-public-shell .commission-rules__layout {
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 16px;
+}
+
+.commission-public-shell .commission-rules__stickyNav {
+  top: 62px;
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 10px 26px rgba(2, 6, 23, 0.2);
+}
+
+.commission-public-shell .commission-rules__content {
+  gap: 12px;
+}
+
+.commission-public-shell .commission-rules .card-block {
+  background:
+    linear-gradient(160deg, rgba(15, 23, 42, 0.74), rgba(15, 23, 42, 0.82));
+  border-color: rgba(148, 163, 184, 0.22);
+  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.2);
+}
+
+.commission-public-shell .commission-rules__hero {
+  border-color: rgba(125, 211, 252, 0.24);
+  background:
+    radial-gradient(720px 280px at 3% -12%, rgba(14, 165, 233, 0.12), transparent 56%),
+    linear-gradient(160deg, rgba(8, 47, 73, 0.34) 0%, rgba(15, 23, 42, 0.9) 56%);
+}
+
+.commission-public-shell .commission-rules__section,
+.commission-public-shell .commission-rules__scrollTarget {
+  scroll-margin-top: 86px;
+}
+
+.commission-public-shell .commission-rules__kpiCard {
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.commission-public-shell .commission-rules__example p,
+.commission-public-shell .commission-rules__faqBtn,
+.commission-public-shell .commission-rules__accordionToggle,
+.commission-public-shell .commission-rules__auditCard h4 {
+  letter-spacing: 0;
+}
+
+@media (max-width: 1180px) {
+  .commission-public-shell .commission-rules__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .commission-public-shell .commission-rules__stickyNav {
+    top: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .commission-public-shell .commission-rules {
+    padding: 10px 10px 18px;
   }
 }
 
