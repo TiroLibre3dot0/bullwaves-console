@@ -435,140 +435,157 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
                 </div>
               </div>
 
-              {(rulesSource?.sections || []).map((section, idx) => {
-                const lines = Array.isArray(section?.lines) ? section.lines : []
-                const bulletLines = lines.filter((line) => String(line).trim().startsWith('-'))
-                const textLines = lines.filter((line) => !String(line).trim().startsWith('-'))
-                const isAlert = /voicemail|manipulation|forfeiture/i.test(
-                  `${section?.heading || ''} ${lines.join(' ')}`
+              {(() => {
+                // Filter out sections with no meaningful content
+                const validSections = (rulesSource?.sections || []).filter(
+                  (s) => Array.isArray(s?.lines) && s.lines.some((l) => String(l).trim().length > 0)
                 )
+                const rule5Number = validSections.length + 1
 
                 return (
-                  <RuleAccordion
-                    key={`${section?.heading || 'rule'}-${idx}`}
-                    id={`rule-${idx + 1}`}
-                    title={`Rule ${idx + 1} - ${section?.heading || `Policy ${idx + 1}`}`}
-                    defaultOpen={idx === 0}
-                    alert={isAlert}
-                  >
-                    {textLines.map((line, lineIdx) => (
-                      <p key={`txt-${idx}-${lineIdx}`}>{line}</p>
-                    ))}
+                  <>
+                    {validSections.map((section, idx) => {
+                      const lines = section.lines.map((l) => String(l))
+                      const bulletLines = lines.filter((line) => line.trim().startsWith('-'))
+                      const textLines = lines.filter((line) => !line.trim().startsWith('-'))
+                      const isAlert = /voicemail|manipulation|forfeiture/i.test(
+                        `${section?.heading || ''} ${lines.join(' ')}`
+                      )
 
-                    {bulletLines.length ? (
+                      return (
+                        <RuleAccordion
+                          key={`${section?.heading || 'rule'}-${idx}`}
+                          id={`rule-${idx + 1}`}
+                          title={`Rule ${idx + 1} - ${section?.heading || `Policy ${idx + 1}`}`}
+                          defaultOpen={idx === 0}
+                          alert={isAlert}
+                        >
+                          {textLines.map((line, lineIdx) => (
+                            <p key={`txt-${idx}-${lineIdx}`}>{line}</p>
+                          ))}
+
+                          {bulletLines.length ? (
+                            <ul className="commission-rules__list">
+                              {bulletLines.map((line, lineIdx) => (
+                                <li key={`li-${idx}-${lineIdx}`}>{line.replace(/^\-\s*/, '')}</li>
+                              ))}
+                            </ul>
+                          ) : null}
+                        </RuleAccordion>
+                      )
+                    })}
+
+                    {/* ── Rule N: Large Single-Client Deposit ── */}
+                    <RuleAccordion
+                      id={`rule-${rule5Number}`}
+                      title={`Rule ${rule5Number} - Large Single-Client Deposit (≥ €10,000)`}
+                      defaultOpen={false}
+                    >
+                      <p>
+                        When a single client makes a deposit (or cumulative deposits within the same
+                        30-day window) totalling <strong>€10,000 or more</strong>, the commission is
+                        split into an <em>immediate</em> portion and a <em>staged-release</em>{' '}
+                        portion. Multiple deposits by the same client within the same 30-day window
+                        are aggregated for the purpose of this rule.
+                      </p>
+
+                      <div className="commission-rules__noteBox">
+                        <strong>Formula</strong>
+                        <ul className="commission-rules__list" style={{ marginTop: 8 }}>
+                          <li>
+                            <strong>Immediate commission</strong> = commission on{' '}
+                            <code>min(totalDeposit, €10,000)</code> — paid at the normal settlement
+                            date.
+                          </li>
+                          <li>
+                            <strong>Pending amount</strong> = commission on{' '}
+                            <code>max(totalDeposit − €10,000, 0)</code> — held and released in two
+                            milestones.
+                          </li>
+                        </ul>
+                      </div>
+
+                      <p style={{ marginTop: 16 }}>
+                        <strong>Staged release milestones for the pending portion:</strong>
+                      </p>
+                      <table className="simple-table" style={{ marginTop: 8 }}>
+                        <thead>
+                          <tr>
+                            <th>Milestone</th>
+                            <th>Release</th>
+                            <th>Required conditions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Day 7</td>
+                            <td>50 % of pending</td>
+                            <td>
+                              Second documented two-way contact on a <em>different calendar day</em>{' '}
+                              from the first + no manipulation flags.
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Day 30</td>
+                            <td>Remaining 50 %</td>
+                            <td>
+                              No early full withdrawal (≥ 80 % of deposit) + no open manipulation
+                              flags.
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+
+                      <p style={{ marginTop: 16 }}>
+                        <strong>Automatic cancellation of pending amount if:</strong>
+                      </p>
                       <ul className="commission-rules__list">
-                        {bulletLines.map((line, lineIdx) => (
-                          <li key={`li-${idx}-${lineIdx}`}>{line.replace(/^\-\s*/, '')}</li>
-                        ))}
+                        <li>A manipulation flag is raised at any point before full release.</li>
+                        <li>
+                          Required contact evidence is missing or cannot be verified by the audit
+                          team.
+                        </li>
+                        <li>Client withdraws ≥ 80 % of the deposit before the Day-30 milestone.</li>
                       </ul>
-                    ) : null}
-                  </RuleAccordion>
+
+                      <div className="commission-rules__examples" style={{ marginTop: 20 }}>
+                        <div className="commission-rules__example is-valid">
+                          <strong>Example A — deposit above threshold (€50,000)</strong>
+                          <ul className="commission-rules__list" style={{ marginTop: 6 }}>
+                            <li>Total deposit: €50,000</li>
+                            <li>
+                              Immediate portion: commission on €10,000 → paid at normal settlement.
+                            </li>
+                            <li>Pending portion: commission on €40,000 → held.</li>
+                            <li>
+                              Day-7 release: 50 % of pending commission (on €20,000) if second
+                              contact verified + no flags.
+                            </li>
+                            <li>
+                              Day-30 release: remaining 50 % of pending commission (on €20,000) if
+                              no early withdrawal + no flags.
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div className="commission-rules__example is-valid">
+                          <strong>Example B — deposit below threshold (€8,000)</strong>
+                          <ul className="commission-rules__list" style={{ marginTop: 6 }}>
+                            <li>Total deposit: €8,000 (below the €10,000 threshold).</li>
+                            <li>
+                              Rule 5 does <em>not</em> apply — standard commission rules (Rules 1–4)
+                              govern this deposit.
+                            </li>
+                            <li>
+                              Full commission is eligible immediately, subject to normal validation.
+                            </li>
+                          </ul>
+                        </div>
+                      </div>
+                    </RuleAccordion>
+                  </>
                 )
-              })}
-
-              {/* ── Rule 5: Large Single-Client Deposit ── */}
-              <RuleAccordion
-                id="rule-5"
-                title="Rule 5 - Large Single-Client Deposit (≥ €10,000)"
-                defaultOpen={false}
-              >
-                <p>
-                  When a single client makes a deposit (or cumulative deposits within the same
-                  30-day window) totalling <strong>€10,000 or more</strong>, the commission is split
-                  into an <em>immediate</em> portion and a <em>staged-release</em> portion. Multiple
-                  deposits by the same client within the same 30-day window are aggregated for the
-                  purpose of this rule.
-                </p>
-
-                <div className="commission-rules__noteBox">
-                  <strong>Formula</strong>
-                  <ul className="commission-rules__list" style={{ marginTop: 8 }}>
-                    <li>
-                      <strong>Immediate commission</strong> = commission on{' '}
-                      <code>min(totalDeposit, €10,000)</code> — paid at the normal settlement date.
-                    </li>
-                    <li>
-                      <strong>Pending amount</strong> = commission on{' '}
-                      <code>max(totalDeposit − €10,000, 0)</code> — held and released in two
-                      milestones.
-                    </li>
-                  </ul>
-                </div>
-
-                <p style={{ marginTop: 16 }}>
-                  <strong>Staged release milestones for the pending portion:</strong>
-                </p>
-                <table className="simple-table" style={{ marginTop: 8 }}>
-                  <thead>
-                    <tr>
-                      <th>Milestone</th>
-                      <th>Release</th>
-                      <th>Required conditions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Day 7</td>
-                      <td>50 % of pending</td>
-                      <td>
-                        Second documented two-way contact on a <em>different calendar day</em> from
-                        the first + no manipulation flags.
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Day 30</td>
-                      <td>Remaining 50 %</td>
-                      <td>
-                        No early full withdrawal (≥ 80 % of deposit) + no open manipulation flags.
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <p style={{ marginTop: 16 }}>
-                  <strong>Automatic cancellation of pending amount if:</strong>
-                </p>
-                <ul className="commission-rules__list">
-                  <li>A manipulation flag is raised at any point before full release.</li>
-                  <li>
-                    Required contact evidence is missing or cannot be verified by the audit team.
-                  </li>
-                  <li>Client withdraws ≥ 80 % of the deposit before the Day-30 milestone.</li>
-                </ul>
-
-                <div className="commission-rules__examples" style={{ marginTop: 20 }}>
-                  <div className="commission-rules__example is-valid">
-                    <strong>Example A — deposit above threshold (€50,000)</strong>
-                    <ul className="commission-rules__list" style={{ marginTop: 6 }}>
-                      <li>Total deposit: €50,000</li>
-                      <li>Immediate portion: commission on €10,000 → paid at normal settlement.</li>
-                      <li>Pending portion: commission on €40,000 → held.</li>
-                      <li>
-                        Day-7 release: 50 % of pending commission (on €20,000) if second contact
-                        verified + no flags.
-                      </li>
-                      <li>
-                        Day-30 release: remaining 50 % of pending commission (on €20,000) if no
-                        early withdrawal + no flags.
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className="commission-rules__example is-valid">
-                    <strong>Example B — deposit below threshold (€8,000)</strong>
-                    <ul className="commission-rules__list" style={{ marginTop: 6 }}>
-                      <li>Total deposit: €8,000 (below the €10,000 threshold).</li>
-                      <li>
-                        Rule 5 does <em>not</em> apply — standard commission rules (Rules 1–4)
-                        govern this deposit.
-                      </li>
-                      <li>
-                        Full commission is eligible immediately, subject to normal validation.
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </RuleAccordion>
+              })()}
             </div>
           </section>
 
