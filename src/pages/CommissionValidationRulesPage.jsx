@@ -1,5 +1,89 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getPublicShareOrigin } from '../utils/publicShareOrigin'
+
+const COMMISSION_SHEET_ID = '1QibZA-cpp7j6c_NTrQyQeAfh3vsC8g-s2L1Bx55bk24'
+const COMMISSION_SHEET_GID = '1500578496'
+
+const DEFAULT_RULES_SOURCE = {
+  title: 'Deposit Validation Rules',
+  sections: [
+    {
+      heading: 'Client Contact Requirement',
+      lines: [
+        'A deposit will be considered valid only if there has been contact with the client within 30 days.',
+        'Exception: If the client has requested to be contacted at a later date, this must be properly documented.',
+      ],
+    },
+    {
+      heading: 'Accepted Proof of Contact',
+      lines: [
+        'Contact must be recorded through one of the following:',
+        '- An effective call in Voiso lasting over 90 seconds',
+        '- A message in Convrs',
+        '- A personal WhatsApp message (must include a screenshot showing the client name/phone number, date, and time)',
+      ],
+    },
+    {
+      heading: 'Funded Accounts & Withdrawals',
+      lines: [
+        'If a client funds an account but later withdraws, the withdrawal will not be counted if the original deposit was not validated.',
+      ],
+    },
+    {
+      heading: 'Voicemail Policy',
+      lines: [
+        'Voicemails must not exceed 90 seconds.',
+        'Leaving longer voicemails to qualify as an effective call will be considered an attempt to manipulate the system.',
+        'In such cases, the commission will be reduced by 100%.',
+        'If leaving a voicemail, ensure it is clear and short.',
+      ],
+    },
+  ],
+}
+
+function buildSheetCsvUrl() {
+  return `https://docs.google.com/spreadsheets/d/${COMMISSION_SHEET_ID}/export?format=csv&gid=${COMMISSION_SHEET_GID}`
+}
+
+function parseRulesFromCsvText(csvText) {
+  const rows = String(csvText || '')
+    .replace(/\r/g, '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+
+  if (!rows.length) return null
+
+  const title = rows[0]
+  const sections = []
+  let current = null
+
+  const looksLikeHeading = (line) => {
+    if (!line) return false
+    if (line.startsWith('-')) return false
+    if (line.includes(':')) return false
+    if (line.length > 72) return false
+    return true
+  }
+
+  for (const line of rows.slice(1)) {
+    if (looksLikeHeading(line)) {
+      if (current) sections.push(current)
+      current = { heading: line, lines: [] }
+      continue
+    }
+
+    if (!current) {
+      current = { heading: 'Operational Notes', lines: [] }
+    }
+    current.lines.push(line)
+  }
+
+  if (current) sections.push(current)
+  if (!sections.length) return null
+
+  return { title, sections }
+}
 
 const KPI_CARDS = [
   { label: 'Valid Contact Window', value: '30 Days' },
@@ -98,6 +182,9 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
   const [faqOpen, setFaqOpen] = useState(() => new Set())
   const [isSharing, setIsSharing] = useState(false)
   const [shareStatus, setShareStatus] = useState('')
+  const [rulesSource, setRulesSource] = useState(DEFAULT_RULES_SOURCE)
+  const [rulesSourceLoading, setRulesSourceLoading] = useState(false)
+  const [rulesSourceError, setRulesSourceError] = useState('')
 
   const futureMetrics = useMemo(
     () => [
@@ -117,6 +204,38 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
       return next
     })
   }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRulesSource() {
+      setRulesSourceLoading(true)
+      setRulesSourceError('')
+
+      try {
+        const resp = await fetch(buildSheetCsvUrl(), { cache: 'no-store' })
+        if (!resp.ok) throw new Error('Unable to load Google Sheet rules source')
+
+        const text = await resp.text()
+        const parsed = parseRulesFromCsvText(text)
+        if (!parsed) throw new Error('Google Sheet rules source is empty or malformed')
+
+        if (!cancelled) setRulesSource(parsed)
+      } catch {
+        if (!cancelled) {
+          setRulesSource(DEFAULT_RULES_SOURCE)
+          setRulesSourceError('Live source unavailable: using baseline rules snapshot.')
+        }
+      } finally {
+        if (!cancelled) setRulesSourceLoading(false)
+      }
+    }
+
+    loadRulesSource()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const navItems = [
     { id: 'commission-hero', label: 'Overview' },
@@ -299,92 +418,154 @@ export default function CommissionValidationRulesPage({ publicMode = false }) {
               <div className="card-block-header">
                 <div>
                   <p className="eyebrow">Policy Rules</p>
-                  <h3>Operational Validation Logic</h3>
+                  <h3>{rulesSource?.title || 'Operational Validation Logic'}</h3>
                   <p className="muted">
-                    Use these rules as the operational source of truth for eligibility and
-                    governance.
+                    Source: Google Sheets commissions structure (live import with fallback).
                   </p>
+                  {rulesSourceLoading ? (
+                    <p className="muted" style={{ marginTop: 6 }}>
+                      Syncing latest rules source...
+                    </p>
+                  ) : null}
+                  {rulesSourceError ? (
+                    <p className="muted" style={{ marginTop: 6 }}>
+                      {rulesSourceError}
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
+              {(rulesSource?.sections || []).map((section, idx) => {
+                const lines = Array.isArray(section?.lines) ? section.lines : []
+                const bulletLines = lines.filter((line) => String(line).trim().startsWith('-'))
+                const textLines = lines.filter((line) => !String(line).trim().startsWith('-'))
+                const isAlert = /voicemail|manipulation|forfeiture/i.test(
+                  `${section?.heading || ''} ${lines.join(' ')}`
+                )
+
+                return (
+                  <RuleAccordion
+                    key={`${section?.heading || 'rule'}-${idx}`}
+                    id={`rule-${idx + 1}`}
+                    title={`Rule ${idx + 1} - ${section?.heading || `Policy ${idx + 1}`}`}
+                    defaultOpen={idx === 0}
+                    alert={isAlert}
+                  >
+                    {textLines.map((line, lineIdx) => (
+                      <p key={`txt-${idx}-${lineIdx}`}>{line}</p>
+                    ))}
+
+                    {bulletLines.length ? (
+                      <ul className="commission-rules__list">
+                        {bulletLines.map((line, lineIdx) => (
+                          <li key={`li-${idx}-${lineIdx}`}>{line.replace(/^\-\s*/, '')}</li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </RuleAccordion>
+                )
+              })}
+
+              {/* ── Rule 5: Large Single-Client Deposit ── */}
               <RuleAccordion
-                id="rule-1"
-                title="Rule 1 - Deposit Validation Requirement"
-                defaultOpen
+                id="rule-5"
+                title="Rule 5 - Large Single-Client Deposit (≥ €10,000)"
+                defaultOpen={false}
               >
-                <ul className="commission-rules__list">
-                  <li>documented contact within 30 days</li>
-                  <li>accepted validation methods:</li>
-                  <li className="commission-rules__subpoint">Voiso effective calls (&gt;90 sec)</li>
-                  <li className="commission-rules__subpoint">
-                    Convrs documented engagement (two-way interaction)
-                  </li>
-                  <li className="commission-rules__subpoint">Personal WhatsApp proof</li>
-                </ul>
-
-                <div className="commission-rules__examples">
-                  <div className="commission-rules__example is-valid">
-                    <p>Valid example</p>
-                    <span>
-                      Agent call on Voiso lasts 01m52s, client asks clarifying question, follow-up
-                      note is timestamped before deposit.
-                    </span>
-                  </div>
-                  <div className="commission-rules__example is-invalid">
-                    <p>Invalid example</p>
-                    <span>
-                      Missed call with no response and no two-way evidence marked as validated
-                      contact.
-                    </span>
-                  </div>
-                </div>
-              </RuleAccordion>
-
-              <RuleAccordion id="rule-2" title="Rule 2 - Exceptions">
                 <p>
-                  Documented exception handling applies when standard validation timing cannot be
-                  met but traceable client intent exists.
+                  When a single client makes a deposit (or cumulative deposits within the same
+                  30-day window) totalling <strong>€10,000 or more</strong>, the commission is split
+                  into an <em>immediate</em> portion and a <em>staged-release</em> portion. Multiple
+                  deposits by the same client within the same 30-day window are aggregated for the
+                  purpose of this rule.
                 </p>
-                <p className="commission-rules__inlineExample">
-                  Example: “Client asked to be contacted next month” → eligible if recorded.
-                </p>
-                <span className="commission-rules__badge">Management Review Override</span>
-              </RuleAccordion>
 
-              <RuleAccordion id="rule-3" title="Rule 3 - Funded Accounts & Withdrawals">
-                <p>
-                  Funded account commission treatment remains dependent on validation status.
-                  Withdrawal activity does not bypass validation requirements.
-                </p>
                 <div className="commission-rules__noteBox">
-                  Deposits not validated under policy do not generate commission eligibility.
+                  <strong>Formula</strong>
+                  <ul className="commission-rules__list" style={{ marginTop: 8 }}>
+                    <li>
+                      <strong>Immediate commission</strong> = commission on{' '}
+                      <code>min(totalDeposit, €10,000)</code> — paid at the normal settlement date.
+                    </li>
+                    <li>
+                      <strong>Pending amount</strong> = commission on{' '}
+                      <code>max(totalDeposit − €10,000, 0)</code> — held and released in two
+                      milestones.
+                    </li>
+                  </ul>
                 </div>
-              </RuleAccordion>
 
-              <RuleAccordion id="rule-4" title="Rule 4 - Voicemail Policy" alert>
-                <div className="commission-rules__fraudHeader">
-                  <span className="commission-rules__alertBadge">Anti-Manipulation Control</span>
-                </div>
+                <p style={{ marginTop: 16 }}>
+                  <strong>Staged release milestones for the pending portion:</strong>
+                </p>
+                <table className="simple-table" style={{ marginTop: 8 }}>
+                  <thead>
+                    <tr>
+                      <th>Milestone</th>
+                      <th>Release</th>
+                      <th>Required conditions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Day 7</td>
+                      <td>50 % of pending</td>
+                      <td>
+                        Second documented two-way contact on a <em>different calendar day</em> from
+                        the first + no manipulation flags.
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>Day 30</td>
+                      <td>Remaining 50 %</td>
+                      <td>
+                        No early full withdrawal (≥ 80 % of deposit) + no open manipulation flags.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <p style={{ marginTop: 16 }}>
+                  <strong>Automatic cancellation of pending amount if:</strong>
+                </p>
                 <ul className="commission-rules__list">
-                  <li>Voicemail does not qualify as effective call</li>
-                  <li>Must remain brief</li>
-                  <li>Long voicemail manipulation triggers 100% forfeiture on affected cases</li>
+                  <li>A manipulation flag is raised at any point before full release.</li>
+                  <li>
+                    Required contact evidence is missing or cannot be verified by the audit team.
+                  </li>
+                  <li>Client withdraws ≥ 80 % of the deposit before the Day-30 milestone.</li>
                 </ul>
 
-                <div className="commission-rules__examples">
+                <div className="commission-rules__examples" style={{ marginTop: 20 }}>
                   <div className="commission-rules__example is-valid">
-                    <p>{publicMode ? 'Acceptable voicemail' : '✅ acceptable voicemail'}</p>
-                    <span>
-                      12-second courtesy voicemail noting call-back availability, followed by proper
-                      two-way interaction in a separate contact.
-                    </span>
+                    <strong>Example A — deposit above threshold (€50,000)</strong>
+                    <ul className="commission-rules__list" style={{ marginTop: 6 }}>
+                      <li>Total deposit: €50,000</li>
+                      <li>Immediate portion: commission on €10,000 → paid at normal settlement.</li>
+                      <li>Pending portion: commission on €40,000 → held.</li>
+                      <li>
+                        Day-7 release: 50 % of pending commission (on €20,000) if second contact
+                        verified + no flags.
+                      </li>
+                      <li>
+                        Day-30 release: remaining 50 % of pending commission (on €20,000) if no
+                        early withdrawal + no flags.
+                      </li>
+                    </ul>
                   </div>
-                  <div className="commission-rules__example is-invalid">
-                    <p>{publicMode ? 'Manipulation example' : '❌ manipulation example'}</p>
-                    <span>
-                      Repeated long voicemail drops logged as “effective calls” to force commission
-                      validation status.
-                    </span>
+
+                  <div className="commission-rules__example is-valid">
+                    <strong>Example B — deposit below threshold (€8,000)</strong>
+                    <ul className="commission-rules__list" style={{ marginTop: 6 }}>
+                      <li>Total deposit: €8,000 (below the €10,000 threshold).</li>
+                      <li>
+                        Rule 5 does <em>not</em> apply — standard commission rules (Rules 1–4)
+                        govern this deposit.
+                      </li>
+                      <li>
+                        Full commission is eligible immediately, subject to normal validation.
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </RuleAccordion>
