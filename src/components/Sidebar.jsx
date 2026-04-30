@@ -219,6 +219,7 @@ export default function Sidebar({
             'whatsappPerformance',
             'trustpilotGuide',
             'commissionValidationRules',
+            'salesMonitoring',
             'orgChart',
             'upload',
           ])
@@ -263,20 +264,15 @@ export default function Sidebar({
           disabled: disabled('segmentComposition'),
         },
         {
-          key: 'salesAgentsMonitor',
-          label: t('sidebar.salesAgentsMonitor'),
-          icon: 'users',
-          active: view === 'salesAgentsMonitor',
-          onClick: () => navigate('salesAgentsMonitor'),
-          disabled: disabled('salesAgentsMonitor'),
-        },
-        {
-          key: 'commissionValidationRules',
-          label: 'Commission Validation Rules',
-          icon: 'shield',
-          active: view === 'commissionValidationRules',
-          onClick: () => navigate('commissionValidationRules'),
-          disabled: disabled('commissionValidationRules'),
+          key: 'salesMonitoring',
+          label: 'Monitoring',
+          icon: 'chart',
+          active:
+            view === 'salesMonitoring' ||
+            view === 'salesAgentsMonitor' ||
+            view === 'commissionValidationRules',
+          onClick: () => navigate('salesMonitoring'),
+          disabled: disabled('salesMonitoring'),
         },
         {
           key: 'emailMasterTemplate',

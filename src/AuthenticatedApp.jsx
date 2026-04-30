@@ -43,6 +43,7 @@ const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMaster
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
 const CommissionValidationRulesPage = lazy(() => import('./pages/CommissionValidationRulesPage'))
+const SalesMonitoringPage = lazy(() => import('./pages/SalesMonitoringPage'))
 const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
@@ -191,6 +192,7 @@ export default function AuthenticatedApp() {
       primeChallengeRanking: '/prime-challenge/ranking',
       primeChallengeWidget: '/prime-challenge/widget',
       commissionValidationRules: '/compliance/commission-validation-rules',
+      salesMonitoring: '/sales/monitoring',
       segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
       emailMasterTemplate: '/retention/email-master-template',
@@ -236,6 +238,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/prime-challenge/widget')) return 'primeChallengeWidget'
     if (pathname.startsWith('/compliance/commission-validation-rules'))
       return 'commissionValidationRules'
+    if (pathname.startsWith('/sales/monitoring')) return 'salesMonitoring'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
     if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
@@ -576,6 +579,7 @@ export default function AuthenticatedApp() {
       commissionValidationRules: 'commission-validation-rules',
       segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
+      salesMonitoring: 'sales-monitoring',
       emailMasterTemplate: 'retention-email-master-template',
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
@@ -659,6 +663,7 @@ export default function AuthenticatedApp() {
               ) : null}
               {view === 'primeChallengeWidget' ? <PrimeChallengeWidgetPage /> : null}
               {view === 'commissionValidationRules' ? <CommissionValidationRulesPage /> : null}
+              {view === 'salesMonitoring' ? <SalesMonitoringPage /> : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
               {view === 'emailMasterTemplate' ? <EmailMasterTemplatePage /> : null}

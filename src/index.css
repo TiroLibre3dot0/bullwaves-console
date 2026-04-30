@@ -317,6 +317,72 @@
   box-shadow: var(--shadow-glow);
 }
 
+/* Sales Monitoring wrapper */
+.sales-monitoring {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.sales-monitoring__header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--bg-surface, #0d1117);
+  border-bottom: 1px solid var(--border-primary, rgba(148, 163, 184, 0.12));
+  backdrop-filter: blur(8px);
+}
+
+.sales-monitoring__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.sales-monitoring__macro {
+  color: var(--text-secondary, rgba(148, 163, 184, 0.7));
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sales-monitoring__sep {
+  color: var(--text-secondary, rgba(148, 163, 184, 0.4));
+  font-size: 14px;
+}
+
+.sales-monitoring__section {
+  color: var(--text-primary, #f1f5f9);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sales-monitoring__pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sales-monitoring__pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 16px;
+  letter-spacing: 0.02em;
+}
+
+.sales-monitoring__body {
+  flex: 1;
+}
+
 /* Commission Validation Rules page */
 .commission-rules {
   padding: 18px;
