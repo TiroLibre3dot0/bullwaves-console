@@ -414,10 +414,11 @@ export default function SalesAgentsMonitor() {
       }
       rec.clients += 1
       if (Number(c?.totalTrades || 0) > 0) rec.activeClients += 1
-      rec.deposit += Number(c?.totalDeposit || 0)
-      rec.withdrawals += Number(c?.totalWithdrawals || 0)
-      rec.net += Number(c?.netDeposit || 0)
-      rec.closedPL += Number(c?.closedPL || 0)
+      // Creolabs inverted-sign convention: negate financial values so positive = good for Bullwaves
+      rec.deposit += -Number(c?.totalDeposit || 0)
+      rec.withdrawals += -Number(c?.totalWithdrawals || 0)
+      rec.net += -Number(c?.netDeposit || 0)
+      rec.closedPL += -Number(c?.closedPL || 0)
       rec.trades += Number(c?.totalTrades || 0)
       map.set(agent, rec)
     }
@@ -469,7 +470,8 @@ export default function SalesAgentsMonitor() {
       const p = extractPeriod(row)
       if (!p?.periodKey || (p.periodKey !== latest && p.periodKey !== prev)) continue
       const agent = String(row?.[userCol] || 'Unassigned').trim() || 'Unassigned'
-      const netValue = parseNumberSafe(row?.[netCol])
+      // Creolabs inverted-sign convention
+      const netValue = -parseNumberSafe(row?.[netCol])
       const rec = byAgent.get(agent) || { latest: 0, prev: 0 }
       if (p.periodKey === latest) rec.latest += netValue
       if (p.periodKey === prev) rec.prev += netValue
@@ -654,9 +656,10 @@ export default function SalesAgentsMonitor() {
       }
       rec.clients += 1
       if (Number(c?.totalTrades || 0) > 0) rec.activeClients += 1
-      rec.deposit += Number(c?.totalDeposit || 0)
-      rec.withdrawals += Number(c?.totalWithdrawals || 0)
-      rec.net += Number(c?.netDeposit || 0)
+      // Creolabs inverted-sign convention
+      rec.deposit += -Number(c?.totalDeposit || 0)
+      rec.withdrawals += -Number(c?.totalWithdrawals || 0)
+      rec.net += -Number(c?.netDeposit || 0)
       rec.trades += Number(c?.totalTrades || 0)
       countryMap.set(country, rec)
     }
