@@ -811,6 +811,37 @@ export default function SalesAgentsMonitor() {
   const personalCountryMetricLabel =
     selectedAgentCountryBreakdown[0]?.metricLabel === 'net' ? 'net deposit' : 'deposit'
 
+  const [headerOpen, setHeaderOpen] = useState({
+    desc: true,
+    time: true,
+    agent: true,
+    snapshot: true,
+  })
+  const toggleHeader = (key) => setHeaderOpen((prev) => ({ ...prev, [key]: !prev[key] }))
+
+  const miniCardStyle = {
+    borderRadius: 14,
+    border: '1px solid rgba(148,163,184,0.14)',
+    background: 'linear-gradient(180deg, rgba(15,23,42,0.92), rgba(8,15,30,0.82))',
+    overflow: 'hidden',
+  }
+  const miniCardHeadStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '10px 14px',
+    cursor: 'pointer',
+    userSelect: 'none',
+    gap: 8,
+  }
+  const miniCardTitleStyle = {
+    margin: 0,
+    fontSize: 13,
+    fontWeight: 800,
+    color: 'var(--text-primary)',
+  }
+  const miniCardBodyStyle = { padding: '0 14px 14px' }
+
   return (
     <div
       ref={pageRootRef}
@@ -834,165 +865,174 @@ export default function SalesAgentsMonitor() {
       <div className="sales-agent-monitor-main">
         <header
           className="page-header sales-agent-monitor-header"
-          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+            gap: 10,
+            alignItems: 'start',
+          }}
         >
-          <div className="sales-agent-monitor-hero">
-            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--intro">
-              <p className="page-label">{t('salesAgentsMonitor.section')}</p>
-              <h1 className="page-title">{t('salesAgentsMonitor.title')}</h1>
-              <p className="page-subtitle">{t('salesAgentsMonitor.subtitle')}</p>
-              <div className="sales-agent-monitor-sourceRow">
-                <span className="sales-agent-monitor-sourceLabel">Source</span>
-                <span className="sales-agent-monitor-sourceValue">
-                  {fileName || t('salesAgentsMonitor.dataSource')}
-                </span>
+          {/* ── Card 1: Descrizione ── */}
+          <div style={miniCardStyle}>
+            <div
+              style={miniCardHeadStyle}
+              onClick={() => toggleHeader('desc')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && toggleHeader('desc')}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>📊</span>
+                <h2 style={miniCardTitleStyle}>{t('salesAgentsMonitor.title')}</h2>
               </div>
-              <div className="sales-agent-monitor-chipRow">
-                <span className="sales-agent-monitor-chip">Periodo: {periodSummaryText}</span>
-                <span className="sales-agent-monitor-chip">
-                  Agenti visibili: {fmtInt(salesAgentKpis.agents)}
-                </span>
-                <span className="sales-agent-monitor-chip">
-                  Clienti attivi: {fmtInt(activeRatePct)}%
-                </span>
-                <span className="sales-agent-monitor-chip sales-agent-monitor-chip--accent">
-                  {isPersonalMode ? `Focus: ${selectedAgentName}` : 'Vista team'}
-                </span>
-              </div>
-            </section>
-
-            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--filters">
-              <div className="sales-agent-monitor-panelHeader">
-                <div>
-                  <p style={sectionEyebrowStyle}>Controlli</p>
-                  <h2 style={sectionTitleStyle}>Filtro e focus</h2>
-                  <p style={sectionSubtitleStyle}>
-                    Riduci il rumore scegliendo periodo, team o singolo agente.
-                  </p>
-                </div>
-              </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: 12,
-                  width: '100%',
-                }}
-              >
-                <div
-                  className="ranking-filter-field"
-                  style={{
-                    minWidth: 0,
-                    padding: 12,
-                    borderRadius: 14,
-                    background: 'linear-gradient(180deg, rgba(15,23,42,0.88), rgba(8,15,30,0.78))',
-                    border: '1px solid rgba(56,189,248,0.16)',
-                    boxShadow: '0 10px 28px rgba(2, 8, 23, 0.18)',
-                  }}
-                >
+              <span style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1 }}>
+                {headerOpen.desc ? '▲' : '▼'}
+              </span>
+            </div>
+            {headerOpen.desc && (
+              <div style={miniCardBodyStyle}>
+                <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: 12, lineHeight: 1.6 }}>
+                  {t('salesAgentsMonitor.subtitle')}
+                </p>
+                {fileName ? (
                   <div
                     style={{
+                      marginTop: 8,
                       display: 'flex',
-                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      gap: 10,
+                      gap: 6,
                       flexWrap: 'wrap',
-                      marginBottom: 8,
                     }}
                   >
-                    <span className="ranking-filter-label" style={{ marginBottom: 0 }}>
-                      Periodo
+                    <span
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 900,
+                        color: 'rgba(148,163,184,0.6)',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                      }}
+                    >
+                      Source
                     </span>
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        flexWrap: 'wrap',
-                      }}
+                    <span
+                      style={{ fontSize: 11, fontWeight: 700, color: 'rgba(186,230,253,0.88)' }}
                     >
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: 999,
-                          background: 'rgba(34,211,238,0.12)',
-                          border: '1px solid rgba(34,211,238,0.22)',
-                          color: 'rgba(186,230,253,0.96)',
-                          fontSize: 11,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {periodSummaryText}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTimeframe('last12')
-                          setSelectedMonthKey('')
-                        }}
-                        style={{
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: 'rgba(255,255,255,0.86)',
-                          borderRadius: 999,
-                          padding: '4px 8px',
-                          fontSize: 11,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Reset
-                      </button>
-                    </div>
+                      {fileName}
+                    </span>
                   </div>
+                ) : null}
+                <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  <span
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(34,211,238,0.10)',
+                      border: '1px solid rgba(34,211,238,0.18)',
+                      color: 'rgba(186,230,253,0.88)',
+                      fontSize: 11,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {periodSummaryText}
+                  </span>
+                  <span
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(34,211,238,0.10)',
+                      border: '1px solid rgba(34,211,238,0.18)',
+                      color: 'rgba(186,230,253,0.88)',
+                      fontSize: 11,
+                      fontWeight: 800,
+                    }}
+                  >
+                    {isPersonalMode ? `Focus: ${selectedAgentName}` : 'Vista team'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
 
-                  {periodAvailable ? (
+          {/* ── Card 2: Filtro Temporale ── */}
+          <div style={miniCardStyle}>
+            <div
+              style={miniCardHeadStyle}
+              onClick={() => toggleHeader('time')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && toggleHeader('time')}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>🗓️</span>
+                <h2 style={miniCardTitleStyle}>Filtro Temporale</h2>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    padding: '2px 7px',
+                    borderRadius: 999,
+                    background: 'rgba(34,211,238,0.12)',
+                    border: '1px solid rgba(34,211,238,0.22)',
+                    color: 'rgba(186,230,253,0.96)',
+                    fontSize: 10,
+                    fontWeight: 800,
+                  }}
+                >
+                  {periodSummaryText}
+                </span>
+                <span style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1 }}>
+                  {headerOpen.time ? '▲' : '▼'}
+                </span>
+              </div>
+            </div>
+            {headerOpen.time && (
+              <div style={miniCardBodyStyle}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  <div>
                     <div
                       style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: 8,
+                        marginBottom: 5,
+                        color: 'var(--text-muted)',
+                        fontSize: 10,
+                        fontWeight: 900,
+                        letterSpacing: 0.4,
+                        textTransform: 'uppercase',
                       }}
                     >
-                      <div style={{ minWidth: 0 }}>
+                      Vista
+                    </div>
+                    <select
+                      value={timeframe === 'month' || timeframe === 'year' ? 'custom' : timeframe}
+                      onChange={(e) => {
+                        const next = String(e.target.value || 'last12')
+                        if (next === 'custom') {
+                          setTimeframe(selectedMonthKey ? 'month' : 'year')
+                          return
+                        }
+                        setTimeframe(next)
+                        if (next === 'all' || next === 'last12') setSelectedMonthKey('')
+                      }}
+                      className="search-hero-input ranking-filter-input"
+                      style={{ minHeight: 34, width: '100%' }}
+                    >
+                      <option value="last12">Ultimi 12 mesi</option>
+                      <option value="custom">Personalizzato</option>
+                      <option value="all">Tutti</option>
+                    </select>
+                  </div>
+                  {periodAvailable ? (
+                    <>
+                      <div>
                         <div
                           style={{
-                            marginBottom: 6,
-                            color: 'var(--text-muted)',
-                            fontSize: 10,
-                            fontWeight: 900,
-                            letterSpacing: 0.4,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          Vista
-                        </div>
-                        <select
-                          value={
-                            timeframe === 'month' || timeframe === 'year' ? 'custom' : timeframe
-                          }
-                          onChange={(e) => {
-                            const next = String(e.target.value || 'last12')
-                            if (next === 'custom') {
-                              setTimeframe(selectedMonthKey ? 'month' : 'year')
-                              return
-                            }
-                            setTimeframe(next)
-                            if (next === 'all' || next === 'last12') setSelectedMonthKey('')
-                          }}
-                          className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
-                        >
-                          <option value="last12">Ultimi 12 mesi</option>
-                          <option value="custom">Personalizzato</option>
-                          <option value="all">Tutti</option>
-                        </select>
-                      </div>
-
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            marginBottom: 6,
+                            marginBottom: 5,
                             color: 'var(--text-muted)',
                             fontSize: 10,
                             fontWeight: 900,
@@ -1011,7 +1051,7 @@ export default function SalesAgentsMonitor() {
                             if (year) setTimeframe('year')
                           }}
                           className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
+                          style={{ minHeight: 34, width: '100%' }}
                         >
                           {yearOptions.map((year) => (
                             <option key={`year-${year}`} value={year}>
@@ -1020,11 +1060,10 @@ export default function SalesAgentsMonitor() {
                           ))}
                         </select>
                       </div>
-
-                      <div style={{ minWidth: 0 }}>
+                      <div>
                         <div
                           style={{
-                            marginBottom: 6,
+                            marginBottom: 5,
                             color: 'var(--text-muted)',
                             fontSize: 10,
                             fontWeight: 900,
@@ -1047,7 +1086,7 @@ export default function SalesAgentsMonitor() {
                             setTimeframe('month')
                           }}
                           className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
+                          style={{ minHeight: 34, width: '100%' }}
                           disabled={!selectedYear}
                         >
                           <option value="">Tutti i mesi</option>
@@ -1061,110 +1100,188 @@ export default function SalesAgentsMonitor() {
                           })}
                         </select>
                       </div>
-                    </div>
+                    </>
                   ) : null}
                 </div>
-
-                <div
-                  className="ranking-filter-field ranking-filter-field--agent"
-                  style={{ minWidth: 0, flexShrink: 0 }}
-                >
-                  <span className="ranking-filter-label">
-                    {t('salesAgentsMonitor.filterByAgent')}
-                  </span>
-                  <label
+                <div style={{ marginTop: 8, textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTimeframe('last12')
+                      setSelectedMonthKey('')
+                    }}
                     style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 8,
-                      fontSize: 12,
-                      color: 'var(--text-muted)',
-                      fontWeight: 700,
+                      border: '1px solid rgba(255,255,255,0.12)',
+                      background: 'rgba(255,255,255,0.04)',
+                      color: 'rgba(255,255,255,0.78)',
+                      borderRadius: 999,
+                      padding: '3px 10px',
+                      fontSize: 11,
+                      fontWeight: 800,
                       cursor: 'pointer',
                     }}
                   >
-                    <input
-                      type="checkbox"
-                      checked={focusSalesTeamOnly}
-                      onChange={(e) => setFocusSalesTeamOnly(Boolean(e.target.checked))}
-                      style={{ accentColor: 'var(--accent-primary)' }}
-                    />
-                    <span>
-                      {t('salesAgentsMonitor.focusSalesTeamOnly')} ({salesTeamLookup.size})
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    className="search-hero-input ranking-filter-input"
-                    value={agentSearch}
-                    onChange={(e) => setAgentSearch(String(e.target.value || ''))}
-                    placeholder={t('salesAgentsMonitor.searchAgents')}
-                  />
-                  <select
-                    value={selectedAgentName}
-                    onChange={(e) => {
-                      const value = String(e.target.value || '')
-                      setSelectedAgents(value ? [value] : [])
-                    }}
-                    className="search-hero-input ranking-filter-input ranking-filter-agents"
-                    style={{ minHeight: 40 }}
-                  >
-                    <option value="">{t('salesAgentsMonitor.personal.selectPlaceholder')}</option>
-                    {filteredAgentOptions.map((a) => (
-                      <option key={String(a)} value={String(a)}>
-                        {a}
-                      </option>
-                    ))}
-                  </select>
+                    Reset
+                  </button>
                 </div>
               </div>
-            </section>
+            )}
           </div>
 
-          <section className="sales-agent-monitor-kpiShell">
-            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 10 }}>
-              <div>
-                <p style={sectionEyebrowStyle}>Sintesi</p>
-                <h2 style={sectionTitleStyle}>Snapshot operativo</h2>
+          {/* ── Card 3: Filtro by Agent ── */}
+          <div style={miniCardStyle}>
+            <div
+              style={miniCardHeadStyle}
+              onClick={() => toggleHeader('agent')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && toggleHeader('agent')}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>👤</span>
+                <h2 style={miniCardTitleStyle}>Filtro Agente</h2>
               </div>
-              <p className="sales-agent-monitor-kpiNote">
-                Depositi, net e copertura attiva aggiornati sul perimetro filtrato.
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {selectedAgentName ? (
+                  <span
+                    style={{
+                      padding: '2px 7px',
+                      borderRadius: 999,
+                      background: 'rgba(16,185,129,0.12)',
+                      border: '1px solid rgba(16,185,129,0.22)',
+                      color: 'rgba(167,243,208,0.96)',
+                      fontSize: 10,
+                      fontWeight: 800,
+                      maxWidth: 100,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {selectedAgentName}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', fontWeight: 700 }}>
+                    Team
+                  </span>
+                )}
+                <span style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1 }}>
+                  {headerOpen.agent ? '▲' : '▼'}
+                </span>
+              </div>
             </div>
-            <div className="sales-agent-monitor-kpiGrid">
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.agents')}
-                value={fmtInt(salesAgentKpis.agents)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.activeClients')}
-                value={fmtInt(salesAgentKpis.activeClients)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.totalDeposit')}
-                value={fmtMoney0(salesAgentKpis.totalDeposit)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.totalNet')}
-                value={fmtMoney0(salesAgentKpis.totalNet)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.avgNetPerAgent')}
-                value={fmtMoney0(salesAgentKpis.avgNetPerAgent)}
-                size="sm"
-                density="compact"
-              />
+            {headerOpen.agent && (
+              <div style={miniCardBodyStyle}>
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 7,
+                    marginBottom: 8,
+                    fontSize: 12,
+                    color: 'var(--text-muted)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={focusSalesTeamOnly}
+                    onChange={(e) => setFocusSalesTeamOnly(Boolean(e.target.checked))}
+                    style={{ accentColor: 'var(--accent-primary)' }}
+                  />
+                  <span>
+                    {t('salesAgentsMonitor.focusSalesTeamOnly')} ({salesTeamLookup.size})
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  className="search-hero-input ranking-filter-input"
+                  value={agentSearch}
+                  onChange={(e) => setAgentSearch(String(e.target.value || ''))}
+                  placeholder={t('salesAgentsMonitor.searchAgents')}
+                  style={{ marginBottom: 8, width: '100%' }}
+                />
+                <select
+                  value={selectedAgentName}
+                  onChange={(e) => {
+                    const value = String(e.target.value || '')
+                    setSelectedAgents(value ? [value] : [])
+                  }}
+                  className="search-hero-input ranking-filter-input"
+                  style={{ minHeight: 38, width: '100%' }}
+                >
+                  <option value="">{t('salesAgentsMonitor.personal.selectPlaceholder')}</option>
+                  {filteredAgentOptions.map((a) => (
+                    <option key={String(a)} value={String(a)}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* ── Card 4: Snapshot Operativo ── */}
+          <div style={miniCardStyle}>
+            <div
+              style={miniCardHeadStyle}
+              onClick={() => toggleHeader('snapshot')}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && toggleHeader('snapshot')}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 16 }}>⚡</span>
+                <h2 style={miniCardTitleStyle}>Snapshot Operativo</h2>
+              </div>
+              <span style={{ color: 'var(--text-muted)', fontSize: 14, lineHeight: 1 }}>
+                {headerOpen.snapshot ? '▲' : '▼'}
+              </span>
             </div>
-          </section>
+            {headerOpen.snapshot && (
+              <div style={miniCardBodyStyle}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
+                    gap: 8,
+                  }}
+                >
+                  <KpiCard
+                    label={t('salesAgentsMonitor.kpi.agents')}
+                    value={fmtInt(salesAgentKpis.agents)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.kpi.activeClients')}
+                    value={fmtInt(salesAgentKpis.activeClients)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.kpi.totalDeposit')}
+                    value={fmtMoney0(salesAgentKpis.totalDeposit)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.kpi.totalNet')}
+                    value={fmtMoney0(salesAgentKpis.totalNet)}
+                    size="sm"
+                    density="compact"
+                  />
+                  <KpiCard
+                    label={t('salesAgentsMonitor.kpi.avgNetPerAgent')}
+                    value={fmtMoney0(salesAgentKpis.avgNetPerAgent)}
+                    size="sm"
+                    density="compact"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </header>
 
         {error ? (
