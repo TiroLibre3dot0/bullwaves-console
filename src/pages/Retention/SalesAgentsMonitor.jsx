@@ -1199,9 +1199,72 @@ export default function SalesAgentsMonitor() {
                   className="search-hero-input ranking-filter-input"
                   value={agentSearch}
                   onChange={(e) => setAgentSearch(String(e.target.value || ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const top = filteredAgentOptions[0]
+                      if (top) {
+                        setSelectedAgents([top])
+                        setAgentSearch('')
+                      }
+                    } else if (e.key === 'Escape') {
+                      setAgentSearch('')
+                    }
+                  }}
                   placeholder={t('salesAgentsMonitor.searchAgents')}
-                  style={{ marginBottom: 8, width: '100%' }}
+                  style={{ marginBottom: 4, width: '100%' }}
+                  autoComplete="off"
                 />
+                {agentSearch && filteredAgentOptions.length > 0 && (
+                  <div
+                    style={{
+                      marginBottom: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      fontSize: 11,
+                      color: 'var(--text-muted)',
+                      fontWeight: 600,
+                      padding: '3px 6px',
+                      borderRadius: 8,
+                      background: 'rgba(34,211,238,0.06)',
+                      border: '1px solid rgba(34,211,238,0.14)',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setSelectedAgents([filteredAgentOptions[0]])
+                      setAgentSearch('')
+                    }}
+                    title="Clicca o premi Invio per selezionare"
+                  >
+                    <span style={{ color: 'rgba(34,211,238,0.7)', fontWeight: 800 }}>↵</span>
+                    <span>
+                      <span style={{ color: 'var(--text-muted)' }}>Seleziona: </span>
+                      <strong style={{ color: 'rgba(186,230,253,0.9)' }}>
+                        {filteredAgentOptions[0]}
+                      </strong>
+                    </span>
+                    {filteredAgentOptions.length > 1 && (
+                      <span
+                        style={{ marginLeft: 'auto', color: 'var(--text-muted)', fontSize: 10 }}
+                      >
+                        +{filteredAgentOptions.length - 1} altri
+                      </span>
+                    )}
+                  </div>
+                )}
+                {agentSearch && filteredAgentOptions.length === 0 && (
+                  <div
+                    style={{
+                      marginBottom: 8,
+                      fontSize: 11,
+                      color: 'rgba(248,113,113,0.7)',
+                      fontWeight: 600,
+                      padding: '3px 6px',
+                    }}
+                  >
+                    Nessun agente trovato
+                  </div>
+                )}
                 <select
                   value={selectedAgentName}
                   onChange={(e) => {
