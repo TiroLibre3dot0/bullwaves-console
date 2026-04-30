@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getConsoleToolByKey } from '../../../config/tools'
+import { fetchQlikSnapshot } from '../services/qlikConsoleService'
 
 const INTERNAL_REPORTS = [
   { label: 'Creolabs Breakdown', href: '/creolabs' },
@@ -17,6 +18,9 @@ function openInternal(pathname) {
 
 export default function ExternalReportsHubPage() {
   const qlikTool = useMemo(() => getConsoleToolByKey('qlik'), [])
+  const [loadingQlik, setLoadingQlik] = useState(false)
+  const [qlikError, setQlikError] = useState('')
+  const [qlikSnapshot, setQlikSnapshot] = useState(null)
 
   const qlikHref = String(qlikTool?.href || '').trim()
   const likelyBlockedByCsp = useMemo(() => {
@@ -29,6 +33,39 @@ export default function ExternalReportsHubPage() {
     if (!qlikHref) return
     window.open(qlikHref, '_blank', 'noopener,noreferrer')
   }
+
+  const refreshQlikSnapshot = async () => {
+    setLoadingQlik(true)
+    setQlikError('')
+    try {
+      const data = await fetchQlikSnapshot(15)
+      setQlikSnapshot(data)
+    } catch (e) {
+      setQlikError(e instanceof Error ? e.message : 'Errore durante il test Qlik API')
+    } finally {
+      setLoadingQlik(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshQlikSnapshot()
+  }, [])
+
+  const health = qlikSnapshot?.health || null
+  const configured = Boolean(health?.configured)
+  const mode = String(health?.mode || '').trim() || 'n/a'
+  const itemRows = Array.isArray(qlikSnapshot?.items?.data?.data)
+    ? qlikSnapshot.items.data.data
+    : Array.isArray(qlikSnapshot?.items?.data)
+      ? qlikSnapshot.items.data
+      : []
+  const appRows = Array.isArray(qlikSnapshot?.apps?.data?.data)
+    ? qlikSnapshot.apps.data.data
+    : Array.isArray(qlikSnapshot?.apps?.data)
+      ? qlikSnapshot.apps.data
+      : []
+  const qlikMissing = health?.missing && typeof health.missing === 'object' ? health.missing : {}
+  const missingKeys = Object.keys(qlikMissing).filter((k) => qlikMissing[k])
 
   return (
     <div className="page-shell">
@@ -81,6 +118,91 @@ export default function ExternalReportsHubPage() {
             ) : null}
           </div>
         )}
+      </section>
+
+      <section className="card-block" style={{ marginBottom: 20 }}>
+        <div className="card-block-header">
+          <div>
+            <p className="eyebrow">Qlik API Connection</p>
+            <h3>Stato integrazione live</h3>
+            <p className="muted">
+              Verifica real-time della connessione server-side a Qlik (OAuth M2M o API key).
+            </p>
+          </div>
+          <div>
+            <button
+              type="button"
+              className="btn"
+              onClick={refreshQlikSnapshot}
+              disabled={loadingQlik}
+            >
+              {loadingQlik ? 'Test in corso...' : 'Ricarica stato API'}
+            </button>
+          </div>
+        </div>
+
+        {qlikError ? (
+          <div
+            style={{
+              border: '1px solid rgba(239, 68, 68, 0.45)',
+              borderRadius: 12,
+              padding: 12,
+              background: 'rgba(127, 29, 29, 0.25)',
+              color: '#fecaca',
+              marginBottom: 12,
+            }}
+          >
+            {qlikError}
+          </div>
+        ) : null}
+
+        <div className="card-columns" role="list" style={{ marginBottom: 12 }}>
+          <div className="card card-global" role="listitem">
+            <div className="eyebrow">Auth Mode</div>
+            <h4 style={{ margin: '6px 0 0' }}>{mode}</h4>
+            <p className="muted" style={{ marginTop: 8 }}>
+              Stato connessione: {configured ? 'configurata' : 'non configurata'}
+            </p>
+          </div>
+
+          <div className="card card-global" role="listitem">
+            <div className="eyebrow">Items</div>
+            <h4 style={{ margin: '6px 0 0' }}>{itemRows.length}</h4>
+            <p className="muted" style={{ marginTop: 8 }}>
+              Risorse lette da /api/qlik/items
+            </p>
+          </div>
+
+          <div className="card card-global" role="listitem">
+            <div className="eyebrow">Apps</div>
+            <h4 style={{ margin: '6px 0 0' }}>{appRows.length}</h4>
+            <p className="muted" style={{ marginTop: 8 }}>
+              App lette da /api/qlik/apps
+            </p>
+          </div>
+        </div>
+
+        {!configured && missingKeys.length ? (
+          <div
+            style={{
+              border: '1px solid var(--border-primary)',
+              borderRadius: 12,
+              padding: 12,
+              background: 'rgba(15, 23, 42, 0.35)',
+            }}
+          >
+            <p className="muted" style={{ marginBottom: 8 }}>
+              Variabili mancanti lato server:
+            </p>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {missingKeys.map((k) => (
+                <li key={k} className="muted">
+                  {k}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
 
       <section className="card-block">
