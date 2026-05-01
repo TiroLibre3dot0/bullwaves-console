@@ -76,8 +76,11 @@ export default function CreolabsPage() {
   const [loadingTable, setLoadingTable] = useState(true)
   const [tableError, setTableError] = useState('')
   const [tableRows, setTableRows] = useState([])
+  const [comparisonRows, setComparisonRows] = useState([])
   const [tableMetrics, setTableMetrics] = useState([])
   const [tablePeriod, setTablePeriod] = useState('')
+  const [livePlData, setLivePlData] = useState(new Map())
+  const [loadingLivePl, setLoadingLivePl] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -119,6 +122,7 @@ export default function CreolabsPage() {
         const rawRows = Array.isArray(payload?.rows) ? payload.rows : []
         if (!rawRows.length) {
           setTableRows([])
+          setComparisonRows([])
           setTableMetrics([])
           setTablePeriod('')
           return
@@ -199,13 +203,17 @@ export default function CreolabsPage() {
           return trades * 1_000_000 + net * 100 + pl
         }
 
-        const top10 = [...byClient.values()]
-          .sort((a, b) => rankScore(b) - rankScore(a))
-          .slice(0, 10)
+        const allClients = [...byClient.values()]
+        const top10 = allClients.sort((a, b) => rankScore(b) - rankScore(a)).slice(0, 10)
+
+        const top5ByPl = [...byClient.values()]
+          .sort((a, b) => Math.abs(Number(b.metrics.pl || 0)) - Math.abs(Number(a.metrics.pl || 0)))
+          .slice(0, 5)
 
         setTablePeriod(latestPeriod)
         setTableMetrics(metrics)
         setTableRows(top10)
+        setComparisonRows(top5ByPl)
       })
       .catch((e) => {
         if (cancelled) return
@@ -213,6 +221,7 @@ export default function CreolabsPage() {
           e instanceof Error ? e.message : 'Errore durante il caricamento della tabella CREOLABS'
         )
         setTableRows([])
+        setComparisonRows([])
         setTableMetrics([])
         setTablePeriod('')
       })
@@ -220,6 +229,31 @@ export default function CreolabsPage() {
         if (!cancelled) setLoadingTable(false)
       })
 
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    setLoadingLivePl(true)
+    fetch('/api/qlik/creolabs/live-pl?limit=50&maxRows=5000')
+      .then((r) => r.json())
+      .then((body) => {
+        if (cancelled) return
+        const clients = Array.isArray(body?.data?.clients) ? body.data.clients : []
+        const map = new Map()
+        for (const c of clients) {
+          if (c.clientName) map.set(c.clientName, c.plLive)
+        }
+        setLivePlData(map)
+      })
+      .catch(() => {
+        // silently ignore – live column stays empty
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLivePl(false)
+      })
     return () => {
       cancelled = true
     }
@@ -321,7 +355,7 @@ export default function CreolabsPage() {
           </div>
         ) : loadingTable ? (
           <p className="muted">Caricamento dati di confronto…</p>
-        ) : tableRows.length === 0 ? (
+        ) : comparisonRows.length === 0 ? (
           <p className="muted">Nessun dato disponibile per il confronto.</p>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -346,9 +380,11 @@ export default function CreolabsPage() {
                 </tr>
               </thead>
               <tbody>
-                {tableRows.slice(0, 5).map((row, idx) => {
+                {comparisonRows.map((row, idx) => {
                   const plLocal = Number(row.metrics.pl || 0)
-                  const plLive = null // Placeholder per dati live
+                  const plLive = livePlData.has(row.clientName)
+                    ? livePlData.get(row.clientName)
+                    : null
                   const diffPct =
                     plLive !== null
                       ? (((plLive - plLocal) / Math.max(Math.abs(plLocal), 1)) * 100).toFixed(1)
@@ -367,9 +403,7 @@ export default function CreolabsPage() {
                           {row.clientId} / {row.clientLogin}
                         </div>
                       </td>
-                      <td style={tdStyle}>
-                        {row.clientName.split('-')[0] ? tableStats.period : '-'}
-                      </td>
+                      <td style={tdStyle}>{tableStats.period}</td>
                       <td
                         style={{
                           ...tdStyle,
@@ -397,7 +431,13 @@ export default function CreolabsPage() {
                           color: '#fbbf24',
                         }}
                       >
-                        <span style={{ opacity: 0.6 }}>—</span>
+                        {loadingLivePl ? (
+                          <span style={{ opacity: 0.4 }}>…</span>
+                        ) : plLive !== null ? (
+                          formatMetric('pl', plLive)
+                        ) : (
+                          <span style={{ opacity: 0.6 }}>—</span>
+                        )}
                       </td>
                       <td
                         style={{

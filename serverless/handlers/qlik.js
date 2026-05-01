@@ -182,34 +182,50 @@ function simplifyCell(cell) {
 }
 
 function extractSheetObjectsFromLayout(layout) {
-  const qItems = Array.isArray(layout?.qChildList?.qItems) ? layout.qChildList.qItems : []
-  const fromChildren = qItems
-    .map((item) => ({
-      id: safeText(item?.qInfo?.qId).trim(),
-      type: safeText(item?.qInfo?.qType).trim(),
-    }))
-    .filter((item) => item.id)
-
-  const cells = Array.isArray(layout?.cells) ? layout.cells : []
-  const fromCells = cells
-    .map((cell) => ({
-      id: safeText(cell?.name || cell?.qName).trim(),
-      type: '',
-    }))
-    .filter((item) => item.id)
-
   const map = new Map()
-  for (const entry of [...fromChildren, ...fromCells]) {
-    const prev = map.get(entry.id)
+  const seen = new WeakSet()
+  const rootId = safeText(layout?.qInfo?.qId).trim()
+
+  function addRef(idRaw, typeRaw = '') {
+    const id = safeText(idRaw).trim()
+    const type = safeText(typeRaw).trim()
+    if (!id || id === rootId) return
+
+    const prev = map.get(id)
     if (!prev) {
-      map.set(entry.id, entry)
-      continue
+      map.set(id, { id, type })
+      return
     }
-    if (!prev.type && entry.type) {
-      map.set(entry.id, entry)
+    if (!prev.type && type) {
+      map.set(id, { id, type })
     }
   }
 
+  function walk(node) {
+    if (!node || typeof node !== 'object') return
+    if (seen.has(node)) return
+    seen.add(node)
+
+    if (Array.isArray(node)) {
+      for (const item of node) walk(item)
+      return
+    }
+
+    addRef(node?.qInfo?.qId, node?.qInfo?.qType)
+    addRef(node?.name || node?.qName, '')
+
+    const qItems = Array.isArray(node?.qChildList?.qItems) ? node.qChildList.qItems : []
+    for (const item of qItems) walk(item)
+
+    const cells = Array.isArray(node?.cells) ? node.cells : []
+    for (const cell of cells) walk(cell)
+
+    for (const value of Object.values(node)) {
+      if (value && typeof value === 'object') walk(value)
+    }
+  }
+
+  walk(layout)
   return Array.from(map.values())
 }
 
@@ -628,6 +644,214 @@ async function handleEngineObjectData(req, res, appId, objectId) {
   }
 }
 
+async function handleEngineObjectLayout(req, res, appId, objectId) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  try {
+    const data = await withEngineSession(config, appId, async (session) => {
+      const objectResult = await session.call(session.docHandle, 'GetObject', [objectId])
+      const objectHandle = Number(objectResult?.qReturn?.qHandle || 0)
+      if (!objectHandle) throw new Error('Object not found')
+
+      const layoutResult = await session.call(objectHandle, 'GetLayout', [])
+      const layout = unwrapLayout(layoutResult)
+
+      const rootKeys = layout && typeof layout === 'object' ? Object.keys(layout).sort() : []
+      const qExtendsId = safeText(layout?.qExtendsId)
+      const qType = safeText(layout?.qInfo?.qType)
+      const qTitle = safeText(layout?.qMeta?.title)
+      const rawPath = safeText(req.query?.path).trim()
+
+      function getByPath(obj, pathStr) {
+        if (!obj || !pathStr) return undefined
+        const parts = pathStr
+          .split('.')
+          .map((p) => p.trim())
+          .filter(Boolean)
+
+        let current = obj
+        for (const part of parts) {
+          if (current == null) return undefined
+
+          const indexMatch = part.match(/^(.+)\[(\d+)\]$/)
+          if (indexMatch) {
+            const key = indexMatch[1]
+            const idx = Number(indexMatch[2])
+            current = current?.[key]
+            if (!Array.isArray(current)) return undefined
+            current = current[idx]
+            continue
+          }
+
+          current = current?.[part]
+        }
+
+        return current
+      }
+
+      // Keep payload bounded but useful for debugging custom extensions.
+      const compactLayout = {}
+      if (layout && typeof layout === 'object') {
+        for (const key of rootKeys) {
+          const value = layout[key]
+          if (value == null) {
+            compactLayout[key] = value
+            continue
+          }
+          if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+            compactLayout[key] = value
+            continue
+          }
+          if (Array.isArray(value)) {
+            compactLayout[key] = {
+              kind: 'array',
+              length: value.length,
+              sample: value.slice(0, 3),
+            }
+            continue
+          }
+          if (typeof value === 'object') {
+            compactLayout[key] = {
+              kind: 'object',
+              keys: Object.keys(value).sort(),
+            }
+          }
+        }
+      }
+
+      return {
+        id: objectId,
+        type: qType,
+        title: qTitle,
+        qExtendsId,
+        rootKeys,
+        compactLayout,
+        requestedPath: rawPath || '',
+        requestedValue: rawPath ? getByPath(layout, rawPath) : undefined,
+      }
+    })
+
+    return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Qlik Engine object layout request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+// Known object IDs for CREOLABS live data (discovered via Engine scan)
+const CREOLABS_APP_ID = 'c6f37daa-0278-42b0-ab9b-813d2b9aafeb'
+// "Previous Month" table – contains per-account PL filtered for the most recent period
+// Dims: Brand, Affiliate, User, Client Name, Client ID, Client LOGIN, LOGIN, Country
+// Meas col 5 = "$ PL", col 3 = "$ Deposit", col 4 = "$ WD", col 10 = "# Accounts"
+const CREOLABS_APR_OBJ = '53c14348-64ce-48a2-a8c7-5fcfc983be32'
+const CREOLABS_N_DIMS = 8
+const CREOLABS_COL_CLIENT_NAME = 3
+const CREOLABS_COL_CLIENT_ID = 4
+const CREOLABS_COL_PL = 13      // nDims(8) + measIdx(5)
+const CREOLABS_COL_DEPOSIT = 11 // nDims(8) + measIdx(3)
+const CREOLABS_COL_WD = 12      // nDims(8) + measIdx(4)
+const CREOLABS_COL_WIDTH = 20
+
+async function handleCreolabsLivePl(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const topN = parsePositiveInt(req.query?.limit, 10, 100)
+  const maxRows = parsePositiveInt(req.query?.maxRows, 5000, 20000)
+
+  try {
+    const data = await withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+      const objResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_APR_OBJ])
+      const h = Number(objResult?.qReturn?.qHandle || 0)
+      if (!h) throw new Error('Creolabs live PL object not found')
+
+      const layoutResult = await session.call(h, 'GetLayout', [])
+      const layout = unwrapLayout(layoutResult)
+      const cube = layout?.qHyperCube
+      const totalRows = Number(cube?.qSize?.qcy || 0)
+      const period = safeText(layout?.qMeta?.title || '')
+
+      // Aggregate by Client Name + Client ID across pages
+      const byClient = new Map()
+      const pageSize = 500
+      let fetched = 0
+      const limit = Math.min(maxRows, totalRows)
+
+      while (fetched < limit) {
+        const pages = await session.call(h, 'GetHyperCubeData', [
+          '/qHyperCubeDef',
+          [{ qTop: fetched, qLeft: 0, qHeight: pageSize, qWidth: CREOLABS_COL_WIDTH }],
+        ])
+        const matrix = Array.isArray(pages?.qDataPages?.[0]?.qMatrix) ? pages.qDataPages[0].qMatrix : []
+        if (!matrix.length) break
+
+        for (const row of matrix) {
+          if (!Array.isArray(row) || row.length < CREOLABS_COL_WIDTH) continue
+          const clientName = safeText(row[CREOLABS_COL_CLIENT_NAME]?.qText).trim()
+          const clientId = safeText(row[CREOLABS_COL_CLIENT_ID]?.qText).trim()
+          if (!clientName || clientName === '-' || clientName === 'null') continue
+
+          const plVal = row[CREOLABS_COL_PL]?.qNum
+          const depVal = row[CREOLABS_COL_DEPOSIT]?.qNum
+          const wdVal = row[CREOLABS_COL_WD]?.qNum
+
+          const key = `${clientName}|${clientId}`
+          const prev = byClient.get(key) || {
+            clientName,
+            clientId,
+            plLive: 0,
+            deposit: 0,
+            wd: 0,
+          }
+          prev.plLive += typeof plVal === 'number' && isFinite(plVal) ? plVal : 0
+          prev.deposit += typeof depVal === 'number' && isFinite(depVal) ? depVal : 0
+          prev.wd += typeof wdVal === 'number' && isFinite(wdVal) ? wdVal : 0
+          byClient.set(key, prev)
+        }
+
+        fetched += matrix.length
+        if (matrix.length < pageSize) break
+      }
+
+      const sorted = [...byClient.values()]
+        .sort((a, b) => Math.abs(b.plLive) - Math.abs(a.plLive))
+        .slice(0, topN)
+
+      return {
+        period,
+        fetchedRows: fetched,
+        uniqueClients: byClient.size,
+        totalRows,
+        clients: sorted,
+      }
+    })
+
+    return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs live PL request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
 async function routeQlik(req, res, parts) {
   const head = parts[0] || ''
 
@@ -635,6 +859,11 @@ async function routeQlik(req, res, parts) {
   if (head === 'users' && parts[1] === 'me') return handleUsersMe(req, res)
   if (head === 'items') return handleItems(req, res)
   if (head === 'apps') return handleApps(req, res)
+
+  // Creolabs live PL comparison route
+  if (head === 'creolabs' && parts[1] === 'live-pl') {
+    return handleCreolabsLivePl(req, res)
+  }
 
   if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'sheets' && !parts[4]) {
     return handleEngineSheets(req, res, parts[2])
@@ -660,6 +889,17 @@ async function routeQlik(req, res, parts) {
     parts[5] === 'data'
   ) {
     return handleEngineObjectData(req, res, parts[2], parts[4])
+  }
+
+  if (
+    head === 'engine' &&
+    parts[1] === 'apps' &&
+    parts[2] &&
+    parts[3] === 'objects' &&
+    parts[4] &&
+    parts[5] === 'layout'
+  ) {
+    return handleEngineObjectLayout(req, res, parts[2], parts[4])
   }
 
   return json(res, 404, { ok: false, error: 'Not found' }, { 'Cache-Control': 'no-store' })
