@@ -1,6 +1,9 @@
 const { json } = require('./_http')
 const WebSocket = require('ws')
 
+const ENGINE_CONNECT_TIMEOUT_MS = 30_000
+const ENGINE_CALL_TIMEOUT_MS = 120_000
+
 function env(name) {
   const v = process.env[name]
   return v == null ? '' : String(v).trim()
@@ -78,7 +81,7 @@ class QlikEngineSession {
         socket.once('open', () => resolve(socket))
         socket.once('error', (error) => reject(error))
       }),
-      15_000,
+      ENGINE_CONNECT_TIMEOUT_MS,
       'Engine websocket connection'
     )
 
@@ -146,7 +149,7 @@ class QlikEngineSession {
           reject(error)
         }
       }),
-      15_000,
+      ENGINE_CALL_TIMEOUT_MS,
       `Engine call ${method}`
     )
   }
@@ -872,6 +875,204 @@ async function handleCreolabsLivePl(req, res) {
   }
 }
 
+// CREOLABS Clients table (5bac0559)
+// Empirical column order confirmed by Engine probe 2026-05-01:
+//   [0] Brand  [1] Affiliate ID  [2] Client ID  [3] Client Name
+//   [4] LOGIN  [5] User          [6] Country    [7] $ Balance  [8] LTV Commission
+//   [9] $ Closed PL  [10] $ Open PL  [11] # Trades
+//   [12] $ FTD  [13] $ RDP  [14] $ Deposit  [15] $ WD  [16] $ Net
+//   [17] Year Month
+const CREOLABS_CLIENTS_OBJ = '5bac0559-4987-4961-816c-e5da8b254cfe'
+const CC_BRAND = 0, CC_AFF = 1, CC_CLIENT_ID = 2, CC_CLIENT_NAME = 3
+const CC_LOGIN = 4, CC_USER = 5, CC_COUNTRY = 6, CC_BALANCE = 7
+const CC_CLOSED_PL = 9, CC_OPEN_PL = 10, CC_TRADES = 11
+const CC_FTD = 12, CC_RDP = 13, CC_DEPOSIT = 14, CC_WD = 15, CC_NET = 16
+const CC_YEAR_MONTH = 17, CC_WIDTH = 18
+
+const _MON = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 }
+function ymRank(text) {
+  const m = String(text || '').trim().match(/^(\d{4})-([A-Za-z]{3})$/)
+  return m ? Number(m[1]) * 100 + (_MON[m[2].toLowerCase()] || 0) : -1
+}
+
+let _creolabsClientsCache = null
+
+async function fetchCreolabsClientsData(config) {
+  return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+    const objResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_CLIENTS_OBJ])
+    const h = Number(objResult?.qReturn?.qHandle || 0)
+    if (!h) throw new Error('Creolabs clients object not found')
+
+    const layoutResult = await session.call(h, 'GetLayout', [])
+    const totalRows = Number(unwrapLayout(layoutResult)?.qHyperCube?.qSize?.qcy || 0)
+
+    const pageSize = 500
+    const PARALLEL = 8
+    const offsets = []
+    for (let off = 0; off < totalRows; off += pageSize) offsets.push(off)
+
+    const allRows = []
+    for (let i = 0; i < offsets.length; i += PARALLEL) {
+      const results = await Promise.all(
+        offsets.slice(i, i + PARALLEL).map((offset) =>
+          session.call(h, 'GetHyperCubeData', [
+            '/qHyperCubeDef',
+            [{ qTop: offset, qLeft: 0, qHeight: pageSize, qWidth: CC_WIDTH }],
+          ]).then((p) => p?.qDataPages?.[0]?.qMatrix || [])
+        )
+      )
+      for (const matrix of results) allRows.push(...matrix)
+    }
+
+    let minRank = Number.POSITIVE_INFINITY
+    let maxRank = -1
+    let periodFrom = ''
+    let periodTo = ''
+    const periodSet = new Set()
+    for (const row of allRows) {
+      if (!Array.isArray(row) || row.length < CC_WIDTH) continue
+      const ym = safeText(row[CC_YEAR_MONTH]?.qText).trim()
+      const rank = ymRank(ym)
+      if (rank <= 0) continue
+      periodSet.add(ym)
+      if (rank < minRank) {
+        minRank = rank
+        periodFrom = ym
+      }
+      if (rank > maxRank) {
+        maxRank = rank
+        periodTo = ym
+      }
+    }
+
+    // Key by clientId+clientName only (NOT brand) so that brand is taken from the
+    // most recent period. In the all-time Qlik view some clients appear as 'BW'
+    // in older periods but 'BW Global' in recent periods; keying on brand caused
+    // them all to collapse to 'BW'. We now track _latestRank and overwrite brand
+    // whenever we see a more recent row for the same client.
+    const byKey = new Map()
+    for (const row of allRows) {
+      if (!Array.isArray(row) || row.length < CC_WIDTH) continue
+
+      const brand = safeText(row[CC_BRAND]?.qText).trim()
+      const clientId = safeText(row[CC_CLIENT_ID]?.qText).trim()
+      const clientName = safeText(row[CC_CLIENT_NAME]?.qText).trim()
+      if (!clientName || clientName === '-' || clientName === 'null') continue
+
+      const ym = safeText(row[CC_YEAR_MONTH]?.qText).trim()
+      const rank = ymRank(ym)
+
+      const key = `${clientId}|${clientName}`
+      const n = (i) => {
+        const v = row[i]?.qNum
+        return typeof v === 'number' && isFinite(v) ? v : 0
+      }
+      const t = (i) => safeText(row[i]?.qText).trim()
+
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          brand,
+          clientId,
+          clientName,
+          affiliateId: t(CC_AFF),
+          user: t(CC_USER),
+          country: t(CC_COUNTRY),
+          balance: 0,
+          closedPl: 0,
+          openPl: 0,
+          trades: 0,
+          ftd: 0,
+          rdp: 0,
+          deposit: 0,
+          wd: 0,
+          net: 0,
+          _latestRank: rank,
+        })
+      }
+
+      const a = byKey.get(key)
+
+      // Overwrite brand (and meta fields) from the most recent period row
+      if (rank > a._latestRank) {
+        a._latestRank = rank
+        a.brand = brand
+        a.affiliateId = t(CC_AFF)
+        a.user = t(CC_USER)
+        a.country = t(CC_COUNTRY)
+      }
+
+      a.closedPl += n(CC_CLOSED_PL)
+      a.openPl += n(CC_OPEN_PL)
+      a.trades += Math.round(n(CC_TRADES))
+      a.ftd += n(CC_FTD)
+      a.rdp += n(CC_RDP)
+      a.deposit += n(CC_DEPOSIT)
+      a.wd += n(CC_WD)
+      a.net += n(CC_NET)
+      const bal = n(CC_BALANCE)
+      if (bal !== 0) a.balance = bal
+    }
+
+    // Strip internal tracking field before returning
+    for (const a of byKey.values()) delete a._latestRank
+
+    const periods = [...periodSet].sort((a, b) => ymRank(a) - ymRank(b))
+    return {
+      period: 'ALL',
+      periodFrom,
+      periodTo,
+      periods,
+      totalFetched: allRows.length,
+      clients: [...byKey.values()],
+    }
+  })
+}
+
+async function handleCreolabsClients(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  // ?bust=1 forces cache invalidation (useful when BW Global is missing from stale cache)
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') _creolabsClientsCache = null
+
+  const now = Date.now()
+  const age = _creolabsClientsCache?.fetchedAt ? now - _creolabsClientsCache.fetchedAt : Infinity
+  if (_creolabsClientsCache?.data && age < CREOLABS_CACHE_TTL) {
+    return json(res, 200, { ok: true, data: { ..._creolabsClientsCache.data, cached: true } }, { 'Cache-Control': 'no-store' })
+  }
+
+  if (_creolabsClientsCache?.promise) {
+    try {
+      const data = await _creolabsClientsCache.promise
+      return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+    } catch (e) {
+      return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs clients request failed' }, { 'Cache-Control': 'no-store' })
+    }
+  }
+
+  const promise = fetchCreolabsClientsData(config)
+    .then((data) => {
+      _creolabsClientsCache = { data, fetchedAt: Date.now(), promise: null }
+      return data
+    })
+    .catch((e) => {
+      if (_creolabsClientsCache) _creolabsClientsCache.promise = null
+      throw e
+    })
+
+  if (!_creolabsClientsCache) _creolabsClientsCache = { data: null, fetchedAt: 0, promise }
+  else _creolabsClientsCache.promise = promise
+
+  try {
+    const data = await promise
+    return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs clients request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
+}
+
 async function routeQlik(req, res, parts) {
   const head = parts[0] || ''
 
@@ -883,6 +1084,10 @@ async function routeQlik(req, res, parts) {
   // Creolabs live PL comparison route
   if (head === 'creolabs' && parts[1] === 'live-pl') {
     return handleCreolabsLivePl(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'clients') {
+    return handleCreolabsClients(req, res)
   }
 
   if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'sheets' && !parts[4]) {
@@ -941,3 +1146,11 @@ setTimeout(() => {
       // silently ignore prefetch errors; the next user request will retry
     })
 }, 500) // short delay to let the server finish booting
+
+setTimeout(() => {
+  const config = getConfig()
+  if (!config.hasApiKey && !config.hasOauth) return
+  fetchCreolabsClientsData(config)
+    .then((data) => { _creolabsClientsCache = { data, fetchedAt: Date.now(), promise: null } })
+    .catch(() => {})
+}, 1500)
