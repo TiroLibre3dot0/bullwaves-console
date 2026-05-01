@@ -237,7 +237,7 @@ export default function CreolabsPage() {
   useEffect(() => {
     let cancelled = false
     setLoadingLivePl(true)
-    fetch('/api/qlik/creolabs/live-pl?limit=50&maxRows=5000')
+    fetch('/api/qlik/creolabs/live-pl?maxRows=20000')
       .then((r) => r.json())
       .then((body) => {
         if (cancelled) return

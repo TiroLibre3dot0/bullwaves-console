@@ -762,93 +762,113 @@ const CREOLABS_COL_DEPOSIT = 11 // nDims(8) + measIdx(3)
 const CREOLABS_COL_WD = 12      // nDims(8) + measIdx(4)
 const CREOLABS_COL_WIDTH = 20
 
+// Cache for CREOLABS live PL (stale-while-revalidate, TTL 15min)
+let _creolabsPlCache = null // { data, fetchedAt, promise }
+const CREOLABS_CACHE_TTL = 15 * 60 * 1000
+
+function aggregateRows(matrix, byClient) {
+  for (const row of matrix) {
+    if (!Array.isArray(row) || row.length < CREOLABS_COL_WIDTH) continue
+    const clientName = safeText(row[CREOLABS_COL_CLIENT_NAME]?.qText).trim()
+    const clientId = safeText(row[CREOLABS_COL_CLIENT_ID]?.qText).trim()
+    if (!clientName || clientName === '-' || clientName === 'null') continue
+    const plVal = row[CREOLABS_COL_PL]?.qNum
+    const depVal = row[CREOLABS_COL_DEPOSIT]?.qNum
+    const wdVal = row[CREOLABS_COL_WD]?.qNum
+    const key = `${clientName}|${clientId}`
+    const prev = byClient.get(key) || { clientName, clientId, plLive: 0, deposit: 0, wd: 0 }
+    prev.plLive += typeof plVal === 'number' && isFinite(plVal) ? plVal : 0
+    prev.deposit += typeof depVal === 'number' && isFinite(depVal) ? depVal : 0
+    prev.wd += typeof wdVal === 'number' && isFinite(wdVal) ? wdVal : 0
+    byClient.set(key, prev)
+  }
+}
+
+async function fetchCreolabsLivePlData(config) {
+  return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+    const objResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_APR_OBJ])
+    const h = Number(objResult?.qReturn?.qHandle || 0)
+    if (!h) throw new Error('Creolabs live PL object not found')
+
+    const layoutResult = await session.call(h, 'GetLayout', [])
+    const layout = unwrapLayout(layoutResult)
+    const cube = layout?.qHyperCube
+    const totalRows = Number(cube?.qSize?.qcy || 0)
+    const period = safeText(layout?.qMeta?.title || '')
+
+    const byClient = new Map()
+    const pageSize = 500
+    const PARALLEL = 8
+
+    // Build list of all page offsets
+    const offsets = []
+    for (let off = 0; off < totalRows; off += pageSize) offsets.push(off)
+
+    // Fetch in parallel batches
+    for (let i = 0; i < offsets.length; i += PARALLEL) {
+      const batch = offsets.slice(i, i + PARALLEL)
+      const results = await Promise.all(
+        batch.map((offset) =>
+          session.call(h, 'GetHyperCubeData', [
+            '/qHyperCubeDef',
+            [{ qTop: offset, qLeft: 0, qHeight: pageSize, qWidth: CREOLABS_COL_WIDTH }],
+          ]).then((p) => (Array.isArray(p?.qDataPages?.[0]?.qMatrix) ? p.qDataPages[0].qMatrix : []))
+        )
+      )
+      for (const matrix of results) aggregateRows(matrix, byClient)
+    }
+
+    return {
+      period,
+      fetchedRows: totalRows,
+      uniqueClients: byClient.size,
+      totalRows,
+      clients: [...byClient.values()],
+    }
+  })
+}
+
 async function handleCreolabsLivePl(req, res) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
   const config = ensureConfigured(res)
   if (!config) return
 
-  const topN = parsePositiveInt(req.query?.limit, 10, 100)
-  const maxRows = parsePositiveInt(req.query?.maxRows, 5000, 20000)
+  const now = Date.now()
+  const cacheAge = _creolabsPlCache?.fetchedAt ? now - _creolabsPlCache.fetchedAt : Infinity
+  const cacheWarm = _creolabsPlCache?.data && cacheAge < CREOLABS_CACHE_TTL
+
+  // Return stale data immediately and trigger background refresh
+  if (cacheWarm) {
+    return json(res, 200, { ok: true, data: { ..._creolabsPlCache.data, cached: true } }, { 'Cache-Control': 'no-store' })
+  }
+
+  // If already fetching, wait for it
+  if (_creolabsPlCache?.promise) {
+    try {
+      const data = await _creolabsPlCache.promise
+      return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+    } catch (e) {
+      return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs live PL request failed' }, { 'Cache-Control': 'no-store' })
+    }
+  }
+
+  // Start fresh fetch
+  const promise = fetchCreolabsLivePlData(config).then((data) => {
+    _creolabsPlCache = { data, fetchedAt: Date.now(), promise: null }
+    return data
+  }).catch((e) => {
+    if (_creolabsPlCache) _creolabsPlCache.promise = null
+    throw e
+  })
+
+  if (!_creolabsPlCache) _creolabsPlCache = { data: null, fetchedAt: 0, promise }
+  else _creolabsPlCache.promise = promise
 
   try {
-    const data = await withEngineSession(config, CREOLABS_APP_ID, async (session) => {
-      const objResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_APR_OBJ])
-      const h = Number(objResult?.qReturn?.qHandle || 0)
-      if (!h) throw new Error('Creolabs live PL object not found')
-
-      const layoutResult = await session.call(h, 'GetLayout', [])
-      const layout = unwrapLayout(layoutResult)
-      const cube = layout?.qHyperCube
-      const totalRows = Number(cube?.qSize?.qcy || 0)
-      const period = safeText(layout?.qMeta?.title || '')
-
-      // Aggregate by Client Name + Client ID across pages
-      const byClient = new Map()
-      const pageSize = 500
-      let fetched = 0
-      const limit = Math.min(maxRows, totalRows)
-
-      while (fetched < limit) {
-        const pages = await session.call(h, 'GetHyperCubeData', [
-          '/qHyperCubeDef',
-          [{ qTop: fetched, qLeft: 0, qHeight: pageSize, qWidth: CREOLABS_COL_WIDTH }],
-        ])
-        const matrix = Array.isArray(pages?.qDataPages?.[0]?.qMatrix) ? pages.qDataPages[0].qMatrix : []
-        if (!matrix.length) break
-
-        for (const row of matrix) {
-          if (!Array.isArray(row) || row.length < CREOLABS_COL_WIDTH) continue
-          const clientName = safeText(row[CREOLABS_COL_CLIENT_NAME]?.qText).trim()
-          const clientId = safeText(row[CREOLABS_COL_CLIENT_ID]?.qText).trim()
-          if (!clientName || clientName === '-' || clientName === 'null') continue
-
-          const plVal = row[CREOLABS_COL_PL]?.qNum
-          const depVal = row[CREOLABS_COL_DEPOSIT]?.qNum
-          const wdVal = row[CREOLABS_COL_WD]?.qNum
-
-          const key = `${clientName}|${clientId}`
-          const prev = byClient.get(key) || {
-            clientName,
-            clientId,
-            plLive: 0,
-            deposit: 0,
-            wd: 0,
-          }
-          prev.plLive += typeof plVal === 'number' && isFinite(plVal) ? plVal : 0
-          prev.deposit += typeof depVal === 'number' && isFinite(depVal) ? depVal : 0
-          prev.wd += typeof wdVal === 'number' && isFinite(wdVal) ? wdVal : 0
-          byClient.set(key, prev)
-        }
-
-        fetched += matrix.length
-        if (matrix.length < pageSize) break
-      }
-
-      const sorted = [...byClient.values()]
-        .sort((a, b) => Math.abs(b.plLive) - Math.abs(a.plLive))
-        .slice(0, topN)
-
-      return {
-        period,
-        fetchedRows: fetched,
-        uniqueClients: byClient.size,
-        totalRows,
-        clients: sorted,
-      }
-    })
-
+    const data = await promise
     return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
   } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs live PL request failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs live PL request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
   }
 }
 
@@ -908,3 +928,16 @@ async function routeQlik(req, res, parts) {
 module.exports = {
   routeQlik,
 }
+
+// Auto-prefetch CREOLABS live PL on module load so the cache is warm before first user request
+setTimeout(() => {
+  const config = getConfig()
+  if (!config.hasApiKey && !config.hasOauth) return
+  fetchCreolabsLivePlData(config)
+    .then((data) => {
+      _creolabsPlCache = { data, fetchedAt: Date.now(), promise: null }
+    })
+    .catch(() => {
+      // silently ignore prefetch errors; the next user request will retry
+    })
+}, 500) // short delay to let the server finish booting
