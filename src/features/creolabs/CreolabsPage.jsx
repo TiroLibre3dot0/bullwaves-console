@@ -245,10 +245,18 @@ export default function CreolabsPage() {
   }, [brand])
 
   const rows = useMemo(() => {
-    const base =
-      brand === 'BW Prime'
-        ? primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
-        : forexRows.filter((r) => String(r.brand || '').trim() === brand)
+    let base
+    if (brand === 'BW Prime') {
+      base = primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
+    } else {
+      const exact = forexRows.filter((r) => String(r.brand || '').trim() === brand)
+      if (brand === 'BW Global' && exact.length === 0) {
+        // Temporary fallback: Qlik may emit BW label for BW Global clients.
+        base = forexRows.filter((r) => String(r.brand || '').trim() === 'BW')
+      } else {
+        base = exact
+      }
+    }
 
     const q = search.trim().toLowerCase()
     if (!q) return base
@@ -260,6 +268,13 @@ export default function CreolabsPage() {
       )
     )
   }, [brand, forexRows, primeRows, search])
+
+  const isBwGlobalFallback = useMemo(() => {
+    if (brand !== 'BW Global') return false
+    const globalCount = forexRows.filter((r) => String(r.brand || '').trim() === 'BW Global').length
+    const bwCount = forexRows.filter((r) => String(r.brand || '').trim() === 'BW').length
+    return globalCount === 0 && bwCount > 0
+  }, [brand, forexRows])
 
   const sorted = useMemo(() => {
     const dir = sortDir === 'desc' ? -1 : 1
@@ -506,6 +521,20 @@ export default function CreolabsPage() {
             flexWrap: 'wrap',
           }}
         >
+          {isBwGlobalFallback && (
+            <span
+              style={{
+                fontSize: '0.75rem',
+                color: '#fbbf24',
+                padding: '4px 10px',
+                borderRadius: 8,
+                border: '1px solid rgba(251,191,36,0.35)',
+                background: 'rgba(251,191,36,0.1)',
+              }}
+            >
+              Qlik live sta etichettando BW Global come BW: fallback attivo.
+            </span>
+          )}
           <input
             type="text"
             placeholder="Cerca su tutte le voci..."
