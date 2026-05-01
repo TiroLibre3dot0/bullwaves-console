@@ -6,6 +6,7 @@ const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
 const { routeConvrs } = require('../serverless/handlers/convrs')
 const { routeEmail } = require('../serverless/handlers/email')
+const { routeQlik } = require('../serverless/handlers/qlik')
 
 const projectRoot = path.join(__dirname, '..')
 ;['.env.sendgrid.local', '.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
@@ -809,6 +810,15 @@ app.all('/api/email/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeEmail(req, res, tail)
+})
+
+app.all('/api/qlik', (req, res) => routeQlik(req, res, []))
+app.all('/api/qlik/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/qlik\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeQlik(req, res, tail)
 })
 
 app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))

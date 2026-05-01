@@ -133,6 +133,7 @@ export default defineConfig({
       '/api/health': 'http://localhost:4000',
       '/api/convrs': 'http://localhost:4000',
       '/api/email': 'http://localhost:4000',
+      '/api/qlik': 'http://localhost:4000',
     },
   },
 })
