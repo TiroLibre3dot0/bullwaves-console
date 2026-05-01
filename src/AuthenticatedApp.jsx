@@ -48,6 +48,7 @@ const SoliticsReportPage = lazy(() => import('./features/solitics/pages/Solitics
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
+const CreolabsPage = lazy(() => import('./features/creolabs/CreolabsPage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
@@ -204,6 +205,7 @@ export default function AuthenticatedApp() {
       aiAssistant: '/support/ai-assistant',
       whatsappPerformance: '/support/whatsapp-performance',
       trustpilotGuide: '/trustpilot-guide',
+      creolabs: '/creolabs',
       reportsHub: '/reports',
       whatsappTemplates: '/whatsapp-templates',
       solitics: '/solitics',
@@ -250,6 +252,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
+    if (pathname.startsWith('/creolabs')) return 'creolabs'
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
     if (pathname.startsWith('/solitics')) return 'solitics'
@@ -275,8 +278,8 @@ export default function AuthenticatedApp() {
       setView('commandCenter')
     }
     if (p && p.startsWith('/creolabs')) {
-      window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
-      setView('commandCenter')
+      window.history.replaceState({ view: 'creolabs' }, '', routes.creolabs)
+      setView('creolabs')
     }
   }, [routes.commandCenter, routes.overview, routes.profitableRanking])
 
@@ -676,6 +679,7 @@ export default function AuthenticatedApp() {
               {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
               {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
+              {view === 'creolabs' ? <CreolabsPage /> : null}
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'solitics' ? <SoliticsReportPage /> : null}

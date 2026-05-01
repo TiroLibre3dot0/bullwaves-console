@@ -285,6 +285,20 @@ export default function Sidebar({
       ],
     },
     {
+      key: 'board',
+      title: 'Board',
+      items: [
+        {
+          key: 'boardAffiliatePayoutSummary',
+          label: t('investments.section.affiliatePayoutSummary'),
+          icon: 'layout',
+          active: view === 'affiliate' && affiliateSection === 'payments',
+          onClick: () => goAffiliateSection('payments'),
+          disabled: disabled('affiliate'),
+        },
+      ],
+    },
+    {
       key: 'support',
       title: 'Support',
       items: [
@@ -488,6 +502,20 @@ export default function Sidebar({
           active: view === 'fraud',
           onClick: () => navigate('fraud'),
           disabled: disabled('fraud'),
+        },
+      ],
+    },
+    {
+      key: 'creolabs',
+      title: 'CREOLABS',
+      items: [
+        {
+          key: 'creolabsApps',
+          label: 'Qlik Apps',
+          icon: 'chart',
+          active: view === 'creolabs',
+          onClick: () => navigate('creolabs'),
+          disabled: disabled('creolabs'),
         },
       ],
     },
