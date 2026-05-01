@@ -49,3 +49,32 @@ export async function fetchQlikSnapshot(limit = 20) {
     fetchedAt: new Date().toISOString(),
   }
 }
+
+export async function fetchQlikEngineSheets(appId) {
+  const id = String(appId || '').trim()
+  if (!id) throw new Error('Missing appId')
+  return requestJson(`/engine/apps/${encodeURIComponent(id)}/sheets`)
+}
+
+export async function fetchQlikEngineSheetObjects(appId, sheetId) {
+  const app = String(appId || '').trim()
+  const sheet = String(sheetId || '').trim()
+  if (!app) throw new Error('Missing appId')
+  if (!sheet) throw new Error('Missing sheetId')
+  return requestJson(
+    `/engine/apps/${encodeURIComponent(app)}/sheets/${encodeURIComponent(sheet)}/objects`
+  )
+}
+
+export async function fetchQlikEngineObjectData(appId, objectId, { rows = 200, cols = 20 } = {}) {
+  const app = String(appId || '').trim()
+  const object = String(objectId || '').trim()
+  if (!app) throw new Error('Missing appId')
+  if (!object) throw new Error('Missing objectId')
+
+  const r = Number.isFinite(Number(rows)) ? Math.max(1, Math.min(2000, Number(rows))) : 200
+  const c = Number.isFinite(Number(cols)) ? Math.max(1, Math.min(50, Number(cols))) : 20
+  return requestJson(
+    `/engine/apps/${encodeURIComponent(app)}/objects/${encodeURIComponent(object)}/data?rows=${r}&cols=${c}`
+  )
+}
