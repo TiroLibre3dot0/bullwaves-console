@@ -27,21 +27,8 @@ const ORG_DATA = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
 const TRADERS_REWARDS_XLSX = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
 const PRIME_CLIENTS_RANKING_XLSX = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
 
-function listCreolabsBreakdownSources() {
-  let entries = []
-  try {
-    entries = fs.readdirSync(CREOLABS_DIR, { withFileTypes: true })
-  } catch {
-    return []
-  }
-
-  return entries
-    .filter((ent) => ent && ent.isFile && ent.isFile())
-    .map((ent) => ent.name)
-    .filter((name) => /\.xlsx$/i.test(name))
-    .filter((name) => !/^~\$/i.test(name))
-    .filter((name) => /creolabs/i.test(name))
-    .map((name) => path.join(CREOLABS_DIR, name))
+function listCreolabsSources() {
+  return safeStat(TRADERS_REWARDS_XLSX).exists ? [TRADERS_REWARDS_XLSX] : []
 }
 
 function parseArgs(argv) {
@@ -142,7 +129,7 @@ function main() {
   const sourceTrustpilot = path.join(ROOT, 'Trustpilot', 'TrustPilot Review Tracker.csv')
   const trustpilotRemoteSourceUrl = String(process.env.TRUSTPILOT_SOURCE_URL || '').trim()
   const hasTrustpilotSource = safeStat(sourceTrustpilot).exists || Boolean(trustpilotRemoteSourceUrl)
-  const sourceCreolabsBreakdowns = listCreolabsBreakdownSources()
+  const sourceCreolabs = listCreolabsSources()
 
   const allTopLevelPublicFiles = fs.existsSync(PUBLIC) ? fs.readdirSync(PUBLIC).map((n) => path.join(PUBLIC, n)) : []
   const publicCsvFiles = allTopLevelPublicFiles.filter((p) => /\.csv$/i.test(p))
@@ -208,19 +195,19 @@ function main() {
     { artifact: artifacts.rankingsUsersTable, sources: [sourceRegistrations], name: 'rankings_users_table.json' },
     {
       artifact: artifacts.creolabsIndex,
-      sources: sourceCreolabsBreakdowns,
+      sources: sourceCreolabs,
       name: 'creolabs_index.json',
       optional: true,
     },
     {
       artifact: artifacts.creolabsClientsTable,
-      sources: sourceCreolabsBreakdowns,
+      sources: sourceCreolabs,
       name: 'creolabs_clients_table.json',
       optional: true,
     },
     {
       artifact: artifacts.creolabsAffiliateMonth,
-      sources: sourceCreolabsBreakdowns,
+      sources: sourceCreolabs,
       name: 'creolabs_affiliate_month.json',
       optional: true,
     },

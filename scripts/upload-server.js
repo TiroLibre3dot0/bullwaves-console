@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
+const { routeAuth } = require('../serverless/handlers/auth')
 const { routeConvrs } = require('../serverless/handlers/convrs')
 const { routeEmail } = require('../serverless/handlers/email')
 const { routeQlik } = require('../serverless/handlers/qlik')
@@ -819,6 +820,15 @@ app.all('/api/qlik/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeQlik(req, res, tail)
+})
+
+app.all('/api/auth', (req, res) => routeAuth(req, res, []))
+app.all('/api/auth/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/auth\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeAuth(req, res, tail)
 })
 
 app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))

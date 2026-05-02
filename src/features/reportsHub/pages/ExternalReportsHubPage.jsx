@@ -3,7 +3,7 @@ import { getConsoleToolByKey } from '../../../config/tools'
 import { fetchQlikSnapshot } from '../services/qlikConsoleService'
 
 const INTERNAL_REPORTS = [
-  { label: 'Creolabs Breakdown', href: '/creolabs' },
+  { label: 'Traders Ranking Rewards', href: '/creolabs' },
   { label: 'Solitics Journey Report', href: '/solitics' },
   { label: 'Trustpilot Guide', href: '/trustpilot-guide' },
   { label: 'Overview Dashboard', href: '/overview' },
@@ -203,6 +203,47 @@ export default function ExternalReportsHubPage() {
             </ul>
           </div>
         ) : null}
+      </section>
+
+      <section className="card-block" style={{ marginBottom: 20 }}>
+        <div className="card-block-header">
+          <div>
+            <p className="eyebrow">Macrosection</p>
+            <h3>CREOLABS</h3>
+            <p className="muted">
+              App Qlik Cloud disponibili nel tenant Creolabs. Clic su una card per aprire l'app in
+              nuova scheda.
+            </p>
+          </div>
+        </div>
+
+        {loadingQlik ? (
+          <p className="muted">Caricamento app in corso…</p>
+        ) : itemRows.filter((r) => r.resourceType === 'app').length === 0 ? (
+          <p className="muted">Nessuna app disponibile (verifica la connessione Qlik).</p>
+        ) : (
+          <div className="card-columns" role="list">
+            {itemRows
+              .filter((r) => r.resourceType === 'app')
+              .map((app) => (
+                <a
+                  key={app.resourceId}
+                  href={`https://creolabs.uk.qlikcloud.com/sense/app/${app.resourceId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="card card-global"
+                  style={{ textDecoration: 'none', display: 'block', textAlign: 'left' }}
+                  role="listitem"
+                >
+                  <div className="eyebrow">Qlik App</div>
+                  <h4 style={{ margin: '6px 0 0' }}>{app.name}</h4>
+                  <p className="muted" style={{ marginTop: 8, fontSize: '0.78rem' }}>
+                    {app.resourceId}
+                  </p>
+                </a>
+              ))}
+          </div>
+        )}
       </section>
 
       <section className="card-block">

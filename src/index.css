@@ -90,6 +90,11 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes bw-toast-in {
+  from { transform: translateX(110%) scale(0.95); opacity: 0; }
+  to   { transform: translateX(0)     scale(1);    opacity: 1; }
+}
+
 @keyframes slide-in-up {
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }

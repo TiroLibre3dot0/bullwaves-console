@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useQlikStatus } from '../../../context/QlikStatusContext'
 
 import {
+  isQlikApiUnavailableError,
+  loadCreolabsQlikClients,
   loadCreolabsAffiliateMonthTable,
   loadCreolabsClientsTable,
+  logCreolabsQlikFallbackBlocked,
+  logCreolabsQlikFallbackUsed,
 } from '../services/creolabsService'
 
 const MONTH_MAP = {
@@ -36,19 +41,35 @@ function parseCreolabsPeriodId(periodId) {
 export function useCreolabsBreakdownData() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
+  const { reportQlikSource } = useQlikStatus()
 
   useEffect(() => {
     let cancelled = false
     ;(async () => {
       setLoading(true)
       try {
-        // Prefer the much smaller affiliate-month artifact for dashboards.
-        // Fall back to the full clients table if it's missing.
+        // API-first: use Qlik month-level aggregate.
+        // Fallback is exceptional-only (API unavailable), not for empty successful responses.
         let table = null
         try {
-          table = await loadCreolabsAffiliateMonthTable({ force: false })
-        } catch {
-          table = await loadCreolabsClientsTable({ force: false })
+          const api = await loadCreolabsQlikClients({ force: false })
+          const rowsFromApi = Array.isArray(api?.data?.affiliateMonth)
+            ? api.data.affiliateMonth
+            : []
+          table = { rows: rowsFromApi }
+          if (!cancelled) reportQlikSource('creolabs-breakdown', 'api')
+        } catch (e) {
+          if (!isQlikApiUnavailableError(e)) {
+            logCreolabsQlikFallbackBlocked('affiliate/payments aggregate load', e)
+            throw e
+          }
+          logCreolabsQlikFallbackUsed('affiliate/payments aggregate load', e)
+          if (!cancelled) reportQlikSource('creolabs-breakdown', 'local')
+          try {
+            table = await loadCreolabsAffiliateMonthTable({ force: false })
+          } catch {
+            table = await loadCreolabsClientsTable({ force: false })
+          }
         }
 
         const nextRows = Array.isArray(table?.rows) ? table.rows : []
@@ -67,9 +88,24 @@ export function useCreolabsBreakdownData() {
         try {
           let table = null
           try {
-            table = await loadCreolabsAffiliateMonthTable({ force: true })
-          } catch {
-            table = await loadCreolabsClientsTable({ force: true })
+            const api = await loadCreolabsQlikClients({ force: true })
+            const rowsFromApi = Array.isArray(api?.data?.affiliateMonth)
+              ? api.data.affiliateMonth
+              : []
+            table = { rows: rowsFromApi }
+            if (!cancelled) reportQlikSource('creolabs-breakdown', 'api')
+          } catch (e) {
+            if (!isQlikApiUnavailableError(e)) {
+              logCreolabsQlikFallbackBlocked('affiliate/payments aggregate reload', e)
+              throw e
+            }
+            logCreolabsQlikFallbackUsed('affiliate/payments aggregate reload', e)
+            if (!cancelled) reportQlikSource('creolabs-breakdown', 'local')
+            try {
+              table = await loadCreolabsAffiliateMonthTable({ force: true })
+            } catch {
+              table = await loadCreolabsClientsTable({ force: true })
+            }
           }
 
           const nextRows = Array.isArray(table?.rows) ? table.rows : []
@@ -84,8 +120,9 @@ export function useCreolabsBreakdownData() {
     return () => {
       cancelled = true
       window.removeEventListener('bw-reports-updated', onUpdated)
+      reportQlikSource('creolabs-breakdown', null)
     }
-  }, [])
+  }, [reportQlikSource])
 
   const mediaRows = useMemo(() => {
     // Output matches the fields consumed by useAffiliateLedger.
@@ -109,10 +146,12 @@ export function useCreolabsBreakdownData() {
         const parsed = parseCreolabsPeriodId(r?.periodId)
         if (!parsed) continue
         const affiliateId = String(r?.affiliateId || '—').trim() || '—'
+        const brand = String(r?.brand || '').trim()
         out.push({
           affiliate: affiliateId,
           year: parsed.year,
           monthIndex: parsed.monthIndex,
+          brand,
           registrations: 0,
           ftd: 0,
           qftd: 0,
@@ -132,13 +171,15 @@ export function useCreolabsBreakdownData() {
       if (!parsed) continue
 
       const affiliateId = String(r?.affiliateId || '—').trim() || '—'
-      const key = `${affiliateId}|${parsed.year}|${parsed.monthIndex}`
+      const brand = String(r?.brand || '').trim()
+      const key = `${affiliateId}|${brand}|${parsed.year}|${parsed.monthIndex}`
 
       if (!map.has(key)) {
         map.set(key, {
           affiliate: affiliateId,
           year: parsed.year,
           monthIndex: parsed.monthIndex,
+          brand,
           registrations: 0,
           ftd: 0,
           qftd: 0,

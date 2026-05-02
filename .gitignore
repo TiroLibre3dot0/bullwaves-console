@@ -30,6 +30,9 @@ dist
 tmp_*.csv
 uploads/
 
+# Console auth credentials (NEVER commit – use CONSOLE_CREDENTIALS env var on Vercel)
+config/credentials.json
+
 # Local server logs
 upload-server.*.log
 

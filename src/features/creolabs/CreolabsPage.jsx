@@ -1,4 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useQlikStatus } from '../../context/QlikStatusContext'
+import {
+  isQlikApiUnavailableError,
+  loadCreolabsQlikClients,
+  logCreolabsQlikFallbackBlocked,
+  logCreolabsQlikFallbackUsed,
+} from './services/creolabsService'
 const moneyFmt = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
@@ -115,6 +122,131 @@ function parseHeaderRows(payload) {
   })
 }
 
+function mapQlikClientMonthToForexRow(row) {
+  const closed = Number(row?.closedPL || 0)
+  const open = Number(row?.openPL || 0)
+  return {
+    brand: row?.brand || '',
+    affiliate_id: row?.affiliateId || '',
+    client_id: row?.clientId || '',
+    client_name: row?.clientName || '',
+    client_login: row?.clientLogin || '',
+    user: row?.user || '',
+    country: row?.country || '',
+    balance: Number(row?.balance || 0),
+    ltv_commission: Number(row?.ltvCommission || 0),
+    closed_pl: closed,
+    open_pl: open,
+    trades: Number(row?.trades || 0),
+    ftd: Number(row?.ftd || 0),
+    rdp: Number(row?.rdp || 0),
+    deposit: Number(row?.deposit || 0),
+    wd: Number(row?.wd || 0),
+    net: Number(row?.net || 0),
+    client_timestamp: '',
+    ltd_date: '',
+    ltt_date: '',
+    equity: 0,
+    clients_p: 0,
+    year_month: row?.yearMonth || row?.periodId || '',
+    opened_trades: 0,
+  }
+}
+
+function mapQlikClientMonthToPrimeRow(row) {
+  const closed = Number(row?.closedPL || 0)
+  const open = Number(row?.openPL || 0)
+  const pl = closed + open
+  return {
+    year: '',
+    month: '',
+    year_month: row?.yearMonth || row?.periodId || '',
+    week: '',
+    date: '',
+    brand: row?.brand || '',
+    affiliate_id: row?.affiliateId || '',
+    client_id: row?.clientId || '',
+    client_name: row?.clientName || '',
+    status: '',
+    country: row?.country || '',
+    last_time_contact: '',
+    ltc_group: '',
+    last_time_call: '',
+    last_time_comment: '',
+    pl,
+    raw_pl: pl,
+    pl_adjustment: 0,
+    open_pl: open,
+    closed_pl: closed,
+    closed_vol: 0,
+    open_vol: 0,
+    traders: 1,
+    trades: Number(row?.trades || 0),
+    open_trades: 0,
+    rdp: Number(row?.rdp || 0),
+    rdps: 0,
+    wd: Number(row?.wd || 0),
+    std: Number(row?.deposit || 0),
+    stds: 0,
+    ftd: Number(row?.ftd || 0),
+    deposit: Number(row?.deposit || 0),
+    net: Number(row?.net || 0),
+    rdr: 0,
+    ftds: 0,
+    leads: 0,
+    cr: 0,
+    client_email: '',
+  }
+}
+
+function getClientId(row) {
+  return String(row?.clientId || row?.client_id || '').trim()
+}
+
+function buildPrimeCandidateClientIds(clientMonths = []) {
+  const byClient = new Map()
+
+  for (const row of clientMonths) {
+    const clientId = getClientId(row)
+    if (!clientId) continue
+
+    const prev = byClient.get(clientId) || {
+      closedPL: 0,
+      openPL: 0,
+      wd: 0,
+      payoutCount: 0,
+      payoutAmount: 0,
+      isPayoutUser: false,
+    }
+
+    prev.closedPL += Number(row?.closedPL || 0)
+    prev.openPL += Number(row?.openPL || 0)
+    prev.wd += Number(row?.wd || 0)
+    prev.payoutCount += Number(row?.payoutCount || 0)
+    prev.payoutAmount += Number(row?.payoutAmount || 0)
+    prev.isPayoutUser =
+      prev.isPayoutUser || String(row?.isPayoutUser || '') === 'true' || Boolean(row?.isPayoutUser)
+
+    byClient.set(clientId, prev)
+  }
+
+  const primeClientIds = new Set()
+  for (const [clientId, metric] of byClient.entries()) {
+    const explicitPayout =
+      Boolean(metric?.isPayoutUser) ||
+      Number(metric?.payoutCount || 0) > 0 ||
+      Number(metric?.payoutAmount || 0) > 0 ||
+      Number(metric?.wd || 0) > 0
+    const positivePL =
+      Number(metric?.closedPL || 0) > 0 ||
+      Number(metric?.closedPL || 0) + Number(metric?.openPL || 0) > 0
+
+    if (explicitPayout || positivePL) primeClientIds.add(clientId)
+  }
+
+  return primeClientIds
+}
+
 function fmt(type, value) {
   if (type === 'money') {
     const n = toNum(value)
@@ -153,6 +285,7 @@ function SortArrow({ col, sortKey, dir }) {
 }
 
 export default function CreolabsPage() {
+  const { reportQlikSource } = useQlikStatus()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [forexRows, setForexRows] = useState([])
@@ -178,40 +311,71 @@ export default function CreolabsPage() {
     let cancelled = false
     setLoading(true)
     setError('')
-
-    const clientsUrl = bustCache
-      ? '/api/qlik/creolabs/clients?bust=1'
-      : '/api/qlik/creolabs/clients'
-    Promise.all([
-      fetch('/traders_ranking_rewards_table.json').then((r) => r.json()),
-      fetch('/prime_clients_ranking_table.json').then((r) => r.json()),
-      fetch(clientsUrl).then((r) => r.json()),
-    ])
-      .then(([forexPayload, primePayload, brandsPayload]) => {
+    ;(async () => {
+      try {
+        // API-first: use the same Qlik source used by Prime Challenge ranking.
+        const qlikPayload = await loadCreolabsQlikClients({ force: bustCache })
         if (cancelled) return
-        const forex = parseHeaderRows(forexPayload)
-        const prime = parseHeaderRows(primePayload)
-        const brandByClientId = new Map()
-        for (const c of brandsPayload?.data?.clients || []) {
-          const id = String(c?.clientId || '').trim()
-          const b = String(c?.brand || '').trim()
-          if (id && b && !brandByClientId.has(id)) brandByClientId.set(id, b)
+
+        const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
+          ? qlikPayload.data.clientMonths
+          : []
+        const literalPrimeRows = clientMonths.filter(
+          (r) => String(r?.brand || '').trim() === 'BW Prime'
+        )
+
+        // Some Qlik snapshots expose only BW/BW Global labels; derive Prime cohort
+        // using the same payout/positive-PL signal used by Prime ranking.
+        const derivedPrimeClientIds = buildPrimeCandidateClientIds(clientMonths)
+        const primeSourceRows =
+          literalPrimeRows.length > 0
+            ? literalPrimeRows
+            : clientMonths.filter((r) => derivedPrimeClientIds.has(getClientId(r)))
+
+        const primeClientIds = new Set(primeSourceRows.map((r) => getClientId(r)).filter(Boolean))
+
+        const forex = clientMonths
+          .filter((r) => !primeClientIds.has(getClientId(r)))
+          .map(mapQlikClientMonthToForexRow)
+        const prime = primeSourceRows.map((r) =>
+          mapQlikClientMonthToPrimeRow({ ...r, brand: 'BW Prime' })
+        )
+
+        setForexRows(forex)
+        setPrimeRows(prime)
+        setPeriodFrom(String(qlikPayload?.data?.periodFrom || ''))
+        setPeriodTo(String(qlikPayload?.data?.periodTo || ''))
+        setBrandCached(Boolean(qlikPayload?.data?.cached))
+        reportQlikSource('creolabs-overview', 'api')
+      } catch (e) {
+        if (cancelled) return
+
+        // Strict policy: fallback only when API is unavailable.
+        if (!isQlikApiUnavailableError(e)) {
+          logCreolabsQlikFallbackBlocked('creolabs overview load', e)
+          throw e
         }
 
-        const forexBranded = forex.map((r) => ({
-          ...r,
-          brand: brandByClientId.get(String(r.client_id || '').trim()) || 'Unknown',
-        }))
+        logCreolabsQlikFallbackUsed('creolabs overview load', e)
+        const [forexPayload, primePayload] = await Promise.all([
+          fetch('/traders_ranking_rewards_table.json').then((r) => r.json()),
+          fetch('/prime_clients_ranking_table.json').then((r) => r.json()),
+        ])
+        if (cancelled) return
 
-        setForexRows(forexBranded)
+        const forex = parseHeaderRows(forexPayload)
+        const prime = parseHeaderRows(primePayload)
+
+        setForexRows(forex)
         setPrimeRows(prime)
-        setPeriodFrom(String(brandsPayload?.data?.periodFrom || ''))
-        setPeriodTo(String(brandsPayload?.data?.periodTo || ''))
-        setBrandCached(Boolean(brandsPayload?.data?.cached))
-      })
+        setBrandCached(false)
+        reportQlikSource('creolabs-overview', 'local')
+      }
+    })()
       .catch((e) => {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Errore durante il caricamento')
+        reportQlikSource('creolabs-overview', 'local')
       })
       .finally(() => {
         if (!cancelled) {
@@ -226,8 +390,65 @@ export default function CreolabsPage() {
   }
 
   useEffect(() => {
-    loadData(false)
-  }, [])
+    const cleanup = loadData(false)
+    return () => {
+      if (typeof cleanup === 'function') cleanup()
+      reportQlikSource('creolabs-overview', null)
+    }
+  }, [reportQlikSource])
+
+  // Silent background refresh — no loading spinner, doesn't interrupt the user.
+  const silentInFlightRef = useRef(false)
+  useEffect(() => {
+    const INTERVAL_MS = 5 * 60 * 1000 // 5 minutes
+
+    const silentRefresh = async () => {
+      if (silentInFlightRef.current) return
+      silentInFlightRef.current = true
+      try {
+        const qlikPayload = await loadCreolabsQlikClients({ force: true })
+        const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
+          ? qlikPayload.data.clientMonths
+          : []
+        const literalPrimeRows = clientMonths.filter(
+          (r) => String(r?.brand || '').trim() === 'BW Prime'
+        )
+        const derivedPrimeClientIds = buildPrimeCandidateClientIds(clientMonths)
+        const primeSourceRows =
+          literalPrimeRows.length > 0
+            ? literalPrimeRows
+            : clientMonths.filter((r) => derivedPrimeClientIds.has(getClientId(r)))
+        const primeClientIds = new Set(primeSourceRows.map((r) => getClientId(r)).filter(Boolean))
+        const forex = clientMonths
+          .filter((r) => !primeClientIds.has(getClientId(r)))
+          .map(mapQlikClientMonthToForexRow)
+        const prime = primeSourceRows.map((r) =>
+          mapQlikClientMonthToPrimeRow({ ...r, brand: 'BW Prime' })
+        )
+        setForexRows(forex)
+        setPrimeRows(prime)
+        setPeriodFrom(String(qlikPayload?.data?.periodFrom || ''))
+        setPeriodTo(String(qlikPayload?.data?.periodTo || ''))
+        setBrandCached(Boolean(qlikPayload?.data?.cached))
+        reportQlikSource('creolabs-overview', 'api')
+      } catch {
+        // Ignore errors on silent refresh — keep showing current data.
+      } finally {
+        silentInFlightRef.current = false
+      }
+    }
+
+    const timerId = window.setInterval(silentRefresh, INTERVAL_MS)
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') silentRefresh()
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      window.clearInterval(timerId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [reportQlikSource])
 
   function handleRefreshBrands() {
     setRefreshing(true)
@@ -291,6 +512,27 @@ export default function CreolabsPage() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
+  // Prime-scope aggregate: identical to Prime Challenge ranking logic.
+  // Aggregates by unique clientId across all periods — no active filters applied.
+  const primeScope = useMemo(() => {
+    if (!primeRows.length) return null
+    const byClient = new Map()
+    for (const r of primeRows) {
+      const id = String(r.client_id || '').trim()
+      if (!id) continue
+      const prev = byClient.get(id) || { wd: 0, deposit: 0, closed_pl: 0 }
+      prev.wd += toNum(r.wd) ?? 0
+      prev.deposit += toNum(r.deposit) ?? 0
+      prev.closed_pl += toNum(r.closed_pl) ?? 0
+      byClient.set(id, prev)
+    }
+    const clients = [...byClient.values()]
+    const totalWd = clients.reduce((a, c) => a + c.wd, 0)
+    const totalDeposit = clients.reduce((a, c) => a + c.deposit, 0)
+    const totalClosedPL = clients.reduce((a, c) => a + c.closed_pl, 0)
+    return { clientCount: clients.length, totalWd, totalDeposit, totalClosedPL }
+  }, [primeRows])
+
   const stats = useMemo(() => {
     if (!rows.length) return null
     const uniqueClients = new Set(
@@ -345,7 +587,7 @@ export default function CreolabsPage() {
       },
       { label: 'LTV Commission', value: moneyFmt.format(sum('ltv_commission')), color: '#a78bfa' },
     ]
-  }, [rows, brand])
+  }, [rows, brand, primeScope])
 
   useEffect(() => {
     const updateScrollMetrics = () => {
@@ -470,7 +712,7 @@ export default function CreolabsPage() {
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
             gap: 10,
-            marginBottom: 18,
+            marginBottom: brand !== 'BW Prime' && primeScope ? 10 : 18,
           }}
         >
           {stats.map(({ label, value, color }) => (
@@ -491,6 +733,76 @@ export default function CreolabsPage() {
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
                   marginBottom: 6,
+                }}
+              >
+                {label}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  color,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {value}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Prime-scope comparison bar — shown on Forex tabs so numbers are comparable with Prime Challenge */}
+      {!loading && !error && brand !== 'BW Prime' && primeScope && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 10,
+            marginBottom: 18,
+            flexWrap: 'wrap',
+          }}
+        >
+          {[
+            {
+              label: 'Prime – Clienti unici',
+              value: intFmt.format(primeScope.clientCount),
+              color: '#94a3b8',
+            },
+            {
+              label: 'Prime – WD/Payout (same scope as Ranking)',
+              value: moneyFmt.format(primeScope.totalWd),
+              color: '#f87171',
+            },
+            {
+              label: 'Prime – Deposit',
+              value: moneyFmt.format(primeScope.totalDeposit),
+              color: '#60a5fa',
+            },
+            {
+              label: 'Prime – Closed PL',
+              value: moneyFmt.format(primeScope.totalClosedPL),
+              color: colorVal(primeScope.totalClosedPL),
+            },
+          ].map(({ label, value, color }) => (
+            <div
+              key={label}
+              style={{
+                background: 'rgba(99,102,241,0.07)',
+                border: '1px solid rgba(99,102,241,0.25)',
+                borderRadius: 10,
+                padding: '10px 14px',
+                minWidth: 180,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.65rem',
+                  color: '#6366f1',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.07em',
+                  marginBottom: 5,
                 }}
               >
                 {label}

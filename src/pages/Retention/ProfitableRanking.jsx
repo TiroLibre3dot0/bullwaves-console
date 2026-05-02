@@ -2,7 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import KpiCard from '../../components/common/KpiCard'
 import FullPageLoader from '../../components/FullPageLoader'
 import SegmentJourneyModal from './SegmentJourneyModal'
+import { useQlikStatus } from '../../context/QlikStatusContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
+import {
+  isQlikApiUnavailableError,
+  loadCreolabsQlikClients,
+  logCreolabsQlikFallbackBlocked,
+  logCreolabsQlikFallbackUsed,
+} from '../../features/creolabs/services/creolabsService'
 import {
   buildPrimeClientsRankingDataset,
   buildPrimeRankingsV1,
@@ -618,6 +625,74 @@ function statusReasonColumn() {
 function toFiniteNumber(v, fallback = 0) {
   const n = Number(v)
   return Number.isFinite(n) ? n : fallback
+}
+
+const QLIK_MONTH_MAP = {
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
+}
+
+function parseQlikPeriodToDate(periodId, endOfMonth = false) {
+  const s = String(periodId || '').trim()
+  const m = s.match(/^(\d{4})[-\s]?([A-Za-z]{3,})/)
+  if (!m) return null
+
+  const year = Number(m[1])
+  const monRaw = String(m[2] || '')
+    .slice(0, 3)
+    .toLowerCase()
+  const monthIndex = QLIK_MONTH_MAP[monRaw]
+  if (!Number.isFinite(year) || monthIndex == null) return null
+
+  if (endOfMonth) {
+    return new Date(Date.UTC(year, monthIndex + 1, 0, 23, 59, 59, 999)).toISOString()
+  }
+  return new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0)).toISOString()
+}
+
+function mapQlikClientMonthsToRankingRows(clientMonths = []) {
+  const list = Array.isArray(clientMonths) ? clientMonths : []
+  return list.map((row) => {
+    const periodId = String(row?.periodId || '').trim()
+    const startIso = parseQlikPeriodToDate(periodId, false)
+    const endIso = parseQlikPeriodToDate(periodId, true)
+
+    const balance = Number(row?.balance || 0)
+
+    return {
+      affiliate_id: String(row?.affiliateId || '').trim(),
+      client_id: String(row?.clientId || '').trim(),
+      client_name: String(row?.clientName || '').trim(),
+      client_login: String(row?.clientLogin || '').trim(),
+      user: String(row?.user || '').trim(),
+      country: String(row?.country || '').trim(),
+      brand: String(row?.brand || '').trim(),
+      balance,
+      equity: balance,
+      closed_pl: Number(row?.pl || 0),
+      open_pl: Number(row?.openPl || 0),
+      trades: Number(row?.trades || 0),
+      ftd: Number(row?.ftd || 0),
+      rdp: Number(row?.rdp || 0),
+      deposit: Number(row?.deposit || 0),
+      wd: Number(row?.wd || 0),
+      net: Number(row?.net || 0),
+      client_timestamp: startIso || '',
+      ltd_date: endIso || '',
+      ltt_date: endIso || '',
+      year_month: periodId,
+    }
+  })
 }
 
 function toFiniteInt(v, fallback = 0) {
@@ -2277,6 +2352,7 @@ export default function ProfitableRanking({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [fileName, setFileName] = useState('')
+  const { reportQlikSource } = useQlikStatus()
 
   const rootRef = useRef(null)
 
@@ -2352,6 +2428,32 @@ export default function ProfitableRanking({
       if (!silent) setError('')
       setLoading(true)
       try {
+        if (['traders', 'prime_challenge'].includes(rankingDefinition.key)) {
+          try {
+            const payload = await loadCreolabsQlikClients({ force: false })
+            const clientMonths = Array.isArray(payload?.data?.clientMonths)
+              ? payload.data.clientMonths
+              : []
+
+            const rows = mapQlikClientMonthsToRankingRows(clientMonths)
+            const headers = Object.keys(rows[0] || {})
+            if (loadReqRef.current !== reqId) return
+
+            setFileName('Qlik CREOLABS API (live)')
+            setArtifact({ rows, headers })
+            reportQlikSource('profitable-ranking', 'api')
+            return
+          } catch (e) {
+            // Fallback is exceptional-only: keep local artifact only when API is unavailable.
+            if (!isQlikApiUnavailableError(e)) {
+              logCreolabsQlikFallbackBlocked(`profitable-ranking ${rankingDefinition.key} load`, e)
+              throw e
+            }
+            logCreolabsQlikFallbackUsed(`profitable-ranking ${rankingDefinition.key} load`, e)
+            reportQlikSource('profitable-ranking', 'local')
+          }
+        }
+
         const ts = Date.now()
         const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
         const res = await fetch(`${baseUrl}${rankingDefinition.artifactPath}?ts=${ts}`, {
@@ -2391,6 +2493,13 @@ export default function ProfitableRanking({
       // no-op
     }
   }, [artifact, loadFromConsoleArtifact])
+
+  // Unregister from QlikStatusContext on unmount so the navbar pill disappears.
+  useEffect(() => {
+    return () => {
+      reportQlikSource('profitable-ranking', null)
+    }
+  }, [reportQlikSource])
 
   const todayRef = useRef(null)
   if (!todayRef.current) todayRef.current = new Date()

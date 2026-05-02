@@ -50,6 +50,7 @@ const ExternalReportsHubPage = lazy(
 )
 const CreolabsPage = lazy(() => import('./features/creolabs/CreolabsPage'))
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
+const AdminPasswordsPage = lazy(() => import('./pages/AdminPasswordsPage'))
 
 // StoriesKanbanPage / ProjectBoardPage are lazy-loaded inside ExecutionHubPage
 
@@ -213,6 +214,7 @@ export default function AuthenticatedApp() {
       upload: '/upload',
       notion: '/notion',
       admin: '/admin',
+      adminPasswords: '/admin/passwords',
     }),
     []
   )
@@ -259,6 +261,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
     if (pathname.startsWith('/notion')) return 'notion'
+    if (pathname.startsWith('/admin/passwords')) return 'adminPasswords'
     if (pathname.startsWith('/admin')) return 'admin'
     return 'commandCenter'
   }
@@ -453,6 +456,7 @@ export default function AuthenticatedApp() {
     if (!nextView) return
 
     if (nextView === 'admin' && !isAdmin) return
+    if (nextView === 'adminPasswords' && !isAdmin) return
     if (nextView === 'customEvents' && !isAdmin) return
     if (nextView === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return
 
@@ -625,6 +629,7 @@ export default function AuthenticatedApp() {
             allowedViews={restrictedAllowedViews}
             customEventsDisabled={!isAdmin}
             canAccessEmailMasterTemplate={canAccessEmailMasterTemplate}
+            isAdmin={isAdmin}
             navigate={navigate}
             goExecutiveSection={goExecutiveSection}
             goAffiliateSection={goAffiliateSection}
@@ -687,6 +692,7 @@ export default function AuthenticatedApp() {
               {view === 'upload' ? <UploadReportsPage /> : null}
               {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}
               {view === 'admin' ? <AdminPanel /> : null}
+              {view === 'adminPasswords' && isAdmin ? <AdminPasswordsPage /> : null}
             </Suspense>
           </div>
         </main>

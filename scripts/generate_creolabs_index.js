@@ -1,8 +1,8 @@
 /*
-Generate a lightweight JSON artifact consumed by the Creolabs page.
+Generate lightweight JSON artifacts consumed by the Creolabs page and unified investments view.
 
 Input:
-  CREOLABS/creolabs breakdown.xlsx
+  CREOLABS/Traders Ranking Rewards.xlsx
 
 Output:
   public/creolabs_index.json
@@ -10,6 +10,8 @@ Output:
 Notes:
   - Uses exceljs streaming reader to avoid OOM on larger XLSX files.
   - Aggregates by (Year Month, Client) and exports Top-N leaderboards.
+  - Keeps the legacy `creolabs_*` artifact shapes so existing pages can consume
+    a single source of truth derived from Traders Ranking Rewards.
 */
 
 const fs = require('fs')
@@ -18,7 +20,7 @@ const ExcelJS = require('exceljs')
 
 const ROOT_DIR = path.join(__dirname, '..')
 const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
-const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'creolabs breakdown.xlsx')
+const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'creolabs_index.json')
 const OUT_TABLE_PATH = path.join(ROOT_DIR, 'public', 'creolabs_clients_table.json')
 const OUT_AFF_MONTH_PATH = path.join(ROOT_DIR, 'public', 'creolabs_affiliate_month.json')
@@ -106,6 +108,20 @@ function parseYearMonthId(v) {
   return s
 }
 
+function getByHeader(values, headerToIdx, name) {
+  if (!headerToIdx) return ''
+  const idx = headerToIdx.get(normHeader(name))
+  return idx == null ? '' : values[idx]
+}
+
+function getAny(values, headerToIdx, names) {
+  for (const name of names || []) {
+    const value = getByHeader(values, headerToIdx, name)
+    if (value !== '' && value != null) return value
+  }
+  return ''
+}
+
 function fallbackPeriodIdFromDate(d) {
   const date = d instanceof Date ? d : new Date()
   const year = date.getFullYear()
@@ -178,38 +194,7 @@ function periodIdFromFilename(filePath) {
 }
 
 function listCreolabsInputs() {
-  if (!fs.existsSync(CREOLABS_DIR)) return []
-  const entries = fs.readdirSync(CREOLABS_DIR)
-  const xlsx = entries
-    .filter((n) => /\.xlsx$/i.test(n))
-    .filter((n) => !/^~\$/.test(n))
-    .map((n) => path.join(CREOLABS_DIR, n))
-    .filter((p) => {
-      try {
-        return fs.statSync(p).isFile()
-      } catch {
-        return false
-      }
-    })
-
-  // The CREOLABS folder can contain other XLSX files (e.g. retention exports).
-  // Only ingest Creolabs breakdown exports to avoid inflating metrics.
-  const creolabsNamed = xlsx.filter((p) => /creolabs/i.test(path.basename(p)))
-  if (creolabsNamed.length) return creolabsNamed.sort((a, b) => a.localeCompare(b))
-
-  // Fallbacks:
-  // - If only one XLSX exists, assume it's the breakdown.
-  // - Otherwise, prefer the default filename if present.
-  if (xlsx.length === 1) return xlsx
   if (fs.existsSync(DEFAULT_INPUT_PATH)) return [DEFAULT_INPUT_PATH]
-
-  if (xlsx.length > 1) {
-    console.warn(
-      `[Creolabs] Multiple XLSX files found under ${CREOLABS_DIR} but none look like a Creolabs breakdown. ` +
-        `Ignored: ${xlsx.map((p) => path.basename(p)).join(', ')}`
-    )
-  }
-
   return []
 }
 
@@ -290,8 +275,8 @@ async function main() {
     // Treat Creolabs inputs as optional in multi-project environments.
     // Write empty artifacts so builds/dev servers don't fail just because
     // the XLSX isn't present on a given machine.
-    console.warn(`[Creolabs] No input XLSX files found under: ${CREOLABS_DIR}`)
-    console.warn(`[Creolabs] Writing empty artifacts (expected at least one .xlsx, e.g. ${DEFAULT_INPUT_PATH})`)
+    console.warn(`[Creolabs] Traders Ranking Rewards source not found: ${DEFAULT_INPUT_PATH}`)
+    console.warn('[Creolabs] Writing empty artifacts so downstream pages keep working')
 
     const emptySource = null
     const emptyIndex = {
@@ -357,9 +342,8 @@ async function main() {
   const aggByPeriod = new Map()
   const periodSet = new Set()
 
-  // If the worksheet provides an explicit period column, we treat values as already monthly.
-  // If it doesn't and we have multiple XLSX files (one per month snapshot), we can derive
-  // monthly deltas from cumulative snapshots.
+  // Traders Ranking Rewards normally provides an explicit monthly column.
+  // Keep the fallback logic defensive in case the export format changes.
   let sawExplicitPeriod = false
 
   let totalRows = 0
@@ -396,52 +380,60 @@ async function main() {
           continue
         }
 
-        const get = (name) => {
-          if (!headerToIdx) return ''
-          const idx = headerToIdx.get(normHeader(name))
-          return idx == null ? '' : values[idx]
-        }
-
-        // Newer Creolabs exports can omit the (Year Month) column (all-time snapshot).
-        // In that case, treat the whole file as a single synthetic period.
-        // Prefer inferring the period from the filename, falling back to file mtime.
-        const yearMonthRaw =
-          get('Year Month') ||
-          get('YearMonth') ||
-          get('Period') ||
-          get('Month') ||
-          get('Report Month')
+        // Prefer the explicit monthly key from Traders Ranking Rewards.
+        // If it's ever missing, keep the old synthetic-period fallback.
+        const yearMonthRaw = getAny(values, headerToIdx, [
+          'year_month',
+          'Year Month',
+          'YearMonth',
+          'Period',
+          'Month',
+          'Report Month',
+        ])
 
         const explicitPeriod = parseYearMonthId(yearMonthRaw)
         if (explicitPeriod) sawExplicitPeriod = true
         const yearMonth = explicitPeriod || filePeriodFallback
 
-        const clientId = pickTitleCase(get('Client ID'))
-        const clientLogin = pickTitleCase(get('Client LOGIN'))
-        const clientName = pickTitleCase(get('Client Name'))
+        const clientId = pickTitleCase(getAny(values, headerToIdx, ['client_id', 'Client ID', 'ID']))
+        const clientLogin = pickTitleCase(
+          getAny(values, headerToIdx, ['client_login', 'Client LOGIN', 'Client Login', 'Login'])
+        )
+        const clientName = pickTitleCase(
+          getAny(values, headerToIdx, ['client_name', 'Client Name', 'Client'])
+        )
         const clientKey = getClientKey({ clientId, clientLogin, clientName })
 
-        const affiliateId = asString(get('Affiliate ID')).trim()
-        const user = asString(get('User')).trim()
-        const country = asString(get('Country')).trim()
-        const brand = asString(get('Brand')).trim()
+        const affiliateId = asString(
+          getAny(values, headerToIdx, ['affiliate_id', 'Affiliate ID'])
+        ).trim()
+        const user = asString(getAny(values, headerToIdx, ['user', 'User'])).trim()
+        const country = asString(getAny(values, headerToIdx, ['country', 'Country'])).trim()
+        const brand = asString(getAny(values, headerToIdx, ['brand', 'Brand'])).trim()
 
-        // Cost/commission proxy coming from Creolabs breakdown.
-        // Column name in XLSX: 'LTV Commission'
-        const commission = parseNumber(get('LTV Commission'))
+        const commission = parseNumber(
+          getAny(values, headerToIdx, ['ltv_commission', 'LTV Commission', 'Commission'])
+        )
 
-        const deposit = parseNumber(get('$ Deposit'))
-        const wd = parseNumber(get('$ WD'))
-        const net = parseNumber(get('$ Net'))
-        const trades = Math.max(0, Math.floor(parseNumber(get('# Trades'))))
+        const deposit = parseNumber(getAny(values, headerToIdx, ['deposit', '$ Deposit', 'Deposits']))
+        const wd = parseNumber(getAny(values, headerToIdx, ['wd', '$ WD', 'Withdrawal', 'Withdrawals']))
+        const net = parseNumber(getAny(values, headerToIdx, ['net', '$ Net', 'Net Deposit']))
+        const trades = Math.max(
+          0,
+          Math.floor(parseNumber(getAny(values, headerToIdx, ['trades', '# Trades', 'num_trades'])))
+        )
 
-        // Prefer explicit $ PL; else Closed+Open.
-        const plExplicit = parseNumber(get('$ PL'))
-        const closedPl = parseNumber(get('$ Closed PL'))
-        const openPl = parseNumber(get('$ Open PL'))
+        // Traders Ranking Rewards exposes closed/open PL; keep explicit PL as a fallback.
+        const plExplicit = parseNumber(getAny(values, headerToIdx, ['$ PL', 'pl']))
+        const closedPl = parseNumber(
+          getAny(values, headerToIdx, ['closed_pl', '$ Closed PL', 'Closed PL'])
+        )
+        const openPl = parseNumber(
+          getAny(values, headerToIdx, ['open_pl', '$ Open PL', 'Open PL'])
+        )
         const pl = plExplicit || closedPl + openPl
 
-        const balance = parseNumber(get('$ Balance'))
+        const balance = parseNumber(getAny(values, headerToIdx, ['balance', '$ Balance']))
 
         periodSet.add(yearMonth)
         dataRows += 1

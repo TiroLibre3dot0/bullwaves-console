@@ -131,6 +131,7 @@ export default defineConfig({
       '/api/upload': 'http://localhost:4000',
       '/api/upload-stream': 'http://localhost:4000',
       '/api/health': 'http://localhost:4000',
+      '/api/auth': 'http://localhost:4000',
       '/api/convrs': 'http://localhost:4000',
       '/api/email': 'http://localhost:4000',
       '/api/qlik': 'http://localhost:4000',

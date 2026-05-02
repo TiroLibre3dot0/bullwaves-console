@@ -1,15 +1,18 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { sections } from '../pages/orgChartData'
 import { trackEvent } from '../services/trackingService'
 import { translate } from '../i18n/translations'
 
 const AuthContext = createContext({
   user: null,
+  token: null,
   allowlist: [],
-  loginWithEmail: () => ({ success: false }),
+  authReady: false,
+  loginWithEmail: async () => ({ success: false }),
   logout: () => {},
 })
-const STORAGE_KEY = 'bw-auth-user'
+const TOKEN_KEY = 'bw-auth-token'
+const USER_KEY = 'bw-auth-user'
 
 function buildAllowlist() {
   const deduped = new Map()
@@ -55,57 +58,122 @@ function buildAllowlist() {
 export function AuthProvider({ children }) {
   const allowlist = useMemo(() => buildAllowlist(), [])
   const [user, setUser] = useState(null)
+  const [token, setToken] = useState(null)
+  // authReady: true once the token verification attempt (or its absence) is settled.
+  const [authReady, setAuthReady] = useState(false)
 
+  // On mount: if a token exists in localStorage, verify it with the server.
   useEffect(() => {
-    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
-    if (!saved) return
-    try {
-      const parsed = JSON.parse(saved)
-      const match = allowlist.find(
-        (entry) => entry.email.toLowerCase() === (parsed.email || '').toLowerCase()
-      )
-      if (match) {
-        setUser(match)
+    const token = typeof window !== 'undefined' ? window.localStorage.getItem(TOKEN_KEY) : null
+    const storedToken = token
+
+    if (!storedToken) {
+      setAuthReady(true)
+      return
+    }
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: storedToken }),
+        })
+        if (cancelled) return
+        if (res.ok) {
+          const data = await res.json()
+          if (data.ok && data.email) {
+            const match = allowlist.find((e) => e.email.toLowerCase() === data.email.toLowerCase())
+            if (match) {
+              setUser(match)
+              setToken(storedToken)
+            } else {
+              // Token valid but email no longer in allowlist – force logout
+              window.localStorage.removeItem(TOKEN_KEY)
+              window.localStorage.removeItem(USER_KEY)
+            }
+          } else {
+            window.localStorage.removeItem(TOKEN_KEY)
+            window.localStorage.removeItem(USER_KEY)
+          }
+        } else {
+          window.localStorage.removeItem(TOKEN_KEY)
+          window.localStorage.removeItem(USER_KEY)
+        }
+      } catch {
+        // Network error – keep token, user stays logged out until next attempt
+      } finally {
+        if (!cancelled) setAuthReady(true)
       }
-    } catch (err) {
-      // Ignore corrupted storage entries
-      window.localStorage.removeItem(STORAGE_KEY)
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [allowlist])
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-    if (user) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user))
-    } else {
-      window.localStorage.removeItem(STORAGE_KEY)
+  const loginWithEmail = useCallback(
+    async (emailInput, password) => {
+      const normalized = (emailInput || '').trim().toLowerCase()
+      if (!normalized) return { success: false, message: 'Please enter an email.' }
+      if (!password) return { success: false, message: 'Please enter a password.' }
+
+      // Check allowlist first (client-side gate)
+      const match = allowlist.find((entry) => entry.email.toLowerCase() === normalized)
+      if (!match) {
+        const locale =
+          typeof window !== 'undefined' ? window.localStorage.getItem('bw-locale') || 'en' : 'en'
+        return { success: false, message: translate(locale, 'auth.emailNotAllowlisted') }
+      }
+
+      // Verify password server-side
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalized, password }),
+        })
+        const data = await res.json()
+
+        if (!res.ok || !data.ok) {
+          return { success: false, message: data.error || 'Invalid credentials.' }
+        }
+
+        // Store token and user
+        window.localStorage.setItem(TOKEN_KEY, data.token)
+        window.localStorage.setItem(USER_KEY, JSON.stringify(match))
+        setToken(data.token)
+        setUser(match)
+
+        trackEvent({
+          type: 'LOGIN',
+          userEmail: match.email,
+          userName: match.name,
+          userRole: match.title || match.department,
+        })
+
+        return { success: true, user: match }
+      } catch (err) {
+        return { success: false, message: 'Connection error. Please try again.' }
+      }
+    },
+    [allowlist]
+  )
+
+  const logout = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem(TOKEN_KEY)
+      window.localStorage.removeItem(USER_KEY)
     }
-  }, [user])
+    setUser(null)
+    setToken(null)
+  }, [])
 
-  const loginWithEmail = (emailInput) => {
-    const normalized = (emailInput || '').trim().toLowerCase()
-    if (!normalized) return { success: false, message: 'Please enter an email.' }
-
-    const match = allowlist.find((entry) => entry.email.toLowerCase() === normalized)
-    if (!match) {
-      const locale =
-        typeof window !== 'undefined' ? window.localStorage.getItem('bw-locale') || 'en' : 'en'
-      return { success: false, message: translate(locale, 'auth.emailNotAllowlisted') }
-    }
-
-    setUser(match)
-    trackEvent({
-      type: 'LOGIN',
-      userEmail: match.email,
-      userName: match.name,
-      userRole: match.title || match.department,
-    })
-    return { success: true, user: match }
-  }
-
-  const logout = () => setUser(null)
-
-  const value = useMemo(() => ({ user, allowlist, loginWithEmail, logout }), [user, allowlist])
+  const value = useMemo(
+    () => ({ user, token, allowlist, authReady, loginWithEmail, logout }),
+    [user, token, allowlist, authReady, loginWithEmail, logout]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

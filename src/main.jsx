@@ -6,6 +6,7 @@ import './lib/chartSetup'
 import { AuthProvider } from './context/AuthContext'
 import { I18nProvider } from './i18n/I18nContext'
 import { DataStatusProvider } from './context/DataStatusContext'
+import { QlikStatusProvider } from './context/QlikStatusContext'
 import { initAnalytics } from './utils/analytics'
 
 initAnalytics()
@@ -33,7 +34,9 @@ createRoot(document.getElementById('root')).render(
   <I18nProvider>
     <AuthProvider>
       <DataStatusProvider>
-        <App />
+        <QlikStatusProvider>
+          <App />
+        </QlikStatusProvider>
       </DataStatusProvider>
     </AuthProvider>
   </I18nProvider>

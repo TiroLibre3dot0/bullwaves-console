@@ -199,6 +199,7 @@ export default function Sidebar({
   allowedViews,
   customEventsDisabled,
   canAccessEmailMasterTemplate,
+  isAdmin,
   navigate,
   goExecutiveSection,
   goAffiliateSection,
@@ -547,6 +548,18 @@ export default function Sidebar({
           onClick: () => navigate('reportsHub'),
           disabled: disabled('reportsHub'),
         },
+        ...(isAdmin
+          ? [
+              {
+                key: 'adminPasswords',
+                label: 'Gestione Accessi',
+                icon: 'shield',
+                active: view === 'adminPasswords',
+                onClick: () => navigate('adminPasswords'),
+                disabled: false,
+              },
+            ]
+          : []),
       ],
     },
   ]

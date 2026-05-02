@@ -1,4 +1,5 @@
 const { routeAnalytics } = require('./handlers/analytics')
+const { routeAuth } = require('./handlers/auth')
 const { routeQlik } = require('./handlers/qlik')
 const { routeEmail } = require('./handlers/email')
 const { routeShare } = require('./handlers/share')
@@ -40,6 +41,10 @@ function getPathParts(req) {
 async function routeApi(req, res) {
   const parts = getPathParts(req)
   const scope = parts[0] || ''
+
+  if (scope === 'auth') {
+    return routeAuth(req, res, parts.slice(1))
+  }
 
   if (scope === 'analytics') {
     return routeAnalytics(req, res, parts.slice(1))

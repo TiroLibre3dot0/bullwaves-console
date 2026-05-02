@@ -757,7 +757,7 @@ const CREOLABS_APP_ID = 'c6f37daa-0278-42b0-ab9b-813d2b9aafeb'
 // Dims: Brand, Affiliate, User, Client Name, Client ID, Client LOGIN, LOGIN, Country
 // Meas col 5 = "$ PL", col 3 = "$ Deposit", col 4 = "$ WD", col 10 = "# Accounts"
 const CREOLABS_APR_OBJ = '53c14348-64ce-48a2-a8c7-5fcfc983be32'
-const CREOLABS_N_DIMS = 8
+const _CREOLABS_N_DIMS = 8
 const CREOLABS_COL_CLIENT_NAME = 3
 const CREOLABS_COL_CLIENT_ID = 4
 const CREOLABS_COL_PL = 13      // nDims(8) + measIdx(5)
@@ -884,7 +884,7 @@ async function handleCreolabsLivePl(req, res) {
 //   [17] Year Month
 const CREOLABS_CLIENTS_OBJ = '5bac0559-4987-4961-816c-e5da8b254cfe'
 const CC_BRAND = 0, CC_AFF = 1, CC_CLIENT_ID = 2, CC_CLIENT_NAME = 3
-const CC_LOGIN = 4, CC_USER = 5, CC_COUNTRY = 6, CC_BALANCE = 7
+const CC_LOGIN = 4, CC_USER = 5, CC_COUNTRY = 6, CC_BALANCE = 7, CC_LTV = 8
 const CC_CLOSED_PL = 9, CC_OPEN_PL = 10, CC_TRADES = 11
 const CC_FTD = 12, CC_RDP = 13, CC_DEPOSIT = 14, CC_WD = 15, CC_NET = 16
 const CC_YEAR_MONTH = 17, CC_WIDTH = 18
@@ -945,6 +945,10 @@ async function fetchCreolabsClientsData(config) {
       }
     }
 
+    // Month-level datasets used by API-first consumers.
+    const byClientMonth = new Map()
+    const byAffiliateMonth = new Map()
+
     // Key by clientId+clientName only (NOT brand) so that brand is taken from the
     // most recent period. In the all-time Qlik view some clients appear as 'BW'
     // in older periods but 'BW Global' in recent periods; keying on brand caused
@@ -968,6 +972,64 @@ async function fetchCreolabsClientsData(config) {
         return typeof v === 'number' && isFinite(v) ? v : 0
       }
       const t = (i) => safeText(row[i]?.qText).trim()
+
+      if (ym) {
+        const clientMonthKey = `${brand}|${t(CC_AFF)}|${clientId}|${ym}`
+        if (!byClientMonth.has(clientMonthKey)) {
+          byClientMonth.set(clientMonthKey, {
+            periodId: ym,
+            brand,
+            affiliateId: t(CC_AFF),
+            clientId,
+            clientName,
+            clientLogin: t(CC_LOGIN),
+            user: t(CC_USER),
+            country: t(CC_COUNTRY),
+            balance: 0,
+            commission: 0,
+            pl: 0,
+            openPl: 0,
+            trades: 0,
+            ftd: 0,
+            rdp: 0,
+            deposit: 0,
+            wd: 0,
+            net: 0,
+          })
+        }
+
+        const cm = byClientMonth.get(clientMonthKey)
+        const bal = n(CC_BALANCE)
+        if (bal > Number(cm.balance || 0)) cm.balance = bal
+        cm.commission += n(CC_LTV)
+        cm.pl += n(CC_CLOSED_PL)
+        cm.openPl += n(CC_OPEN_PL)
+        cm.trades += Math.round(n(CC_TRADES))
+        cm.ftd += n(CC_FTD)
+        cm.rdp += n(CC_RDP)
+        cm.deposit += n(CC_DEPOSIT)
+        cm.wd += n(CC_WD)
+        cm.net += n(CC_NET)
+
+        const affiliateMonthKey = `${brand}|${t(CC_AFF)}|${ym}`
+        if (!byAffiliateMonth.has(affiliateMonthKey)) {
+          byAffiliateMonth.set(affiliateMonthKey, {
+            periodId: ym,
+            brand,
+            affiliateId: t(CC_AFF),
+            net: 0,
+            pl: 0,
+            commission: 0,
+            balance: 0,
+          })
+        }
+
+        const am = byAffiliateMonth.get(affiliateMonthKey)
+        am.net += n(CC_NET)
+        am.pl += n(CC_CLOSED_PL)
+        am.commission += n(CC_LTV)
+        am.balance += bal
+      }
 
       if (!byKey.has(key)) {
         byKey.set(key, {
@@ -1017,6 +1079,29 @@ async function fetchCreolabsClientsData(config) {
     for (const a of byKey.values()) delete a._latestRank
 
     const periods = [...periodSet].sort((a, b) => ymRank(a) - ymRank(b))
+    const clientMonths = [...byClientMonth.values()].sort((a, b) => {
+      const ra = ymRank(a?.periodId)
+      const rb = ymRank(b?.periodId)
+      if (ra !== rb) return ra - rb
+      const aa = safeText(a?.affiliateId)
+      const ab = safeText(b?.affiliateId)
+      if (aa !== ab) return aa.localeCompare(ab)
+      const ba = safeText(a?.brand)
+      const bb = safeText(b?.brand)
+      if (ba !== bb) return ba.localeCompare(bb)
+      return safeText(a?.clientId).localeCompare(safeText(b?.clientId))
+    })
+
+    const affiliateMonth = [...byAffiliateMonth.values()].sort((a, b) => {
+      const ra = ymRank(a?.periodId)
+      const rb = ymRank(b?.periodId)
+      if (ra !== rb) return ra - rb
+      const aa = safeText(a?.affiliateId)
+      const ab = safeText(b?.affiliateId)
+      if (aa !== ab) return aa.localeCompare(ab)
+      return safeText(a?.brand).localeCompare(safeText(b?.brand))
+    })
+
     return {
       period: 'ALL',
       periodFrom,
@@ -1024,6 +1109,8 @@ async function fetchCreolabsClientsData(config) {
       periods,
       totalFetched: allRows.length,
       clients: [...byKey.values()],
+      clientMonths,
+      affiliateMonth,
     }
   })
 }

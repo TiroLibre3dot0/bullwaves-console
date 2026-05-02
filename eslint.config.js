@@ -71,7 +71,20 @@ module.exports = [
       // and can block commits via lint-staged.
       'no-useless-escape': 'off',
       'no-duplicate-imports': 'error',
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
+  // Node.js / CommonJS globals for serverless handlers
+  {
+    files: ['serverless/**/*.js'],
+    languageOptions: {
+      globals: {
+        require: 'readonly',
+        module: 'writable',
+        exports: 'writable',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
     },
   },
 ]

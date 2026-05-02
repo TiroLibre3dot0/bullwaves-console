@@ -516,7 +516,7 @@ export const translations = {
 
     // Creolabs
     'creolabs.title': 'Creolabs',
-    'creolabs.subtitle': 'Monthly breakdown (Top 50 leaderboards).',
+    'creolabs.subtitle': 'Traders Ranking Rewards (Top 50 leaderboards).',
     'creolabs.period': 'Period',
     'creolabs.year': 'Year',
     'creolabs.month': 'Month',
@@ -3101,7 +3101,7 @@ export const translations = {
 
     // Creolabs
     'creolabs.title': 'Creolabs',
-    'creolabs.subtitle': 'Breakdown mensile (classifiche Top 50).',
+    'creolabs.subtitle': 'Traders Ranking Rewards (classifiche Top 50).',
     'creolabs.period': 'Periodo',
     'creolabs.year': 'Anno',
     'creolabs.month': 'Mese',

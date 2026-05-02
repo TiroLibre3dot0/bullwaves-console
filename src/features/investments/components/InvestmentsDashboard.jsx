@@ -14,7 +14,13 @@ import {
 import { useCellxInvestmentsData } from '../../cellx/hooks/useCellxInvestmentsData'
 import { useAffiliateLedger } from '../../media-payments/hooks/useAffiliateLedger'
 import { useCreolabsBreakdownData } from '../../creolabs/hooks/useCreolabsBreakdownData'
-import { loadCreolabsClientsTable } from '../../creolabs/services/creolabsService'
+import {
+  isQlikApiUnavailableError,
+  loadCreolabsClientsTable,
+  loadCreolabsQlikClients,
+  logCreolabsQlikFallbackBlocked,
+  logCreolabsQlikFallbackUsed,
+} from '../../creolabs/services/creolabsService'
 import { loadAffiliateIndexById } from '../../ranking/services/rankingService'
 import { checkDataStatus } from '../../../utils/dataStatusChecker'
 import { useDataStatus } from '../../../context/DataStatusContext'
@@ -24,6 +30,7 @@ import { withReportsVersion } from '../../../lib/fetchCache'
 import AffiliatePayoutUnifiedTable from './AffiliatePayoutUnifiedTable'
 import StickyMetricsTable from './StickyMetricsTable'
 import { formatMonthReference } from '../utils/formatMonthReference'
+import { useQlikStatus } from '../../../context/QlikStatusContext'
 
 const selectStyle = {
   minWidth: 180,
@@ -377,6 +384,7 @@ export default function InvestmentsDashboard(props) {
   } = props || {}
 
   const { t, locale } = useI18n()
+  const { reportQlikSource } = useQlikStatus()
 
   const [viewMode, setViewMode] = useState(() => {
     const initial = String(initialViewMode || '').trim()
@@ -500,9 +508,24 @@ export default function InvestmentsDashboard(props) {
     const load = async (force) => {
       setCreolabsClientsLoading(true)
       try {
-        const table = await loadCreolabsClientsTable({ force })
-        const nextRows = Array.isArray(table?.rows) ? table.rows : []
-        if (!cancelled) setCreolabsClientRows(nextRows)
+        try {
+          const api = await loadCreolabsQlikClients({ force })
+          const nextRows = Array.isArray(api?.data?.clientMonths) ? api.data.clientMonths : []
+          if (!cancelled) setCreolabsClientRows(nextRows)
+          if (!cancelled) reportQlikSource('creolabs-dashboard', 'api')
+          return
+        } catch (e) {
+          if (!isQlikApiUnavailableError(e)) {
+            logCreolabsQlikFallbackBlocked('affiliate/payments balances load', e)
+            throw e
+          }
+          logCreolabsQlikFallbackUsed('affiliate/payments balances load', e)
+          if (!cancelled) reportQlikSource('creolabs-dashboard', 'local')
+          const table = await loadCreolabsClientsTable({ force })
+          const nextRows = Array.isArray(table?.rows) ? table.rows : []
+          if (!cancelled) setCreolabsClientRows(nextRows)
+          return
+        }
       } catch (e) {
         console.warn('Unable to load Creolabs clients table for balances', e)
         if (!cancelled) setCreolabsClientRows([])
@@ -521,8 +544,9 @@ export default function InvestmentsDashboard(props) {
     return () => {
       cancelled = true
       window.removeEventListener('bw-reports-updated', onUpdated)
+      reportQlikSource('creolabs-dashboard', null)
     }
-  }, [shouldLoadCreolabsClients])
+  }, [shouldLoadCreolabsClients, reportQlikSource])
 
   const selectedActiveData = effectiveRequestedSource === 'creolabs' ? creolabs : cellxpert
   const selectedLoading =

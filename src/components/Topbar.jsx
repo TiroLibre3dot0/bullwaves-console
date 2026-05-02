@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useDataStatus } from '../context/DataStatusContext'
+import { useQlikStatus } from '../context/QlikStatusContext'
+import QlikSourcePill from './common/QlikSourcePill'
 import { useMediaPaymentsData } from '../features/media-payments/hooks/useMediaPaymentsData'
 import { useI18n } from '../i18n/I18nContext'
 import { CONSOLE_TOOLS } from '../config/tools'
@@ -382,6 +384,7 @@ export default function Topbar({
 }) {
   const { t, locale, setLocale, locales } = useI18n()
   const { dataStatus } = useDataStatus()
+  const { qlikSource } = useQlikStatus()
   const { mediaRows, payments, mediaSource, paymentsSource } = useMediaPaymentsData()
   const { user, logout } = useAuth()
   const initial = user?.name?.[0]?.toUpperCase() || 'B'
@@ -392,6 +395,8 @@ export default function Topbar({
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notificationReadById, setNotificationReadById] = useState({})
   const [dailyUpdate, setDailyUpdate] = useState(null)
+  const [newClientNotifs, setNewClientNotifs] = useState([])
+  const [newClientToasts, setNewClientToasts] = useState([])
   const [updateSummary, setUpdateSummary] = useState({
     changedRows: 0,
     changedFields: 0,
@@ -957,6 +962,118 @@ export default function Topbar({
     }
   }, [dailyUpdate])
 
+  // Detect new CRM registered users and push them as notifications.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.fetch) return
+
+    let cancelled = false
+    const SEEN_KEY = 'bw_crm_seen_ids:v1'
+    const NOTIF_KEY = 'bw_crm_new_notifs:v1'
+    const INTERVAL_MS = 5 * 60 * 1000
+
+    const checkNewClients = async () => {
+      try {
+        const rows = await loadCrmQuickRows()
+        if (cancelled || !Array.isArray(rows) || !rows.length) return
+
+        const storedSeen = (() => {
+          try {
+            const raw = window.localStorage.getItem(SEEN_KEY)
+            return raw ? JSON.parse(raw) : null
+          } catch {
+            return null
+          }
+        })()
+
+        const currentIds = new Set(
+          rows.map((r) => String(r?.userid || r?.user_id || '').trim()).filter(Boolean)
+        )
+
+        if (!storedSeen) {
+          // First run: persist current IDs as baseline, no notifications.
+          try {
+            window.localStorage.setItem(SEEN_KEY, JSON.stringify([...currentIds]))
+          } catch {
+            /* ignore */
+          }
+          return
+        }
+
+        const seenSet = new Set(Array.isArray(storedSeen) ? storedSeen : [])
+        const newUsers = rows
+          .filter((r) => {
+            const id = String(r?.userid || r?.user_id || '').trim()
+            return id && !seenSet.has(id)
+          })
+          .map((r) => mapSupportUser(r))
+          .filter((u) => u?.userId || u?.name)
+
+        if (cancelled) return
+
+        if (newUsers.length > 0) {
+          // Fire a toast for each new user (max 3 at a time).
+          newUsers.slice(0, 3).forEach((u) => pushNewClientToast(u))
+
+          // Merge with previously stored unread new-client notifications.
+          const existing = (() => {
+            try {
+              const raw = window.localStorage.getItem(NOTIF_KEY)
+              return raw ? JSON.parse(raw) : []
+            } catch {
+              return []
+            }
+          })()
+          const existingIds = new Set(
+            (Array.isArray(existing) ? existing : []).map((u) => u.userId)
+          )
+          const merged = [
+            ...newUsers.filter((u) => !existingIds.has(u.userId)),
+            ...(Array.isArray(existing) ? existing : []),
+          ].slice(0, 30)
+
+          try {
+            window.localStorage.setItem(NOTIF_KEY, JSON.stringify(merged))
+            window.localStorage.setItem(SEEN_KEY, JSON.stringify([...currentIds]))
+          } catch {
+            /* ignore */
+          }
+
+          setNewClientNotifs(merged)
+        } else {
+          // No new users but update seen set.
+          try {
+            window.localStorage.setItem(SEEN_KEY, JSON.stringify([...currentIds]))
+          } catch {
+            /* ignore */
+          }
+          // Restore any previously unread notifications from storage.
+          const stored = (() => {
+            try {
+              const raw = window.localStorage.getItem(NOTIF_KEY)
+              return raw ? JSON.parse(raw) : []
+            } catch {
+              return []
+            }
+          })()
+          if (Array.isArray(stored) && stored.length) setNewClientNotifs(stored)
+        }
+      } catch {
+        // Silently ignore — CRM index may not be available.
+      }
+    }
+
+    const timerId = window.setInterval(checkNewClients, INTERVAL_MS)
+    const onReportsUpdated = () => checkNewClients()
+    window.addEventListener('bw-reports-updated', onReportsUpdated)
+    checkNewClients()
+
+    return () => {
+      cancelled = true
+      window.clearInterval(timerId)
+      window.removeEventListener('bw-reports-updated', onReportsUpdated)
+    }
+  }, [])
+
   useEffect(() => {
     if (!notificationsOpen) return
     const onMouseDown = (event) => {
@@ -995,6 +1112,11 @@ export default function Topbar({
         contacted: 'Gia contattati',
         pending: 'Richiedono follow-up',
         completed: 'Chiuse/revisionate',
+        newClientsTitle: '{count} nuovo/i cliente/i registrato/i',
+        newClientsSubtitle: 'Rilevati tramite CRM index — nome, affiliato e data registrazione.',
+        newClientsClearAll: 'Segna tutti come visti',
+        noAffiliate: 'Affiliato n/d',
+        noDate: 'Data n/d',
         fieldLabels: {
           reviewSummary: 'Sintesi review',
           issueType: 'Issue type',
@@ -1030,6 +1152,11 @@ export default function Topbar({
       contacted: 'Already contacted',
       pending: 'Needs follow-up',
       completed: 'Closed/reviewed',
+      newClientsTitle: '{count} new client(s) registered',
+      newClientsSubtitle: 'Detected via CRM index — name, affiliate and registration date.',
+      newClientsClearAll: 'Mark all as seen',
+      noAffiliate: 'No affiliate',
+      noDate: 'Date n/a',
       fieldLabels: {
         reviewSummary: 'Review summary',
         issueType: 'Issue type',
@@ -1050,16 +1177,18 @@ export default function Topbar({
   }, [locale, dailyUpdate?.dateLabel])
 
   const notificationItems = useMemo(() => {
-    if (!dailyUpdate) return []
-    const summaryLine =
-      updateSummary?.changedFields > 0
-        ? notificationsText.summaryWithChanges
-            .replace('{fields}', String(updateSummary.changedFields))
-            .replace('{rows}', String(updateSummary.changedRows))
-        : notificationsText.summaryNoChanges
-    return [
-      {
+    const items = []
+
+    if (dailyUpdate) {
+      const summaryLine =
+        updateSummary?.changedFields > 0
+          ? notificationsText.summaryWithChanges
+              .replace('{fields}', String(updateSummary.changedFields))
+              .replace('{rows}', String(updateSummary.changedRows))
+          : notificationsText.summaryNoChanges
+      items.push({
         id: dailyUpdate.notificationId || `daily:${dailyUpdate.dateKey}`,
+        kind: 'trustpilot',
         title: notificationsText.dailyTitle,
         subtitle: notificationsText.subtitle,
         summaryLine,
@@ -1070,9 +1199,21 @@ export default function Topbar({
           `${notificationsText.pending}: ${dailyUpdate.pendingCount}`,
           `${notificationsText.completed}: ${dailyUpdate.completedCount}`,
         ],
-      },
-    ]
-  }, [dailyUpdate, notificationsText, updateSummary])
+      })
+    }
+
+    if (newClientNotifs.length > 0) {
+      items.push({
+        id: `new-clients:${newClientNotifs.length}:${newClientNotifs[0]?.userId || ''}`,
+        kind: 'new-clients',
+        title: notificationsText.newClientsTitle.replace('{count}', String(newClientNotifs.length)),
+        subtitle: notificationsText.newClientsSubtitle,
+        clients: newClientNotifs,
+      })
+    }
+
+    return items
+  }, [dailyUpdate, notificationsText, updateSummary, newClientNotifs])
 
   const unreadNotificationsCount = useMemo(
     () => notificationItems.filter((item) => !notificationReadById?.[item.id]).length,
@@ -1082,6 +1223,23 @@ export default function Topbar({
   const markNotificationRead = (notificationId) => {
     if (!notificationId) return
     setNotificationReadById((prev) => ({ ...prev, [notificationId]: true }))
+  }
+
+  const clearNewClientNotifs = () => {
+    setNewClientNotifs([])
+    try {
+      window.localStorage.removeItem('bw_crm_new_notifs:v1')
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const pushNewClientToast = (user) => {
+    const id = `toast-${Date.now()}-${Math.random()}`
+    setNewClientToasts((prev) => [...prev.slice(-4), { id, user }])
+    window.setTimeout(() => {
+      setNewClientToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 6000)
   }
 
   return (
@@ -1251,6 +1409,11 @@ export default function Topbar({
           {user ? (
             <div className="user-chip">
               <div className="lang-switch" title={t('lang.label')}>
+                {qlikSource ? (
+                  <span style={{ marginRight: 8 }}>
+                    <QlikSourcePill source={qlikSource} />
+                  </span>
+                ) : null}
                 <div ref={notificationsWrapRef} style={{ position: 'relative' }}>
                   <button
                     type="button"
@@ -1329,6 +1492,117 @@ export default function Topbar({
                       {notificationItems.length ? (
                         notificationItems.map((item) => {
                           const isRead = Boolean(notificationReadById?.[item.id])
+
+                          if (item.kind === 'new-clients') {
+                            return (
+                              <div
+                                key={item.id}
+                                style={{
+                                  border: '1px solid rgba(52,211,153,0.45)',
+                                  borderRadius: 10,
+                                  padding: 10,
+                                  background: isRead
+                                    ? '#374151'
+                                    : 'linear-gradient(180deg, rgba(52,211,153,0.12), rgba(30,41,59,0.9))',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                  }}
+                                >
+                                  <div style={{ color: '#6ee7b7', fontSize: 12, fontWeight: 800 }}>
+                                    {item.title}
+                                  </div>
+                                  <span
+                                    style={{
+                                      fontSize: 10,
+                                      borderRadius: 999,
+                                      padding: '2px 8px',
+                                      background: isRead ? '#374151' : '#065f46',
+                                      color: isRead ? '#cbd5e1' : '#6ee7b7',
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    {isRead ? notificationsText.read : notificationsText.unread}
+                                  </span>
+                                </div>
+                                <div style={{ color: '#a7f3d0', fontSize: 11, marginTop: 4 }}>
+                                  {item.subtitle}
+                                </div>
+                                <div style={{ marginTop: 8, display: 'grid', gap: 5 }}>
+                                  {item.clients.slice(0, 8).map((u, idx) => (
+                                    <div
+                                      key={u.userId || idx}
+                                      style={{
+                                        borderLeft: '3px solid #34d399',
+                                        paddingLeft: 8,
+                                        fontSize: 11,
+                                        color: '#e2e8f0',
+                                      }}
+                                    >
+                                      <span style={{ fontWeight: 700 }}>
+                                        {u.name || u.userId || '—'}
+                                      </span>
+                                      <span style={{ color: '#94a3b8', marginLeft: 6 }}>
+                                        {'Aff: '}
+                                        {u.affiliateId || notificationsText.noAffiliate}
+                                      </span>
+                                      {u.regDate ? (
+                                        <span style={{ color: '#64748b', marginLeft: 6 }}>
+                                          {u.regDate.slice(0, 10)}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  ))}
+                                  {item.clients.length > 8 ? (
+                                    <div style={{ color: '#64748b', fontSize: 11 }}>
+                                      +{item.clients.length - 8} altri…
+                                    </div>
+                                  ) : null}
+                                </div>
+                                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                                  <button
+                                    type="button"
+                                    onClick={clearNewClientNotifs}
+                                    style={{
+                                      border: '1px solid #065f46',
+                                      background: '#374151',
+                                      color: '#6ee7b7',
+                                      borderRadius: 8,
+                                      padding: '5px 8px',
+                                      fontSize: 11,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {notificationsText.newClientsClearAll}
+                                  </button>
+                                  {!isRead ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => markNotificationRead(item.id)}
+                                      style={{
+                                        border: '1px solid #1e40af',
+                                        background: '#374151',
+                                        color: '#bfdbfe',
+                                        borderRadius: 8,
+                                        padding: '5px 8px',
+                                        fontSize: 11,
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      {notificationsText.markRead}
+                                    </button>
+                                  ) : null}
+                                </div>
+                              </div>
+                            )
+                          }
+
+                          // Trustpilot / daily notification
                           const hasChanges = updateSummary?.changedFields > 0
                           return (
                             <div
@@ -1641,6 +1915,79 @@ export default function Topbar({
           registrationsOutdated,
         }}
       />
+
+      {/* New-client toast notifications — top-right stack */}
+      {newClientToasts.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 64,
+            right: 16,
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            pointerEvents: 'none',
+          }}
+        >
+          {newClientToasts.map((toast) => (
+            <div
+              key={toast.id}
+              style={{
+                pointerEvents: 'auto',
+                minWidth: 280,
+                maxWidth: 340,
+                background: 'linear-gradient(135deg, rgba(6,95,70,0.97), rgba(15,23,42,0.97))',
+                border: '1px solid rgba(52,211,153,0.5)',
+                borderRadius: 12,
+                padding: '12px 14px',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+                animation: 'bw-toast-in 0.25s ease',
+                display: 'flex',
+                gap: 10,
+                alignItems: 'flex-start',
+              }}
+            >
+              <span style={{ fontSize: 20, lineHeight: 1 }}>🆕</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ color: '#6ee7b7', fontWeight: 800, fontSize: 12, marginBottom: 3 }}>
+                  Nuova registrazione
+                </div>
+                <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 13 }}>
+                  {toast.user?.name || toast.user?.userId || '—'}
+                </div>
+                {toast.user?.affiliateId ? (
+                  <div style={{ color: '#94a3b8', fontSize: 11, marginTop: 2 }}>
+                    Affiliato: {toast.user.affiliateId}
+                  </div>
+                ) : null}
+                {toast.user?.regDate ? (
+                  <div style={{ color: '#64748b', fontSize: 11 }}>
+                    {String(toast.user.regDate).slice(0, 10)}
+                  </div>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewClientToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#6ee7b7',
+                  cursor: 'pointer',
+                  fontSize: 16,
+                  lineHeight: 1,
+                  padding: 0,
+                  marginTop: 1,
+                }}
+                aria-label="Chiudi notifica"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </>
   )
 }
