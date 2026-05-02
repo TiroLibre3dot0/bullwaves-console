@@ -166,6 +166,32 @@ async function loadCrmQuickRows() {
   return Array.isArray(rows) ? rows : null
 }
 
+// Fetch unique clients from Qlik API for new-registration notifications.
+// Does NOT cache so each polling cycle sees the latest data.
+async function loadQlikUniqueClients() {
+  try {
+    const res = await fetch('/api/qlik/creolabs/clients', { cache: 'no-store' })
+    if (!res.ok) return null
+    const data = await res.json()
+    const months = Array.isArray(data?.data?.clientMonths) ? data.data.clientMonths : []
+    const seen = new Set()
+    const unique = []
+    for (const row of months) {
+      const id = String(row?.clientId || '').trim()
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      unique.push({
+        userid: id,
+        customername: row?.clientName || '',
+        country: row?.country || '',
+      })
+    }
+    return unique.length ? unique : null
+  } catch {
+    return null
+  }
+}
+
 function normalizeCrmQuery(value) {
   return String(value || '')
     .replace(/\s+/g, ' ')
@@ -973,7 +999,7 @@ export default function Topbar({
 
     const checkNewClients = async () => {
       try {
-        const rows = await loadCrmQuickRows()
+        const rows = await loadQlikUniqueClients()
         if (cancelled || !Array.isArray(rows) || !rows.length) return
 
         const storedSeen = (() => {
