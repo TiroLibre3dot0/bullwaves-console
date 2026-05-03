@@ -56,7 +56,7 @@ const SUPPORT_TOTAL_DEPOSITS_KEYS = [
 ]
 const SUPPORT_NET_DEPOSITS_KEYS = ['netdeposits', 'netDeposits', 'net_deposits']
 const SUPPORT_WITHDRAWALS_KEYS = ['withdrawals', 'totalwithdrawals', 'total_withdrawals']
-const SUPPORT_AFFILIATE_KEYS = ['affiliateid', 'affiliate_id', 'affiliate']
+const SUPPORT_AFFILIATE_KEYS = ['affiliateid', 'affiliate_id', 'affiliateId', 'affiliate']
 const SUPPORT_STATUS_KEYS = ['status']
 const SUPPORT_COUNTRY_KEYS = ['country']
 const SUPPORT_ACTION_KEYS = ['action']
@@ -174,22 +174,120 @@ async function loadQlikUniqueClients() {
     if (!res.ok) return null
     const data = await res.json()
     const months = Array.isArray(data?.data?.clientMonths) ? data.data.clientMonths : []
-    const seen = new Set()
-    const unique = []
+
+    const monthOrder = {
+      Jan: 1,
+      Feb: 2,
+      Mar: 3,
+      Apr: 4,
+      May: 5,
+      Jun: 6,
+      Jul: 7,
+      Aug: 8,
+      Sep: 9,
+      Oct: 10,
+      Nov: 11,
+      Dec: 12,
+    }
+
+    const ymRank = (value) => {
+      const text = String(value || '').trim()
+      const match = text.match(/^(\d{4})-([A-Za-z]{3})$/)
+      if (!match) return Number.POSITIVE_INFINITY
+      const year = Number(match[1])
+      const month = monthOrder[match[2]]
+      if (!Number.isFinite(year) || !Number.isFinite(month)) return Number.POSITIVE_INFINITY
+      return year * 12 + month
+    }
+
+    const byClientId = new Map()
     for (const row of months) {
       const id = String(row?.clientId || '').trim()
-      if (!id || seen.has(id)) continue
-      seen.add(id)
-      unique.push({
-        userid: id,
-        customername: row?.clientName || '',
-        country: row?.country || '',
-      })
+      if (!id) continue
+
+      const affiliateId = String(row?.affiliateId || '').trim()
+      const periodId = String(row?.periodId || row?.yearMonth || '').trim()
+      const existing = byClientId.get(id)
+
+      if (!existing) {
+        byClientId.set(id, {
+          userid: id,
+          customername: row?.clientName || '',
+          country: row?.country || '',
+          affiliateid: affiliateId,
+          affiliateId,
+          registrationdate: periodId,
+          registrationDate: periodId,
+          _regRank: ymRank(periodId),
+        })
+        continue
+      }
+
+      if (!existing.customername && row?.clientName) existing.customername = row.clientName
+      if (!existing.country && row?.country) existing.country = row.country
+      if (!existing.affiliateId && affiliateId) {
+        existing.affiliateId = affiliateId
+        existing.affiliateid = affiliateId
+      }
+
+      const rank = ymRank(periodId)
+      if (rank < existing._regRank) {
+        existing._regRank = rank
+        existing.registrationDate = periodId
+        existing.registrationdate = periodId
+      }
     }
+
+    const unique = [...byClientId.values()].map((u) => {
+      const { _regRank, ...rest } = u
+      return rest
+    })
+
+    // Enrich with real registration dates from CRM index.
+    try {
+      const crmRows = await loadCrmQuickRows()
+      if (Array.isArray(crmRows) && crmRows.length) {
+        const crmById = new Map()
+        for (const row of crmRows) {
+          const id = String(row?.userid || row?.user_id || '')
+            .trim()
+            .toLowerCase()
+          if (id && !crmById.has(id)) crmById.set(id, row)
+        }
+        for (const u of unique) {
+          const id = String(u.userid || '')
+            .trim()
+            .toLowerCase()
+          const crmRow = id ? crmById.get(id) : undefined
+          if (crmRow) {
+            const realDate = pickSupportField(crmRow, SUPPORT_REGDATE_KEYS)
+            if (realDate) {
+              u.registrationDate = realDate
+              u.registrationdate = realDate
+            }
+          }
+        }
+      }
+    } catch {
+      // CRM enrichment is best-effort; ignore errors
+    }
+
     return unique.length ? unique : null
   } catch {
     return null
   }
+}
+
+function formatRegDate(value) {
+  if (!value) return ''
+  const d = parseReviewDate(value)
+  if (d) {
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    return `${dd}/${mm}/${d.getFullYear()}`
+  }
+  // fallback: show raw value trimmed
+  return String(value).trim().slice(0, 10)
 }
 
 function normalizeCrmQuery(value) {
@@ -1579,7 +1677,7 @@ export default function Topbar({
                                       </span>
                                       {u.regDate ? (
                                         <span style={{ color: '#64748b', marginLeft: 6 }}>
-                                          {u.regDate.slice(0, 10)}
+                                          {formatRegDate(u.regDate)}
                                         </span>
                                       ) : null}
                                     </div>
@@ -1989,7 +2087,7 @@ export default function Topbar({
                 ) : null}
                 {toast.user?.regDate ? (
                   <div style={{ color: '#64748b', fontSize: 11 }}>
-                    {String(toast.user.regDate).slice(0, 10)}
+                    {formatRegDate(toast.user.regDate)}
                   </div>
                 ) : null}
               </div>

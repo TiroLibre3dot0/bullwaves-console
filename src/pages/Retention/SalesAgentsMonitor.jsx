@@ -12,10 +12,12 @@ import {
 import { Bar, Pie } from 'react-chartjs-2'
 import KpiCard from '../../components/common/KpiCard'
 import FullPageLoader from '../../components/FullPageLoader'
+import { useQlikStatus } from '../../context/QlikStatusContext'
 import { normalizeHeader, parseNumberSafe, parseYearMonthSafe } from '../../utils/retentionRanking'
 import { buildTradersRankingRewardsDataset } from '../../utils/tradersRankingRewards'
 import { useI18n } from '../../i18n/I18nContext'
 import { sections as orgChartSections } from '../orgChartData'
+import { loadCreolabsQlikClientMonths } from '../../features/creolabs/services/creolabsService'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
@@ -102,8 +104,37 @@ function formatPeriodLabel(periodKey) {
   return dt.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
 }
 
+function mapQlikClientMonthsToSalesRows(clientMonths = []) {
+  const list = Array.isArray(clientMonths) ? clientMonths : []
+  return list.map((row) => {
+    const periodId = String(row?.periodId || '').trim()
+    const balance = Number(row?.balance || 0)
+    return {
+      affiliate_id: String(row?.affiliateId || '').trim(),
+      client_id: String(row?.clientId || '').trim(),
+      client_name: String(row?.clientName || '').trim(),
+      client_login: String(row?.clientLogin || '').trim(),
+      user: String(row?.user || '').trim(),
+      country: String(row?.country || '').trim(),
+      brand: String(row?.brand || '').trim(),
+      balance,
+      equity: balance,
+      closed_pl: Number(row?.pl || 0),
+      open_pl: Number(row?.openPl || 0),
+      trades: Number(row?.trades || 0),
+      ftd: Number(row?.ftd || 0),
+      rdp: Number(row?.rdp || 0),
+      deposit: Number(row?.deposit || 0),
+      wd: Number(row?.wd || 0),
+      net: Number(row?.net || 0),
+      year_month: periodId,
+    }
+  })
+}
+
 export default function SalesAgentsMonitor() {
   const { t } = useI18n()
+  const { reportQlikSource } = useQlikStatus()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [artifact, setArtifact] = useState(null)
@@ -127,25 +158,23 @@ export default function SalesAgentsMonitor() {
     setError('')
     setLoading(true)
     try {
-      const ts = Date.now()
-      const baseUrl = (import.meta?.env?.BASE_URL || '/').replace(/\/+$/, '/')
-      const res = await fetch(`${baseUrl}traders_ranking_rewards_table.json?ts=${ts}`, {
-        cache: 'no-store',
-      })
-      if (!res.ok) throw new Error('Traders Ranking Rewards report not found in console assets')
-      const json = await res.json()
-      const rows = Array.isArray(json?.rows) ? json.rows : []
-      const headers = Array.isArray(json?.headers) ? json.headers : Object.keys(rows[0] || {})
+      const payload = await loadCreolabsQlikClientMonths({ force: false })
+      const clientMonths = Array.isArray(payload?.data?.clientMonths)
+        ? payload.data.clientMonths
+        : []
+      const rows = mapQlikClientMonthsToSalesRows(clientMonths)
+      const headers = Object.keys(rows[0] || {})
       if (loadReqRef.current !== reqId) return
-      setFileName('Traders Ranking Rewards.xlsx (auto)')
+      setFileName('Qlik CREOLABS API (live)')
       setArtifact({ rows, headers })
+      reportQlikSource('sales-agents-monitor', 'api')
     } catch (e) {
-      const msg = String(e?.message || '').trim() || 'Refresh failed'
-      setError(msg)
+      const msg = String(e?.message || '').trim() || 'Qlik API unavailable'
+      if (loadReqRef.current === reqId) setError(msg)
     } finally {
       if (loadReqRef.current === reqId) setLoading(false)
     }
-  }, [])
+  }, [reportQlikSource])
 
   useEffect(() => {
     if (!artifact) loadFromConsoleArtifact()

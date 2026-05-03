@@ -5,6 +5,8 @@ import {
   loadCreolabsQlikAnalytics,
   loadCreolabsQlikClientMonths,
   loadCreolabsQlikKpis,
+  loadPrimeClientsRankingTable,
+  loadTradersRankingRewardsTable,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
 } from './services/creolabsService'
@@ -40,6 +42,48 @@ const TD_L = { ...TD, textAlign: 'left' }
 
 const BRANDS = ['BW', 'BW Global', 'BW Prime']
 const PAGE_SIZE = 100
+const CONDITIONAL_COLUMN_KEYS = new Set([
+  'client_timestamp',
+  'ltd_date',
+  'ltt_date',
+  'equity',
+  'clients_p',
+  'opened_trades',
+  'year',
+  'month',
+  'week',
+  'date',
+  'status',
+  'last_time_contact',
+  'ltc_group',
+  'last_time_call',
+  'last_time_comment',
+  'pl_adjustment',
+  'closed_vol',
+  'open_vol',
+  'open_trades',
+  'rdps',
+  'stds',
+  'rdr',
+  'ftds',
+  'leads',
+  'cr',
+  'client_email',
+])
+const MONTH_ORDER = {
+  Jan: 1,
+  Feb: 2,
+  Mar: 3,
+  Apr: 4,
+  May: 5,
+  Jun: 6,
+  Jul: 7,
+  Aug: 8,
+  Sep: 9,
+  Oct: 10,
+  Nov: 11,
+  Dec: 12,
+}
 
 const FOREX_COLS = [
   { key: 'brand', label: 'Brand', align: 'left', type: 'text' },
@@ -124,9 +168,354 @@ function parseHeaderRows(payload) {
   })
 }
 
-function mapQlikClientMonthToForexRow(row) {
+function parseDateValue(value) {
+  if (value == null || value === '') return null
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null
+  }
+  if (typeof value === 'number') {
+    const ms = Date.UTC(1899, 11, 30) + Math.round(value) * 86400000
+    const date = new Date(ms)
+    return Number.isFinite(date.getTime()) ? date : null
+  }
+
+  const text = String(value).trim()
+  if (!text || text === '-' || text === '—') return null
+
+  const isoMs = Date.parse(text)
+  if (Number.isFinite(isoMs)) {
+    const date = new Date(isoMs)
+    return Number.isFinite(date.getTime()) ? date : null
+  }
+
+  const isoLike = text.match(
+    /^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+  )
+  if (isoLike) {
+    const year = Number(isoLike[1])
+    const month = Number(isoLike[2])
+    const day = Number(isoLike[3])
+    const hours = isoLike[4] != null ? Number(isoLike[4]) : 0
+    const minutes = isoLike[5] != null ? Number(isoLike[5]) : 0
+    const seconds = isoLike[6] != null ? Number(isoLike[6]) : 0
+    const ms = Date.UTC(year, month - 1, day, hours, minutes, seconds)
+    const date = new Date(ms)
+    return Number.isFinite(date.getTime()) ? date : null
+  }
+
+  const dmy = text.match(
+    /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/
+  )
+  if (dmy) {
+    const day = Number(dmy[1])
+    const month = Number(dmy[2])
+    let year = Number(dmy[3])
+    const hours = dmy[4] != null ? Number(dmy[4]) : 0
+    const minutes = dmy[5] != null ? Number(dmy[5]) : 0
+    const seconds = dmy[6] != null ? Number(dmy[6]) : 0
+    if (year >= 0 && year < 100) year += 2000
+    const ms = Date.UTC(year, month - 1, day, hours, minutes, seconds)
+    const date = new Date(ms)
+    return Number.isFinite(date.getTime()) ? date : null
+  }
+
+  return null
+}
+
+function toIsoDateText(value) {
+  const date = parseDateValue(value)
+  return date ? date.toISOString() : ''
+}
+
+function normalizeText(value) {
+  const text = String(value ?? '').trim()
+  return text && text !== '-' && text !== '—' ? text : ''
+}
+
+function parseYearMonthParts(value) {
+  const text = String(value || '').trim()
+  const match = text.match(/^(\d{4})-([A-Za-z]{3})$/)
+  if (!match) return null
+  const year = Number(match[1])
+  const monthAbbr = match[2]
+  const month = MONTH_ORDER[monthAbbr]
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return null
+  return { year, month, monthLabel: monthAbbr }
+}
+
+function formatIsoWeek(value) {
+  const date = parseDateValue(value)
+  if (!date) return ''
+  const utc = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  const day = utc.getUTCDay() || 7
+  utc.setUTCDate(utc.getUTCDate() + 4 - day)
+  const yearStart = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(((utc - yearStart) / 86400000 + 1) / 7)
+  return `${utc.getUTCFullYear()}-${String(week).padStart(2, '0')}`
+}
+
+function pickEarlierDateText(currentValue, nextValue) {
+  const currentDate = parseDateValue(currentValue)
+  const nextDate = parseDateValue(nextValue)
+  if (!currentDate) return nextDate ? nextDate.toISOString() : ''
+  if (!nextDate) return currentDate.toISOString()
+  return currentDate.getTime() <= nextDate.getTime()
+    ? currentDate.toISOString()
+    : nextDate.toISOString()
+}
+
+function pickLaterDateText(currentValue, nextValue) {
+  const currentDate = parseDateValue(currentValue)
+  const nextDate = parseDateValue(nextValue)
+  if (!currentDate) return nextDate ? nextDate.toISOString() : ''
+  if (!nextDate) return currentDate.toISOString()
+  return currentDate.getTime() >= nextDate.getTime()
+    ? currentDate.toISOString()
+    : nextDate.toISOString()
+}
+
+function buildTradersDateLookup(payload) {
+  const rows = parseHeaderRows(payload)
+  const byClientMonth = new Map()
+  const byClient = new Map()
+
+  for (const row of rows) {
+    const clientId = String(row?.client_id || row?.clientId || '').trim()
+    if (!clientId) continue
+
+    const yearMonth = String(row?.year_month || row?.yearMonth || row?.periodId || '').trim()
+    const clientTimestamp = toIsoDateText(row?.client_timestamp || row?.clientTimestamp || '')
+    const ltdDate = toIsoDateText(row?.ltd_date || row?.lastTradeDate || '')
+    const lttDate = toIsoDateText(row?.ltt_date || row?.lastTransactionDate || '')
+
+    const applyDates = (target) => {
+      target.client_timestamp = pickEarlierDateText(target.client_timestamp, clientTimestamp)
+      const lastTradeCandidate = pickLaterDateText(ltdDate, lttDate)
+      target.ltd_date = pickLaterDateText(target.ltd_date, lastTradeCandidate)
+      target.ltt_date = pickLaterDateText(target.ltt_date, lttDate)
+    }
+
+    if (!byClient.has(clientId)) {
+      byClient.set(clientId, {
+        client_timestamp: '',
+        ltd_date: '',
+        ltt_date: '',
+      })
+    }
+    applyDates(byClient.get(clientId))
+
+    if (yearMonth) {
+      const clientMonthKey = `${clientId}|${yearMonth}`
+      if (!byClientMonth.has(clientMonthKey)) {
+        byClientMonth.set(clientMonthKey, {
+          client_timestamp: '',
+          ltd_date: '',
+          ltt_date: '',
+        })
+      }
+      applyDates(byClientMonth.get(clientMonthKey))
+    }
+  }
+
+  return { byClientMonth, byClient }
+}
+
+function getTradersDates(dateLookup, row) {
+  const clientId = String(row?.clientId || row?.client_id || '').trim()
+  const yearMonth = String(row?.yearMonth || row?.year_month || row?.periodId || '').trim()
+  const byClientMonth = dateLookup?.byClientMonth instanceof Map ? dateLookup.byClientMonth : null
+  const byClient = dateLookup?.byClient instanceof Map ? dateLookup.byClient : null
+
+  if (clientId && yearMonth && byClientMonth?.has(`${clientId}|${yearMonth}`)) {
+    return byClientMonth.get(`${clientId}|${yearMonth}`)
+  }
+  if (clientId && byClient?.has(clientId)) {
+    return byClient.get(clientId)
+  }
+  return null
+}
+
+function normalizeName(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+}
+
+function createPrimeDetailsBucket() {
+  return {
+    year: null,
+    month: '',
+    year_month: '',
+    week: '',
+    date: '',
+    status: '',
+    country: '',
+    last_time_contact: '',
+    ltc_group: '',
+    last_time_call: '',
+    last_time_comment: '',
+    raw_pl: 0,
+    pl_adjustment: 0,
+    closed_vol: 0,
+    open_vol: 0,
+    open_trades: 0,
+    rdps: 0,
+    stds: 0,
+    ftds: 0,
+    leads: 0,
+    client_email: '',
+    _latestDateMs: Number.NEGATIVE_INFINITY,
+  }
+}
+
+function buildPrimeDetailsLookup(payload) {
+  const rows = parseHeaderRows(payload)
+  const byClientMonth = new Map()
+  const byClient = new Map()
+  // Fallback index when ID spaces differ across systems.
+  const byClientName = new Map()
+
+  const applyPrimeDetails = (target, row) => {
+    const rowDateText = toIsoDateText(
+      row?.date || row?.last_time_contact || row?.last_time_call || ''
+    )
+    const rowDate = parseDateValue(rowDateText)
+    const rowDateMs = rowDate ? rowDate.getTime() : Number.NEGATIVE_INFINITY
+
+    target.raw_pl += Number(row?.raw_pl || 0)
+    target.pl_adjustment += Number(row?.pl_adjustment || 0)
+    target.closed_vol += Number(row?.closed_vol || 0)
+    target.open_vol += Number(row?.open_vol || 0)
+    target.open_trades += Number(row?.open_trades || 0)
+    target.rdps += Number(row?.rdps || 0)
+    target.stds += Number(row?.stds || 0)
+    target.ftds += Number(row?.ftds || 0)
+    target.leads += Number(row?.leads || 0)
+
+    const clientEmail = normalizeText(row?.client_email)
+    if (clientEmail && (!target.client_email || clientEmail.includes('@'))) {
+      target.client_email = clientEmail
+    }
+
+    if (rowDateMs >= target._latestDateMs) {
+      target._latestDateMs = rowDateMs
+      target.year = Number.isFinite(Number(row?.year)) ? Number(row.year) : target.year
+      target.month = normalizeText(row?.month) || target.month
+      target.year_month = normalizeText(row?.year_month) || target.year_month
+      target.week = normalizeText(row?.week) || target.week
+      target.date = rowDateText || target.date
+      target.status = normalizeText(row?.status) || target.status
+      target.country = normalizeText(row?.country) || target.country
+      target.last_time_contact =
+        normalizeText(row?.last_time_contact) ||
+        normalizeText(row?.last_time_comment) ||
+        target.last_time_contact
+      target.ltc_group = normalizeText(row?.ltc_group) || target.ltc_group
+      target.last_time_call = normalizeText(row?.last_time_call) || target.last_time_call
+      target.last_time_comment = normalizeText(row?.last_time_comment) || target.last_time_comment
+    }
+  }
+
+  for (const row of rows) {
+    const clientId = String(row?.client_id || row?.clientId || '').trim()
+    if (!clientId) continue
+
+    const clientName = normalizeName(row?.client_name || row?.clientName || '')
+    const yearMonth = String(row?.year_month || row?.yearMonth || row?.periodId || '').trim()
+
+    if (!byClient.has(clientId)) byClient.set(clientId, createPrimeDetailsBucket())
+    applyPrimeDetails(byClient.get(clientId), row)
+
+    if (clientName) {
+      if (!byClientName.has(clientName)) byClientName.set(clientName, createPrimeDetailsBucket())
+      applyPrimeDetails(byClientName.get(clientName), row)
+    }
+
+    if (yearMonth) {
+      const clientMonthKey = `${clientId}|${yearMonth}`
+      if (!byClientMonth.has(clientMonthKey))
+        byClientMonth.set(clientMonthKey, createPrimeDetailsBucket())
+      applyPrimeDetails(byClientMonth.get(clientMonthKey), row)
+    }
+  }
+
+  const finalizeBucket = (bucket) => ({
+    year: bucket.year,
+    month: bucket.month,
+    year_month: bucket.year_month,
+    week: bucket.week,
+    date: bucket.date,
+    status: bucket.status,
+    country: bucket.country,
+    last_time_contact: bucket.last_time_contact,
+    ltc_group: bucket.ltc_group,
+    last_time_call: bucket.last_time_call,
+    last_time_comment: bucket.last_time_comment,
+    raw_pl: bucket.raw_pl,
+    pl_adjustment: bucket.pl_adjustment,
+    closed_vol: bucket.closed_vol,
+    open_vol: bucket.open_vol,
+    open_trades: bucket.open_trades,
+    rdps: bucket.rdps,
+    stds: bucket.stds,
+    ftds: bucket.ftds,
+    leads: bucket.leads,
+    client_email: bucket.client_email,
+  })
+
+  return {
+    byClientMonth: new Map(
+      [...byClientMonth.entries()].map(([key, bucket]) => [key, finalizeBucket(bucket)])
+    ),
+    byClient: new Map(
+      [...byClient.entries()].map(([key, bucket]) => [key, finalizeBucket(bucket)])
+    ),
+    byClientName: new Map(
+      [...byClientName.entries()].map(([key, bucket]) => [key, finalizeBucket(bucket)])
+    ),
+  }
+}
+
+function getPrimeDetails(lookup, row) {
+  const clientId = String(row?.clientId || row?.client_id || '').trim()
+  const clientName = normalizeName(row?.clientName || row?.client_name || '')
+  const yearMonth = String(row?.yearMonth || row?.year_month || row?.periodId || '').trim()
+  const byClientMonth = lookup?.byClientMonth instanceof Map ? lookup.byClientMonth : null
+  const byClient = lookup?.byClient instanceof Map ? lookup.byClient : null
+  const byClientName = lookup?.byClientName instanceof Map ? lookup.byClientName : null
+
+  if (clientId && yearMonth && byClientMonth?.has(`${clientId}|${yearMonth}`)) {
+    return byClientMonth.get(`${clientId}|${yearMonth}`)
+  }
+  if (clientId && byClient?.has(clientId)) {
+    return byClient.get(clientId)
+  }
+  if (clientName && byClientName?.has(clientName)) {
+    return byClientName.get(clientName)
+  }
+  return null
+}
+
+function hasMeaningfulColumnValue(col, value) {
+  if (col?.type === 'money' || col?.type === 'int') {
+    const n = toNum(value)
+    return n != null && n !== 0
+  }
+  return Boolean(normalizeText(value))
+}
+
+function filterVisibleColumns(columns, rows) {
+  return columns.filter((col) => {
+    if (!CONDITIONAL_COLUMN_KEYS.has(col.key)) return true
+    return rows.some((row) => hasMeaningfulColumnValue(col, row?.[col.key]))
+  })
+}
+
+function mapQlikClientMonthToForexRow(row, dateLookup = null) {
   const closed = Number(row?.closedPL || 0)
   const open = Number(row?.openPL || 0)
+  const tradersDates = getTradersDates(dateLookup, row)
   return {
     brand: row?.brand || '',
     affiliate_id: row?.affiliateId || '',
@@ -145,9 +534,9 @@ function mapQlikClientMonthToForexRow(row) {
     deposit: Number(row?.deposit || 0),
     wd: Number(row?.wd || 0),
     net: Number(row?.net || 0),
-    client_timestamp: '',
-    ltd_date: '',
-    ltt_date: '',
+    client_timestamp: tradersDates?.client_timestamp || '',
+    ltd_date: tradersDates?.ltd_date || '',
+    ltt_date: tradersDates?.ltt_date || '',
     equity: 0,
     clients_p: 0,
     year_month: row?.yearMonth || row?.periodId || '',
@@ -155,49 +544,66 @@ function mapQlikClientMonthToForexRow(row) {
   }
 }
 
-function mapQlikClientMonthToPrimeRow(row) {
+function mapQlikClientMonthToPrimeRow(row, primeLookup = null, tradersDateLookup = null) {
   const closed = Number(row?.closedPL || 0)
   const open = Number(row?.openPL || 0)
   const pl = closed + open
+  const primeDetails = getPrimeDetails(primeLookup, row)
+  const tradersDates = getTradersDates(tradersDateLookup, row)
+  const yearMonth = String(row?.yearMonth || row?.periodId || primeDetails?.year_month || '').trim()
+  const parsedYearMonth = parseYearMonthParts(yearMonth)
+  const detailDate =
+    primeDetails?.date ||
+    tradersDates?.ltt_date ||
+    tradersDates?.ltd_date ||
+    tradersDates?.client_timestamp ||
+    ''
+  const detailWeek = primeDetails?.week || formatIsoWeek(detailDate)
+  const detailLeads = Number(primeDetails?.leads || 0)
+  const detailFtds = Number(primeDetails?.ftds || 0)
+  const detailStds = Number(primeDetails?.stds || 0)
+  const detailRdps = Number(primeDetails?.rdps || 0)
+  const computedCr = detailLeads > 0 ? (detailFtds / detailLeads) * 100 : 0
+  const computedRdr = detailStds > 0 ? (detailRdps / detailStds) * 100 : 0
   return {
-    year: '',
-    month: '',
-    year_month: row?.yearMonth || row?.periodId || '',
-    week: '',
-    date: '',
+    year: primeDetails?.year ?? parsedYearMonth?.year ?? null,
+    month: primeDetails?.month || parsedYearMonth?.monthLabel || '',
+    year_month: yearMonth,
+    week: detailWeek,
+    date: detailDate,
     brand: row?.brand || '',
     affiliate_id: row?.affiliateId || '',
     client_id: row?.clientId || '',
     client_name: row?.clientName || '',
-    status: '',
-    country: row?.country || '',
-    last_time_contact: '',
-    ltc_group: '',
-    last_time_call: '',
-    last_time_comment: '',
+    status: primeDetails?.status || '',
+    country: primeDetails?.country || row?.country || '',
+    last_time_contact: primeDetails?.last_time_contact || '',
+    ltc_group: primeDetails?.ltc_group || '',
+    last_time_call: primeDetails?.last_time_call || '',
+    last_time_comment: primeDetails?.last_time_comment || '',
     pl,
-    raw_pl: pl,
-    pl_adjustment: 0,
+    raw_pl: Number(primeDetails?.raw_pl || pl),
+    pl_adjustment: Number(primeDetails?.pl_adjustment || 0),
     open_pl: open,
     closed_pl: closed,
-    closed_vol: 0,
-    open_vol: 0,
+    closed_vol: Number(primeDetails?.closed_vol || 0),
+    open_vol: Number(primeDetails?.open_vol || 0),
     traders: 1,
     trades: Number(row?.trades || 0),
-    open_trades: 0,
+    open_trades: Number(primeDetails?.open_trades || 0),
     rdp: Number(row?.rdp || 0),
-    rdps: 0,
+    rdps: detailRdps,
     wd: Number(row?.wd || 0),
     std: Number(row?.deposit || 0),
-    stds: 0,
+    stds: detailStds,
     ftd: Number(row?.ftd || 0),
     deposit: Number(row?.deposit || 0),
     net: Number(row?.net || 0),
-    rdr: 0,
-    ftds: 0,
-    leads: 0,
-    cr: 0,
-    client_email: '',
+    rdr: computedRdr,
+    ftds: detailFtds,
+    leads: detailLeads,
+    cr: computedCr,
+    client_email: primeDetails?.client_email || '',
   }
 }
 
@@ -324,12 +730,18 @@ export default function CreolabsPage() {
     ;(async () => {
       try {
         // API-first: use the same Qlik source used by Prime Challenge ranking.
-        const qlikPayload = await loadCreolabsQlikClientMonths({ force: bustCache })
+        const [qlikPayload, tradersPayloadResult, primePayloadResult] = await Promise.all([
+          loadCreolabsQlikClientMonths({ force: bustCache }),
+          loadTradersRankingRewardsTable({ force: bustCache }).catch(() => null),
+          loadPrimeClientsRankingTable({ force: bustCache }).catch(() => null),
+        ])
         if (cancelled) return
 
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
           ? qlikPayload.data.clientMonths
           : []
+        const tradersDateLookup = buildTradersDateLookup(tradersPayloadResult)
+        const primeDetailsLookup = buildPrimeDetailsLookup(primePayloadResult)
         const literalPrimeRows = clientMonths.filter(
           (r) => String(r?.brand || '').trim() === 'BW Prime'
         )
@@ -346,9 +758,13 @@ export default function CreolabsPage() {
 
         const forex = clientMonths
           .filter((r) => !primeClientIds.has(getClientId(r)))
-          .map(mapQlikClientMonthToForexRow)
+          .map((row) => mapQlikClientMonthToForexRow(row, tradersDateLookup))
         const prime = primeSourceRows.map((r) =>
-          mapQlikClientMonthToPrimeRow({ ...r, brand: 'BW Prime' })
+          mapQlikClientMonthToPrimeRow(
+            { ...r, brand: 'BW Prime' },
+            primeDetailsLookup,
+            tradersDateLookup
+          )
         )
 
         setForexRows(forex)
@@ -416,10 +832,16 @@ export default function CreolabsPage() {
       if (silentInFlightRef.current) return
       silentInFlightRef.current = true
       try {
-        const qlikPayload = await loadCreolabsQlikClientMonths({ force: true })
+        const [qlikPayload, tradersPayloadResult, primePayloadResult] = await Promise.all([
+          loadCreolabsQlikClientMonths({ force: true }),
+          loadTradersRankingRewardsTable({ force: true }).catch(() => null),
+          loadPrimeClientsRankingTable({ force: true }).catch(() => null),
+        ])
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
           ? qlikPayload.data.clientMonths
           : []
+        const tradersDateLookup = buildTradersDateLookup(tradersPayloadResult)
+        const primeDetailsLookup = buildPrimeDetailsLookup(primePayloadResult)
         const literalPrimeRows = clientMonths.filter(
           (r) => String(r?.brand || '').trim() === 'BW Prime'
         )
@@ -431,9 +853,13 @@ export default function CreolabsPage() {
         const primeClientIds = new Set(primeSourceRows.map((r) => getClientId(r)).filter(Boolean))
         const forex = clientMonths
           .filter((r) => !primeClientIds.has(getClientId(r)))
-          .map(mapQlikClientMonthToForexRow)
+          .map((row) => mapQlikClientMonthToForexRow(row, tradersDateLookup))
         const prime = primeSourceRows.map((r) =>
-          mapQlikClientMonthToPrimeRow({ ...r, brand: 'BW Prime' })
+          mapQlikClientMonthToPrimeRow(
+            { ...r, brand: 'BW Prime' },
+            primeDetailsLookup,
+            tradersDateLookup
+          )
         )
         setForexRows(forex)
         setPrimeRows(prime)
@@ -506,17 +932,7 @@ export default function CreolabsPage() {
     }
   }
 
-  const cols = brand === 'BW Prime' ? PRIME_COLS : FOREX_COLS
-
-  useEffect(() => {
-    if (!cols.some((c) => c.key === sortKey)) {
-      setSortKey(cols[0]?.key || 'client_id')
-      setSortDir('asc')
-    }
-    setPage(0)
-  }, [brand])
-
-  const rows = useMemo(() => {
+  const brandRows = useMemo(() => {
     let base
     if (brand === 'BW Prime') {
       base = primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
@@ -530,16 +946,36 @@ export default function CreolabsPage() {
       }
     }
 
+    return base
+  }, [brand, forexRows, primeRows])
+
+  const cols = useMemo(() => {
+    const baseCols = brand === 'BW Prime' ? PRIME_COLS : FOREX_COLS
+    return filterVisibleColumns(baseCols, brandRows)
+  }, [brand, brandRows])
+
+  useEffect(() => {
+    setPage(0)
+  }, [brand])
+
+  useEffect(() => {
+    if (!cols.some((c) => c.key === sortKey)) {
+      setSortKey(cols[0]?.key || 'client_id')
+      setSortDir('asc')
+    }
+  }, [cols, sortKey])
+
+  const rows = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return base
-    return base.filter((r) =>
+    if (!q) return brandRows
+    return brandRows.filter((r) =>
       Object.values(r || {}).some((v) =>
         String(v == null ? '' : v)
           .toLowerCase()
           .includes(q)
       )
     )
-  }, [brand, forexRows, primeRows, search])
+  }, [brandRows, search])
 
   const isBwGlobalFallback = useMemo(() => {
     if (brand !== 'BW Global') return false

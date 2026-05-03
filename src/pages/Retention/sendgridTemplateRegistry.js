@@ -20,7 +20,7 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-04-15T15:01:55.724Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-05-03T17:00:59.855Z'
 
 export const sendgridTemplateRegistry = {
   churned_high_value_step3_email: {
@@ -214,6 +214,198 @@ export const sendgridTemplateRegistry = {
         subject: 'Hai già riattivato il percorso. Ora mantienilo in movimento.',
         timing: 'D3',
         delay: '+3 giorni dopo step 1',
+      },
+    },
+  },
+  dormant_120d_bonus_step2_email: {
+    en: {
+      a: {
+        templateId: 'd-eabdc1cf8e5048c4acbdc8bf8d0556c4',
+        versionId: '680667bd-60d6-496b-9c46-f5eafaf5b66c',
+        name: 'Dormant 120d - Bonus Activation Reminder A',
+        subject: 'To request the 100 USD bonus, send BONUS100 on WhatsApp.',
+        timing: 'D4',
+        delay: '+4 days after step 1',
+      },
+      b: {
+        templateId: 'd-51f7cf54a416430f95d2915a2f826bcc',
+        versionId: 'b707f6b0-12a4-443d-b69a-df371bdff956',
+        name: 'Dormant 120d - Bonus Activation Reminder B',
+        subject: 'A simpler return starts with one WhatsApp keyword: BONUS100.',
+        timing: 'D4',
+        delay: '+4 days after step 1',
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-7a52fde54eec4a64b0c3ae9f97d6c813',
+        versionId: 'e3c26fa7-d331-4267-8cd7-87b3d89eaa85',
+        name: 'Dormant 120d - Reminder Attivazione Bonus A IT',
+        subject: 'Per richiedere il bonus da 100 USD, invia BONUS100 su WhatsApp.',
+        timing: 'D4',
+        delay: '+4 giorni dopo step 1',
+      },
+      b: {
+        templateId: 'd-b8c62e3f366a41449ec634db33b799ef',
+        versionId: '815339ec-93a3-4afc-ae4f-3868dab65adb',
+        name: 'Dormant 120d - Reminder Attivazione Bonus B IT',
+        subject: 'Un rientro più semplice parte da una keyword WhatsApp: BONUS100.',
+        timing: 'D4',
+        delay: '+4 giorni dopo step 1',
+      },
+    },
+  },
+  dormant_120d_bonus_followup_recovery_email: {
+    en: {
+      a: {
+        templateId: 'd-34cc971807154d84876c4dca22ca6738',
+        versionId: 'f8f2e1b5-0c8a-44aa-a78d-2ff49e2b9cb3',
+        name: 'Dormant 120d - Bonus Recovery Follow-up A',
+        subject: 'Your 100 USD WhatsApp bonus route is still available.',
+        timing: 'D21',
+        delay: '+11 days after missed outcome',
+      },
+      b: {
+        templateId: 'd-f3e00b8bfd694ac99ac4787df61e3514',
+        versionId: 'ea189fe1-edc6-4e7b-a956-04c6eaf72979',
+        name: 'Dormant 120d - Bonus Recovery Follow-up B',
+        subject: 'Still inactive? Your manager-led 100 USD bonus option remains open.',
+        timing: 'D21',
+        delay: '+11 days after missed outcome',
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-b9242ab7311d46b2ba8e97a8eed67ebc',
+        versionId: 'b80dbdcb-bdeb-4399-a945-65d93bc8cd10',
+        name: 'Dormant 120d - Follow-up Recovery Bonus A IT',
+        subject: 'Il tuo percorso bonus da 100 USD su WhatsApp è ancora disponibile.',
+        timing: 'D21',
+        delay: '+11 giorni dopo esito non centrato',
+      },
+      b: {
+        templateId: 'd-b1cdcd7215e4489cba1cb76bfeb1758d',
+        versionId: 'e57b889f-b1a8-49cd-a5ad-47f67648226e',
+        name: 'Dormant 120d - Follow-up Recovery Bonus B IT',
+        subject:
+          'Ancora inattivo? La tua opzione bonus da 100 USD guidata dal manager e ancora aperta.',
+        timing: 'D21',
+        delay: '+11 giorni dopo esito non centrato',
+      },
+    },
+  },
+  dormant_120d_bonus_followup_retained_email: {
+    en: {
+      a: {
+        templateId: 'd-46a63ee0e4384d36a01573f60a628fa3',
+        versionId: 'c79e0a78-e3ba-4340-98bb-dd8f47e9eb37',
+        name: 'Dormant 120d - Bonus Request Confirmed A',
+        subject: 'Your Bullwaves bonus request has reopened the path.',
+        timing: 'CHECKPOINT +0d',
+        delay: 'Immediate follow-up after positive outcome',
+      },
+      b: {
+        templateId: 'd-7d10d6a1f57644aaa5cb1d9b3c4d4294',
+        versionId: 'a4025724-8ac8-46d6-aac4-b34410ab9dd5',
+        name: 'Dormant 120d - Bonus Request Confirmed B',
+        subject: 'Good news: your bonus path is now back in motion.',
+        timing: 'CHECKPOINT +0d',
+        delay: 'Immediate follow-up after positive outcome',
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-0c73b85891624635aa69f63f2921dad5',
+        versionId: '475ab307-e03a-4e9b-a74a-c561b354997c',
+        name: 'Dormant 120d - Richiesta Bonus Confermata A IT',
+        subject: 'La tua richiesta bonus Bullwaves ha riaperto il percorso.',
+        timing: 'CHECKPOINT +0d',
+        delay: 'Follow-up immediato dopo esito positivo',
+      },
+      b: {
+        templateId: 'd-ad04a1be286d4bd697c8636cb0145608',
+        versionId: '2e8898e4-ce91-4aa8-bd1f-7c2fac6dd9df',
+        name: 'Dormant 120d - Richiesta Bonus Confermata B IT',
+        subject: 'Buone notizie: il tuo percorso bonus si e rimesso in moto.',
+        timing: 'CHECKPOINT +0d',
+        delay: 'Follow-up immediato dopo esito positivo',
+      },
+    },
+  },
+  dormant_120d_bonus_step1_email: {
+    en: {
+      a: {
+        templateId: 'd-0c8a1f3998eb44bbb81086efd7337e8f',
+        versionId: '71bba433-1b43-4a1b-bc8a-a888294f82d2',
+        name: 'Dormant 120d - Free Bonus Invite A',
+        subject: 'A 100 USD Bullwaves bonus can now help you restart.',
+        timing: 'D0',
+        delay: '0 days from segment entry',
+      },
+      b: {
+        templateId: 'd-735d94ce982e4902a2bbe875fb5faca3',
+        versionId: '0e35c73c-7195-44b6-8186-6775da00e73d',
+        name: 'Dormant 120d - Free Bonus Invite B',
+        subject: 'Your account is eligible for a 100 USD reactivation bonus.',
+        timing: 'D0',
+        delay: '0 days from segment entry',
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-943b0291b40544b09b5308ec75fcab3d',
+        versionId: 'a506dc1f-8803-4e4e-bc41-141ecbcd5da4',
+        name: 'Dormant 120d - Invito Bonus Gratuito A IT',
+        subject: 'Un bonus Bullwaves da 100 USD può aiutarti a ripartire.',
+        timing: 'D0',
+        delay: "0 giorni dall'ingresso nel segmento",
+      },
+      b: {
+        templateId: 'd-07d226c2e2294b3da02c3d5dd0caabd9',
+        versionId: '0684d369-f019-4348-936f-05fedbf14210',
+        name: 'Dormant 120d - Invito Bonus Gratuito B IT',
+        subject: 'Per il tuo account e disponibile un bonus di riattivazione da 100 USD.',
+        timing: 'D0',
+        delay: "0 giorni dall'ingresso nel segmento",
+      },
+    },
+  },
+  dormant_120d_bonus_step3_email: {
+    en: {
+      a: {
+        templateId: 'd-91ac45b307d84bdbb40ef50f9af53ac9',
+        versionId: '60aa6ae5-f06d-48c6-994a-e932311dd420',
+        name: 'Dormant 120d - Last Call Bonus Support A',
+        subject: 'If you want a low-friction return, your 100 USD bonus path is still open.',
+        timing: 'D10',
+        delay: '+6 days after step 2',
+      },
+      b: {
+        templateId: 'd-15a384553e5046d5b9de119f34aac3cb',
+        versionId: 'e58760e8-3d5c-4977-a2a9-b3b026ea671a',
+        name: 'Dormant 120d - Last Call Bonus Support B',
+        subject: 'The 100 USD bonus offer is still available for your account.',
+        timing: 'D10',
+        delay: '+6 days after step 2',
+      },
+    },
+    it: {
+      a: {
+        templateId: 'd-3d1db2828cc2440f8c8c8bb107043c9c',
+        versionId: '26d99f8b-09e5-4792-b135-2c42c8975955',
+        name: 'Dormant 120d - Supporto Finale Bonus A IT',
+        subject:
+          'Se vuoi un rientro più leggero, il tuo percorso bonus da 100 USD e ancora aperto.',
+        timing: 'D10',
+        delay: '+6 giorni dopo step 2',
+      },
+      b: {
+        templateId: 'd-8d12a97bae6b4391a16105007d4eac4f',
+        versionId: 'c589e715-5e15-4333-80e3-6b7cf0869642',
+        name: 'Dormant 120d - Supporto Finale Bonus B IT',
+        subject: 'Per il tuo account il bonus da 100 USD e ancora disponibile.',
+        timing: 'D10',
+        delay: '+6 giorni dopo step 2',
       },
     },
   },
