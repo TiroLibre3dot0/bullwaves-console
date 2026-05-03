@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQlikStatus } from '../../context/QlikStatusContext'
 import {
   isQlikApiUnavailableError,
-  loadCreolabsQlikClients,
+  loadCreolabsQlikAnalytics,
+  loadCreolabsQlikClientMonths,
+  loadCreolabsQlikKpis,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
 } from './services/creolabsService'
@@ -301,6 +303,14 @@ export default function CreolabsPage() {
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
   const [showTopScrollbar, setShowTopScrollbar] = useState(false)
+  const [validationLoading, setValidationLoading] = useState(false)
+  const [validationError, setValidationError] = useState('')
+  const [validationData, setValidationData] = useState(null)
+  const [validationAt, setValidationAt] = useState('')
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [analyticsError, setAnalyticsError] = useState('')
+  const [analyticsData, setAnalyticsData] = useState(null)
+  const [analyticsAt, setAnalyticsAt] = useState('')
 
   const topScrollbarRef = useRef(null)
   const topScrollbarSizerRef = useRef(null)
@@ -314,7 +324,7 @@ export default function CreolabsPage() {
     ;(async () => {
       try {
         // API-first: use the same Qlik source used by Prime Challenge ranking.
-        const qlikPayload = await loadCreolabsQlikClients({ force: bustCache })
+        const qlikPayload = await loadCreolabsQlikClientMonths({ force: bustCache })
         if (cancelled) return
 
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
@@ -406,7 +416,7 @@ export default function CreolabsPage() {
       if (silentInFlightRef.current) return
       silentInFlightRef.current = true
       try {
-        const qlikPayload = await loadCreolabsQlikClients({ force: true })
+        const qlikPayload = await loadCreolabsQlikClientMonths({ force: true })
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
           ? qlikPayload.data.clientMonths
           : []
@@ -455,6 +465,47 @@ export default function CreolabsPage() {
     loadData(true)
   }
 
+  async function runValidation(force = false) {
+    setValidationLoading(true)
+    setValidationError('')
+    try {
+      const payload = await loadCreolabsQlikKpis({
+        brand,
+        period: periodTo || '',
+        force,
+      })
+      setValidationData(payload?.data || null)
+      setValidationAt(new Date().toLocaleTimeString())
+    } catch (e) {
+      setValidationError(e instanceof Error ? e.message : 'Validation failed')
+      setValidationData(null)
+    } finally {
+      setValidationLoading(false)
+    }
+  }
+
+  async function runAnalytics(force = false) {
+    setAnalyticsLoading(true)
+    setAnalyticsError('')
+    try {
+      const selectedBrand = brand === 'BW Prime' ? '' : brand
+      const selectedYear = /^\d{4}/.test(String(periodTo || '')) ? String(periodTo).slice(0, 4) : ''
+      const payload = await loadCreolabsQlikAnalytics({
+        brand: selectedBrand,
+        year: selectedYear,
+        top: 10,
+        force,
+      })
+      setAnalyticsData(payload?.data || null)
+      setAnalyticsAt(new Date().toLocaleTimeString())
+    } catch (e) {
+      setAnalyticsError(e instanceof Error ? e.message : 'Analytics failed')
+      setAnalyticsData(null)
+    } finally {
+      setAnalyticsLoading(false)
+    }
+  }
+
   const cols = brand === 'BW Prime' ? PRIME_COLS : FOREX_COLS
 
   useEffect(() => {
@@ -496,6 +547,39 @@ export default function CreolabsPage() {
     const bwCount = forexRows.filter((r) => String(r.brand || '').trim() === 'BW').length
     return globalCount === 0 && bwCount > 0
   }, [brand, forexRows])
+
+  // Local KPIs computed from the in-memory dataset for the active brand + optional period —
+  // mirrors the server-side aggregateClientMonthKpis() so we can diff old vs new.
+  const localBrandKpis = useMemo(() => {
+    let base
+    if (brand === 'BW Prime') {
+      base = primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
+    } else {
+      const exact = forexRows.filter((r) => String(r.brand || '').trim() === brand)
+      base =
+        brand === 'BW Global' && exact.length === 0
+          ? forexRows.filter((r) => String(r.brand || '').trim() === 'BW')
+          : exact
+    }
+    const filtered = periodTo
+      ? base.filter((r) => String(r.year_month || '').trim() === periodTo)
+      : base
+    const uniqueClients = new Set(filtered.map((r) => String(r.client_id || '')).filter(Boolean))
+      .size
+    const sum = (key) => filtered.reduce((acc, r) => acc + (Number(r[key]) || 0), 0)
+    return {
+      rows: filtered.length,
+      uniqueClients,
+      deposit: sum('deposit'),
+      wd: sum('wd'),
+      net: sum('net'),
+      closedPl: sum('closed_pl'),
+      openPl: sum('open_pl'),
+      balance: sum('balance'),
+      trades: sum('trades'),
+      ftd: sum('ftd'),
+    }
+  }, [brand, forexRows, primeRows, periodTo])
 
   const sorted = useMemo(() => {
     const dir = sortDir === 'desc' ? -1 : 1
@@ -751,6 +835,515 @@ export default function CreolabsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Ad-hoc section for KPI migration phase validation */}
+      {!loading && !error && (
+        <section
+          style={{
+            marginBottom: 18,
+            border: '1px solid rgba(56,189,248,0.3)',
+            borderRadius: 12,
+            background: 'rgba(8,47,73,0.22)',
+            padding: 14,
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <p
+              style={{
+                margin: 0,
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                color: '#67e8f9',
+              }}
+            >
+              Fase Validation & Migration KPI API
+            </p>
+            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
+              Brand: {brand} {periodTo ? `· Periodo test: ${periodTo}` : ''}
+            </span>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+              <button
+                onClick={() => runValidation(false)}
+                disabled={validationLoading}
+                className="pill-tab"
+                style={{ opacity: validationLoading ? 0.5 : 1 }}
+              >
+                {validationLoading ? 'Test in corso…' : 'Esegui test KPI'}
+              </button>
+              <button
+                onClick={() => runValidation(true)}
+                disabled={validationLoading}
+                className="pill-tab"
+                style={{ opacity: validationLoading ? 0.5 : 1 }}
+              >
+                Bust cache + test
+              </button>
+              <button
+                onClick={() => runAnalytics(false)}
+                disabled={analyticsLoading}
+                className="pill-tab"
+                style={{ opacity: analyticsLoading ? 0.5 : 1 }}
+              >
+                {analyticsLoading ? 'Analytics…' : 'Carica analytics'}
+              </button>
+              <button
+                onClick={() => runAnalytics(true)}
+                disabled={analyticsLoading}
+                className="pill-tab"
+                style={{ opacity: analyticsLoading ? 0.5 : 1 }}
+              >
+                Bust + analytics
+              </button>
+            </div>
+          </div>
+
+          {validationError ? (
+            <p style={{ margin: '10px 0 0', color: '#fca5a5', fontSize: '0.8rem' }}>
+              {validationError}
+            </p>
+          ) : null}
+
+          {validationData ? (
+            <div
+              style={{
+                marginTop: 10,
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: 8,
+              }}
+            >
+              {[
+                {
+                  label: 'Rows (filtered)',
+                  value: intFmt.format(Number(validationData.filteredRows || 0)),
+                },
+                {
+                  label: 'Clienti unici',
+                  value: intFmt.format(Number(validationData?.kpis?.uniqueClients || 0)),
+                },
+                {
+                  label: 'Deposit',
+                  value: moneyFmt.format(Number(validationData?.kpis?.deposit || 0)),
+                },
+                {
+                  label: 'WD',
+                  value: moneyFmt.format(Number(validationData?.kpis?.wd || 0)),
+                },
+                {
+                  label: 'Net',
+                  value: moneyFmt.format(Number(validationData?.kpis?.net || 0)),
+                },
+                {
+                  label: 'Closed PL',
+                  value: moneyFmt.format(Number(validationData?.kpis?.closedPl || 0)),
+                },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  style={{
+                    border: '1px solid rgba(56,189,248,0.25)',
+                    borderRadius: 8,
+                    padding: '8px 10px',
+                    background: 'rgba(15,23,42,0.4)',
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: '0.67rem', color: '#94a3b8' }}>{card.label}</p>
+                  <p
+                    style={{
+                      margin: '4px 0 0',
+                      fontSize: '0.92rem',
+                      fontWeight: 700,
+                      color: '#e2e8f0',
+                    }}
+                  >
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+
+              <div
+                style={{
+                  gridColumn: '1 / -1',
+                  border: '1px solid rgba(56,189,248,0.25)',
+                  borderRadius: 8,
+                  padding: '8px 10px',
+                  background: 'rgba(15,23,42,0.4)',
+                }}
+              >
+                <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
+                  Esito check: {validationData?.validation?.pass ? 'PASS' : 'FAIL'}
+                  {validationAt ? ` · ultimo test ${validationAt}` : ''}
+                </p>
+                <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(validationData?.validation?.checks || []).map((c) => (
+                    <span
+                      key={c.id}
+                      style={{
+                        fontSize: '0.72rem',
+                        borderRadius: 999,
+                        padding: '2px 8px',
+                        border: c.passed
+                          ? '1px solid rgba(52,211,153,0.45)'
+                          : '1px solid rgba(248,113,113,0.45)',
+                        background: c.passed ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
+                        color: c.passed ? '#6ee7b7' : '#fca5a5',
+                      }}
+                      title={String(c.detail || '')}
+                    >
+                      {c.id}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Delta comparison: local dataset vs API */}
+              <div
+                style={{
+                  gridColumn: '1 / -1',
+                  border: '1px solid rgba(56,189,248,0.2)',
+                  borderRadius: 8,
+                  overflow: 'hidden',
+                  background: 'rgba(15,23,42,0.4)',
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    padding: '6px 10px',
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.05em',
+                    textTransform: 'uppercase',
+                    color: '#7dd3fc',
+                    borderBottom: '1px solid rgba(56,189,248,0.15)',
+                  }}
+                >
+                  Delta Locale → API
+                </p>
+                <div style={{ overflowX: 'auto' }}>
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ color: '#64748b' }}>
+                        {['Metrica', 'Locale', 'API', 'Δ Ass.', 'Δ %', 'Esito'].map((h) => (
+                          <th
+                            key={h}
+                            style={{
+                              padding: '4px 10px',
+                              textAlign: h === 'Metrica' ? 'left' : 'right',
+                              fontWeight: 600,
+                              whiteSpace: 'nowrap',
+                              borderBottom: '1px solid rgba(56,189,248,0.1)',
+                            }}
+                          >
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        {
+                          label: 'Righe',
+                          localVal: localBrandKpis.rows,
+                          apiVal: validationData.kpis.rows,
+                          isMoney: false,
+                        },
+                        {
+                          label: 'Clienti unici',
+                          localVal: localBrandKpis.uniqueClients,
+                          apiVal: validationData.kpis.uniqueClients,
+                          isMoney: false,
+                        },
+                        {
+                          label: 'Deposit',
+                          localVal: localBrandKpis.deposit,
+                          apiVal: validationData.kpis.deposit,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'WD',
+                          localVal: localBrandKpis.wd,
+                          apiVal: validationData.kpis.wd,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'Net',
+                          localVal: localBrandKpis.net,
+                          apiVal: validationData.kpis.net,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'Closed PL',
+                          localVal: localBrandKpis.closedPl,
+                          apiVal: validationData.kpis.closedPl,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'Open PL',
+                          localVal: localBrandKpis.openPl,
+                          apiVal: validationData.kpis.openPl,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'Balance',
+                          localVal: localBrandKpis.balance,
+                          apiVal: validationData.kpis.balance,
+                          isMoney: true,
+                        },
+                        {
+                          label: 'Trades',
+                          localVal: localBrandKpis.trades,
+                          apiVal: validationData.kpis.trades,
+                          isMoney: false,
+                        },
+                        {
+                          label: 'FTD',
+                          localVal: localBrandKpis.ftd,
+                          apiVal: validationData.kpis.ftd,
+                          isMoney: true,
+                        },
+                      ].map(({ label, localVal, apiVal, isMoney }) => {
+                        const local = Number(localVal) || 0
+                        const api = Number(apiVal) || 0
+                        const delta = api - local
+                        const pct =
+                          local !== 0 ? (delta / Math.abs(local)) * 100 : api !== 0 ? 100 : 0
+                        const tol = isMoney ? 0.1 : 0
+                        const pass = Math.abs(pct) <= tol
+                        const fmtNum = isMoney ? moneyFmt : intFmt
+                        const deltaColor =
+                          Math.abs(pct) < 0.001 ? '#94a3b8' : delta > 0 ? '#34d399' : '#f87171'
+                        return (
+                          <tr
+                            key={label}
+                            style={{
+                              borderTop: '1px solid rgba(56,189,248,0.07)',
+                            }}
+                          >
+                            <td style={{ padding: '4px 10px', color: '#cbd5e1' }}>{label}</td>
+                            <td
+                              style={{
+                                padding: '4px 10px',
+                                textAlign: 'right',
+                                color: '#94a3b8',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {fmtNum.format(local)}
+                            </td>
+                            <td
+                              style={{
+                                padding: '4px 10px',
+                                textAlign: 'right',
+                                color: '#e2e8f0',
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {fmtNum.format(api)}
+                            </td>
+                            <td
+                              style={{
+                                padding: '4px 10px',
+                                textAlign: 'right',
+                                color: deltaColor,
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {delta >= 0 ? '+' : ''}
+                              {fmtNum.format(delta)}
+                            </td>
+                            <td
+                              style={{
+                                padding: '4px 10px',
+                                textAlign: 'right',
+                                color: deltaColor,
+                                fontVariantNumeric: 'tabular-nums',
+                              }}
+                            >
+                              {delta >= 0 ? '+' : ''}
+                              {pct.toFixed(3)}%
+                            </td>
+                            <td style={{ padding: '4px 10px', textAlign: 'right' }}>
+                              <span
+                                style={{
+                                  fontSize: '0.68rem',
+                                  borderRadius: 999,
+                                  padding: '1px 7px',
+                                  border: pass
+                                    ? '1px solid rgba(52,211,153,0.45)'
+                                    : '1px solid rgba(248,113,113,0.45)',
+                                  background: pass
+                                    ? 'rgba(16,185,129,0.15)'
+                                    : 'rgba(239,68,68,0.15)',
+                                  color: pass ? '#6ee7b7' : '#fca5a5',
+                                }}
+                              >
+                                {pass ? 'OK' : 'DIFF'}
+                              </span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {analyticsError ? (
+            <p style={{ margin: '10px 0 0', color: '#fca5a5', fontSize: '0.8rem' }}>
+              {analyticsError}
+            </p>
+          ) : null}
+
+          {analyticsData ? (
+            <div
+              style={{
+                marginTop: 10,
+                border: '1px solid rgba(56,189,248,0.25)',
+                borderRadius: 8,
+                background: 'rgba(15,23,42,0.4)',
+                padding: 10,
+              }}
+            >
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  color: '#7dd3fc',
+                }}
+              >
+                Analytics endpoint (ranking + annual/monthly/weekly)
+                {analyticsAt ? ` · ultimo fetch ${analyticsAt}` : ''}
+              </p>
+
+              <div
+                style={{
+                  marginTop: 8,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
+                  gap: 8,
+                }}
+              >
+                {[
+                  {
+                    label: 'Source rows',
+                    value: intFmt.format(Number(analyticsData.sourceRows || 0)),
+                  },
+                  {
+                    label: 'Filtered rows',
+                    value: intFmt.format(Number(analyticsData.filteredRows || 0)),
+                  },
+                  {
+                    label: 'Annual buckets',
+                    value: intFmt.format(Number(analyticsData?.analytics?.annual?.length || 0)),
+                  },
+                  {
+                    label: 'Monthly buckets',
+                    value: intFmt.format(Number(analyticsData?.analytics?.monthly?.length || 0)),
+                  },
+                  {
+                    label: 'Weekly buckets',
+                    value: intFmt.format(Number(analyticsData?.analytics?.weekly?.length || 0)),
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    style={{
+                      border: '1px solid rgba(56,189,248,0.2)',
+                      borderRadius: 8,
+                      padding: '6px 8px',
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: '0.66rem', color: '#94a3b8' }}>{item.label}</p>
+                    <p
+                      style={{
+                        margin: '4px 0 0',
+                        fontSize: '0.9rem',
+                        fontWeight: 700,
+                        color: '#e2e8f0',
+                      }}
+                    >
+                      {item.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {String(analyticsData?.analytics?.weeklyNote || '').trim() ? (
+                <p style={{ margin: '8px 0 0', fontSize: '0.72rem', color: '#94a3b8' }}>
+                  {String(analyticsData.analytics.weeklyNote)}
+                </p>
+              ) : null}
+
+              <div style={{ marginTop: 8, overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem' }}>
+                  <thead>
+                    <tr style={{ color: '#64748b' }}>
+                      {['Top Net', 'Client', 'Brand', 'Net', 'Deposit', 'Trades'].map((h) => (
+                        <th
+                          key={h}
+                          style={{
+                            padding: '4px 8px',
+                            textAlign: h === 'Client' || h === 'Brand' ? 'left' : 'right',
+                            borderBottom: '1px solid rgba(56,189,248,0.1)',
+                          }}
+                        >
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(analyticsData?.analytics?.rankings?.topNet || [])
+                      .slice(0, 5)
+                      .map((r, idx) => (
+                        <tr key={`${r.clientId || r.clientName || idx}`}>
+                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#94a3b8' }}>
+                            {idx + 1}
+                          </td>
+                          <td style={{ padding: '4px 8px', color: '#e2e8f0' }}>
+                            {String(r.clientName || '—')}
+                          </td>
+                          <td style={{ padding: '4px 8px', color: '#94a3b8' }}>
+                            {String(r.brand || '—')}
+                          </td>
+                          <td
+                            style={{
+                              padding: '4px 8px',
+                              textAlign: 'right',
+                              color: colorVal(Number(r.net || 0)),
+                            }}
+                          >
+                            {moneyFmt.format(Number(r.net || 0))}
+                          </td>
+                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#60a5fa' }}>
+                            {moneyFmt.format(Number(r.deposit || 0))}
+                          </td>
+                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#e2e8f0' }}>
+                            {intFmt.format(Number(r.trades || 0))}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+        </section>
       )}
 
       {/* Prime-scope comparison bar — shown on Forex tabs so numbers are comparable with Prime Challenge */}

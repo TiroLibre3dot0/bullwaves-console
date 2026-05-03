@@ -170,7 +170,7 @@ async function loadCrmQuickRows() {
 // Does NOT cache so each polling cycle sees the latest data.
 async function loadQlikUniqueClients() {
   try {
-    const res = await fetch('/api/qlik/creolabs/clients', { cache: 'no-store' })
+    const res = await fetch('/api/qlik/creolabs/client-months', { cache: 'no-store' })
     if (!res.ok) return null
     const data = await res.json()
     const months = Array.isArray(data?.data?.clientMonths) ? data.data.clientMonths : []

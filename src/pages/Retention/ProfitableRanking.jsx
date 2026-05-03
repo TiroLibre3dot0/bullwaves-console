@@ -6,7 +6,7 @@ import { useQlikStatus } from '../../context/QlikStatusContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import {
   isQlikApiUnavailableError,
-  loadCreolabsQlikClients,
+  loadCreolabsQlikClientScores,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
 } from '../../features/creolabs/services/creolabsService'
@@ -660,15 +660,19 @@ function parseQlikPeriodToDate(periodId, endOfMonth = false) {
   return new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0)).toISOString()
 }
 
-function mapQlikClientMonthsToRankingRows(clientMonths = []) {
-  const list = Array.isArray(clientMonths) ? clientMonths : []
+/**
+ * Maps the /client-scores API response (one row per client, already aggregated) to
+ * the same flat-row format expected by buildTradersRankingRewardsDataset.
+ * Uses lastPeriodId/firstPeriodId to derive ltd_date/client_timestamp for recency
+ * computation — equivalent precision to the month-grain approach.
+ */
+function mapQlikClientScoresToRankingRows(scores = []) {
+  const list = Array.isArray(scores) ? scores : []
   return list.map((row) => {
-    const periodId = String(row?.periodId || '').trim()
-    const startIso = parseQlikPeriodToDate(periodId, false)
-    const endIso = parseQlikPeriodToDate(periodId, true)
-
-    const balance = Number(row?.balance || 0)
-
+    const lastPeriodId = String(row?.lastPeriodId || '').trim()
+    const firstPeriodId = String(row?.firstPeriodId || '').trim()
+    const startIso = parseQlikPeriodToDate(firstPeriodId, false)
+    const endIso = parseQlikPeriodToDate(lastPeriodId, true)
     return {
       affiliate_id: String(row?.affiliateId || '').trim(),
       client_id: String(row?.clientId || '').trim(),
@@ -677,9 +681,9 @@ function mapQlikClientMonthsToRankingRows(clientMonths = []) {
       user: String(row?.user || '').trim(),
       country: String(row?.country || '').trim(),
       brand: String(row?.brand || '').trim(),
-      balance,
-      equity: balance,
-      closed_pl: Number(row?.pl || 0),
+      balance: Number(row?.balance || 0),
+      equity: Number(row?.balance || 0),
+      closed_pl: Number(row?.closedPl || 0),
       open_pl: Number(row?.openPl || 0),
       trades: Number(row?.trades || 0),
       ftd: Number(row?.ftd || 0),
@@ -690,7 +694,7 @@ function mapQlikClientMonthsToRankingRows(clientMonths = []) {
       client_timestamp: startIso || '',
       ltd_date: endIso || '',
       ltt_date: endIso || '',
-      year_month: periodId,
+      year_month: lastPeriodId,
     }
   })
 }
@@ -2430,12 +2434,14 @@ export default function ProfitableRanking({
       try {
         if (['traders', 'prime_challenge'].includes(rankingDefinition.key)) {
           try {
-            const payload = await loadCreolabsQlikClients({ force: false })
-            const clientMonths = Array.isArray(payload?.data?.clientMonths)
-              ? payload.data.clientMonths
+            // Use the lighter /client-scores endpoint (one row per client).
+            // Any non-availability case is handled by the existing local artifact fallback.
+            const scoresPayload = await loadCreolabsQlikClientScores({ force: false })
+            const scores = Array.isArray(scoresPayload?.data?.scores)
+              ? scoresPayload.data.scores
               : []
+            const rows = mapQlikClientScoresToRankingRows(scores)
 
-            const rows = mapQlikClientMonthsToRankingRows(clientMonths)
             const headers = Object.keys(rows[0] || {})
             if (loadReqRef.current !== reqId) return
 

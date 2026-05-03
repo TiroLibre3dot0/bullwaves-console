@@ -17,7 +17,7 @@ import { useCreolabsBreakdownData } from '../../creolabs/hooks/useCreolabsBreakd
 import {
   isQlikApiUnavailableError,
   loadCreolabsClientsTable,
-  loadCreolabsQlikClients,
+  loadCreolabsQlikClientMonths,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
 } from '../../creolabs/services/creolabsService'
@@ -509,7 +509,7 @@ export default function InvestmentsDashboard(props) {
       setCreolabsClientsLoading(true)
       try {
         try {
-          const api = await loadCreolabsQlikClients({ force })
+          const api = await loadCreolabsQlikClientMonths({ force })
           const nextRows = Array.isArray(api?.data?.clientMonths) ? api.data.clientMonths : []
           if (!cancelled) setCreolabsClientRows(nextRows)
           if (!cancelled) reportQlikSource('creolabs-dashboard', 'api')

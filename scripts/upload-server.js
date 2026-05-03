@@ -1,4 +1,5 @@
 const express = require('express')
+const compression = require('compression')
 const multer = require('multer')
 const path = require('path')
 const fs = require('fs')
@@ -31,6 +32,7 @@ const storage = multer.diskStorage({
 })
 const upload = multer({ storage })
 
+app.use(compression())
 app.use(express.json({ limit: '1mb' }))
 app.use(express.static(path.join(__dirname, '..', 'public')))
 

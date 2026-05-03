@@ -3,7 +3,7 @@ import { useQlikStatus } from '../../../context/QlikStatusContext'
 
 import {
   isQlikApiUnavailableError,
-  loadCreolabsQlikClients,
+  loadCreolabsQlikAffiliateMonth,
   loadCreolabsAffiliateMonthTable,
   loadCreolabsClientsTable,
   logCreolabsQlikFallbackBlocked,
@@ -52,7 +52,7 @@ export function useCreolabsBreakdownData() {
         // Fallback is exceptional-only (API unavailable), not for empty successful responses.
         let table = null
         try {
-          const api = await loadCreolabsQlikClients({ force: false })
+          const api = await loadCreolabsQlikAffiliateMonth({ force: false })
           const rowsFromApi = Array.isArray(api?.data?.affiliateMonth)
             ? api.data.affiliateMonth
             : []
@@ -88,7 +88,7 @@ export function useCreolabsBreakdownData() {
         try {
           let table = null
           try {
-            const api = await loadCreolabsQlikClients({ force: true })
+            const api = await loadCreolabsQlikAffiliateMonth({ force: true })
             const rowsFromApi = Array.isArray(api?.data?.affiliateMonth)
               ? api.data.affiliateMonth
               : []

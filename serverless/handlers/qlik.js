@@ -896,8 +896,135 @@ function ymRank(text) {
 }
 
 let _creolabsClientsCache = null
+let _creolabsSnapshotCache = null
 
-async function fetchCreolabsClientsData(config) {
+const _creolabsClientVariantCaches = {
+  full: null,
+  clientMonths: null,
+  affiliateMonth: null,
+}
+
+function clearCreolabsClientVariantCaches() {
+  for (const key of Object.keys(_creolabsClientVariantCaches)) {
+    _creolabsClientVariantCaches[key] = null
+  }
+  _creolabsClientsCache = null
+  _creolabsSnapshotCache = null
+}
+
+function getCreolabsClientVariantOptions(variant) {
+  if (variant === 'clientMonths') {
+    return {
+      includeClients: false,
+      includeClientMonths: true,
+      includeAffiliateMonth: false,
+      sortClientMonths: false,
+      sortAffiliateMonth: false,
+    }
+  }
+  if (variant === 'affiliateMonth') {
+    return {
+      includeClients: false,
+      includeClientMonths: false,
+      includeAffiliateMonth: true,
+      sortClientMonths: false,
+      sortAffiliateMonth: false,
+    }
+  }
+  return {
+    includeClients: true,
+    includeClientMonths: true,
+    includeAffiliateMonth: true,
+    sortClientMonths: true,
+    sortAffiliateMonth: true,
+  }
+}
+
+function getCreolabsClientVariantCache(variant) {
+  return variant === 'full' ? _creolabsClientsCache : _creolabsClientVariantCaches[variant]
+}
+
+function setCreolabsClientVariantCache(variant, value) {
+  if (variant === 'full') _creolabsClientsCache = value
+  else _creolabsClientVariantCaches[variant] = value
+}
+
+function projectCreolabsVariantFromSnapshot(snapshotData, variant) {
+  if (!snapshotData || typeof snapshotData !== 'object') return {}
+
+  const base = {
+    period: snapshotData.period,
+    periodFrom: snapshotData.periodFrom,
+    periodTo: snapshotData.periodTo,
+    periods: Array.isArray(snapshotData.periods) ? snapshotData.periods : [],
+    totalFetched: Number(snapshotData.totalFetched || 0),
+  }
+
+  if (variant === 'clientMonths') {
+    return {
+      ...base,
+      clientMonths: Array.isArray(snapshotData.clientMonths) ? snapshotData.clientMonths : [],
+    }
+  }
+
+  if (variant === 'affiliateMonth') {
+    return {
+      ...base,
+      affiliateMonth: Array.isArray(snapshotData.affiliateMonth) ? snapshotData.affiliateMonth : [],
+    }
+  }
+
+  return {
+    ...base,
+    clients: Array.isArray(snapshotData.clients) ? snapshotData.clients : [],
+    clientMonths: Array.isArray(snapshotData.clientMonths) ? snapshotData.clientMonths : [],
+    affiliateMonth: Array.isArray(snapshotData.affiliateMonth) ? snapshotData.affiliateMonth : [],
+  }
+}
+
+async function resolveCreolabsSnapshot(config) {
+  const now = Date.now()
+  const age = _creolabsSnapshotCache?.fetchedAt ? now - _creolabsSnapshotCache.fetchedAt : Infinity
+  if (_creolabsSnapshotCache?.data && age < CREOLABS_CACHE_TTL) {
+    return { data: _creolabsSnapshotCache.data, cached: true }
+  }
+
+  if (_creolabsSnapshotCache?.promise) {
+    const data = await _creolabsSnapshotCache.promise
+    return { data, cached: false }
+  }
+
+  const promise = fetchCreolabsClientsData(config, {
+    includeClients: true,
+    includeClientMonths: true,
+    includeAffiliateMonth: true,
+    sortClientMonths: false,
+    sortAffiliateMonth: false,
+  })
+    .then((data) => {
+      _creolabsSnapshotCache = { data, fetchedAt: Date.now(), promise: null }
+      return data
+    })
+    .catch((e) => {
+      if (_creolabsSnapshotCache) _creolabsSnapshotCache.promise = null
+      throw e
+    })
+
+  _creolabsSnapshotCache = { data: null, fetchedAt: 0, promise }
+  const data = await promise
+  return { data, cached: false }
+}
+
+async function fetchCreolabsClientsData(
+  config,
+  {
+    includeClients = true,
+    includeClientMonths = true,
+    includeAffiliateMonth = true,
+    sortClientMonths = true,
+    sortAffiliateMonth = true,
+  } = {}
+) {
   return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
     const objResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_CLIENTS_OBJ])
     const h = Number(objResult?.qReturn?.qHandle || 0)
@@ -906,258 +1033,807 @@ async function fetchCreolabsClientsData(config) {
     const layoutResult = await session.call(h, 'GetLayout', [])
     const totalRows = Number(unwrapLayout(layoutResult)?.qHyperCube?.qSize?.qcy || 0)
 
+    // Keep page size below common Qlik hypercube cell limits to avoid 502s.
     const pageSize = 500
     const PARALLEL = 8
     const offsets = []
     for (let off = 0; off < totalRows; off += pageSize) offsets.push(off)
-
-    const allRows = []
-    for (let i = 0; i < offsets.length; i += PARALLEL) {
-      const results = await Promise.all(
-        offsets.slice(i, i + PARALLEL).map((offset) =>
-          session.call(h, 'GetHyperCubeData', [
-            '/qHyperCubeDef',
-            [{ qTop: offset, qLeft: 0, qHeight: pageSize, qWidth: CC_WIDTH }],
-          ]).then((p) => p?.qDataPages?.[0]?.qMatrix || [])
-        )
-      )
-      for (const matrix of results) allRows.push(...matrix)
-    }
 
     let minRank = Number.POSITIVE_INFINITY
     let maxRank = -1
     let periodFrom = ''
     let periodTo = ''
     const periodSet = new Set()
-    for (const row of allRows) {
-      if (!Array.isArray(row) || row.length < CC_WIDTH) continue
-      const ym = safeText(row[CC_YEAR_MONTH]?.qText).trim()
-      const rank = ymRank(ym)
-      if (rank <= 0) continue
-      periodSet.add(ym)
-      if (rank < minRank) {
-        minRank = rank
-        periodFrom = ym
-      }
-      if (rank > maxRank) {
-        maxRank = rank
-        periodTo = ym
-      }
-    }
+    let totalFetched = 0
 
     // Month-level datasets used by API-first consumers.
-    const byClientMonth = new Map()
-    const byAffiliateMonth = new Map()
+    const byClientMonth = includeClientMonths ? new Map() : null
+    const byAffiliateMonth = includeAffiliateMonth ? new Map() : null
 
     // Key by clientId+clientName only (NOT brand) so that brand is taken from the
     // most recent period. In the all-time Qlik view some clients appear as 'BW'
     // in older periods but 'BW Global' in recent periods; keying on brand caused
     // them all to collapse to 'BW'. We now track _latestRank and overwrite brand
     // whenever we see a more recent row for the same client.
-    const byKey = new Map()
-    for (const row of allRows) {
-      if (!Array.isArray(row) || row.length < CC_WIDTH) continue
+    const byKey = includeClients ? new Map() : null
+    for (let i = 0; i < offsets.length; i += PARALLEL) {
+      const results = await Promise.all(
+        offsets.slice(i, i + PARALLEL).map((offset) =>
+          session
+            .call(h, 'GetHyperCubeData', [
+              '/qHyperCubeDef',
+              [{ qTop: offset, qLeft: 0, qHeight: pageSize, qWidth: CC_WIDTH }],
+            ])
+            .then((p) => p?.qDataPages?.[0]?.qMatrix || [])
+        )
+      )
 
-      const brand = safeText(row[CC_BRAND]?.qText).trim()
-      const clientId = safeText(row[CC_CLIENT_ID]?.qText).trim()
-      const clientName = safeText(row[CC_CLIENT_NAME]?.qText).trim()
-      if (!clientName || clientName === '-' || clientName === 'null') continue
+      for (const matrix of results) {
+        totalFetched += Array.isArray(matrix) ? matrix.length : 0
+        for (const row of matrix || []) {
+          if (!Array.isArray(row) || row.length < CC_WIDTH) continue
 
-      const ym = safeText(row[CC_YEAR_MONTH]?.qText).trim()
-      const rank = ymRank(ym)
+          const ym = safeText(row[CC_YEAR_MONTH]?.qText).trim()
+          const rank = ymRank(ym)
+          if (rank > 0) {
+            periodSet.add(ym)
+            if (rank < minRank) {
+              minRank = rank
+              periodFrom = ym
+            }
+            if (rank > maxRank) {
+              maxRank = rank
+              periodTo = ym
+            }
+          }
 
-      const key = `${clientId}|${clientName}`
-      const n = (i) => {
-        const v = row[i]?.qNum
-        return typeof v === 'number' && isFinite(v) ? v : 0
-      }
-      const t = (i) => safeText(row[i]?.qText).trim()
+          const brand = safeText(row[CC_BRAND]?.qText).trim()
+          const clientId = safeText(row[CC_CLIENT_ID]?.qText).trim()
+          const clientName = safeText(row[CC_CLIENT_NAME]?.qText).trim()
+          if (!clientName || clientName === '-' || clientName === 'null') continue
 
-      if (ym) {
-        const clientMonthKey = `${brand}|${t(CC_AFF)}|${clientId}|${ym}`
-        if (!byClientMonth.has(clientMonthKey)) {
-          byClientMonth.set(clientMonthKey, {
-            periodId: ym,
-            brand,
-            affiliateId: t(CC_AFF),
-            clientId,
-            clientName,
-            clientLogin: t(CC_LOGIN),
-            user: t(CC_USER),
-            country: t(CC_COUNTRY),
-            balance: 0,
-            commission: 0,
-            pl: 0,
-            openPl: 0,
-            trades: 0,
-            ftd: 0,
-            rdp: 0,
-            deposit: 0,
-            wd: 0,
-            net: 0,
-          })
+          const affiliateId = safeText(row[CC_AFF]?.qText).trim()
+          const clientLogin = safeText(row[CC_LOGIN]?.qText).trim()
+          const user = safeText(row[CC_USER]?.qText).trim()
+          const country = safeText(row[CC_COUNTRY]?.qText).trim()
+          const n = (idx) => {
+            const v = row[idx]?.qNum
+            return typeof v === 'number' && isFinite(v) ? v : 0
+          }
+
+          if (includeClientMonths && ym) {
+            const clientMonthKey = `${brand}|${affiliateId}|${clientId}|${ym}`
+            if (!byClientMonth.has(clientMonthKey)) {
+              byClientMonth.set(clientMonthKey, {
+                periodId: ym,
+                brand,
+                affiliateId,
+                clientId,
+                clientName,
+                clientLogin,
+                user,
+                country,
+                balance: 0,
+                commission: 0,
+                pl: 0,
+                openPl: 0,
+                trades: 0,
+                ftd: 0,
+                rdp: 0,
+                deposit: 0,
+                wd: 0,
+                net: 0,
+              })
+            }
+
+            const cm = byClientMonth.get(clientMonthKey)
+            const bal = n(CC_BALANCE)
+            if (bal > Number(cm.balance || 0)) cm.balance = bal
+            cm.commission += n(CC_LTV)
+            cm.pl += n(CC_CLOSED_PL)
+            cm.openPl += n(CC_OPEN_PL)
+            cm.trades += Math.round(n(CC_TRADES))
+            cm.ftd += n(CC_FTD)
+            cm.rdp += n(CC_RDP)
+            cm.deposit += n(CC_DEPOSIT)
+            cm.wd += n(CC_WD)
+            cm.net += n(CC_NET)
+          }
+
+          if (includeAffiliateMonth && ym) {
+            const affiliateMonthKey = `${brand}|${affiliateId}|${ym}`
+            if (!byAffiliateMonth.has(affiliateMonthKey)) {
+              byAffiliateMonth.set(affiliateMonthKey, {
+                periodId: ym,
+                brand,
+                affiliateId,
+                net: 0,
+                pl: 0,
+                commission: 0,
+                balance: 0,
+              })
+            }
+            const am = byAffiliateMonth.get(affiliateMonthKey)
+            am.net += n(CC_NET)
+            am.pl += n(CC_CLOSED_PL)
+            am.commission += n(CC_LTV)
+            am.balance += n(CC_BALANCE)
+          }
+
+          if (includeClients) {
+            const key = `${clientId}|${clientName}`
+            if (!byKey.has(key)) {
+              byKey.set(key, {
+                brand,
+                clientId,
+                clientName,
+                affiliateId,
+                user,
+                country,
+                balance: 0,
+                closedPl: 0,
+                openPl: 0,
+                trades: 0,
+                ftd: 0,
+                rdp: 0,
+                deposit: 0,
+                wd: 0,
+                net: 0,
+                _latestRank: rank,
+              })
+            }
+
+            const client = byKey.get(key)
+            if (rank > client._latestRank) {
+              client._latestRank = rank
+              client.brand = brand
+              client.affiliateId = affiliateId
+              client.user = user
+              client.country = country
+            }
+
+            client.closedPl += n(CC_CLOSED_PL)
+            client.openPl += n(CC_OPEN_PL)
+            client.trades += Math.round(n(CC_TRADES))
+            client.ftd += n(CC_FTD)
+            client.rdp += n(CC_RDP)
+            client.deposit += n(CC_DEPOSIT)
+            client.wd += n(CC_WD)
+            client.net += n(CC_NET)
+            const bal = n(CC_BALANCE)
+            if (bal !== 0) client.balance = bal
+          }
         }
-
-        const cm = byClientMonth.get(clientMonthKey)
-        const bal = n(CC_BALANCE)
-        if (bal > Number(cm.balance || 0)) cm.balance = bal
-        cm.commission += n(CC_LTV)
-        cm.pl += n(CC_CLOSED_PL)
-        cm.openPl += n(CC_OPEN_PL)
-        cm.trades += Math.round(n(CC_TRADES))
-        cm.ftd += n(CC_FTD)
-        cm.rdp += n(CC_RDP)
-        cm.deposit += n(CC_DEPOSIT)
-        cm.wd += n(CC_WD)
-        cm.net += n(CC_NET)
-
-        const affiliateMonthKey = `${brand}|${t(CC_AFF)}|${ym}`
-        if (!byAffiliateMonth.has(affiliateMonthKey)) {
-          byAffiliateMonth.set(affiliateMonthKey, {
-            periodId: ym,
-            brand,
-            affiliateId: t(CC_AFF),
-            net: 0,
-            pl: 0,
-            commission: 0,
-            balance: 0,
-          })
-        }
-
-        const am = byAffiliateMonth.get(affiliateMonthKey)
-        am.net += n(CC_NET)
-        am.pl += n(CC_CLOSED_PL)
-        am.commission += n(CC_LTV)
-        am.balance += bal
       }
-
-      if (!byKey.has(key)) {
-        byKey.set(key, {
-          brand,
-          clientId,
-          clientName,
-          affiliateId: t(CC_AFF),
-          user: t(CC_USER),
-          country: t(CC_COUNTRY),
-          balance: 0,
-          closedPl: 0,
-          openPl: 0,
-          trades: 0,
-          ftd: 0,
-          rdp: 0,
-          deposit: 0,
-          wd: 0,
-          net: 0,
-          _latestRank: rank,
-        })
-      }
-
-      const a = byKey.get(key)
-
-      // Overwrite brand (and meta fields) from the most recent period row
-      if (rank > a._latestRank) {
-        a._latestRank = rank
-        a.brand = brand
-        a.affiliateId = t(CC_AFF)
-        a.user = t(CC_USER)
-        a.country = t(CC_COUNTRY)
-      }
-
-      a.closedPl += n(CC_CLOSED_PL)
-      a.openPl += n(CC_OPEN_PL)
-      a.trades += Math.round(n(CC_TRADES))
-      a.ftd += n(CC_FTD)
-      a.rdp += n(CC_RDP)
-      a.deposit += n(CC_DEPOSIT)
-      a.wd += n(CC_WD)
-      a.net += n(CC_NET)
-      const bal = n(CC_BALANCE)
-      if (bal !== 0) a.balance = bal
     }
 
     // Strip internal tracking field before returning
-    for (const a of byKey.values()) delete a._latestRank
+    if (includeClients) {
+      for (const client of byKey.values()) delete client._latestRank
+    }
 
     const periods = [...periodSet].sort((a, b) => ymRank(a) - ymRank(b))
-    const clientMonths = [...byClientMonth.values()].sort((a, b) => {
-      const ra = ymRank(a?.periodId)
-      const rb = ymRank(b?.periodId)
-      if (ra !== rb) return ra - rb
-      const aa = safeText(a?.affiliateId)
-      const ab = safeText(b?.affiliateId)
-      if (aa !== ab) return aa.localeCompare(ab)
-      const ba = safeText(a?.brand)
-      const bb = safeText(b?.brand)
-      if (ba !== bb) return ba.localeCompare(bb)
-      return safeText(a?.clientId).localeCompare(safeText(b?.clientId))
-    })
-
-    const affiliateMonth = [...byAffiliateMonth.values()].sort((a, b) => {
-      const ra = ymRank(a?.periodId)
-      const rb = ymRank(b?.periodId)
-      if (ra !== rb) return ra - rb
-      const aa = safeText(a?.affiliateId)
-      const ab = safeText(b?.affiliateId)
-      if (aa !== ab) return aa.localeCompare(ab)
-      return safeText(a?.brand).localeCompare(safeText(b?.brand))
-    })
-
-    return {
+    const data = {
       period: 'ALL',
       periodFrom,
       periodTo,
       periods,
-      totalFetched: allRows.length,
-      clients: [...byKey.values()],
-      clientMonths,
-      affiliateMonth,
+      totalFetched,
     }
+
+    if (includeClients) data.clients = [...byKey.values()]
+    if (includeClientMonths) {
+      const clientMonths = [...byClientMonth.values()]
+      if (sortClientMonths) {
+        clientMonths.sort((a, b) => {
+          const ra = ymRank(a?.periodId)
+          const rb = ymRank(b?.periodId)
+          if (ra !== rb) return ra - rb
+          const aa = safeText(a?.affiliateId)
+          const ab = safeText(b?.affiliateId)
+          if (aa !== ab) return aa.localeCompare(ab)
+          const ba = safeText(a?.brand)
+          const bb = safeText(b?.brand)
+          if (ba !== bb) return ba.localeCompare(bb)
+          return safeText(a?.clientId).localeCompare(safeText(b?.clientId))
+        })
+      }
+      data.clientMonths = clientMonths
+    }
+    if (includeAffiliateMonth) {
+      const affiliateMonth = [...byAffiliateMonth.values()]
+      if (sortAffiliateMonth) {
+        affiliateMonth.sort((a, b) => {
+          const ra = ymRank(a?.periodId)
+          const rb = ymRank(b?.periodId)
+          if (ra !== rb) return ra - rb
+          const aa = safeText(a?.affiliateId)
+          const ab = safeText(b?.affiliateId)
+          if (aa !== ab) return aa.localeCompare(ab)
+          return safeText(a?.brand).localeCompare(safeText(b?.brand))
+        })
+      }
+      data.affiliateMonth = affiliateMonth
+    }
+
+    return data
   })
 }
 
-async function handleCreolabsClients(req, res) {
+async function resolveCreolabsClientVariant(config, variant) {
+  const cacheEntry = getCreolabsClientVariantCache(variant)
+  const now = Date.now()
+  const age = cacheEntry?.fetchedAt ? now - cacheEntry.fetchedAt : Infinity
+  if (cacheEntry?.data && age < CREOLABS_CACHE_TTL) {
+    return { data: cacheEntry.data, cached: true }
+  }
+
+  if (cacheEntry?.promise) {
+    const data = await cacheEntry.promise
+    return { data, cached: false }
+  }
+
+  const promise = resolveCreolabsSnapshot(config)
+    .then((snapshot) => projectCreolabsVariantFromSnapshot(snapshot.data, variant))
+    .then((data) => {
+      setCreolabsClientVariantCache(variant, { data, fetchedAt: Date.now(), promise: null })
+      return data
+    })
+    .catch((e) => {
+      const current = getCreolabsClientVariantCache(variant)
+      if (current) current.promise = null
+      throw e
+    })
+
+  const nextCacheValue = { data: null, fetchedAt: 0, promise }
+  setCreolabsClientVariantCache(variant, nextCacheValue)
+
+  const data = await promise
+  return { data, cached: false }
+}
+
+async function handleCreolabsClientVariant(req, res, variant, failureMessage) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
   const config = ensureConfigured(res)
   if (!config) return
 
-  // ?bust=1 forces cache invalidation (useful when BW Global is missing from stale cache)
   const urlObj = new URL(req.url || '/', 'http://localhost')
-  if (urlObj.searchParams.get('bust') === '1') _creolabsClientsCache = null
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
 
-  const now = Date.now()
-  const age = _creolabsClientsCache?.fetchedAt ? now - _creolabsClientsCache.fetchedAt : Infinity
-  if (_creolabsClientsCache?.data && age < CREOLABS_CACHE_TTL) {
-    return json(res, 200, { ok: true, data: { ..._creolabsClientsCache.data, cached: true } }, { 'Cache-Control': 'no-store' })
+  try {
+    const { data, cached } = await resolveCreolabsClientVariant(config, variant)
+    return json(res, 200, { ok: true, data: { ...data, cached } }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      { ok: false, error: e?.message || failureMessage, details: e?.details || '' },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsClients(req, res) {
+  return handleCreolabsClientVariant(req, res, 'full', 'Creolabs clients request failed')
+}
+
+async function handleCreolabsClientMonths(req, res) {
+  return handleCreolabsClientVariant(req, res, 'clientMonths', 'Creolabs client-months request failed')
+}
+
+async function handleCreolabsAffiliateMonth(req, res) {
+  return handleCreolabsClientVariant(req, res, 'affiliateMonth', 'Creolabs affiliate-month request failed')
+}
+
+function normalizeText(value) {
+  return String(value == null ? '' : value).trim()
+}
+
+function toFiniteNumber(value) {
+  const n = Number(value)
+  return Number.isFinite(n) ? n : 0
+}
+
+function aggregateClientMonthKpis(rows) {
+  const byClient = new Set()
+  const k = {
+    rows: 0,
+    uniqueClients: 0,
+    deposit: 0,
+    wd: 0,
+    net: 0,
+    closedPl: 0,
+    openPl: 0,
+    commission: 0,
+    balance: 0,
+    trades: 0,
+    ftd: 0,
+    rdp: 0,
   }
 
-  if (_creolabsClientsCache?.promise) {
-    try {
-      const data = await _creolabsClientsCache.promise
-      return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
-    } catch (e) {
-      return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs clients request failed' }, { 'Cache-Control': 'no-store' })
+  for (const row of rows || []) {
+    const clientId = normalizeText(row?.clientId)
+    if (clientId) byClient.add(clientId)
+
+    k.rows += 1
+    k.deposit += toFiniteNumber(row?.deposit)
+    k.wd += toFiniteNumber(row?.wd)
+    k.net += toFiniteNumber(row?.net)
+    k.closedPl += toFiniteNumber(row?.pl)
+    k.openPl += toFiniteNumber(row?.openPl)
+    k.commission += toFiniteNumber(row?.commission)
+    k.balance += toFiniteNumber(row?.balance)
+    k.trades += toFiniteNumber(row?.trades)
+    k.ftd += toFiniteNumber(row?.ftd)
+    k.rdp += toFiniteNumber(row?.rdp)
+  }
+
+  k.uniqueClients = byClient.size
+  return k
+}
+
+function buildKpiValidationChecks(kpi) {
+  const derivedNet = Number(kpi.deposit) - Number(kpi.wd)
+  const netDelta = Math.abs(derivedNet - Number(kpi.net))
+
+  const checks = [
+    {
+      id: 'rows_non_negative',
+      passed: Number(kpi.rows) >= 0,
+      detail: `rows=${kpi.rows}`,
+    },
+    {
+      id: 'clients_non_negative',
+      passed: Number(kpi.uniqueClients) >= 0,
+      detail: `uniqueClients=${kpi.uniqueClients}`,
+    },
+    {
+      id: 'net_matches_deposit_minus_wd',
+      passed: netDelta < 0.01,
+      detail: `net=${kpi.net.toFixed(2)} vs deposit-wd=${derivedNet.toFixed(2)} (delta=${netDelta.toFixed(4)})`,
+    },
+  ]
+
+  return {
+    pass: checks.every((c) => c.passed),
+    checks,
+  }
+}
+
+function buildCreolabsAnalytics(rows, { topN = 20 } = {}) {
+  const annual = new Map()
+  const monthly = new Map()
+  const byClient = new Map()
+
+  for (const row of rows || []) {
+    const periodId = normalizeText(row?.periodId || row?.yearMonth)
+    const year = /^\d{4}/.test(periodId) ? periodId.slice(0, 4) : 'unknown'
+    const brand = normalizeText(row?.brand)
+    const clientId = normalizeText(row?.clientId)
+    const clientName = normalizeText(row?.clientName)
+
+    const dep = toFiniteNumber(row?.deposit)
+    const wd = toFiniteNumber(row?.wd)
+    const net = toFiniteNumber(row?.net)
+    const pl = toFiniteNumber(row?.pl)
+    const openPl = toFiniteNumber(row?.openPl)
+    const bal = toFiniteNumber(row?.balance)
+    const commission = toFiniteNumber(row?.commission)
+    const trades = toFiniteNumber(row?.trades)
+    const ftd = toFiniteNumber(row?.ftd)
+    const rdp = toFiniteNumber(row?.rdp)
+
+    if (!annual.has(year)) {
+      annual.set(year, {
+        year,
+        rows: 0,
+        uniqueClients: new Set(),
+        deposit: 0,
+        wd: 0,
+        net: 0,
+        closedPl: 0,
+        openPl: 0,
+        balance: 0,
+        commission: 0,
+        trades: 0,
+        ftd: 0,
+        rdp: 0,
+      })
+    }
+    const y = annual.get(year)
+    y.rows += 1
+    if (clientId) y.uniqueClients.add(clientId)
+    y.deposit += dep
+    y.wd += wd
+    y.net += net
+    y.closedPl += pl
+    y.openPl += openPl
+    y.balance += bal
+    y.commission += commission
+    y.trades += trades
+    y.ftd += ftd
+    y.rdp += rdp
+
+    if (!monthly.has(periodId)) {
+      monthly.set(periodId, {
+        periodId,
+        year,
+        rows: 0,
+        uniqueClients: new Set(),
+        deposit: 0,
+        wd: 0,
+        net: 0,
+        closedPl: 0,
+        openPl: 0,
+        balance: 0,
+        commission: 0,
+        trades: 0,
+        ftd: 0,
+        rdp: 0,
+      })
+    }
+    const m = monthly.get(periodId)
+    m.rows += 1
+    if (clientId) m.uniqueClients.add(clientId)
+    m.deposit += dep
+    m.wd += wd
+    m.net += net
+    m.closedPl += pl
+    m.openPl += openPl
+    m.balance += bal
+    m.commission += commission
+    m.trades += trades
+    m.ftd += ftd
+    m.rdp += rdp
+
+    if (clientId) {
+      if (!byClient.has(clientId)) {
+        byClient.set(clientId, {
+          clientId,
+          clientName,
+          brand,
+          rows: 0,
+          periods: new Set(),
+          deposit: 0,
+          wd: 0,
+          net: 0,
+          closedPl: 0,
+          openPl: 0,
+          balance: 0,
+          commission: 0,
+          trades: 0,
+          ftd: 0,
+          rdp: 0,
+        })
+      }
+      const c = byClient.get(clientId)
+      c.rows += 1
+      if (periodId) c.periods.add(periodId)
+      c.clientName = clientName || c.clientName
+      c.brand = brand || c.brand
+      c.deposit += dep
+      c.wd += wd
+      c.net += net
+      c.closedPl += pl
+      c.openPl += openPl
+      c.balance = bal !== 0 ? bal : c.balance
+      c.commission += commission
+      c.trades += trades
+      c.ftd += ftd
+      c.rdp += rdp
     }
   }
 
-  const promise = fetchCreolabsClientsData(config)
-    .then((data) => {
-      _creolabsClientsCache = { data, fetchedAt: Date.now(), promise: null }
-      return data
-    })
-    .catch((e) => {
-      if (_creolabsClientsCache) _creolabsClientsCache.promise = null
-      throw e
-    })
+  const normalizeAgg = (item) => ({
+    ...item,
+    uniqueClients: item.uniqueClients.size,
+  })
 
-  if (!_creolabsClientsCache) _creolabsClientsCache = { data: null, fetchedAt: 0, promise }
-  else _creolabsClientsCache.promise = promise
+  const annualRows = [...annual.values()]
+    .map(normalizeAgg)
+    .sort((a, b) => Number(a.year) - Number(b.year))
 
-  try {
-    const data = await promise
-    return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
-  } catch (e) {
-    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs clients request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  const monthlyRows = [...monthly.values()]
+    .map(normalizeAgg)
+    .sort((a, b) => ymRank(a.periodId) - ymRank(b.periodId))
+
+  const rankingRows = [...byClient.values()].map((c) => ({
+    ...c,
+    periods: c.periods.size,
+  }))
+
+  const pickTop = (key) =>
+    [...rankingRows]
+      .sort((a, b) => Number(b[key] || 0) - Number(a[key] || 0))
+      .slice(0, Math.max(1, topN))
+
+  return {
+    annual: annualRows,
+    monthly: monthlyRows,
+    weekly: [],
+    rankings: {
+      topNet: pickTop('net'),
+      topClosedPl: pickTop('closedPl'),
+      topTrades: pickTop('trades'),
+      topDeposit: pickTop('deposit'),
+    },
+    weeklyNote:
+      'Weekly aggregates are unavailable from this source because CREOLABS clients data is month-grain only (Year Month).',
   }
+}
+
+async function handleCreolabsAnalytics(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  const brandFilter = normalizeText(urlObj.searchParams.get('brand'))
+  const yearFilter = normalizeText(urlObj.searchParams.get('year'))
+  const topN = Math.max(5, Math.min(200, Number(urlObj.searchParams.get('top') || 20)))
+
+  let baseData = null
+  try {
+    const resolved = await resolveCreolabsClientVariant(config, 'clientMonths')
+    baseData = resolved.data
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs analytics request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const sourceRows = Array.isArray(baseData?.clientMonths) ? baseData.clientMonths : []
+  const filteredRows = sourceRows.filter((row) => {
+    const brandOk = !brandFilter || normalizeText(row?.brand) === brandFilter
+    const periodId = normalizeText(row?.periodId || row?.yearMonth)
+    const year = /^\d{4}/.test(periodId) ? periodId.slice(0, 4) : ''
+    const yearOk = !yearFilter || year === yearFilter
+    return brandOk && yearOk
+  })
+
+  const analytics = buildCreolabsAnalytics(filteredRows, { topN })
+
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      data: {
+        filters: {
+          brand: brandFilter || null,
+          year: yearFilter || null,
+          top: topN,
+        },
+        sourceRows: sourceRows.length,
+        filteredRows: filteredRows.length,
+        periodFrom: normalizeText(baseData?.periodFrom),
+        periodTo: normalizeText(baseData?.periodTo),
+        analytics,
+      },
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+}
+
+async function handleCreolabsKpis(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  const brandFilter = normalizeText(urlObj.searchParams.get('brand'))
+  const periodFilter = normalizeText(urlObj.searchParams.get('period'))
+
+  let baseData = null
+  try {
+    baseData = (await resolveCreolabsClientVariant(config, 'clientMonths')).data
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs KPI request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const sourceRows = Array.isArray(baseData?.clientMonths) ? baseData.clientMonths : []
+  const filteredRows = sourceRows.filter((row) => {
+    const brandOk = !brandFilter || normalizeText(row?.brand) === brandFilter
+    const periodValue = normalizeText(row?.periodId || row?.yearMonth)
+    const periodOk = !periodFilter || periodValue === periodFilter
+    return brandOk && periodOk
+  })
+
+  const kpis = aggregateClientMonthKpis(filteredRows)
+  const validation = buildKpiValidationChecks(kpis)
+
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      data: {
+        filters: {
+          brand: brandFilter || null,
+          period: periodFilter || null,
+        },
+        basePeriodFrom: normalizeText(baseData?.periodFrom),
+        basePeriodTo: normalizeText(baseData?.periodTo),
+        sourceRows: sourceRows.length,
+        filteredRows: filteredRows.length,
+        kpis,
+        validation,
+        cached: Boolean(baseData?.cached),
+      },
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+}
+
+/**
+ * Aggregates clientMonths snapshot into one row per unique client.
+ * Includes lastPeriodId and firstPeriodId so the frontend can compute recency
+ * and activeMonths without needing the full month-grain dump.
+ */
+function buildCreolabsClientScores(rows) {
+  const byClient = new Map()
+
+  for (const row of rows || []) {
+    const clientId = normalizeText(row?.clientId)
+    if (!clientId) continue
+
+    const periodId = normalizeText(row?.periodId)
+    const brand = normalizeText(row?.brand)
+    const clientName = normalizeText(row?.clientName)
+    const affiliateId = normalizeText(row?.affiliateId)
+    const clientLogin = normalizeText(row?.clientLogin)
+    const user = normalizeText(row?.user)
+    const country = normalizeText(row?.country)
+
+    const dep = toFiniteNumber(row?.deposit)
+    const wd = toFiniteNumber(row?.wd)
+    const net = toFiniteNumber(row?.net)
+    const pl = toFiniteNumber(row?.pl)
+    const openPl = toFiniteNumber(row?.openPl)
+    const bal = toFiniteNumber(row?.balance)
+    const commission = toFiniteNumber(row?.commission)
+    const trades = Math.round(toFiniteNumber(row?.trades))
+    const ftd = toFiniteNumber(row?.ftd)
+    const rdp = toFiniteNumber(row?.rdp)
+
+    if (!byClient.has(clientId)) {
+      byClient.set(clientId, {
+        clientId,
+        clientName,
+        brand,
+        affiliateId,
+        clientLogin,
+        user,
+        country,
+        deposit: 0,
+        wd: 0,
+        net: 0,
+        closedPl: 0,
+        openPl: 0,
+        balance: 0,
+        commission: 0,
+        trades: 0,
+        ftd: 0,
+        rdp: 0,
+        activeMonths: 0,
+        firstPeriodId: '',
+        lastPeriodId: '',
+        _periods: new Set(),
+        _latestRank: 0,
+      })
+    }
+
+    const c = byClient.get(clientId)
+
+    // Keep brand/meta from most recent period
+    const rank = typeof ymRank === 'function' ? ymRank(periodId) : 0
+    if (rank > c._latestRank) {
+      c._latestRank = rank
+      c.brand = brand || c.brand
+      c.affiliateId = affiliateId || c.affiliateId
+      c.user = user || c.user
+      c.country = country || c.country
+    }
+
+    // Update name if longer
+    if ((clientName || '').length > c.clientName.length) c.clientName = clientName
+
+    c.deposit += dep
+    c.wd += wd
+    c.net += net
+    c.closedPl += pl
+    c.openPl += openPl
+    if (bal !== 0) c.balance = bal // last non-zero wins
+    c.commission += commission
+    c.trades += trades
+    c.ftd += ftd
+    c.rdp += rdp
+
+    if (periodId) {
+      c._periods.add(periodId)
+      // Track first and last period for recency computation
+      if (!c.firstPeriodId || (typeof ymRank === 'function' ? ymRank(periodId) < ymRank(c.firstPeriodId) : false)) {
+        c.firstPeriodId = periodId
+      }
+      if (!c.lastPeriodId || (typeof ymRank === 'function' ? ymRank(periodId) > ymRank(c.lastPeriodId) : false)) {
+        c.lastPeriodId = periodId
+      }
+    }
+  }
+
+  return [...byClient.values()].map((c) => {
+    const activeMonths = c._periods.size
+    // eslint-disable-next-line no-unused-vars
+    const { _periods, _latestRank, ...rest } = c
+    return { ...rest, activeMonths }
+  })
+}
+
+async function handleCreolabsClientScores(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  const brandFilter = normalizeText(urlObj.searchParams.get('brand'))
+
+  let baseData = null
+  try {
+    const resolved = await resolveCreolabsClientVariant(config, 'clientMonths')
+    baseData = resolved.data
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs client-scores request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const sourceRows = Array.isArray(baseData?.clientMonths) ? baseData.clientMonths : []
+  const filteredRows = brandFilter
+    ? sourceRows.filter((r) => normalizeText(r?.brand) === brandFilter)
+    : sourceRows
+
+  const scores = buildCreolabsClientScores(filteredRows)
+
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      data: {
+        filters: { brand: brandFilter || null },
+        sourceRows: sourceRows.length,
+        filteredRows: filteredRows.length,
+        clientCount: scores.length,
+        periodFrom: normalizeText(baseData?.periodFrom),
+        periodTo: normalizeText(baseData?.periodTo),
+        periods: Array.isArray(baseData?.periods) ? baseData.periods : [],
+        totalFetched: Number(baseData?.totalFetched || 0),
+        cached: Boolean(baseData?.cached),
+        scores,
+      },
+    },
+    { 'Cache-Control': 'no-store' }
+  )
 }
 
 async function routeQlik(req, res, parts) {
@@ -1175,6 +1851,26 @@ async function routeQlik(req, res, parts) {
 
   if (head === 'creolabs' && parts[1] === 'clients') {
     return handleCreolabsClients(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'client-months') {
+    return handleCreolabsClientMonths(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'affiliate-month') {
+    return handleCreolabsAffiliateMonth(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'kpis') {
+    return handleCreolabsKpis(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'analytics') {
+    return handleCreolabsAnalytics(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'client-scores') {
+    return handleCreolabsClientScores(req, res)
   }
 
   if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'sheets' && !parts[4]) {
@@ -1237,7 +1933,6 @@ setTimeout(() => {
 setTimeout(() => {
   const config = getConfig()
   if (!config.hasApiKey && !config.hasOauth) return
-  fetchCreolabsClientsData(config)
-    .then((data) => { _creolabsClientsCache = { data, fetchedAt: Date.now(), promise: null } })
+  resolveCreolabsClientVariant(config, 'clientMonths')
     .catch(() => {})
 }, 1500)
