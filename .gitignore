@@ -78,6 +78,9 @@ tmp-*.log
 CREOLABS/Traders Ranking Rewards.xlsx
 CREOLABS/~$*.xlsx
 
+# Prime ranking JSON artifact (81 MB) — served via Qlik API, no longer versioned
+public/prime_clients_ranking_table.json
+
 # Local invoice/provider spreadsheets
 Invoice providers/*.xlsx
 
