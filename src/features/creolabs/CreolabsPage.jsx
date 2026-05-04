@@ -6,6 +6,7 @@ import {
   loadCreolabsQlikClientMonths,
   loadCreolabsQlikKpis,
   loadPrimeClientsRankingTable,
+  loadPrimeEmailIndex,
   loadTradersRankingRewardsTable,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
@@ -544,7 +545,12 @@ function mapQlikClientMonthToForexRow(row, dateLookup = null) {
   }
 }
 
-function mapQlikClientMonthToPrimeRow(row, primeLookup = null, tradersDateLookup = null) {
+function mapQlikClientMonthToPrimeRow(
+  row,
+  primeLookup = null,
+  tradersDateLookup = null,
+  emailIndex = null
+) {
   const closed = Number(row?.closedPL || 0)
   const open = Number(row?.openPL || 0)
   const pl = closed + open
@@ -603,7 +609,15 @@ function mapQlikClientMonthToPrimeRow(row, primeLookup = null, tradersDateLookup
     ftds: detailFtds,
     leads: detailLeads,
     cr: computedCr,
-    client_email: primeDetails?.client_email || '',
+    client_email:
+      emailIndex?.byId?.[row?.clientId] ||
+      emailIndex?.byName?.[
+        String(row?.clientName || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '')
+      ] ||
+      primeDetails?.client_email ||
+      '',
   }
 }
 
@@ -730,11 +744,13 @@ export default function CreolabsPage() {
     ;(async () => {
       try {
         // API-first: use the same Qlik source used by Prime Challenge ranking.
-        const [qlikPayload, tradersPayloadResult, primePayloadResult] = await Promise.all([
-          loadCreolabsQlikClientMonths({ force: bustCache }),
-          loadTradersRankingRewardsTable({ force: bustCache }).catch(() => null),
-          loadPrimeClientsRankingTable({ force: bustCache }).catch(() => null),
-        ])
+        const [qlikPayload, tradersPayloadResult, primePayloadResult, emailIndexResult] =
+          await Promise.all([
+            loadCreolabsQlikClientMonths({ force: bustCache }),
+            loadTradersRankingRewardsTable({ force: bustCache }).catch(() => null),
+            loadPrimeClientsRankingTable({ force: bustCache }).catch(() => null),
+            loadPrimeEmailIndex({ force: bustCache }).catch(() => null),
+          ])
         if (cancelled) return
 
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
@@ -763,7 +779,8 @@ export default function CreolabsPage() {
           mapQlikClientMonthToPrimeRow(
             { ...r, brand: 'BW Prime' },
             primeDetailsLookup,
-            tradersDateLookup
+            tradersDateLookup,
+            emailIndexResult
           )
         )
 
@@ -832,11 +849,13 @@ export default function CreolabsPage() {
       if (silentInFlightRef.current) return
       silentInFlightRef.current = true
       try {
-        const [qlikPayload, tradersPayloadResult, primePayloadResult] = await Promise.all([
-          loadCreolabsQlikClientMonths({ force: true }),
-          loadTradersRankingRewardsTable({ force: true }).catch(() => null),
-          loadPrimeClientsRankingTable({ force: true }).catch(() => null),
-        ])
+        const [qlikPayload, tradersPayloadResult, primePayloadResult, emailIndexResult] =
+          await Promise.all([
+            loadCreolabsQlikClientMonths({ force: true }),
+            loadTradersRankingRewardsTable({ force: true }).catch(() => null),
+            loadPrimeClientsRankingTable({ force: true }).catch(() => null),
+            loadPrimeEmailIndex({ force: true }).catch(() => null),
+          ])
         const clientMonths = Array.isArray(qlikPayload?.data?.clientMonths)
           ? qlikPayload.data.clientMonths
           : []
@@ -858,7 +877,8 @@ export default function CreolabsPage() {
           mapQlikClientMonthToPrimeRow(
             { ...r, brand: 'BW Prime' },
             primeDetailsLookup,
-            tradersDateLookup
+            tradersDateLookup,
+            emailIndexResult
           )
         )
         setForexRows(forex)

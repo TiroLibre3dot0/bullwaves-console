@@ -23,6 +23,7 @@
     "analyze:comments": "node scripts/analyze_comments.js",
     "report:comments": "node scripts/generate_comments_report.js",
     "generate:affiliate-index": "node scripts/generate_affiliate_index.js",
+    "generate:prime-email-index": "node scripts/generate_prime_email_index.js",
     "generate:support-users-index": "node scripts/generate_support_users_index.js",
     "generate:reports-meta": "node scripts/generate_reports_meta.js",
     "generate:all-indexes": "node scripts/generate_all_indexes.js",

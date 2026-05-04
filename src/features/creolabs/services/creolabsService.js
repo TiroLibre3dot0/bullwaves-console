@@ -4,6 +4,7 @@ const CREOLABS_INDEX_URL = '/creolabs_index.json'
 const CREOLABS_CLIENTS_TABLE_URL = '/creolabs_clients_table.json'
 const CREOLABS_AFFILIATE_MONTH_URL = '/creolabs_affiliate_month.json'
 const PRIME_CLIENTS_RANKING_TABLE_URL = '/prime_clients_ranking_table.json'
+const PRIME_EMAIL_INDEX_URL = '/prime_email_index.json'
 const TRADERS_RANKING_REWARDS_TABLE_URL = '/traders_ranking_rewards_table.json'
 const CREOLABS_QLIK_CLIENT_MONTHS_URL = '/api/qlik/creolabs/client-months'
 const CREOLABS_QLIK_AFFILIATE_MONTH_URL = '/api/qlik/creolabs/affiliate-month'
@@ -343,5 +344,19 @@ export async function loadPrimeClientsRankingTable({ force = false } = {}) {
     const err = new Error('Invalid prime_clients_ranking_table.json')
     err.cause = e
     throw err
+  }
+}
+
+export async function loadPrimeEmailIndex({ force = false } = {}) {
+  const url = withReportsVersion(PRIME_EMAIL_INDEX_URL)
+  const text = await fetchTextCached(url, { force, headers: { Accept: 'application/json' } })
+  const trimmed = String(text || '').trimStart()
+  if (trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')) {
+    return null
+  }
+  try {
+    return JSON.parse(text)
+  } catch {
+    return null
   }
 }
