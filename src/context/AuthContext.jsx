@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { sections } from '../pages/orgChartData'
 import { trackEvent } from '../services/trackingService'
 import { translate } from '../i18n/translations'
+import { augmentAllowlist } from '../lib/accessControl'
 
 const AuthContext = createContext({
   user: null,
@@ -52,7 +53,7 @@ function buildAllowlist() {
     })
   })
 
-  return Array.from(deduped.values())
+  return augmentAllowlist(Array.from(deduped.values()))
 }
 
 export function AuthProvider({ children }) {

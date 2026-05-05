@@ -197,6 +197,7 @@ export default function Sidebar({
   affiliateSection,
   supportOnly,
   allowedViews,
+  accessMode,
   customEventsDisabled,
   canAccessEmailMasterTemplate,
   isAdmin,
@@ -206,6 +207,7 @@ export default function Sidebar({
 }) {
   const { t } = useI18n()
   const [isStandbyOpen, setIsStandbyOpen] = useState(false)
+  const trustpilotOnlyMode = accessMode === 'trustpilotOnly'
 
   const disabled = (key) => {
     if (customEventsDisabled && key === 'customEvents') return true
@@ -225,6 +227,15 @@ export default function Sidebar({
             'upload',
           ])
     return !allowed.has(key)
+  }
+
+  const trustpilotSupportItem = {
+    key: 'trustpilotGuide',
+    label: t('sidebar.trustpilotGuide'),
+    icon: 'chart',
+    active: view === 'trustpilotGuide',
+    onClick: () => navigate('trustpilotGuide'),
+    disabled: disabled('trustpilotGuide'),
   }
 
   const sectionGroups = [
@@ -316,16 +327,18 @@ export default function Sidebar({
     {
       key: 'support',
       title: 'Support',
-      items: [
-        {
-          key: 'supportUserCheck',
-          label: t('sidebar.supportUserCheck'),
-          icon: 'search',
-          active: view === 'supportUserCheck',
-          onClick: () => navigate('supportUserCheck'),
-          disabled: disabled('supportUserCheck'),
-        },
-      ],
+      items: trustpilotOnlyMode
+        ? [trustpilotSupportItem]
+        : [
+            {
+              key: 'supportUserCheck',
+              label: t('sidebar.supportUserCheck'),
+              icon: 'search',
+              active: view === 'supportUserCheck',
+              onClick: () => navigate('supportUserCheck'),
+              disabled: disabled('supportUserCheck'),
+            },
+          ],
     },
     {
       key: 'primeChallenge',
@@ -572,9 +585,13 @@ export default function Sidebar({
     },
   ]
 
+  const visibleSectionGroups = trustpilotOnlyMode
+    ? sectionGroups.filter((section) => section.key === 'support')
+    : sectionGroups
+
   return (
     <div className="sidebar">
-      {sectionGroups.map((section) => (
+      {visibleSectionGroups.map((section) => (
         <section key={section.key} className={`sidebar-section sidebar-section--${section.key}`}>
           {section.key === 'standby' ? (
             <button

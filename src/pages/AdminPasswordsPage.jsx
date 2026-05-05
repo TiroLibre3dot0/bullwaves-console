@@ -1,34 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { sections } from './orgChartData'
+import { augmentAllowlist, getAccessMode, isAdminEmail } from '../lib/accessControl'
 
 // ---------------------------------------------------------------------------
 // Access level logic (mirrors AuthenticatedApp.jsx)
 // ---------------------------------------------------------------------------
-const ADMIN_EMAILS = new Set(['paolo.v@bullwaves.com'])
-const MANAGEMENT_SECTIONS = ['Management Team', 'Management', 'C-Suite', 'Executive']
-
-function isSalesDepartment(department = '') {
-  const d = String(department || '')
-    .trim()
-    .toLowerCase()
-  return d.startsWith('sales') || d.includes('business development')
-}
-
-function getAccessLevel(user) {
-  const email = (user.email || '').toLowerCase()
-  if (ADMIN_EMAILS.has(email)) return 'admin'
-  const section = (user.section || '').trim()
-  const isManagement = MANAGEMENT_SECTIONS.some((s) =>
-    section.toLowerCase().includes(s.toLowerCase())
-  )
-  if (isManagement) return 'admin'
-  const dept = (user.department || user.section || '').trim().toLowerCase()
-  if (dept === 'support team') return 'support'
-  if (isSalesDepartment(dept)) return 'sales'
-  return 'full'
-}
-
 const ACCESS_LEVELS = {
   admin: {
     label: 'Admin',
@@ -55,6 +32,12 @@ const ACCESS_LEVELS = {
     bg: 'rgba(244,114,182,0.12)',
     tooltip:
       'Sezioni visibili: Home, User Check, AI Assistant, WhatsApp Perf., Trustpilot, Validazione Provvigioni, Organigramma (no Upload)',
+  },
+  trustpilotOnly: {
+    label: 'Trustpilot Only',
+    color: '#38bdf8',
+    bg: 'rgba(56,189,248,0.14)',
+    tooltip: 'Accesso limitato alla sola pagina Trustpilot Guide, mostrata nella sezione Support.',
   },
 }
 
@@ -97,7 +80,7 @@ function buildFullAllowlist() {
       })
     })
   })
-  return Array.from(deduped.values())
+  return augmentAllowlist(Array.from(deduped.values()))
 }
 
 function EyeIcon({ open }) {
@@ -477,7 +460,10 @@ export default function AdminPasswordsPage() {
                 const isVisible = visiblePwds.has(u.email)
                 const hasPwd = u.pwd !== null && u.pwd !== undefined
                 const isCopied = copiedEmail === u.email
-                const accessLevel = getAccessLevel(u)
+                const accessLevel = getAccessMode({
+                  ...u,
+                  isManagementTeam: Boolean(u.isManagementTeam || isAdminEmail(u.email)),
+                })
 
                 return (
                   <tr

@@ -5,6 +5,13 @@ import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
 import { useAuth } from './context/AuthContext'
 import { trackEvent } from './services/trackingService'
+import {
+  getAccessMode,
+  getAllowedViewsForAccessMode,
+  getDeniedViewForAccessMode,
+  getLandingViewForAccessMode,
+  isAdminEmail,
+} from './lib/accessControl'
 
 const OrgChart = lazy(() => import('./pages/OrgChart'))
 const ExecutionHubPage = lazy(() => import('./features/execution/ExecutionHubPage'))
@@ -58,14 +65,6 @@ const AdminPasswordsPage = lazy(() => import('./pages/AdminPasswordsPage'))
 export default function AuthenticatedApp() {
   const [notionPillarFilter] = useState(null)
 
-  const isSalesDepartment = (department = '') => {
-    const d = String(department || '')
-      .trim()
-      .toLowerCase()
-    if (!d) return false
-    return d.startsWith('sales') || d.includes('business development')
-  }
-
   const getIsMobile = () =>
     typeof window !== 'undefined' && window.matchMedia
       ? window.matchMedia('(max-width: 900px)').matches
@@ -100,43 +99,19 @@ export default function AuthenticatedApp() {
 
   const { user } = useAuth()
   const normalizedEmail = user?.email?.toLowerCase() || ''
-  const isManagementTeam = Boolean(user?.isManagementTeam)
-  // Admin features (Custom Events, Admin Panel) follow the org chart: Management Team has full access.
-  // Keep a small explicit allowlist for exceptional admin users outside management.
-  const adminEmails = new Set(['paolo.v@bullwaves.com'])
-  const emailTemplatePreviewEmails = new Set(['paolo.v@bullwaves.com'])
-  const isAdmin = Boolean(isManagementTeam || adminEmails.has(normalizedEmail))
+  const accessMode = getAccessMode(user)
+  const isAdmin = accessMode === 'admin'
   const canAccessEmailMasterTemplate = Boolean(
-    isManagementTeam || emailTemplatePreviewEmails.has(normalizedEmail)
+    user?.isManagementTeam || isAdminEmail(normalizedEmail)
   )
-  const isSupportUser = (user?.department || '').trim().toLowerCase() === 'support team'
-  const isSupportOnly = Boolean(isSupportUser && !isManagementTeam)
-  const isBusinessDevSales = Boolean(!isManagementTeam && isSalesDepartment(user?.department || ''))
-  const isRestrictedUser = Boolean(isSupportOnly || isBusinessDevSales)
-
-  const restrictedAllowedViews = useMemo(() => {
-    // Support can upload reports; BD/Sales should not.
-    if (isSupportOnly)
-      return new Set([
-        'home',
-        'supportUserCheck',
-        'aiAssistant',
-        'whatsappPerformance',
-        'trustpilotGuide',
-        'commissionValidationRules',
-        'orgChart',
-        'upload',
-      ])
-    return new Set([
-      'home',
-      'supportUserCheck',
-      'aiAssistant',
-      'whatsappPerformance',
-      'trustpilotGuide',
-      'commissionValidationRules',
-      'orgChart',
-    ])
-  }, [isSupportOnly])
+  const isRestrictedUser = Boolean(['support', 'sales', 'trustpilotOnly'].includes(accessMode))
+  const isSupportOnly = accessMode === 'support'
+  const restrictedAllowedViews = useMemo(
+    () => getAllowedViewsForAccessMode(accessMode),
+    [accessMode]
+  )
+  const restrictedLandingView = getLandingViewForAccessMode(accessMode)
+  const restrictedDeniedView = getDeniedViewForAccessMode(accessMode)
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -334,33 +309,46 @@ export default function AuthenticatedApp() {
     const onPop = () => {
       const nextPath = window.location.pathname
       if (isRestrictedUser) {
-        if (nextPath.startsWith('/support/user-check')) {
+        if (
+          restrictedAllowedViews?.has('supportUserCheck') &&
+          nextPath.startsWith('/support/user-check')
+        ) {
           setView('supportUserCheck')
           return
         }
-        if (nextPath.startsWith('/trustpilot-guide')) {
+        if (
+          restrictedAllowedViews?.has('trustpilotGuide') &&
+          nextPath.startsWith('/trustpilot-guide')
+        ) {
           setView('trustpilotGuide')
           return
         }
-        if (nextPath.startsWith('/support/ai-assistant')) {
+        if (
+          restrictedAllowedViews?.has('aiAssistant') &&
+          nextPath.startsWith('/support/ai-assistant')
+        ) {
           setView('aiAssistant')
           return
         }
-        if (nextPath.startsWith('/support/whatsapp-performance')) {
+        if (
+          restrictedAllowedViews?.has('whatsappPerformance') &&
+          nextPath.startsWith('/support/whatsapp-performance')
+        ) {
           setView('whatsappPerformance')
           return
         }
-        if (nextPath.startsWith('/org-chart')) {
+        if (restrictedAllowedViews?.has('orgChart') && nextPath.startsWith('/org-chart')) {
           setView('orgChart')
           return
         }
-        if (isSupportOnly && nextPath.startsWith('/upload')) {
+        if (restrictedAllowedViews?.has('upload') && nextPath.startsWith('/upload')) {
           setView('upload')
           return
         }
 
-        window.history.replaceState({ view: 'supportUserCheck' }, '', '/support/user-check')
-        setView('supportUserCheck')
+        const deniedPath = routes[restrictedDeniedView] || routes.home
+        window.history.replaceState({ view: restrictedDeniedView }, '', deniedPath)
+        setView(restrictedDeniedView)
         return
       }
 
@@ -402,9 +390,11 @@ export default function AuthenticatedApp() {
     canAccessEmailMasterTemplate,
     isAdmin,
     isRestrictedUser,
-    isSupportOnly,
     routes.commandCenter,
     routes.projectBoard,
+    routes,
+    restrictedAllowedViews,
+    restrictedDeniedView,
   ])
 
   useEffect(() => {
@@ -415,13 +405,13 @@ export default function AuthenticatedApp() {
   useEffect(() => {
     if (!user) return
     if (!isRestrictedUser) return
-    // Restricted users still land on Home; navigation enforces allowed views.
     const p = window.location.pathname
-    if (!p.startsWith('/home')) {
-      window.history.replaceState({ view: 'home' }, '', routes.home)
+    const landingPath = routes[restrictedLandingView] || routes.home
+    if (p !== landingPath) {
+      window.history.replaceState({ view: restrictedLandingView }, '', landingPath)
     }
-    setView('home')
-  }, [user, isRestrictedUser])
+    setView(restrictedLandingView)
+  }, [restrictedLandingView, routes, user, isRestrictedUser])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -464,11 +454,12 @@ export default function AuthenticatedApp() {
     if (nextView === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return
 
     if (isRestrictedUser && !restrictedAllowedViews.has(nextView)) {
-      const nextPath = routes.supportUserCheck
+      const fallbackView = restrictedDeniedView
+      const nextPath = routes[fallbackView] || routes.home
       if (window.location.pathname !== nextPath) {
-        window.history.pushState({ view: 'supportUserCheck' }, '', nextPath)
+        window.history.pushState({ view: fallbackView }, '', nextPath)
       }
-      setView('supportUserCheck')
+      setView(fallbackView)
       return
     }
 
@@ -631,6 +622,7 @@ export default function AuthenticatedApp() {
             affiliateSection={affiliateSection}
             supportOnly={isRestrictedUser}
             allowedViews={restrictedAllowedViews}
+            accessMode={accessMode}
             customEventsDisabled={!isAdmin}
             canAccessEmailMasterTemplate={canAccessEmailMasterTemplate}
             isAdmin={isAdmin}
