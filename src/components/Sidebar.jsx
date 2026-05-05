@@ -229,6 +229,20 @@ export default function Sidebar({
 
   const sectionGroups = [
     {
+      key: 'creolabs',
+      title: 'CREOLABS',
+      items: [
+        {
+          key: 'creolabsApps',
+          label: 'Qlik Apps',
+          icon: 'chart',
+          active: view === 'creolabs',
+          onClick: () => navigate('creolabs'),
+          disabled: disabled('creolabs'),
+        },
+      ],
+    },
+    {
       key: 'sales',
       title: 'Sales',
       items: [
@@ -461,6 +475,14 @@ export default function Sidebar({
           disabled: disabled('whatsappTemplates'),
         },
         {
+          key: 'acuity',
+          label: 'ACUITY Lab',
+          icon: 'layout',
+          active: view === 'acuity',
+          onClick: () => navigate('acuity'),
+          disabled: disabled('acuity'),
+        },
+        {
           key: 'customEvents',
           label: t('sidebar.customEvents'),
           icon: 'chart',
@@ -503,20 +525,6 @@ export default function Sidebar({
           active: view === 'fraud',
           onClick: () => navigate('fraud'),
           disabled: disabled('fraud'),
-        },
-      ],
-    },
-    {
-      key: 'creolabs',
-      title: 'CREOLABS',
-      items: [
-        {
-          key: 'creolabsApps',
-          label: 'Qlik Apps',
-          icon: 'chart',
-          active: view === 'creolabs',
-          onClick: () => navigate('creolabs'),
-          disabled: disabled('creolabs'),
         },
       ],
     },

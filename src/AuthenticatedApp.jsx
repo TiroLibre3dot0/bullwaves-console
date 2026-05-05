@@ -45,6 +45,7 @@ const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidget
 const CommissionValidationRulesPage = lazy(() => import('./pages/CommissionValidationRulesPage'))
 const SalesMonitoringPage = lazy(() => import('./pages/SalesMonitoringPage'))
 const SoliticsReportPage = lazy(() => import('./features/solitics/pages/SoliticsReportPage'))
+const AcuityLabPage = lazy(() => import('./features/acuity/pages/AcuityLabPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
@@ -210,6 +211,7 @@ export default function AuthenticatedApp() {
       reportsHub: '/reports',
       whatsappTemplates: '/whatsapp-templates',
       solitics: '/solitics',
+      acuity: '/acuity',
       customEvents: '/custom-events',
       upload: '/upload',
       notion: '/notion',
@@ -258,6 +260,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
     if (pathname.startsWith('/solitics')) return 'solitics'
+    if (pathname.startsWith('/acuity')) return 'acuity'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
     if (pathname.startsWith('/upload')) return 'upload'
     if (pathname.startsWith('/notion')) return 'notion'
@@ -598,6 +601,7 @@ export default function AuthenticatedApp() {
       reportsHub: 'reports-hub',
       whatsappTemplates: 'whatsapp-templates',
       solitics: 'solitics-report',
+      acuity: 'acuity-lab',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
       admin: 'admin-panel',
@@ -688,6 +692,7 @@ export default function AuthenticatedApp() {
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'solitics' ? <SoliticsReportPage /> : null}
+              {view === 'acuity' ? <AcuityLabPage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}
               {view === 'notion' ? <NotionBoard pillarFilter={notionPillarFilter} /> : null}

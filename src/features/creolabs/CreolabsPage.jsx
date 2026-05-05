@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Line } from 'react-chartjs-2'
 import { useQlikStatus } from '../../context/QlikStatusContext'
 import {
   isQlikApiUnavailableError,
-  loadCreolabsQlikAnalytics,
   loadCreolabsQlikClientMonths,
-  loadCreolabsQlikKpis,
   loadPrimeClientsRankingTable,
   loadPrimeEmailIndex,
   loadTradersRankingRewardsTable,
@@ -41,7 +40,8 @@ const TD = {
 }
 const TD_L = { ...TD, textAlign: 'left' }
 
-const BRANDS = ['BW', 'BW Global', 'BW Prime']
+const COMBINED_FOREX_BRAND = 'BW + BW Global'
+const BRANDS = [COMBINED_FOREX_BRAND, 'BW', 'BW Global', 'BW Prime']
 const PAGE_SIZE = 100
 const CONDITIONAL_COLUMN_KEYS = new Set([
   'client_timestamp',
@@ -514,8 +514,8 @@ function filterVisibleColumns(columns, rows) {
 }
 
 function mapQlikClientMonthToForexRow(row, dateLookup = null) {
-  const closed = Number(row?.closedPL || 0)
-  const open = Number(row?.openPL || 0)
+  const closed = Number(row?.pl ?? row?.closedPL ?? 0)
+  const open = Number(row?.openPl ?? row?.openPL ?? 0)
   const tradersDates = getTradersDates(dateLookup, row)
   return {
     brand: row?.brand || '',
@@ -551,8 +551,8 @@ function mapQlikClientMonthToPrimeRow(
   tradersDateLookup = null,
   emailIndex = null
 ) {
-  const closed = Number(row?.closedPL || 0)
-  const open = Number(row?.openPL || 0)
+  const closed = Number(row?.pl ?? row?.closedPL ?? 0)
+  const open = Number(row?.openPl ?? row?.openPL ?? 0)
   const pl = closed + open
   const primeDetails = getPrimeDetails(primeLookup, row)
   const tradersDates = getTradersDates(tradersDateLookup, row)
@@ -693,12 +693,244 @@ function colorVal(n) {
 }
 
 const SIGNED_COLOR_KEYS = new Set(['closed_pl', 'open_pl', 'net', 'pl', 'raw_pl', 'pl_adjustment'])
+const TREND_PERIODS = ['week', 'month', 'year']
+const TREND_METRICS = [
+  { key: 'closedPnl', label: 'Closed PNL', color: '#34d399' },
+  { key: 'ftd', label: 'FTD', color: '#60a5fa' },
+  { key: 'rdp', label: 'RDP', color: '#f59e0b' },
+  { key: 'wd', label: 'WD', color: '#f87171' },
+  { key: 'newClients', label: 'New Clients', color: '#a78bfa' },
+]
+
+function toMetricNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string') {
+    const raw = value.trim()
+    if (!raw) return 0
+    const cleaned = raw.replace(/\s|\$/g, '')
+    const hasDot = cleaned.includes('.')
+    const hasComma = cleaned.includes(',')
+
+    if (hasDot && hasComma) {
+      const lastDot = cleaned.lastIndexOf('.')
+      const lastComma = cleaned.lastIndexOf(',')
+      if (lastComma > lastDot) {
+        const normalized = cleaned.replace(/\./g, '').replace(',', '.')
+        const n = Number(normalized)
+        return Number.isFinite(n) ? n : 0
+      }
+      const normalized = cleaned.replace(/,/g, '')
+      const n = Number(normalized)
+      return Number.isFinite(n) ? n : 0
+    }
+
+    if (hasComma && !hasDot) {
+      const normalized = /,\d{1,2}$/.test(cleaned)
+        ? cleaned.replace(',', '.')
+        : cleaned.replace(/,/g, '')
+      const n = Number(normalized)
+      return Number.isFinite(n) ? n : 0
+    }
+
+    const n = Number(cleaned)
+    return Number.isFinite(n) ? n : 0
+  }
+  return 0
+}
 
 function getCellColor(col, rawValue) {
   if (!col || !SIGNED_COLOR_KEYS.has(col.key)) return '#e2e8f0'
   const n = toNum(rawValue)
   if (n == null) return '#94a3b8'
   return colorVal(n)
+}
+
+function monthKeyToSortNumber(monthKey) {
+  const m = String(monthKey || '').match(/^(\d{4})-([A-Za-z]{3})$/)
+  if (!m) return Number.POSITIVE_INFINITY
+  const year = Number(m[1])
+  const month = MONTH_ORDER[m[2]]
+  if (!Number.isFinite(year) || !Number.isFinite(month)) return Number.POSITIVE_INFINITY
+  return year * 100 + month
+}
+
+function parseWeekSortNumber(weekKey) {
+  const m = String(weekKey || '').match(/^(\d{4})-(\d{1,2})$/)
+  if (!m) return Number.POSITIVE_INFINITY
+  const year = Number(m[1])
+  const week = Number(m[2])
+  if (!Number.isFinite(year) || !Number.isFinite(week)) return Number.POSITIVE_INFINITY
+  return year * 100 + week
+}
+
+function rowDateFallback(row) {
+  const dateSources = [
+    row?.date,
+    row?.client_timestamp,
+    row?.ltt_date,
+    row?.ltd_date,
+    row?.year_month,
+  ]
+  for (const v of dateSources) {
+    const d = parseDateValue(v)
+    if (d) return d
+  }
+  return null
+}
+
+function getTrendBucketKeys(row) {
+  // Primary source: year_month (trading period), NOT client activity dates.
+  // Client dates (client_timestamp, ltt_date, ltd_date) are registration/activity
+  // dates that can be years apart from the actual trading period.
+  const yearMonthText = String(row?.year_month || '').trim()
+  const ymParts = parseYearMonthParts(yearMonthText)
+
+  let year = ''
+  let month = ''
+  let week = ''
+
+  if (ymParts) {
+    year = String(ymParts.year)
+    month = `${year}-${ymParts.monthLabel}`
+  }
+
+  // For week: try explicit week field first, then derive from year_month start date.
+  week = String(row?.week || '').trim()
+  if (week && /^\d{4}-W?\d{1,2}$/.test(week)) {
+    week = week.replace('-W', '-')
+  } else if (ymParts) {
+    // Approximate: use first day of the year_month as week anchor.
+    const approxDate = new Date(Date.UTC(ymParts.year, MONTH_ORDER[ymParts.monthLabel] - 1, 1))
+    week = formatIsoWeek(approxDate)
+  }
+
+  return { week, month, year }
+}
+
+function formatDateToTrendKey(date, period) {
+  if (!(date instanceof Date) || !Number.isFinite(date.getTime())) return ''
+  const year = String(date.getUTCFullYear())
+  if (period === 'year') return year
+  if (period === 'month') {
+    const monthNum = date.getUTCMonth() + 1
+    const monthLabel = Object.keys(MONTH_ORDER).find((k) => MONTH_ORDER[k] === monthNum) || ''
+    return monthLabel ? `${year}-${monthLabel}` : ''
+  }
+  return formatIsoWeek(date)
+}
+
+function registrationDateFromRow(row) {
+  return (
+    parseDateValue(row?.client_timestamp) ||
+    parseDateValue(row?.ltd_date) ||
+    parseDateValue(row?.ltt_date) ||
+    parseDateValue(row?.date) ||
+    parseDateValue(row?.year_month)
+  )
+}
+
+function metricValueFromRow(row, key) {
+  if (key === 'closedPnl') {
+    return toMetricNumber(row?.closed_pl ?? row?.closedPL ?? row?.closed_pl_value)
+  }
+  if (key === 'ftd') {
+    return toMetricNumber(row?.ftd ?? row?.FTD)
+  }
+  if (key === 'rdp') {
+    return toMetricNumber(row?.rdp ?? row?.RDP)
+  }
+  if (key === 'wd') {
+    return toMetricNumber(row?.wd ?? row?.WD ?? row?.withdrawals)
+  }
+  return 0
+}
+
+function isKeyInSelectedYear(key, period, selectedYear) {
+  if (!selectedYear) return true
+  const k = String(key || '').trim()
+  if (!k) return false
+  if (period === 'year') return k === selectedYear
+  return k.startsWith(`${selectedYear}-`)
+}
+
+function buildTrendSeries(rows = [], period = 'month', selectedYear = null) {
+  const buckets = new Map()
+  const registrationCountsByBucket = new Map()
+
+  const rowsWithKey = rows
+    .map((row) => {
+      const keys = getTrendBucketKeys(row)
+      const key = String(keys?.[period] || '').trim()
+      if (!key || !isKeyInSelectedYear(key, period, selectedYear)) return null
+      const sortValue =
+        period === 'week'
+          ? parseWeekSortNumber(key)
+          : period === 'month'
+            ? monthKeyToSortNumber(key)
+            : Number(key)
+      return { row, key, sortValue }
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.sortValue - b.sortValue)
+
+  for (const item of rowsWithKey) {
+    const { row, key } = item
+    const bucket = buckets.get(key) || { closedPnl: 0, ftd: 0, rdp: 0, wd: 0, newClients: 0 }
+    bucket.closedPnl += metricValueFromRow(row, 'closedPnl')
+    bucket.ftd += metricValueFromRow(row, 'ftd')
+    bucket.rdp += metricValueFromRow(row, 'rdp')
+    bucket.wd += metricValueFromRow(row, 'wd')
+    buckets.set(key, bucket)
+  }
+
+  const byClientRegDate = new Map()
+  for (const row of rows) {
+    const clientId = String(row?.client_id || '').trim()
+    if (!clientId) continue
+    const regDate = registrationDateFromRow(row)
+    if (!regDate) continue
+    const prev = byClientRegDate.get(clientId)
+    if (!prev || regDate < prev) {
+      byClientRegDate.set(clientId, regDate)
+    }
+  }
+
+  for (const regDate of byClientRegDate.values()) {
+    const regKey = formatDateToTrendKey(regDate, period)
+    if (!regKey || !isKeyInSelectedYear(regKey, period, selectedYear)) continue
+    registrationCountsByBucket.set(regKey, (registrationCountsByBucket.get(regKey) || 0) + 1)
+    // Keep registration-only points only inside the selected timeframe.
+    if (!buckets.has(regKey))
+      buckets.set(regKey, { closedPnl: 0, ftd: 0, rdp: 0, wd: 0, newClients: 0 })
+  }
+
+  const labels = [...buckets.keys()].sort((a, b) => {
+    const av =
+      period === 'week'
+        ? parseWeekSortNumber(a)
+        : period === 'month'
+          ? monthKeyToSortNumber(a)
+          : Number(a)
+    const bv =
+      period === 'week'
+        ? parseWeekSortNumber(b)
+        : period === 'month'
+          ? monthKeyToSortNumber(b)
+          : Number(b)
+    return av - bv
+  })
+  const series = { closedPnl: [], ftd: [], rdp: [], wd: [], newClients: [] }
+
+  for (const key of labels) {
+    const b = buckets.get(key)
+    series.closedPnl.push(b.closedPnl)
+    series.ftd.push(b.ftd)
+    series.rdp.push(b.rdp)
+    series.wd.push(b.wd)
+    series.newClients.push(registrationCountsByBucket.get(key) || 0)
+  }
+
+  return { labels, series }
 }
 
 function SortArrow({ col, sortKey, dir }) {
@@ -717,20 +949,16 @@ export default function CreolabsPage() {
   const [brandCached, setBrandCached] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
-  const [brand, setBrand] = useState('BW')
+  const [brand, setBrand] = useState(COMBINED_FOREX_BRAND)
   const [sortKey, setSortKey] = useState('year_month')
   const [sortDir, setSortDir] = useState('desc')
   const [page, setPage] = useState(0)
   const [search, setSearch] = useState('')
   const [showTopScrollbar, setShowTopScrollbar] = useState(false)
-  const [validationLoading, setValidationLoading] = useState(false)
-  const [validationError, setValidationError] = useState('')
-  const [validationData, setValidationData] = useState(null)
-  const [validationAt, setValidationAt] = useState('')
-  const [analyticsLoading, setAnalyticsLoading] = useState(false)
-  const [analyticsError, setAnalyticsError] = useState('')
-  const [analyticsData, setAnalyticsData] = useState(null)
-  const [analyticsAt, setAnalyticsAt] = useState('')
+  const [selectedTrendMetric, setSelectedTrendMetric] = useState('all')
+  const [selectedYear, setSelectedYear] = useState(null)
+  const [selectedMonth, setSelectedMonth] = useState(null)
+  const [selectedWeek, setSelectedWeek] = useState(null)
 
   const topScrollbarRef = useRef(null)
   const topScrollbarSizerRef = useRef(null)
@@ -911,51 +1139,15 @@ export default function CreolabsPage() {
     loadData(true)
   }
 
-  async function runValidation(force = false) {
-    setValidationLoading(true)
-    setValidationError('')
-    try {
-      const payload = await loadCreolabsQlikKpis({
-        brand,
-        period: periodTo || '',
-        force,
-      })
-      setValidationData(payload?.data || null)
-      setValidationAt(new Date().toLocaleTimeString())
-    } catch (e) {
-      setValidationError(e instanceof Error ? e.message : 'Validation failed')
-      setValidationData(null)
-    } finally {
-      setValidationLoading(false)
-    }
-  }
-
-  async function runAnalytics(force = false) {
-    setAnalyticsLoading(true)
-    setAnalyticsError('')
-    try {
-      const selectedBrand = brand === 'BW Prime' ? '' : brand
-      const selectedYear = /^\d{4}/.test(String(periodTo || '')) ? String(periodTo).slice(0, 4) : ''
-      const payload = await loadCreolabsQlikAnalytics({
-        brand: selectedBrand,
-        year: selectedYear,
-        top: 10,
-        force,
-      })
-      setAnalyticsData(payload?.data || null)
-      setAnalyticsAt(new Date().toLocaleTimeString())
-    } catch (e) {
-      setAnalyticsError(e instanceof Error ? e.message : 'Analytics failed')
-      setAnalyticsData(null)
-    } finally {
-      setAnalyticsLoading(false)
-    }
-  }
-
   const brandRows = useMemo(() => {
     let base
     if (brand === 'BW Prime') {
       base = primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
+    } else if (brand === COMBINED_FOREX_BRAND) {
+      base = forexRows.filter((r) => {
+        const b = String(r.brand || '').trim()
+        return b === 'BW' || b === 'BW Global'
+      })
     } else {
       const exact = forexRows.filter((r) => String(r.brand || '').trim() === brand)
       if (brand === 'BW Global' && exact.length === 0) {
@@ -976,6 +1168,9 @@ export default function CreolabsPage() {
 
   useEffect(() => {
     setPage(0)
+    setSelectedYear(null)
+    setSelectedMonth(null)
+    setSelectedWeek(null)
   }, [brand])
 
   useEffect(() => {
@@ -985,17 +1180,62 @@ export default function CreolabsPage() {
     }
   }, [cols, sortKey])
 
+  const availableYears = useMemo(() => {
+    const years = new Set()
+    for (const r of brandRows) {
+      const ym = String(r.year_month || '').trim()
+      const y = ym.slice(0, 4)
+      if (y && /^\d{4}$/.test(y)) years.add(y)
+    }
+    return [...years].sort().reverse()
+  }, [brandRows])
+
+  const availableMonths = useMemo(() => {
+    const base = selectedYear
+      ? brandRows.filter((r) => String(r.year_month || '').startsWith(selectedYear))
+      : brandRows
+    const months = new Set()
+    for (const r of base) {
+      const ym = String(r.year_month || '').trim()
+      if (/^\d{4}-[A-Za-z]{3}$/.test(ym)) months.add(ym)
+    }
+    return [...months].sort((a, b) => monthKeyToSortNumber(a) - monthKeyToSortNumber(b))
+  }, [brandRows, selectedYear])
+
+  const availableWeeks = useMemo(() => {
+    let base = brandRows
+    if (selectedYear) base = base.filter((r) => String(r.year_month || '').startsWith(selectedYear))
+    if (selectedMonth)
+      base = base.filter((r) => String(r.year_month || '').trim() === selectedMonth)
+    const weeks = new Set()
+    for (const r of base) {
+      const w = getTrendBucketKeys(r).week
+      if (w) weeks.add(w)
+    }
+    return [...weeks].sort((a, b) => parseWeekSortNumber(a) - parseWeekSortNumber(b))
+  }, [brandRows, selectedYear, selectedMonth])
+
   const rows = useMemo(() => {
+    let base = brandRows
+    if (selectedYear) {
+      base = base.filter((r) => String(r.year_month || '').startsWith(selectedYear))
+    }
+    if (selectedMonth) {
+      base = base.filter((r) => String(r.year_month || '').trim() === selectedMonth)
+    }
+    if (selectedWeek) {
+      base = base.filter((r) => getTrendBucketKeys(r).week === selectedWeek)
+    }
     const q = search.trim().toLowerCase()
-    if (!q) return brandRows
-    return brandRows.filter((r) =>
+    if (!q) return base
+    return base.filter((r) =>
       Object.values(r || {}).some((v) =>
         String(v == null ? '' : v)
           .toLowerCase()
           .includes(q)
       )
     )
-  }, [brandRows, search])
+  }, [brandRows, selectedYear, selectedMonth, selectedWeek, search])
 
   const isBwGlobalFallback = useMemo(() => {
     if (brand !== 'BW Global') return false
@@ -1004,38 +1244,13 @@ export default function CreolabsPage() {
     return globalCount === 0 && bwCount > 0
   }, [brand, forexRows])
 
-  // Local KPIs computed from the in-memory dataset for the active brand + optional period —
-  // mirrors the server-side aggregateClientMonthKpis() so we can diff old vs new.
-  const localBrandKpis = useMemo(() => {
-    let base
-    if (brand === 'BW Prime') {
-      base = primeRows.filter((r) => String(r.brand || '').trim() === 'BW Prime')
-    } else {
-      const exact = forexRows.filter((r) => String(r.brand || '').trim() === brand)
-      base =
-        brand === 'BW Global' && exact.length === 0
-          ? forexRows.filter((r) => String(r.brand || '').trim() === 'BW')
-          : exact
+  const trendByPeriod = useMemo(() => {
+    const out = {}
+    for (const period of TREND_PERIODS) {
+      out[period] = buildTrendSeries(rows, period, selectedYear)
     }
-    const filtered = periodTo
-      ? base.filter((r) => String(r.year_month || '').trim() === periodTo)
-      : base
-    const uniqueClients = new Set(filtered.map((r) => String(r.client_id || '')).filter(Boolean))
-      .size
-    const sum = (key) => filtered.reduce((acc, r) => acc + (Number(r[key]) || 0), 0)
-    return {
-      rows: filtered.length,
-      uniqueClients,
-      deposit: sum('deposit'),
-      wd: sum('wd'),
-      net: sum('net'),
-      closedPl: sum('closed_pl'),
-      openPl: sum('open_pl'),
-      balance: sum('balance'),
-      trades: sum('trades'),
-      ftd: sum('ftd'),
-    }
-  }, [brand, forexRows, primeRows, periodTo])
+    return out
+  }, [rows, selectedYear])
 
   const sorted = useMemo(() => {
     const dir = sortDir === 'desc' ? -1 : 1
@@ -1052,82 +1267,39 @@ export default function CreolabsPage() {
   const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE))
   const pageRows = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-  // Prime-scope aggregate: identical to Prime Challenge ranking logic.
-  // Aggregates by unique clientId across all periods — no active filters applied.
-  const primeScope = useMemo(() => {
-    if (!primeRows.length) return null
-    const byClient = new Map()
-    for (const r of primeRows) {
-      const id = String(r.client_id || '').trim()
-      if (!id) continue
-      const prev = byClient.get(id) || { wd: 0, deposit: 0, closed_pl: 0 }
-      prev.wd += toNum(r.wd) ?? 0
-      prev.deposit += toNum(r.deposit) ?? 0
-      prev.closed_pl += toNum(r.closed_pl) ?? 0
-      byClient.set(id, prev)
-    }
-    const clients = [...byClient.values()]
-    const totalWd = clients.reduce((a, c) => a + c.wd, 0)
-    const totalDeposit = clients.reduce((a, c) => a + c.deposit, 0)
-    const totalClosedPL = clients.reduce((a, c) => a + c.closed_pl, 0)
-    return { clientCount: clients.length, totalWd, totalDeposit, totalClosedPL }
-  }, [primeRows])
-
   const stats = useMemo(() => {
     if (!rows.length) return null
     const uniqueClients = new Set(
       rows.map((r) => String(r.client_id || r.clientId || '')).filter(Boolean)
+    )
+    const ftdClients = new Set(
+      rows
+        .filter((r) => {
+          const ftdValue = toNum(r.ftd)
+          return ftdValue != null && ftdValue > 0
+        })
+        .map((r) => String(r.client_id || r.clientId || ''))
+        .filter(Boolean)
     )
     const sum = (key) =>
       rows.reduce((acc, r) => {
         const n = toNum(r[key])
         return n != null ? acc + n : acc
       }, 0)
-    if (brand === 'BW Prime') {
-      return [
-        { label: 'Clienti unici', value: intFmt.format(uniqueClients.size), color: '#94a3b8' },
-        { label: 'Righe dataset', value: intFmt.format(rows.length), color: '#94a3b8' },
-        { label: 'PL Totale', value: moneyFmt.format(sum('pl')), color: colorVal(sum('pl')) },
-        {
-          label: 'Closed PL',
-          value: moneyFmt.format(sum('closed_pl')),
-          color: colorVal(sum('closed_pl')),
-        },
-        {
-          label: 'Open PL',
-          value: moneyFmt.format(sum('open_pl')),
-          color: colorVal(sum('open_pl')),
-        },
-        { label: 'Deposit Totale', value: moneyFmt.format(sum('deposit')), color: '#60a5fa' },
-        { label: 'Net Totale', value: moneyFmt.format(sum('net')), color: colorVal(sum('net')) },
-        { label: 'FTD Totale', value: moneyFmt.format(sum('ftd')), color: '#60a5fa' },
-        { label: 'WD Totale', value: moneyFmt.format(sum('wd')), color: '#f87171' },
-        { label: 'Trades Totali', value: intFmt.format(sum('trades')), color: '#94a3b8' },
-      ]
-    }
-    return [
-      { label: 'Clienti unici', value: intFmt.format(uniqueClients.size), color: '#94a3b8' },
-      { label: 'Righe dataset', value: intFmt.format(rows.length), color: '#94a3b8' },
-      { label: 'Balance Totale', value: moneyFmt.format(sum('balance')), color: '#60a5fa' },
+    const cards = [
+      { label: 'Registrati', value: intFmt.format(uniqueClients.size), color: '#94a3b8' },
+      { label: '#FTDs', value: intFmt.format(ftdClients.size), color: '#60a5fa' },
       {
         label: 'Closed PL',
         value: moneyFmt.format(sum('closed_pl')),
         color: colorVal(sum('closed_pl')),
       },
-      { label: 'Open PL', value: moneyFmt.format(sum('open_pl')), color: colorVal(sum('open_pl')) },
-      { label: 'Deposit Totale', value: moneyFmt.format(sum('deposit')), color: '#60a5fa' },
-      { label: 'Net Totale', value: moneyFmt.format(sum('net')), color: colorVal(sum('net')) },
-      { label: 'FTD Totale', value: moneyFmt.format(sum('ftd')), color: '#60a5fa' },
-      { label: 'WD Totale', value: moneyFmt.format(sum('wd')), color: '#f87171' },
-      { label: 'Trades Totali', value: intFmt.format(sum('trades')), color: '#94a3b8' },
-      {
-        label: 'Equity Totale',
-        value: moneyFmt.format(sum('equity')),
-        color: colorVal(sum('equity')),
-      },
-      { label: 'LTV Commission', value: moneyFmt.format(sum('ltv_commission')), color: '#a78bfa' },
+      { label: 'Deposit', value: moneyFmt.format(sum('deposit')), color: '#34d399' },
+      { label: 'WD', value: moneyFmt.format(sum('wd')), color: '#f87171' },
+      { label: 'Net', value: moneyFmt.format(sum('net')), color: colorVal(sum('net')) },
     ]
-  }, [rows, brand, primeScope])
+    return cards
+  }, [rows, brand])
 
   useEffect(() => {
     const updateScrollMetrics = () => {
@@ -1212,7 +1384,45 @@ export default function CreolabsPage() {
             {b}
           </button>
         ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{
+            marginLeft: 'auto',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          {/* Timeframe pills */}
+          {!loading && availableYears.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <button
+                className={`pill-tab${selectedYear === null ? ' active' : ''}`}
+                onClick={() => {
+                  setSelectedYear(null)
+                  setSelectedMonth(null)
+                  setSelectedWeek(null)
+                }}
+                style={{ fontSize: '0.72rem', padding: '3px 10px' }}
+              >
+                Tutti
+              </button>
+              {availableYears.map((y) => (
+                <button
+                  key={y}
+                  className={`pill-tab${selectedYear === y ? ' active' : ''}`}
+                  onClick={() => {
+                    setSelectedYear(y)
+                    setSelectedMonth(null)
+                    setSelectedWeek(null)
+                  }}
+                  style={{ fontSize: '0.72rem', padding: '3px 10px' }}
+                >
+                  {y}
+                </button>
+              ))}
+            </div>
+          )}
           {brandCached && (
             <span
               style={{
@@ -1246,13 +1456,83 @@ export default function CreolabsPage() {
         </div>
       </div>
 
+      {/* Month filter pills */}
+      {!loading && selectedYear !== null && availableMonths.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            marginBottom: 8,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.7rem', color: '#64748b', marginRight: 4 }}>Mese:</span>
+          <button
+            className={`pill-tab${selectedMonth === null ? ' active' : ''}`}
+            onClick={() => {
+              setSelectedMonth(null)
+              setSelectedWeek(null)
+            }}
+            style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+          >
+            Tutti
+          </button>
+          {availableMonths.map((m) => (
+            <button
+              key={m}
+              className={`pill-tab${selectedMonth === m ? ' active' : ''}`}
+              onClick={() => {
+                setSelectedMonth(m)
+                setSelectedWeek(null)
+              }}
+              style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+            >
+              {m.slice(5)}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Week filter pills */}
+      {!loading && selectedMonth !== null && availableWeeks.length > 1 && (
+        <div
+          style={{
+            display: 'flex',
+            gap: 4,
+            marginBottom: 8,
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span style={{ fontSize: '0.7rem', color: '#64748b', marginRight: 4 }}>Settimana:</span>
+          <button
+            className={`pill-tab${selectedWeek === null ? ' active' : ''}`}
+            onClick={() => setSelectedWeek(null)}
+            style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+          >
+            Tutte
+          </button>
+          {availableWeeks.map((w) => (
+            <button
+              key={w}
+              className={`pill-tab${selectedWeek === w ? ' active' : ''}`}
+              onClick={() => setSelectedWeek(w)}
+              style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+            >
+              W{w.slice(5)}
+            </button>
+          ))}
+        </div>
+      )}
+
       {!loading && !error && stats && (
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
             gap: 10,
-            marginBottom: brand !== 'BW Prime' && primeScope ? 10 : 18,
+            marginBottom: 18,
           }}
         >
           {stats.map(({ label, value, color }) => (
@@ -1293,18 +1573,17 @@ export default function CreolabsPage() {
         </div>
       )}
 
-      {/* Ad-hoc section for KPI migration phase validation */}
       {!loading && !error && (
         <section
           style={{
             marginBottom: 18,
-            border: '1px solid rgba(56,189,248,0.3)',
+            border: '1px solid rgba(71,85,105,0.35)',
             borderRadius: 12,
-            background: 'rgba(8,47,73,0.22)',
+            background: 'rgba(15,23,42,0.45)',
             padding: 14,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <p
               style={{
                 margin: 0,
@@ -1312,564 +1591,141 @@ export default function CreolabsPage() {
                 fontWeight: 700,
                 letterSpacing: '0.05em',
                 textTransform: 'uppercase',
-                color: '#67e8f9',
+                color: '#cbd5e1',
               }}
             >
-              Fase Validation & Migration KPI API
+              Trends · {brand}
             </p>
-            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>
-              Brand: {brand} {periodTo ? `· Periodo test: ${periodTo}` : ''}
+            <span style={{ color: '#94a3b8', fontSize: '0.74rem' }}>
+              Closed PNL, FTD, RDP, WD, New Clients (valori per periodo)
             </span>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <button
-                onClick={() => runValidation(false)}
-                disabled={validationLoading}
+                type="button"
                 className="pill-tab"
-                style={{ opacity: validationLoading ? 0.5 : 1 }}
+                onClick={() => setSelectedTrendMetric('all')}
+                style={{
+                  opacity: selectedTrendMetric === 'all' ? 1 : 0.75,
+                  borderColor:
+                    selectedTrendMetric === 'all'
+                      ? 'rgba(99,102,241,0.55)'
+                      : 'rgba(71,85,105,0.45)',
+                }}
               >
-                {validationLoading ? 'Test in corso…' : 'Esegui test KPI'}
+                All
               </button>
-              <button
-                onClick={() => runValidation(true)}
-                disabled={validationLoading}
-                className="pill-tab"
-                style={{ opacity: validationLoading ? 0.5 : 1 }}
-              >
-                Bust cache + test
-              </button>
-              <button
-                onClick={() => runAnalytics(false)}
-                disabled={analyticsLoading}
-                className="pill-tab"
-                style={{ opacity: analyticsLoading ? 0.5 : 1 }}
-              >
-                {analyticsLoading ? 'Analytics…' : 'Carica analytics'}
-              </button>
-              <button
-                onClick={() => runAnalytics(true)}
-                disabled={analyticsLoading}
-                className="pill-tab"
-                style={{ opacity: analyticsLoading ? 0.5 : 1 }}
-              >
-                Bust + analytics
-              </button>
+              {TREND_METRICS.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  className="pill-tab"
+                  onClick={() => setSelectedTrendMetric(m.key)}
+                  style={{
+                    opacity: selectedTrendMetric === m.key ? 1 : 0.75,
+                    color: m.color,
+                    borderColor:
+                      selectedTrendMetric === m.key ? `${m.color}AA` : 'rgba(71,85,105,0.45)',
+                  }}
+                >
+                  {m.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          {validationError ? (
-            <p style={{ margin: '10px 0 0', color: '#fca5a5', fontSize: '0.8rem' }}>
-              {validationError}
-            </p>
-          ) : null}
+          <div
+            style={{
+              marginTop: 12,
+              display: 'grid',
+              gap: 12,
+              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            }}
+          >
+            {TREND_PERIODS.map((period) => {
+              const trend = trendByPeriod?.[period] || { labels: [], series: {} }
+              const labels = Array.isArray(trend.labels) ? trend.labels : []
+              const hasData = labels.length > 0
+              const chartData = {
+                labels,
+                datasets: TREND_METRICS.filter(
+                  (m) => selectedTrendMetric === 'all' || m.key === selectedTrendMetric
+                ).map((m) => ({
+                  label: m.label,
+                  data: trend.series?.[m.key] || [],
+                  borderColor: m.color,
+                  backgroundColor: `${m.color}22`,
+                  pointRadius: 1.8,
+                  borderWidth: 2,
+                  tension: 0.25,
+                })),
+              }
+              const chartOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                  legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 10 } },
+                },
+                scales: {
+                  x: { ticks: { color: '#94a3b8', maxRotation: 0 }, grid: { display: false } },
+                  y: {
+                    ticks: {
+                      color: '#94a3b8',
+                      callback: (value) =>
+                        Math.abs(Number(value)) >= 1000
+                          ? `${(Number(value) / 1000).toFixed(1)}k`
+                          : `${Number(value).toFixed(0)}`,
+                    },
+                    grid: { color: 'rgba(148,163,184,0.15)' },
+                  },
+                },
+              }
 
-          {validationData ? (
-            <div
-              style={{
-                marginTop: 10,
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                gap: 8,
-              }}
-            >
-              {[
-                {
-                  label: 'Rows (filtered)',
-                  value: intFmt.format(Number(validationData.filteredRows || 0)),
-                },
-                {
-                  label: 'Clienti unici',
-                  value: intFmt.format(Number(validationData?.kpis?.uniqueClients || 0)),
-                },
-                {
-                  label: 'Deposit',
-                  value: moneyFmt.format(Number(validationData?.kpis?.deposit || 0)),
-                },
-                {
-                  label: 'WD',
-                  value: moneyFmt.format(Number(validationData?.kpis?.wd || 0)),
-                },
-                {
-                  label: 'Net',
-                  value: moneyFmt.format(Number(validationData?.kpis?.net || 0)),
-                },
-                {
-                  label: 'Closed PL',
-                  value: moneyFmt.format(Number(validationData?.kpis?.closedPl || 0)),
-                },
-              ].map((card) => (
+              return (
                 <div
-                  key={card.label}
+                  key={period}
                   style={{
-                    border: '1px solid rgba(56,189,248,0.25)',
-                    borderRadius: 8,
-                    padding: '8px 10px',
-                    background: 'rgba(15,23,42,0.4)',
+                    border: '1px solid rgba(71,85,105,0.35)',
+                    borderRadius: 10,
+                    padding: 10,
+                    background: 'rgba(2,6,23,0.45)',
                   }}
                 >
-                  <p style={{ margin: 0, fontSize: '0.67rem', color: '#94a3b8' }}>{card.label}</p>
                   <p
                     style={{
-                      margin: '4px 0 0',
-                      fontSize: '0.92rem',
-                      fontWeight: 700,
-                      color: '#e2e8f0',
+                      margin: 0,
+                      marginBottom: 8,
+                      fontSize: '0.72rem',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      color: '#94a3b8',
                     }}
                   >
-                    {card.value}
+                    By {period}
                   </p>
-                </div>
-              ))}
 
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  border: '1px solid rgba(56,189,248,0.25)',
-                  borderRadius: 8,
-                  padding: '8px 10px',
-                  background: 'rgba(15,23,42,0.4)',
-                }}
-              >
-                <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
-                  Esito check: {validationData?.validation?.pass ? 'PASS' : 'FAIL'}
-                  {validationAt ? ` · ultimo test ${validationAt}` : ''}
-                </p>
-                <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {(validationData?.validation?.checks || []).map((c) => (
-                    <span
-                      key={c.id}
-                      style={{
-                        fontSize: '0.72rem',
-                        borderRadius: 999,
-                        padding: '2px 8px',
-                        border: c.passed
-                          ? '1px solid rgba(52,211,153,0.45)'
-                          : '1px solid rgba(248,113,113,0.45)',
-                        background: c.passed ? 'rgba(16,185,129,0.15)' : 'rgba(239,68,68,0.15)',
-                        color: c.passed ? '#6ee7b7' : '#fca5a5',
-                      }}
-                      title={String(c.detail || '')}
-                    >
-                      {c.id}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Delta comparison: local dataset vs API */}
-              <div
-                style={{
-                  gridColumn: '1 / -1',
-                  border: '1px solid rgba(56,189,248,0.2)',
-                  borderRadius: 8,
-                  overflow: 'hidden',
-                  background: 'rgba(15,23,42,0.4)',
-                }}
-              >
-                <p
-                  style={{
-                    margin: 0,
-                    padding: '6px 10px',
-                    fontSize: '0.68rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                    textTransform: 'uppercase',
-                    color: '#7dd3fc',
-                    borderBottom: '1px solid rgba(56,189,248,0.15)',
-                  }}
-                >
-                  Delta Locale → API
-                </p>
-                <div style={{ overflowX: 'auto' }}>
-                  <table
-                    style={{
-                      width: '100%',
-                      borderCollapse: 'collapse',
-                      fontSize: '0.75rem',
-                    }}
-                  >
-                    <thead>
-                      <tr style={{ color: '#64748b' }}>
-                        {['Metrica', 'Locale', 'API', 'Δ Ass.', 'Δ %', 'Esito'].map((h) => (
-                          <th
-                            key={h}
-                            style={{
-                              padding: '4px 10px',
-                              textAlign: h === 'Metrica' ? 'left' : 'right',
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap',
-                              borderBottom: '1px solid rgba(56,189,248,0.1)',
-                            }}
-                          >
-                            {h}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        {
-                          label: 'Righe',
-                          localVal: localBrandKpis.rows,
-                          apiVal: validationData.kpis.rows,
-                          isMoney: false,
-                        },
-                        {
-                          label: 'Clienti unici',
-                          localVal: localBrandKpis.uniqueClients,
-                          apiVal: validationData.kpis.uniqueClients,
-                          isMoney: false,
-                        },
-                        {
-                          label: 'Deposit',
-                          localVal: localBrandKpis.deposit,
-                          apiVal: validationData.kpis.deposit,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'WD',
-                          localVal: localBrandKpis.wd,
-                          apiVal: validationData.kpis.wd,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'Net',
-                          localVal: localBrandKpis.net,
-                          apiVal: validationData.kpis.net,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'Closed PL',
-                          localVal: localBrandKpis.closedPl,
-                          apiVal: validationData.kpis.closedPl,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'Open PL',
-                          localVal: localBrandKpis.openPl,
-                          apiVal: validationData.kpis.openPl,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'Balance',
-                          localVal: localBrandKpis.balance,
-                          apiVal: validationData.kpis.balance,
-                          isMoney: true,
-                        },
-                        {
-                          label: 'Trades',
-                          localVal: localBrandKpis.trades,
-                          apiVal: validationData.kpis.trades,
-                          isMoney: false,
-                        },
-                        {
-                          label: 'FTD',
-                          localVal: localBrandKpis.ftd,
-                          apiVal: validationData.kpis.ftd,
-                          isMoney: true,
-                        },
-                      ].map(({ label, localVal, apiVal, isMoney }) => {
-                        const local = Number(localVal) || 0
-                        const api = Number(apiVal) || 0
-                        const delta = api - local
-                        const pct =
-                          local !== 0 ? (delta / Math.abs(local)) * 100 : api !== 0 ? 100 : 0
-                        const tol = isMoney ? 0.1 : 0
-                        const pass = Math.abs(pct) <= tol
-                        const fmtNum = isMoney ? moneyFmt : intFmt
-                        const deltaColor =
-                          Math.abs(pct) < 0.001 ? '#94a3b8' : delta > 0 ? '#34d399' : '#f87171'
-                        return (
-                          <tr
-                            key={label}
-                            style={{
-                              borderTop: '1px solid rgba(56,189,248,0.07)',
-                            }}
-                          >
-                            <td style={{ padding: '4px 10px', color: '#cbd5e1' }}>{label}</td>
-                            <td
-                              style={{
-                                padding: '4px 10px',
-                                textAlign: 'right',
-                                color: '#94a3b8',
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
-                            >
-                              {fmtNum.format(local)}
-                            </td>
-                            <td
-                              style={{
-                                padding: '4px 10px',
-                                textAlign: 'right',
-                                color: '#e2e8f0',
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
-                            >
-                              {fmtNum.format(api)}
-                            </td>
-                            <td
-                              style={{
-                                padding: '4px 10px',
-                                textAlign: 'right',
-                                color: deltaColor,
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
-                            >
-                              {delta >= 0 ? '+' : ''}
-                              {fmtNum.format(delta)}
-                            </td>
-                            <td
-                              style={{
-                                padding: '4px 10px',
-                                textAlign: 'right',
-                                color: deltaColor,
-                                fontVariantNumeric: 'tabular-nums',
-                              }}
-                            >
-                              {delta >= 0 ? '+' : ''}
-                              {pct.toFixed(3)}%
-                            </td>
-                            <td style={{ padding: '4px 10px', textAlign: 'right' }}>
-                              <span
-                                style={{
-                                  fontSize: '0.68rem',
-                                  borderRadius: 999,
-                                  padding: '1px 7px',
-                                  border: pass
-                                    ? '1px solid rgba(52,211,153,0.45)'
-                                    : '1px solid rgba(248,113,113,0.45)',
-                                  background: pass
-                                    ? 'rgba(16,185,129,0.15)'
-                                    : 'rgba(239,68,68,0.15)',
-                                  color: pass ? '#6ee7b7' : '#fca5a5',
-                                }}
-                              >
-                                {pass ? 'OK' : 'DIFF'}
-                              </span>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {analyticsError ? (
-            <p style={{ margin: '10px 0 0', color: '#fca5a5', fontSize: '0.8rem' }}>
-              {analyticsError}
-            </p>
-          ) : null}
-
-          {analyticsData ? (
-            <div
-              style={{
-                marginTop: 10,
-                border: '1px solid rgba(56,189,248,0.25)',
-                borderRadius: 8,
-                background: 'rgba(15,23,42,0.4)',
-                padding: 10,
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.05em',
-                  textTransform: 'uppercase',
-                  color: '#7dd3fc',
-                }}
-              >
-                Analytics endpoint (ranking + annual/monthly/weekly)
-                {analyticsAt ? ` · ultimo fetch ${analyticsAt}` : ''}
-              </p>
-
-              <div
-                style={{
-                  marginTop: 8,
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))',
-                  gap: 8,
-                }}
-              >
-                {[
-                  {
-                    label: 'Source rows',
-                    value: intFmt.format(Number(analyticsData.sourceRows || 0)),
-                  },
-                  {
-                    label: 'Filtered rows',
-                    value: intFmt.format(Number(analyticsData.filteredRows || 0)),
-                  },
-                  {
-                    label: 'Annual buckets',
-                    value: intFmt.format(Number(analyticsData?.analytics?.annual?.length || 0)),
-                  },
-                  {
-                    label: 'Monthly buckets',
-                    value: intFmt.format(Number(analyticsData?.analytics?.monthly?.length || 0)),
-                  },
-                  {
-                    label: 'Weekly buckets',
-                    value: intFmt.format(Number(analyticsData?.analytics?.weekly?.length || 0)),
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    style={{
-                      border: '1px solid rgba(56,189,248,0.2)',
-                      borderRadius: 8,
-                      padding: '6px 8px',
-                    }}
-                  >
-                    <p style={{ margin: 0, fontSize: '0.66rem', color: '#94a3b8' }}>{item.label}</p>
-                    <p
-                      style={{
-                        margin: '4px 0 0',
-                        fontSize: '0.9rem',
-                        fontWeight: 700,
-                        color: '#e2e8f0',
-                      }}
-                    >
-                      {item.value}
-                    </p>
+                  <div style={{ height: 220 }}>
+                    {hasData ? (
+                      <Line data={chartData} options={chartOptions} />
+                    ) : (
+                      <div
+                        style={{
+                          height: '100%',
+                          display: 'grid',
+                          placeItems: 'center',
+                          color: '#64748b',
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        Nessun dato disponibile
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-
-              {String(analyticsData?.analytics?.weeklyNote || '').trim() ? (
-                <p style={{ margin: '8px 0 0', fontSize: '0.72rem', color: '#94a3b8' }}>
-                  {String(analyticsData.analytics.weeklyNote)}
-                </p>
-              ) : null}
-
-              <div style={{ marginTop: 8, overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.74rem' }}>
-                  <thead>
-                    <tr style={{ color: '#64748b' }}>
-                      {['Top Net', 'Client', 'Brand', 'Net', 'Deposit', 'Trades'].map((h) => (
-                        <th
-                          key={h}
-                          style={{
-                            padding: '4px 8px',
-                            textAlign: h === 'Client' || h === 'Brand' ? 'left' : 'right',
-                            borderBottom: '1px solid rgba(56,189,248,0.1)',
-                          }}
-                        >
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(analyticsData?.analytics?.rankings?.topNet || [])
-                      .slice(0, 5)
-                      .map((r, idx) => (
-                        <tr key={`${r.clientId || r.clientName || idx}`}>
-                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#94a3b8' }}>
-                            {idx + 1}
-                          </td>
-                          <td style={{ padding: '4px 8px', color: '#e2e8f0' }}>
-                            {String(r.clientName || '—')}
-                          </td>
-                          <td style={{ padding: '4px 8px', color: '#94a3b8' }}>
-                            {String(r.brand || '—')}
-                          </td>
-                          <td
-                            style={{
-                              padding: '4px 8px',
-                              textAlign: 'right',
-                              color: colorVal(Number(r.net || 0)),
-                            }}
-                          >
-                            {moneyFmt.format(Number(r.net || 0))}
-                          </td>
-                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#60a5fa' }}>
-                            {moneyFmt.format(Number(r.deposit || 0))}
-                          </td>
-                          <td style={{ padding: '4px 8px', textAlign: 'right', color: '#e2e8f0' }}>
-                            {intFmt.format(Number(r.trades || 0))}
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : null}
+                </div>
+              )
+            })}
+          </div>
         </section>
-      )}
-
-      {/* Prime-scope comparison bar — shown on Forex tabs so numbers are comparable with Prime Challenge */}
-      {!loading && !error && brand !== 'BW Prime' && primeScope && (
-        <div
-          style={{
-            display: 'flex',
-            gap: 10,
-            marginBottom: 18,
-            flexWrap: 'wrap',
-          }}
-        >
-          {[
-            {
-              label: 'Prime – Clienti unici',
-              value: intFmt.format(primeScope.clientCount),
-              color: '#94a3b8',
-            },
-            {
-              label: 'Prime – WD/Payout (same scope as Ranking)',
-              value: moneyFmt.format(primeScope.totalWd),
-              color: '#f87171',
-            },
-            {
-              label: 'Prime – Deposit',
-              value: moneyFmt.format(primeScope.totalDeposit),
-              color: '#60a5fa',
-            },
-            {
-              label: 'Prime – Closed PL',
-              value: moneyFmt.format(primeScope.totalClosedPL),
-              color: colorVal(primeScope.totalClosedPL),
-            },
-          ].map(({ label, value, color }) => (
-            <div
-              key={label}
-              style={{
-                background: 'rgba(99,102,241,0.07)',
-                border: '1px solid rgba(99,102,241,0.25)',
-                borderRadius: 10,
-                padding: '10px 14px',
-                minWidth: 180,
-              }}
-            >
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '0.65rem',
-                  color: '#6366f1',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.07em',
-                  marginBottom: 5,
-                }}
-              >
-                {label}
-              </p>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '1rem',
-                  fontWeight: 700,
-                  color,
-                  fontVariantNumeric: 'tabular-nums',
-                }}
-              >
-                {value}
-              </p>
-            </div>
-          ))}
-        </div>
       )}
 
       {!loading && !error && (

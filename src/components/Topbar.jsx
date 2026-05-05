@@ -243,6 +243,41 @@ async function loadQlikUniqueClients() {
       return rest
     })
 
+    // Enrich with client_timestamp from traders artifact (more precise than periodId).
+    try {
+      const tradersRes = await fetch('/traders_ranking_rewards_table.json', {
+        cache: 'force-cache',
+      })
+      if (tradersRes.ok) {
+        const tradersPayload = await tradersRes.json()
+        const headers = Array.isArray(tradersPayload?.headers) ? tradersPayload.headers : []
+        const rows = Array.isArray(tradersPayload?.rows) ? tradersPayload.rows : []
+        const idIdx = headers.indexOf('client_id')
+        const tsIdx = headers.indexOf('client_timestamp')
+        if (idIdx !== -1 && tsIdx !== -1) {
+          // Build map: clientId → earliest client_timestamp (ISO string)
+          const tsById = new Map()
+          for (const row of rows) {
+            const id = String(row?.[idIdx] ?? '').trim()
+            const ts = String(row?.[tsIdx] ?? '').trim()
+            if (!id || !ts) continue
+            const existing = tsById.get(id)
+            if (!existing || ts < existing) tsById.set(id, ts)
+          }
+          for (const u of unique) {
+            const id = String(u.userid || '').trim()
+            const ts = id ? tsById.get(id) : undefined
+            if (ts) {
+              u.registrationDate = ts
+              u.registrationdate = ts
+            }
+          }
+        }
+      }
+    } catch {
+      // traders enrichment is best-effort; ignore errors
+    }
+
     // Enrich with real registration dates from CRM index.
     try {
       const crmRows = await loadCrmQuickRows()
@@ -280,6 +315,38 @@ async function loadQlikUniqueClients() {
 
 function formatRegDate(value) {
   if (!value) return ''
+  const raw = String(value).trim()
+
+  // If source is month-grain only (e.g. 2026-May), show month/year
+  // instead of a fake 01/MM/YYYY day.
+  const ymText = raw.match(/^(\d{4})-([A-Za-z]{3})$/)
+  if (ymText) {
+    const year = ymText[1]
+    const mon = ymText[2].toLowerCase()
+    const monLabel = {
+      jan: 'Jan',
+      feb: 'Feb',
+      mar: 'Mar',
+      apr: 'Apr',
+      may: 'May',
+      jun: 'Jun',
+      jul: 'Jul',
+      aug: 'Aug',
+      sep: 'Sep',
+      oct: 'Oct',
+      nov: 'Nov',
+      dec: 'Dec',
+    }[mon]
+    if (monLabel) return `${monLabel} ${year}`
+  }
+
+  const ymNum = raw.match(/^(\d{4})-(\d{1,2})$/)
+  if (ymNum) {
+    const year = ymNum[1]
+    const month = String(Number(ymNum[2])).padStart(2, '0')
+    return `${month}/${year}`
+  }
+
   const d = parseReviewDate(value)
   if (d) {
     const dd = String(d.getDate()).padStart(2, '0')

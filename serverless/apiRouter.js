@@ -5,6 +5,7 @@ const { routeEmail } = require('./handlers/email')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeConvrs } = require('./handlers/convrs')
+const { routeAcuity } = require('./handlers/acuity')
 
 function json(res, status, payload, headers) {
   res.statusCode = status
@@ -68,6 +69,10 @@ async function routeApi(req, res) {
 
   if (scope === 'convrs') {
     return routeConvrs(req, res, parts.slice(1))
+  }
+
+  if (scope === 'acuity') {
+    return routeAcuity(req, res, parts.slice(1))
   }
 
   return json(res, 404, { ok: false, error: 'Not found' })

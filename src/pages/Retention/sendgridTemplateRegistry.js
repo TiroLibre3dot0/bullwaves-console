@@ -20,22 +20,22 @@ export const SENDGRID_DYNAMIC_TEMPLATE_DEFAULTS = {
   account_manager_name: 'The Bullwaves Team',
 }
 
-export const sendgridTemplateRegistryGeneratedAt = '2026-05-03T17:00:59.855Z'
+export const sendgridTemplateRegistryGeneratedAt = '2026-05-04T08:01:23.191Z'
 
 export const sendgridTemplateRegistry = {
   churned_high_value_step3_email: {
     en: {
       a: {
-        templateId: 'd-84f36e5884ee44e48b3343ed93606976',
-        versionId: 'ce833a4a-7726-4943-b729-e210b2afdb6d',
+        templateId: 'd-ba5fe0036e0e4c4b83584d7bf562956a',
+        versionId: 'de764457-d349-45dd-8ac0-aa0bc4c2a5ab',
         name: 'Churned High Value - Active Return Consolidation A',
         subject: 'After your deposit, Bullwaves can now support the next phase more completely.',
         timing: 'D7',
         delay: '+4 days after step 2',
       },
       b: {
-        templateId: 'd-38fc5030729249dbb21ec5cc04c50140',
-        versionId: '8ad8ffc8-0793-4530-9012-9b8f48d398e6',
+        templateId: 'd-288c014121994e9baeba8bd304133fc2',
+        versionId: '1eeedf54-cf06-4d38-b955-605ef5093418',
         name: 'Churned High Value - Active Return Consolidation B',
         subject: 'Your deposit restarted the path. A final supportive review is now available.',
         timing: 'D7',
@@ -44,8 +44,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-ddd47a8a7df74da4bd75fe6f21d652df',
-        versionId: '476ba331-4e1f-453d-95ad-1a150a187f6e',
+        templateId: 'd-485d8386111f42fb80b9dcdd2b7318d5',
+        versionId: '54028f41-5cb4-4e9c-b641-1d8e476e8160',
         name: 'Churned High Value - Consolidamento Ritorno Attivo A IT',
         subject:
           'Dopo il tuo deposito, Bullwaves può supportare in modo più completo la prossima fase.',
@@ -53,8 +53,8 @@ export const sendgridTemplateRegistry = {
         delay: '+4 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-570b03891c3d4d398ee28cd2bec5fa2e',
-        versionId: 'a544a6a4-96f7-420e-99fe-c6bd31d23dbe',
+        templateId: 'd-6f52bdeded6147c7ac99cc84e6f9ed8b',
+        versionId: 'e02b9552-3aac-4f3a-b7a9-ef3379fc1289',
         name: 'Churned High Value - Consolidamento Ritorno Attivo B IT',
         subject:
           'Il tuo deposito ha riattivato il percorso. Ora è disponibile una review finale più supportiva.',
@@ -66,16 +66,16 @@ export const sendgridTemplateRegistry = {
   churned_high_value_step1_email: {
     en: {
       a: {
-        templateId: 'd-d7e44349a97f4f399db7891b4b825c8c',
-        versionId: 'd9d1f4b7-d545-4d43-8192-da87b578b2a1',
+        templateId: 'd-432851595bb94c6bb94ba65ef754dec1',
+        versionId: 'f1a5e4f0-1f50-4385-8b93-2cacb2f761a5',
         name: 'Churned High Value - Comeback Touch A',
         subject: 'A more tailored Bullwaves return plan is ready for you.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-46d62f83ddba47b99c68d362d3d54995',
-        versionId: 'bdec7232-a679-446a-8d5c-1fe79d247306',
+        templateId: 'd-e2fb0bbaab1c4c62aec43f623ce25937',
+        versionId: 'dfb0b08e-4b33-4c00-9156-0257aec631e0',
         name: 'Churned High Value - Comeback Touch B',
         subject: 'Your dedicated Bullwaves review is open in your client area.',
         timing: 'D0',
@@ -84,16 +84,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-67937e426c814150b621fae97f273234',
-        versionId: '827ddcc9-2857-41fa-b160-e0cdfe9f7e71',
+        templateId: 'd-51d319bcaaf140b1b47613a5010397ad',
+        versionId: '6040fdf9-9ba8-4429-b873-a97483ad494e',
         name: 'Churned High Value - Comeback Touch A IT',
         subject: 'Per il tuo rientro abbiamo preparato una proposta Bullwaves più su misura.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-efac67dd9f8d4098934b1d21acbacef1',
-        versionId: '9d9a344e-4585-4c32-9a63-685bfd7f4c4a',
+        templateId: 'd-34929bca976245a0800b9cdfd2bc900c',
+        versionId: 'd31c769c-5868-4407-aa11-052e4bc43146',
         name: 'Churned High Value - Comeback Touch B IT',
         subject: 'La tua revisione dedicata Bullwaves è aperta nella tua area cliente.',
         timing: 'D0',
@@ -104,16 +104,16 @@ export const sendgridTemplateRegistry = {
   churned_high_value_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-b321bbd9b55c4527aacc3264f7447823',
-        versionId: 'bf2af812-97ea-4bd2-8757-bf78e156d577',
+        templateId: 'd-d84df6d5134146c88798d1f0145f75f4',
+        versionId: '22f9c85c-69c7-48a1-95c7-ec1489c07880',
         name: 'Churned High Value - Positive Follow-up A',
         subject: 'Good news: your deposit has reactivated the Bullwaves path.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-d77e4d7b92314f45aa7193dd239dcc0c',
-        versionId: '859578cb-858e-4283-aba6-af9fe7702fed',
+        templateId: 'd-f30373f4a232446a94b8066d776fb55c',
+        versionId: '5c0e9e3a-d2e9-4a5d-89e3-7d454ed59af3',
         name: 'Churned High Value - Positive Follow-up B',
         subject: 'Your return is moving in the right direction after the recent deposit.',
         timing: 'CHECKPOINT +0d',
@@ -122,16 +122,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-14235d7d91a1420b869a9379771c732f',
-        versionId: 'c4e14fa5-322c-4cc0-b453-2fa6e24fb596',
+        templateId: 'd-301993119ad14cdbbf5af29da113ecbd',
+        versionId: 'c56f8717-ef74-45c6-add9-091265fb7e1d',
         name: 'Churned High Value - Positive Follow-up A IT',
         subject: 'Buone notizie: il tuo deposito ha riattivato il percorso Bullwaves.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-0fc1a9467ec241d98eb6c4d1489f0982',
-        versionId: '4056f86e-d286-49ce-ab7c-002579f52e93',
+        templateId: 'd-617f450b491d46bc85eb091d8c3c6d9c',
+        versionId: '3ad79055-39bc-4ae8-a8c3-fc8332fe66af',
         name: 'Churned High Value - Positive Follow-up B IT',
         subject: 'Il tuo ritorno si sta muovendo nella direzione giusta dopo il deposito recente.',
         timing: 'CHECKPOINT +0d',
@@ -142,16 +142,16 @@ export const sendgridTemplateRegistry = {
   churned_high_value_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-3f695226e923416f901a1b65d3915235',
-        versionId: '89682190-2eeb-49d5-ada0-089209ac7942',
+        templateId: 'd-14b73d2f0ce445fab09b572a88f9ab48',
+        versionId: '4c8b1721-29ea-48ca-9ea8-a09ccf91712d',
         name: 'Churned High Value - Return Follow-up A',
         subject: 'No deposit yet? The Bullwaves reactivation path is still open.',
         timing: 'D14',
         delay: '+7 days after missed outcome',
       },
       b: {
-        templateId: 'd-6487472321da43db9a26d426bc7ad601',
-        versionId: '31ddfd7a-221e-479c-89fe-f76c0f478527',
+        templateId: 'd-6495562edd1a45a38bd40bc80fb37444',
+        versionId: '9d9cf131-de96-4700-8305-e4495e3ed38a',
         name: 'Churned High Value - Return Follow-up B',
         subject:
           'Still no action? A lighter Bullwaves return option is available for your account.',
@@ -161,16 +161,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-e0e9acc11edc4ed28116f48a85a19b1d',
-        versionId: '25948319-f9a9-4125-a9cb-4f968f332ccb',
+        templateId: 'd-0df4cbf901e24daf9674e81494572fbe',
+        versionId: '60627cb3-c4e3-402b-9b3f-cb91c017e16b',
         name: 'Churned High Value - Return Follow-up A IT',
         subject: 'Nessun deposito ancora? Il percorso di riattivazione Bullwaves è ancora aperto.',
         timing: 'D14',
         delay: '+7 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-22abe1a885ac4752814421ff0125336b',
-        versionId: 'a7022b07-f00f-4f65-9239-c9801a69daf7',
+        templateId: 'd-89f73fd02b4843e19f98b481ae963cbc',
+        versionId: '74844644-05b9-43e3-a3e3-51808579ecad',
         name: 'Churned High Value - Return Follow-up B IT',
         subject:
           'Ancora nessuna azione? Per il tuo account è disponibile una opzione Bullwaves più leggera.',
@@ -182,16 +182,16 @@ export const sendgridTemplateRegistry = {
   churned_high_value_step2_email: {
     en: {
       a: {
-        templateId: 'd-78875ecc4d30479aaf2e6fc4cfb386b1',
-        versionId: '00d80574-81e3-457c-8060-991547bb3fd5',
+        templateId: 'd-f3901e26c7ec46ca9217a2006f9c16ce',
+        versionId: 'bd545ac3-8630-44a9-9ead-48c56955f53a',
         name: 'Churned High Value - Return Package A',
         subject: 'Your Bullwaves deposit is confirmed. Here is the next supported step.',
         timing: 'D3',
         delay: '+3 days after step 1',
       },
       b: {
-        templateId: 'd-c3932e97d2ea41f29169001897790e22',
-        versionId: '7c7ea9ea-d370-4713-8c0b-309a2c145fa7',
+        templateId: 'd-f1dd1cd027dd4c628f1fc1c988d7987b',
+        versionId: '28f61f7d-984f-46bf-be9b-d1baa1ada422',
         name: 'Churned High Value - Return Package B',
         subject: 'You already restarted the path. Let’s keep it moving.',
         timing: 'D3',
@@ -200,16 +200,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-a6134fb137314158bee5d8e090546f80',
-        versionId: 'a7957eb8-e211-4c11-9f17-a3ac1056dbef',
+        templateId: 'd-6c120dcc37db472e93415466107d53e8',
+        versionId: '17b2d1c9-0a33-4c71-9167-63e91fbe9bba',
         name: 'Churned High Value - Return Package A IT',
         subject: 'Il tuo deposito Bullwaves è confermato. Ecco il prossimo passo supportato.',
         timing: 'D3',
         delay: '+3 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-b59a3a8587f042a1ad3ef8d7821af8e3',
-        versionId: '8330ace9-1d9f-4875-adab-c12e1a76edaf',
+        templateId: 'd-4e28fda05065441994d000f02099a64f',
+        versionId: '0bcc277f-0a40-4ce0-9408-b69b9451a748',
         name: 'Churned High Value - Return Package B IT',
         subject: 'Hai già riattivato il percorso. Ora mantienilo in movimento.',
         timing: 'D3',
@@ -220,16 +220,16 @@ export const sendgridTemplateRegistry = {
   dormant_120d_bonus_step2_email: {
     en: {
       a: {
-        templateId: 'd-eabdc1cf8e5048c4acbdc8bf8d0556c4',
-        versionId: '680667bd-60d6-496b-9c46-f5eafaf5b66c',
+        templateId: 'd-128acc3695c947219a49b9d764606726',
+        versionId: 'ea53b2b0-dca2-44b7-b0ea-d2cf002c0d34',
         name: 'Dormant 120d - Bonus Activation Reminder A',
         subject: 'To request the 100 USD bonus, send BONUS100 on WhatsApp.',
         timing: 'D4',
         delay: '+4 days after step 1',
       },
       b: {
-        templateId: 'd-51f7cf54a416430f95d2915a2f826bcc',
-        versionId: 'b707f6b0-12a4-443d-b69a-df371bdff956',
+        templateId: 'd-bccdd4ea28fd4e339371303e22139ed8',
+        versionId: 'ab560239-b905-458d-9ab9-00ceba90232e',
         name: 'Dormant 120d - Bonus Activation Reminder B',
         subject: 'A simpler return starts with one WhatsApp keyword: BONUS100.',
         timing: 'D4',
@@ -238,16 +238,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-7a52fde54eec4a64b0c3ae9f97d6c813',
-        versionId: 'e3c26fa7-d331-4267-8cd7-87b3d89eaa85',
+        templateId: 'd-450735ff8e1f4b3abe6e11dbd3e8951c',
+        versionId: '91ef8e79-ccc1-49b9-afd9-4d89e016301d',
         name: 'Dormant 120d - Reminder Attivazione Bonus A IT',
         subject: 'Per richiedere il bonus da 100 USD, invia BONUS100 su WhatsApp.',
         timing: 'D4',
         delay: '+4 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-b8c62e3f366a41449ec634db33b799ef',
-        versionId: '815339ec-93a3-4afc-ae4f-3868dab65adb',
+        templateId: 'd-9652dfdc40254f27996d4d52a012c199',
+        versionId: '940b93ba-6a52-43c6-b183-1ae6288da2af',
         name: 'Dormant 120d - Reminder Attivazione Bonus B IT',
         subject: 'Un rientro più semplice parte da una keyword WhatsApp: BONUS100.',
         timing: 'D4',
@@ -258,16 +258,16 @@ export const sendgridTemplateRegistry = {
   dormant_120d_bonus_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-34cc971807154d84876c4dca22ca6738',
-        versionId: 'f8f2e1b5-0c8a-44aa-a78d-2ff49e2b9cb3',
+        templateId: 'd-949a4757ebe043a7852c62083d3c9a5e',
+        versionId: 'cc8a359e-7346-4085-8a22-930ef38ea8a1',
         name: 'Dormant 120d - Bonus Recovery Follow-up A',
         subject: 'Your 100 USD WhatsApp bonus route is still available.',
         timing: 'D21',
         delay: '+11 days after missed outcome',
       },
       b: {
-        templateId: 'd-f3e00b8bfd694ac99ac4787df61e3514',
-        versionId: 'ea189fe1-edc6-4e7b-a956-04c6eaf72979',
+        templateId: 'd-bed11b7cf9d641fab5748b5bca60f244',
+        versionId: 'ac7e4b78-c29c-4996-95d5-a7894e346443',
         name: 'Dormant 120d - Bonus Recovery Follow-up B',
         subject: 'Still inactive? Your manager-led 100 USD bonus option remains open.',
         timing: 'D21',
@@ -276,16 +276,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-b9242ab7311d46b2ba8e97a8eed67ebc',
-        versionId: 'b80dbdcb-bdeb-4399-a945-65d93bc8cd10',
+        templateId: 'd-c843e0e173784a008cc792205189948e',
+        versionId: '832bb35a-d24d-49e2-96c2-c9ef4ff1492a',
         name: 'Dormant 120d - Follow-up Recovery Bonus A IT',
         subject: 'Il tuo percorso bonus da 100 USD su WhatsApp è ancora disponibile.',
         timing: 'D21',
         delay: '+11 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-b1cdcd7215e4489cba1cb76bfeb1758d',
-        versionId: 'e57b889f-b1a8-49cd-a5ad-47f67648226e',
+        templateId: 'd-67752a0f33df480cb85fbe3f8e011e45',
+        versionId: '5b69f8d0-5d33-483d-9b90-266f4b95cb24',
         name: 'Dormant 120d - Follow-up Recovery Bonus B IT',
         subject:
           'Ancora inattivo? La tua opzione bonus da 100 USD guidata dal manager e ancora aperta.',
@@ -297,16 +297,16 @@ export const sendgridTemplateRegistry = {
   dormant_120d_bonus_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-46a63ee0e4384d36a01573f60a628fa3',
-        versionId: 'c79e0a78-e3ba-4340-98bb-dd8f47e9eb37',
+        templateId: 'd-1d84d9b7439e4ae7a289cdcb25686f79',
+        versionId: 'd11ced89-b687-4a08-9bbf-4f5e5fbdfee8',
         name: 'Dormant 120d - Bonus Request Confirmed A',
         subject: 'Your Bullwaves bonus request has reopened the path.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-7d10d6a1f57644aaa5cb1d9b3c4d4294',
-        versionId: 'a4025724-8ac8-46d6-aac4-b34410ab9dd5',
+        templateId: 'd-8347be54c72b4ff98e4827f2c0ebfd1e',
+        versionId: '5012f923-9033-4358-9b75-cf8df0120bef',
         name: 'Dormant 120d - Bonus Request Confirmed B',
         subject: 'Good news: your bonus path is now back in motion.',
         timing: 'CHECKPOINT +0d',
@@ -315,16 +315,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-0c73b85891624635aa69f63f2921dad5',
-        versionId: '475ab307-e03a-4e9b-a74a-c561b354997c',
+        templateId: 'd-9d6be2dd50164bafb2a5dbdd87b16c02',
+        versionId: '9200963b-0883-4bac-95ca-188201cac20a',
         name: 'Dormant 120d - Richiesta Bonus Confermata A IT',
         subject: 'La tua richiesta bonus Bullwaves ha riaperto il percorso.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-ad04a1be286d4bd697c8636cb0145608',
-        versionId: '2e8898e4-ce91-4aa8-bd1f-7c2fac6dd9df',
+        templateId: 'd-8b4ec1c8625d4399a0d87f631c0c0d27',
+        versionId: '64017d08-f589-4988-8fff-7382a24da225',
         name: 'Dormant 120d - Richiesta Bonus Confermata B IT',
         subject: 'Buone notizie: il tuo percorso bonus si e rimesso in moto.',
         timing: 'CHECKPOINT +0d',
@@ -335,16 +335,16 @@ export const sendgridTemplateRegistry = {
   dormant_120d_bonus_step1_email: {
     en: {
       a: {
-        templateId: 'd-0c8a1f3998eb44bbb81086efd7337e8f',
-        versionId: '71bba433-1b43-4a1b-bc8a-a888294f82d2',
+        templateId: 'd-e736f2f5d4b44e87b5b2b91f6335a5df',
+        versionId: 'e668f8c0-534c-4c5b-b002-8a1c4bb52a4a',
         name: 'Dormant 120d - Free Bonus Invite A',
         subject: 'A 100 USD Bullwaves bonus can now help you restart.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-735d94ce982e4902a2bbe875fb5faca3',
-        versionId: '0e35c73c-7195-44b6-8186-6775da00e73d',
+        templateId: 'd-78e737d20e5c428288d1755d10c80df2',
+        versionId: '8afed3db-799b-4d1b-97cc-686a675aa955',
         name: 'Dormant 120d - Free Bonus Invite B',
         subject: 'Your account is eligible for a 100 USD reactivation bonus.',
         timing: 'D0',
@@ -353,16 +353,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-943b0291b40544b09b5308ec75fcab3d',
-        versionId: 'a506dc1f-8803-4e4e-bc41-141ecbcd5da4',
+        templateId: 'd-9312b38410014a9d99a0025dd651644b',
+        versionId: '8c1cfc8b-78e8-4602-982a-3f044111ea46',
         name: 'Dormant 120d - Invito Bonus Gratuito A IT',
         subject: 'Un bonus Bullwaves da 100 USD può aiutarti a ripartire.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-07d226c2e2294b3da02c3d5dd0caabd9',
-        versionId: '0684d369-f019-4348-936f-05fedbf14210',
+        templateId: 'd-42cd1d12d75c4e55806bbdacac076bb4',
+        versionId: 'f0de3ad8-0af9-4dc5-8fed-fea5787e6711',
         name: 'Dormant 120d - Invito Bonus Gratuito B IT',
         subject: 'Per il tuo account e disponibile un bonus di riattivazione da 100 USD.',
         timing: 'D0',
@@ -373,16 +373,16 @@ export const sendgridTemplateRegistry = {
   dormant_120d_bonus_step3_email: {
     en: {
       a: {
-        templateId: 'd-91ac45b307d84bdbb40ef50f9af53ac9',
-        versionId: '60aa6ae5-f06d-48c6-994a-e932311dd420',
+        templateId: 'd-233dd5638d464308bf10a1baf45b6f3a',
+        versionId: 'f2eadf15-5cd7-4a0f-ae5f-835af56ab3f7',
         name: 'Dormant 120d - Last Call Bonus Support A',
         subject: 'If you want a low-friction return, your 100 USD bonus path is still open.',
         timing: 'D10',
         delay: '+6 days after step 2',
       },
       b: {
-        templateId: 'd-15a384553e5046d5b9de119f34aac3cb',
-        versionId: 'e58760e8-3d5c-4977-a2a9-b3b026ea671a',
+        templateId: 'd-14e08b67af4f497398cff4b0c1d4eae1',
+        versionId: '0c2e2507-f355-4c67-8544-d7852985be6b',
         name: 'Dormant 120d - Last Call Bonus Support B',
         subject: 'The 100 USD bonus offer is still available for your account.',
         timing: 'D10',
@@ -391,8 +391,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-3d1db2828cc2440f8c8c8bb107043c9c',
-        versionId: '26d99f8b-09e5-4792-b135-2c42c8975955',
+        templateId: 'd-42cc6742ddf748058ff5d721855e4f89',
+        versionId: '145f42ac-f1bc-43fa-9e5e-e350a647501c',
         name: 'Dormant 120d - Supporto Finale Bonus A IT',
         subject:
           'Se vuoi un rientro più leggero, il tuo percorso bonus da 100 USD e ancora aperto.',
@@ -400,8 +400,8 @@ export const sendgridTemplateRegistry = {
         delay: '+6 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-8d12a97bae6b4391a16105007d4eac4f',
-        versionId: 'c589e715-5e15-4333-80e3-6b7cf0869642',
+        templateId: 'd-3370b9509e7048fe9d9e6d4c2e2b4778',
+        versionId: 'be33647f-e86a-49aa-a5bf-2fe9c8cf7013',
         name: 'Dormant 120d - Supporto Finale Bonus B IT',
         subject: 'Per il tuo account il bonus da 100 USD e ancora disponibile.',
         timing: 'D10',
@@ -412,16 +412,16 @@ export const sendgridTemplateRegistry = {
   dormant_low_step3_email: {
     en: {
       a: {
-        templateId: 'd-61085bb539664c6eb0ef42b0a412222b',
-        versionId: 'e9e071f6-7841-42f4-9971-ff75efe22a95',
+        templateId: 'd-be5df25add8e440988859c0a68002f86',
+        versionId: '29c0adf7-f917-4398-ab9e-e2739272e4bf',
         name: 'Dormant Low - Light Continuity Nurture A',
         subject: 'Keep your Bullwaves restart active with one light next step.',
         timing: 'D15',
         delay: '+9 days after step 2',
       },
       b: {
-        templateId: 'd-03386e463fc44a33bc0962b33f485a88',
-        versionId: '012d885a-8ce8-4864-bbbf-6934d4360acf',
+        templateId: 'd-96a2ba0ee95445488f25daf558aaa854',
+        versionId: 'a81429a0-6895-4824-ac16-3c377ab0dba3',
         name: 'Dormant Low - Light Continuity Nurture B',
         subject: 'Your Bullwaves account is moving again. Keep the next step simple.',
         timing: 'D15',
@@ -430,16 +430,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-600a4dd1da7d4cc883961a5e494ff1b3',
-        versionId: '2008a050-4947-4250-862e-605057f02765',
+        templateId: 'd-116a530b9e8d45b79d3c05d4f690873f',
+        versionId: '2adc4052-1882-49df-b428-ac5e783958cb',
         name: 'Dormant Low - Light Continuity Nurture A IT',
         subject: 'Mantieni attiva la tua ripartenza Bullwaves con un leggero passo in più.',
         timing: 'D15',
         delay: '+9 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-de8c40a3355b43c989ca7186e7c7b6b4',
-        versionId: 'f63544c4-f76d-449a-81b3-a1b402a832cc',
+        templateId: 'd-161c81f8d57749a39976975363401d7d',
+        versionId: '8d6df17e-6714-4e39-8dcc-330e83d04cc4',
         name: 'Dormant Low - Light Continuity Nurture B IT',
         subject:
           'Il tuo account Bullwaves si sta muovendo di nuovo. Mantieni semplice il prossimo passo.',
@@ -451,16 +451,16 @@ export const sendgridTemplateRegistry = {
   dormant_low_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-362cdc1a229b4b5e9198fd0cbd08b92b',
-        versionId: '415e3549-004b-4a5b-b41b-2ea3c5b87b18',
+        templateId: 'd-e3a43a4f817644cba16ca647bfc47d80',
+        versionId: '60acc6d5-319e-47c2-a932-4ab205cb70eb',
         name: 'Dormant Low - Positive Follow-up A',
         subject: 'Good news: your Bullwaves restart is working.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-8af0ca8fdd944133b6a63c485f7e8295',
-        versionId: 'd0a0dbbc-35da-4bfb-938b-dff3398ba366',
+        templateId: 'd-86f836045da04e4680280f7aa094c0cc',
+        versionId: '4a65661b-edf3-4d23-971b-78ce7eb7b402',
         name: 'Dormant Low - Positive Follow-up B',
         subject: 'Your account is active again. Keep the next steps light and clear.',
         timing: 'CHECKPOINT +0d',
@@ -469,16 +469,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-9e26cb6b9efe47baa3f3725050ea09b4',
-        versionId: 'f6f8b398-2981-49b6-a518-ec8828e0da03',
+        templateId: 'd-69fd598347fe45df966fba921f9cb0c3',
+        versionId: 'fdff141a-d3b2-4953-a0dc-7280e6c9d2c6',
         name: 'Dormant Low - Positive Follow-up A IT',
         subject: 'Buona notizia: la tua ripartenza Bullwaves sta funzionando.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-045980272c6641879dfd0d699fdca78f',
-        versionId: '56e5d54a-a63b-4bcb-b2f5-dbbb969cce37',
+        templateId: 'd-9f36d358d3f7468db1895153d4663c3e',
+        versionId: '1f3deee8-6e58-4133-ab84-8e2f02b4a988',
         name: 'Dormant Low - Positive Follow-up B IT',
         subject: 'Il tuo account è di nuovo attivo. Mantieni leggeri e chiari i prossimi step.',
         timing: 'CHECKPOINT +0d',
@@ -489,16 +489,16 @@ export const sendgridTemplateRegistry = {
   dormant_low_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-7a492ca5170f4b2d9cf90e67de64f9b9',
-        versionId: '0f32afe0-97e5-4abc-9650-b48d62cb2bb1',
+        templateId: 'd-952cb25a9983474786c1116fdb886bac',
+        versionId: 'c1fd791b-62ac-4d8d-8c59-46f36aef33f0',
         name: 'Dormant Low - Recovery Follow-up A',
         subject: 'Your Bullwaves account can still restart from a lighter path.',
         timing: 'D21',
         delay: '+6 days after missed outcome',
       },
       b: {
-        templateId: 'd-231405cf859d455198f99f49f7e19862',
-        versionId: 'a0e783f1-bc2b-4ca5-9803-71b25b4c8917',
+        templateId: 'd-ff7a7f8ee2334a15bb47f00715444bac',
+        versionId: '2275369e-6ee2-4134-9b0b-f583e6dcf9bd',
         name: 'Dormant Low - Recovery Follow-up B',
         subject: 'A softer Bullwaves re-entry path is ready for you.',
         timing: 'D21',
@@ -507,16 +507,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-c5bab62bd656496cb604cc4d86a28064',
-        versionId: '068d58e2-25e9-431f-b98c-afa4e962598d',
+        templateId: 'd-8a7f053a3e36475d98fe3c2c42495d5e',
+        versionId: '132f6e4a-4721-4e70-8d83-1e328b1f436b',
         name: 'Dormant Low - Recovery Follow-up A IT',
         subject: 'Il tuo account Bullwaves può ancora ripartire da un percorso più leggero.',
         timing: 'D21',
         delay: '+6 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-1bc10b76bf3a435faeb35e33c9580322',
-        versionId: '77e6c5a6-96d3-4166-959d-fe51403c5a4d',
+        templateId: 'd-b709ee9940bd49da8695ef4fae229208',
+        versionId: '36d1a64c-2447-4511-a875-0aa368cfe508',
         name: 'Dormant Low - Recovery Follow-up B IT',
         subject: 'Per te e pronto un percorso Bullwaves di rientro più morbido.',
         timing: 'D21',
@@ -527,16 +527,16 @@ export const sendgridTemplateRegistry = {
   dormant_low_step2_email: {
     en: {
       a: {
-        templateId: 'd-a802ed2f030346b9a8a063abddd35512',
-        versionId: 'e40e46e5-272d-42d0-917c-b8cf84e22c19',
+        templateId: 'd-6c09d9687fd947558f0f47a4fade7c87',
+        versionId: 'f173236b-6c4b-4500-9872-1b87105c7e3d',
         name: 'Dormant Low - Simple Restart Path A',
         subject: 'Your simple Bullwaves restart path is ready.',
         timing: 'D6',
         delay: '+6 days after step 1',
       },
       b: {
-        templateId: 'd-71620c4d2d694023987205d3a13d7149',
-        versionId: 'fd6c64a3-8b35-4d42-9fff-df03b0c28ca2',
+        templateId: 'd-43c89e634d584831a229e1b962e48f75',
+        versionId: '3ce89ceb-15b1-4a77-aead-625b906e3a1c',
         name: 'Dormant Low - Simple Restart Path B',
         subject: 'A lighter Bullwaves recovery plan is now available for your account.',
         timing: 'D6',
@@ -545,16 +545,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-e83a99be634f421e84c7d7e08fcc8086',
-        versionId: 'f4e75a7e-4e34-4455-b929-db939871ea11',
+        templateId: 'd-9235c7881a0249299b11439f42cc0213',
+        versionId: 'da1748fb-38a3-47f2-b54b-9d6aebe36d13',
         name: 'Dormant Low - Simple Restart Path A IT',
         subject: 'Il tuo percorso semplice di ripartenza Bullwaves e pronto.',
         timing: 'D6',
         delay: '+6 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-bb296783bf95436f84b7040a57901785',
-        versionId: '0fba3381-8f3e-46b1-9967-013e1d83001c',
+        templateId: 'd-f0574e87b4e14b4b8c19f781ab58d429',
+        versionId: '9f9f7145-34e9-4a0b-a64f-6cfa6ad57e8b',
         name: 'Dormant Low - Simple Restart Path B IT',
         subject: 'Per il tuo account e ora disponibile un piano Bullwaves di recovery più leggero.',
         timing: 'D6',
@@ -565,16 +565,16 @@ export const sendgridTemplateRegistry = {
   dormant_low_step1_email: {
     en: {
       a: {
-        templateId: 'd-0966e03794184eb5b47e10d9fbded55c',
-        versionId: '9324abfc-ef0d-4199-9626-612ba631e9e5',
+        templateId: 'd-0099e8c8db344f0d967b626536cac8f9',
+        versionId: '4c6c8b19-07e3-4e0b-9786-a0529a6de34f',
         name: 'Dormant Low - Soft Re-entry Touch A',
         subject: 'A simple Bullwaves restart path is available whenever you are ready.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-e5ed1e0317164297a8f2f02fbb43371b',
-        versionId: '988246d4-19a1-4757-af7c-e7ca57680afc',
+        templateId: 'd-b776d4a0b9f64262a1facf4613e4156b',
+        versionId: '170fcf5c-520d-4e43-8f44-82dd294e2f74',
         name: 'Dormant Low - Soft Re-entry Touch B',
         subject: 'Your Bullwaves account can restart from a lighter step.',
         timing: 'D0',
@@ -583,16 +583,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-b7eb65abe6d1453f9b020640bef80e10',
-        versionId: 'a8d93cc1-e7b9-4184-8577-8f488bc9392d',
+        templateId: 'd-2049d0f36ef042e092471da0380d13d9',
+        versionId: 'd5d77f4f-eede-4971-9084-e1db430d8ae1',
         name: 'Dormant Low - Soft Re-entry Touch A IT',
         subject: 'E disponibile un percorso Bullwaves di ripartenza semplice quando vuoi.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-1a1187b4e0054dec9cacfb43ca7aa457',
-        versionId: 'c9c824d6-ec45-42be-9006-2d0e932c0a4d',
+        templateId: 'd-c665862406ad4ee49fa407d98918d6e2',
+        versionId: '4afedb56-4b69-4f86-af2f-9b3c1e5605bc',
         name: 'Dormant Low - Soft Re-entry Touch B IT',
         subject: 'Il tuo account Bullwaves può ripartire da un passo più leggero.',
         timing: 'D0',
@@ -603,16 +603,16 @@ export const sendgridTemplateRegistry = {
   dormant_mid_step3_email: {
     en: {
       a: {
-        templateId: 'd-52c010ba7462401e887bfe7ab059e268',
-        versionId: '2d28902f-a590-4d51-8814-fc287b8a3358',
+        templateId: 'd-5688a8bc42874b429aeefaefc5eba191',
+        versionId: '9bc7bf6f-ed1f-4969-98eb-b9c14735c2e4',
         name: 'Dormant Mid - Manager Continuity Touch A',
         subject: 'Keep your Bullwaves recovery stable with one more step.',
         timing: 'D10',
         delay: '+6 days after step 2',
       },
       b: {
-        templateId: 'd-f61b3db5fd8245e9aa40d1072da0d4f1',
-        versionId: 'a53742a6-9fec-420d-a681-7bccbfb5e233',
+        templateId: 'd-7e9af578b8cf4d0db506b02c36ca3e33',
+        versionId: '720e7906-72c4-40cb-9f34-bbee5fb07cbd',
         name: 'Dormant Mid - Manager Continuity Touch B',
         subject: 'Your Bullwaves return can still become a stable active path.',
         timing: 'D10',
@@ -621,16 +621,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-95d3a3e89d2d43648264bf8892fd8edc',
-        versionId: '0d09ea9b-8369-4746-920b-ec83a33bde0b',
+        templateId: 'd-34c9ed852df04a569687b6f11dae1df4',
+        versionId: '7ef98fd3-e9f9-47ad-b53f-2b953b9252f1',
         name: 'Dormant Mid - Manager Continuity Touch A IT',
         subject: 'Mantieni stabile il tuo recovery Bullwaves con un altro step.',
         timing: 'D10',
         delay: '+6 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-0f8e7f0781724efab6f67c0986661d0d',
-        versionId: '7d423d40-f359-4d8d-abbd-d2f236003dea',
+        templateId: 'd-ba207f6d2c52409aa21d33876833ef61',
+        versionId: '7583c3b7-41dc-4d41-a065-204b2e402bbd',
         name: 'Dormant Mid - Manager Continuity Touch B IT',
         subject: 'Il tuo ritorno Bullwaves può ancora diventare un percorso attivo stabile.',
         timing: 'D10',
@@ -641,16 +641,16 @@ export const sendgridTemplateRegistry = {
   dormant_mid_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-9caf88d0edaa453483350093904a76c3',
-        versionId: '616f5134-aeb9-4377-81f9-7ddb3931497e',
+        templateId: 'd-273ef992d9c745efa877699282ecd290',
+        versionId: 'c03df2c2-1654-4f62-91b3-bf59e2c1110f',
         name: 'Dormant Mid - Positive Follow-up A',
         subject: 'Your Bullwaves recovery is confirmed and back on track.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-a0ac78e6382b4a279bd10a69989b8b0c',
-        versionId: 'd8b9d6ea-8550-4e6c-ac2d-3818378e9128',
+        templateId: 'd-bfbcc1a9f0e140a396b3b8fa54ba651b',
+        versionId: 'b2d241a0-ec75-4583-8d4f-b4d9fd63eff4',
         name: 'Dormant Mid - Positive Follow-up B',
         subject: 'Good result: your Bullwaves account is moving again.',
         timing: 'CHECKPOINT +0d',
@@ -659,16 +659,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-a6bf28ffb46342538da414adfff7e974',
-        versionId: '8035de5b-e7dd-4bc6-90de-45adcff29f25',
+        templateId: 'd-ff8b2c14ecae4e3f950abe553855cfde',
+        versionId: '4d11d361-769a-4986-b081-1910a3711093',
         name: 'Dormant Mid - Positive Follow-up A IT',
         subject: 'Il tuo recovery Bullwaves e confermato ed e tornato in linea.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-2a25868af3cc404d8981598a996896b5',
-        versionId: 'e14f67a4-d57b-43a5-9bc4-07d1f7767fb1',
+        templateId: 'd-ca0bf4bcfce5413cb75725130103773e',
+        versionId: 'd3c36151-a7b2-497f-8d47-faf4e647627d',
         name: 'Dormant Mid - Positive Follow-up B IT',
         subject: 'Buon risultato: il tuo account Bullwaves si e rimesso in movimento.',
         timing: 'CHECKPOINT +0d',
@@ -679,16 +679,16 @@ export const sendgridTemplateRegistry = {
   dormant_mid_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-e71bf963b9d14007a5dbc0cc57a701b7',
-        versionId: 'b8e93b68-d5a2-4060-a480-d84a956fa4a1',
+        templateId: 'd-2b591078024a4f0b9feedf4304741c67',
+        versionId: '70771f4a-754e-4682-9235-3135307537f9',
         name: 'Dormant Mid - Recovery Follow-up A',
         subject: 'Your Bullwaves comeback is still possible from a cleaner path.',
         timing: 'D18',
         delay: '+8 days after missed outcome',
       },
       b: {
-        templateId: 'd-2ae3ed94d5f0469686bea40fe357173f',
-        versionId: '5d1e29da-4f95-4a1c-821b-61f98a422ca2',
+        templateId: 'd-c1435b7c57124999bee82896ea9a2ab1',
+        versionId: '809f894a-8d9c-4cf1-827a-a770053e181d',
         name: 'Dormant Mid - Recovery Follow-up B',
         subject: 'A lighter Bullwaves re-entry path is available for your account.',
         timing: 'D18',
@@ -697,16 +697,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-fd4ae7954e334b89b1d58d80a0229080',
-        versionId: 'd54633a1-4959-4714-ba37-2436fa17c014',
+        templateId: 'd-750e04a0507345919e09bf68e39722d8',
+        versionId: '311efb00-2492-418f-acbf-a73c16a5a485',
         name: 'Dormant Mid - Recovery Follow-up A IT',
         subject: 'Il tuo comeback Bullwaves e ancora possibile da un percorso più pulito.',
         timing: 'D18',
         delay: '+8 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-a7c5742e1243431a8bc3543bfa2544aa',
-        versionId: 'fedf1b85-4ea1-42a4-9607-608183630432',
+        templateId: 'd-f561bb7343614c56b4196305bded307f',
+        versionId: 'fb4a712e-d87d-40d8-98af-abbaf86442a0',
         name: 'Dormant Mid - Recovery Follow-up B IT',
         subject: 'Per il tuo account e disponibile un percorso Bullwaves di rientro più leggero.',
         timing: 'D18',
@@ -717,16 +717,16 @@ export const sendgridTemplateRegistry = {
   dormant_mid_step2_email: {
     en: {
       a: {
-        templateId: 'd-4649ea5b76724be89c51e2caa5eba860',
-        versionId: '5c2691b0-6de6-4090-9215-9951f99f26fd',
+        templateId: 'd-247adab9a4a04c699dba9224375ec76a',
+        versionId: 'e398ae97-6bdf-4587-b5ca-11f6e9589766',
         name: 'Dormant Mid - Relaunch Value Path A',
         subject: 'Your Bullwaves relaunch path is ready for review.',
         timing: 'D4',
         delay: '+4 days after step 1',
       },
       b: {
-        templateId: 'd-729444d5681b4c7ca0da2f3ae745c260',
-        versionId: 'aea67244-e854-448e-b7a8-3249dc8653de',
+        templateId: 'd-da327fde6266468e9e383e0ef1924ba3',
+        versionId: 'ae0bda8d-221e-4769-9dbf-679c1cb03b2e',
         name: 'Dormant Mid - Relaunch Value Path B',
         subject: 'A clearer Bullwaves recovery plan is now active for your account.',
         timing: 'D4',
@@ -735,16 +735,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-2d06fa2848784fe7a307838f8e8b5d10',
-        versionId: 'a9d160e0-124b-4011-a7cf-3969d2439ce5',
+        templateId: 'd-a3764aa2fb894e6caa66fbaccad267bc',
+        versionId: '2919e229-4497-4031-bbdf-0aee8f74a5f9',
         name: 'Dormant Mid - Relaunch Value Path A IT',
         subject: 'Il tuo percorso Bullwaves di rilancio e pronto da rivedere.',
         timing: 'D4',
         delay: '+4 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-c9d0406f1a8a48e797e89c67bdc40599',
-        versionId: '8172f75e-0498-46f4-8e41-49faa87b9e8e',
+        templateId: 'd-e785e6a228f54ca49166ca8099c8937f',
+        versionId: '02230ece-7728-4825-9456-311e45ba5c16',
         name: 'Dormant Mid - Relaunch Value Path B IT',
         subject: 'Per il tuo account e ora attivo un piano Bullwaves di recovery più chiaro.',
         timing: 'D4',
@@ -755,16 +755,16 @@ export const sendgridTemplateRegistry = {
   dormant_mid_step1_email: {
     en: {
       a: {
-        templateId: 'd-3a12027294fb4959874349a0acfb3a3b',
-        versionId: 'e2ac54a7-eeed-4ae9-8848-0f81f52dbeba',
+        templateId: 'd-2066a23a7056471499250a2ee782ba9e',
+        versionId: '685ca6a3-ee33-49c2-b407-f7ed1e40c8f1',
         name: 'Dormant Mid - Winback Touch A',
         subject: 'A stronger Bullwaves return path is available for your account.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-20492ed200fc409b9a53b99121df6a82',
-        versionId: 'ed3bdcd9-be97-4130-9325-daef02919695',
+        templateId: 'd-f61fa94c924a492080947ffbf7050d2e',
+        versionId: '00abfd79-3ad7-4f42-8068-e3ce9e759cc9',
         name: 'Dormant Mid - Winback Touch B',
         subject: 'Your Bullwaves profile is ready for a more structured comeback.',
         timing: 'D0',
@@ -773,16 +773,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-f1378bbc467547afa59e019984ca57fe',
-        versionId: 'dd935648-fd45-4bd6-8964-ea017cbd98fc',
+        templateId: 'd-c57fedcdd2fe4fcf95df81bf4dad7226',
+        versionId: 'dea2a976-5b42-44e3-8f11-e0f78e4fdca1',
         name: 'Dormant Mid - Winback Touch A IT',
         subject: 'Per il tuo account e disponibile un percorso Bullwaves di ritorno più forte.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-98ba8399e8364060bd5f2e9e10df10e2',
-        versionId: '607b64aa-1427-4658-b430-b6e699ba66dc',
+        templateId: 'd-a45acf33a2a14c8fbc3838ea36bc27b7',
+        versionId: 'ebf5db2c-80a7-4c74-be63-cf1d56485a00',
         name: 'Dormant Mid - Winback Touch B IT',
         subject: 'Il tuo profilo Bullwaves e pronto per un comeback più strutturato.',
         timing: 'D0',
@@ -793,16 +793,16 @@ export const sendgridTemplateRegistry = {
   dormant_value_step3_email: {
     en: {
       a: {
-        templateId: 'd-4bfdcc74977e48dda321a9f03377ae03',
-        versionId: '5a0242a4-ec71-409c-aded-a7239076e6cf',
+        templateId: 'd-9d3d21c9e720417dae4befcc62fbd415',
+        versionId: '3fc20c4f-0e02-4d0a-a3eb-9c9b89ceffae',
         name: 'Dormant Value - Continuity Reinforcement A',
         subject: 'Keep your reactivation stable with one final Bullwaves step.',
         timing: 'D9',
         delay: '+6 days after step 2',
       },
       b: {
-        templateId: 'd-4ba41c198e224233b1877413b8fc75e8',
-        versionId: '7ae123a4-3eec-498b-b6b0-f0a5b3d795c2',
+        templateId: 'd-b7a3385a5f554123ac6fff4d3890a837',
+        versionId: '1e339b45-74a4-4f9e-93f5-98489936d411',
         name: 'Dormant Value - Continuity Reinforcement B',
         subject: 'Your Bullwaves return is improving. Now keep it consistent.',
         timing: 'D9',
@@ -811,16 +811,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-a6e5c59de45e4860bf1eaa6e14250490',
-        versionId: '8018c681-2575-484c-bb34-b789a6a10a2b',
+        templateId: 'd-94499a9144594fa3ba603c2b11f60d17',
+        versionId: '2e2f4a62-4843-43fa-9e6e-3bc8f73dc4ea',
         name: 'Dormant Value - Continuity Reinforcement A IT',
         subject: 'Mantieni stabile la tua riattivazione con un ultimo step Bullwaves.',
         timing: 'D9',
         delay: '+6 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-39146b7d908c4f148b941a0f4c19c21c',
-        versionId: 'fbbe64d7-90cf-434d-b420-ff8784d1b810',
+        templateId: 'd-9e536e22005a46daab3a2c1b2bb06bd0',
+        versionId: '2ef0721f-6086-4c62-83fd-829ddb502d56',
         name: 'Dormant Value - Continuity Reinforcement B IT',
         subject: 'Il tuo ritorno Bullwaves sta migliorando. Ora rendilo più costante.',
         timing: 'D9',
@@ -831,16 +831,16 @@ export const sendgridTemplateRegistry = {
   dormant_value_step2_email: {
     en: {
       a: {
-        templateId: 'd-a05833876db04192bb061086f4403239',
-        versionId: 'a527f4fa-4e9b-4e8b-9e1c-389041a9df83',
+        templateId: 'd-6dee1f2d348b42cdaff2a85962d04023',
+        versionId: '0bde40bf-15b9-4bac-99af-f6f160c3b48d',
         name: 'Dormant Value - Guided Return Plan A',
         subject: 'Your guided return plan is ready inside Bullwaves.',
         timing: 'D3',
         delay: '+3 days after step 1',
       },
       b: {
-        templateId: 'd-9d9bc8c9b26c4d9b9c422a0a180d91d6',
-        versionId: '7be73c50-1dfa-4485-8f85-6b56647823c7',
+        templateId: 'd-8fb08b3931544ad9afe13f9443032c77',
+        versionId: 'be371172-3386-4cbd-9ef9-22f599d48cea',
         name: 'Dormant Value - Guided Return Plan B',
         subject: 'Your Bullwaves return path is still open and easier to follow now.',
         timing: 'D3',
@@ -849,16 +849,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-060170e76274424db50f14f2edfdbf22',
-        versionId: 'b6ee6a92-b5ff-40ec-8962-5c9b830d2136',
+        templateId: 'd-9a392fa13d91450fbab1f43af11bf944',
+        versionId: 'c51f9783-d296-4117-b40f-69851f413adf',
         name: 'Dormant Value - Guided Return Plan A IT',
         subject: 'Il tuo piano guidato di ritorno è pronto dentro Bullwaves.',
         timing: 'D3',
         delay: '+3 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-dfe973a3ddd449fdb45f600ffa8857f0',
-        versionId: 'db980ca9-a226-4136-9efc-315a12b62c79',
+        templateId: 'd-1f52b0a95bb740b58d0d8f04850b278e',
+        versionId: '536d172a-f044-4dd7-8fe2-16cc016ad628',
         name: 'Dormant Value - Guided Return Plan B IT',
         subject:
           'Il tuo percorso di ritorno Bullwaves è ancora aperto e ora è più facile da seguire.',
@@ -870,16 +870,16 @@ export const sendgridTemplateRegistry = {
   dormant_value_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-a1cf536f689c415c91e3ae6f334e1fd6',
-        versionId: 'e97be384-c78f-4b07-ba5a-8f185e2f8310',
+        templateId: 'd-e1db92d45bf94e7b80e11e196896db01',
+        versionId: '13260c69-b4f6-4787-ba06-160ca837df96',
         name: 'Dormant Value - Positive Follow-up A',
         subject: 'Good news: your Bullwaves account is back on track.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-42040cb2dbae43d794bf8fb24b034d8d',
-        versionId: '39dff04b-3a83-4420-9713-0cad7e185efb',
+        templateId: 'd-d17a5171e44d49f182db49a9f748cf98',
+        versionId: '3149b850-3939-42da-a65f-a617f5931d56',
         name: 'Dormant Value - Positive Follow-up B',
         subject: 'Your reactivation is confirmed. Keep your account moving.',
         timing: 'CHECKPOINT +0d',
@@ -888,16 +888,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-7428a2e1452d495ab6b0392a3bd19ac7',
-        versionId: '354e153a-fdf2-4f54-92c4-6a66d42d3882',
+        templateId: 'd-2e047842b78a4a36ab1c518a0365743d',
+        versionId: 'bd3fd203-9ec6-4c96-afa1-25603d4d5bcd',
         name: 'Dormant Value - Positive Follow-up A IT',
         subject: 'Buona notizia: il tuo account Bullwaves è tornato in linea.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-c8cb4d45a2bc433eb300d21b91a9ab2a',
-        versionId: 'e23d06db-5e00-4dcb-8dd0-91fbc35c4c83',
+        templateId: 'd-4701549389f04c188fe77ae2da308155',
+        versionId: '83225e30-97ea-4706-952b-0b42e57dbba4',
         name: 'Dormant Value - Positive Follow-up B IT',
         subject: 'La tua riattivazione è confermata. Mantieni il tuo account in movimento.',
         timing: 'CHECKPOINT +0d',
@@ -908,16 +908,16 @@ export const sendgridTemplateRegistry = {
   dormant_value_step1_email: {
     en: {
       a: {
-        templateId: 'd-114bb95131e74a35bda5a41a34012fd1',
-        versionId: 'a2b0d7fc-4c62-4cab-9ba7-aa17fca11abe',
+        templateId: 'd-95d93b4cb6c749f4a100ec43bf5fbb85',
+        versionId: 'd6597e81-9cdb-4206-90e1-c1f460d23f91',
         name: 'Dormant Value - Reactivation Touch A',
         subject: 'Your Bullwaves account still has value ready to reactivate.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-07bf302efae741bba1c96df2fa724866',
-        versionId: '250c9a21-8ee2-4612-beac-e497a29e9633',
+        templateId: 'd-4d87700db900433ebe11316f76a5fae8',
+        versionId: '464710b1-74bf-435e-9f09-0f37ba4e28d5',
         name: 'Dormant Value - Reactivation Touch B',
         subject: 'A clearer way to restart your Bullwaves activity is available.',
         timing: 'D0',
@@ -926,16 +926,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-95da0eacc6154e218697d8690518b76e',
-        versionId: '8d469898-33df-46b3-a237-97644efa02ef',
+        templateId: 'd-51217f9e77c64cfe89d9f171c34c683b',
+        versionId: '9c00a281-b682-4ff3-9bcc-00cb15499110',
         name: 'Dormant Value - Reactivation Touch A IT',
         subject: 'Il tuo account Bullwaves ha ancora valore da riattivare.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-0d7f6fd74e6143288544031018284ecc',
-        versionId: '45869a3c-6f2b-4d12-828e-8799965d0bce',
+        templateId: 'd-d5ce3c4253be41dfaffae3b26063db4e',
+        versionId: 'f7ace6fb-a35f-4430-9b55-920398cd5088',
         name: 'Dormant Value - Reactivation Touch B IT',
         subject: 'È disponibile un modo più chiaro per ripartire con Bullwaves.',
         timing: 'D0',
@@ -946,16 +946,16 @@ export const sendgridTemplateRegistry = {
   dormant_value_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-f47daf96bd6e4f4fbb64d34510429be9',
-        versionId: '6cfbb173-1775-4890-ba80-7f19f7531956',
+        templateId: 'd-d1827962ba124cd49b559d02148c08b7',
+        versionId: '79d2b2d1-4f9c-4b44-84af-5e65086fcf18',
         name: 'Dormant Value - Recovery Follow-up A',
         subject: 'Your Bullwaves return path is still open.',
         timing: 'D18',
         delay: '+9 days after missed outcome',
       },
       b: {
-        templateId: 'd-9c8bcaea9c2e479198c9971f4a910c2a',
-        versionId: '7b9399c4-2f3d-4af9-bd63-b1be5aaa23ca',
+        templateId: 'd-f115537427754af7a794df35efb4befc',
+        versionId: 'f1accaca-8375-4268-8873-94415bc3cf17',
         name: 'Dormant Value - Recovery Follow-up B',
         subject: 'A simpler Bullwaves restart option is available for your account.',
         timing: 'D18',
@@ -964,16 +964,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-ac5569ac633e44c6b67261b440adec87',
-        versionId: 'e1c1581a-2969-4d45-91f7-af00072f1edd',
+        templateId: 'd-d56bb6dbdc6942279861abf0eba5988f',
+        versionId: '9aa1ec7c-c06e-437a-9f01-879d8bd185e4',
         name: 'Dormant Value - Recovery Follow-up A IT',
         subject: 'Il tuo percorso di ritorno Bullwaves e ancora aperto.',
         timing: 'D18',
         delay: '+9 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-495d8ed8ca6b458e80753fb00cad6a39',
-        versionId: 'fda440cc-6574-49b6-9c51-383173b28b4a',
+        templateId: 'd-6c353f1d1aa94caab2e3791247af274d',
+        versionId: '31bc322b-33b9-4b99-9711-26b1caf38fb4',
         name: 'Dormant Value - Recovery Follow-up B IT',
         subject:
           'Per il tuo account e disponibile una opzione Bullwaves di ripartenza più semplice.',
@@ -985,16 +985,16 @@ export const sendgridTemplateRegistry = {
   most_consistent_badge_award_email: {
     en: {
       a: {
-        templateId: 'd-31642f9a4e79418a8b485a9a53f37622',
-        versionId: 'a685f89f-7bf1-4570-b852-3ee1c80b5ce3',
+        templateId: 'd-db752b98ac464e6f831a30012d82bd6b',
+        versionId: 'e4a59d82-5747-4c67-a033-2d3a8b1001fc',
         name: 'Most Consistent - Badge Award A',
         subject: 'You earned your Bullwaves consistency badge.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-8d6e8e0b3f434106a774d66fceb292df',
-        versionId: 'a27c7985-b374-447f-8fb4-8f6eb7373c1e',
+        templateId: 'd-0bd843de8b8b46c1bffa1f6cb8d18330',
+        versionId: 'b720bc4e-17e7-4946-9bf0-1d15244020c7',
         name: 'Most Consistent - Badge Award B',
         subject: 'Your consistency is now a growth asset on Bullwaves.',
         timing: 'D0',
@@ -1003,16 +1003,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-2f823bcbf61f48c79db0ef3f4c3af94f',
-        versionId: '0aa5cfb3-eb8d-4180-97e9-70ab34964f8c',
+        templateId: 'd-843a913f5248420eb261a747c113e8ef',
+        versionId: '5786c9ae-60c1-483e-ab91-1e4cf35a7909',
         name: 'Most Consistent - Badge Award A IT',
         subject: 'Hai ottenuto il tuo badge Bullwaves di consistenza.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-21af5f4b88d34859ad0536a4dafc2852',
-        versionId: 'c56db601-e4d4-4530-9ccd-47e9af90509d',
+        templateId: 'd-ca6e01629202418a9010416e831c77ed',
+        versionId: '2b5897e1-d346-40c8-a5bd-90bd5f06776c',
         name: 'Most Consistent - Badge Award B IT',
         subject: 'La tua costanza è ora un asset di crescita su Bullwaves.',
         timing: 'D0',
@@ -1023,16 +1023,16 @@ export const sendgridTemplateRegistry = {
   most_consistent_cycle_restart_email: {
     en: {
       a: {
-        templateId: 'd-d8d39c76dbe54711952e24fcc53d3a6c',
-        versionId: '87e07cb2-3d52-476f-afcd-7d59102348ac',
+        templateId: 'd-4906a7dce7ac41fc96d6f8f11797b69c',
+        versionId: 'a0f557e9-0b8d-4167-b559-bc4dd94f5c27',
         name: 'Most Consistent - Cycle Restart A',
         subject: 'Restart your Bullwaves cycle with a cleaner challenge path.',
         timing: 'D30',
         delay: '+30 days after last low-engagement cycle',
       },
       b: {
-        templateId: 'd-0e32d4c45f384bd4a926a5939df0015c',
-        versionId: '75ebb36a-4153-4cba-94e2-99efb434a833',
+        templateId: 'd-a643dc8f955b401e817f79ceedcc8936',
+        versionId: '20ecb424-6f54-4d6b-b899-44d726d15085',
         name: 'Most Consistent - Cycle Restart B',
         subject: 'A cleaner Bullwaves restart is still available to you.',
         timing: 'D30',
@@ -1041,16 +1041,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-4d6d048959974f4fb6c2ff8121f8d216',
-        versionId: '3be17999-a17d-4f6d-b04a-35ff8d2bcf0b',
+        templateId: 'd-c8d5dfb1d8ce482bbffae12a91694a9d',
+        versionId: '54caaa75-ce7e-4374-8330-aaf6565156ab',
         name: 'Most Consistent - Cycle Restart A IT',
         subject: 'Riavvia il tuo ciclo Bullwaves con un percorso challenge più chiaro.',
         timing: 'D30',
         delay: '+30 giorni dopo l ultimo ciclo a basso engagement',
       },
       b: {
-        templateId: 'd-fdf04137cd3644fc8acc9bd1e6fd993b',
-        versionId: 'def6ad4c-858d-40df-bfbc-bccb347dab76',
+        templateId: 'd-cce4cab7303747b5b5fa31c7cf054821',
+        versionId: '94ac6a29-b1a3-41e4-ae21-2f586551f4ad',
         name: 'Most Consistent - Cycle Restart B IT',
         subject: 'Una ripartenza Bullwaves più pulita è ancora disponibile per te.',
         timing: 'D30',
@@ -1061,16 +1061,16 @@ export const sendgridTemplateRegistry = {
   most_consistent_growth_roadmap_email: {
     en: {
       a: {
-        templateId: 'd-e3c7e6faa68a4d37b34fc804a74b7950',
-        versionId: '56170400-61e0-4eb2-9053-ac19a215bbdb',
+        templateId: 'd-600d262cfabd4b7b93428cd5a242c15d',
+        versionId: 'f8e0ac31-fb73-4d8d-8eca-48d0ffe3c9f8',
         name: 'Most Consistent - Growth Roadmap A',
         subject: 'Your Bullwaves roadmap is ready. Let consistency become growth.',
         timing: 'D7',
         delay: '+7 days after badge award',
       },
       b: {
-        templateId: 'd-f803cc4f9a614b39a22015c7ccf451a2',
-        versionId: 'cff42208-f92e-4167-b6c7-ab175d3153a9',
+        templateId: 'd-20bcdb180b484e728494abac70cc9454',
+        versionId: '612626c5-e656-40aa-ab7f-3c388edec634',
         name: 'Most Consistent - Growth Roadmap B',
         subject: 'A steadier trader should never feel directionless.',
         timing: 'D7',
@@ -1079,16 +1079,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-7e47782868a04b89b3b5a16b8c7e1d87',
-        versionId: 'd02c72e1-ff13-4518-9fe0-a2a2bf6aab2b',
+        templateId: 'd-9e5cfdcfe3624bf69c75d3c416b53722',
+        versionId: 'b033a852-145a-4882-af0f-44c7c5e990c3',
         name: 'Most Consistent - Growth Roadmap A IT',
         subject: 'Il tuo piano di crescita Bullwaves è pronto. Trasforma la costanza in crescita.',
         timing: 'D7',
         delay: '+7 giorni dopo il badge',
       },
       b: {
-        templateId: 'd-eec3580790fe44df947628c9111c13fb',
-        versionId: '2a224bca-f8b8-46cd-befd-5f0467aab0c6',
+        templateId: 'd-8734c3f587874f80a43d83398081276b',
+        versionId: '53c0e05a-b655-407d-a554-66dc61fec224',
         name: 'Most Consistent - Growth Roadmap B IT',
         subject: 'Un trader più costante non dovrebbe mai sentirsi senza direzione.',
         timing: 'D7',
@@ -1099,16 +1099,16 @@ export const sendgridTemplateRegistry = {
   most_consistent_loyalty_reward_email: {
     en: {
       a: {
-        templateId: 'd-7f3727ece96046629caa4bc2fb43ddce',
-        versionId: 'd0e4f30e-ee82-46d2-ae1c-a78ea6fff5c1',
+        templateId: 'd-7e4dd65ae7054f9182600afe62a5ee9e',
+        versionId: 'db607b21-a3ec-4c92-8fdf-8b1b8c211b03',
         name: 'Most Consistent - Loyalty Reward A',
         subject: 'Your consistency is unlocking a Bullwaves loyalty reward.',
         timing: 'D21',
         delay: '+14 days after growth roadmap',
       },
       b: {
-        templateId: 'd-5b37b38c4b814231834658060ba062bb',
-        versionId: '3fe59f2b-ae9c-4ff7-aa21-90b93b07471d',
+        templateId: 'd-5b3bcb9fc3614d01b8bc3507c45d3233',
+        versionId: '48079e9f-9d13-45dc-8c91-3811f4904641',
         name: 'Most Consistent - Loyalty Reward B',
         subject: 'Stable effort deserves a stronger Bullwaves reward signal.',
         timing: 'D21',
@@ -1117,16 +1117,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-bd8b42b3070648bb9d343d63c1423151',
-        versionId: '835c668d-09f3-400d-96de-b7b61b3dabe8',
+        templateId: 'd-5bc86c26d0b940ddbaa2cdccf33e90d6',
+        versionId: '4e15834d-7f6f-42bf-82d3-7560bbbe4ca5',
         name: 'Most Consistent - Loyalty Reward A IT',
         subject: 'La tua costanza sta sbloccando un premio fedeltà Bullwaves.',
         timing: 'D21',
         delay: '+14 giorni dopo la roadmap',
       },
       b: {
-        templateId: 'd-150de87c87274b0c8679f68e18ab76b6',
-        versionId: '84ebd387-6c61-486e-bb3c-5092b9adfff9',
+        templateId: 'd-861a7a42dfff4f4eb9380e301c70f0d7',
+        versionId: 'aba0d44e-6791-467a-80e7-493a1b288f12',
         name: 'Most Consistent - Loyalty Reward B IT',
         subject: 'Uno sforzo stabile merita un riconoscimento Bullwaves più forte.',
         timing: 'D21',
@@ -1137,16 +1137,16 @@ export const sendgridTemplateRegistry = {
   most_consistent_top_performers_onboarding_email: {
     en: {
       a: {
-        templateId: 'd-b5ab537b3fb548cfb956bd2d816a08ba',
-        versionId: '80cbb0e0-e1cf-4820-ba24-c6bdd1b1112c',
+        templateId: 'd-9e2930ae7a184d749bc90ee1b639c321',
+        versionId: 'b45ed341-f723-4cb7-ac15-3a88897022ef',
         name: 'Most Consistent - Top Performers Onboarding A',
         subject: 'You are ready for the Bullwaves Top Performers path.',
         timing: 'PROMO +0d',
         delay: 'Immediately after promotion to Top Performers',
       },
       b: {
-        templateId: 'd-b948c7539266423f9f76f06624e1b100',
-        versionId: '1f32fa72-7af1-4490-afe7-a6d47a9fcd49',
+        templateId: 'd-4d67de6465f447fea7481393a73de823',
+        versionId: 'f6b918e7-9c9b-43a9-9d2b-6d4afb6fc9da',
         name: 'Most Consistent - Top Performers Onboarding B',
         subject: 'Your Bullwaves profile is moving into a stronger segment.',
         timing: 'PROMO +0d',
@@ -1155,16 +1155,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-e7b555b8e1c64d39855244af288f8ec0',
-        versionId: 'aea27c33-46bb-49a6-b146-6cb4e211c92b',
+        templateId: 'd-aafe02ef13444d77a1db9a71e1d376c1',
+        versionId: '21de03e6-d188-428f-84c7-8119430e5a91',
         name: 'Most Consistent - Top Performers Onboarding A IT',
         subject: 'Sei pronto per il percorso Bullwaves Top Performers.',
         timing: 'PROMO +0d',
         delay: 'Immediatamente dopo la promozione a Top Performers',
       },
       b: {
-        templateId: 'd-aa8a53658af448d89007f1daf5c8bdf3',
-        versionId: '4289a624-0104-4a8c-bd09-183c5b0a167d',
+        templateId: 'd-550d69168a6845298807fbcd2c639b4a',
+        versionId: 'b875aa06-a3dd-4dca-886f-95efb9af190e',
         name: 'Most Consistent - Top Performers Onboarding B IT',
         subject: 'Il tuo profilo Bullwaves sta entrando in un segmento più forte.',
         timing: 'PROMO +0d',
@@ -1175,16 +1175,16 @@ export const sendgridTemplateRegistry = {
   reward_candidates_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-fd61306da7ba4906950213db44004d4f',
-        versionId: 'e2fea8f2-f784-4ff9-b2d4-bf1e8dca9c10',
+        templateId: 'd-1c0dca38e0cc44788cbfeaed4880ecb7',
+        versionId: '71a41f22-c472-4990-81d8-8e04d6637f64',
         name: 'Reward Candidates - Retained Follow-up A',
         subject: 'Great news: your account review is confirmed and your premium setup continues.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive checkpoint',
       },
       b: {
-        templateId: 'd-1df07c6f8fe0432998389e1985100e8d',
-        versionId: 'c62a5bb0-a41a-4b2b-a7b5-c9af8675a7a1',
+        templateId: 'd-9c17beecbc1547f18da49802696e82f5',
+        versionId: 'd96a667f-a570-4260-a622-1b3a6974613c',
         name: 'Reward Candidates - Retained Follow-up B',
         subject: 'Review completed successfully. Keep your momentum active.',
         timing: 'CHECKPOINT +0d',
@@ -1193,16 +1193,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-168fa7937d5549858c1c81a49f5b62e0',
-        versionId: '9cbb7503-a42c-4fd9-9377-a1b8acf2a3ba',
+        templateId: 'd-89c08428ebe74ca6baa55fc2195454f8',
+        versionId: 'bd4d68d5-fda7-4c36-8746-7e076e28dd20',
         name: 'Reward Candidates - Retained Follow-up A IT',
         subject: 'Ottima notizia: la tua review account è confermata e il setup premium continua.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo checkpoint positivo',
       },
       b: {
-        templateId: 'd-52f5701c27bb4b39ba4ce895807d50fb',
-        versionId: 'ee81014e-48f4-47d9-9f77-925b652e011c',
+        templateId: 'd-cd1cb7b19b8c4fadbc91c1b5a754a121',
+        versionId: 'd1384caa-5fb1-487f-a548-fa313a68b1c8',
         name: 'Reward Candidates - Retained Follow-up B IT',
         subject: 'Review completata con successo. Mantieni attivo il tuo slancio.',
         timing: 'CHECKPOINT +0d',
@@ -1213,16 +1213,16 @@ export const sendgridTemplateRegistry = {
   reward_candidates_step3_email: {
     en: {
       a: {
-        templateId: 'd-a373f874d0614e2081ca6a6815e14715',
-        versionId: '61e3ac24-8781-404b-b2e8-bd674c8c816e',
+        templateId: 'd-0856e65a4c0e4ca098062b6f8e3b18ca',
+        versionId: 'c9880a5a-937a-449d-8a75-93cbf191d543',
         name: 'Reward Candidates - Retention Commitment A',
         subject: 'Before your next account review, there is one final step to complete.',
         timing: 'D14',
         delay: '+9 days after step 2',
       },
       b: {
-        templateId: 'd-0b09bfbf33f143328f14d508a907e9ce',
-        versionId: '549a5d85-c7a4-435e-8ad2-aa4b817678f5',
+        templateId: 'd-9c852cdacc4a4a62929f8f153312c102',
+        versionId: 'b0b75d6f-17df-414c-aa95-e0722426090d',
         name: 'Reward Candidates - Retention Commitment B',
         subject: 'Your account review is approaching. Confirm the final setup now.',
         timing: 'D14',
@@ -1231,16 +1231,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-5649db208346431e8111bc82a2b5547f',
-        versionId: 'b2ea6e1f-6e40-4572-ba48-e4a0f72a27b8',
+        templateId: 'd-1d31bccab01b4b67b30932eb97cf1905',
+        versionId: '5f4135ec-b798-482b-bf54-b2cb1b667c5c',
         name: 'Reward Candidates - Retention Commitment A IT',
         subject: 'Prima della prossima review account c è un ultimo passaggio da completare.',
         timing: 'D14',
         delay: '+9 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-3d6e689f7dca4956b0c7e7ebc7cda2a9',
-        versionId: '8ff975dd-8a27-4da7-ac06-68f1b10278bf',
+        templateId: 'd-12eaa065fdc545a7b44037e710ba572c',
+        versionId: 'a74513b6-a3d7-4953-97c1-d5cff1d24d44',
         name: 'Reward Candidates - Retention Commitment B IT',
         subject: 'La review account è vicina. Conferma ora il setup finale.',
         timing: 'D14',
@@ -1251,16 +1251,16 @@ export const sendgridTemplateRegistry = {
   reward_candidates_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-874b98df443c4ed68543448afa8d2294',
-        versionId: 'f383505b-046a-4bdd-96a3-7b593a70ffbb',
+        templateId: 'd-cf570e1afe6c4111916d4b2eb24160f2',
+        versionId: 'e3c4af38-0783-490f-b1e4-5a38a70a45d9',
         name: 'Reward Candidates - Return Follow-up A',
         subject: 'Your account can restart from a simpler and clearer path.',
         timing: 'D21',
         delay: '+7 days after missed checkpoint outcome',
       },
       b: {
-        templateId: 'd-50846d5eeb5442eda5ac440e64be4e7f',
-        versionId: '45ccba3e-3e9d-419d-b0ef-2ca20e19a8d1',
+        templateId: 'd-264741935280443093bb04e220e2a7c0',
+        versionId: '3a8d0dd7-d878-4b84-b35c-b26c56d125d8',
         name: 'Reward Candidates - Return Follow-up B',
         subject: 'A lighter restart option is now active in your Bullwaves account.',
         timing: 'D21',
@@ -1269,16 +1269,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-9e304695255148c2b4fe4d09053805e3',
-        versionId: 'd5515723-37d4-4d55-a7eb-54609464c4c0',
+        templateId: 'd-44ea059a9e054966979be664beb07773',
+        versionId: 'd4f59573-6360-4b06-8b3d-ba17e13263af',
         name: 'Reward Candidates - Return Follow-up A IT',
         subject: 'Il tuo account può ripartire da un percorso più chiaro e più semplice.',
         timing: 'D21',
         delay: '+7 giorni dopo esito checkpoint non centrato',
       },
       b: {
-        templateId: 'd-fc6f7e5db01c4d1ba681b7d61aae3f6b',
-        versionId: 'b661a61b-8ce6-4a28-8960-6e442b13cb0f',
+        templateId: 'd-71827073d8c44ae3bbed0df169d89f86',
+        versionId: '4ad13933-4a73-4ad6-800c-ce195020ef0e',
         name: 'Reward Candidates - Return Follow-up B IT',
         subject: 'Nel tuo account Bullwaves è attiva una opzione di ripartenza più leggera.',
         timing: 'D21',
@@ -1289,16 +1289,16 @@ export const sendgridTemplateRegistry = {
   reward_candidates_step2_email: {
     en: {
       a: {
-        templateId: 'd-3ff9f66cc54d45e5b5713fbc2fc94054',
-        versionId: 'a36ef77d-b506-4513-90dd-d4a33fc61b5d',
+        templateId: 'd-318a71eccfe146bd9443ca7d5c911faf',
+        versionId: '81e52cc5-24a7-48da-838b-1d285df49a5f',
         name: 'Reward Candidates - Reward Ladder A',
         subject: 'Your next Bullwaves steps are ready in your account.',
         timing: 'D5',
         delay: '+5 days after step 1',
       },
       b: {
-        templateId: 'd-0bcc930448774d0ba3d2a197f65f1805',
-        versionId: '914e1276-039e-4973-b2b3-b24d1f867480',
+        templateId: 'd-897d0d64a2064208a957bc4d7d91b251',
+        versionId: '902c7c19-2c99-474a-b545-f0549fdaee28',
         name: 'Reward Candidates - Reward Ladder B',
         subject: 'A clearer progression plan is now active in your Bullwaves account.',
         timing: 'D5',
@@ -1307,16 +1307,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-d29c2e66dfdd4724a23ad892810ad830',
-        versionId: 'a6e2cb99-3327-40b7-af26-a15d2eaa628a',
+        templateId: 'd-287827f89fd04b18941f71420832f29f',
+        versionId: 'd5597f3e-bb8d-4191-b3b0-9a97bb9d5f11',
         name: 'Reward Candidates - Reward Ladder A IT',
         subject: 'I tuoi prossimi passi Bullwaves sono pronti nel tuo account.',
         timing: 'D5',
         delay: '+5 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-06ac8fd657dc4662bbe31bfc9f688e27',
-        versionId: '456371a4-e07b-4824-b45d-35ad7631769a',
+        templateId: 'd-5d3cece7186049d489920c21d00f52be',
+        versionId: '2eb1d575-5dce-4f0d-8b5e-00749b20018d',
         name: 'Reward Candidates - Reward Ladder B IT',
         subject: 'Nel tuo account Bullwaves è attivo un piano di progressione più chiaro.',
         timing: 'D5',
@@ -1327,16 +1327,16 @@ export const sendgridTemplateRegistry = {
   reward_candidates_step1_email: {
     it: {
       a: {
-        templateId: 'd-d6e2befa541f41b996dabdb6eb6a9d2d',
-        versionId: 'c285bb36-136c-4291-bee1-6afcf7ad648e',
+        templateId: 'd-6af89db58dab476784fa69457ff22b36',
+        versionId: 'd25cabdd-11c1-432e-9c42-156e05d612a9',
         name: 'Reward Candidates - Segnale Reward VIP A IT',
         subject: 'Il tuo profilo Bullwaves ha sbloccato vantaggi premium.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-a1d4275847604053aac705b39a62a109',
-        versionId: 'b581186f-46e6-4e2c-8718-6988c78d2a83',
+        templateId: 'd-58f05fc125a1431e9b2741142aa0878a',
+        versionId: '27bb1487-d5b0-4f7a-8784-c3d8c3590360',
         name: 'Reward Candidates - Segnale Reward VIP B IT',
         subject: 'Per il tuo profilo è attiva un esperienza Bullwaves più su misura.',
         timing: 'D0',
@@ -1345,16 +1345,16 @@ export const sendgridTemplateRegistry = {
     },
     en: {
       a: {
-        templateId: 'd-80a0729e322c462f9557c9f82211aa7b',
-        versionId: '1752bbaa-9b2b-419a-b1e0-2393a6372f99',
+        templateId: 'd-4ae430b7e21a45b6a1bef4e93e3153bc',
+        versionId: 'f1465a1f-5cff-4b6e-a6c9-f708aaf3231a',
         name: 'Reward Candidates - VIP Reward Signal A',
         subject: 'Your Bullwaves profile unlocked premium benefits.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-5e1a3b226fd649169df46c147ee8c605',
-        versionId: 'b89f8e27-e781-4968-a681-6766b365e7de',
+        templateId: 'd-8caee96c208d4e0ca15ef6f623a456e6',
+        versionId: '66616141-b891-437c-b1a3-eca7c1927d92',
         name: 'Reward Candidates - VIP Reward Signal B',
         subject: 'You now have access to a more tailored Bullwaves experience.',
         timing: 'D0',
@@ -1365,16 +1365,16 @@ export const sendgridTemplateRegistry = {
   rising_step2_email: {
     en: {
       a: {
-        templateId: 'd-dd475780cf7f466191b090ad1df84d8e',
-        versionId: 'cf2aa8b6-d899-4fa0-a1b6-6e9da0598780',
+        templateId: 'd-3c98eaf87b6d4f5187a6d3136c933851',
+        versionId: 'c913f4ab-9314-4c1a-9adc-8d7baf1cac91',
         name: 'Rising - Milestone Sprint Plan A',
         subject: 'Your next milestones are ready. Keep your growth structured.',
         timing: 'D4',
         delay: '+4 days after step 1',
       },
       b: {
-        templateId: 'd-044ea35f4c604177bd01cda4fe4822f6',
-        versionId: '763d4dc3-5855-4e07-b949-eb140360356e',
+        templateId: 'd-1253b993191d4c1a8e3edbe2ab273d83',
+        versionId: '34734254-3572-4978-a551-4b03947b03e4',
         name: 'Rising - Milestone Sprint Plan B',
         subject: 'A clearer account plan is now active for your next phase.',
         timing: 'D4',
@@ -1383,16 +1383,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-ca88b6186f4c4732a619263776fa7ed8',
-        versionId: '28465b6b-da23-4a95-ab48-36682688dfff',
+        templateId: 'd-278db5d1047b40df85bdae44bd831c32',
+        versionId: 'e4e1395c-7917-4f98-b127-eb6e7882c3dd',
         name: 'Rising - Milestone Sprint Plan A IT',
         subject: 'I tuoi prossimi traguardi sono pronti. Mantieni la crescita strutturata.',
         timing: 'D4',
         delay: '+4 giorni dopo step 1',
       },
       b: {
-        templateId: 'd-dafde70772044ac68717f5ac25e3011d',
-        versionId: '613d3c06-fc9b-406a-b1ad-145745a78f79',
+        templateId: 'd-b53600bef19b4b7c90cf3affb2aa200d',
+        versionId: 'fbd63a56-830f-4bac-930e-8b83337e4a44',
         name: 'Rising - Milestone Sprint Plan B IT',
         subject: 'Nel tuo account e attivo un piano più chiaro per la prossima fase.',
         timing: 'D4',
@@ -1403,16 +1403,16 @@ export const sendgridTemplateRegistry = {
   rising_step1_email: {
     en: {
       a: {
-        templateId: 'd-43184addcc5c4f03abaaf559efab1eab',
-        versionId: '46d0df4a-0aa0-435d-8113-6f8bcb1358ce',
+        templateId: 'd-3d03d1a43e414d2dbdeef66f5d7e5d2d',
+        versionId: '1c02e401-f04c-4d40-8633-f4d36450bc58',
         name: 'Rising - Momentum Accelerator A',
         subject: 'Your Bullwaves activity is growing. Keep this momentum active.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-1a7107d4ef0541bf9968b7ddfef301b0',
-        versionId: '9ef746a9-b6cc-49b3-8e2c-d70b429c16c3',
+        templateId: 'd-436cb16870ed4a81be204171dc71c378',
+        versionId: '82ede969-4ddc-4340-a057-84abd993678f',
         name: 'Rising - Momentum Accelerator B',
         subject: 'You are gaining pace on Bullwaves. Keep your next steps clear.',
         timing: 'D0',
@@ -1421,16 +1421,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-ff0c192cf6fc4a4e85b9dd98a3aad391',
-        versionId: 'e8614f99-323e-44e1-8b39-2e65bad93bf9',
+        templateId: 'd-9ac3b56da884431c94791895c761bb57',
+        versionId: 'f21cd31c-0cda-4000-a3f5-fd8a05bdcc7b',
         name: 'Rising - Momentum Accelerator A IT',
         subject: 'La tua attività Bullwaves sta crescendo. Mantieni attivo questo slancio.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-933b74cd958643a28b1b03abbe28f009',
-        versionId: '8bca8ba4-00bb-4100-8145-e3b7d49e9923',
+        templateId: 'd-9ea506c98fea4800bc26eb2b607e2760',
+        versionId: '89ec6174-376f-4d8a-a23d-b9afcf2762d5',
         name: 'Rising - Momentum Accelerator B IT',
         subject: 'Stai aumentando il ritmo su Bullwaves. Mantieni chiari i prossimi passi.',
         timing: 'D0',
@@ -1441,16 +1441,16 @@ export const sendgridTemplateRegistry = {
   rising_followup_retained_email: {
     en: {
       a: {
-        templateId: 'd-cf92bc9897154f20b6587b2cb223722e',
-        versionId: '995f683d-5616-41ec-b1b9-4fff95c1e172',
+        templateId: 'd-fdcb5afa8d6647eaab4fe22f836eabb0',
+        versionId: '87860a3b-1ed3-4620-8c2d-c9a53517e192',
         name: 'Rising - Positive Follow-up A',
         subject: 'Great result: your progress is confirmed. Keep moving forward.',
         timing: 'CHECKPOINT +0d',
         delay: 'Immediate follow-up after positive outcome',
       },
       b: {
-        templateId: 'd-97a8c0ed219740649d530dd94826dc29',
-        versionId: 'b4eff611-f9a3-40eb-adf0-716bb60d124e',
+        templateId: 'd-8f48e9117ccd4079b5ea98d3556e7c26',
+        versionId: '2acaeff2-185f-4591-9ea5-2e4d3b145e33',
         name: 'Rising - Positive Follow-up B',
         subject: 'Your account is on track. Keep this pace in the next phase.',
         timing: 'CHECKPOINT +0d',
@@ -1459,16 +1459,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-eca48b828eab44449bd2de7d8f5c191c',
-        versionId: '7a6d596e-bf58-4d4b-90c0-8c2bc83df7e1',
+        templateId: 'd-a5bd6d7482ea42fd9a7a9c2a5b1c966b',
+        versionId: '3c430233-e141-4763-a8b8-ae94f5528c9e',
         name: 'Rising - Positive Follow-up A IT',
         subject: 'Ottimo risultato: la tua progressione e confermata. Continua così.',
         timing: 'CHECKPOINT +0d',
         delay: 'Follow-up immediato dopo esito positivo',
       },
       b: {
-        templateId: 'd-25af551d91bc40c5a5cc563893e9b260',
-        versionId: '25796212-aed7-4201-b90b-26cff19077c9',
+        templateId: 'd-6d468e52cd704352b73701e9afbdcee1',
+        versionId: 'dfc4829e-6bd5-4ab9-aae7-7ef3b9afdacf',
         name: 'Rising - Positive Follow-up B IT',
         subject: 'Il tuo account è in linea. Mantieni questo ritmo nella prossima fase.',
         timing: 'CHECKPOINT +0d',
@@ -1479,16 +1479,16 @@ export const sendgridTemplateRegistry = {
   rising_followup_recovery_email: {
     en: {
       a: {
-        templateId: 'd-85dc1ad9e8cc4e968c07d3b839eb45b0',
-        versionId: '296d9c5b-628e-49da-9249-997a81e71cf5',
+        templateId: 'd-5e729ff9549b48cca2dc3bd853d534da',
+        versionId: 'd7cc794f-cb75-426d-a32f-36857b7c2795',
         name: 'Rising - Return Follow-up A',
         subject: 'Your momentum can restart from a simpler Bullwaves path.',
         timing: 'D21',
         delay: '+9 days after missed outcome',
       },
       b: {
-        templateId: 'd-35340c8c5de34c008cca2f579d93bf25',
-        versionId: 'ce66fa63-f38d-4704-87c1-d62aba9260f3',
+        templateId: 'd-5e9b9b910ea24d42b9f661ff6631b8d4',
+        versionId: '115fdcf9-6aab-4fcd-9aff-9f2c749efb6a',
         name: 'Rising - Return Follow-up B',
         subject: 'A lighter path is active to help you resume your Bullwaves activity.',
         timing: 'D21',
@@ -1497,16 +1497,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-1b88a63440384969b1269d7badb21f89',
-        versionId: '730e17e9-6149-49b0-8d11-b9efddedb6ff',
+        templateId: 'd-4ed93ea1ef1a4bd4bb6aac76fe0b553f',
+        versionId: '4936b911-0450-454b-beef-8906daa29a6a',
         name: 'Rising - Return Follow-up A IT',
         subject: 'Il tuo slancio può ripartire da un percorso Bullwaves più semplice.',
         timing: 'D21',
         delay: '+9 giorni dopo esito non centrato',
       },
       b: {
-        templateId: 'd-189b7373d10742eeb0907c2dd4f2ed8e',
-        versionId: 'b840d8db-25ec-4e8a-8aff-b63d93e3b85d',
+        templateId: 'd-e2c26a6d5c79443e92a46e9bc2ca1f50',
+        versionId: 'd2bf1767-ae61-4f63-940a-896a1cebca36',
         name: 'Rising - Return Follow-up B IT',
         subject: 'E attivo un percorso più leggero per riprendere la tua attività Bullwaves.',
         timing: 'D21',
@@ -1517,16 +1517,16 @@ export const sendgridTemplateRegistry = {
   rising_step3_email: {
     en: {
       a: {
-        templateId: 'd-19ee9f3cb0384615aa76931622356328',
-        versionId: '87f8597b-ebda-4755-9a3a-77c8448008f0',
+        templateId: 'd-e4c07dc11d3e4bd9a115e2268489a0e8',
+        versionId: '77a4def3-8e4e-4712-a4bf-8a4c7ffc872c',
         name: 'Rising - Tier-up Preparation A',
         subject: 'Your profile is close to an account upgrade. Complete this final preparation.',
         timing: 'D12',
         delay: '+8 days after step 2',
       },
       b: {
-        templateId: 'd-c3c12d37f03e49988da12a480aff121e',
-        versionId: '0c51d23f-f3b0-4349-b05d-0fd830996d8c',
+        templateId: 'd-c6e49b0e388e4e2fbbecbde5b760024a',
+        versionId: '84bca25e-b1a4-4e6c-8b06-3d2a20f849dd',
         name: 'Rising - Tier-up Preparation B',
         subject: 'Before your next account review, confirm your final setup.',
         timing: 'D12',
@@ -1535,8 +1535,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-8d578b682a9e4e269264a509a2391154',
-        versionId: '23426561-4ca0-4684-9758-32f0cbfefa2e',
+        templateId: 'd-c21978314bc14ffd8462c190a6a2f08f',
+        versionId: '5fdbb960-225c-440e-994d-a3aae6bc9ea2',
         name: 'Rising - Tier-up Preparation A IT',
         subject:
           'Il tuo profilo è vicino a un upgrade account. Completa questa preparazione finale.',
@@ -1544,8 +1544,8 @@ export const sendgridTemplateRegistry = {
         delay: '+8 giorni dopo step 2',
       },
       b: {
-        templateId: 'd-53b7d35f4f484cd6931ec7e168231549',
-        versionId: '9792e531-fc05-4fbc-9c2a-3dc8ae13865d',
+        templateId: 'd-291e1cc70a754b65a8fd61db80145185',
+        versionId: '8c1b2e34-f165-4849-b175-7a55101d1ed2',
         name: 'Rising - Tier-up Preparation B IT',
         subject: 'Prima della prossima review account, conferma il setup finale.',
         timing: 'D12',
@@ -1556,16 +1556,16 @@ export const sendgridTemplateRegistry = {
   top_performing_advanced_tools_email: {
     en: {
       a: {
-        templateId: 'd-fd315c32b0c3473f871c502aed0ae704',
-        versionId: '09beae2a-0788-4e78-b1a4-eecc0a590a87',
+        templateId: 'd-c429c4ee61a541c1a93bb3067bfd1b80',
+        versionId: '0e44aca5-414d-46b1-b454-a8ee40c2510d',
         name: 'Top Performing - Advanced Tools A',
         subject: 'A stronger trader should have a sharper support stack.',
         timing: 'D3',
         delay: '+3 days after VIP recognition',
       },
       b: {
-        templateId: 'd-ff0ba92ab7c84d099ca890eb106bf6f9',
-        versionId: 'efac0a60-ba7a-4d2f-8f36-85de855234b8',
+        templateId: 'd-08a7f955ffbe40edaf977eb131be13d7',
+        versionId: '7b675b42-f6a4-4299-aacd-bb2ed9a8963d',
         name: 'Top Performing - Advanced Tools B',
         subject: 'Protecting edge often starts with a better operating environment.',
         timing: 'D3',
@@ -1574,16 +1574,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-80fc5e3936de468f8434803d0405064d',
-        versionId: '0aa22212-af3c-4395-9f08-039a039ac983',
+        templateId: 'd-f03115f26bff4ee1bcb1b54747ab628d',
+        versionId: 'bcd1a0e8-359c-42a6-b0aa-802d572cbd32',
         name: 'Top Performing - Advanced Tools A IT',
         subject: 'Un trader più forte dovrebbe avere un supporto più preciso.',
         timing: 'D3',
         delay: '+3 giorni dopo il touch VIP',
       },
       b: {
-        templateId: 'd-7d6f773744f949a2a2c05abb0b6c64e6',
-        versionId: '4c2e636e-3b07-4b46-9d93-ef6f8ebd8161',
+        templateId: 'd-9452b9797bb547d1ae4881ab366a2020',
+        versionId: '9455c1db-5deb-43ce-9c75-e13744930430',
         name: 'Top Performing - Advanced Tools B IT',
         subject: 'Proteggere il vantaggio spesso inizia da un ambiente operativo migliore.',
         timing: 'D3',
@@ -1594,16 +1594,16 @@ export const sendgridTemplateRegistry = {
   top_performing_loyalty_upgrade_email: {
     en: {
       a: {
-        templateId: 'd-643b3ce425064a4ab7e2c74f2e20c685',
-        versionId: 'e41afa3d-dd9d-430d-a3be-f30eb413af3f',
+        templateId: 'd-a19070deaa3d410a9e7baca76a72533a',
+        versionId: '705270f1-2933-4aa1-aaf7-027dbaf5ad49',
         name: 'Top Performing - Loyalty Upgrade A',
         subject: 'Your consistency is opening premium loyalty treatment.',
         timing: 'D10',
         delay: '+7 days after advanced tools offer',
       },
       b: {
-        templateId: 'd-dae73318a0d24bc190fa649ec89d4939',
-        versionId: '8dfaf5ed-1108-4fac-82e3-dce7f05d0bfd',
+        templateId: 'd-aa4bf44bcef9469ab6d4bfe563fed8c3',
+        versionId: '7b8ab1d5-85a8-4be7-b2c6-faca5736ccd9',
         name: 'Top Performing - Loyalty Upgrade B',
         subject: 'A stronger loyalty tier is ready for your Bullwaves profile.',
         timing: 'D10',
@@ -1612,16 +1612,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-c1b95ab7257c4fc28269fffee2655995',
-        versionId: 'b6b8aef1-62ef-4a3b-91fe-405249e2b0de',
+        templateId: 'd-744a20031d9a477f83fb5e457874172a',
+        versionId: 'ec4c610f-14d6-4963-8c0b-d89aa24625a8',
         name: 'Top Performing - Loyalty Upgrade A IT',
         subject: 'La tua continuità sta aprendo un percorso loyalty premium.',
         timing: 'D10',
         delay: "+7 giorni dopo l'offerta strumenti avanzati",
       },
       b: {
-        templateId: 'd-ca5d71a32d57464bbd89dc167d60f2d8',
-        versionId: '28508bba-89a4-42d7-9c81-1bc244b14811',
+        templateId: 'd-9cdfe45675c142799fd00a31f8dae057',
+        versionId: 'fe35bc6f-c66d-4740-b51c-a4f5aa22d6ff',
         name: 'Top Performing - Loyalty Upgrade B IT',
         subject: 'Un livello loyalty più forte è pronto per il tuo profilo Bullwaves.',
         timing: 'D10',
@@ -1632,16 +1632,16 @@ export const sendgridTemplateRegistry = {
   top_performing_premium_nurture_email: {
     en: {
       a: {
-        templateId: 'd-e9f088fc7afb4674a9208f6d2c55f2bb',
-        versionId: '139c5f5c-6665-4ece-af63-409b72b4b4fd',
+        templateId: 'd-efc0da19c9a4476ca3a91279f470fd36',
+        versionId: '52a4b6b3-a267-45f4-adbd-e41f69426977',
         name: 'Top Performing - Premium Nurture A',
         subject: 'Keep your Bullwaves premium momentum alive.',
         timing: 'D30',
         delay: '+30 days after last premium touch',
       },
       b: {
-        templateId: 'd-ad718748095f41ef9105242132d1f9a0',
-        versionId: '3ac1cac2-b00a-4344-8989-d561501330c8',
+        templateId: 'd-305e5634329a4ac1b88c4574ced922dc',
+        versionId: 'ac23ddad-7a41-4419-8d27-b9be928eaed7',
         name: 'Top Performing - Premium Nurture B',
         subject: 'A premium relationship stays strong through intelligent continuity.',
         timing: 'D30',
@@ -1650,16 +1650,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-e6b25ed95940492fbfa993a3c0a90423',
-        versionId: 'c8b4da45-23ea-4c59-a938-2ba17d52c75d',
+        templateId: 'd-2d70f9922269462caf91e673028711a4',
+        versionId: '227ac85d-a39b-4427-a04b-88e90c1d3348',
         name: 'Top Performing - Premium Nurture A IT',
         subject: 'Mantieni vivo il tuo slancio premium su Bullwaves.',
         timing: 'D30',
         delay: "+30 giorni dopo l'ultimo touch premium",
       },
       b: {
-        templateId: 'd-b3c2ee22965c43ac92f6c92d80b45bdf',
-        versionId: '7097607f-3a8c-4ca0-92c8-750a6ca51d66',
+        templateId: 'd-23cea9f4d5c947eaa22fa68e2226114b',
+        versionId: '780288bf-3541-4ca6-83bd-53c6bd1fc460',
         name: 'Top Performing - Premium Nurture B IT',
         subject: 'Una relazione premium resta forte con continuità intelligente.',
         timing: 'D30',
@@ -1670,16 +1670,16 @@ export const sendgridTemplateRegistry = {
   top_performing_vip_recognition_email: {
     en: {
       a: {
-        templateId: 'd-972402e449914928b86750bd6527c12d',
-        versionId: 'fa891cc3-a7e9-423e-84d4-9d0298569252',
+        templateId: 'd-facde08614f04f56ae41098b1d259790',
+        versionId: 'fbb49def-3dcd-4959-846b-e88652b65426',
         name: 'Top Performing - VIP Recognition A',
         subject: 'You are among Bullwaves top performers. We built your next step accordingly.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-cf74cddc846c4e5ba909aca69102fa5b',
-        versionId: '7ff45206-c84d-4ef2-a47f-b015c0942a03',
+        templateId: 'd-2dfe9f0f7765431fa7f3959ad3565e3d',
+        versionId: '58075aec-8e05-4140-950f-b8c559deee56',
         name: 'Top Performing - VIP Recognition B',
         subject: 'Your trading profile unlocked a more tailored Bullwaves path.',
         timing: 'D0',
@@ -1688,16 +1688,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-0a7145f002b44f97aebbeec84b918bf1',
-        versionId: 'a08f0ca8-802e-48a2-98fe-c66bc80eec26',
+        templateId: 'd-bc1d08258d954cf898600618d932fb92',
+        versionId: '571e7f7e-0797-42de-8e50-49b102e2f64c',
         name: 'Top Performing - VIP Recognition A IT',
         subject: 'Sei tra i top performer Bullwaves. Il prossimo passo è costruito di conseguenza.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-644aaf5d6af64564993d198279aba9dd',
-        versionId: '26484d89-5a76-4d87-8fd7-8ebe872b720d',
+        templateId: 'd-8356912bf6134d2bb36722c42bf2173d',
+        versionId: 'e17d67b0-7adb-432e-952e-a7f69a8ce191',
         name: 'Top Performing - VIP Recognition B IT',
         subject: 'Il tuo profilo trading ha sbloccato un percorso Bullwaves più su misura.',
         timing: 'D0',
@@ -1708,16 +1708,16 @@ export const sendgridTemplateRegistry = {
   top_performing_vip_review_email: {
     en: {
       a: {
-        templateId: 'd-2343c2b7227143c98239ce0893015e9c',
-        versionId: 'afe6bede-8deb-4e80-9831-fc19d61dab55',
+        templateId: 'd-d4fec930a9d04fd98bd42a5750044e46',
+        versionId: '82d6553c-b8f0-4620-978e-acd045dd12d3',
         name: 'Top Performing - VIP Review A',
         subject: 'Your quarterly Bullwaves VIP review is ready.',
         timing: 'Q+0d',
         delay: 'At the start of the quarterly review cycle',
       },
       b: {
-        templateId: 'd-7cb0344af4a044f5965e4aba6d99c5b4',
-        versionId: 'c25bbf54-b1f4-4f02-8e77-6ec00b5fb2d8',
+        templateId: 'd-a24766ea18da4b09a4c8c922dffc77ec',
+        versionId: '3743f280-0333-4fd5-a337-8f5d4aaf624e',
         name: 'Top Performing - VIP Review B',
         subject: 'A stronger next quarter starts with a sharper review now.',
         timing: 'Q+0d',
@@ -1726,16 +1726,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-6e515e09b751404a95792537cd5deb56',
-        versionId: 'c4e2f5af-9fa6-4f30-860c-f2425f847357',
+        templateId: 'd-bc1cdc19d09b4aa5a679cee6deeb6608',
+        versionId: 'f1ae3127-a431-4809-a702-23d30a416c59',
         name: 'Top Performing - VIP Review A IT',
         subject: 'La tua review VIP trimestrale Bullwaves è pronta.',
         timing: 'Q+0d',
         delay: 'All inizio del ciclo review trimestrale',
       },
       b: {
-        templateId: 'd-7e10afc6245d4089b124e0662ec996e7',
-        versionId: 'e24ead62-951d-4d17-86c6-d8b19955e5cc',
+        templateId: 'd-340d300b319141e5a5c713b536c9d5af',
+        versionId: '57bb9e38-8b89-4025-a858-939f1fbd4c62',
         name: 'Top Performing - VIP Review B IT',
         subject: 'Un prossimo trimestre più forte parte da una review più lucida oggi.',
         timing: 'Q+0d',
@@ -1746,16 +1746,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_post_login_deposit_activation_email: {
     it: {
       a: {
-        templateId: 'd-d9799893ebef49fc9a04e6c51936a68e',
-        versionId: '33bae03a-d1ad-4fab-8113-97d0cb94a7db',
+        templateId: 'd-9d4a617450cb4e85a01c5269442518a4',
+        versionId: '06d8d3af-ad0c-4d00-a412-b4991418ecb7',
         name: 'Unfunded Newcomers - +48h Deposito + Trade A',
         subject: 'Il tuo account è attivo. Il tuo account manager dedicato è ora disponibile.',
         timing: '+48h',
         delay: '+48 ore dopo il welcome message',
       },
       b: {
-        templateId: 'd-f34c1fe855694bf18a2ce16809c7ae8c',
-        versionId: '8b64e988-3d02-4077-9de7-4b1489a8e52a',
+        templateId: 'd-11de40d7b27345e791ba42457c7d87a0',
+        versionId: '8c0e50d1-96d0-4434-9d2a-761327a60d06',
         name: 'Unfunded Newcomers - +48h Deposito + Trade B',
         subject: 'La tua prima operatività è avviata. Ora hai una guida dedicata.',
         timing: '+48h',
@@ -1764,16 +1764,16 @@ export const sendgridTemplateRegistry = {
     },
     en: {
       a: {
-        templateId: 'd-b973f2a405424420a5ab3d8da289b499',
-        versionId: '2798fec1-4b60-4926-a288-d3b59430c2ab',
+        templateId: 'd-92a5d540684e4d9cb85f9b8770e6038b',
+        versionId: '2a2ca20c-cbfd-4ace-a471-c6149c651ff3',
         name: 'Unfunded Newcomers - +48hr Deposit + Trade A',
         subject: 'Your account is active. Your dedicated account manager is now available.',
         timing: '+48hr',
         delay: '+48 hours after welcome message',
       },
       b: {
-        templateId: 'd-044bcad122d84f1787438495aa1a3e57',
-        versionId: '6528dfe5-574e-4414-aa5a-9e61e9d4dee0',
+        templateId: 'd-c1f5cb7c884241c9aa16f769cfd24ec4',
+        versionId: '4f2a4bf1-c230-4acc-9b13-616b9af958d4',
         name: 'Unfunded Newcomers - +48hr Deposit + Trade B',
         subject: 'Your first activity is in place. Dedicated guidance is now available.',
         timing: '+48hr',
@@ -1784,16 +1784,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_account_activation_reminder_email: {
     it: {
       a: {
-        templateId: 'd-9e2bf1c75add478f93ddb6b248472882',
-        versionId: 'ed5486ef-315b-494e-82a4-0e6c23db1c45',
+        templateId: 'd-2307346007b54fab8ce9992209242aa7',
+        versionId: '8169fc46-e88e-4c09-b9af-7384831e9607',
         name: 'Unfunded Newcomers - +48h Nessun Deposito A',
         subject: 'Il deposito non è ancora stato completato. Il prossimo passo è ancora aperto.',
         timing: '+48h',
         delay: '+48 ore dopo il welcome message',
       },
       b: {
-        templateId: 'd-c546f893dba145568a8d793a8a925263',
-        versionId: '3925fe30-fd44-4bdf-b0c4-3d839369332c',
+        templateId: 'd-c08883a15b5e4d3b8cd6bfacc1ee0d0b',
+        versionId: 'ecc77dc5-4640-4272-b0d7-6189aaeb1a1f',
         name: 'Unfunded Newcomers - +48h Nessun Deposito B',
         subject: 'Il tuo account è pronto. Il passaggio di deposito è ancora da completare.',
         timing: '+48h',
@@ -1802,16 +1802,16 @@ export const sendgridTemplateRegistry = {
     },
     en: {
       a: {
-        templateId: 'd-3ed7a5ef517f4297b9fe81e8292cb9a6',
-        versionId: '86ee0f3b-2479-4c06-87f2-2234f9ad5101',
+        templateId: 'd-9e29971d2dba4169af30bede59905311',
+        versionId: 'da0c9aa4-85ac-4319-ba93-447344e4a65c',
         name: 'Unfunded Newcomers - +48hr No Deposit A',
         subject: 'No deposit has been completed yet. Your next step is still open.',
         timing: '+48hr',
         delay: '+48 hours after welcome message',
       },
       b: {
-        templateId: 'd-143b22351278478a82eb973f6350a254',
-        versionId: 'e7bf3260-43b5-4ab0-94b6-cf3c9e2385cc',
+        templateId: 'd-3a9f63c305774a58809e5ea61e9371c9',
+        versionId: '87db75e3-dc9b-42ae-9a9e-c9cb94763760',
         name: 'Unfunded Newcomers - +48hr No Deposit B',
         subject: 'Your account is ready. The deposit step is still pending.',
         timing: '+48hr',
@@ -1822,16 +1822,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_deposit_intent_recovery_email: {
     en: {
       a: {
-        templateId: 'd-c2d2a0dd07b74e5bb0a558b46b96b89d',
-        versionId: '3000e43d-5683-4944-a0f4-4a621a05c96b',
+        templateId: 'd-8827359ed0f247fca15385dc923b0c9e',
+        versionId: '27c3beb7-c2ca-4077-bca0-fe8c5ad64815',
         name: 'Unfunded Newcomers - Deposit Intent Recovery A',
         subject: 'Your account is ready to continue. The deposit path is still open.',
         timing: '+3d',
         delay: '+3 days after the no-deposit follow-up',
       },
       b: {
-        templateId: 'd-706dade977124b1195c3fb8be35ce037',
-        versionId: 'd575f14a-a7c2-4f40-bc76-b855b3a8c095',
+        templateId: 'd-02f31ec08ff74572905509b24fc6f60b',
+        versionId: '4801f28f-f300-41f4-8ff0-23f64e54bce2',
         name: 'Unfunded Newcomers - Deposit Intent Recovery B',
         subject: 'Your return is a good sign. The deposit path is still available.',
         timing: '+3d',
@@ -1840,16 +1840,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-130098ffa8d84e60be45b21116e9c8ad',
-        versionId: '7a42467a-7c6d-4ce3-8bf5-cbe9396d2203',
+        templateId: 'd-315b0dffc5f144af98c59cdb20ca57c6',
+        versionId: 'b3855930-c930-4e3e-8a19-8a6aec7e80f4',
         name: 'Unfunded Newcomers - Recupero Intento Deposito A',
         subject: 'Il tuo account è pronto per continuare. Il percorso di deposito è ancora aperto.',
         timing: '+3g',
         delay: '+3 giorni dopo il touch no-deposito',
       },
       b: {
-        templateId: 'd-17eb6df60f89453caec0df23b260c2bf',
-        versionId: '7a3ec722-b63d-4ff9-bc6e-6af64502092b',
+        templateId: 'd-538d84691d514767b4150d388e7c4bc6',
+        versionId: 'fe6d539b-9063-4d4f-ad10-ab532849acbf',
         name: 'Unfunded Newcomers - Recupero Intento Deposito B',
         subject:
           'Il tuo rientro è un segnale positivo. Il percorso di deposito è ancora disponibile.',
@@ -1861,8 +1861,8 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_first_deposit_push_email: {
     en: {
       a: {
-        templateId: 'd-92da8490d8264618be2e00775aec4629',
-        versionId: '4d6a8306-2269-4ee4-a2e5-b42f24b0e036',
+        templateId: 'd-4477fc824cc5465a9b56c986877310fb',
+        versionId: 'f87b25a9-c70b-4b47-b502-36e41acaddba',
         name: 'Unfunded Newcomers - First Deposit Push A',
         subject:
           'Your first deposit is complete. Your Bullwaves account is ready for the next step.',
@@ -1870,8 +1870,8 @@ export const sendgridTemplateRegistry = {
         delay: 'Immediately after successful deposit confirmation',
       },
       b: {
-        templateId: 'd-7b47f5e61780443799ee40a531568b38',
-        versionId: 'ece7d409-5b24-42b4-a2b5-5d003de3a822',
+        templateId: 'd-9bdb7870f0cb4634be396a2947fc938f',
+        versionId: '30c7024d-5086-4d6f-bf25-2ae5384e4da0',
         name: 'Unfunded Newcomers - First Deposit Push B',
         subject: 'Your account is funded. Now continue with the next active step.',
         timing: 'DEPOSIT OK +0d',
@@ -1880,8 +1880,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-c010b6bf217b4177b61707a8c557cbee',
-        versionId: '05cf59b6-9cc9-4783-a550-a9faa3305626',
+        templateId: 'd-8a24c0b859d34448b6d6842f97692b39',
+        versionId: '7962e2ae-a37f-4a73-8cf8-63988b4c8daa',
         name: 'Unfunded Newcomers - Primo Deposito A',
         subject:
           'Il tuo primo deposito è completato. Il tuo account Bullwaves è pronto per il prossimo passo.',
@@ -1889,8 +1889,8 @@ export const sendgridTemplateRegistry = {
         delay: 'Immediatamente dopo la conferma del deposito',
       },
       b: {
-        templateId: 'd-0fe9ba896386456b95b5c53b76a88268',
-        versionId: '2d89beee-9287-47c1-8237-58c62f0be736',
+        templateId: 'd-9ab42207c2aa4905bb498952a7dd3fa1',
+        versionId: '6424e373-f704-4a8b-be67-ecbc1f0b2686',
         name: 'Unfunded Newcomers - Primo Deposito B',
         subject: 'Il tuo account è finanziato. Ora continua con il prossimo passo operativo.',
         timing: 'DEPOSIT OK +0d',
@@ -1901,16 +1901,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_first_trade_onboarding_email: {
     en: {
       a: {
-        templateId: 'd-192758b6508240d89507053f69f9ca9b',
-        versionId: '567f50be-6dd8-4120-a7d4-87ed1ab67417',
+        templateId: 'd-3329c8ea34be4de8b32cccc8f04d8fdb',
+        versionId: 'f19b195f-9a9d-462e-b15c-445776fc86b5',
         name: 'Unfunded Newcomers - First Trade Onboarding A',
         subject: 'Your first deposit is complete. Your dedicated account manager is available.',
         timing: 'FTD +0d',
         delay: 'Immediately after successful first deposit',
       },
       b: {
-        templateId: 'd-33fe70fd80864e70b6eae74a4553fa07',
-        versionId: '65c51c8e-41ca-4f32-8ba0-2d93b79ba0fb',
+        templateId: 'd-eb17316de65a497ea42cff68d736fd63',
+        versionId: 'be191919-4066-48f7-a407-754ea56fd773',
         name: 'Unfunded Newcomers - First Trade Onboarding B',
         subject: 'Your account is now funded. Dedicated support is available for the next step.',
         timing: 'FTD +0d',
@@ -1919,8 +1919,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-662382ac8cc146fa9f3f7fc67a0b77df',
-        versionId: 'b2122d15-7135-4cf9-b5cb-77b887b5bd77',
+        templateId: 'd-ddffe6ad701d431aa740166844ce8110',
+        versionId: '01f0635b-bf56-4d9d-99b4-b378fd18e649',
         name: 'Unfunded Newcomers - Onboarding Primo Trade A',
         subject:
           'Il tuo primo deposito è completato. Il tuo account manager dedicato è disponibile.',
@@ -1928,8 +1928,8 @@ export const sendgridTemplateRegistry = {
         delay: 'Immediatamente dopo il primo deposito riuscito',
       },
       b: {
-        templateId: 'd-b9dc4454a1e1468988bf4e3e3ce336b1',
-        versionId: 'f998b653-f80b-48a8-afd3-fc4e7643926c',
+        templateId: 'd-0c60023f73d140948e4b1f6d419dc512',
+        versionId: 'e8479ca0-4d01-488e-a178-5ac2ddb88d31',
         name: 'Unfunded Newcomers - Onboarding Primo Trade B',
         subject: 'Il tuo account è ora finanziato. Hai un supporto dedicato per il prossimo passo.',
         timing: 'FTD +0d',
@@ -1940,16 +1940,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_friction_reduction_email: {
     en: {
       a: {
-        templateId: 'd-070656e9654c4cda8b3388c4840c1a6e',
-        versionId: '7d929f01-6cf0-42be-989c-dd368e5e67e5',
+        templateId: 'd-8a7a4d439aa1464f9cc748b5274b9a14',
+        versionId: '9784b0ce-7ac5-4f6e-914b-21c5af62a847',
         name: 'Unfunded Newcomers - Friction Reduction A',
         subject: 'If you have questions before funding, here is a clearer way forward.',
         timing: 'D2',
         delay: '+2 days after welcome message',
       },
       b: {
-        templateId: 'd-7e2d3e8aa47b45dbbc161d0e2d5cf044',
-        versionId: '7b381c67-9b72-4193-8f88-935b07931072',
+        templateId: 'd-416de086e9b24168acb7180073e89470',
+        versionId: '66434700-61b1-4ab6-b05e-187c31a5363a',
         name: 'Unfunded Newcomers - Friction Reduction B',
         subject: 'The deposit step may be simpler than it seems.',
         timing: 'D2',
@@ -1958,16 +1958,16 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-4bd5fd578c7f4d6f933da6670c20e8b6',
-        versionId: 'df257034-2601-4f6e-8d62-7f67addf055c',
+        templateId: 'd-e2098132b8ef49ee802c79a8fc98b955',
+        versionId: 'a4c088c5-369f-4078-aa79-8f0c1626866e',
         name: 'Unfunded Newcomers - Riduzione Attriti A',
         subject: 'Se hai dubbi prima di depositare, ecco un modo più chiaro per procedere.',
         timing: 'D2',
         delay: '+2 giorni dopo il welcome message',
       },
       b: {
-        templateId: 'd-1f46366f7120412dab51635e793f5827',
-        versionId: '2f0e6d0c-c3c8-465b-9354-97d8423c16a4',
+        templateId: 'd-906eaba785fb483f8a3710af3ff70160',
+        versionId: '89d69cef-f5fc-4f3e-9f97-589fb67f6644',
         name: 'Unfunded Newcomers - Riduzione Attriti B',
         subject: 'Il deposito potrebbe essere più semplice di quanto sembri.',
         timing: 'D2',
@@ -1978,16 +1978,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_reentry_nurture_email: {
     en: {
       a: {
-        templateId: 'd-16dec51da32a4f82827b8992b253f193',
-        versionId: 'cf39ee05-5e3d-4117-892f-02ff01c33735',
+        templateId: 'd-ad561478c20a450f93c71cc99c22fff0',
+        versionId: '2ed106ee-4d31-4115-95b8-ff7eb40340e8',
         name: 'Unfunded Newcomers - Re-entry Nurture A',
         subject: 'If you are still considering Bullwaves, returning can be simpler than expected.',
         timing: 'D21',
         delay: '+21 days after last non-converted step',
       },
       b: {
-        templateId: 'd-3d042316676145358bf4ab756802e645',
-        versionId: '492adbf6-da7b-4b4e-8728-6bcd15a6be43',
+        templateId: 'd-46e2360d1ff74065b620cfd014a543d7',
+        versionId: 'cc6414a7-7c0d-478c-8d90-da0ea009f549',
         name: 'Unfunded Newcomers - Re-entry Nurture B',
         subject: 'Your Bullwaves opportunity is still open. You can return with greater clarity.',
         timing: 'D21',
@@ -1996,8 +1996,8 @@ export const sendgridTemplateRegistry = {
     },
     it: {
       a: {
-        templateId: 'd-6e3163dc104c4c0a93199ff9d4b2fdf7',
-        versionId: '276a02fb-2a34-490a-892d-b825866784bf',
+        templateId: 'd-3f9800300de44fda8b592b0c26326312',
+        versionId: 'e5e8d412-90b5-4704-b0b2-da06d91169e9',
         name: 'Unfunded Newcomers - Riattivazione Soft A',
         subject:
           'Se stai ancora valutando Bullwaves, tornare può essere più semplice di quanto sembri.',
@@ -2005,8 +2005,8 @@ export const sendgridTemplateRegistry = {
         delay: '+21 giorni dopo l ultimo step non convertito',
       },
       b: {
-        templateId: 'd-ba0178bae6f342038ad4f550dc06a1ef',
-        versionId: '580994e6-a223-431b-9029-c21ffa6a4879',
+        templateId: 'd-58f46370970b4c27915d43d6d6355538',
+        versionId: '95a8823d-161f-43d9-ab9d-a584171fb25d',
         name: 'Unfunded Newcomers - Riattivazione Soft B',
         subject:
           'La tua opportunità con Bullwaves è ancora aperta. Puoi rientrare con maggiore chiarezza.',
@@ -2018,16 +2018,16 @@ export const sendgridTemplateRegistry = {
   unfunded_newcomers_welcome_value_email: {
     it: {
       a: {
-        templateId: 'd-48d554bff2534e92a62f33b936cd51ce',
-        versionId: 'd6e95aeb-f3b0-4b51-9720-bb53c74461aa',
+        templateId: 'd-ce5888a4570d470ca8622d137fd6e67d',
+        versionId: 'ee9ed1e8-8410-49f5-ab44-7b08a8b88f06',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore A',
         subject: 'Il tuo account Bullwaves è pronto. Il prossimo passo è disponibile quando vuoi.',
         timing: 'D0',
         delay: "0 giorni dall'ingresso nel segmento",
       },
       b: {
-        templateId: 'd-260c34d7c84c4ef280ee7dfd8538bf99',
-        versionId: '6259cffa-0173-4176-a40f-6f1ccc1f05a5',
+        templateId: 'd-be776716ff8d4d7fabcfe500f668c84c',
+        versionId: '98a29c08-0078-467d-9679-1bc19e8e144c',
         name: 'Unfunded Newcomers - Welcome + Proposta di Valore B',
         subject:
           'Registrazione completata. Il tuo account Bullwaves è pronto per il prossimo passo.',
@@ -2037,16 +2037,16 @@ export const sendgridTemplateRegistry = {
     },
     en: {
       a: {
-        templateId: 'd-6dbc11007c244c8ab87e2d4d8fa015e4',
-        versionId: '8f3f5fac-a2d8-4042-90e1-08b7fa82e8bb',
+        templateId: 'd-3d420139066641ceae1baf58d5560fb6',
+        versionId: 'b0ebe51c-427e-497f-8056-2f3faa3fbc25',
         name: 'Unfunded Newcomers - Welcome + Value Proposition A',
         subject: 'Your Bullwaves account is ready. The next step is available whenever you are.',
         timing: 'D0',
         delay: '0 days from segment entry',
       },
       b: {
-        templateId: 'd-26cf50cb8d944f58ae436eb14a13d687',
-        versionId: '756f8692-e74b-4452-af58-9b6eb32e1bb1',
+        templateId: 'd-7e99295ac2ab46e0a2c7af7ac85ba507',
+        versionId: '60e900f9-3cb2-40e2-9abb-d9c986af378e',
         name: 'Unfunded Newcomers - Welcome + Value Proposition B',
         subject:
           'Your registration is complete. Your Bullwaves account is ready for the next step.',

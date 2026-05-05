@@ -4684,6 +4684,174 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   text-transform: none;
 }
 
+/* ACUITY Lab */
+.acuity-lab__grid {
+  display: grid;
+  gap: 14px;
+}
+
+.acuity-lab__grid--setup {
+  grid-template-columns: minmax(240px, 1fr) minmax(220px, 320px);
+}
+
+.acuity-lab__grid--drafts {
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+}
+
+.acuity-lab__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acuity-lab__field span {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.acuity-lab__field input,
+.acuity-lab__textarea {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(2, 6, 23, 0.34);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.acuity-lab__field input:focus,
+.acuity-lab__textarea:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.75);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.acuity-lab__status {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.35);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.acuity-lab__status span {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.acuity-lab__status strong {
+  font-size: 15px;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.acuity-lab__status small {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.acuity-lab__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.acuity-lab__actions--wrap {
+  flex-wrap: wrap;
+}
+
+.acuity-lab__error {
+  margin-top: 10px;
+  color: #fecaca;
+  font-size: 12px;
+}
+
+.acuity-lab__textarea {
+  margin-top: 12px;
+  min-height: 170px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.acuity-lab__messages {
+  display: grid;
+  gap: 8px;
+}
+
+.acuity-lab__messageItem {
+  width: 100%;
+  text-align: left;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: rgba(15, 23, 42, 0.32);
+  color: var(--text-primary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.acuity-lab__messageItem small {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.acuity-lab__messageItem.is-active {
+  border-color: rgba(59, 130, 246, 0.75);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+}
+
+.acuity-lab__pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.32);
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.acuity-lab__journey {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.32);
+  padding: 12px 14px;
+}
+
+.acuity-lab__journey p {
+  margin: 0 0 10px;
+  color: var(--text-secondary);
+}
+
+.acuity-lab__journey ol {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--text-primary);
+  display: grid;
+  gap: 6px;
+}
+
+@media (max-width: 980px) {
+  .acuity-lab__grid--setup,
+  .acuity-lab__grid--drafts {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* If a section chip follows a list, reduce vertical gap */
 .pb-desc__list + .pb-desc__heading { margin-top: 6px; }
 

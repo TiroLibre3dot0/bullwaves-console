@@ -55,14 +55,14 @@ npm run sendgrid:templates:sync
 ## Required environment variables
 
 - `SENDGRID_API_KEY`
+- `SENDGRID_ON_BEHALF_OF`
+  Mandatory guard rail: sync and audit refuse to run without an explicit subuser target.
 
 Optional:
 
 - `SENDGRID_BASE_URL`
   Default: `https://api.sendgrid.com`
   Use `https://api.eu.sendgrid.com` for EU regional subusers.
-- `SENDGRID_ON_BEHALF_OF`
-  Useful when a parent account manages templates for a subuser.
 
 ## Output artifact
 

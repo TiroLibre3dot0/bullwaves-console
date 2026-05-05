@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Top Opportunities - {{week_label}}</title>
+  <style>
+    body { margin:0; padding:0; background:#c9d9ec; font-family:Arial,Helvetica,sans-serif; color:#071321; }
+    table { border-collapse:collapse; }
+    .wrapper { width:100%; background:radial-gradient(circle at top left, rgba(20,81,197,0.32), transparent 32%), linear-gradient(180deg, #dce8f8 0%, #cfdeef 100%); }
+    .container { width:100%; max-width:700px; margin:0 auto; background:#ffffff; border:1px solid #9eb8db; border-radius:28px; overflow:hidden; box-shadow:0 26px 76px rgba(6,23,44,0.2); }
+    .minimal-header { padding:28px; background:linear-gradient(180deg, #081022 0%, #0b1433 45%, #1632b7 100%); color:#ffffff; }
+    .header-logo { display:block; width:170px; height:auto; border:0; }
+    .minimal-brand-line { margin-top:8px; font-size:11px; line-height:15px; letter-spacing:0.10em; text-transform:uppercase; font-weight:700; color:#e4eeff; }
+    .minimal-body { padding:28px; }
+    .minimal-eyebrow { display:inline-block; margin:0 0 16px; font-size:12px; line-height:16px; letter-spacing:0.12em; text-transform:uppercase; font-weight:700; color:#2949d4; }
+    .minimal-title { margin:0 0 14px; font-size:38px; line-height:1.08; letter-spacing:-0.04em; font-weight:700; color:#071321; }
+    .minimal-copy { margin:0 0 16px; font-size:18px; line-height:1.7; color:#0f1d2e; }
+    .minimal-copy strong { color:#071321; font-weight:700; }
+    .minimal-copy--muted { color:#314a66; }
+    .block-label { font-size:11px; font-weight:700; letter-spacing:0.10em; text-transform:uppercase; color:#4b6b8a; margin-bottom:14px; }
+    .week-chip { display:inline-block; margin:0 0 20px; padding:5px 12px; border-radius:999px; background:rgba(41,73,212,0.10); border:1px solid #a6bce0; font-size:12px; font-weight:700; color:#1e3a8a; }
+    .opps-block { margin:0 0 20px; padding:20px; border-radius:16px; background:#f4f8fe; border:1px solid #c2d6ee; }
+    .asset-row-wrap { margin-bottom:10px; padding:12px 14px; border-radius:12px; background:#ffffff; border:1px solid #c2d6ee; }
+    .asset-row-wrap:last-child { margin-bottom:0; }
+    .rank-badge { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center; border-radius:999px; background:#e4edfa; border:1px solid #b0cae8; font-size:11px; font-weight:700; color:#1e3a8a; vertical-align:middle; margin-right:8px; }
+    .asset-ticker { display:inline-block; font-family:"Courier New",Courier,monospace; font-size:14px; font-weight:700; color:#071321; vertical-align:middle; }
+    .asset-score-pill { display:inline-block; font-size:11px; font-weight:700; color:#166534; background:#dcfce7; border:1px solid #86efac; border-radius:999px; padding:2px 8px; vertical-align:middle; margin-left:8px; }
+    .asset-rating { display:inline-block; font-size:11px; color:#365677; vertical-align:middle; margin-left:6px; }
+    .asset-positivity { display:inline-block; font-size:11px; font-weight:700; color:#1d4ed8; vertical-align:middle; margin-left:4px; }
+    .cta-wrap { margin:22px 0 0; text-align:center; padding:20px 18px; border-radius:22px; background:linear-gradient(180deg, #e1ecff 0%, #d6e6ff 100%); border:1px solid #8caad1; }
+    .btn { display:inline-block; background:linear-gradient(135deg, #225ee6 0%, #0c34c0 100%); color:#ffffff !important; text-decoration:none; padding:16px 28px; border-radius:999px; font-weight:700; font-size:15px; box-shadow:0 14px 30px rgba(9,43,164,0.36); }
+    .helper { margin-top:12px; color:#314a66; font-size:13px; line-height:1.6; }
+    .signature { font-size:14px; color:#243b57; margin-top:18px; line-height:1.7; }
+    .legal { padding:0 24px 26px; }
+    .legal-shell { padding:18px; border-radius:22px; background:linear-gradient(180deg, #e9f1fb 0%, #dfebf9 100%); border:1px solid #a7c0dd; box-shadow:inset 0 1px 0 rgba(255,255,255,0.72); }
+    .legal-brand-table { width:100%; border-collapse:collapse; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid #b4c9e3; }
+    .legal-brand-logo-cell { padding-right:14px; }
+    .legal-logo-badge { width:56px; height:56px; line-height:56px; text-align:center; border-radius:18px; background:linear-gradient(180deg, #ffffff 0%, #edf3fb 100%); border:1px solid #acc4de; box-shadow:0 10px 24px rgba(21,44,79,0.10); }
+    .legal-logo { display:inline-block; vertical-align:middle; width:34px; height:auto; }
+    .legal-kicker { color:#2d4869; font-size:10px; line-height:1.2; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; margin-bottom:5px; }
+    .legal-brand-title { color:#102033; font-size:18px; line-height:1.1; font-weight:700; }
+    .legal-brand-subtitle { margin-top:5px; color:#365677; font-size:12px; line-height:1.55; }
+    .legal-card { padding:15px 17px; border-radius:18px; background:linear-gradient(180deg, #ffffff 0%, #eef5ff 100%); border:1px solid #abc3de; box-shadow:0 8px 18px rgba(21,44,79,0.06); }
+    .legal-card + .legal-card { margin-top:12px; }
+    .legal-card--risk { background:linear-gradient(180deg, #fffaf2 0%, #fff2de 100%); border-color:#d8b171; }
+    .legal-section-title { color:#1b3453; font-size:11px; line-height:1.2; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:9px; }
+    .legal-copy { margin:0; font-size:11px; color:#1f3a59; line-height:1.68; }
+    .legal-links { margin-top:16px; font-size:11px; line-height:1.6; color:#2f4e70; }
+    .legal-link-divider { margin:0 6px; color:#587699; }
+    .legal a { color:#2e49c7; text-decoration:none; }
+    @media only screen and (max-width:620px) {
+      .minimal-header { padding:24px 20px; }
+      .header-logo { width:152px !important; max-width:152px !important; }
+      .minimal-body { padding:24px 20px; }
+      .minimal-title { font-size:28px; line-height:1.12; }
+      .minimal-copy { font-size:16px; }
+      .legal { padding:0 18px 22px; }
+      .legal-shell { padding:16px; }
+      .legal-brand-logo-cell { width:68px !important; padding-right:12px; }
+      .legal-logo-badge { width:50px; height:50px; line-height:50px; border-radius:16px; }
+      .legal-logo { width:30px; }
+      .legal-brand-title { font-size:16px; }
+      .legal-brand-subtitle { font-size:11px; }
+    }
+  </style>
+</head>
+<body>
+<table width="100%" class="wrapper">
+<tr><td align="center" style="padding:20px 10px;">
+
+<table class="container" data-skin="light">
+<tr>
+<td class="minimal-header">
+  <img src="/Logo.png" width="170" alt="Logo Bullwaves" class="header-logo" style="display:block; width:170px; max-width:170px; height:auto; border:0;" />
+  <div class="minimal-brand-line">Bullwaves Client Communication</div>
+</td>
+</tr>
+
+<tr>
+<td class="minimal-body">
+  <div class="minimal-eyebrow">Weekly Opportunity</div>
+  <h1 class="minimal-title">Top Opportunities This Week</h1>
+  <span class="week-chip">{{week_label}}</span>
+  <p class="minimal-copy minimal-copy--muted">The three highest-scoring assets by confidence and consensus, in a fast operational format.</p>
+
+  <div class="opps-block">
+    <div class="block-label">Weekly Shortlist</div>
+
+    <div class="asset-row-wrap">
+      <span class="rank-badge">1</span>
+      <span class="asset-ticker">{{asset_1_ticker}}</span>
+      <span class="asset-score-pill">{{asset_1_score}}</span>
+      <span class="asset-rating">{{asset_1_rating}}</span>
+      <span class="asset-positivity">{{asset_1_positivity}}%</span>
+    </div>
+
+    <div class="asset-row-wrap">
+      <span class="rank-badge">2</span>
+      <span class="asset-ticker">{{asset_2_ticker}}</span>
+      <span class="asset-score-pill">{{asset_2_score}}</span>
+      <span class="asset-rating">{{asset_2_rating}}</span>
+      <span class="asset-positivity">{{asset_2_positivity}}%</span>
+    </div>
+
+    <div class="asset-row-wrap">
+      <span class="rank-badge">3</span>
+      <span class="asset-ticker">{{asset_3_ticker}}</span>
+      <span class="asset-score-pill">{{asset_3_score}}</span>
+      <span class="asset-rating">{{asset_3_rating}}</span>
+      <span class="asset-positivity">{{asset_3_positivity}}%</span>
+    </div>
+  </div>
+
+  <p class="minimal-copy minimal-copy--muted">Want to turn this shortlist into a trading plan? Open the portal and continue your analysis with Bullwaves internal tools.</p>
+
+  <div class="cta-wrap">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+      <tr>
+        <td align="center" style="border-radius:999px; background:#1f56f0;">
+          <a href="https://portal.bullwaves.com/login" class="btn" style="display:inline-block; background:#1f56f0; color:#ffffff !important; text-decoration:none; padding:16px 28px; border-radius:999px; font-weight:700; font-size:15px; line-height:1.2;">Trade</a>
+        </td>
+      </tr>
+    </table>
+    <p class="helper">Full analysis available in your members area.</p>
+  </div>
+
+  <p class="signature">Best regards,<br><strong>The Bullwaves Team</strong></p>
+</td>
+</tr>
+
+<tr>
+<td class="legal">
+  <div class="legal-shell">
+    <table width="100%" role="presentation" class="legal-brand-table">
+      <tr>
+        <td width="74" valign="middle" class="legal-brand-logo-cell">
+          <div class="legal-logo-badge">
+            <img src="/Group%202087330261.svg" width="42" alt="Logo Bullwaves" class="legal-logo" />
+          </div>
+        </td>
+        <td valign="middle">
+          <div class="legal-kicker">Bullwaves</div>
+          <div class="legal-brand-title">Bullwaves</div>
+          <div class="legal-brand-subtitle">Regulatory Information &amp; Essential Risk Warning</div>
+        </td>
+      </tr>
+    </table>
+    <div class="legal-card">
+      <div class="legal-section-title">Company Information</div>
+      <p class="legal-copy">Bullwaves is a trading name used by multiple licensed entities across different jurisdictions, including Equitex Capital Limited (Registration No. 8434948-1), authorised and regulated by the Financial Services Authority (FSA, licence no. SD185), and Moonance LLC, regulated by MISA in the Comoros Islands.</p>
+    </div>
+    <div class="legal-card legal-card--risk">
+      <div class="legal-section-title">Risk Warning</div>
+      <p class="legal-copy">Over-the-counter derivatives are complex instruments and carry a high risk of losing capital rapidly due to leverage. You should consider whether you understand how over-the-counter derivatives work and whether you can afford to take the high level of risk with your capital. Investing in over-the-counter derivatives involves significant risks and is not suitable for all investors.</p>
+    </div>
+    <div class="legal-links">
+      <a href="{{unsubscribe}}">Unsubscribe</a>
+      <span class="legal-link-divider">&middot;</span>
+      <a href="#">Email Preferences</a>
+    </div>
+  </div>
+</td>
+</tr>
+</table>
+
+</td></tr>
+</table>
+</body>
+</html>

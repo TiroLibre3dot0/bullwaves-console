@@ -1,9 +1,13 @@
 import dotenv from 'dotenv'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { sendgridTemplateRegistry } from './src/pages/Retention/sendgridTemplateRegistry.js'
 
-dotenv.config({ path: path.join(process.cwd(), '.env.sendgrid.local'), override: false })
-dotenv.config({ path: path.join(process.cwd(), '.env.local'), override: false })
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+dotenv.config({ path: path.join(__dirname, '.env.sendgrid.local'), override: false })
+dotenv.config({ path: path.join(__dirname, '.env.local'), override: false })
 
 const apiKey = process.env.SENDGRID_API_KEY || ''
 const baseUrl = process.env.SENDGRID_BASE_URL || 'https://api.sendgrid.com'
@@ -11,6 +15,11 @@ const onBehalfOf = process.env.SENDGRID_ON_BEHALF_OF || ''
 
 if (!apiKey) {
   console.error('SENDGRID_API_KEY missing')
+  process.exit(1)
+}
+
+if (!onBehalfOf) {
+  console.error('SENDGRID_ON_BEHALF_OF missing. Refusing audit without explicit subuser target.')
   process.exit(1)
 }
 
@@ -84,6 +93,7 @@ for (const mapping of mappings) {
 
 console.log(`Audit checked mappings: ${mappings.length}`)
 console.log(`Unique template IDs: ${uniqueTemplateIds.length}`)
+console.log(`Target subuser: ${onBehalfOf}`)
 console.log(`Failures: ${failures.length}`)
 
 if (failures.length) {

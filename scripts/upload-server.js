@@ -9,6 +9,7 @@ const { routeAuth } = require('../serverless/handlers/auth')
 const { routeConvrs } = require('../serverless/handlers/convrs')
 const { routeEmail } = require('../serverless/handlers/email')
 const { routeQlik } = require('../serverless/handlers/qlik')
+const { routeAcuity } = require('../serverless/handlers/acuity')
 
 const projectRoot = path.join(__dirname, '..')
 ;['.env.sendgrid.local', '.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
@@ -831,6 +832,15 @@ app.all('/api/auth/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeAuth(req, res, tail)
+})
+
+app.all('/api/acuity', (req, res) => routeAcuity(req, res, []))
+app.all('/api/acuity/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/acuity\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeAcuity(req, res, tail)
 })
 
 app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))

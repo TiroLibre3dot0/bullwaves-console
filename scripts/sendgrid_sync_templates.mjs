@@ -88,6 +88,10 @@ async function sendgridRequest(method, resourcePath, body) {
     throw new Error('SENDGRID_API_KEY is required for API operations.')
   }
 
+  if (!onBehalfOf) {
+    throw new Error('SENDGRID_ON_BEHALF_OF is required to target the correct SendGrid subuser.')
+  }
+
   const headers = {
     Authorization: `Bearer ${apiKey}`,
     'Content-Type': 'application/json',
@@ -283,6 +287,10 @@ async function writeRuntimeRegistry(summary) {
 }
 
 async function main() {
+  if (!onBehalfOf) {
+    throw new Error('SENDGRID_ON_BEHALF_OF missing. Refusing sync without explicit subuser target.')
+  }
+
   const catalog = buildCatalog()
   const summary = {
     generatedAt: new Date().toISOString(),
@@ -306,6 +314,7 @@ async function main() {
   if (isDryRun && !isApply) {
     await writeOutput(summary)
     console.log(`Dry run complete. Prepared ${catalog.length} SendGrid template records.`)
+    console.log(`Target subuser: ${onBehalfOf}`)
     console.log(`Output written to ${outputFile}`)
     return
   }
@@ -321,6 +330,7 @@ async function main() {
 
   await writeOutput(summary)
   await writeRuntimeRegistry(summary)
+  console.log(`Target subuser: ${onBehalfOf}`)
   console.log(`Sync complete. Output written to ${outputFile}`)
 }
 
