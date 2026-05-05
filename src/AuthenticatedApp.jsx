@@ -57,6 +57,9 @@ const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
 const CreolabsPage = lazy(() => import('./features/creolabs/CreolabsPage'))
+const CreolabsClientListsPage = lazy(
+  () => import('./features/creolabs/pages/CreolabsClientListsPage')
+)
 const AdminPanel = lazy(() => import('./components/AdminPanel'))
 const AdminPasswordsPage = lazy(() => import('./pages/AdminPasswordsPage'))
 
@@ -183,6 +186,7 @@ export default function AuthenticatedApp() {
       whatsappPerformance: '/support/whatsapp-performance',
       trustpilotGuide: '/trustpilot-guide',
       creolabs: '/creolabs',
+      creolabsClientLists: '/creolabs/client-lists',
       reportsHub: '/reports',
       whatsappTemplates: '/whatsapp-templates',
       solitics: '/solitics',
@@ -231,6 +235,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/support/whatsapp-performance')) return 'whatsappPerformance'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
+    if (pathname.startsWith('/creolabs/client-lists')) return 'creolabsClientLists'
     if (pathname.startsWith('/creolabs')) return 'creolabs'
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/whatsapp-templates')) return 'whatsappTemplates'
@@ -681,6 +686,7 @@ export default function AuthenticatedApp() {
               {view === 'whatsappPerformance' ? <WhatsAppPerformancePage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
               {view === 'creolabs' ? <CreolabsPage /> : null}
+              {view === 'creolabsClientLists' ? <CreolabsClientListsPage /> : null}
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'whatsappTemplates' ? <WhatsAppTemplatesPage /> : null}
               {view === 'solitics' ? <SoliticsReportPage /> : null}

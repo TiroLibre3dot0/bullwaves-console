@@ -251,6 +251,14 @@ export default function Sidebar({
           onClick: () => navigate('creolabs'),
           disabled: disabled('creolabs'),
         },
+        {
+          key: 'creolabsClientLists',
+          label: 'Client Lists (30d)',
+          icon: 'list',
+          active: view === 'creolabsClientLists',
+          onClick: () => navigate('creolabsClientLists'),
+          disabled: disabled('creolabs'),
+        },
       ],
     },
     {

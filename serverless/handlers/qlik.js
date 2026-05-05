@@ -1317,6 +1317,160 @@ async function handleCreolabsClients(req, res) {
   return handleCreolabsClientVariant(req, res, 'full', 'Creolabs clients request failed')
 }
 
+/**
+ * GET /api/qlik/creolabs/client-lists?days=30
+ *
+ * Returns 3 deduplicated client lists per brand (BW, BW Global) for the
+ * rolling window of the last `days` calendar days (default 30).
+ *
+ * Because data is month-granular, any month whose end-of-month falls on or
+ * after the cutoff date is included (e.g. for May 5 with days=30 → Apr+May).
+ *
+ * Lists:
+ *   deposited  – clients with deposit > 0 in the window
+ *   withdrawn  – clients with wd > 0 in the window
+ *   inProfit   – clients with (closedPl + openPl) > 0 in the window
+ */
+async function handleCreolabsClientLists(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  const rawDays = urlObj.searchParams.get('days')
+  const days = parsePositiveInt(rawDays, 30, 365)
+
+  try {
+    const { data, cached } = await resolveCreolabsClientVariant(config, 'clientMonths')
+    const clientMonths = Array.isArray(data?.clientMonths) ? data.clientMonths : []
+
+    // Determine which periodIds fall within the last `days` days.
+    const now = new Date()
+    const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    // Include any month whose last day >= cutoff → month rank >= cutoff month rank.
+    const cutoffRank = cutoff.getFullYear() * 100 + (cutoff.getMonth() + 1)
+
+    // Collect period labels that are in range (for metadata).
+    const periodsInRange = new Set()
+    let minRankFound = Number.POSITIVE_INFINITY
+    let maxRankFound = -1
+
+    // Aggregate per brand+clientId over the filtered months.
+    const byBrandClient = new Map()
+
+    for (const row of clientMonths) {
+      const periodId = normalizeText(row?.periodId)
+      const rank = ymRank(periodId)
+      if (rank < cutoffRank) continue // outside window
+
+      periodsInRange.add(periodId)
+      if (rank < minRankFound) minRankFound = rank
+      if (rank > maxRankFound) maxRankFound = rank
+
+      const brand = normalizeText(row?.brand)
+      if (!brand) continue
+
+      const clientId = normalizeText(row?.clientId)
+      const clientName = normalizeText(row?.clientName)
+      if (!clientId && !clientName) continue
+
+      const mapKey = `${brand}|${clientId}|${clientName}`
+      if (!byBrandClient.has(mapKey)) {
+        byBrandClient.set(mapKey, {
+          brand,
+          clientId,
+          clientName,
+          clientLogin: normalizeText(row?.clientLogin),
+          affiliateId: normalizeText(row?.affiliateId),
+          country: normalizeText(row?.country),
+          deposit: 0,
+          wd: 0,
+          closedPl: 0,
+          openPl: 0,
+          trades: 0,
+        })
+      }
+
+      const agg = byBrandClient.get(mapKey)
+      agg.deposit += toFiniteNumber(row?.deposit)
+      agg.wd += toFiniteNumber(row?.wd)
+      agg.closedPl += toFiniteNumber(row?.pl)
+      agg.openPl += toFiniteNumber(row?.openPl)
+      agg.trades += Math.round(toFiniteNumber(row?.trades))
+      // Keep most recent login/country/affiliate in case they changed.
+      if (normalizeText(row?.clientLogin)) agg.clientLogin = normalizeText(row?.clientLogin)
+      if (normalizeText(row?.country)) agg.country = normalizeText(row?.country)
+      if (normalizeText(row?.affiliateId)) agg.affiliateId = normalizeText(row?.affiliateId)
+    }
+
+    // Build per-brand lists.
+    const result = {}
+    for (const agg of byBrandClient.values()) {
+      const b = agg.brand
+      if (!result[b]) {
+        result[b] = { deposited: [], withdrawn: [], inProfit: [] }
+      }
+
+      // Strip internal brand field from the client object.
+      const client = {
+        clientId: agg.clientId,
+        clientName: agg.clientName,
+        clientLogin: agg.clientLogin,
+        affiliateId: agg.affiliateId,
+        country: agg.country,
+        deposit: agg.deposit,
+        wd: agg.wd,
+        closedPl: agg.closedPl,
+        openPl: agg.openPl,
+        trades: agg.trades,
+      }
+
+      if (agg.deposit > 0) result[b].deposited.push(client)
+      if (agg.wd > 0) result[b].withdrawn.push(client)
+      if (agg.closedPl + agg.openPl > 0) result[b].inProfit.push(client)
+    }
+
+    // Sort each list by the primary metric descending for easier consumption.
+    for (const brand of Object.keys(result)) {
+      result[brand].deposited.sort((a, b) => b.deposit - a.deposit)
+      result[brand].withdrawn.sort((a, b) => b.wd - a.wd)
+      result[brand].inProfit.sort((a, b) => (b.closedPl + b.openPl) - (a.closedPl + a.openPl))
+    }
+
+    // Periods metadata (sorted ascending).
+    const periods = [...periodsInRange].sort((a, b) => ymRank(a) - ymRank(b))
+    const fromPeriod = minRankFound !== Number.POSITIVE_INFINITY ? periods[0] : null
+    const toPeriod = periods.length ? periods[periods.length - 1] : null
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          days,
+          cutoffDate: cutoff.toISOString().slice(0, 10),
+          fromPeriod,
+          toPeriod,
+          periods,
+          brands: result,
+          cached,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      { ok: false, error: e?.message || 'Creolabs client-lists request failed', details: e?.details || '' },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
 async function handleCreolabsClientMonths(req, res) {
   return handleCreolabsClientVariant(req, res, 'clientMonths', 'Creolabs client-months request failed')
 }
@@ -1871,6 +2025,10 @@ async function routeQlik(req, res, parts) {
 
   if (head === 'creolabs' && parts[1] === 'client-scores') {
     return handleCreolabsClientScores(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'client-lists') {
+    return handleCreolabsClientLists(req, res)
   }
 
   if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'sheets' && !parts[4]) {
