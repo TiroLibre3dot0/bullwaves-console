@@ -981,26 +981,24 @@ export const translations = {
     'weeklyExecutionHistory.empty': 'No history entries.',
 
     // Login
-    'login.pill': 'Management + Finance + Support access',
+    'login.pill': 'Access controlled by authorized email list',
     'login.title': 'Bullwaves Intelligence',
-    'login.subtitle': 'Enter your work email to continue. Passwords are not required.',
+    'login.subtitle': 'Enter your work email and password to continue.',
     'login.workEmail': 'Work email',
     'login.placeholder': 'you@bullwaves.com',
-    'login.hint':
-      'Only Management, Finance, or Support emails from the org chart will be accepted.',
+    'login.hint': 'Only emails included in the access list can sign in.',
     'login.continue': 'Continue',
     'login.viewOrgChart': 'View Organization Chart ↗',
     'login.allowlistDepartments': 'Departments that can log in',
     'login.allowlistDepartmentsAria': 'Allowlisted departments',
 
     'login.typing.welcome': 'Welcome to Bullwaves Intelligence',
-    'login.typing.access': 'Management + Finance + Support access',
+    'login.typing.access': 'Authorized access list',
     'login.typing.allowlist': 'Email allowlist enforced',
     'login.error.unable': 'Unable to log in.',
 
     // Auth
-    'auth.emailNotAllowlisted':
-      'Email not found in the allowlist (Management + Finance + Support).',
+    'auth.emailNotAllowlisted': 'Email not found in the access list.',
 
     // Languages
     'lang.label': 'Language',
@@ -3577,26 +3575,23 @@ export const translations = {
     'weeklyExecutionHistory.sections.done': 'Completato',
     'weeklyExecutionHistory.empty': 'Nessuna voce nello storico.',
 
-    'login.pill': 'Accesso Management + Finance + Support',
+    'login.pill': 'Accesso controllato da lista email autorizzate',
     'login.title': 'Bullwaves Intelligence',
-    'login.subtitle':
-      'Inserisci la tua email di lavoro per continuare. Nessuna password richiesta.',
+    'login.subtitle': 'Inserisci email di lavoro e password per continuare.',
     'login.workEmail': 'Email di lavoro',
     'login.placeholder': 'nome@bullwaves.com',
-    'login.hint':
-      'Sono accettate solo email di Management, Finance o Support presenti nell’org chart.',
+    'login.hint': 'Possono accedere solo le email presenti nella lista accessi.',
     'login.continue': 'Continua',
     'login.viewOrgChart': 'Apri Organization Chart ↗',
     'login.allowlistDepartments': 'Dipartimenti abilitati al login',
     'login.allowlistDepartmentsAria': 'Dipartimenti autorizzati',
 
     'login.typing.welcome': 'Benvenuto in Bullwaves Intelligence',
-    'login.typing.access': 'Accesso Management + Finance + Support',
+    'login.typing.access': 'Lista accessi autorizzata',
     'login.typing.allowlist': 'Allowlist email attiva',
     'login.error.unable': 'Impossibile effettuare il login.',
 
-    'auth.emailNotAllowlisted':
-      'Email non presente nella allowlist (Management + Finance + Support).',
+    'auth.emailNotAllowlisted': 'Email non presente nella lista accessi.',
 
     'lang.label': 'Lingua',
 
@@ -5868,23 +5863,23 @@ export const translations = {
     'weeklyExecutionHistory.sections.done': 'Završeno',
     'weeklyExecutionHistory.empty': 'Nema unosa u istoriji.',
 
-    'login.pill': 'Pristup: Management + Finance + Support',
+    'login.pill': 'Pristup kontroliše lista odobrenih email adresa',
     'login.title': 'Bullwaves Intelligence',
-    'login.subtitle': 'Unesite poslovni email da nastavite. Lozinka nije potrebna.',
+    'login.subtitle': 'Unesite poslovni email i lozinku da nastavite.',
     'login.workEmail': 'Poslovni email',
     'login.placeholder': 'ti@bullwaves.com',
-    'login.hint': 'Prihvaćeni su samo emailovi iz org charta (Management, Finance ili Support).',
+    'login.hint': 'Prijava je dozvoljena samo za email adrese iz liste pristupa.',
     'login.continue': 'Nastavi',
     'login.viewOrgChart': 'Prikaži Org Chart ↗',
     'login.allowlistDepartments': 'Odeljenja koja mogu da se prijave',
     'login.allowlistDepartmentsAria': 'Dozvoljeni timovi',
 
     'login.typing.welcome': 'Dobrodošli u Bullwaves Intelligence',
-    'login.typing.access': 'Pristup: Management + Finance + Support',
+    'login.typing.access': 'Odobrena lista pristupa',
     'login.typing.allowlist': 'Email allowlist je aktivan',
     'login.error.unable': 'Nije moguće prijaviti se.',
 
-    'auth.emailNotAllowlisted': 'Email nije na allowlisti (Management + Finance + Support).',
+    'auth.emailNotAllowlisted': 'Email nije na listi pristupa.',
 
     'lang.label': 'Jezik',
 
