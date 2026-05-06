@@ -1,22 +1,994 @@
 {
-  "generatedAt": "2026-05-04T12:49:31.625Z",
+  "generatedAt": "2026-05-05T18:17:32.609Z",
   "source": "Media Report.csv",
   "rows": [
+    {
+      "affiliateId": "35112",
+      "affiliateName": "mvmarketing",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -166.6599999999999,
+      "commission": -3308.69,
+      "pl": 7985.6194
+    },
+    {
+      "affiliateId": "35138",
+      "affiliateName": "diamondfc",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 469.18,
+      "commission": 113.44,
+      "pl": 73.7749
+    },
+    {
+      "affiliateId": "35141",
+      "affiliateName": "dovyfx",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 839.02
+    },
+    {
+      "affiliateId": "35143",
+      "affiliateName": "ajmudronja",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 8101.339999999999,
+      "commission": 653.3800000000001,
+      "pl": 13820.923200000001
+    },
+    {
+      "affiliateId": "35144",
+      "affiliateName": "ajmudronja2",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 15,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35164",
+      "affiliateName": "FundedFast",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 9.91
+    },
+    {
+      "affiliateId": "35171",
+      "affiliateName": "fintechmediaadv",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -468.08,
+      "commission": 0,
+      "pl": 828.8483
+    },
+    {
+      "affiliateId": "35180",
+      "affiliateName": "jonathanvareymitchell",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 73492.89,
+      "commission": 15450,
+      "pl": 95453.64559999999
+    },
+    {
+      "affiliateId": "35197",
+      "affiliateName": "Basilatwani",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 2100.1499999999996,
+      "commission": 8100,
+      "pl": 22684.451900000004
+    },
+    {
+      "affiliateId": "35198",
+      "affiliateName": "junjix",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 3819.06,
+      "commission": 800,
+      "pl": 1297.8684999999998
+    },
+    {
+      "affiliateId": "35224",
+      "affiliateName": "theforexcomplex",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1635.73,
+      "commission": 800,
+      "pl": -1511.0855
+    },
+    {
+      "affiliateId": "35227",
+      "affiliateName": "melofx",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1647.28,
+      "commission": 600,
+      "pl": 5280.007699999999
+    },
+    {
+      "affiliateId": "35228",
+      "affiliateName": "fabi69",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -88.9213
+    },
+    {
+      "affiliateId": "35231",
+      "affiliateName": "MoonAff",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -19324.87,
+      "commission": 0,
+      "pl": -4910.1272
+    },
+    {
+      "affiliateId": "35235",
+      "affiliateName": "DefiCreators",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 25,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35254",
+      "affiliateName": "Nardo99",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -71.6723
+    },
+    {
+      "affiliateId": "35256",
+      "affiliateName": "diamondfc1",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 117.07,
+      "commission": 0,
+      "pl": 697.6974
+    },
+    {
+      "affiliateId": "35262",
+      "affiliateName": "mastermelo",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 150,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35263",
+      "affiliateName": "fxnhsignals",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 3019.98,
+      "commission": 1350,
+      "pl": -1294.048
+    },
+    {
+      "affiliateId": "35270",
+      "affiliateName": "WealthWave",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 27214.770000000004,
+      "commission": 15350,
+      "pl": 26001.048500000004
+    },
+    {
+      "affiliateId": "35271",
+      "affiliateName": "ForexAffiliateMasterclass",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 100,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35272",
+      "affiliateName": "Mertyoz",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 31452.74,
+      "commission": 16830.350000000002,
+      "pl": 88198.5166
+    },
+    {
+      "affiliateId": "35273",
+      "affiliateName": "Fredtrading",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 4965.960000000001,
+      "commission": 3920.62,
+      "pl": 20510.491400000014
+    },
+    {
+      "affiliateId": "35281",
+      "affiliateName": "tradingcentalfx",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 136.5426
+    },
+    {
+      "affiliateId": "35284",
+      "affiliateName": "fxnltrading",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1655.69,
+      "commission": 600,
+      "pl": 971.9964000000001
+    },
+    {
+      "affiliateId": "35290",
+      "affiliateName": "masternl",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1255.08,
+      "commission": 0,
+      "pl": 4014.2774999999997
+    },
+    {
+      "affiliateId": "35302",
+      "affiliateName": "bridges",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 16071.5,
+      "commission": 8900,
+      "pl": 7297.1831999999995
+    },
+    {
+      "affiliateId": "35306",
+      "affiliateName": "pavlosaff",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35307",
+      "affiliateName": "rayanlewiis",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 86.06
+    },
+    {
+      "affiliateId": "35315",
+      "affiliateName": "Andrewcga",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 9684.36,
+      "commission": 1200,
+      "pl": -288.4129
+    },
+    {
+      "affiliateId": "35347",
+      "affiliateName": "Saix004",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 600,
+      "commission": 0,
+      "pl": 641.8793
+    },
+    {
+      "affiliateId": "35392",
+      "affiliateName": "legend_circle",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -160.12789999999998
+    },
+    {
+      "affiliateId": "35401",
+      "affiliateName": "Archieward99",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -1570,
+      "commission": 0,
+      "pl": 2732.951
+    },
+    {
+      "affiliateId": "35423",
+      "affiliateName": "fxtradinggroup",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35427",
+      "affiliateName": "aff.bullwaves",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -70.94999999999999,
+      "commission": 0,
+      "pl": -277.2188
+    },
+    {
+      "affiliateId": "35429",
+      "affiliateName": "basil-hannah",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 664.25,
+      "commission": 150,
+      "pl": -114.92
+    },
+    {
+      "affiliateId": "35461",
+      "affiliateName": "vanmanhlh@gmail.com",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 3367.72,
+      "commission": 246.08,
+      "pl": 5114.5794
+    },
+    {
+      "affiliateId": "35465",
+      "affiliateName": "Billionairetrading",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 604.97,
+      "commission": 500,
+      "pl": -752.5291
+    },
+    {
+      "affiliateId": "35475",
+      "affiliateName": "fxgodfather",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 248.23000000000002,
+      "commission": 1100,
+      "pl": -383.8462999999999
+    },
+    {
+      "affiliateId": "35477",
+      "affiliateName": "frenibusiness",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -505.11,
+      "commission": 0,
+      "pl": 524.3487
+    },
+    {
+      "affiliateId": "35529",
+      "affiliateName": "alphatrade",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -5174.78,
+      "commission": 1201.93,
+      "pl": 33659.0296
+    },
+    {
+      "affiliateId": "35575",
+      "affiliateName": "NextStar",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1100.92,
+      "commission": 128.57,
+      "pl": 630.61
+    },
+    {
+      "affiliateId": "35576",
+      "affiliateName": "armaster",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 12.86,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35583",
+      "affiliateName": "basil-tyrone",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0.25,
+      "pl": 63.6699
+    },
+    {
+      "affiliateId": "35592",
+      "affiliateName": "tradeandshare",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -34.3277
+    },
+    {
+      "affiliateId": "35596",
+      "affiliateName": "Robert",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 2290.71,
+      "commission": 19227.64,
+      "pl": 34552.1828
+    },
+    {
+      "affiliateId": "35597",
+      "affiliateName": "junji2",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 12262.8,
+      "commission": 3800,
+      "pl": 4262.4377
+    },
+    {
+      "affiliateId": "35607",
+      "affiliateName": "JamieLeon",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 947.11,
+      "commission": 557,
+      "pl": 1887.6234
+    },
+    {
+      "affiliateId": "35620",
+      "affiliateName": "Radinert",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1154,
+      "commission": 650,
+      "pl": 617.5387
+    },
+    {
+      "affiliateId": "35637",
+      "affiliateName": "Loconsole",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0.32,
+      "pl": -65.5653
+    },
+    {
+      "affiliateId": "35638",
+      "affiliateName": "Dunnyfxt",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 541.9223
+    },
+    {
+      "affiliateId": "35658",
+      "affiliateName": "LucaLaurienzo",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -292.95
+    },
+    {
+      "affiliateId": "35660",
+      "affiliateName": "denbull",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 1182.4222
+    },
+    {
+      "affiliateId": "35680",
+      "affiliateName": "signalstrading",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 1.9000000000000001,
+      "pl": 10.628199999999996
+    },
+    {
+      "affiliateId": "35752",
+      "affiliateName": "Alexmaster",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 690,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35765",
+      "affiliateName": "pitayaai",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35799",
+      "affiliateName": "junji5",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 5802.23,
+      "commission": 2400,
+      "pl": 3386.0688
+    },
+    {
+      "affiliateId": "35800",
+      "affiliateName": "fxstate",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 9556.72,
+      "commission": 5800,
+      "pl": 3638.5262000000002
+    },
+    {
+      "affiliateId": "35801",
+      "affiliateName": "EpLagundo84",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -813.5,
+      "commission": 0,
+      "pl": 392.0363
+    },
+    {
+      "affiliateId": "35829",
+      "affiliateName": "koskos8",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 104.31,
+      "commission": 0,
+      "pl": 103.51100000000001
+    },
+    {
+      "affiliateId": "35835",
+      "affiliateName": "forexchurch",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35853",
+      "affiliateName": "levrone-bw",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -473.02000000000044,
+      "commission": 7200,
+      "pl": -1123.7188
+    },
+    {
+      "affiliateId": "35863",
+      "affiliateName": "diamondfc10",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 117.08,
+      "commission": 0,
+      "pl": 519.5272
+    },
+    {
+      "affiliateId": "35886",
+      "affiliateName": "Empire",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 6304.12,
+      "commission": 2700,
+      "pl": 4116.7482
+    },
+    {
+      "affiliateId": "35890",
+      "affiliateName": "khanarsal",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -1131.99,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35893",
+      "affiliateName": "CISaff",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 701,
+      "commission": 0,
+      "pl": 1485.3
+    },
+    {
+      "affiliateId": "Admasters",
+      "affiliateName": "Admasters",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 104.1,
+      "pl": 363.1517
+    },
+    {
+      "affiliateId": "ajrebates",
+      "affiliateName": "ajrebates",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 68205.31,
+      "commission": 689.6,
+      "pl": 2117.5254
+    },
+    {
+      "affiliateId": "AlbertoMa",
+      "affiliateName": "AlbertoMa",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 820.07,
+      "commission": 0,
+      "pl": -867.3929
+    },
+    {
+      "affiliateId": "bullwavespartner",
+      "affiliateName": "bullwavespartner",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "candrin",
+      "affiliateName": "candrin",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "CentralBrokers1",
+      "affiliateName": "CentralBrokers1",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": -2688.36,
+      "pl": -5762.73
+    },
+    {
+      "affiliateId": "dailyforex",
+      "affiliateName": "dailyforex",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "DayTrading",
+      "affiliateName": "DayTrading",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Default Affiliate",
+      "affiliateName": "Default Affiliate",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 41433.33,
+      "commission": 0,
+      "pl": 26970.293099999995
+    },
+    {
+      "affiliateId": "Dima95",
+      "affiliateName": "Dima95",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "dmorevshare",
+      "affiliateName": "dmorevshare",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Er21960721",
+      "affiliateName": "Er21960721",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 48958.7,
+      "commission": 513.98,
+      "pl": -29470.64
+    },
+    {
+      "affiliateId": "forexero",
+      "affiliateName": "forexero",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": -401.85,
+      "commission": 607.79,
+      "pl": 1026.4436
+    },
+    {
+      "affiliateId": "forexsocial",
+      "affiliateName": "forexsocial",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "G.S-Alpha",
+      "affiliateName": "G.S-Alpha",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": -1028.23,
+      "pl": 0
+    },
+    {
+      "affiliateId": "G.Sicuro",
+      "affiliateName": "G.Sicuro",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 100,
+      "commission": -2453.46,
+      "pl": -1106.58
+    },
+    {
+      "affiliateId": "ibnikolas2106",
+      "affiliateName": "ibnikolas2106",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 100,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Ignatbond",
+      "affiliateName": "Ignatbond",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "kevin@faireconomy.com",
+      "affiliateName": "kevin@faireconomy.com",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "lukedes",
+      "affiliateName": "lukedes",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 300,
+      "commission": 505,
+      "pl": 184.2
+    },
+    {
+      "affiliateId": "manuaceto",
+      "affiliateName": "manuaceto",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "MasterDen",
+      "affiliateName": "MasterDen",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 2575,
+      "pl": 0
+    },
+    {
+      "affiliateId": "menamedia",
+      "affiliateName": "menamedia",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Myfxbook",
+      "affiliateName": "Myfxbook",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 4918.4401
+    },
+    {
+      "affiliateId": "n5444f",
+      "affiliateName": "n5444f",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 8.85,
+      "pl": 1155.21
+    },
+    {
+      "affiliateId": "Nasiru",
+      "affiliateName": "Nasiru",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "owen",
+      "affiliateName": "owen",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Pip24h",
+      "affiliateName": "Pip24h",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "pixgaming",
+      "affiliateName": "pixgaming",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 680.55,
+      "commission": -286.17,
+      "pl": -953.1328
+    },
+    {
+      "affiliateId": "ReignCapital",
+      "affiliateName": "ReignCapital",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 2225.48,
+      "commission": 0,
+      "pl": -86.9649
+    },
+    {
+      "affiliateId": "salesmarkelitics",
+      "affiliateName": "salesmarkelitics",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -270.5683
+    },
+    {
+      "affiliateId": "Samwealth",
+      "affiliateName": "Samwealth",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "sardarsaad1",
+      "affiliateName": "sardarsaad1",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -368.5
+    },
+    {
+      "affiliateId": "ser_ious",
+      "affiliateName": "ser_ious",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 1145.99,
+      "commission": 900,
+      "pl": -6112.8235
+    },
+    {
+      "affiliateId": "Silviobull",
+      "affiliateName": "Silviobull",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -114.3527
+    },
+    {
+      "affiliateId": "StandardMerchants",
+      "affiliateName": "StandardMerchants",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "stefan",
+      "affiliateName": "stefan",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 292.98,
+      "commission": 0,
+      "pl": -1197.5013
+    },
+    {
+      "affiliateId": "superteo89",
+      "affiliateName": "superteo89",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 4200,
+      "commission": 1425.23,
+      "pl": 14648.94
+    },
+    {
+      "affiliateId": "thedealmachines",
+      "affiliateName": "thedealmachines",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": -18.21,
+      "pl": 0
+    },
+    {
+      "affiliateId": "TraderFactor",
+      "affiliateName": "TraderFactor",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "TUnion",
+      "affiliateName": "TUnion",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "violetbalo",
+      "affiliateName": "violetbalo",
+      "year": 2026,
+      "monthIndex": 4,
+      "netDeposits": 0,
+      "commission": 8.6,
+      "pl": 1156.29
+    },
     {
       "affiliateId": "1027",
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 827,
-      "commission": 121.07,
-      "pl": 403.5507
+      "netDeposits": 894.82,
+      "commission": 202.4,
+      "pl": 674.6687
     },
     {
       "affiliateId": "1049",
       "affiliateName": "Cwillows",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -869.94,
       "commission": 0,
       "pl": 138.31
     },
@@ -25,18 +997,18 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 21100,
+      "netDeposits": 152138.18,
       "commission": 0,
-      "pl": 2776.99
+      "pl": 42277.6481
     },
     {
       "affiliateId": "1088",
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 353,
-      "commission": 80.21,
-      "pl": 267.5764
+      "netDeposits": 587.05,
+      "commission": 137.86,
+      "pl": 459.5298
     },
     {
       "affiliateId": "1118",
@@ -45,16 +1017,16 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": -88.7948
+      "pl": 7.2236
     },
     {
       "affiliateId": "1134",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 6669,
+      "netDeposits": 7491.33,
       "commission": 0,
-      "pl": 8779.7559
+      "pl": 10898.4027
     },
     {
       "affiliateId": "114",
@@ -70,9 +1042,9 @@
       "affiliateName": "ReignCapital",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 852,
-      "commission": 500,
-      "pl": -14.2971
+      "netDeposits": 3725.73,
+      "commission": 2000,
+      "pl": -115.9158
     },
     {
       "affiliateId": "12",
@@ -88,52 +1060,52 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 116.88,
       "commission": 0,
-      "pl": 1.2987
+      "pl": 110.7259
     },
     {
       "affiliateId": "1266",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 200,
+      "netDeposits": 1817.36,
       "commission": 0,
-      "pl": 298.6
+      "pl": 375.8053
     },
     {
       "affiliateId": "1311",
       "affiliateName": "salesmarkelitics",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 586,
-      "commission": 500,
-      "pl": 785.3166
+      "netDeposits": 1174.4,
+      "commission": 1000,
+      "pl": 232.29
     },
     {
       "affiliateId": "1416",
       "affiliateName": "Er21960721",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 6000,
-      "commission": 33.5,
-      "pl": 8481.18
+      "netDeposits": 9000,
+      "commission": 45.8,
+      "pl": 11944.53
     },
     {
       "affiliateId": "1425",
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 390,
-      "commission": 123.75,
-      "pl": 416.25
+      "netDeposits": 1290,
+      "commission": -116.92,
+      "pl": -386
     },
     {
       "affiliateId": "1477",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 116,
+      "netDeposits": 115.53,
       "commission": 0,
       "pl": 122.1306
     },
@@ -142,9 +1114,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 4500,
+      "netDeposits": 4382.22,
       "commission": 0,
-      "pl": 1713.06
+      "pl": -471.62
     },
     {
       "affiliateId": "1534",
@@ -153,7 +1125,7 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": 2.59
+      "pl": 3.27
     },
     {
       "affiliateId": "156",
@@ -171,16 +1143,16 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": -28.1212
+      "pl": -101.8239
     },
     {
       "affiliateId": "1569",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 200,
       "commission": 0,
-      "pl": 25.81
+      "pl": 276.11
     },
     {
       "affiliateId": "157",
@@ -188,8 +1160,8 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 1.6,
-      "pl": 0.31
+      "commission": 2.66,
+      "pl": 17.25
     },
     {
       "affiliateId": "1579",
@@ -197,53 +1169,53 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 13.7,
-      "pl": 394.16
+      "commission": 37.6,
+      "pl": 266.54
     },
     {
       "affiliateId": "1581",
       "affiliateName": "Admasters",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 201,
-      "commission": 29.54,
-      "pl": 98.45
+      "netDeposits": 200.98,
+      "commission": -80.73,
+      "pl": -269.11
     },
     {
       "affiliateId": "1604",
       "affiliateName": "Myfxbook",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1200,
+      "netDeposits": 2200,
       "commission": 0,
-      "pl": -1901.44
+      "pl": 2267.02
     },
     {
       "affiliateId": "1608",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 2885,
+      "netDeposits": 3473.75,
       "commission": 0,
-      "pl": -377.3898
+      "pl": 3468.6565
     },
     {
       "affiliateId": "1625",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 700,
+      "netDeposits": -10600,
       "commission": 0,
-      "pl": -2306.61
+      "pl": -8177.32
     },
     {
       "affiliateId": "1690",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 100,
+      "netDeposits": 500.01,
       "commission": 0,
-      "pl": -631.13
+      "pl": -2481.31
     },
     {
       "affiliateId": "1772",
@@ -261,34 +1233,34 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": 34.1831
+      "pl": 44.9629
     },
     {
       "affiliateId": "1850",
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1801,
-      "commission": 199.99,
-      "pl": 2571.83
+      "netDeposits": 3602.83,
+      "commission": 349.96,
+      "pl": 3457.38
     },
     {
       "affiliateId": "1853",
       "affiliateName": "CentralBrokers1",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 6435,
-      "commission": 3565.11,
-      "pl": 8090.13
+      "netDeposits": 7085,
+      "commission": 3907.59,
+      "pl": 8617.02
     },
     {
       "affiliateId": "1859",
       "affiliateName": "G.Sicuro",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 6972,
-      "commission": 896.17,
-      "pl": 3584.67
+      "netDeposits": 6971.44,
+      "commission": -1026.94,
+      "pl": -1966.79
     },
     {
       "affiliateId": "1876",
@@ -331,27 +1303,27 @@
       "affiliateName": "Alberto26",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 2337.46,
       "commission": 0,
-      "pl": -58.8057
+      "pl": -647.1427
     },
     {
       "affiliateId": "2107",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -2555,
+      "netDeposits": -2555.38,
       "commission": 0,
-      "pl": -14.7
+      "pl": 157.54
     },
     {
       "affiliateId": "2111",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1710,
+      "netDeposits": 0,
       "commission": 0,
-      "pl": 1875.3656
+      "pl": 0
     },
     {
       "affiliateId": "2112",
@@ -376,9 +1348,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1657,
+      "netDeposits": 288.29,
       "commission": 0,
-      "pl": 107.5556
+      "pl": 283.3656
     },
     {
       "affiliateId": "2132",
@@ -387,7 +1359,7 @@
       "monthIndex": 3,
       "netDeposits": -1000,
       "commission": 0,
-      "pl": -1030.62
+      "pl": -1158.6
     },
     {
       "affiliateId": "2166",
@@ -457,18 +1429,18 @@
       "affiliateName": "stefan",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 2650,
       "commission": 0,
-      "pl": 1205.9926
+      "pl": 665.1526
     },
     {
       "affiliateId": "2358",
       "affiliateName": "Er21960721",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -14055,
-      "commission": 177.5,
-      "pl": -14055.13
+      "netDeposits": -8514.13,
+      "commission": 600.5,
+      "pl": -3212.72
     },
     {
       "affiliateId": "2401",
@@ -486,16 +1458,16 @@
       "monthIndex": 3,
       "netDeposits": 300,
       "commission": 0,
-      "pl": -28.68
+      "pl": -193.92
     },
     {
       "affiliateId": "2451",
       "affiliateName": "G.Sicuro",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 4731,
-      "commission": 1704.22,
-      "pl": 6700.99
+      "netDeposits": 4731.56,
+      "commission": 1423.26,
+      "pl": 9175.76
     },
     {
       "affiliateId": "2503",
@@ -511,9 +1483,9 @@
       "affiliateName": "AlbertoMa",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 2337,
+      "netDeposits": 3326.42,
       "commission": 0,
-      "pl": 4133.3474
+      "pl": 5238.1159
     },
     {
       "affiliateId": "2531",
@@ -628,9 +1600,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -600,
       "commission": 0,
-      "pl": -191.35
+      "pl": -309.81
     },
     {
       "affiliateId": "2716",
@@ -700,27 +1672,27 @@
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 8402,
-      "commission": 3900.89,
-      "pl": 36846.61
+      "netDeposits": 16736.41,
+      "commission": 5984.56,
+      "pl": 46671.35
     },
     {
       "affiliateId": "2793",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 719,
+      "netDeposits": 307.88,
       "commission": 0,
-      "pl": 1334.8429
+      "pl": 1460.0656
     },
     {
       "affiliateId": "281",
       "affiliateName": "CentralBrokers1",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 2400,
-      "commission": 394.57,
-      "pl": 710.28
+      "netDeposits": 10900,
+      "commission": 784.32,
+      "pl": 1599.15
     },
     {
       "affiliateId": "2816",
@@ -745,9 +1717,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -1320,
+      "netDeposits": -1155.77,
       "commission": 0,
-      "pl": 1965.7099
+      "pl": 4369.3463
     },
     {
       "affiliateId": "2850",
@@ -781,16 +1753,16 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 117.52,
       "commission": 0,
-      "pl": 1.1499
+      "pl": -4.4621
     },
     {
       "affiliateId": "2862",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -3000,
       "commission": 0,
       "pl": -807.22
     },
@@ -862,9 +1834,9 @@
       "affiliateName": "ser_ious",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 2500,
+      "commission": 1700,
+      "pl": -6529.65
     },
     {
       "affiliateId": "2983",
@@ -898,9 +1870,9 @@
       "affiliateName": "Silviobull",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 2338.39,
       "commission": 0,
-      "pl": -3283.2709
+      "pl": 8078.3377
     },
     {
       "affiliateId": "3031",
@@ -954,7 +1926,7 @@
       "monthIndex": 3,
       "netDeposits": 1400,
       "commission": 0,
-      "pl": -34.59
+      "pl": 730.47
     },
     {
       "affiliateId": "3081",
@@ -1222,9 +2194,9 @@
       "affiliateName": "Er21960721",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 4482,
-      "commission": 265.2,
-      "pl": 6862.01
+      "netDeposits": 14482,
+      "commission": 337,
+      "pl": 18745.69
     },
     {
       "affiliateId": "3443",
@@ -1276,36 +2248,36 @@
       "affiliateName": "forexero",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -640,
-      "commission": -455.15,
-      "pl": -758.59
+      "netDeposits": 1140.92,
+      "commission": -376.15,
+      "pl": -621.5271
     },
     {
       "affiliateId": "35060",
       "affiliateName": "Cantax",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1100,
-      "commission": 4819.33,
-      "pl": 8032.22
+      "netDeposits": 874.56,
+      "commission": 14255.720000000001,
+      "pl": 23759.53
     },
     {
       "affiliateId": "35112",
       "affiliateName": "mvmarketing",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1984,
-      "commission": -14092.290000000005,
-      "pl": -23990.0724
+      "netDeposits": 15329.45,
+      "commission": 42920.380000000005,
+      "pl": 70789.50890000002
     },
     {
       "affiliateId": "35138",
       "affiliateName": "diamondfc",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 576,
-      "commission": 1860.13,
-      "pl": 3574.4899
+      "netDeposits": 810.4,
+      "commission": 2790.02,
+      "pl": 5225.645
     },
     {
       "affiliateId": "35141",
@@ -1314,43 +2286,43 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": -3040.2200000000003
+      "pl": 6392.02
     },
     {
       "affiliateId": "35143",
       "affiliateName": "ajmudronja",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1878,
-      "commission": 2400,
-      "pl": -17870.765499999998
+      "netDeposits": 5531.25,
+      "commission": 2754.06,
+      "pl": 6228.874999999999
     },
     {
       "affiliateId": "35164",
       "affiliateName": "FundedFast",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -679,
+      "netDeposits": -1989.43,
       "commission": 0,
-      "pl": -226.45999999999998
+      "pl": -364.74
     },
     {
       "affiliateId": "35171",
       "affiliateName": "fintechmediaadv",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 641,
+      "netDeposits": 2388.84,
       "commission": 0,
-      "pl": 6884.1601
+      "pl": 10594.525
     },
     {
       "affiliateId": "35175",
       "affiliateName": "ActeonCapitalG",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -577,
-      "commission": -274.54,
-      "pl": -499.1588
+      "netDeposits": -1235.59,
+      "commission": -374.81,
+      "pl": -681.4655
     },
     {
       "affiliateId": "3518",
@@ -1366,9 +2338,9 @@
       "affiliateName": "jonathanvareymitchell",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 207158,
-      "commission": 84300.2,
-      "pl": 168512.6613
+      "netDeposits": 423956.82999999996,
+      "commission": 152706.05,
+      "pl": 414463.5235
     },
     {
       "affiliateId": "35183",
@@ -1384,18 +2356,18 @@
       "affiliateName": "Basilatwani",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 51507,
-      "commission": 29200,
-      "pl": 253862.96
+      "netDeposits": 83651.95999999999,
+      "commission": 59850,
+      "pl": 293874.43069999997
     },
     {
       "affiliateId": "35198",
       "affiliateName": "junjix",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 8475,
-      "commission": 6600,
-      "pl": 3766.472399999999
+      "netDeposits": 13789.06,
+      "commission": 11800,
+      "pl": 15805.621500000003
     },
     {
       "affiliateId": "352",
@@ -1407,31 +2379,40 @@
       "pl": 0
     },
     {
+      "affiliateId": "35200",
+      "affiliateName": "snipetrading",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
       "affiliateId": "35224",
       "affiliateName": "theforexcomplex",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 14133,
-      "commission": 1300,
-      "pl": 9478.697600000001
+      "netDeposits": 17455.77,
+      "commission": 2900,
+      "pl": 7547.750099999999
     },
     {
       "affiliateId": "35227",
       "affiliateName": "melofx",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 23787,
-      "commission": 31000,
-      "pl": 25049.124999999996
+      "netDeposits": 32286.350000000002,
+      "commission": 44200,
+      "pl": 32843.029599999994
     },
     {
       "affiliateId": "35228",
       "affiliateName": "fabi69",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 100,
+      "netDeposits": 1736.88,
       "commission": 0,
-      "pl": -484.34270000000004
+      "pl": -777.9149
     },
     {
       "affiliateId": "35230",
@@ -1440,16 +2421,16 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": -15.1975
+      "pl": 31.5748
     },
     {
       "affiliateId": "35231",
       "affiliateName": "MoonAff",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 23624,
-      "commission": 12250,
-      "pl": 4271.7110999999995
+      "netDeposits": 39417.659999999996,
+      "commission": 27200,
+      "pl": 8427.1008
     },
     {
       "affiliateId": "35234",
@@ -1466,7 +2447,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 37.5,
+      "commission": 132.5,
       "pl": 0
     },
     {
@@ -1483,25 +2464,25 @@
       "affiliateName": "Nardo99",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -3925,
+      "netDeposits": -3924.43,
       "commission": 0,
-      "pl": 811.3202
+      "pl": 1800.0922
     },
     {
       "affiliateId": "35256",
       "affiliateName": "diamondfc1",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 4601,
+      "netDeposits": 1316.37,
       "commission": 0,
-      "pl": 2956.9536
+      "pl": 6139.2145
     },
     {
       "affiliateId": "35261",
       "affiliateName": "Liukmane",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 115,
+      "netDeposits": 115.24,
       "commission": 0,
       "pl": 113.4481
     },
@@ -1519,18 +2500,18 @@
       "affiliateName": "fxnhsignals",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 7476,
-      "commission": 1000,
-      "pl": 4942.897999999998
+      "netDeposits": 3121.2,
+      "commission": 2000,
+      "pl": 6503.5692
     },
     {
       "affiliateId": "35270",
       "affiliateName": "WealthWave",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 56945,
-      "commission": 54200,
-      "pl": 118211.6258
+      "netDeposits": 121007.86,
+      "commission": 115750,
+      "pl": 199737.31259999995
     },
     {
       "affiliateId": "35271",
@@ -1538,7 +2519,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 200,
+      "commission": 600,
       "pl": 0
     },
     {
@@ -1546,36 +2527,36 @@
       "affiliateName": "Mertyoz",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 131247,
-      "commission": 151978.29999999996,
-      "pl": 78133.73079999998
+      "netDeposits": 258725.1199999999,
+      "commission": 275166.3499999999,
+      "pl": 318850.81290000014
     },
     {
       "affiliateId": "35273",
       "affiliateName": "Fredtrading",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 10102,
-      "commission": 24098.960000000003,
-      "pl": 21395.034699999993
+      "netDeposits": 4570.579999999998,
+      "commission": 35411.920000000006,
+      "pl": 98163.11950000002
     },
     {
       "affiliateId": "35281",
       "affiliateName": "tradingcentalfx",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -258,
       "commission": 0,
-      "pl": -72.19890000000001
+      "pl": -85.19709999999999
     },
     {
       "affiliateId": "35284",
       "affiliateName": "fxnltrading",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1777,
-      "commission": 5550,
-      "pl": 4957.9976
+      "netDeposits": 3509.56,
+      "commission": 7350,
+      "pl": 6243.271199999999
     },
     {
       "affiliateId": "3529",
@@ -1591,18 +2572,18 @@
       "affiliateName": "masternl",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 5203,
+      "netDeposits": 43105.63,
       "commission": 0,
-      "pl": -2137.0600000000004
+      "pl": 42332.9891
     },
     {
       "affiliateId": "35302",
       "affiliateName": "bridges",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 48291,
-      "commission": 14200,
-      "pl": 34787.6959
+      "netDeposits": 87686.67000000001,
+      "commission": 41300,
+      "pl": 72482.68549999999
     },
     {
       "affiliateId": "35306",
@@ -1618,16 +2599,16 @@
       "affiliateName": "rayanlewiis",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 100,
+      "netDeposits": 300,
       "commission": 0,
-      "pl": 3523.56
+      "pl": 3635.12
     },
     {
       "affiliateId": "35314",
       "affiliateName": "DRIVADAVE",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -117,
       "commission": 0,
       "pl": 131.199
     },
@@ -1636,18 +2617,18 @@
       "affiliateName": "Andrewcga",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 14078,
+      "netDeposits": 12438.32,
       "commission": 3500,
-      "pl": 195.1554
+      "pl": 7086.5786
     },
     {
       "affiliateId": "35347",
       "affiliateName": "Saix004",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1164,
+      "netDeposits": 1163.39,
       "commission": 0,
-      "pl": 394.334
+      "pl": 1261.2394
     },
     {
       "affiliateId": "35392",
@@ -1655,17 +2636,17 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 2240,
-      "commission": 0,
-      "pl": 49.643
+      "commission": 1000,
+      "pl": 1770.2981
     },
     {
       "affiliateId": "35394",
       "affiliateName": "SanderOever",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 0.05,
       "commission": 0,
-      "pl": 2.2077
+      "pl": 132.5113
     },
     {
       "affiliateId": "3540",
@@ -1681,18 +2662,36 @@
       "affiliateName": "Archieward99",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 41640,
-      "commission": 18000,
-      "pl": 2754.6535
+      "netDeposits": 61125.93,
+      "commission": 37600,
+      "pl": 8265.7398
+    },
+    {
+      "affiliateId": "35402",
+      "affiliateName": "joel",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "35403",
+      "affiliateName": "dominguero",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": -4.43
     },
     {
       "affiliateId": "35423",
       "affiliateName": "fxtradinggroup",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -177.25,
       "commission": 0,
-      "pl": 104.9564
+      "pl": 123.3256
     },
     {
       "affiliateId": "35426",
@@ -1701,25 +2700,34 @@
       "monthIndex": 3,
       "netDeposits": 0,
       "commission": 0,
-      "pl": -1.6921
+      "pl": 9.5858
     },
     {
       "affiliateId": "35427",
       "affiliateName": "aff.bullwaves",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 3240,
-      "commission": 0,
-      "pl": 27.649999999999995
+      "netDeposits": 3357.22,
+      "commission": 900,
+      "pl": -366.97110000000004
     },
     {
       "affiliateId": "35429",
       "affiliateName": "basil-hannah",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 3661,
+      "netDeposits": 5727.389999999999,
       "commission": 0,
-      "pl": 5665.177000000001
+      "pl": 8360.8072
+    },
+    {
+      "affiliateId": "35431",
+      "affiliateName": "dutrades",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 450,
+      "commission": 200,
+      "pl": 447.89
     },
     {
       "affiliateId": "3545",
@@ -1735,36 +2743,36 @@
       "affiliateName": "vanmanhlh@gmail.com",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 2487,
-      "commission": 361.68,
-      "pl": 2998.3668
+      "netDeposits": 4928.78,
+      "commission": 967.1999999999999,
+      "pl": 2475.592
     },
     {
       "affiliateId": "35465",
       "affiliateName": "Billionairetrading",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1457,
-      "commission": 750,
-      "pl": 38.513099999999994
+      "netDeposits": 2996.5600000000004,
+      "commission": 2650,
+      "pl": 817.4543999999999
     },
     {
       "affiliateId": "35475",
       "affiliateName": "fxgodfather",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 13270,
-      "commission": 2350,
-      "pl": 10704.1739
+      "netDeposits": 17073.65,
+      "commission": 3650,
+      "pl": 12535.852599999998
     },
     {
       "affiliateId": "35477",
       "affiliateName": "frenibusiness",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 2019,
-      "commission": 1400,
-      "pl": 3907.5812
+      "netDeposits": 13555.08,
+      "commission": 1900,
+      "pl": 22286.4177
     },
     {
       "affiliateId": "3550",
@@ -1789,9 +2797,9 @@
       "affiliateName": "alphatrade",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -6764,
-      "commission": 11633.1,
-      "pl": 90527.24919999999
+      "netDeposits": -5805.7,
+      "commission": 643.73,
+      "pl": 110640.36309999999
     },
     {
       "affiliateId": "3554",
@@ -1807,7 +2815,7 @@
       "affiliateName": "danknight",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -519,
+      "netDeposits": -519.06,
       "commission": 0,
       "pl": 44.98
     },
@@ -1816,9 +2824,9 @@
       "affiliateName": "NextStar",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 9371,
-      "commission": 6353.07,
-      "pl": 2567.2446
+      "netDeposits": 20556.09,
+      "commission": 20032.44,
+      "pl": -461.7672999999993
     },
     {
       "affiliateId": "35576",
@@ -1826,7 +2834,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 635.31,
+      "commission": 2003.24,
       "pl": 0
     },
     {
@@ -1834,72 +2842,72 @@
       "affiliateName": "basil-tyrone",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 133,
-      "commission": 5.45,
-      "pl": 351.5518
+      "netDeposits": 132.5,
+      "commission": 14.3,
+      "pl": 353.00419999999997
     },
     {
       "affiliateId": "35592",
       "affiliateName": "tradeandshare",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -3604.22,
       "commission": 0,
-      "pl": 130.6624
+      "pl": 85.3791
     },
     {
       "affiliateId": "35596",
       "affiliateName": "Robert",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 29275,
-      "commission": -3414.48,
-      "pl": -6678.791300000001
+      "netDeposits": 30034.03,
+      "commission": -2363.64,
+      "pl": -2890.4092
     },
     {
       "affiliateId": "35597",
       "affiliateName": "junji2",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 20246,
-      "commission": 16000,
-      "pl": 8248.4008
+      "netDeposits": 45027.28,
+      "commission": 36400,
+      "pl": 29142.9917
     },
     {
       "affiliateId": "35607",
       "affiliateName": "JamieLeon",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 8581,
-      "commission": 5309.799999999999,
-      "pl": -199.27130000000005
+      "netDeposits": 8617.91,
+      "commission": 5517.599999999999,
+      "pl": 3829.3696
     },
     {
       "affiliateId": "35620",
       "affiliateName": "Radinert",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 14091,
-      "commission": 2600,
-      "pl": 43523.9439
+      "netDeposits": 9649.67,
+      "commission": 4350,
+      "pl": 53945.9106
     },
     {
       "affiliateId": "35637",
       "affiliateName": "Loconsole",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 7206,
-      "commission": 1929.88,
-      "pl": 4920.7675
+      "netDeposits": 7398.03,
+      "commission": 4947.12,
+      "pl": 6472.0316
     },
     {
       "affiliateId": "35638",
       "affiliateName": "Dunnyfxt",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -113,
+      "netDeposits": -541.5,
       "commission": 500,
-      "pl": -555.1516
+      "pl": 5086.6252
     },
     {
       "affiliateId": "3564",
@@ -1924,9 +2932,9 @@
       "affiliateName": "LucaLaurienzo",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -3100,
       "commission": 0,
-      "pl": 973.96
+      "pl": -1931.3999999999999
     },
     {
       "affiliateId": "35660",
@@ -1935,14 +2943,14 @@
       "monthIndex": 3,
       "netDeposits": 500,
       "commission": 1000,
-      "pl": -2187.4095
+      "pl": 1547.0273
     },
     {
       "affiliateId": "35665",
       "affiliateName": "markeliticsita",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -1434,
+      "netDeposits": -1434.48,
       "commission": 0,
       "pl": 0
     },
@@ -1951,9 +2959,18 @@
       "affiliateName": "signalstrading",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -39,
-      "commission": 519.0500000000001,
-      "pl": 343.75309999999996
+      "netDeposits": 36.25999999999999,
+      "commission": 692.9999999999999,
+      "pl": 306.90189999999996
+    },
+    {
+      "affiliateId": "35703",
+      "affiliateName": "tradeflow",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": -508.3,
+      "commission": 0,
+      "pl": 0
     },
     {
       "affiliateId": "3572",
@@ -1970,7 +2987,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 1190,
+      "commission": 3420,
       "pl": 0
     },
     {
@@ -1996,27 +3013,27 @@
       "affiliateName": "junji5",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 7515,
-      "commission": 2400,
-      "pl": 6075.506800000001
+      "netDeposits": 12900.28,
+      "commission": 5400,
+      "pl": 9643.3118
     },
     {
       "affiliateId": "35800",
       "affiliateName": "fxstate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 23384,
-      "commission": 11400,
-      "pl": 9169.0896
+      "netDeposits": 40077.909999999996,
+      "commission": 23700,
+      "pl": 29439.3866
     },
     {
       "affiliateId": "35801",
       "affiliateName": "EpLagundo84",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 679,
+      "netDeposits": 1025.95,
       "commission": 2200,
-      "pl": 3954.3771
+      "pl": 4299.3572
     },
     {
       "affiliateId": "3582",
@@ -2032,9 +3049,9 @@
       "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -7702,
-      "commission": 0,
-      "pl": 311.9342
+      "netDeposits": -1433.0800000000004,
+      "commission": 200,
+      "pl": 4884.7708
     },
     {
       "affiliateId": "35835",
@@ -2059,45 +3076,45 @@
       "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -12434,
-      "commission": 11200,
-      "pl": -1206.7936000000004
+      "netDeposits": 25442.699999999997,
+      "commission": 33800,
+      "pl": 7589.186799999999
     },
     {
       "affiliateId": "35863",
       "affiliateName": "diamondfc10",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 1949,
-      "commission": 2300,
-      "pl": 1001.9303
+      "netDeposits": 7045.98,
+      "commission": 4600,
+      "pl": 12497.038499999999
     },
     {
       "affiliateId": "35886",
       "affiliateName": "Empire",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 4590,
-      "commission": 1500,
-      "pl": -1047.1525
+      "netDeposits": 8576.63,
+      "commission": 5100,
+      "pl": 5284.6708
     },
     {
       "affiliateId": "35890",
       "affiliateName": "khanarsal",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -902.25,
       "commission": 0,
-      "pl": 684.17
+      "pl": 1970.78
     },
     {
       "affiliateId": "35893",
       "affiliateName": "CISaff",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 7915,
-      "commission": 3700,
-      "pl": -459.2199999999998
+      "netDeposits": 13328.689999999999,
+      "commission": 8400,
+      "pl": 9529.1304
     },
     {
       "affiliateId": "35928",
@@ -2113,18 +3130,18 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 16236,
+      "netDeposits": 23254.28,
       "commission": 0,
-      "pl": 4238.0572
+      "pl": 30232.3843
     },
     {
       "affiliateId": "3607",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 450,
       "commission": 0,
-      "pl": 0
+      "pl": 248.39
     },
     {
       "affiliateId": "3612",
@@ -2329,9 +3346,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": -210,
+      "netDeposits": -730,
       "commission": 0,
-      "pl": -634.25
+      "pl": -1011.65
     },
     {
       "affiliateId": "3799",
@@ -2428,9 +3445,9 @@
       "affiliateName": "Admasters",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 1457.67,
+      "commission": 283.56,
+      "pl": 945.1901
     },
     {
       "affiliateId": "3906",
@@ -2455,27 +3472,27 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 100,
       "commission": 0,
-      "pl": 0
+      "pl": -53.2
     },
     {
       "affiliateId": "3923",
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 401,
-      "commission": 100.25,
-      "pl": 1286.65
+      "netDeposits": 1001,
+      "commission": 250.25,
+      "pl": 1728.47
     },
     {
       "affiliateId": "3938",
       "affiliateName": "Er21960721",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 121149,
-      "commission": 2322.24,
-      "pl": 109648.55
+      "netDeposits": 69644.35,
+      "commission": 4889.74,
+      "pl": -3753.33
     },
     {
       "affiliateId": "3982",
@@ -2527,9 +3544,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 265,
+      "netDeposits": 400.02,
       "commission": 0,
-      "pl": 264.0066
+      "pl": 395.7131
     },
     {
       "affiliateId": "4072",
@@ -2752,9 +3769,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 984,
+      "netDeposits": 813,
       "commission": 0,
-      "pl": 632.41
+      "pl": 643.21
     },
     {
       "affiliateId": "4247",
@@ -2815,7 +3832,7 @@
       "affiliateName": "Devidpul",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 11686,
+      "netDeposits": 11686.2,
       "commission": 0,
       "pl": 51932.2496
     },
@@ -3077,7 +4094,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 4650,
+      "commission": 11125,
       "pl": 0
     },
     {
@@ -3094,9 +4111,9 @@
       "affiliateName": "ser_ious",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 300,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 1350,
+      "commission": 900,
+      "pl": 729.36
     },
     {
       "affiliateId": "4507",
@@ -3229,7 +4246,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 100,
+      "netDeposits": -1.8,
       "commission": 0,
       "pl": 0
     },
@@ -3392,7 +4409,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 2276.28,
+      "commission": 1830.79,
       "pl": 0
     },
     {
@@ -3913,9 +4930,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 200,
+      "netDeposits": 2100,
       "commission": 0,
-      "pl": 1098.26
+      "pl": 4070.12
     },
     {
       "affiliateId": "5298",
@@ -3967,7 +4984,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": -900,
       "commission": 0,
       "pl": 0
     },
@@ -4112,7 +5129,7 @@
       "year": 2026,
       "monthIndex": 3,
       "netDeposits": 0,
-      "commission": 35.46,
+      "commission": 36.22,
       "pl": 0
     },
     {
@@ -4246,9 +5263,9 @@
       "affiliateName": "G.Sicuro",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 575,
+      "commission": -625.06,
+      "pl": -2500.25
     },
     {
       "affiliateId": "5542",
@@ -4534,9 +5551,9 @@
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 32.28,
+      "commission": 9.68,
+      "pl": 32.28
     },
     {
       "affiliateId": "5806",
@@ -4615,9 +5632,9 @@
       "affiliateName": "sardarsaad1",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 1935,
+      "commission": 914.55,
+      "pl": -225.8
     },
     {
       "affiliateId": "5864",
@@ -4696,7 +5713,7 @@
       "affiliateName": "stefan",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 232,
+      "netDeposits": 231.58,
       "commission": 0,
       "pl": 0
     },
@@ -4759,9 +5776,9 @@
       "affiliateName": "Myfxbook",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 101977.68,
       "commission": 0,
-      "pl": 0
+      "pl": 8741.2738
     },
     {
       "affiliateId": "5994",
@@ -5065,9 +6082,9 @@
       "affiliateName": "ser_ious",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
+      "netDeposits": 560,
       "commission": 0,
-      "pl": 0
+      "pl": 98.64
     },
     {
       "affiliateId": "636",
@@ -5137,9 +6154,9 @@
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 0,
-      "commission": 0,
-      "pl": 0
+      "netDeposits": 1000,
+      "commission": -73.63,
+      "pl": -245.42
     },
     {
       "affiliateId": "705",
@@ -5416,16 +6433,466 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 3,
-      "netDeposits": 233,
+      "netDeposits": 0,
       "commission": 0,
-      "pl": 258.2936
+      "pl": 0
+    },
+    {
+      "affiliateId": "Admasters",
+      "affiliateName": "Admasters",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Aiforex",
+      "affiliateName": "Aiforex",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "ajrebates",
+      "affiliateName": "ajrebates",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": -1389.34,
+      "commission": 3.36,
+      "pl": -3186.56
+    },
+    {
+      "affiliateId": "Alexturch",
+      "affiliateName": "Alexturch",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Anaisme",
+      "affiliateName": "Anaisme",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "BalhajiFX",
+      "affiliateName": "BalhajiFX",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "bullwavespartner",
+      "affiliateName": "bullwavespartner",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "candrin",
+      "affiliateName": "candrin",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "CentralBrokers1",
+      "affiliateName": "CentralBrokers1",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 7005,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Colegate",
+      "affiliateName": "Colegate",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "dailyforex",
+      "affiliateName": "dailyforex",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "DayTrading",
+      "affiliateName": "DayTrading",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Default Affiliate",
+      "affiliateName": "Default Affiliate",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Dima95",
+      "affiliateName": "Dima95",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 938.68,
+      "commission": 0,
+      "pl": 1288.6252
+    },
+    {
+      "affiliateId": "dm02",
+      "affiliateName": "dm02",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "dmo1",
+      "affiliateName": "dmo1",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 1349.1,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Dmodeejay",
+      "affiliateName": "Dmodeejay",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Er21960721",
+      "affiliateName": "Er21960721",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "forexero",
+      "affiliateName": "forexero",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 2130.37,
+      "commission": 127.53000000000002,
+      "pl": 230.58999999999997
+    },
+    {
+      "affiliateId": "forexsocial",
+      "affiliateName": "forexsocial",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "fxempire",
+      "affiliateName": "fxempire",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "GainXTrading",
+      "affiliateName": "GainXTrading",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "guyads",
+      "affiliateName": "guyads",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "ilWadjet",
+      "affiliateName": "ilWadjet",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "kevin@faireconomy.com",
+      "affiliateName": "kevin@faireconomy.com",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "lu_galis",
+      "affiliateName": "lu_galis",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 850,
+      "pl": 845.306
+    },
+    {
+      "affiliateId": "lucivaltercs",
+      "affiliateName": "lucivaltercs",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "lukedes",
+      "affiliateName": "lukedes",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "marcomudronja",
+      "affiliateName": "marcomudronja",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "meganastra",
+      "affiliateName": "meganastra",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "menamedia",
+      "affiliateName": "menamedia",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "mstmng",
+      "affiliateName": "mstmng",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Myfxbook",
+      "affiliateName": "Myfxbook",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 300,
+      "commission": 0,
+      "pl": 392.57
+    },
+    {
+      "affiliateId": "n5444f",
+      "affiliateName": "n5444f",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 999.61,
+      "commission": 24.6,
+      "pl": -146.68
+    },
+    {
+      "affiliateId": "Nasiru",
+      "affiliateName": "Nasiru",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Nitina",
+      "affiliateName": "Nitina",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "orlan123",
+      "affiliateName": "orlan123",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "owen",
+      "affiliateName": "owen",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "pixgaming",
+      "affiliateName": "pixgaming",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "PocketVibe",
+      "affiliateName": "PocketVibe",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "ReignCapital",
+      "affiliateName": "ReignCapital",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 500,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Romashaonly",
+      "affiliateName": "Romashaonly",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "Samwealth",
+      "affiliateName": "Samwealth",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "sardarsaad1",
+      "affiliateName": "sardarsaad1",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "secrettraffic",
+      "affiliateName": "secrettraffic",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "ser_ious",
+      "affiliateName": "ser_ious",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "StandardMerchants",
+      "affiliateName": "StandardMerchants",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "startbusinessonlinecom",
+      "affiliateName": "startbusinessonlinecom",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "toptrades",
+      "affiliateName": "toptrades",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
+    },
+    {
+      "affiliateId": "TUnion",
+      "affiliateName": "TUnion",
+      "year": 2026,
+      "monthIndex": 3,
+      "netDeposits": 0,
+      "commission": 0,
+      "pl": 0
     },
     {
       "affiliateId": "1054",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 5060,
+      "netDeposits": 5059.61,
       "commission": 0,
       "pl": 5604.59
     },
@@ -5461,7 +6928,7 @@
       "affiliateName": "anitag1",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -3565,
+      "netDeposits": -3565.62,
       "commission": 0,
       "pl": 230.33
     },
@@ -5470,7 +6937,7 @@
       "affiliateName": "Devidpul",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 63316,
+      "netDeposits": 63316.38,
       "commission": 0,
       "pl": 48114.037
     },
@@ -5479,7 +6946,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 5510,
+      "netDeposits": 5510.83,
       "commission": 0,
       "pl": 5449.36
     },
@@ -5488,7 +6955,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 2007,
+      "netDeposits": 2007.19,
       "commission": 0,
       "pl": 853.68
     },
@@ -5497,7 +6964,7 @@
       "affiliateName": "anitag1",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -1,
+      "netDeposits": -0.6,
       "commission": 0,
       "pl": -0.6
     },
@@ -5506,7 +6973,7 @@
       "affiliateName": "Silviobull",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 8076,
+      "netDeposits": 8075.63,
       "commission": 0,
       "pl": 4137.8451
     },
@@ -5515,7 +6982,7 @@
       "affiliateName": "kamilstu",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3447,
+      "netDeposits": 3447.76,
       "commission": 141,
       "pl": 1326.0521
     },
@@ -5524,7 +6991,7 @@
       "affiliateName": "Alberto26",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 576,
+      "netDeposits": 576.02,
       "commission": 0,
       "pl": -40.1764
     },
@@ -5542,16 +7009,16 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 120,
+      "netDeposits": 0,
       "commission": 0,
-      "pl": 57.988
+      "pl": 80.968
     },
     {
       "affiliateId": "160",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 11,
+      "netDeposits": 11.28,
       "commission": 0,
       "pl": 10.9
     },
@@ -5578,7 +7045,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -2442,
+      "netDeposits": -2442.39,
       "commission": 0,
       "pl": -338.05
     },
@@ -5596,7 +7063,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -5810,
+      "netDeposits": -5809.84,
       "commission": 0,
       "pl": -10821.5793
     },
@@ -5614,7 +7081,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -367,
+      "netDeposits": -367.14,
       "commission": 0,
       "pl": -11.51
     },
@@ -5632,7 +7099,7 @@
       "affiliateName": "CoRNeLL",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 279,
+      "netDeposits": 279.11,
       "commission": 0,
       "pl": 280.1865
     },
@@ -5641,7 +7108,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 869,
+      "netDeposits": 869.15,
       "commission": 0,
       "pl": -1754.26
     },
@@ -5677,7 +7144,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 401,
+      "netDeposits": 401.3,
       "commission": 0,
       "pl": 401.5157
     },
@@ -5687,7 +7154,7 @@
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 583,
-      "commission": 0,
+      "commission": 500,
       "pl": 199.31
     },
     {
@@ -5695,7 +7162,7 @@
       "affiliateName": "stefan",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3907,
+      "netDeposits": 3907.27,
       "commission": 0,
       "pl": 2749.8841
     },
@@ -5749,7 +7216,7 @@
       "affiliateName": "salesmarkelitics",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 695,
+      "netDeposits": 695.33,
       "commission": 500,
       "pl": 676.7327
     },
@@ -5785,7 +7252,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 389,
+      "netDeposits": 389.04,
       "commission": 0,
       "pl": 1256.24
     },
@@ -5812,7 +7279,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -4199,
+      "netDeposits": -4198.95,
       "commission": 0,
       "pl": -8211.7219
     },
@@ -6091,7 +7558,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 11040,
+      "netDeposits": 11042.42,
       "commission": 0,
       "pl": 19577.3737
     },
@@ -6217,7 +7684,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1203,
+      "netDeposits": 1203.43,
       "commission": 0,
       "pl": 1085.1614
     },
@@ -6271,7 +7738,7 @@
       "affiliateName": "AlbertoMa",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 15757,
+      "netDeposits": 15757.35,
       "commission": 0,
       "pl": 18252.94
     },
@@ -6289,7 +7756,7 @@
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3558,
+      "netDeposits": 3558.58,
       "commission": 721.81,
       "pl": 2490.8458
     },
@@ -6452,7 +7919,7 @@
       "year": 2026,
       "monthIndex": 2,
       "netDeposits": 0,
-      "commission": 9875,
+      "commission": 9650,
       "pl": 0
     },
     {
@@ -6496,7 +7963,7 @@
       "affiliateName": "Er21960721",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 10000,
+      "netDeposits": 10000.01,
       "commission": 101.6,
       "pl": -12970.52
     },
@@ -6505,7 +7972,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 115,
+      "netDeposits": 115.41,
       "commission": 0,
       "pl": 507.4941
     },
@@ -6523,9 +7990,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 38774,
+      "netDeposits": 38379.19,
       "commission": 0,
-      "pl": 47066.0941
+      "pl": 47025.0828
     },
     {
       "affiliateId": "3039",
@@ -6613,7 +8080,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -15677,
+      "netDeposits": -15676.18,
       "commission": 0,
       "pl": -850.34
     },
@@ -6631,7 +8098,7 @@
       "affiliateName": "stefan",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 291,
+      "netDeposits": 290.83,
       "commission": 0,
       "pl": 0
     },
@@ -6802,7 +8269,7 @@
       "affiliateName": "bosioriccardo",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1736,
+      "netDeposits": 1736.39,
       "commission": 0,
       "pl": 1730.8203
     },
@@ -6813,7 +8280,7 @@
       "monthIndex": 2,
       "netDeposits": 0,
       "commission": 0,
-      "pl": 2486.8619
+      "pl": 0
     },
     {
       "affiliateId": "3345",
@@ -6910,7 +8377,7 @@
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 18313,
+      "netDeposits": 18325.2,
       "commission": 9414.23,
       "pl": 45945.65
     },
@@ -6937,7 +8404,7 @@
       "affiliateName": "Cantax",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1177,
+      "netDeposits": 1177.87,
       "commission": 8128.1,
       "pl": 17031.5058
     },
@@ -6955,7 +8422,7 @@
       "affiliateName": "mvmarketing",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 46184,
+      "netDeposits": 46184.27000000001,
       "commission": 11334.26,
       "pl": 20577.1233
     },
@@ -6973,7 +8440,7 @@
       "affiliateName": "diamondfc",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 929,
+      "netDeposits": 929.19,
       "commission": 273.4,
       "pl": 497.0916
     },
@@ -6991,7 +8458,7 @@
       "affiliateName": "dovyfx",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 501,
+      "netDeposits": 501.27,
       "commission": 0,
       "pl": -8572.53
     },
@@ -7000,9 +8467,9 @@
       "affiliateName": "ajmudronja",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -5567,
-      "commission": 4400,
-      "pl": 22578.155800000008
+      "netDeposits": -5869.26,
+      "commission": 4000,
+      "pl": 24290.095800000006
     },
     {
       "affiliateId": "35144",
@@ -7036,7 +8503,7 @@
       "affiliateName": "fintechmediaadv",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 24825,
+      "netDeposits": 24826.05,
       "commission": 0,
       "pl": 32221.0807
     },
@@ -7045,7 +8512,7 @@
       "affiliateName": "ActeonCapitalG",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 204840,
+      "netDeposits": 204841.65,
       "commission": 48741.53,
       "pl": 88620.9636
     },
@@ -7054,27 +8521,27 @@
       "affiliateName": "jonathanvareymitchell",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 537717,
-      "commission": 165851.55,
-      "pl": 328260.4222
+      "netDeposits": 539306.9700000001,
+      "commission": 165835.6,
+      "pl": 328041.12749999994
     },
     {
       "affiliateId": "35197",
       "affiliateName": "Basilatwani",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 194141,
+      "netDeposits": 194144.53999999998,
       "commission": 130900,
-      "pl": 237503.3093
+      "pl": 237340.39949999997
     },
     {
       "affiliateId": "35198",
       "affiliateName": "junjix",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 36082,
+      "netDeposits": 41833.83,
       "commission": 18850,
-      "pl": 56590.4445
+      "pl": 55935.89259999999
     },
     {
       "affiliateId": "35200",
@@ -7090,7 +8557,7 @@
       "affiliateName": "theforexcomplex",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 18019,
+      "netDeposits": 18019.480000000003,
       "commission": 4300,
       "pl": 28510.4991
     },
@@ -7108,7 +8575,7 @@
       "affiliateName": "melofx",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 28424,
+      "netDeposits": 28426.210000000003,
       "commission": 23400,
       "pl": 40297.0693
     },
@@ -7117,7 +8584,7 @@
       "affiliateName": "fabi69",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3048,
+      "netDeposits": 3047.37,
       "commission": 0,
       "pl": 1459.2822
     },
@@ -7135,7 +8602,7 @@
       "affiliateName": "MoonAff",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 38045,
+      "netDeposits": 38045.030000000006,
       "commission": 22750,
       "pl": 24946.044800000003
     },
@@ -7171,7 +8638,7 @@
       "affiliateName": "Nardo99",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -902,
+      "netDeposits": -901.73,
       "commission": 0,
       "pl": -3450.1626
     },
@@ -7180,7 +8647,7 @@
       "affiliateName": "diamondfc1",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 2840,
+      "netDeposits": 2838.5,
       "commission": 250,
       "pl": 13071.5005
     },
@@ -7189,7 +8656,7 @@
       "affiliateName": "Liukmane",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 116,
+      "netDeposits": 115.51,
       "commission": 0,
       "pl": 115.8383
     },
@@ -7198,7 +8665,7 @@
       "affiliateName": "fxnhsignals",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 19206,
+      "netDeposits": 19205.16,
       "commission": 15050,
       "pl": 38061.04469999999
     },
@@ -7207,9 +8674,9 @@
       "affiliateName": "WealthWave",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 103213,
+      "netDeposits": 103222.38000000002,
       "commission": 130550,
-      "pl": 322890.9773
+      "pl": 323053.8871
     },
     {
       "affiliateId": "35271",
@@ -7225,16 +8692,16 @@
       "affiliateName": "Mertyoz",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 610333,
-      "commission": 386222.8,
-      "pl": 911350.6781000004
+      "netDeposits": 604052.3200000001,
+      "commission": 385438.74999999994,
+      "pl": 912010.4464000005
     },
     {
       "affiliateId": "35273",
       "affiliateName": "Fredtrading",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 134150,
+      "netDeposits": 134149.9,
       "commission": 90825.21999999996,
       "pl": 368567.94269999996
     },
@@ -7252,7 +8719,7 @@
       "affiliateName": "fxnltrading",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3785,
+      "netDeposits": 3784.52,
       "commission": 3499,
       "pl": 435.63999999999993
     },
@@ -7261,7 +8728,7 @@
       "affiliateName": "masternl",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 5741,
+      "netDeposits": 5739.99,
       "commission": 600,
       "pl": 30241.4097
     },
@@ -7270,7 +8737,7 @@
       "affiliateName": "bridges",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 75110,
+      "netDeposits": 75113.02,
       "commission": 44500,
       "pl": 75178.0366
     },
@@ -7288,7 +8755,7 @@
       "affiliateName": "rayanlewiis",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -196,
+      "netDeposits": -195.83,
       "commission": 0,
       "pl": -3033.4486
     },
@@ -7297,7 +8764,7 @@
       "affiliateName": "DRIVADAVE",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 559,
+      "netDeposits": 558.93,
       "commission": 0,
       "pl": 732.1747
     },
@@ -7306,7 +8773,7 @@
       "affiliateName": "Andrewcga",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 542,
+      "netDeposits": 542.36,
       "commission": 0,
       "pl": 3661.3465
     },
@@ -7324,7 +8791,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -1210,
+      "netDeposits": -1043.54,
       "commission": 0,
       "pl": 2477.9888
     },
@@ -7333,7 +8800,7 @@
       "affiliateName": "Saix004",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 404,
+      "netDeposits": 404.37,
       "commission": 0,
       "pl": 1085.425
     },
@@ -7342,7 +8809,7 @@
       "affiliateName": "legend_circle",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1161,
+      "netDeposits": 1161.54,
       "commission": 650,
       "pl": 791.3409999999999
     },
@@ -7360,7 +8827,7 @@
       "affiliateName": "Archieward99",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 22970,
+      "netDeposits": 22969.56,
       "commission": 14400,
       "pl": 4082.3252
     },
@@ -7378,7 +8845,7 @@
       "affiliateName": "fxtradinggroup",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 863,
+      "netDeposits": 862.92,
       "commission": 0,
       "pl": 767.3846000000001
     },
@@ -7396,7 +8863,7 @@
       "affiliateName": "aff.bullwaves",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -2299,
+      "netDeposits": -2298.83,
       "commission": 100,
       "pl": 1461.3759
     },
@@ -7405,7 +8872,7 @@
       "affiliateName": "basil-hannah",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -964,
+      "netDeposits": -963.78,
       "commission": 350,
       "pl": 8805.764399999998
     },
@@ -7423,7 +8890,7 @@
       "affiliateName": "vanmanhlh@gmail.com",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1896,
+      "netDeposits": 1897.16,
       "commission": 608.9399999999999,
       "pl": 74.0966
     },
@@ -7432,7 +8899,7 @@
       "affiliateName": "Billionairetrading",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1198,
+      "netDeposits": 1198.18,
       "commission": 700,
       "pl": 146.8322
     },
@@ -7441,7 +8908,7 @@
       "affiliateName": "fxgodfather",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 18707,
+      "netDeposits": 18705.37,
       "commission": 7700,
       "pl": 35527.541099999995
     },
@@ -7450,7 +8917,7 @@
       "affiliateName": "frenibusiness",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 2981,
+      "netDeposits": 2981.04,
       "commission": 7900,
       "pl": 6777.5406
     },
@@ -7459,7 +8926,7 @@
       "affiliateName": "alphatrade",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -14119,
+      "netDeposits": -14111.500000000002,
       "commission": -5629.27,
       "pl": 40418.7153
     },
@@ -7477,7 +8944,7 @@
       "affiliateName": "NextStar",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -11,
+      "netDeposits": -11.099999999999966,
       "commission": 0,
       "pl": 2121.0912000000003
     },
@@ -7486,7 +8953,7 @@
       "affiliateName": "basil-tyrone",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 492,
+      "netDeposits": 491.72,
       "commission": 31.5,
       "pl": 714.9598
     },
@@ -7495,7 +8962,7 @@
       "affiliateName": "tradeandshare",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1739,
+      "netDeposits": 1739.01,
       "commission": 3250,
       "pl": 375.5316
     },
@@ -7504,7 +8971,7 @@
       "affiliateName": "Robert",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 31993,
+      "netDeposits": 31989.86,
       "commission": 35263.5,
       "pl": 64234.397800000006
     },
@@ -7513,7 +8980,7 @@
       "affiliateName": "junji2",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 27233,
+      "netDeposits": 27230.76,
       "commission": 11600,
       "pl": 56143.3011
     },
@@ -7531,7 +8998,7 @@
       "affiliateName": "JamieLeon",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 5122,
+      "netDeposits": 5120.97,
       "commission": 3566.3,
       "pl": 22422.449099999998
     },
@@ -7540,7 +9007,7 @@
       "affiliateName": "Radinert",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 73663,
+      "netDeposits": 73663.44999999998,
       "commission": 33500,
       "pl": 74383.70079999999
     },
@@ -7549,16 +9016,16 @@
       "affiliateName": "Loconsole",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 8771,
+      "netDeposits": 8893.8,
       "commission": 6278.43,
-      "pl": 11348.6537
+      "pl": 11325.6737
     },
     {
       "affiliateId": "35638",
       "affiliateName": "Dunnyfxt",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 6737,
+      "netDeposits": 6735.37,
       "commission": 2000,
       "pl": 4554.585800000001
     },
@@ -7567,7 +9034,7 @@
       "affiliateName": "LucaLaurienzo",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3194,
+      "netDeposits": 3193.5,
       "commission": 2800,
       "pl": 2585.5
     },
@@ -7576,7 +9043,7 @@
       "affiliateName": "denbull",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 463,
+      "netDeposits": 463.4399999999996,
       "commission": 0,
       "pl": 5887.575699999999
     },
@@ -7585,7 +9052,7 @@
       "affiliateName": "markeliticsita",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 3029,
+      "netDeposits": 3028.4700000000003,
       "commission": 900,
       "pl": 3656.5825999999997
     },
@@ -7594,7 +9061,7 @@
       "affiliateName": "signalstrading",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -1048,
+      "netDeposits": -1047.6999999999998,
       "commission": 1628.7,
       "pl": 2565.1301000000003
     },
@@ -7603,7 +9070,7 @@
       "affiliateName": "tradeflow",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -1611,
+      "netDeposits": -1610.96,
       "commission": 0,
       "pl": 5205.52
     },
@@ -7657,7 +9124,7 @@
       "affiliateName": "junji5",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 18789,
+      "netDeposits": 18787.68,
       "commission": 10600,
       "pl": 21160.4139
     },
@@ -7666,16 +9133,16 @@
       "affiliateName": "fxstate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 55843,
-      "commission": 27100.06,
-      "pl": 24254.4316
+      "netDeposits": 54785.97,
+      "commission": 26200.06,
+      "pl": 24468.5099
     },
     {
       "affiliateId": "35801",
       "affiliateName": "EpLagundo84",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 2139,
+      "netDeposits": 1972.31,
       "commission": 5300,
       "pl": 2648.8095
     },
@@ -7693,7 +9160,7 @@
       "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 6136,
+      "netDeposits": 6137.610000000001,
       "commission": 15400,
       "pl": 444.65900000000005
     },
@@ -7711,7 +9178,7 @@
       "affiliateName": "levrone-bw",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 25490,
+      "netDeposits": 25489.45,
       "commission": 5100,
       "pl": -10661.5285
     },
@@ -7720,7 +9187,7 @@
       "affiliateName": "diamondfc10",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 6467,
+      "netDeposits": 6466.86,
       "commission": 4800,
       "pl": 494.9267
     },
@@ -7729,7 +9196,7 @@
       "affiliateName": "Empire",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 1151,
+      "netDeposits": 1151.22,
       "commission": 900,
       "pl": 12.3884
     },
@@ -8080,7 +9547,7 @@
       "affiliateName": "G.Sicuro",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -332,
+      "netDeposits": -331.95,
       "commission": -32.75,
       "pl": 45.5883
     },
@@ -8161,7 +9628,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 6006,
+      "netDeposits": 6006.45,
       "commission": 0,
       "pl": 2490.29
     },
@@ -8449,7 +9916,7 @@
       "affiliateName": "lu_galis",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 23134,
+      "netDeposits": 23134.59,
       "commission": 0,
       "pl": 0
     },
@@ -8638,7 +10105,7 @@
       "affiliateName": "pixgaming",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 117,
+      "netDeposits": 117.01,
       "commission": 35.1,
       "pl": 117.4269
     },
@@ -9511,7 +10978,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 115,
+      "netDeposits": 115.29,
       "commission": 0,
       "pl": 13.47
     },
@@ -10132,7 +11599,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -3,
+      "netDeposits": 0,
       "commission": 0,
       "pl": 0
     },
@@ -10195,7 +11662,7 @@
       "affiliateName": "stefan",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 289,
+      "netDeposits": 289.49,
       "commission": 0,
       "pl": 0
     },
@@ -10303,7 +11770,7 @@
       "affiliateName": "kamilstu",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 581,
+      "netDeposits": 580.78,
       "commission": 26.04,
       "pl": 709.9294
     },
@@ -10798,7 +12265,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": 790,
+      "netDeposits": 789.98,
       "commission": 0,
       "pl": 0
     },
@@ -11221,16 +12688,34 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 2,
-      "netDeposits": -62060,
+      "netDeposits": -62059.18,
       "commission": 0,
       "pl": -46589.8822
+    },
+    {
+      "affiliateId": "ajrebates",
+      "affiliateName": "ajrebates",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 300,
+      "commission": 400,
+      "pl": -1711.94
+    },
+    {
+      "affiliateId": "Dima95",
+      "affiliateName": "Dima95",
+      "year": 2026,
+      "monthIndex": 2,
+      "netDeposits": 397.05,
+      "commission": 0,
+      "pl": 41.0113
     },
     {
       "affiliateId": "1018",
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 185,
+      "netDeposits": 185.04,
       "commission": 0,
       "pl": 762.0508
     },
@@ -11239,7 +12724,7 @@
       "affiliateName": "salesmarkelitics",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 237,
+      "netDeposits": 237.12,
       "commission": 0,
       "pl": 1131.2555
     },
@@ -11248,7 +12733,7 @@
       "affiliateName": "Devidpul",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 11864,
+      "netDeposits": 11863.52,
       "commission": 0,
       "pl": 16048.1874
     },
@@ -11257,7 +12742,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 250,
+      "netDeposits": 249.88,
       "commission": 0,
       "pl": 201.13
     },
@@ -11266,7 +12751,7 @@
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 13900,
+      "netDeposits": 13912.19,
       "commission": 7971.38,
       "pl": 28943.07
     },
@@ -11293,7 +12778,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4598,
+      "netDeposits": 4598.31,
       "commission": 0,
       "pl": 2063.44
     },
@@ -11302,7 +12787,7 @@
       "affiliateName": "G.Sicuro",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 1767,
+      "netDeposits": 1768.54,
       "commission": 238.58,
       "pl": 477.1549
     },
@@ -11320,7 +12805,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 177,
+      "netDeposits": 177.11,
       "commission": 0,
       "pl": 174.876
     },
@@ -11338,9 +12823,9 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -6737,
+      "netDeposits": -6736.66,
       "commission": 0,
-      "pl": 1964.0677
+      "pl": 1857.1177
     },
     {
       "affiliateId": "147",
@@ -11365,7 +12850,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -4331,
+      "netDeposits": -4330.68,
       "commission": 0,
       "pl": -4724.9168
     },
@@ -11374,7 +12859,7 @@
       "affiliateName": "Silviobull",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 7918,
+      "netDeposits": 7917.16,
       "commission": 0,
       "pl": 7449.329
     },
@@ -11410,7 +12895,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 56341,
+      "netDeposits": 56345.24,
       "commission": 0,
       "pl": 44616.6262
     },
@@ -11446,7 +12931,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -3405,
+      "netDeposits": -3405.03,
       "commission": 0,
       "pl": -2834.1829
     },
@@ -11734,7 +13219,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 255,
+      "netDeposits": 254.95,
       "commission": 0,
       "pl": 690.9904
     },
@@ -11860,7 +13345,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 103,
+      "netDeposits": 102.9,
       "commission": 0,
       "pl": -8178.02
     },
@@ -11959,7 +13444,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -565,
+      "netDeposits": -564.98,
       "commission": 0,
       "pl": -1522.9204
     },
@@ -11968,7 +13453,7 @@
       "affiliateName": "forexero",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -81,
+      "netDeposits": -81.22,
       "commission": 177.07,
       "pl": 295.12
     },
@@ -11995,7 +13480,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 818,
+      "netDeposits": 818.04,
       "commission": 0,
       "pl": 90.2846
     },
@@ -12013,7 +13498,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2545,
+      "netDeposits": 2545.01,
       "commission": 0,
       "pl": 3002.67
     },
@@ -12058,7 +13543,7 @@
       "affiliateName": "AlbertoMa",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 10206,
+      "netDeposits": 10206.16,
       "commission": 0,
       "pl": 4007.3563
     },
@@ -12067,7 +13552,7 @@
       "affiliateName": "basil-engjell",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 475,
+      "netDeposits": 474.57,
       "commission": 500,
       "pl": -293.91
     },
@@ -12076,7 +13561,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 13798,
+      "netDeposits": 13797.76,
       "commission": 0,
       "pl": 17904.99
     },
@@ -12094,7 +13579,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 172,
+      "netDeposits": 171.49,
       "commission": 0,
       "pl": 181.026
     },
@@ -12166,7 +13651,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -538,
+      "netDeposits": -537.91,
       "commission": 0,
       "pl": 211.8211
     },
@@ -12355,7 +13840,7 @@
       "affiliateName": "forexero",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 296,
+      "netDeposits": 295.56,
       "commission": 174.35,
       "pl": 290.582
     },
@@ -12472,7 +13957,7 @@
       "affiliateName": "Cantax",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 7393,
+      "netDeposits": 7392.68,
       "commission": 1369.68,
       "pl": 2367.6525
     },
@@ -12481,7 +13966,7 @@
       "affiliateName": "mvmarketing",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 15660,
+      "netDeposits": 15660.840000000002,
       "commission": 5683.78,
       "pl": 37841.345100000006
     },
@@ -12490,7 +13975,7 @@
       "affiliateName": "diamondfc",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2370,
+      "netDeposits": 2369.67,
       "commission": 1470.5,
       "pl": 2673.6311
     },
@@ -12499,7 +13984,7 @@
       "affiliateName": "dovyfx",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 5499,
+      "netDeposits": 5498.76,
       "commission": 0,
       "pl": -7871.35
     },
@@ -12508,9 +13993,9 @@
       "affiliateName": "ajmudronja",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 9429,
-      "commission": 5550,
-      "pl": 25557.3213
+      "netDeposits": 8078.849999999999,
+      "commission": 4200,
+      "pl": 25700.241299999998
     },
     {
       "affiliateId": "35144",
@@ -12535,7 +14020,7 @@
       "affiliateName": "fintechmediaadv",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 3399,
+      "netDeposits": 3397.18,
       "commission": 0,
       "pl": -1789.5978000000005
     },
@@ -12544,7 +14029,7 @@
       "affiliateName": "ActeonCapitalG",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 29563,
+      "netDeposits": 29564.02,
       "commission": -136.69,
       "pl": -4432.2668
     },
@@ -12553,8 +14038,8 @@
       "affiliateName": "jonathanvareymitchell",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 369640,
-      "commission": 214807.52,
+      "netDeposits": 369643.33,
+      "commission": 214107.52,
       "pl": 324246.88060000003
     },
     {
@@ -12562,18 +14047,18 @@
       "affiliateName": "Basilatwani",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 136609,
+      "netDeposits": 136492.55,
       "commission": 86050,
-      "pl": 114554.603
+      "pl": 114623.11880000001
     },
     {
       "affiliateId": "35198",
       "affiliateName": "junjix",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 39164,
+      "netDeposits": 39843.63999999999,
       "commission": 26400,
-      "pl": 45933.619300000006
+      "pl": 37223.868500000004
     },
     {
       "affiliateId": "35200",
@@ -12589,7 +14074,7 @@
       "affiliateName": "theforexcomplex",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 25142,
+      "netDeposits": 25140.55,
       "commission": 7100,
       "pl": 34849.816999999995
     },
@@ -12598,7 +14083,7 @@
       "affiliateName": "melofx",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 33451,
+      "netDeposits": 33451.590000000004,
       "commission": 17700,
       "pl": 34315.2496
     },
@@ -12607,7 +14092,7 @@
       "affiliateName": "fabi69",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2804,
+      "netDeposits": 2803.5299999999997,
       "commission": 0,
       "pl": 5248.3607
     },
@@ -12616,7 +14101,7 @@
       "affiliateName": "investbestbrokers2",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 590,
+      "netDeposits": 589.93,
       "commission": 0,
       "pl": 106.7034
     },
@@ -12625,7 +14110,7 @@
       "affiliateName": "MoonAff",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 41226,
+      "netDeposits": 41227.32000000001,
       "commission": 26250,
       "pl": 36890.658899999995
     },
@@ -12634,7 +14119,7 @@
       "affiliateName": "Anthhony",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -1516,
+      "netDeposits": -1515.96,
       "commission": 0.08,
       "pl": -0.3559
     },
@@ -12652,7 +14137,7 @@
       "affiliateName": "Delice",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2368,
+      "netDeposits": 2367.41,
       "commission": 0,
       "pl": 3894.2252
     },
@@ -12670,7 +14155,7 @@
       "affiliateName": "Nardo99",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 1097,
+      "netDeposits": 1097.26,
       "commission": 600,
       "pl": 1569.7606
     },
@@ -12679,7 +14164,7 @@
       "affiliateName": "diamondfc1",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 830,
+      "netDeposits": 830.83,
       "commission": 1000,
       "pl": 7220.0259
     },
@@ -12688,7 +14173,7 @@
       "affiliateName": "Liukmane",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 119,
+      "netDeposits": 118.71,
       "commission": 0,
       "pl": 116.1385
     },
@@ -12706,7 +14191,7 @@
       "affiliateName": "fxnhsignals",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 35256,
+      "netDeposits": 35256.78,
       "commission": 11600,
       "pl": 11357.836300000003
     },
@@ -12715,9 +14200,9 @@
       "affiliateName": "WealthWave",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -51262,
+      "netDeposits": -51143.50000000001,
       "commission": 123850,
-      "pl": 167088.24750000003
+      "pl": 167019.73170000003
     },
     {
       "affiliateId": "35271",
@@ -12733,16 +14218,16 @@
       "affiliateName": "Mertyoz",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 922215,
+      "netDeposits": 921536.2699999999,
       "commission": 429978.35000000015,
-      "pl": 1266806.3277000005
+      "pl": 1275516.0785000005
     },
     {
       "affiliateId": "35273",
       "affiliateName": "Fredtrading",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 124311,
+      "netDeposits": 124310.30000000003,
       "commission": 74304.98000000003,
       "pl": 293674.9192
     },
@@ -12751,7 +14236,7 @@
       "affiliateName": "tradingcentalfx",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 203,
+      "netDeposits": 203.19,
       "commission": 0,
       "pl": 1607.1180000000002
     },
@@ -12769,7 +14254,7 @@
       "affiliateName": "masternl",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2485,
+      "netDeposits": 2485.71,
       "commission": 0,
       "pl": 7901.484600000001
     },
@@ -12778,7 +14263,7 @@
       "affiliateName": "bridges",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 38063,
+      "netDeposits": 38063.560000000005,
       "commission": 29500,
       "pl": 27697.924100000007
     },
@@ -12796,7 +14281,7 @@
       "affiliateName": "rayanlewiis",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 519,
+      "netDeposits": 519.18,
       "commission": 0,
       "pl": 234.4543
     },
@@ -12805,7 +14290,7 @@
       "affiliateName": "DRIVADAVE",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 3480,
+      "netDeposits": 3479.88,
       "commission": 0,
       "pl": 3655.5332000000003
     },
@@ -12814,7 +14299,7 @@
       "affiliateName": "Andrewcga",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 1683,
+      "netDeposits": 1682.72,
       "commission": 1600,
       "pl": 4242.9186
     },
@@ -12832,7 +14317,7 @@
       "affiliateName": "Saix004",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 570,
+      "netDeposits": 570.15,
       "commission": 0,
       "pl": -482.861
     },
@@ -12859,7 +14344,7 @@
       "affiliateName": "SanderOever",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -77,
+      "netDeposits": -77.75,
       "commission": 0,
       "pl": 2846.4105999999997
     },
@@ -12886,7 +14371,7 @@
       "affiliateName": "fxtradinggroup",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -303,
+      "netDeposits": -303.22,
       "commission": 0,
       "pl": 463.55050000000006
     },
@@ -12895,7 +14380,7 @@
       "affiliateName": "ElevatingForex",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -349,
+      "netDeposits": -348.89,
       "commission": 0,
       "pl": 0
     },
@@ -12904,7 +14389,7 @@
       "affiliateName": "aff.bullwaves",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -4683,
+      "netDeposits": -4682.929999999999,
       "commission": 2250,
       "pl": 2501.5237999999995
     },
@@ -12913,7 +14398,7 @@
       "affiliateName": "basil-hannah",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 6423,
+      "netDeposits": 6423.35,
       "commission": 2500,
       "pl": 8243.7036
     },
@@ -12931,7 +14416,7 @@
       "affiliateName": "vanmanhlh@gmail.com",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 8965,
+      "netDeposits": 8964.93,
       "commission": 1144.9,
       "pl": 9394.580199999999
     },
@@ -12940,7 +14425,7 @@
       "affiliateName": "Billionairetrading",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -1977,
+      "netDeposits": -1977.9800000000005,
       "commission": 850,
       "pl": 1267.8628
     },
@@ -12949,7 +14434,7 @@
       "affiliateName": "Sekmani1962",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 3851,
+      "netDeposits": 3851.81,
       "commission": 308.64,
       "pl": 4207.92
     },
@@ -12958,7 +14443,7 @@
       "affiliateName": "fxgodfather",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 6418,
+      "netDeposits": 6419.370000000001,
       "commission": 16050,
       "pl": 21217.998000000007
     },
@@ -12967,7 +14452,7 @@
       "affiliateName": "frenibusiness",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2555,
+      "netDeposits": 2555.67,
       "commission": 3091,
       "pl": 10874.4487
     },
@@ -12976,7 +14461,7 @@
       "affiliateName": "alphatrade",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 7419,
+      "netDeposits": 7418.98,
       "commission": -5724.87,
       "pl": 5921.4748
     },
@@ -12994,7 +14479,7 @@
       "affiliateName": "NextStar",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -6625,
+      "netDeposits": -6624.5,
       "commission": 1200,
       "pl": -3897.756099999999
     },
@@ -13012,7 +14497,7 @@
       "affiliateName": "basil-tyrone",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 273,
+      "netDeposits": 273.06,
       "commission": 215.6,
       "pl": 873.0809
     },
@@ -13021,7 +14506,7 @@
       "affiliateName": "tradeandshare",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 5310,
+      "netDeposits": 5309.59,
       "commission": 3900,
       "pl": 332.5371
     },
@@ -13030,7 +14515,7 @@
       "affiliateName": "Robert",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 51862,
+      "netDeposits": 51860.15,
       "commission": 3597.1400000000003,
       "pl": 6549.3046
     },
@@ -13039,7 +14524,7 @@
       "affiliateName": "junji2",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 31772,
+      "netDeposits": 31772.59999999999,
       "commission": 29600,
       "pl": 49020.718899999985
     },
@@ -13048,7 +14533,7 @@
       "affiliateName": "JamieLeon",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2506,
+      "netDeposits": 2506.87,
       "commission": 7264.1,
       "pl": 36.61550000000011
     },
@@ -13057,7 +14542,7 @@
       "affiliateName": "Radinert",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 65918,
+      "netDeposits": 65917.99,
       "commission": 36500,
       "pl": 12632.021499999999
     },
@@ -13066,7 +14551,7 @@
       "affiliateName": "Loconsole",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 23333,
+      "netDeposits": 23332.25,
       "commission": 8401.92,
       "pl": 29881.8462
     },
@@ -13075,7 +14560,7 @@
       "affiliateName": "Dunnyfxt",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 2019,
+      "netDeposits": 2017.04,
       "commission": 3000,
       "pl": 11230.5383
     },
@@ -13084,7 +14569,7 @@
       "affiliateName": "LucaLaurienzo",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4603,
+      "netDeposits": 4602.79,
       "commission": 2700,
       "pl": -1517.39
     },
@@ -13111,7 +14596,7 @@
       "affiliateName": "denbull",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4368,
+      "netDeposits": 4367.9400000000005,
       "commission": 1000,
       "pl": 14064.6477
     },
@@ -13120,7 +14605,7 @@
       "affiliateName": "markeliticsita",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 15053,
+      "netDeposits": 15053.33,
       "commission": 3590,
       "pl": 14874.7798
     },
@@ -13129,7 +14614,7 @@
       "affiliateName": "signalstrading",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4567,
+      "netDeposits": 4567.5599999999995,
       "commission": 688.5999999999999,
       "pl": -207.97000000000003
     },
@@ -13138,7 +14623,7 @@
       "affiliateName": "tradeflow",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -5972,
+      "netDeposits": -5973.2,
       "commission": 2970,
       "pl": 1479.6000000000001
     },
@@ -13156,7 +14641,7 @@
       "affiliateName": "Yakess",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 3376,
+      "netDeposits": 3375.87,
       "commission": 650,
       "pl": 3376.3066
     },
@@ -13183,7 +14668,7 @@
       "affiliateName": "lucacostanza",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 3560,
+      "netDeposits": 3560.55,
       "commission": 1800,
       "pl": 3571.3628
     },
@@ -13192,7 +14677,7 @@
       "affiliateName": "junji5",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 12510,
+      "netDeposits": 12510.24,
       "commission": 5800,
       "pl": 4783.7546
     },
@@ -13201,7 +14686,7 @@
       "affiliateName": "fxstate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4178,
+      "netDeposits": 4177.54,
       "commission": 2900,
       "pl": 501.4351
     },
@@ -13210,9 +14695,9 @@
       "affiliateName": "EpLagundo84",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 11133,
+      "netDeposits": 11137.87,
       "commission": 1250,
-      "pl": 1840.5868
+      "pl": 1947.5368
     },
     {
       "affiliateId": "35814",
@@ -13228,7 +14713,7 @@
       "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 4929,
+      "netDeposits": 4930.280000000001,
       "commission": 3400,
       "pl": 983.4913
     },
@@ -13246,7 +14731,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 11864,
+      "netDeposits": 11863.53,
       "commission": 0,
       "pl": -3718.3521
     },
@@ -13894,7 +15379,7 @@
       "affiliateName": "Barbara24",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 0,
+      "netDeposits": -0.07,
       "commission": 0,
       "pl": 0
     },
@@ -14209,7 +15694,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 700,
+      "netDeposits": 700.16,
       "commission": 0,
       "pl": -245.05
     },
@@ -14821,7 +16306,7 @@
       "affiliateName": "traderpro",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": -969,
+      "netDeposits": -969.96,
       "commission": 600,
       "pl": -957.3833
     },
@@ -16306,7 +17791,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 118,
+      "netDeposits": 118.01,
       "commission": 0,
       "pl": -0.6964
     },
@@ -16450,9 +17935,18 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 1,
-      "netDeposits": 26473,
+      "netDeposits": 26474.59,
       "commission": 0,
       "pl": 1622.2356
+    },
+    {
+      "affiliateId": "ajrebates",
+      "affiliateName": "ajrebates",
+      "year": 2026,
+      "monthIndex": 1,
+      "netDeposits": 1350,
+      "commission": 1350,
+      "pl": -142.92
     },
     {
       "affiliateId": "1055",
@@ -16477,7 +17971,7 @@
       "affiliateName": "Devidpul",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 93599,
+      "netDeposits": 93598.68,
       "commission": 0,
       "pl": 12975.1861
     },
@@ -16486,7 +17980,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -6636,
+      "netDeposits": -6635.77,
       "commission": 0,
       "pl": 4258.06
     },
@@ -16540,7 +18034,7 @@
       "affiliateName": "superteo89",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 4421,
+      "netDeposits": 4421.99,
       "commission": 744.08,
       "pl": 5324.96
     },
@@ -16549,7 +18043,7 @@
       "affiliateName": "AlbertoMa",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 5926,
+      "netDeposits": 5927.06,
       "commission": 0,
       "pl": 5487.7965
     },
@@ -16558,7 +18052,7 @@
       "affiliateName": "Midcopytrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 106,
+      "netDeposits": 105.9,
       "commission": 11.78,
       "pl": 104.88
     },
@@ -16567,7 +18061,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 546,
+      "netDeposits": 546.68,
       "commission": 0,
       "pl": -105.84
     },
@@ -16603,7 +18097,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 3096,
+      "netDeposits": 3096.89,
       "commission": 0,
       "pl": -3670.2763
     },
@@ -16612,7 +18106,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 632,
+      "netDeposits": 631.89,
       "commission": 0,
       "pl": 58.57
     },
@@ -16630,7 +18124,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 430,
+      "netDeposits": 429.87,
       "commission": 0,
       "pl": 1102.61
     },
@@ -16648,7 +18142,7 @@
       "affiliateName": "forexero",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 116,
+      "netDeposits": 116.43,
       "commission": 67.73,
       "pl": 112.8903
     },
@@ -16657,7 +18151,7 @@
       "affiliateName": "salesmarkelitics",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 118,
+      "netDeposits": 118.31,
       "commission": 0,
       "pl": 1664.6013
     },
@@ -16684,7 +18178,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -592,
+      "netDeposits": -591.97,
       "commission": 0,
       "pl": 172.72
     },
@@ -16693,7 +18187,7 @@
       "affiliateName": "CoRNeLL",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 281,
+      "netDeposits": 281.23,
       "commission": 0,
       "pl": 291.039
     },
@@ -16765,7 +18259,7 @@
       "affiliateName": "salesmarkelitics",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 600,
+      "netDeposits": 600.27,
       "commission": 500,
       "pl": 671.6045
     },
@@ -16783,7 +18277,7 @@
       "affiliateName": "Midcopytrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 213,
+      "netDeposits": 212.95,
       "commission": 76.06,
       "pl": 212.12
     },
@@ -16837,7 +18331,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1216,
+      "netDeposits": 1215.29,
       "commission": 0,
       "pl": 237.969
     },
@@ -16846,7 +18340,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 416,
+      "netDeposits": 416.46,
       "commission": 0,
       "pl": 402.7935
     },
@@ -17089,7 +18583,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 25,
+      "netDeposits": 25.33,
       "commission": 0,
       "pl": 24.2
     },
@@ -17098,7 +18592,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 776,
+      "netDeposits": 775.62,
       "commission": 0,
       "pl": 633.076
     },
@@ -17296,7 +18790,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -14339,
+      "netDeposits": -14339.11,
       "commission": 0,
       "pl": -16938.696
     },
@@ -17521,7 +19015,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 232,
+      "netDeposits": 232.8,
       "commission": 0,
       "pl": 228.9461
     },
@@ -17530,7 +19024,7 @@
       "affiliateName": "Cantax",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2642,
+      "netDeposits": 2642.9,
       "commission": 3263.82,
       "pl": 5581.244
     },
@@ -17548,7 +19042,7 @@
       "affiliateName": "mvmarketing",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 33679,
+      "netDeposits": 33676.030000000006,
       "commission": -19983.670000000002,
       "pl": -19260.274400000002
     },
@@ -17557,7 +19051,7 @@
       "affiliateName": "diamondfc",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2375,
+      "netDeposits": 2374.13,
       "commission": 2949.64,
       "pl": 5362.9897
     },
@@ -17566,7 +19060,7 @@
       "affiliateName": "dovyfx",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 14181,
+      "netDeposits": 14181.82,
       "commission": 0,
       "pl": 7167.93
     },
@@ -17575,9 +19069,9 @@
       "affiliateName": "ajmudronja",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 24403,
+      "netDeposits": 20900.92,
       "commission": 0,
-      "pl": 23245.0795
+      "pl": 18517.8595
     },
     {
       "affiliateId": "35144",
@@ -17593,7 +19087,7 @@
       "affiliateName": "FundedFast",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -405,
+      "netDeposits": -404.5,
       "commission": 0,
       "pl": 808.7598999999999
     },
@@ -17602,7 +19096,7 @@
       "affiliateName": "fintechmediaadv",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 13562,
+      "netDeposits": 13562.57,
       "commission": 0,
       "pl": 17666.2484
     },
@@ -17611,7 +19105,7 @@
       "affiliateName": "ActeonCapitalG",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 21513,
+      "netDeposits": 21511.33,
       "commission": 38861.75,
       "pl": 71276.3471
     },
@@ -17620,7 +19114,7 @@
       "affiliateName": "jonathanvareymitchell",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 465043,
+      "netDeposits": 465044.06,
       "commission": 214860.97999999998,
       "pl": 523545.73420000006
     },
@@ -17629,7 +19123,7 @@
       "affiliateName": "Basilatwani",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 198648,
+      "netDeposits": 198650.9,
       "commission": 121550,
       "pl": 59214.8927
     },
@@ -17638,9 +19132,9 @@
       "affiliateName": "junjix",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 69029,
-      "commission": 35850,
-      "pl": 40127.313
+      "netDeposits": 61737.59,
+      "commission": 34950,
+      "pl": 47993.6926
     },
     {
       "affiliateId": "3520",
@@ -17665,7 +19159,7 @@
       "affiliateName": "theforexcomplex",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 26428,
+      "netDeposits": 26424.980000000003,
       "commission": 12150,
       "pl": 20250.6557
     },
@@ -17674,7 +19168,7 @@
       "affiliateName": "Tips2Pips",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 3644,
+      "netDeposits": 3643.87,
       "commission": 1200,
       "pl": 3907.0437
     },
@@ -17683,7 +19177,7 @@
       "affiliateName": "melofx",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 36828,
+      "netDeposits": 36829.16,
       "commission": 33100,
       "pl": 54558.394499999995
     },
@@ -17692,7 +19186,7 @@
       "affiliateName": "fabi69",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2618,
+      "netDeposits": 2617.6600000000003,
       "commission": 0,
       "pl": 1384.0851999999995
     },
@@ -17701,7 +19195,7 @@
       "affiliateName": "MoonAff",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 71685,
+      "netDeposits": 71685.14,
       "commission": 50900,
       "pl": 116950.69130000002
     },
@@ -17728,7 +19222,7 @@
       "affiliateName": "Delice",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1705,
+      "netDeposits": 1705.87,
       "commission": -37.75,
       "pl": 5555.5948
     },
@@ -17737,7 +19231,7 @@
       "affiliateName": "Nardo99",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1562,
+      "netDeposits": 1561.76,
       "commission": 1200,
       "pl": 188.7782
     },
@@ -17746,7 +19240,7 @@
       "affiliateName": "diamondfc1",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -5097,
+      "netDeposits": -5096.72,
       "commission": 650,
       "pl": 16154.0005
     },
@@ -17764,7 +19258,7 @@
       "affiliateName": "fxnhsignals",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 19700,
+      "netDeposits": 19695.289999999997,
       "commission": 15600,
       "pl": 35307.9664
     },
@@ -17773,7 +19267,7 @@
       "affiliateName": "WealthWave",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 280995,
+      "netDeposits": 280992.37999999995,
       "commission": 198850,
       "pl": 269157.94999999995
     },
@@ -17791,16 +19285,16 @@
       "affiliateName": "Mertyoz",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 847393,
-      "commission": 539681.9,
-      "pl": 968623.4108999996
+      "netDeposits": 854680.3999999998,
+      "commission": 540581.9,
+      "pl": 960757.0312999996
     },
     {
       "affiliateId": "35273",
       "affiliateName": "Fredtrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 38352,
+      "netDeposits": 38355.62999999999,
       "commission": 156712.44,
       "pl": -27038.889600000002
     },
@@ -17809,7 +19303,7 @@
       "affiliateName": "tradingcentalfx",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1915,
+      "netDeposits": 1915.26,
       "commission": 700,
       "pl": 1865.9932000000001
     },
@@ -17818,7 +19312,7 @@
       "affiliateName": "fxnltrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1242,
+      "netDeposits": 1241.97,
       "commission": 1201,
       "pl": 2088.59
     },
@@ -17827,7 +19321,7 @@
       "affiliateName": "masternl",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 6479,
+      "netDeposits": 6479.739999999999,
       "commission": -40,
       "pl": -6417.7128
     },
@@ -17836,7 +19330,7 @@
       "affiliateName": "bridges",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 38082,
+      "netDeposits": 38082.43,
       "commission": 21100,
       "pl": 31540.362799999995
     },
@@ -17863,7 +19357,7 @@
       "affiliateName": "rayanlewiis",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 395,
+      "netDeposits": 395.07,
       "commission": 0,
       "pl": 216.4165
     },
@@ -17872,7 +19366,7 @@
       "affiliateName": "DRIVADAVE",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -7005,
+      "netDeposits": -7004.84,
       "commission": 500,
       "pl": 4384.1555
     },
@@ -17881,7 +19375,7 @@
       "affiliateName": "Andrewcga",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 10838,
+      "netDeposits": 10836.86,
       "commission": 700,
       "pl": 22990.686
     },
@@ -17908,7 +19402,7 @@
       "affiliateName": "Saix004",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 5707,
+      "netDeposits": 5707.37,
       "commission": 600,
       "pl": 8835.3353
     },
@@ -17926,7 +19420,7 @@
       "affiliateName": "legend_circle",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 4822,
+      "netDeposits": 4822.0599999999995,
       "commission": 1600,
       "pl": 3173.8759
     },
@@ -17935,7 +19429,7 @@
       "affiliateName": "SanderOever",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -8386,
+      "netDeposits": -8385.4,
       "commission": 2200,
       "pl": 33932.1192
     },
@@ -17971,7 +19465,7 @@
       "affiliateName": "fxtradinggroup",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2399,
+      "netDeposits": 2398.73,
       "commission": 0,
       "pl": 1895.1182
     },
@@ -17980,7 +19474,7 @@
       "affiliateName": "ElevatingForex",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -2492,
+      "netDeposits": -2490.91,
       "commission": 1150,
       "pl": 2532.8097
     },
@@ -17989,7 +19483,7 @@
       "affiliateName": "aff.bullwaves",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 14342,
+      "netDeposits": 14341.37,
       "commission": 12450,
       "pl": 20452.967
     },
@@ -17998,7 +19492,7 @@
       "affiliateName": "basil-hannah",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 9305,
+      "netDeposits": 9306.359999999997,
       "commission": 21100,
       "pl": 27365.545200000004
     },
@@ -18007,7 +19501,7 @@
       "affiliateName": "dutrades",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2977,
+      "netDeposits": 2977.11,
       "commission": 1950,
       "pl": 3131.4851
     },
@@ -18016,7 +19510,7 @@
       "affiliateName": "vanmanhlh@gmail.com",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 8991,
+      "netDeposits": 8990.650000000001,
       "commission": 942.1800000000001,
       "pl": 9653.2998
     },
@@ -18025,7 +19519,7 @@
       "affiliateName": "Billionairetrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 11031,
+      "netDeposits": 11031.86,
       "commission": 2150,
       "pl": 10651.627100000002
     },
@@ -18034,16 +19528,16 @@
       "affiliateName": "fxgodfather",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 29138,
+      "netDeposits": 29137.399999999994,
       "commission": 33700,
-      "pl": -3138.9051999999992
+      "pl": -3646.6385
     },
     {
       "affiliateId": "35477",
       "affiliateName": "frenibusiness",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 15212,
+      "netDeposits": 15211.23,
       "commission": 6800,
       "pl": 10450.3814
     },
@@ -18061,7 +19555,7 @@
       "affiliateName": "alphatrade",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 36731,
+      "netDeposits": 36734.97,
       "commission": 22301.989999999998,
       "pl": 130474.72969999998
     },
@@ -18088,7 +19582,7 @@
       "affiliateName": "NextStar",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 5285,
+      "netDeposits": 5285.4800000000005,
       "commission": 9000,
       "pl": 16516.691600000002
     },
@@ -18115,7 +19609,7 @@
       "affiliateName": "Robert",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 50382,
+      "netDeposits": 50383.38,
       "commission": 44575.909999999996,
       "pl": 91587.5932
     },
@@ -18124,7 +19618,7 @@
       "affiliateName": "junji2",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 50160,
+      "netDeposits": 50159.77,
       "commission": 52200,
       "pl": 59911.75400000001
     },
@@ -18133,7 +19627,7 @@
       "affiliateName": "JamieLeon",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 17430,
+      "netDeposits": 17430.29,
       "commission": 13495.600000000002,
       "pl": 13039.762200000001
     },
@@ -18151,7 +19645,7 @@
       "affiliateName": "Radinert",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 12557,
+      "netDeposits": 12555.66,
       "commission": 6800,
       "pl": 10444.6497
     },
@@ -18160,7 +19654,7 @@
       "affiliateName": "Loconsole",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 132415,
+      "netDeposits": 132417.98,
       "commission": 5258.62,
       "pl": 139586.5718
     },
@@ -18169,7 +19663,7 @@
       "affiliateName": "Dunnyfxt",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 19806,
+      "netDeposits": 19807.34,
       "commission": 9500,
       "pl": 8953.0202
     },
@@ -18178,7 +19672,7 @@
       "affiliateName": "LucaLaurienzo",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 8464,
+      "netDeposits": 8465.23,
       "commission": 4050,
       "pl": 1072.96
     },
@@ -18196,7 +19690,7 @@
       "affiliateName": "denbull",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 32101,
+      "netDeposits": 32098.49,
       "commission": 20900,
       "pl": 25944.484800000006
     },
@@ -18205,7 +19699,7 @@
       "affiliateName": "markeliticsita",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 4422,
+      "netDeposits": 4421.75,
       "commission": 550,
       "pl": 3018.1906
     },
@@ -18214,7 +19708,7 @@
       "affiliateName": "nnguducttorngg@gmail.com",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -35020,
+      "netDeposits": -35019.8,
       "commission": 20,
       "pl": -464
     },
@@ -18223,7 +19717,7 @@
       "affiliateName": "signalstrading",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 144,
+      "netDeposits": 144.24,
       "commission": 175.35,
       "pl": 297.61
     },
@@ -18232,7 +19726,7 @@
       "affiliateName": "tradeflow",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 17441,
+      "netDeposits": 17441.3,
       "commission": 7920,
       "pl": 2087.2739
     },
@@ -18268,16 +19762,16 @@
       "affiliateName": "junji5",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 5368,
+      "netDeposits": 5370.69,
       "commission": 0,
-      "pl": 8370.7584
+      "pl": 8878.4917
     },
     {
       "affiliateId": "35801",
       "affiliateName": "EpLagundo84",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1769,
+      "netDeposits": 1769.49,
       "commission": 0,
       "pl": 1093.9275
     },
@@ -18286,7 +19780,7 @@
       "affiliateName": "koskos8",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 1772,
+      "netDeposits": 1772.66,
       "commission": 0,
       "pl": 0
     },
@@ -18547,7 +20041,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": -4956,
+      "netDeposits": -4954.98,
       "commission": 0,
       "pl": 2196.25
     },
@@ -18556,7 +20050,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 2480,
+      "netDeposits": 2479.57,
       "commission": 0,
       "pl": -1960.4986
     },
@@ -18583,7 +20077,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 20,
+      "netDeposits": 19.5,
       "commission": 0,
       "pl": 0
     },
@@ -20833,7 +22327,7 @@
       "affiliateName": "Silviobull",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 3522,
+      "netDeposits": 3521.99,
       "commission": 0,
       "pl": 0
     },
@@ -20887,7 +22381,7 @@
       "affiliateName": "stuart.doak",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 265,
+      "netDeposits": 264.96,
       "commission": 0,
       "pl": 9650.3877
     },
@@ -20959,7 +22453,7 @@
       "affiliateName": "Default Affiliate",
       "year": 2026,
       "monthIndex": 0,
-      "netDeposits": 16406,
+      "netDeposits": 16415.24,
       "commission": 0,
       "pl": 30308.7506
     },
@@ -20989,6 +22483,15 @@
       "netDeposits": 100,
       "commission": 0.08,
       "pl": 98.45
+    },
+    {
+      "affiliateId": "ajrebates",
+      "affiliateName": "ajrebates",
+      "year": 2026,
+      "monthIndex": 0,
+      "netDeposits": 3500,
+      "commission": 0,
+      "pl": 4727.22
     },
     {
       "affiliateId": "10087",

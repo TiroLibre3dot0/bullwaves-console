@@ -27,6 +27,10 @@ const LISTS = [
 ]
 
 const DAYS_OPTIONS = [7, 14, 30, 60, 90]
+const EXPORT_ALL_MODES = [
+  { key: 'unique', label: 'Utenti unici' },
+  { key: 'raw', label: 'Righe complete' },
+]
 
 const fmt2 = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 const fmt0 = new Intl.NumberFormat('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
@@ -52,14 +56,22 @@ function derivePl(row) {
   return (Number(row?.closedPl) || 0) + (Number(row?.openPl) || 0)
 }
 
+function getPrimaryMetric(listKey, row) {
+  if (listKey === 'deposited') return Number(row?.deposit) || 0
+  if (listKey === 'withdrawn') return Number(row?.wd) || 0
+  if (listKey === 'inProfit') return derivePl(row)
+  return 0
+}
+
 function escapeCell(v) {
   const s = String(v == null ? '' : v)
   if (s.includes(',') || s.includes('"') || s.includes('\n')) return `"${s.replace(/"/g, '""')}"`
   return s
 }
 
-function downloadCsv(rows, listKey, brand, days) {
+function downloadCsv(rows, listKey, days) {
   const headers = [
+    'brand',
     'clientId',
     'clientName',
     'clientLogin',
@@ -77,6 +89,7 @@ function downloadCsv(rows, listKey, brand, days) {
     const pl = derivePl(row)
     lines.push(
       [
+        row.brand,
         row.clientId,
         row.clientName,
         row.clientLogin,
@@ -96,9 +109,181 @@ function downloadCsv(rows, listKey, brand, days) {
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
-  const safeBrand = brand.replace(/\s+/g, '_')
   a.href = url
-  a.download = `client_list_${listKey}_${safeBrand}_last${days}d.csv`
+  a.download = `client_list_${listKey}_all_brands_last${days}d.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function buildAllUsersRows(data) {
+  if (!data?.brands) return []
+
+  const byUser = new Map()
+
+  for (const brand of BRANDS) {
+    for (const list of LISTS) {
+      const listRows = data.brands[brand]?.[list.key] || []
+      for (const row of listRows) {
+        const id = String(row?.clientId || '').trim()
+        const login = String(row?.clientLogin || '').trim()
+        const key = `${brand}::${id || login}`
+        if (!id && !login) continue
+
+        if (!byUser.has(key)) {
+          byUser.set(key, {
+            brand,
+            clientId: row.clientId,
+            clientName: row.clientName,
+            clientLogin: row.clientLogin,
+            affiliateId: row.affiliateId,
+            country: row.country,
+            deposit: Number(row.deposit) || 0,
+            wd: Number(row.wd) || 0,
+            closedPl: Number(row.closedPl) || 0,
+            openPl: Number(row.openPl) || 0,
+            trades: Number(row.trades) || 0,
+            lists: new Set([list.key]),
+          })
+          continue
+        }
+
+        const current = byUser.get(key)
+        current.deposit = Number(current.deposit || 0) + (Number(row.deposit) || 0)
+        current.wd = Number(current.wd || 0) + (Number(row.wd) || 0)
+        current.closedPl = Number(current.closedPl || 0) + (Number(row.closedPl) || 0)
+        current.openPl = Number(current.openPl || 0) + (Number(row.openPl) || 0)
+        current.trades = Number(current.trades || 0) + (Number(row.trades) || 0)
+        current.lists.add(list.key)
+      }
+    }
+  }
+
+  const rows = Array.from(byUser.values()).map((r) => ({
+    ...r,
+    lists: Array.from(r.lists).sort().join('|'),
+  }))
+
+  rows.sort((a, b) => derivePl(b) - derivePl(a))
+  return rows
+}
+
+function buildAllRawRows(data) {
+  if (!data?.brands) return []
+
+  const rows = []
+  for (const brand of BRANDS) {
+    for (const list of LISTS) {
+      const listRows = data.brands[brand]?.[list.key] || []
+      for (const row of listRows) {
+        rows.push({
+          ...row,
+          brand,
+          list: list.key,
+        })
+      }
+    }
+  }
+
+  rows.sort((a, b) => derivePl(b) - derivePl(a))
+  return rows
+}
+
+function downloadCsvAllUsers(rows, days) {
+  const headers = [
+    'brand',
+    'clientId',
+    'clientName',
+    'clientLogin',
+    'affiliateId',
+    'country',
+    'deposit',
+    'wd',
+    'closedPl',
+    'openPl',
+    'totalPl',
+    'trades',
+    'lists',
+  ]
+  const lines = [headers.join(',')]
+  for (const row of rows) {
+    const pl = derivePl(row)
+    lines.push(
+      [
+        row.brand,
+        row.clientId,
+        row.clientName,
+        row.clientLogin,
+        row.affiliateId,
+        row.country,
+        row.deposit,
+        row.wd,
+        row.closedPl,
+        row.openPl,
+        pl,
+        row.trades,
+        row.lists,
+      ]
+        .map(escapeCell)
+        .join(',')
+    )
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `client_list_all_users_all_brands_last${days}d.csv`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function downloadCsvAllRows(rows, days) {
+  const headers = [
+    'brand',
+    'list',
+    'clientId',
+    'clientName',
+    'clientLogin',
+    'affiliateId',
+    'country',
+    'deposit',
+    'wd',
+    'closedPl',
+    'openPl',
+    'totalPl',
+    'trades',
+  ]
+  const lines = [headers.join(',')]
+  for (const row of rows) {
+    const pl = derivePl(row)
+    lines.push(
+      [
+        row.brand,
+        row.list,
+        row.clientId,
+        row.clientName,
+        row.clientLogin,
+        row.affiliateId,
+        row.country,
+        row.deposit,
+        row.wd,
+        row.closedPl,
+        row.openPl,
+        pl,
+        row.trades,
+      ]
+        .map(escapeCell)
+        .join(',')
+    )
+  }
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `client_list_all_rows_all_brands_last${days}d.csv`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -106,7 +291,6 @@ function downloadCsv(rows, listKey, brand, days) {
 }
 
 function ClientTable({ rows, listDef }) {
-  const { key, metricKey, color } = listDef
   if (!rows || rows.length === 0) {
     return <p style={{ color: '#6b7280', fontSize: 13 }}>Nessun cliente in questa lista.</p>
   }
@@ -118,6 +302,7 @@ function ClientTable({ rows, listDef }) {
           <tr style={{ borderBottom: '1px solid #374151' }}>
             {[
               '#',
+              'Brand',
               'Client ID',
               'Nome',
               'Login',
@@ -152,6 +337,9 @@ function ClientTable({ rows, listDef }) {
             return (
               <tr key={`${row.clientId}-${i}`} style={{ borderBottom: '1px solid #1f2937' }}>
                 <td style={{ padding: '5px 8px', color: '#6b7280' }}>{i + 1}</td>
+                <td style={{ padding: '5px 8px', color: '#cbd5e1', whiteSpace: 'nowrap' }}>
+                  {row.brand || '—'}
+                </td>
                 <td style={{ padding: '5px 8px', color: '#e5e7eb', fontFamily: 'monospace' }}>
                   {row.clientId || '—'}
                 </td>
@@ -200,9 +388,9 @@ export default function CreolabsClientListsPage() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [activeBrand, setActiveBrand] = useState('BW')
   const [activeList, setActiveList] = useState('deposited')
   const [searchQuery, setSearchQuery] = useState('')
+  const [exportAllMode, setExportAllMode] = useState('unique')
 
   const fetchData = useCallback((d, bust = false) => {
     setLoading(true)
@@ -226,8 +414,16 @@ export default function CreolabsClientListsPage() {
 
   const rawRows = useMemo(() => {
     if (!data?.brands) return []
-    return data.brands[activeBrand]?.[activeList] || []
-  }, [data, activeBrand, activeList])
+    const merged = []
+    for (const brand of BRANDS) {
+      const rows = data.brands[brand]?.[activeList] || []
+      for (const row of rows) {
+        merged.push({ ...row, brand })
+      }
+    }
+    merged.sort((a, b) => getPrimaryMetric(activeList, b) - getPrimaryMetric(activeList, a))
+    return merged
+  }, [data, activeList])
 
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -256,14 +452,48 @@ export default function CreolabsClientListsPage() {
   const countsByBrandList = useMemo(() => {
     if (!data?.brands) return {}
     const out = {}
-    for (const b of BRANDS) {
-      out[b] = {}
-      for (const l of LISTS) {
-        out[b][l.key] = (data.brands[b]?.[l.key] || []).length
+    for (const l of LISTS) {
+      let total = 0
+      for (const b of BRANDS) {
+        total += (data.brands[b]?.[l.key] || []).length
       }
+      out[l.key] = total
     }
     return out
   }, [data])
+
+  const totals = useMemo(() => {
+    return filteredRows.reduce(
+      (acc, row) => {
+        acc.clients += 1
+        acc.deposit += Number(row?.deposit) || 0
+        acc.wd += Number(row?.wd) || 0
+        acc.pl += derivePl(row)
+        acc.trades += Number(row?.trades) || 0
+        return acc
+      },
+      { clients: 0, deposit: 0, wd: 0, pl: 0, trades: 0 }
+    )
+  }, [filteredRows])
+
+  const allUsersRows = useMemo(() => buildAllUsersRows(data), [data])
+  const allRawRows = useMemo(() => buildAllRawRows(data), [data])
+
+  const scrollToTop = () => {
+    if (typeof window === 'undefined') return
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const scrollToBottom = () => {
+    if (typeof window === 'undefined') return
+    const h = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight
+    )
+    window.scrollTo({ top: h, behavior: 'smooth' })
+  }
 
   return (
     <div
@@ -305,6 +535,8 @@ export default function CreolabsClientListsPage() {
           </h1>
           {data && (
             <p style={{ margin: '6px 0 0', fontSize: 12, color: '#6b7280' }}>
+              Brand inclusi: <span style={{ color: '#94a3b8' }}>BW + BW Global</span>
+              {' · '}
               Periodi inclusi:{' '}
               <span style={{ color: '#94a3b8' }}>
                 {data.fromPeriod} → {data.toPeriod}
@@ -359,32 +591,10 @@ export default function CreolabsClientListsPage() {
 
       {data && (
         <>
-          {/* Brand tabs */}
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-            {BRANDS.map((b) => (
-              <button
-                key={b}
-                onClick={() => setActiveBrand(b)}
-                style={{
-                  background: activeBrand === b ? '#3b82f6' : '#1e293b',
-                  color: activeBrand === b ? '#fff' : '#94a3b8',
-                  border: '1px solid ' + (activeBrand === b ? '#3b82f6' : '#374151'),
-                  borderRadius: 8,
-                  padding: '6px 16px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  fontSize: 14,
-                }}
-              >
-                {b}
-              </button>
-            ))}
-          </div>
-
           {/* List tabs */}
           <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
             {LISTS.map((l) => {
-              const count = countsByBrandList[activeBrand]?.[l.key] ?? 0
+              const count = countsByBrandList[l.key] ?? 0
               return (
                 <button
                   key={l.key}
@@ -422,6 +632,88 @@ export default function CreolabsClientListsPage() {
             })}
           </div>
 
+          {/* Cumulative cards */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: 10,
+              marginBottom: 14,
+            }}
+          >
+            <div
+              style={{
+                background: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: 10,
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ color: '#64748b', fontSize: 12 }}>Clienti</div>
+              <div style={{ color: '#f8fafc', fontSize: 22, fontWeight: 700 }}>
+                {fmtCount(totals.clients)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: 10,
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ color: '#64748b', fontSize: 12 }}>Deposit Totale</div>
+              <div style={{ color: '#38bdf8', fontSize: 22, fontWeight: 700 }}>
+                {fmtMoney(totals.deposit)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: 10,
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ color: '#64748b', fontSize: 12 }}>Withdrawal Totale</div>
+              <div style={{ color: '#fb7185', fontSize: 22, fontWeight: 700 }}>
+                {fmtMoney(totals.wd)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: 10,
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ color: '#64748b', fontSize: 12 }}>P&L Totale</div>
+              <div
+                style={{
+                  color: totals.pl >= 0 ? '#4ade80' : '#fb7185',
+                  fontSize: 22,
+                  fontWeight: 700,
+                }}
+              >
+                {fmtPl(totals.pl)}
+              </div>
+            </div>
+            <div
+              style={{
+                background: '#111827',
+                border: '1px solid #1f2937',
+                borderRadius: 10,
+                padding: '10px 12px',
+              }}
+            >
+              <div style={{ color: '#64748b', fontSize: 12 }}>Trades Totali</div>
+              <div style={{ color: '#e2e8f0', fontSize: 22, fontWeight: 700 }}>
+                {fmtCount(totals.trades)}
+              </div>
+            </div>
+          </div>
+
           {/* Search + CSV export */}
           <div
             style={{
@@ -434,7 +726,7 @@ export default function CreolabsClientListsPage() {
           >
             <input
               type="text"
-              placeholder="Cerca per nome, ID, login, affiliato, paese…"
+              placeholder="Cerca account (login), nome, client ID, affiliato, paese..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
@@ -454,7 +746,37 @@ export default function CreolabsClientListsPage() {
               {filteredRows.length !== rawRows.length ? `/ ${rawRows.length}` : ''} clienti
             </span>
             <button
-              onClick={() => downloadCsv(filteredRows, activeList, activeBrand, days)}
+              onClick={scrollToBottom}
+              style={{
+                background: '#1e293b',
+                border: '1px solid #334155',
+                color: '#cbd5e1',
+                borderRadius: 6,
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              ↓ Vai in fondo
+            </button>
+            <button
+              onClick={scrollToTop}
+              style={{
+                background: '#1e293b',
+                border: '1px solid #334155',
+                color: '#cbd5e1',
+                borderRadius: 6,
+                padding: '6px 12px',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              ↑ Torna su
+            </button>
+            <button
+              onClick={() => downloadCsv(filteredRows, activeList, days)}
               style={{
                 background: '#166534',
                 border: '1px solid #15803d',
@@ -467,6 +789,46 @@ export default function CreolabsClientListsPage() {
               }}
             >
               ↓ Export CSV
+            </button>
+            <select
+              value={exportAllMode}
+              onChange={(e) => setExportAllMode(e.target.value)}
+              style={{
+                background: '#0f172a',
+                border: '1px solid #334155',
+                color: '#cbd5e1',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              {EXPORT_ALL_MODES.map((mode) => (
+                <option key={mode.key} value={mode.key}>
+                  {mode.label}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => {
+                if (exportAllMode === 'raw') {
+                  downloadCsvAllRows(allRawRows, days)
+                  return
+                }
+                downloadCsvAllUsers(allUsersRows, days)
+              }}
+              style={{
+                background: '#1d4ed8',
+                border: '1px solid #2563eb',
+                color: '#bfdbfe',
+                borderRadius: 6,
+                padding: '6px 14px',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              ↓ Export CSV {exportAllMode === 'raw' ? 'Righe complete' : 'Tutti gli utenti'}
             </button>
           </div>
 
@@ -499,7 +861,7 @@ export default function CreolabsClientListsPage() {
                 }}
               />
               <span style={{ fontWeight: 700, fontSize: 15, color: '#f9fafb' }}>
-                {activeBrand} — {activeListDef.label}
+                BW + BW Global — {activeListDef.label}
               </span>
             </div>
             <div style={{ padding: '0 12px' }}>
