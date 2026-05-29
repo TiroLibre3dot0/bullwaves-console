@@ -1,8 +1,26 @@
 const { json } = require('./_http')
 const WebSocket = require('ws')
+const fs = require('fs')
+const path = require('path')
 
 const ENGINE_CONNECT_TIMEOUT_MS = 30_000
 const ENGINE_CALL_TIMEOUT_MS = 120_000
+const REGISTERED_LEADS_OBJECT_TIMEOUT_MS = parsePositiveInt(env('REGISTERED_LEADS_OBJECT_TIMEOUT_MS'), 25_000, 120_000)
+const REGISTERED_USERS_CLIENT_MONTHS_TIMEOUT_MS = 12_000
+const DB_LIVE_INGEST_INTERVAL_MS = parsePositiveInt(env('DB_LIVE_INGEST_INTERVAL_MS'), 15 * 60 * 1000, 24 * 60 * 60 * 1000)
+const DB_LIVE_LOOKBACK_DAYS = 7
+const DB_LIVE_STALE_LOOKBACK_DAYS = 14
+const DB_LIVE_RECOVERY_LOOKBACK_DAYS = 30
+const DB_LIVE_BOOTSTRAP_FROM = '2024-01-01'
+const DB_LIVE_RUNS_HISTORY_MAX = 40
+const DB_LIVE_REPORT_JOBS_HISTORY_MAX = 80
+const DB_LIVE_STORE_USERS_MAX = 200_000
+const DB_LIVE_EXPORT_MAX_LIMIT = 20_000
+const DB_LIVE_INGEST_CONTROL_WINDOW_MS = 5 * 60 * 1000
+const DB_LIVE_INGEST_CONTROL_MAX_ACTIONS = 6
+const DB_LIVE_AUDIT_LOG_MAX_BYTES = 2 * 1024 * 1024
+const DB_LIVE_IDENTITY_MISSING_WARN_RATIO = 0.01
+const DB_LIVE_UNMAPPED_LABEL = 'UNMAPPED'
 
 function env(name) {
   const v = process.env[name]
@@ -122,7 +140,6 @@ class QlikEngineSession {
       throw new Error('Unable to open Qlik app document')
     }
   }
-
   call(handle, method, params = []) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return Promise.reject(new Error('Engine websocket is not open'))
@@ -345,6 +362,37 @@ async function qlikGet(config, pathWithQuery) {
   return parsed == null ? text : parsed
 }
 
+async function qlikPost(config, pathWithQuery, payload) {
+  const authorization = await getAuthHeader(config)
+  const response = await fetch(`${config.tenant}${pathWithQuery}`, {
+    method: 'POST',
+    headers: {
+      Authorization: authorization,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload == null ? {} : payload),
+  })
+
+  const text = await response.text()
+  let parsed = null
+  try {
+    parsed = text ? JSON.parse(text) : null
+  } catch {
+    parsed = null
+  }
+
+  if (!response.ok) {
+    const error = parsed?.message || parsed?.error || response.statusText || 'Qlik request failed'
+    const err = new Error(error)
+    err.status = response.status
+    err.details = typeof text === 'string' ? text.slice(0, 500) : ''
+    throw err
+  }
+
+  return parsed == null ? text : parsed
+}
+
 function notAllowed(req, res, allow) {
   res.setHeader('Allow', allow)
   return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
@@ -507,7 +555,6 @@ async function handleEngineSheets(req, res, appId) {
     )
   }
 }
-
 async function handleEngineSheetObjects(req, res, appId, sheetId) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
   const config = ensureConfigured(res)
@@ -609,7 +656,11 @@ async function handleEngineObjectData(req, res, appId, objectId) {
         [{ qTop: 0, qLeft: 0, qHeight: height, qWidth: width }],
       ])
 
-      const matrix = Array.isArray(pages?.[0]?.qMatrix) ? pages[0].qMatrix : []
+      const matrix = Array.isArray(pages?.qDataPages?.[0]?.qMatrix)
+        ? pages.qDataPages[0].qMatrix
+        : Array.isArray(pages?.[0]?.qMatrix)
+          ? pages[0].qMatrix
+          : []
       const dimensions = Array.isArray(hypercube?.qDimensionInfo)
         ? hypercube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
         : []
@@ -751,6 +802,178 @@ async function handleEngineObjectLayout(req, res, appId, objectId) {
   }
 }
 
+function splitCsvParam(raw) {
+  return safeText(raw)
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+}
+
+function toDiscoveryRegex(raw) {
+  const fallback = /(Client|Date|Timestamp|Time|KYC|Lead|Name|Email|Registration|LTD|LTT)/i
+  const text = safeText(raw).trim()
+  if (!text) return fallback
+  try {
+    return new RegExp(text, 'i')
+  } catch {
+    return fallback
+  }
+}
+
+async function handleEngineObjectDiscovery(req, res, appId) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const targetSheets = new Set(splitCsvParam(req.query?.sheetIds))
+  const maxSheets = parsePositiveInt(req.query?.maxSheets, 20, 100)
+  const maxObjects = parsePositiveInt(req.query?.maxObjects, 250, 1000)
+  const sampleRows = parsePositiveInt(req.query?.sampleRows, 1, 5)
+  const sampleCols = parsePositiveInt(req.query?.sampleCols, 20, 50)
+  const includeSample = safeText(req.query?.includeSample) === '1'
+  const keywords = safeText(req.query?.keywords)
+  const filterRegex = toDiscoveryRegex(keywords)
+
+  try {
+    const data = await withEngineSession(config, appId, async (session) => {
+      const sheetsResult = await session.call(session.docHandle, 'GetObjects', [
+        {
+          qTypes: ['sheet'],
+          qIncludeSessionObjects: false,
+        },
+      ])
+
+      let sheets = (Array.isArray(sheetsResult?.qList) ? sheetsResult.qList : []).map((row) => ({
+        id: safeText(row?.qInfo?.qId),
+        title: safeText(row?.qMeta?.title),
+      }))
+
+      if (targetSheets.size > 0) {
+        sheets = sheets.filter((sheet) => targetSheets.has(sheet.id))
+      }
+
+      sheets = sheets.slice(0, maxSheets)
+
+      const candidates = []
+      let scannedObjects = 0
+      let scannedSheets = 0
+
+      for (const sheet of sheets) {
+        if (scannedObjects >= maxObjects) break
+        scannedSheets += 1
+
+        let refs = []
+        try {
+          const sheetObj = await session.call(session.docHandle, 'GetObject', [sheet.id])
+          const sheetHandle = Number(sheetObj?.qReturn?.qHandle || 0)
+          if (!sheetHandle) continue
+
+          const sheetLayoutResult = await session.call(sheetHandle, 'GetLayout', [])
+          const sheetLayout = unwrapLayout(sheetLayoutResult)
+          refs = extractSheetObjectsFromLayout(sheetLayout)
+        } catch {
+          continue
+        }
+
+        for (const ref of refs) {
+          if (scannedObjects >= maxObjects) break
+          scannedObjects += 1
+
+          let objectHandle = 0
+          let layout = null
+          try {
+            const objectResult = await session.call(session.docHandle, 'GetObject', [ref.id])
+            objectHandle = Number(objectResult?.qReturn?.qHandle || 0)
+            if (!objectHandle) continue
+            const layoutResult = await session.call(objectHandle, 'GetLayout', [])
+            layout = unwrapLayout(layoutResult)
+          } catch {
+            continue
+          }
+
+          const hypercube = layout?.qHyperCube
+          if (!hypercube) continue
+
+          const objectType = safeText(layout?.qInfo?.qType || ref.type)
+          const objectTitle = safeText(layout?.qMeta?.title || layout?.title)
+          const dimensions = Array.isArray(hypercube?.qDimensionInfo)
+            ? hypercube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
+            : []
+          const measures = Array.isArray(hypercube?.qMeasureInfo)
+            ? hypercube.qMeasureInfo.map((m) => safeText(m?.qFallbackTitle || m?.qLabel))
+            : []
+
+          const haystack = `${objectType} ${objectTitle} ${dimensions.join(' ')} ${measures.join(' ')}`
+          if (!filterRegex.test(haystack)) continue
+
+          const qSize = hypercube?.qSize || {}
+          const result = {
+            sheetId: sheet.id,
+            sheetTitle: sheet.title,
+            objectId: ref.id,
+            objectType,
+            objectTitle,
+            size: {
+              rows: Number(qSize.qcy || 0),
+              cols: Number(qSize.qcx || 0),
+            },
+            dimensions,
+            measures,
+          }
+
+          if (includeSample) {
+            try {
+              const height = Math.max(1, Math.min(sampleRows, Number(qSize.qcy || 0) || sampleRows))
+              const width = Math.max(1, Math.min(sampleCols, Number(qSize.qcx || 0) || sampleCols))
+              const pages = await session.call(objectHandle, 'GetHyperCubeData', [
+                '/qHyperCubeDef',
+                [{ qTop: 0, qLeft: 0, qHeight: height, qWidth: width }],
+              ])
+              const matrix = Array.isArray(pages?.qDataPages?.[0]?.qMatrix)
+                ? pages.qDataPages[0].qMatrix
+                : Array.isArray(pages?.[0]?.qMatrix)
+                  ? pages[0].qMatrix
+                  : []
+              result.sample = matrix.map((row) => (Array.isArray(row) ? row.map(simplifyCell) : []))
+            } catch {
+              result.sample = []
+            }
+          }
+
+          candidates.push(result)
+        }
+      }
+
+      return {
+        filters: {
+          sheetIds: [...targetSheets],
+          keywords: keywords || filterRegex.source,
+          includeSample,
+          maxSheets,
+          maxObjects,
+        },
+        scannedSheets,
+        scannedObjects,
+        matched: candidates.length,
+        candidates,
+      }
+    })
+
+    return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Qlik Engine discovery request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
 // Known object IDs for CREOLABS live data (discovered via Engine scan)
 const CREOLABS_APP_ID = 'c6f37daa-0278-42b0-ab9b-813d2b9aafeb'
 // "Previous Month" table – contains per-account PL filtered for the most recent period
@@ -768,6 +991,7 @@ const CREOLABS_COL_WIDTH = 20
 // Cache for CREOLABS live PL (stale-while-revalidate, TTL 15min)
 let _creolabsPlCache = null // { data, fetchedAt, promise }
 const CREOLABS_CACHE_TTL = 15 * 60 * 1000
+const CREOLABS_WARMUP_MAX_MS = 2 * 60 * 1000
 
 function aggregateRows(matrix, byClient) {
   for (const row of matrix) {
@@ -897,11 +1121,41 @@ function ymRank(text) {
 
 let _creolabsClientsCache = null
 let _creolabsSnapshotCache = null
+let _creolabsTradersRankingRewardsTableCache = null
 
 const _creolabsClientVariantCaches = {
   full: null,
   clientMonths: null,
   affiliateMonth: null,
+}
+let _creolabsLatestLeadObjectCache = null
+let _creolabsRegisteredLeadsObjectCache = null
+let _registeredUsersMetaCacheByClient = new Map()
+let _registeredUsersMetaCacheTouchedAt = 0
+const REGISTERED_USERS_META_CACHE_TTL = 12 * 60 * 60 * 1000
+
+const _dbLiveIngestionState = {
+  schedulerStarted: false,
+  hydratedFromDisk: false,
+  timer: null,
+  inFlight: false,
+  startedAt: null,
+  lastRunAt: null,
+  lastSuccessAt: null,
+  lastFailureAt: null,
+  consecutiveFailures: 0,
+  latestWatermark: '',
+  runCount: 0,
+  storeByClient: new Map(),
+  lastRun: null,
+  runs: [],
+}
+
+const _dbLiveIngestionControlRate = new Map()
+
+const _dbLiveReportJobsState = {
+  jobsById: new Map(),
+  history: [],
 }
 
 function clearCreolabsClientVariantCaches() {
@@ -910,6 +1164,416 @@ function clearCreolabsClientVariantCaches() {
   }
   _creolabsClientsCache = null
   _creolabsSnapshotCache = null
+  _creolabsTradersRankingRewardsTableCache = null
+  _creolabsLatestLeadObjectCache = null
+  _creolabsRegisteredLeadsObjectCache = null
+  _registeredUsersMetaCacheByClient = new Map()
+  _registeredUsersMetaCacheTouchedAt = 0
+}
+
+const CREOLABS_LATEST_LEAD_OBJECT_ID = 'db41484c-0a43-4f59-a499-381dfceee46c'
+const CREOLABS_LATEST_LEAD_OBJECT_TTL = 5 * 60 * 1000
+const CREOLABS_REGISTERED_LEADS_OBJECT_ID = 'ZShKmrn'
+const CREOLABS_REGISTERED_LEADS_OBJECT_TTL = 5 * 60 * 1000
+const CREOLABS_LEAD_EXCLUDED_STATUSES = new Set(['duplicate', 'deleted', 'do not call', 'less than 18'])
+
+function qlikDateNumberToIsoDate(value) {
+  const num = Number(value)
+  if (!Number.isFinite(num)) return ''
+  const ms = Date.UTC(1899, 11, 30) + Math.round(num) * 24 * 60 * 60 * 1000
+  const d = new Date(ms)
+  if (!Number.isFinite(d.getTime())) return ''
+  const yyyy = d.getUTCFullYear()
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function parseLooseNumber(text) {
+  const raw = safeText(text).trim()
+  if (!raw) return 0
+  const normalized = raw.replace(/,/g, '')
+  const n = Number(normalized)
+  return Number.isFinite(n) ? n : 0
+}
+
+function findHeaderIndex(headers, pattern) {
+  for (let i = 0; i < headers.length; i += 1) {
+    const header = safeText(headers[i]).trim()
+    if (pattern.test(header)) return i
+  }
+  return -1
+}
+
+function extractIsoDateFromCell(cell) {
+  const numIso = qlikDateNumberToIsoDate(cell?.qNum)
+  if (numIso) return numIso
+  const text = safeText(cell?.qText).trim()
+  const m = text.match(/^(\d{4}-\d{2}-\d{2})$/)
+  return m ? m[1] : ''
+}
+
+function extractIsoDateFromRow(row) {
+  for (const cell of row || []) {
+    const text = safeText(cell?.qText).trim()
+    const m = text.match(/^(\d{4}-\d{2}-\d{2})$/)
+    if (m) return m[1]
+  }
+  return ''
+}
+
+function extractIsoDateFromAnyCell(cell) {
+  const numIso = qlikDateNumberToIsoDate(cell?.qNum)
+  if (numIso) return numIso
+
+  const text = safeText(cell?.qText).trim()
+  if (!text || text === '-') return ''
+
+  const isoMatch = text.match(/^(\d{4}-\d{2}-\d{2})$/)
+  if (isoMatch) return isoMatch[1]
+
+  const dmyMatch = text.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/)
+  if (dmyMatch) {
+    const dd = String(dmyMatch[1]).padStart(2, '0')
+    const mm = String(dmyMatch[2]).padStart(2, '0')
+    const yyyy = String(dmyMatch[3])
+    return `${yyyy}-${mm}-${dd}`
+  }
+
+  const parsed = Date.parse(text)
+  if (!Number.isFinite(parsed)) return ''
+  return new Date(parsed).toISOString().slice(0, 10)
+}
+
+function looksLikeClientIdText(value) {
+  const text = normalizeText(value)
+  return /^\d{3,}$/.test(text)
+}
+
+function inferLeadObjectHeaderOffset(matrix, idxClientTs, idxClientId) {
+  if (!Array.isArray(matrix) || !matrix.length) return 0
+
+  let bestOffset = 0
+  let bestScore = -1
+
+  for (let offset = -3; offset <= 3; offset += 1) {
+    let score = 0
+
+    for (const row of matrix) {
+      if (!Array.isArray(row)) continue
+
+      const tsCell = row[idxClientTs + offset]
+      const idCell = row[idxClientId + offset]
+      const tsOk = Boolean(extractIsoDateFromAnyCell(tsCell))
+      const idOk = looksLikeClientIdText(idCell?.qText)
+
+      if (tsOk) score += 1
+      if (idOk) score += 2
+    }
+
+    if (score > bestScore) {
+      bestScore = score
+      bestOffset = offset
+    }
+  }
+
+  return bestOffset
+}
+
+async function fetchCreolabsRegisteredLeadsFromObject(config) {
+  return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+    const objectResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_REGISTERED_LEADS_OBJECT_ID])
+    const objectHandle = Number(objectResult?.qReturn?.qHandle || 0)
+    if (!objectHandle) throw new Error('Creolabs registered-leads object not found')
+
+    const layoutResult = await session.call(objectHandle, 'GetLayout', [])
+    const layout = unwrapLayout(layoutResult)
+    const hypercube = layout?.qHyperCube
+    if (!hypercube) throw new Error('Creolabs registered-leads object has no hypercube')
+
+    const qSize = hypercube?.qSize || {}
+    const totalRows = Math.max(0, Number(qSize.qcy || 0))
+    const totalCols = Math.max(1, Number(qSize.qcx || 0))
+    if (!totalRows) return []
+
+    const dimensions = Array.isArray(hypercube?.qDimensionInfo)
+      ? hypercube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
+      : []
+    const measures = Array.isArray(hypercube?.qMeasureInfo)
+      ? hypercube.qMeasureInfo.map((m) => safeText(m?.qFallbackTitle || m?.qLabel))
+      : []
+    const headers = [...dimensions, ...measures]
+
+    const idxClientTs = findHeaderIndex(headers, /^client\s*timestamp$/i)
+    const idxClientId = findHeaderIndex(headers, /^client\s*id$/i)
+    const idxClientName = findHeaderIndex(headers, /^client\s*name$/i)
+    const idxAffiliateId = findHeaderIndex(headers, /(^|\b)affiliate(\s*id)?(\b|$)/i)
+    const idxClientLogin = findHeaderIndex(headers, /(^|\b)client\s*login(\b|$)/i)
+    const idxBrand = findHeaderIndex(headers, /(^|\b)brand(\b|$)/i)
+    const idxCountry = findHeaderIndex(headers, /^country$/i)
+    const idxStatus = findHeaderIndex(headers, /^status$/i)
+    const idxFtdDate = findHeaderIndex(headers, /^ftd\s*date$/i)
+    const idxLtdDate = findHeaderIndex(headers, /^ltd\s*date$/i)
+    const idxLttDate = findHeaderIndex(headers, /^ltt\s*date$/i)
+    const idxLastContact = findHeaderIndex(headers, /^last\s*time\s*contact$/i)
+    const idxUser = findHeaderIndex(headers, /^user$/i)
+    const idxLtvDeposit = findHeaderIndex(headers, /^ltv\s*deposit$/i)
+    const idxLtvWd = findHeaderIndex(headers, /^ltv\s*withdrawal$/i)
+    const idxLtvCommission = findHeaderIndex(headers, /^ltv\s*commission$/i)
+    const idxLtvPl = findHeaderIndex(headers, /^ltv\s*pl$/i)
+    const idxLtvOpenPl = findHeaderIndex(headers, /^ltv\s*open\s*pl$/i)
+    const idxLtvNet = findHeaderIndex(headers, /^ltv\s*net$/i)
+    const idxLtvBalance = findHeaderIndex(headers, /^ltv\s*balance$/i)
+    const idxTrades = findHeaderIndex(headers, /^#\s*trades$/i)
+    const idxFtdAmount = findHeaderIndex(headers, /^ftd\s*amount$/i)
+    const idxStdAmount = findHeaderIndex(headers, /^std\s*amount$/i)
+
+    if (idxClientId < 0 || idxClientTs < 0) {
+      throw new Error('Creolabs registered-leads object missing required headers')
+    }
+
+    const inferPage = await session.call(objectHandle, 'GetHyperCubeData', [
+      '/qHyperCubeDef',
+      [{ qTop: 0, qLeft: 0, qHeight: Math.min(totalRows, 250), qWidth: Math.min(totalCols, 40) }],
+    ])
+    const inferMatrix = Array.isArray(inferPage?.qDataPages?.[0]?.qMatrix)
+      ? inferPage.qDataPages[0].qMatrix
+      : Array.isArray(inferPage?.[0]?.qMatrix)
+        ? inferPage[0].qMatrix
+        : []
+    const headerOffset = inferLeadObjectHeaderOffset(inferMatrix, idxClientTs, idxClientId)
+
+    // Keep per-request cells under common Qlik limits to avoid 502/timeouts.
+    const pageSize = 300
+    const pageParallel = 2
+    const offsets = []
+    for (let off = 0; off < totalRows; off += pageSize) offsets.push(off)
+
+    const leads = []
+    for (let i = 0; i < offsets.length; i += pageParallel) {
+      const chunk = offsets.slice(i, i + pageParallel)
+      const pages = await Promise.all(
+        chunk.map((offset) =>
+          session.call(objectHandle, 'GetHyperCubeData', [
+            '/qHyperCubeDef',
+            [{ qTop: offset, qLeft: 0, qHeight: Math.min(pageSize, totalRows - offset), qWidth: Math.min(totalCols, 40) }],
+          ])
+        )
+      )
+
+      for (const page of pages) {
+        const matrix = Array.isArray(page?.qDataPages?.[0]?.qMatrix)
+          ? page.qDataPages[0].qMatrix
+          : Array.isArray(page?.[0]?.qMatrix)
+            ? page[0].qMatrix
+            : []
+
+        for (const row of matrix) {
+          if (!Array.isArray(row)) continue
+          const readCell = (idx) => {
+            const shifted = idx + headerOffset
+            if (shifted < 0 || shifted >= row.length) return null
+            return row[shifted]
+          }
+
+          const clientId = normalizeText(readCell(idxClientId)?.qText)
+          if (!clientId) continue
+
+          const regDateIso = extractIsoDateFromAnyCell(readCell(idxClientTs))
+          const clientTimestamp = regDateIso ? `${regDateIso}T00:00:00.000Z` : ''
+
+          leads.push({
+            clientId,
+            clientName: idxClientName >= 0 ? normalizeText(readCell(idxClientName)?.qText) : '',
+            affiliateId: idxAffiliateId >= 0 ? normalizeText(readCell(idxAffiliateId)?.qText) : '',
+            clientLogin: idxClientLogin >= 0 ? normalizeText(readCell(idxClientLogin)?.qText) : '',
+            brand: idxBrand >= 0 ? normalizeText(readCell(idxBrand)?.qText) : '',
+            user: idxUser >= 0 ? normalizeText(readCell(idxUser)?.qText) : '',
+            country: idxCountry >= 0 ? normalizeText(readCell(idxCountry)?.qText) : '',
+            status: idxStatus >= 0 ? normalizeText(readCell(idxStatus)?.qText).toLowerCase() : '',
+            clientTimestamp,
+            kycTimestamp: clientTimestamp,
+            ftdDate: idxFtdDate >= 0 ? extractIsoDateFromAnyCell(readCell(idxFtdDate)) : '',
+            ltdDate: idxLtdDate >= 0 ? extractIsoDateFromAnyCell(readCell(idxLtdDate)) : '',
+            lttDate: idxLttDate >= 0 ? extractIsoDateFromAnyCell(readCell(idxLttDate)) : '',
+            lastTimeComment: idxLastContact >= 0 ? extractIsoDateFromAnyCell(readCell(idxLastContact)) : '',
+            deposit: idxLtvDeposit >= 0 ? toFiniteNumber(readCell(idxLtvDeposit)?.qNum ?? parseLooseNumber(readCell(idxLtvDeposit)?.qText)) : 0,
+            wd: idxLtvWd >= 0 ? toFiniteNumber(readCell(idxLtvWd)?.qNum ?? parseLooseNumber(readCell(idxLtvWd)?.qText)) : 0,
+            net: idxLtvNet >= 0 ? toFiniteNumber(readCell(idxLtvNet)?.qNum ?? parseLooseNumber(readCell(idxLtvNet)?.qText)) : 0,
+            closedPl: idxLtvPl >= 0 ? toFiniteNumber(readCell(idxLtvPl)?.qNum ?? parseLooseNumber(readCell(idxLtvPl)?.qText)) : 0,
+            openPl: idxLtvOpenPl >= 0 ? toFiniteNumber(readCell(idxLtvOpenPl)?.qNum ?? parseLooseNumber(readCell(idxLtvOpenPl)?.qText)) : 0,
+            commission: idxLtvCommission >= 0 ? toFiniteNumber(readCell(idxLtvCommission)?.qNum ?? parseLooseNumber(readCell(idxLtvCommission)?.qText)) : 0,
+            ftd: idxFtdAmount >= 0 ? toFiniteNumber(readCell(idxFtdAmount)?.qNum ?? parseLooseNumber(readCell(idxFtdAmount)?.qText)) : 0,
+            rdp: idxStdAmount >= 0 ? toFiniteNumber(readCell(idxStdAmount)?.qNum ?? parseLooseNumber(readCell(idxStdAmount)?.qText)) : 0,
+            trades: idxTrades >= 0 ? Math.round(toFiniteNumber(readCell(idxTrades)?.qNum ?? parseLooseNumber(readCell(idxTrades)?.qText))) : 0,
+            balance: idxLtvBalance >= 0 ? toFiniteNumber(readCell(idxLtvBalance)?.qNum ?? parseLooseNumber(readCell(idxLtvBalance)?.qText)) : 0,
+            sourceObjectId: CREOLABS_REGISTERED_LEADS_OBJECT_ID,
+          })
+        }
+      }
+    }
+
+    // Deduplicate exact repeats but keep historical day-level rows for each client.
+    const byClientAndTimestamp = new Map()
+    for (const row of leads) {
+      const clientId = normalizeText(row?.clientId)
+      const clientTimestamp = normalizeText(row?.clientTimestamp)
+      const key = `${clientId}|${clientTimestamp || 'no-ts'}`
+      if (!key) continue
+      if (!byClientAndTimestamp.has(key)) byClientAndTimestamp.set(key, row)
+    }
+
+    return [...byClientAndTimestamp.values()]
+  })
+}
+
+async function resolveCreolabsRegisteredLeadsFromObject(config) {
+  const cache = _creolabsRegisteredLeadsObjectCache
+  const age = cache?.fetchedAt ? Date.now() - cache.fetchedAt : Infinity
+  if (cache?.data && age < CREOLABS_REGISTERED_LEADS_OBJECT_TTL) {
+    return { data: cache.data, cached: true }
+  }
+
+  if (cache?.promise) {
+    const data = await cache.promise
+    return { data, cached: false }
+  }
+
+  const promise = fetchCreolabsRegisteredLeadsFromObject(config)
+    .then((data) => {
+      _creolabsRegisteredLeadsObjectCache = { data, fetchedAt: Date.now(), promise: null }
+      return data
+    })
+    .catch((e) => {
+      if (_creolabsRegisteredLeadsObjectCache) _creolabsRegisteredLeadsObjectCache.promise = null
+      throw e
+    })
+
+  _creolabsRegisteredLeadsObjectCache = { data: null, fetchedAt: 0, promise }
+  const data = await promise
+  return { data, cached: false }
+}
+
+async function fetchCreolabsLatestLeadFromObject(config) {
+  return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+    const objectResult = await session.call(session.docHandle, 'GetObject', [CREOLABS_LATEST_LEAD_OBJECT_ID])
+    const objectHandle = Number(objectResult?.qReturn?.qHandle || 0)
+    if (!objectHandle) throw new Error('Creolabs latest-lead object not found')
+
+    const layoutResult = await session.call(objectHandle, 'GetLayout', [])
+    const layout = unwrapLayout(layoutResult)
+    const hypercube = layout?.qHyperCube
+    if (!hypercube) throw new Error('Creolabs latest-lead object has no hypercube')
+
+    const qSize = hypercube?.qSize || {}
+    const totalRows = Math.max(0, Number(qSize.qcy || 0))
+    const totalCols = Math.max(1, Number(qSize.qcx || 0))
+    if (!totalRows) return null
+
+    const pages = await session.call(objectHandle, 'GetHyperCubeData', [
+      '/qHyperCubeDef',
+      [{ qTop: 0, qLeft: 0, qHeight: Math.min(totalRows, 3000), qWidth: Math.min(totalCols, 50) }],
+    ])
+    const matrix = Array.isArray(pages?.qDataPages?.[0]?.qMatrix)
+      ? pages.qDataPages[0].qMatrix
+      : Array.isArray(pages?.[0]?.qMatrix)
+        ? pages[0].qMatrix
+        : []
+
+    const dimensions = Array.isArray(hypercube?.qDimensionInfo)
+      ? hypercube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
+      : []
+    const measures = Array.isArray(hypercube?.qMeasureInfo)
+      ? hypercube.qMeasureInfo.map((m) => safeText(m?.qFallbackTitle || m?.qLabel))
+      : []
+    const headers = [...dimensions, ...measures]
+
+    const idxClientId = findHeaderIndex(headers, /client\s*id/i)
+    const idxClientName = findHeaderIndex(headers, /client\s*name/i)
+    const idxClientEmail = findHeaderIndex(headers, /client\s*email/i)
+    const idxDate = findHeaderIndex(headers, /^date$/i)
+    const idxRiskLevel = findHeaderIndex(headers, /risk\s*level/i)
+    const idxScore = findHeaderIndex(headers, /^score$/i)
+    const idxLtvDeposit = findHeaderIndex(headers, /^ltv\s*deposit$/i)
+    const idxDeposit = findHeaderIndex(headers, /^\$\s*deposit$/i)
+    const idxDeposits = findHeaderIndex(headers, /^#\s*deposits$/i)
+
+    if (idxClientId < 0 || idxDate < 0) {
+      throw new Error('Creolabs latest-lead object missing required headers')
+    }
+
+    let best = null
+    let bestDateNum = -1
+    let bestDateIso = ''
+    let bestClientIdNum = -1
+
+    for (const row of matrix) {
+      if (!Array.isArray(row)) continue
+      const clientIdText = safeText(row[idxClientId]?.qText).trim()
+      if (!clientIdText) continue
+
+      const rowIsoDate = extractIsoDateFromRow(row) || (idxDate >= 0 ? extractIsoDateFromCell(row[idxDate]) : '')
+      const dateRank = rowIsoDate ? Date.parse(`${rowIsoDate}T00:00:00.000Z`) : -1
+      const clientIdNum = Number(clientIdText)
+      const clientRank = Number.isFinite(clientIdNum) ? clientIdNum : -1
+
+      if (dateRank > bestDateNum || (dateRank === bestDateNum && clientRank > bestClientIdNum)) {
+        bestDateNum = dateRank
+        bestDateIso = rowIsoDate
+        bestClientIdNum = clientRank
+        best = row
+      }
+    }
+
+    if (!best) return null
+
+    const isoDate = bestDateIso || extractIsoDateFromRow(best) || (idxDate >= 0 ? extractIsoDateFromCell(best[idxDate]) : '')
+    const isoDateTime = isoDate ? `${isoDate}T00:00:00.000Z` : ''
+
+    return {
+      clientId: safeText(best[idxClientId]?.qText).trim(),
+      clientName: idxClientName >= 0 ? safeText(best[idxClientName]?.qText).trim() : '',
+      clientEmail: idxClientEmail >= 0 ? safeText(best[idxClientEmail]?.qText).trim() : '',
+      riskLevel: idxRiskLevel >= 0 ? safeText(best[idxRiskLevel]?.qText).trim() : '',
+      riskScore: idxScore >= 0 ? safeText(best[idxScore]?.qText).trim() : '',
+      ltvDeposit: idxLtvDeposit >= 0 ? toFiniteNumber(best[idxLtvDeposit]?.qNum ?? parseLooseNumber(best[idxLtvDeposit]?.qText)) : 0,
+      transactionDeposit: idxDeposit >= 0 ? toFiniteNumber(best[idxDeposit]?.qNum ?? parseLooseNumber(best[idxDeposit]?.qText)) : 0,
+      depositsCount: idxDeposits >= 0 ? Math.round(toFiniteNumber(best[idxDeposits]?.qNum ?? parseLooseNumber(best[idxDeposits]?.qText))) : 0,
+      transactionDate: isoDate,
+      clientTimestamp: isoDateTime,
+      lttDate: isoDateTime || '-',
+      lastTimeComment: isoDateTime,
+      status: 'active',
+      sourceObjectId: CREOLABS_LATEST_LEAD_OBJECT_ID,
+    }
+  })
+}
+
+async function resolveCreolabsLatestLeadFromObject(config) {
+  const cache = _creolabsLatestLeadObjectCache
+  const age = cache?.fetchedAt ? Date.now() - cache.fetchedAt : Infinity
+  if (cache?.data && age < CREOLABS_LATEST_LEAD_OBJECT_TTL) {
+    return { data: cache.data, cached: true }
+  }
+
+  if (cache?.promise) {
+    const data = await cache.promise
+    return { data, cached: false }
+  }
+
+  const promise = fetchCreolabsLatestLeadFromObject(config)
+    .then((data) => {
+      _creolabsLatestLeadObjectCache = { data, fetchedAt: Date.now(), promise: null }
+      return data
+    })
+    .catch((e) => {
+      if (_creolabsLatestLeadObjectCache) _creolabsLatestLeadObjectCache.promise = null
+      throw e
+    })
+
+  _creolabsLatestLeadObjectCache = { data: null, fetchedAt: 0, promise }
+  const data = await promise
+  return { data, cached: false }
 }
 
 function getCreolabsClientVariantOptions(variant) {
@@ -1276,7 +1940,7 @@ async function resolveCreolabsClientVariant(config, variant) {
   const promise = resolveCreolabsSnapshot(config)
     .then((snapshot) => projectCreolabsVariantFromSnapshot(snapshot.data, variant))
     .then((data) => {
-      setCreolabsClientVariantCache(variant, { data, fetchedAt: Date.now(), promise: null })
+      setCreolabsClientVariantCache(variant, { data, fetchedAt: Date.now(), promise: null, promiseStartedAt: 0 })
       return data
     })
     .catch((e) => {
@@ -1285,7 +1949,7 @@ async function resolveCreolabsClientVariant(config, variant) {
       throw e
     })
 
-  const nextCacheValue = { data: null, fetchedAt: 0, promise }
+  const nextCacheValue = { data: null, fetchedAt: 0, promise, promiseStartedAt: Date.now() }
   setCreolabsClientVariantCache(variant, nextCacheValue)
 
   const data = await promise
@@ -1482,6 +2146,90 @@ async function handleCreolabsAffiliateMonth(req, res) {
 function normalizeText(value) {
   return String(value == null ? '' : value).trim()
 }
+
+function isMissingIdentityValue(value) {
+  const text = normalizeText(value)
+  if (!text) return true
+  return text.toUpperCase() === DB_LIVE_UNMAPPED_LABEL
+}
+
+function getClientIdCacheKeys(clientId) {
+  const text = normalizeText(clientId)
+  if (!text) return []
+  const keys = [text]
+  const num = Number(text)
+  if (Number.isFinite(num)) keys.push(`n:${num}`)
+  return keys
+}
+
+function ensureRegisteredUsersMetaCacheFresh() {
+  if (!_registeredUsersMetaCacheTouchedAt) return
+  if (Date.now() - _registeredUsersMetaCacheTouchedAt < REGISTERED_USERS_META_CACHE_TTL) return
+  _registeredUsersMetaCacheByClient = new Map()
+  _registeredUsersMetaCacheTouchedAt = 0
+}
+
+function mergeRegisteredUsersMeta(existing, incoming) {
+  if (!existing) return { ...incoming }
+  const merged = { ...existing }
+  const keys = ['clientName', 'brand', 'affiliateId', 'clientLogin', 'user', 'country']
+  for (const key of keys) {
+    const value = normalizeText(incoming?.[key])
+    if (value) merged[key] = value
+  }
+  return merged
+}
+
+function upsertRegisteredUsersMeta(candidate) {
+  ensureRegisteredUsersMetaCacheFresh()
+  const clientId = normalizeText(candidate?.clientId)
+  if (!clientId) return
+
+  const incoming = {
+    clientId,
+    clientName: normalizeText(candidate?.clientName),
+    brand: normalizeText(candidate?.brand),
+    affiliateId: normalizeText(candidate?.affiliateId),
+    clientLogin: normalizeText(candidate?.clientLogin),
+    user: normalizeText(candidate?.user),
+    country: normalizeText(candidate?.country),
+  }
+
+  let merged = null
+  const keys = getClientIdCacheKeys(clientId)
+  for (const key of keys) {
+    const existing = _registeredUsersMetaCacheByClient.get(key)
+    merged = mergeRegisteredUsersMeta(merged || existing, incoming)
+  }
+  merged = mergeRegisteredUsersMeta(merged, incoming)
+
+  for (const key of keys) {
+    _registeredUsersMetaCacheByClient.set(key, merged)
+  }
+  _registeredUsersMetaCacheTouchedAt = Date.now()
+}
+
+function getRegisteredUsersMeta(clientId) {
+  ensureRegisteredUsersMetaCacheFresh()
+  for (const key of getClientIdCacheKeys(clientId)) {
+    const cached = _registeredUsersMetaCacheByClient.get(key)
+    if (cached) return cached
+  }
+  return null
+}
+
+function normalizeLooseIdentity(value) {
+  return normalizeText(value).toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+function buildIdentityFallbackKey(clientName, country, user) {
+  const name = normalizeLooseIdentity(clientName)
+  const ctry = normalizeLooseIdentity(country)
+  const owner = normalizeLooseIdentity(user)
+  if (!name || !ctry || !owner) return ''
+  return `${name}|${ctry}|${owner}`
+}
+
 
 function toFiniteNumber(value) {
   const n = Number(value)
@@ -1858,6 +2606,8 @@ function buildCreolabsClientScores(rows) {
     const bal = toFiniteNumber(row?.balance)
     const commission = toFiniteNumber(row?.commission)
     const trades = Math.round(toFiniteNumber(row?.trades))
+    const openedTrades = Math.round(toFiniteNumber(row?.openedTrades ?? row?.opened_trades))
+    const equity = toFiniteNumber(row?.equity)
     const ftd = toFiniteNumber(row?.ftd)
     const rdp = toFiniteNumber(row?.rdp)
 
@@ -1878,6 +2628,8 @@ function buildCreolabsClientScores(rows) {
         balance: 0,
         commission: 0,
         trades: 0,
+        openedTrades: 0,
+        equity: 0,
         ftd: 0,
         rdp: 0,
         activeMonths: 0,
@@ -1896,9 +2648,16 @@ function buildCreolabsClientScores(rows) {
       c._latestRank = rank
       c.brand = brand || c.brand
       c.affiliateId = affiliateId || c.affiliateId
+      c.clientLogin = clientLogin || c.clientLogin
       c.user = user || c.user
       c.country = country || c.country
     }
+
+    // Keep non-empty identity fields even if they are not from the latest month row.
+    c.affiliateId = affiliateId || c.affiliateId
+    c.clientLogin = clientLogin || c.clientLogin
+    c.user = user || c.user
+    c.country = country || c.country
 
     // Update name if longer
     if ((clientName || '').length > c.clientName.length) c.clientName = clientName
@@ -1911,6 +2670,8 @@ function buildCreolabsClientScores(rows) {
     if (bal !== 0) c.balance = bal // last non-zero wins
     c.commission += commission
     c.trades += trades
+    c.openedTrades += openedTrades
+    if (equity !== 0) c.equity = equity // last non-zero wins
     c.ftd += ftd
     c.rdp += rdp
 
@@ -1932,6 +2693,3523 @@ function buildCreolabsClientScores(rows) {
     const { _periods, _latestRank, ...rest } = c
     return { ...rest, activeMonths }
   })
+}
+
+const PERIOD_MONTH_INDEX = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  May: 4,
+  Jun: 5,
+  Jul: 6,
+  Aug: 7,
+  Sep: 8,
+  Oct: 9,
+  Nov: 10,
+  Dec: 11,
+}
+
+function parsePeriodMeta(periodId) {
+  const value = normalizeText(periodId)
+  const match = value.match(/^(\d{4})-([A-Za-z]{3})$/)
+  if (!match) return null
+  const year = Number(match[1])
+  const monthIndex = PERIOD_MONTH_INDEX[match[2]]
+  if (!Number.isFinite(year) || monthIndex == null) return null
+  return { periodId: value, year, monthIndex }
+}
+
+function monthStartDate(periodId) {
+  const meta = parsePeriodMeta(periodId)
+  if (!meta) return null
+  return new Date(Date.UTC(meta.year, meta.monthIndex, 1, 0, 0, 0))
+}
+
+function monthEndDate(periodId) {
+  const meta = parsePeriodMeta(periodId)
+  if (!meta) return null
+  return new Date(Date.UTC(meta.year, meta.monthIndex + 1, 0, 23, 59, 59))
+}
+
+function daysInMonthFromPeriod(periodId) {
+  const meta = parsePeriodMeta(periodId)
+  if (!meta) return 30
+  return new Date(Date.UTC(meta.year, meta.monthIndex + 1, 0)).getUTCDate()
+}
+
+function formatCompactCurrency(value) {
+  const n = toFiniteNumber(value)
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(n)
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat('en-US').format(toFiniteNumber(value))
+}
+
+function buildDerivedClientDatesRows(clientScores, latestPeriodId) {
+  const latestStart = latestPeriodId ? monthStartDate(latestPeriodId) : new Date()
+  return (clientScores || [])
+    .filter((client) => normalizeText(client?.clientId))
+    .map((client) => {
+      const firstPeriod = normalizeText(client?.firstPeriodId) || normalizeText(client?.lastPeriodId) || latestPeriodId
+      const lastPeriod = normalizeText(client?.lastPeriodId) || firstPeriod
+      const clientTimestamp = monthStartDate(firstPeriod) || latestStart
+      const ltdDate = monthStartDate(lastPeriod) || clientTimestamp
+      const status = Number(client?.activeMonths || 0) > 6 ? 'active' : 'new'
+
+      return {
+        clientId: normalizeText(client?.clientId),
+        clientTimestamp: clientTimestamp ? clientTimestamp.toISOString() : '',
+        ltdDate: ltdDate ? ltdDate.toISOString() : '-',
+        lttDate: ltdDate ? ltdDate.toISOString() : '-',
+        kycTimestamp: clientTimestamp ? clientTimestamp.toISOString() : '',
+        status,
+        lastTimeComment: ltdDate ? ltdDate.toISOString() : '',
+      }
+    })
+}
+
+function buildDerivedClientDatesRowsFromClientMonths(clientMonthsRows, latestPeriodId) {
+  const latestStart = latestPeriodId ? monthStartDate(latestPeriodId) : new Date()
+  const byClient = new Map()
+
+  for (const row of clientMonthsRows || []) {
+    const clientId = normalizeText(row?.clientId)
+    if (!clientId) continue
+    const periodId = normalizeText(row?.periodId)
+    if (!periodId) continue
+    const rank = typeof ymRank === 'function' ? ymRank(periodId) : 0
+
+    let entry = byClient.get(clientId)
+    if (!entry) {
+      entry = {
+        clientId,
+        firstPeriodId: null,
+        lastPeriodId: null,
+        firstDepositPeriodId: null,
+        lastTradePeriodId: null,
+        activeMonths: 0,
+      }
+      byClient.set(clientId, entry)
+    }
+
+    entry.activeMonths += 1
+
+    if (!entry.firstPeriodId || (typeof ymRank === 'function' ? rank < ymRank(entry.firstPeriodId) : false)) {
+      entry.firstPeriodId = periodId
+    }
+    if (!entry.lastPeriodId || (typeof ymRank === 'function' ? rank > ymRank(entry.lastPeriodId) : false)) {
+      entry.lastPeriodId = periodId
+    }
+
+    const hasDeposit = toFiniteNumber(row?.deposit) > 0 || toFiniteNumber(row?.ftd) > 0
+    if (hasDeposit) {
+      if (!entry.firstDepositPeriodId || (typeof ymRank === 'function' ? rank < ymRank(entry.firstDepositPeriodId) : false)) {
+        entry.firstDepositPeriodId = periodId
+      }
+    }
+
+    if (toFiniteNumber(row?.trades) > 0) {
+      if (!entry.lastTradePeriodId || (typeof ymRank === 'function' ? rank > ymRank(entry.lastTradePeriodId) : false)) {
+        entry.lastTradePeriodId = periodId
+      }
+    }
+  }
+
+  return [...byClient.values()].map((client) => {
+    const clientTimestamp = monthStartDate(client.firstPeriodId) || latestStart
+    const ltdDate = client.firstDepositPeriodId ? monthStartDate(client.firstDepositPeriodId) : null
+    const lttDate = client.lastTradePeriodId ? monthStartDate(client.lastTradePeriodId) : null
+    const status = Number(client.activeMonths || 0) > 6 ? 'active' : 'new'
+
+    return {
+      clientId: client.clientId,
+      clientTimestamp: clientTimestamp ? clientTimestamp.toISOString() : '',
+      ltdDate: ltdDate ? ltdDate.toISOString() : '-',
+      lttDate: lttDate ? lttDate.toISOString() : '-',
+      kycTimestamp: clientTimestamp ? clientTimestamp.toISOString() : '',
+      status,
+      lastTimeComment: lttDate ? lttDate.toISOString() : (ltdDate ? ltdDate.toISOString() : ''),
+    }
+  })
+}
+
+function metricSeries(current, previous, { currentDays = 1, previousDays = 1, yoy = null } = {}) {
+  const currentValue = toFiniteNumber(current)
+  const previousValue = toFiniteNumber(previous)
+  const yoyValue = yoy == null ? null : toFiniteNumber(yoy)
+  const currentMtdDailyAverage = currentDays > 0 ? currentValue / currentDays : currentValue
+  const previousComparableDailyAverage = previousDays > 0 ? previousValue / previousDays : previousValue
+  const deltaPct = previousComparableDailyAverage > 0
+    ? ((currentMtdDailyAverage - previousComparableDailyAverage) / previousComparableDailyAverage) * 100
+    : 0
+  const deltaYoyPct = yoyValue != null && yoyValue !== 0
+    ? ((currentMtdDailyAverage - yoyValue) / yoyValue) * 100
+    : null
+
+  return {
+    current: currentValue,
+    previous: previousValue,
+    currentMtdDailyAverage,
+    previousComparableDailyAverage,
+    deltaPct,
+    deltaYoyPct,
+  }
+}
+
+function buildCreolabsBoardSnapshotFromRows(clientMonthsRows, clientScoresRows = []) {
+  const analytics = buildCreolabsAnalytics(clientMonthsRows, { topN: 10 })
+  const monthlyRows = Array.isArray(analytics.monthly) ? analytics.monthly : []
+  const latestMonth = monthlyRows.length ? monthlyRows[monthlyRows.length - 1] : null
+  const previousMonth = monthlyRows.length > 1 ? monthlyRows[monthlyRows.length - 2] : null
+
+  const latestMeta = parsePeriodMeta(latestMonth?.periodId)
+  const today = new Date()
+  const isCurrentMonth = Boolean(
+    latestMeta && latestMeta.year === today.getUTCFullYear() && latestMeta.monthIndex === today.getUTCMonth()
+  )
+  const elapsedDays = latestMeta
+    ? (isCurrentMonth ? today.getUTCDate() : daysInMonthFromPeriod(latestMonth.periodId))
+    : 1
+  const currentPeriodDays = latestMonth?.periodId ? daysInMonthFromPeriod(latestMonth.periodId) : 30
+  const previousPeriodDays = previousMonth?.periodId ? daysInMonthFromPeriod(previousMonth.periodId) : currentPeriodDays
+
+  const yoyMonth = latestMeta
+    ? monthlyRows.find((row) => {
+        const meta = parsePeriodMeta(row?.periodId)
+        return meta && meta.year === latestMeta.year - 1 && meta.monthIndex === latestMeta.monthIndex
+      })
+    : null
+
+  const latest = latestMonth || {}
+  const prev = previousMonth || {}
+  const yoy = yoyMonth || {}
+
+  const kpis = {
+    closedPl: metricSeries(latest.closedPl, prev.closedPl, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.closedPl,
+    }),
+    netDeposits: metricSeries(latest.net, prev.net, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.net,
+    }),
+    deposits: metricSeries(latest.deposit, prev.deposit, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.deposit,
+    }),
+    withdrawals: metricSeries(latest.wd, prev.wd, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.wd,
+    }),
+    activeUsers: metricSeries(latest.uniqueClients, prev.uniqueClients, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.uniqueClients,
+    }),
+    ftdCount: metricSeries(latest.ftd, prev.ftd, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.ftd,
+    }),
+    rdpCount: metricSeries(latest.rdp, prev.rdp, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.rdp,
+    }),
+    trades: metricSeries(latest.trades, prev.trades, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.trades,
+    }),
+    openPl: metricSeries(latest.openPl, prev.openPl, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.openPl,
+    }),
+    balance: metricSeries(latest.balance, prev.balance, {
+      currentDays: elapsedDays,
+      previousDays: previousPeriodDays,
+      yoy: yoy.balance,
+    }),
+  }
+
+  const comparison = [
+    { kpi: 'Closed P&L', ...kpis.closedPl },
+    { kpi: 'Net Deposits', ...kpis.netDeposits },
+    { kpi: 'Deposits', ...kpis.deposits },
+    { kpi: 'Withdrawals', ...kpis.withdrawals },
+  ]
+
+  const latestClientDates = buildDerivedClientDatesRows(clientScoresRows, latestMonth?.periodId)
+  const registeredClientIds = new Set()
+  const latestPeriodMeta = parsePeriodMeta(latestMonth?.periodId)
+  for (const row of latestClientDates) {
+    const regDate = row.clientTimestamp ? new Date(row.clientTimestamp) : null
+    if (!latestPeriodMeta || !regDate || Number.isNaN(regDate.getTime())) continue
+    if (regDate.getUTCFullYear() === latestPeriodMeta.year && regDate.getUTCMonth() === latestPeriodMeta.monthIndex) {
+      registeredClientIds.add(row.clientId)
+    }
+  }
+
+  const clientsInLatest = clientScoresRows.filter((client) => normalizeText(client?.lastPeriodId) === normalizeText(latestMonth?.periodId))
+  const cohortClientsInLatest = clientsInLatest.filter((client) => registeredClientIds.has(normalizeText(client?.clientId)))
+  const withFtd = new Set(cohortClientsInLatest.filter((client) => toFiniteNumber(client?.ftd) > 0).map((client) => normalizeText(client?.clientId)))
+  const withQftd = new Set(cohortClientsInLatest.filter((client) => toFiniteNumber(client?.ftd) > 0 && toFiniteNumber(client?.rdp) > 0).map((client) => normalizeText(client?.clientId)))
+
+  const funnel = {
+    leads: toFiniteNumber(latest.uniqueClients),
+    registrations: registeredClientIds.size || toFiniteNumber(latest.uniqueClients),
+    withFtd: withFtd.size,
+    withQftd: withQftd.size,
+    ftdRate: registeredClientIds.size > 0 ? (withFtd.size / registeredClientIds.size) * 100 : 0,
+    qftdRate: registeredClientIds.size > 0 ? (withQftd.size / registeredClientIds.size) * 100 : 0,
+    registrationToQftdPct: registeredClientIds.size > 0 ? (withQftd.size / registeredClientIds.size) * 100 : 0,
+  }
+
+  return {
+    ok: true,
+    generatedAt: new Date().toISOString(),
+    periodContext: {
+      reportDate: latestMonth?.periodId ? (monthEndDate(latestMonth.periodId)?.toISOString() || new Date().toISOString()) : new Date().toISOString(),
+      currentPeriod: latestMonth?.periodId || 'Current Period',
+      previousPeriod: previousMonth?.periodId || '',
+      currentPeriodStart: latestMonth?.periodId ? (monthStartDate(latestMonth.periodId)?.toISOString() || '') : '',
+      currentPeriodEnd: latestMonth?.periodId ? (monthEndDate(latestMonth.periodId)?.toISOString() || '') : '',
+      elapsedDays,
+      totalDaysInMonth: currentPeriodDays,
+    },
+    kpis,
+    funnel,
+    comparison,
+    clients: clientScoresRows.map((client) => {
+      const firstPeriod = normalizeText(client?.firstPeriodId) || normalizeText(client?.lastPeriodId)
+      const tenureStart = firstPeriod ? monthStartDate(firstPeriod) : null
+      const tenureDays = tenureStart ? Math.max(0, Math.floor((Date.now() - tenureStart.getTime()) / 86400000)) : 0
+      return {
+        clientId: normalizeText(client?.clientId),
+        clientName: normalizeText(client?.clientName),
+        brand: normalizeText(client?.brand),
+        affiliateId: normalizeText(client?.affiliateId),
+        country: normalizeText(client?.country),
+        ltv: toFiniteNumber(client?.commission || client?.net),
+        tenureDays,
+        totalTrades: toFiniteNumber(client?.trades),
+        net: toFiniteNumber(client?.net),
+        deposit: toFiniteNumber(client?.deposit),
+        wd: toFiniteNumber(client?.wd),
+        activeMonths: toFiniteNumber(client?.activeMonths),
+        firstPeriodId: firstPeriod,
+        lastPeriodId: normalizeText(client?.lastPeriodId),
+      }
+    }),
+    monthly: monthlyRows,
+  }
+}
+
+function buildLifetimeClustersFromClients(clientScoresRows) {
+  const now = Date.now()
+  const clients = (clientScoresRows || [])
+    .filter((client) => normalizeText(client?.clientId))
+    .map((client) => {
+      const firstPeriod = normalizeText(client?.firstPeriodId) || normalizeText(client?.lastPeriodId)
+      const lastPeriod = normalizeText(client?.lastPeriodId) || firstPeriod
+      const tenureStart = firstPeriod ? monthStartDate(firstPeriod) : null
+      const lastSeen = lastPeriod ? monthEndDate(lastPeriod) : null
+      const tenureDays = tenureStart ? Math.max(0, Math.floor((now - tenureStart.getTime()) / 86400000)) : 0
+      const recencyDays = lastSeen ? Math.max(0, Math.floor((now - lastSeen.getTime()) / 86400000)) : 9999
+      const ltv = toFiniteNumber(client?.commission || client?.net)
+      const totalTrades = toFiniteNumber(client?.trades)
+      const activeMonths = toFiniteNumber(client?.activeMonths)
+      let clusterId = 'core-growth'
+      let label = 'Core Growth'
+
+      if (activeMonths <= 1 && ltv <= 0 && totalTrades <= 1) {
+        clusterId = 'churned'
+        label = 'Churned'
+      } else if (activeMonths <= 2 && ltv > 0) {
+        clusterId = 'new-actives'
+        label = 'New Actives'
+      } else if (ltv < 0 || totalTrades < 5) {
+        clusterId = 'at-risk'
+        label = 'At Risk'
+      } else if (activeMonths >= 6 && ltv > 0 && totalTrades >= 10) {
+        clusterId = 'high-activity'
+        label = 'High Activity'
+      }
+
+      return {
+        clientId: normalizeText(client?.clientId),
+        clientName: normalizeText(client?.clientName),
+        clusterId,
+        ltv,
+        tenureDays,
+        totalTrades,
+        recencyDays,
+        activeMonths,
+        brand: normalizeText(client?.brand),
+        affiliateId: normalizeText(client?.affiliateId),
+        country: normalizeText(client?.country),
+        clusterLabel: label,
+      }
+    })
+
+  const clusterDefs = [
+    { clusterId: 'high-activity', label: 'High Activity' },
+    { clusterId: 'core-growth', label: 'Core Growth' },
+    { clusterId: 'new-actives', label: 'New Actives' },
+    { clusterId: 'at-risk', label: 'At Risk' },
+    { clusterId: 'churned', label: 'Churned' },
+  ]
+
+  const clusters = clusterDefs.map((def) => {
+    const members = clients.filter((client) => client.clusterId === def.clusterId)
+    const clientCount = members.length
+    const totalLtv = members.reduce((sum, client) => sum + client.ltv, 0)
+    const totalTrades = members.reduce((sum, client) => sum + client.totalTrades, 0)
+    const totalTenure = members.reduce((sum, client) => sum + client.tenureDays, 0)
+    const totalRecency = members.reduce((sum, client) => sum + client.recencyDays, 0)
+
+    return {
+      clusterId: def.clusterId,
+      label: def.label,
+      clientCount,
+      totalLtv,
+      avgLtv: clientCount > 0 ? totalLtv / clientCount : 0,
+      avgTenureDays: clientCount > 0 ? totalTenure / clientCount : 0,
+      avgTrades: clientCount > 0 ? totalTrades / clientCount : 0,
+      avgRecencyDays: clientCount > 0 ? totalRecency / clientCount : 0,
+    }
+  })
+
+  const activeClients = clusters
+    .filter((cluster) => cluster.clusterId !== 'churned')
+    .reduce((sum, cluster) => sum + cluster.clientCount, 0)
+
+  const churnedCluster = clusters.find((cluster) => cluster.clusterId === 'churned') || { clientCount: 0, totalLtv: 0 }
+
+  return {
+    clients,
+    clusters,
+    inactiveSegment: {
+      clientCount: churnedCluster.clientCount,
+      totalLtv: churnedCluster.totalLtv,
+    },
+    metadata: {
+      validClients: clients.length,
+      activeClients,
+      churnedClients: churnedCluster.clientCount,
+      generatedAt: new Date().toISOString(),
+    },
+  }
+}
+
+async function handleCreolabsClientDates(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  try {
+    const { data } = await resolveCreolabsClientVariant(config, 'clientMonths')
+    const rows = buildDerivedClientDatesRowsFromClientMonths(Array.isArray(data?.clientMonths) ? data.clientMonths : [], data?.periodTo)
+    return json(res, 200, { ok: true, data: { rows } }, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs client-dates request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
+}
+
+function parseIsoDateBoundary(raw, { endOfDay = false } = {}) {
+  const text = normalizeText(raw)
+  if (!text) return null
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    const suffix = endOfDay ? 'T23:59:59.999Z' : 'T00:00:00.000Z'
+    const ms = Date.parse(`${text}${suffix}`)
+    return Number.isFinite(ms) ? ms : null
+  }
+
+  const ms = Date.parse(text)
+  if (!Number.isFinite(ms)) return null
+  if (!endOfDay) return ms
+
+  const d = new Date(ms)
+  d.setUTCHours(23, 59, 59, 999)
+  return d.getTime()
+}
+
+function toCsvCell(value) {
+  const raw = value == null ? '' : String(value)
+  const escaped = raw.replace(/"/g, '""')
+  return `"${escaped}"`
+}
+
+function toCsv(rows, columns) {
+  const header = columns.map(toCsvCell).join(',')
+  const lines = rows.map((row) => columns.map((col) => toCsvCell(row?.[col])).join(','))
+  return [header, ...lines].join('\n')
+}
+
+async function buildCreolabsRegisteredUsersDataset(req) {
+  const config = getConfig()
+  if (!config.hasApiKey && !config.hasOauth) {
+    const error = new Error('Qlik handler not configured. Set QLIK_TENANT_URL and auth credentials.')
+    error.status = 503
+    throw error
+  }
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  const fromRaw = urlObj.searchParams.get('from') || DB_LIVE_BOOTSTRAP_FROM
+  const toRaw = urlObj.searchParams.get('to') || nowIsoDateOnly()
+  const format = normalizeText(urlObj.searchParams.get('format') || 'json').toLowerCase()
+  const allowMonthFallback = normalizeText(urlObj.searchParams.get('monthFallback')) === '1'
+  const includeProvenance = normalizeText(urlObj.searchParams.get('provenance')) === '1'
+
+  const fromMs = parseIsoDateBoundary(fromRaw, { endOfDay: false })
+  const toMs = parseIsoDateBoundary(toRaw, { endOfDay: true })
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
+    const error = new Error('Invalid date range. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD')
+    error.status = 400
+    throw error
+  }
+
+  let monthsRows = []
+  let monthsFromArtifact = false
+  let latestPeriodTo = ''
+  let clientMonthsError = ''
+
+  try {
+    const resolvedClientMonths = await withTimeout(
+      resolveCreolabsClientVariant(config, 'clientMonths'),
+      REGISTERED_USERS_CLIENT_MONTHS_TIMEOUT_MS,
+      'Creolabs client-months for registered-users'
+    )
+    const monthData = resolvedClientMonths?.data || {}
+    monthsRows = Array.isArray(monthData?.clientMonths) ? monthData.clientMonths : []
+    latestPeriodTo = normalizeText(monthData?.periodTo)
+  } catch (monthError) {
+    clientMonthsError = normalizeText(monthError?.message)
+    monthsRows = []
+    latestPeriodTo = ''
+  }
+
+  let localArtifactRows = []
+  let localArtifactPeriodTo = ''
+  try {
+    const resolvedLocalArtifact = await resolveCreolabsTradersRankingRewardsRows()
+    const artifactData = resolvedLocalArtifact?.data || {}
+    localArtifactRows = Array.isArray(artifactData?.rows) ? artifactData.rows : []
+    localArtifactPeriodTo = normalizeText(artifactData?.periodTo)
+  } catch {
+    localArtifactRows = []
+  }
+
+  if (!monthsRows.length && localArtifactRows.length > 0) {
+    monthsRows = localArtifactRows
+    monthsFromArtifact = true
+    latestPeriodTo = localArtifactPeriodTo || latestPeriodTo
+  }
+
+  const scores = buildCreolabsClientScores(monthsRows)
+  for (const score of scores) {
+    upsertRegisteredUsersMeta(score)
+  }
+
+  const identityCandidates = new Map()
+  for (const score of scores) {
+    const key = buildIdentityFallbackKey(score?.clientName, score?.country, score?.user)
+    const affiliateId = normalizeText(score?.affiliateId)
+    const clientLogin = normalizeText(score?.clientLogin)
+    if (!key) continue
+    if (!affiliateId && !clientLogin) continue
+    if (!identityCandidates.has(key)) identityCandidates.set(key, [])
+    identityCandidates.get(key).push({
+      clientId: normalizeText(score?.clientId),
+      affiliateId,
+      clientLogin,
+    })
+  }
+
+  const identityFallbackUnique = new Map()
+  for (const [key, entries] of identityCandidates.entries()) {
+    const uniqueClientIds = new Set(entries.map((entry) => normalizeText(entry?.clientId)).filter(Boolean))
+    if (uniqueClientIds.size !== 1) continue
+    const best = entries.find((entry) => normalizeText(entry?.affiliateId) || normalizeText(entry?.clientLogin)) || entries[0]
+    identityFallbackUnique.set(key, {
+      affiliateId: normalizeText(best?.affiliateId),
+      clientLogin: normalizeText(best?.clientLogin),
+    })
+  }
+
+  const scoreByClient = new Map()
+  for (const score of scores) {
+    const sid = normalizeText(score?.clientId)
+    if (!sid) continue
+    if (!scoreByClient.has(sid)) scoreByClient.set(sid, score)
+    const sidNum = Number(sid)
+    if (Number.isFinite(sidNum)) {
+      const numericKey = `n:${sidNum}`
+      if (!scoreByClient.has(numericKey)) scoreByClient.set(numericKey, score)
+    }
+  }
+
+  const toDbLiveMonthRow = (row) => {
+    const periodId = normalizeText(row?.periodId || row?.year_month || row?.yearMonth)
+    const startDate = monthStartDate(periodId)
+    const endDate = monthEndDate(periodId)
+    const explicitTimestamp = normalizeText(row?.clientTimestamp || row?.client_timestamp)
+    const explicitTimestampMs = Date.parse(explicitTimestamp)
+    const clientTimestamp = Number.isFinite(explicitTimestampMs)
+      ? new Date(explicitTimestampMs).toISOString()
+      : (startDate ? startDate.toISOString() : '')
+    const lastTimeComment = endDate ? endDate.toISOString() : clientTimestamp
+    const closedPl = toFiniteNumber(row?.closedPl ?? row?.pl)
+    const openPl = toFiniteNumber(row?.openPl)
+    const balance = toFiniteNumber(row?.balance)
+    const equity = toFiniteNumber(row?.equity) || balance + openPl
+
+    return {
+      ...row,
+      clientTimestamp,
+      kycTimestamp: clientTimestamp,
+      status: normalizeText(row?.status) || 'active',
+      ltdDate: normalizeText(row?.ltdDate),
+      lttDate: normalizeText(row?.lttDate),
+      lastTimeComment: normalizeText(row?.lastTimeComment) || lastTimeComment,
+      closedPl,
+      openPl,
+      balance,
+      equity,
+      openedTrades: Math.round(toFiniteNumber(row?.openedTrades ?? row?.opened_trades ?? row?.trades)),
+      sourceObjectId: CREOLABS_CLIENTS_OBJ,
+      sourcePeriod: periodId,
+    }
+  }
+
+  let sourceRows = []
+  let sourceMode = 'client-months'
+  let sourceDiagnostics = {
+    clientMonthsError,
+  }
+  let metadataCacheHits = 0
+  let identityFallbackHits = 0
+  let storeFallbackHits = 0
+
+  const storeByClient = _dbLiveIngestionState?.storeByClient instanceof Map
+    ? _dbLiveIngestionState.storeByClient
+    : new Map()
+
+  try {
+    const resolvedLeads = await withTimeout(
+      resolveCreolabsRegisteredLeadsFromObject(config),
+      REGISTERED_LEADS_OBJECT_TIMEOUT_MS,
+      'Creolabs registered-leads object'
+    )
+    sourceRows = Array.isArray(resolvedLeads?.data) ? resolvedLeads.data : []
+    sourceMode = 'lead-object'
+    sourceDiagnostics = {
+      ...sourceDiagnostics,
+      leadObjectRows: sourceRows.length,
+      leadObjectCached: Boolean(resolvedLeads?.cached),
+    }
+
+    if (!sourceRows.length && monthsRows.length > 0) {
+      sourceRows = monthsRows.map(toDbLiveMonthRow)
+      sourceMode = monthsFromArtifact ? 'local-artifact' : 'client-months'
+      sourceDiagnostics = {
+        ...sourceDiagnostics,
+        clientMonthsRows: sourceRows.length,
+        sourceObjectId: monthsFromArtifact
+          ? 'public/traders_ranking_rewards_table.json'
+          : CREOLABS_CLIENTS_OBJ,
+      }
+    }
+  } catch (leadError) {
+    if (monthsRows.length > 0) {
+      sourceRows = monthsRows.map(toDbLiveMonthRow)
+      sourceMode = monthsFromArtifact ? 'local-artifact' : 'client-months'
+      sourceDiagnostics = {
+        ...sourceDiagnostics,
+        clientMonthsRows: sourceRows.length,
+        leadObjectRows: 0,
+        leadObjectError: normalizeText(leadError?.message),
+        sourceObjectId: monthsFromArtifact
+          ? 'public/traders_ranking_rewards_table.json'
+          : CREOLABS_CLIENTS_OBJ,
+      }
+    } else {
+      const canUseMonthFallback = allowMonthFallback && monthsRows.length > 0
+      const datesRows = canUseMonthFallback
+        ? buildDerivedClientDatesRowsFromClientMonths(monthsRows, latestPeriodTo)
+        : []
+      sourceRows = datesRows
+      sourceMode = canUseMonthFallback ? 'client-months-fallback' : 'no-source'
+      sourceDiagnostics = {
+        ...sourceDiagnostics,
+        leadObjectRows: 0,
+        fallbackRows: datesRows.length,
+        leadObjectError: normalizeText(leadError?.message),
+      }
+    }
+  }
+
+  const users = []
+  for (const row of sourceRows) {
+    const ts = normalizeText(row?.clientTimestamp)
+    const tsMs = ts ? Date.parse(ts) : NaN
+    if (!Number.isFinite(tsMs)) continue
+    if (tsMs < fromMs || tsMs > toMs) continue
+
+    const normalizedStatus = normalizeText(row?.status).toLowerCase()
+    if (sourceMode === 'lead-object' && CREOLABS_LEAD_EXCLUDED_STATUSES.has(normalizedStatus)) {
+      continue
+    }
+
+    const clientId = normalizeText(row?.clientId)
+    const clientIdNum = Number(clientId)
+    const storeKey = getDbLiveStoreKey(row)
+    const storeUser =
+      storeByClient.get(storeKey) ||
+      storeByClient.get(clientId) ||
+      (Number.isFinite(clientIdNum) ? storeByClient.get(String(clientIdNum)) : null) ||
+      null
+    const score =
+      scoreByClient.get(clientId) ||
+      (Number.isFinite(clientIdNum) ? scoreByClient.get(`n:${clientIdNum}`) : null) ||
+      null
+    const cachedMeta = getRegisteredUsersMeta(clientId)
+    if (cachedMeta) metadataCacheHits += 1
+
+    const identityKey = buildIdentityFallbackKey(
+      row?.clientName || score?.clientName || cachedMeta?.clientName,
+      row?.country || score?.country || cachedMeta?.country,
+      row?.user || score?.user || cachedMeta?.user
+    )
+    const identityFallback = identityKey ? identityFallbackUnique.get(identityKey) : null
+
+    const pickSourceValue = (valueChain) => {
+      for (const item of valueChain) {
+        const value = normalizeText(item?.value)
+        if (value) return { value, source: item.source }
+      }
+      return { value: '', source: 'missing' }
+    }
+
+    const affiliatePicked = pickSourceValue([
+      { source: 'lead', value: row?.affiliateId },
+      { source: 'score', value: score?.affiliateId },
+      { source: 'cache', value: cachedMeta?.affiliateId },
+      { source: 'identity', value: identityFallback?.affiliateId },
+      { source: 'store', value: storeUser?.affiliateId },
+    ])
+    const loginPicked = pickSourceValue([
+      { source: 'lead', value: row?.clientLogin },
+      { source: 'score', value: score?.clientLogin },
+      { source: 'cache', value: cachedMeta?.clientLogin },
+      { source: 'identity', value: identityFallback?.clientLogin },
+      { source: 'store', value: storeUser?.clientLogin },
+    ])
+    const namePicked = pickSourceValue([
+      { source: 'lead', value: row?.clientName },
+      { source: 'score', value: score?.clientName },
+      { source: 'cache', value: cachedMeta?.clientName },
+    ])
+    const countryPicked = pickSourceValue([
+      { source: 'lead', value: row?.country },
+      { source: 'score', value: score?.country },
+      { source: 'cache', value: cachedMeta?.country },
+    ])
+    const userPicked = pickSourceValue([
+      { source: 'lead', value: row?.user },
+      { source: 'score', value: score?.user },
+      { source: 'cache', value: cachedMeta?.user },
+    ])
+    const brandPicked = pickSourceValue([
+      { source: 'lead', value: row?.brand },
+      { source: 'score', value: score?.brand },
+      { source: 'cache', value: cachedMeta?.brand },
+      { source: 'store', value: storeUser?.brand },
+    ])
+
+    const pickNumericSourceValue = (valueChain, { preferNonZero = false } = {}) => {
+      if (preferNonZero) {
+        for (const item of valueChain) {
+          const n = Number(item?.value)
+          if (Number.isFinite(n) && n !== 0) return { value: n, source: item.source }
+        }
+      }
+
+      for (const item of valueChain) {
+        const n = Number(item?.value)
+        if (Number.isFinite(n)) return { value: n, source: item.source }
+      }
+      return { value: 0, source: 'missing' }
+    }
+
+    const openedTradesPicked = pickNumericSourceValue([
+      { source: 'lead', value: row?.openedTrades ?? row?.opened_trades },
+      { source: 'score', value: score?.openedTrades },
+      { source: 'store', value: storeUser?.openedTrades },
+      { source: 'lead-trades-fallback', value: row?.trades },
+      { source: 'score-trades-fallback', value: score?.trades },
+      { source: 'store-trades-fallback', value: storeUser?.trades },
+    ], { preferNonZero: true })
+
+    const equityPicked = pickNumericSourceValue([
+      { source: 'lead', value: row?.equity },
+      { source: 'score', value: score?.equity },
+      { source: 'store', value: storeUser?.equity },
+      { source: 'lead-derived-balance-openpl', value: toFiniteNumber(row?.balance) + toFiniteNumber(row?.openPl) },
+      { source: 'score-derived-balance-openpl', value: toFiniteNumber(score?.balance) + toFiniteNumber(score?.openPl) },
+      { source: 'lead-balance-fallback', value: row?.balance },
+      { source: 'score-balance-fallback', value: score?.balance },
+      { source: 'store-balance-fallback', value: storeUser?.balance },
+    ], { preferNonZero: true })
+
+    const enrichedUser = {
+      clientId,
+      clientName: namePicked.value,
+      brand: brandPicked.value,
+      affiliateId: affiliatePicked.value,
+      clientLogin: loginPicked.value,
+      user: userPicked.value,
+      country: countryPicked.value,
+      clientTimestamp: ts,
+      kycTimestamp: normalizeText(row?.kycTimestamp || ts),
+      status: normalizeText(row?.status),
+      ltdDate: normalizeText(row?.ltdDate),
+      lttDate: normalizeText(row?.lttDate),
+      lastTimeComment: normalizeText(row?.lastTimeComment || row?.lttDate || row?.ltdDate),
+      firstPeriodId: normalizeText(score?.firstPeriodId),
+      lastPeriodId: normalizeText(score?.lastPeriodId),
+      activeMonths: Math.round(toFiniteNumber(score?.activeMonths)),
+      deposit: toFiniteNumber(row?.deposit || score?.deposit),
+      wd: toFiniteNumber(row?.wd || score?.wd),
+      net: toFiniteNumber(row?.net || score?.net),
+      closedPl: toFiniteNumber(row?.closedPl || score?.closedPl),
+      openPl: toFiniteNumber(row?.openPl || score?.openPl),
+      commission: toFiniteNumber(row?.commission || score?.commission),
+      trades: Math.round(toFiniteNumber(row?.trades || score?.trades)),
+      openedTrades: Math.round(openedTradesPicked.value),
+      ftd: toFiniteNumber(row?.ftd || score?.ftd),
+      rdp: toFiniteNumber(row?.rdp || score?.rdp),
+      balance: toFiniteNumber(row?.balance || score?.balance),
+      equity: toFiniteNumber(equityPicked.value),
+      sourcePeriod: normalizeText(row?.sourcePeriod || row?.periodId || score?.lastPeriodId),
+      sourceObjectId: normalizeText(row?.sourceObjectId),
+    }
+
+    if (includeProvenance) {
+      enrichedUser.enrichmentSources = {
+        affiliateId: affiliatePicked.source,
+        clientLogin: loginPicked.source,
+        clientName: namePicked.source,
+        country: countryPicked.source,
+        user: userPicked.source,
+        brand: brandPicked.source,
+        openedTrades: openedTradesPicked.source,
+        equity: equityPicked.source,
+      }
+    }
+
+    if (identityFallback && (!normalizeText(row?.affiliateId) || !normalizeText(row?.clientLogin))) {
+      identityFallbackHits += 1
+    }
+    if ((affiliatePicked.source === 'store' || loginPicked.source === 'store') && storeUser) {
+      storeFallbackHits += 1
+    }
+
+    upsertRegisteredUsersMeta(enrichedUser)
+    users.push(enrichedUser)
+  }
+
+  users.sort((a, b) => {
+    const at = Date.parse(a.clientTimestamp)
+    const bt = Date.parse(b.clientTimestamp)
+    if (at !== bt) return bt - at
+    return Number(normalizeText(b.clientId)) - Number(normalizeText(a.clientId))
+  })
+
+  const meta = {
+    from: new Date(fromMs).toISOString(),
+    to: new Date(toMs).toISOString(),
+    total: users.length,
+    sourceRows: {
+      clientMonths: monthsRows.length,
+      leadRows: sourceRows.length,
+      clientScores: scores.length,
+      sourceMode,
+      metadataCacheSize: _registeredUsersMetaCacheByClient.size,
+      metadataCacheHits,
+      identityFallbackHits,
+      identityFallbackKeys: identityFallbackUnique.size,
+      storeFallbackHits,
+      ...sourceDiagnostics,
+    },
+    note: sourceMode === 'client-months'
+      ? 'Client-months source in use: historical month-grain rows from the all-time clients table.'
+      : sourceMode === 'lead-object'
+        ? 'Lead object source in use: Client Timestamp rows deduped by clientId.'
+        : sourceMode === 'client-months-fallback'
+          ? 'Fallback source in use: clientTimestamp is month-grain in current source dataset.'
+          : 'No source available in time window: both lead-object and client-months timed out or unavailable.',
+  }
+
+  return {
+    urlObj,
+    format,
+    fromMs,
+    toMs,
+    meta,
+    users,
+  }
+}
+
+function encodeDbLiveCursor(offset) {
+  const raw = JSON.stringify({ offset: Math.max(0, Number(offset) || 0) })
+  return Buffer.from(raw, 'utf8').toString('base64')
+}
+
+function decodeDbLiveCursor(cursor) {
+  try {
+    const raw = Buffer.from(String(cursor || ''), 'base64').toString('utf8')
+    const parsed = JSON.parse(raw)
+    const offset = Number(parsed?.offset)
+    return Number.isFinite(offset) && offset >= 0 ? Math.trunc(offset) : 0
+  } catch {
+    return 0
+  }
+}
+
+function isoDateOnlyFromMs(ms) {
+  const d = new Date(ms)
+  const yyyy = d.getUTCFullYear()
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(d.getUTCDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function nowIsoDateOnly() {
+  return isoDateOnlyFromMs(Date.now())
+}
+
+function subtractDaysIsoDateOnly(isoDate, days) {
+  const ms = parseIsoDateBoundary(isoDate, { endOfDay: false })
+  if (!Number.isFinite(ms)) return nowIsoDateOnly()
+  return isoDateOnlyFromMs(ms - Math.max(1, Number(days) || 1) * 24 * 60 * 60 * 1000)
+}
+
+function mergeDbLiveUsersByRecency(existingUser, incomingUser) {
+  if (!existingUser) return incomingUser
+  const aTs = Date.parse(normalizeText(existingUser?.clientTimestamp))
+  const bTs = Date.parse(normalizeText(incomingUser?.clientTimestamp))
+  const incomingIsNewer = Number.isFinite(bTs) && (!Number.isFinite(aTs) || bTs >= aTs)
+
+  const primary = incomingIsNewer ? incomingUser : existingUser
+  const secondary = incomingIsNewer ? existingUser : incomingUser
+  const merged = { ...primary }
+
+  const backfillKeys = ['affiliateId', 'clientLogin', 'clientName', 'country', 'user', 'brand']
+  for (const key of backfillKeys) {
+    if (!normalizeText(merged?.[key]) && normalizeText(secondary?.[key])) {
+      merged[key] = secondary[key]
+    }
+  }
+
+  const numericBackfillKeys = ['openedTrades', 'equity']
+  for (const key of numericBackfillKeys) {
+    const mergedValue = Number(merged?.[key])
+    const secondaryValue = Number(secondary?.[key])
+    if ((!Number.isFinite(mergedValue) || mergedValue === 0) && Number.isFinite(secondaryValue) && secondaryValue !== 0) {
+      merged[key] = secondaryValue
+    }
+  }
+
+  return merged
+}
+
+function getDbLiveStoreKey(user) {
+  const clientId = normalizeText(user?.clientId)
+  const sourcePeriod = normalizeText(user?.sourcePeriod)
+  const clientTimestamp = normalizeText(user?.clientTimestamp)
+  const sourceObjectId = normalizeText(user?.sourceObjectId)
+  return [clientId || 'no-client', sourcePeriod || clientTimestamp || 'no-period', sourceObjectId || 'db-live'].join('|')
+}
+
+function getCreolabsTradersRankingRewardsTablePath() {
+  return resolveCreolabsTradersRankingRewardsTableSource().filePath
+}
+
+async function resolveCreolabsTradersRankingRewardsRows() {
+  const source = resolveCreolabsTradersRankingRewardsTableSource()
+  const sourceFilePath = source.filePath
+  const sourceObjectId = source.sourceObjectId
+  const sourceType = source.sourceType
+  let sourceMtimeMs = 0
+  try {
+    sourceMtimeMs = Number(fs.statSync(sourceFilePath)?.mtimeMs || 0)
+  } catch {
+    sourceMtimeMs = 0
+  }
+
+  const cache = _creolabsTradersRankingRewardsTableCache
+  if (
+    cache?.data &&
+    normalizeText(cache?.filePath) === sourceFilePath &&
+    Number(cache?.fileMtimeMs || 0) === sourceMtimeMs
+  ) {
+    return { data: cache.data, cached: true }
+  }
+  if (cache?.promise) {
+    if (
+      normalizeText(cache?.filePath) === sourceFilePath &&
+      Number(cache?.fileMtimeMs || 0) === sourceMtimeMs
+    ) {
+      const data = await cache.promise
+      return { data, cached: false }
+    }
+  }
+
+  const promise = (async () => {
+    const raw = await fs.promises.readFile(sourceFilePath, 'utf8')
+    const parsed = JSON.parse(raw)
+
+    const mapObjectRows = (objectRows) => {
+      const mapped = (objectRows || []).map((row) => {
+        const periodId = normalizeText(row?.periodId || row?.year_month || row?.yearMonth || row?.sourcePeriod)
+        const clientTimestamp = normalizeText(row?.clientTimestamp || row?.client_timestamp)
+
+        return {
+          affiliateId: normalizeText(row?.affiliateId || row?.affiliate_id),
+          clientId: normalizeText(row?.clientId || row?.client_id),
+          clientName: normalizeText(row?.clientName || row?.client_name),
+          clientLogin: normalizeText(row?.clientLogin || row?.client_login),
+          user: normalizeText(row?.user),
+          country: normalizeText(row?.country),
+          brand: normalizeText(row?.brand) || 'CREOLABS',
+          balance: toFiniteNumber(row?.balance),
+          commission: toFiniteNumber(row?.commission || row?.ltv_commission),
+          closedPl: toFiniteNumber(row?.closedPl || row?.closed_pl),
+          openPl: toFiniteNumber(row?.openPl || row?.open_pl),
+          trades: Math.round(toFiniteNumber(row?.trades)),
+          ftd: toFiniteNumber(row?.ftd),
+          rdp: toFiniteNumber(row?.rdp),
+          deposit: toFiniteNumber(row?.deposit),
+          wd: toFiniteNumber(row?.wd),
+          net: toFiniteNumber(row?.net),
+          openedTrades: Math.round(toFiniteNumber(row?.openedTrades || row?.opened_trades)),
+          equity: toFiniteNumber(row?.equity),
+          clientTimestamp,
+          kycTimestamp: normalizeText(row?.kycTimestamp || row?.kyc_timestamp) || clientTimestamp,
+          ltdDate: normalizeText(row?.ltdDate || row?.ltd_date),
+          lttDate: normalizeText(row?.lttDate || row?.ltt_date),
+          lastTimeComment:
+            normalizeText(row?.lastTimeComment || row?.last_time_comment) ||
+            normalizeText(row?.lttDate || row?.ltt_date) ||
+            normalizeText(row?.ltdDate || row?.ltd_date) ||
+            clientTimestamp,
+          status: normalizeText(row?.status) || 'active',
+          periodId,
+          sourcePeriod: normalizeText(row?.sourcePeriod || row?.source_period) || periodId,
+          sourceObjectId: normalizeText(row?.sourceObjectId || row?.source_object_id) || sourceObjectId,
+        }
+      })
+
+      const periods = mapped
+        .map((row) => normalizeText(row?.periodId || row?.sourcePeriod))
+        .filter(Boolean)
+        .sort((a, b) => ymRank(a) - ymRank(b))
+
+      return {
+        rows: mapped,
+        periodFrom: periods[0] || normalizeText(parsed?.periodFrom),
+        periodTo: periods[periods.length - 1] || normalizeText(parsed?.periodTo),
+        rowCount: mapped.length,
+        sourceType,
+      }
+    }
+
+    if (Array.isArray(parsed?.rows) && parsed.rows.length > 0 && typeof parsed.rows[0] === 'object') {
+      return mapObjectRows(parsed.rows)
+    }
+
+    if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'object') {
+      return mapObjectRows(parsed)
+    }
+
+    const headers = Array.isArray(parsed?.headers) ? parsed.headers.map((header) => normalizeText(header).toLowerCase()) : []
+    const rows = Array.isArray(parsed?.rows) ? parsed.rows : []
+
+    const idx = new Map(headers.map((header, index) => [header, index]))
+    const pick = (row, names) => {
+      for (const name of names) {
+        const key = normalizeText(name).toLowerCase()
+        const columnIndex = idx.get(key)
+        if (columnIndex == null) continue
+        const value = row[columnIndex]
+        if (value != null && value !== '') return value
+      }
+      return ''
+    }
+
+    const mapped = rows.map((row) => {
+      const periodId = normalizeText(pick(row, ['year_month']))
+      const clientTimestamp = normalizeText(pick(row, ['client_timestamp']))
+      return {
+        affiliateId: normalizeText(pick(row, ['affiliate_id'])),
+        clientId: normalizeText(pick(row, ['client_id'])),
+        clientName: normalizeText(pick(row, ['client_name'])),
+        clientLogin: normalizeText(pick(row, ['client_login'])),
+        user: normalizeText(pick(row, ['user'])),
+        country: normalizeText(pick(row, ['country'])),
+        brand: 'CREOLABS',
+        balance: toFiniteNumber(pick(row, ['balance'])),
+        commission: toFiniteNumber(pick(row, ['ltv_commission'])),
+        closedPl: toFiniteNumber(pick(row, ['closed_pl'])),
+        openPl: toFiniteNumber(pick(row, ['open_pl'])),
+        trades: Math.round(toFiniteNumber(pick(row, ['trades']))),
+        ftd: toFiniteNumber(pick(row, ['ftd'])),
+        rdp: toFiniteNumber(pick(row, ['rdp'])),
+        deposit: toFiniteNumber(pick(row, ['deposit'])),
+        wd: toFiniteNumber(pick(row, ['wd'])),
+        net: toFiniteNumber(pick(row, ['net'])),
+        openedTrades: Math.round(toFiniteNumber(pick(row, ['opened_trades']))),
+        equity: toFiniteNumber(pick(row, ['equity'])),
+        clientTimestamp,
+        kycTimestamp: clientTimestamp,
+        ltdDate: normalizeText(pick(row, ['ltd_date'])),
+        lttDate: normalizeText(pick(row, ['ltt_date'])),
+        lastTimeComment: normalizeText(pick(row, ['ltt_date'])) || normalizeText(pick(row, ['ltd_date'])) || clientTimestamp,
+        status: 'active',
+        periodId,
+        sourcePeriod: periodId,
+        sourceObjectId,
+      }
+    })
+
+    const periods = mapped
+      .map((row) => normalizeText(row?.periodId))
+      .filter(Boolean)
+      .sort((a, b) => ymRank(a) - ymRank(b))
+    const periodFrom = periods[0] || ''
+    const periodTo = periods[periods.length - 1] || ''
+
+    return {
+      rows: mapped,
+      periodFrom,
+      periodTo,
+      rowCount: mapped.length,
+      sourceType,
+    }
+  })()
+
+  _creolabsTradersRankingRewardsTableCache = {
+    data: null,
+    promise,
+    filePath: sourceFilePath,
+    fileMtimeMs: sourceMtimeMs,
+  }
+  try {
+    const data = await promise
+    _creolabsTradersRankingRewardsTableCache = {
+      data,
+      promise: null,
+      filePath: sourceFilePath,
+      fileMtimeMs: sourceMtimeMs,
+    }
+    return { data, cached: false }
+  } catch (error) {
+    _creolabsTradersRankingRewardsTableCache = null
+    throw error
+  }
+}
+
+function persistCreolabsLiveArtifactRows(rows, context = {}) {
+  const users = Array.isArray(rows) ? rows : []
+  if (!users.length) {
+    return {
+      written: false,
+      reason: 'empty-rows',
+      filePath: getCreolabsLiveArtifactPath(),
+    }
+  }
+
+  const filePath = getCreolabsLiveArtifactPath()
+  const dir = path.dirname(filePath)
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+  const mappedRows = users.map((user) => {
+    const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
+    return {
+      ...user,
+      periodId,
+      sourcePeriod: periodId,
+      year_month: periodId,
+      client_timestamp: normalizeText(user?.clientTimestamp || user?.client_timestamp),
+      kyc_timestamp: normalizeText(user?.kycTimestamp || user?.kyc_timestamp),
+      ltd_date: normalizeText(user?.ltdDate || user?.ltd_date),
+      ltt_date: normalizeText(user?.lttDate || user?.ltt_date),
+      sourceObjectId: normalizeText(user?.sourceObjectId || CREOLABS_REGISTERED_LEADS_OBJECT_ID),
+    }
+  })
+
+  const periods = mappedRows
+    .map((row) => normalizeText(row?.periodId || row?.sourcePeriod))
+    .filter(Boolean)
+    .sort((a, b) => ymRank(a) - ymRank(b))
+
+  const payload = {
+    contractVersion: 'creolabs-live-artifact-v1',
+    generatedAt: new Date().toISOString(),
+    sourceMode: normalizeText(context?.sourceMode) || 'lead-object',
+    from: normalizeText(context?.from),
+    to: normalizeText(context?.to),
+    periodFrom: periods[0] || '',
+    periodTo: periods[periods.length - 1] || '',
+    rowCount: mappedRows.length,
+    rows: mappedRows,
+  }
+
+  const temp = `${filePath}.tmp`
+  fs.writeFileSync(temp, JSON.stringify(payload, null, 2), 'utf8')
+  fs.renameSync(temp, filePath)
+  _creolabsTradersRankingRewardsTableCache = null
+
+  return {
+    written: true,
+    filePath,
+    rowCount: mappedRows.length,
+    periodFrom: payload.periodFrom,
+    periodTo: payload.periodTo,
+  }
+}
+
+function buildDbLiveRunQuery({ from, to, monthFallback = 1, provenance = 1 }) {
+  const query = new URLSearchParams()
+  query.set('from', normalizeText(from) || DB_LIVE_BOOTSTRAP_FROM)
+  query.set('to', normalizeText(to) || nowIsoDateOnly())
+  query.set('monthFallback', monthFallback ? '1' : '0')
+  query.set('provenance', provenance ? '1' : '0')
+  return `/api/qlik/creolabs/registered-users?${query.toString()}`
+}
+
+function getDbLiveIngestionStateFilePath() {
+  const fromEnv = normalizeText(env('DB_LIVE_INGESTION_STATE_FILE'))
+  if (fromEnv) return fromEnv
+  return path.join(process.cwd(), 'uploads', 'db-live-ingestion-state.json')
+}
+
+function getDbLiveStoreFilePath() {
+  const fromEnv = normalizeText(env('DB_LIVE_STORE_FILE'))
+  if (fromEnv) return fromEnv
+  return path.join(process.cwd(), 'uploads', 'db-live-store.json')
+}
+
+function getDbLiveAuditLogFilePath() {
+  const fromEnv = normalizeText(env('DB_LIVE_AUDIT_LOG_FILE'))
+  if (fromEnv) return fromEnv
+  return path.join(process.cwd(), 'uploads', 'db-live-audit.log')
+}
+
+function getCreolabsLiveArtifactPath() {
+  const fromEnv = normalizeText(env('DB_LIVE_LOCAL_ARTIFACT_FILE'))
+  if (fromEnv) return fromEnv
+  return path.join(process.cwd(), 'uploads', 'traders_ranking_rewards_table.live.json')
+}
+
+function getCreolabsStaticArtifactPath() {
+  return path.join(process.cwd(), 'public', 'traders_ranking_rewards_table.json')
+}
+
+function toWorkspaceRelativePath(filePath) {
+  const absolute = normalizeText(filePath)
+  if (!absolute) return ''
+  const cwd = process.cwd()
+  if (absolute.startsWith(cwd)) {
+    return normalizeText(path.relative(cwd, absolute)).replace(/\\/g, '/')
+  }
+  return absolute.replace(/\\/g, '/')
+}
+
+function resolveCreolabsTradersRankingRewardsTableSource() {
+  const livePath = getCreolabsLiveArtifactPath()
+  if (livePath && fs.existsSync(livePath)) {
+    return {
+      filePath: livePath,
+      sourceObjectId: toWorkspaceRelativePath(livePath) || livePath,
+      sourceType: 'live-artifact',
+    }
+  }
+
+  const staticPath = getCreolabsStaticArtifactPath()
+  return {
+    filePath: staticPath,
+    sourceObjectId: toWorkspaceRelativePath(staticPath) || staticPath,
+    sourceType: 'static-artifact',
+  }
+}
+
+function getDbLiveActor(req) {
+  const header = normalizeText(req?.headers?.['x-forwarded-for'] || req?.headers?.['x-real-ip'])
+  const forwarded = header
+    .split(',')
+    .map((v) => normalizeText(v))
+    .filter(Boolean)
+  if (forwarded.length) return forwarded[0]
+  return normalizeText(req?.ip || req?.socket?.remoteAddress) || 'unknown'
+}
+
+function checkDbLiveIngestionControlRateLimit(req) {
+  const actor = getDbLiveActor(req)
+  const now = Date.now()
+  const windowStart = now - DB_LIVE_INGEST_CONTROL_WINDOW_MS
+  const history = (_dbLiveIngestionControlRate.get(actor) || []).filter((ts) => Number(ts) > windowStart)
+
+  if (history.length >= DB_LIVE_INGEST_CONTROL_MAX_ACTIONS) {
+    const oldest = Number(history[0] || now)
+    const retryAfterMs = Math.max(1, DB_LIVE_INGEST_CONTROL_WINDOW_MS - (now - oldest))
+    return {
+      limited: true,
+      actor,
+      retryAfterSec: Math.ceil(retryAfterMs / 1000),
+      remaining: 0,
+    }
+  }
+
+  history.push(now)
+  _dbLiveIngestionControlRate.set(actor, history)
+  return {
+    limited: false,
+    actor,
+    retryAfterSec: 0,
+    remaining: Math.max(0, DB_LIVE_INGEST_CONTROL_MAX_ACTIONS - history.length),
+  }
+}
+
+function appendDbLiveAuditEvent(event) {
+  try {
+    const targetFile = getDbLiveAuditLogFilePath()
+    const dir = path.dirname(targetFile)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+    if (fs.existsSync(targetFile)) {
+      const stat = fs.statSync(targetFile)
+      if (Number(stat?.size || 0) >= DB_LIVE_AUDIT_LOG_MAX_BYTES) {
+        const rotated = `${targetFile}.1`
+        if (fs.existsSync(rotated)) fs.unlinkSync(rotated)
+        fs.renameSync(targetFile, rotated)
+      }
+    }
+
+    const line = JSON.stringify({
+      ts: new Date().toISOString(),
+      ...event,
+    })
+    fs.appendFileSync(targetFile, `${line}\n`, 'utf8')
+  } catch {
+    // Never block API responses for audit logging failures.
+  }
+}
+
+function serializeDbLiveStorePayload() {
+  const users = Array.from(_dbLiveIngestionState.storeByClient.values())
+    .slice(0, DB_LIVE_STORE_USERS_MAX)
+    .map((user) => (user && typeof user === 'object' ? { ...user } : null))
+    .filter(Boolean)
+
+  return {
+    contractVersion: 'db-live-store-v1',
+    updatedAt: new Date().toISOString(),
+    totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+    users,
+  }
+}
+
+function serializeDbLiveIngestionMeta() {
+  return {
+    startedAt: normalizeText(_dbLiveIngestionState.startedAt),
+    lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
+    lastSuccessAt: normalizeText(_dbLiveIngestionState.lastSuccessAt),
+    lastFailureAt: normalizeText(_dbLiveIngestionState.lastFailureAt),
+    latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+    runCount: Number(_dbLiveIngestionState.runCount || 0),
+    consecutiveFailures: Number(_dbLiveIngestionState.consecutiveFailures || 0),
+    totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+    lastRun: _dbLiveIngestionState.lastRun || null,
+    runs: Array.isArray(_dbLiveIngestionState.runs)
+      ? _dbLiveIngestionState.runs.slice(0, DB_LIVE_RUNS_HISTORY_MAX)
+      : [],
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+function persistDbLiveIngestionMeta() {
+  try {
+    const targetFile = getDbLiveIngestionStateFilePath()
+    const dir = path.dirname(targetFile)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+    const payload = JSON.stringify(serializeDbLiveIngestionMeta(), null, 2)
+    const temp = `${targetFile}.tmp`
+    fs.writeFileSync(temp, payload, 'utf8')
+    fs.renameSync(temp, targetFile)
+  } catch {
+    // Ignore persistence errors to avoid blocking API requests.
+  }
+
+  try {
+    const storeFile = getDbLiveStoreFilePath()
+    const storeDir = path.dirname(storeFile)
+    if (!fs.existsSync(storeDir)) fs.mkdirSync(storeDir, { recursive: true })
+
+    const storePayload = JSON.stringify(serializeDbLiveStorePayload(), null, 2)
+    const tempStore = `${storeFile}.tmp`
+    fs.writeFileSync(tempStore, storePayload, 'utf8')
+    fs.renameSync(tempStore, storeFile)
+  } catch {
+    // Ignore store persistence errors to avoid blocking API requests.
+  }
+}
+
+function hydrateDbLiveIngestionMetaFromDisk() {
+  if (_dbLiveIngestionState.hydratedFromDisk) return
+  _dbLiveIngestionState.hydratedFromDisk = true
+
+  try {
+    const targetFile = getDbLiveIngestionStateFilePath()
+    if (!fs.existsSync(targetFile)) return
+    const raw = fs.readFileSync(targetFile, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return
+
+    _dbLiveIngestionState.startedAt = normalizeText(parsed?.startedAt) || _dbLiveIngestionState.startedAt
+    _dbLiveIngestionState.lastRunAt = normalizeText(parsed?.lastRunAt) || _dbLiveIngestionState.lastRunAt
+    _dbLiveIngestionState.lastSuccessAt = normalizeText(parsed?.lastSuccessAt) || _dbLiveIngestionState.lastSuccessAt
+    _dbLiveIngestionState.lastFailureAt = normalizeText(parsed?.lastFailureAt) || _dbLiveIngestionState.lastFailureAt
+    _dbLiveIngestionState.latestWatermark = normalizeText(parsed?.latestWatermark) || _dbLiveIngestionState.latestWatermark
+    _dbLiveIngestionState.runCount = Number(parsed?.runCount || _dbLiveIngestionState.runCount || 0)
+    _dbLiveIngestionState.consecutiveFailures = Number(
+      parsed?.consecutiveFailures || _dbLiveIngestionState.consecutiveFailures || 0
+    )
+
+    const runs = Array.isArray(parsed?.runs) ? parsed.runs : []
+    _dbLiveIngestionState.runs = runs.slice(0, DB_LIVE_RUNS_HISTORY_MAX)
+    _dbLiveIngestionState.lastRun = parsed?.lastRun || _dbLiveIngestionState.runs[0] || null
+  } catch {
+    // Ignore hydration errors and continue with clean in-memory state.
+  }
+
+  try {
+    if (_dbLiveIngestionState.storeByClient.size > 0) return
+
+    const storeFile = getDbLiveStoreFilePath()
+    if (!fs.existsSync(storeFile)) return
+    const storeRaw = fs.readFileSync(storeFile, 'utf8')
+    const storeParsed = JSON.parse(storeRaw)
+    const users = Array.isArray(storeParsed?.users) ? storeParsed.users : []
+
+    for (const user of users) {
+      const storeKey = getDbLiveStoreKey(user)
+      _dbLiveIngestionState.storeByClient.set(storeKey, user)
+    }
+  } catch {
+    // Ignore store hydration errors and continue with clean in-memory state.
+  }
+}
+
+function getDbLiveUsersSnapshot() {
+  const users = Array.from(_dbLiveIngestionState.storeByClient.values())
+  users.sort((a, b) => {
+    const at = Date.parse(normalizeText(a?.clientTimestamp))
+    const bt = Date.parse(normalizeText(b?.clientTimestamp))
+    if (Number.isFinite(at) && Number.isFinite(bt) && at !== bt) return bt - at
+    return Number(normalizeText(b?.clientId)) - Number(normalizeText(a?.clientId))
+  })
+  return users
+}
+
+function getDbLiveIngestionWindow() {
+  const to = nowIsoDateOnly()
+  let lookbackDays = DB_LIVE_LOOKBACK_DAYS
+  let mode = 'delta'
+
+  const lastSuccessMs = Date.parse(normalizeText(_dbLiveIngestionState.lastSuccessAt))
+  const staleMs = Number.isFinite(lastSuccessMs) ? Date.now() - lastSuccessMs : Infinity
+
+  if ((_dbLiveIngestionState.consecutiveFailures || 0) >= 3) {
+    lookbackDays = DB_LIVE_RECOVERY_LOOKBACK_DAYS
+    mode = 'delta-recovery'
+  } else if (staleMs > DB_LIVE_INGEST_INTERVAL_MS * 6) {
+    lookbackDays = DB_LIVE_STALE_LOOKBACK_DAYS
+    mode = 'delta-stale'
+  }
+
+  if (_dbLiveIngestionState.latestWatermark) {
+    return {
+      from: subtractDaysIsoDateOnly(_dbLiveIngestionState.latestWatermark.slice(0, 10), lookbackDays),
+      to,
+      mode,
+      lookbackDays,
+    }
+  }
+  return {
+    from: DB_LIVE_BOOTSTRAP_FROM,
+    to,
+    mode: 'bootstrap',
+    lookbackDays: null,
+  }
+}
+
+async function runDbLiveIngestionCycle({ reason = 'manual', forceFull = false } = {}) {
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  if (_dbLiveIngestionState.inFlight) {
+    return {
+      skipped: true,
+      reason: 'in-flight',
+      run: _dbLiveIngestionState.lastRun,
+    }
+  }
+
+  _dbLiveIngestionState.inFlight = true
+  const startedAtMs = Date.now()
+  const startedAtIso = new Date(startedAtMs).toISOString()
+  _dbLiveIngestionState.startedAt = _dbLiveIngestionState.startedAt || startedAtIso
+  _dbLiveIngestionState.lastRunAt = startedAtIso
+
+  const window = forceFull
+    ? { from: DB_LIVE_BOOTSTRAP_FROM, to: nowIsoDateOnly(), mode: 'full' }
+    : getDbLiveIngestionWindow()
+
+  const runMeta = {
+    id: `${startedAtMs}-${Math.trunc(Math.random() * 10_000)}`,
+    reason,
+    mode: window.mode,
+    lookbackDays: Number(window?.lookbackDays || 0) || null,
+    from: window.from,
+    to: window.to,
+    startedAt: startedAtIso,
+    finishedAt: '',
+    durationMs: 0,
+    status: 'running',
+    fetchedUsers: 0,
+    upserts: 0,
+    totalStored: _dbLiveIngestionState.storeByClient.size,
+    sourceMode: 'n/a',
+    sourceRows: {},
+    error: '',
+  }
+
+  try {
+    const syntheticReq = { url: buildDbLiveRunQuery({ from: window.from, to: window.to, monthFallback: 1, provenance: 1 }) }
+    const dataset = await buildCreolabsRegisteredUsersDataset(syntheticReq)
+    const users = Array.isArray(dataset?.users) ? dataset.users : []
+
+    let upserts = 0
+    let watermarkMs = Date.parse(normalizeText(_dbLiveIngestionState.latestWatermark))
+    if (!Number.isFinite(watermarkMs)) watermarkMs = -1
+
+    for (const user of users) {
+      const clientId = normalizeText(user?.clientId)
+      if (!clientId) continue
+      const storeKey = getDbLiveStoreKey(user)
+      const prev = _dbLiveIngestionState.storeByClient.get(storeKey)
+      const merged = mergeDbLiveUsersByRecency(prev, user)
+      _dbLiveIngestionState.storeByClient.set(storeKey, merged)
+      upserts += 1
+
+      const ts = Date.parse(normalizeText(merged?.clientTimestamp))
+      if (Number.isFinite(ts) && ts > watermarkMs) watermarkMs = ts
+    }
+
+    _dbLiveIngestionState.latestWatermark = Number.isFinite(watermarkMs) && watermarkMs > 0
+      ? new Date(watermarkMs).toISOString()
+      : _dbLiveIngestionState.latestWatermark
+    _dbLiveIngestionState.lastSuccessAt = new Date().toISOString()
+    _dbLiveIngestionState.lastFailureAt = null
+    _dbLiveIngestionState.consecutiveFailures = 0
+    _dbLiveIngestionState.runCount += 1
+
+    runMeta.status = 'success'
+    runMeta.fetchedUsers = users.length
+    runMeta.upserts = upserts
+    runMeta.totalStored = _dbLiveIngestionState.storeByClient.size
+    runMeta.sourceMode = normalizeText(dataset?.meta?.sourceRows?.sourceMode) || 'n/a'
+    runMeta.sourceRows = dataset?.meta?.sourceRows || {}
+
+    try {
+      if (runMeta.sourceMode === 'lead-object') {
+        runMeta.localArtifactSync = persistCreolabsLiveArtifactRows(users, {
+          sourceMode: runMeta.sourceMode,
+          from: window.from,
+          to: window.to,
+        })
+      } else {
+        runMeta.localArtifactSync = {
+          written: false,
+          reason: `sourceMode:${runMeta.sourceMode}`,
+          filePath: getCreolabsLiveArtifactPath(),
+        }
+      }
+    } catch (artifactError) {
+      runMeta.localArtifactSync = {
+        written: false,
+        reason: 'write-failed',
+        filePath: getCreolabsLiveArtifactPath(),
+        error: normalizeText(artifactError?.message),
+      }
+    }
+
+    runMeta.finishedAt = new Date().toISOString()
+    runMeta.durationMs = Date.now() - startedAtMs
+  } catch (error) {
+    runMeta.status = 'failed'
+    runMeta.error = normalizeText(error?.message || 'unknown-error')
+    runMeta.finishedAt = new Date().toISOString()
+    runMeta.durationMs = Date.now() - startedAtMs
+    _dbLiveIngestionState.lastFailureAt = runMeta.finishedAt
+    _dbLiveIngestionState.consecutiveFailures = Number(_dbLiveIngestionState.consecutiveFailures || 0) + 1
+  } finally {
+    _dbLiveIngestionState.inFlight = false
+    _dbLiveIngestionState.lastRun = runMeta
+    _dbLiveIngestionState.runs.unshift(runMeta)
+    if (_dbLiveIngestionState.runs.length > DB_LIVE_RUNS_HISTORY_MAX) {
+      _dbLiveIngestionState.runs.length = DB_LIVE_RUNS_HISTORY_MAX
+    }
+    persistDbLiveIngestionMeta()
+  }
+
+  return {
+    skipped: false,
+    run: runMeta,
+  }
+}
+
+async function runDbLiveIdentityRepairCycle({ reason = 'repair-identity' } = {}) {
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  const startedAtMs = Date.now()
+  const startedAtIso = new Date(startedAtMs).toISOString()
+
+  const runMeta = {
+    id: `${startedAtMs}-${Math.trunc(Math.random() * 10_000)}`,
+    reason,
+    mode: 'repair-identity',
+    startedAt: startedAtIso,
+    finishedAt: '',
+    durationMs: 0,
+    status: 'running',
+    scannedClients: 0,
+    repairedClients: 0,
+    totalStored: _dbLiveIngestionState.storeByClient.size,
+    sourceMode: normalizeText(_dbLiveIngestionState?.lastRun?.sourceMode) || 'n/a',
+    sourceRows: {
+      beforeMissingIdentity: 0,
+      afterMissingIdentity: 0,
+    },
+    error: '',
+  }
+
+  try {
+    const syntheticReq = {
+      url: buildDbLiveRunQuery({
+        from: DB_LIVE_BOOTSTRAP_FROM,
+        to: nowIsoDateOnly(),
+        monthFallback: 1,
+        provenance: 1,
+      }),
+    }
+    const dataset = await buildCreolabsRegisteredUsersDataset(syntheticReq)
+    const users = Array.isArray(dataset?.users) ? dataset.users : []
+
+    const byClient = new Map()
+    for (const user of users) {
+      const cid = normalizeText(user?.clientId)
+      if (!cid) continue
+      if (!byClient.has(cid)) byClient.set(cid, user)
+      const cidNum = Number(cid)
+      if (Number.isFinite(cidNum)) {
+        const numericKey = String(cidNum)
+        if (!byClient.has(numericKey)) byClient.set(numericKey, user)
+      }
+    }
+
+    const identityUnique = new Map()
+    for (const user of users) {
+      const key = buildIdentityFallbackKey(user?.clientName, user?.country, user?.user)
+      if (!key) continue
+
+      if (!identityUnique.has(key)) {
+        identityUnique.set(key, {
+          affiliateIds: new Set(),
+          clientLogins: new Set(),
+        })
+      }
+      const bucket = identityUnique.get(key)
+      const aff = normalizeText(user?.affiliateId)
+      const login = normalizeText(user?.clientLogin)
+      if (aff) bucket.affiliateIds.add(aff)
+      if (login) bucket.clientLogins.add(login)
+    }
+
+    const nextStore = new Map()
+    let repairedClients = 0
+    let beforeMissingIdentity = 0
+    let afterMissingIdentity = 0
+
+    for (const [storeKey, user] of _dbLiveIngestionState.storeByClient.entries()) {
+      const current = user && typeof user === 'object' ? { ...user } : user
+      if (!current || typeof current !== 'object') {
+        nextStore.set(storeKey, current)
+        continue
+      }
+
+      runMeta.scannedClients += 1
+
+      const beforeMissing = isMissingIdentityValue(current?.affiliateId) || isMissingIdentityValue(current?.clientLogin)
+      if (beforeMissing) beforeMissingIdentity += 1
+
+      const cid = normalizeText(current?.clientId) || normalizeText(storeKey)
+      const candidate = byClient.get(cid) || null
+      const cachedMeta = getRegisteredUsersMeta(cid)
+      const identityKey = buildIdentityFallbackKey(
+        current?.clientName || candidate?.clientName || cachedMeta?.clientName,
+        current?.country || candidate?.country || cachedMeta?.country,
+        current?.user || candidate?.user || cachedMeta?.user
+      )
+      const identityFallback = identityKey ? identityUnique.get(identityKey) : null
+
+      const nextAffiliateId =
+        normalizeText(current?.affiliateId) ||
+        normalizeText(candidate?.affiliateId) ||
+        normalizeText(cachedMeta?.affiliateId) ||
+        (identityFallback && identityFallback.affiliateIds.size === 1 ? Array.from(identityFallback.affiliateIds)[0] : '')
+
+      const nextClientLogin =
+        normalizeText(current?.clientLogin) ||
+        normalizeText(candidate?.clientLogin) ||
+        normalizeText(cachedMeta?.clientLogin) ||
+        (identityFallback && identityFallback.clientLogins.size === 1 ? Array.from(identityFallback.clientLogins)[0] : '')
+
+      const wasAffiliateMissing = isMissingIdentityValue(current?.affiliateId)
+      const wasLoginMissing = isMissingIdentityValue(current?.clientLogin)
+      const affiliateRecovered = wasAffiliateMissing && normalizeText(nextAffiliateId)
+      const loginRecovered = wasLoginMissing && normalizeText(nextClientLogin)
+
+      current.affiliateId = nextAffiliateId || ''
+      current.clientLogin = nextClientLogin || ''
+
+      if (affiliateRecovered || loginRecovered) repairedClients += 1
+
+      const afterMissing = isMissingIdentityValue(current?.affiliateId) || isMissingIdentityValue(current?.clientLogin)
+      if (afterMissing) afterMissingIdentity += 1
+
+      nextStore.set(getDbLiveStoreKey(current), current)
+    }
+
+    _dbLiveIngestionState.storeByClient = nextStore
+    persistDbLiveIngestionMeta()
+
+    runMeta.repairedClients = repairedClients
+    runMeta.sourceRows.beforeMissingIdentity = beforeMissingIdentity
+    runMeta.sourceRows.afterMissingIdentity = afterMissingIdentity
+    runMeta.totalStored = _dbLiveIngestionState.storeByClient.size
+    runMeta.status = 'success'
+  } catch (error) {
+    runMeta.status = 'error'
+    runMeta.error = normalizeText(error?.message)
+  } finally {
+    runMeta.finishedAt = new Date().toISOString()
+    runMeta.durationMs = Math.max(1, Date.now() - startedAtMs)
+    _dbLiveIngestionState.lastRun = runMeta
+    _dbLiveIngestionState.lastRunAt = runMeta.finishedAt
+    _dbLiveIngestionState.runs.unshift(runMeta)
+    if (_dbLiveIngestionState.runs.length > DB_LIVE_RUNS_HISTORY_MAX) {
+      _dbLiveIngestionState.runs.length = DB_LIVE_RUNS_HISTORY_MAX
+    }
+    persistDbLiveIngestionMeta()
+  }
+
+  return {
+    skipped: false,
+    run: runMeta,
+  }
+}
+
+function startDbLiveIngestionScheduler() {
+  if (_dbLiveIngestionState.schedulerStarted) return
+  _dbLiveIngestionState.schedulerStarted = true
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  const scheduleTick = () => {
+    runDbLiveIngestionCycle({ reason: 'scheduled' }).catch(() => {})
+  }
+
+  scheduleTick()
+  _dbLiveIngestionState.timer = setInterval(scheduleTick, DB_LIVE_INGEST_INTERVAL_MS)
+}
+
+function applyDbLiveFilters(users, urlObj) {
+  const search = normalizeText(urlObj.searchParams.get('search')).toLowerCase()
+  const status = normalizeText(urlObj.searchParams.get('status')).toLowerCase()
+  const country = normalizeText(urlObj.searchParams.get('country')).toLowerCase()
+  const affiliateId = normalizeText(urlObj.searchParams.get('affiliateId')).toLowerCase()
+  const brands = normalizeText(urlObj.searchParams.get('brand'))
+    .split(',')
+    .map((value) => normalizeText(value).toLowerCase())
+    .filter(Boolean)
+  const brandSet = new Set(brands)
+
+  return users.filter((user) => {
+    if (status && normalizeText(user?.status).toLowerCase() !== status) return false
+    if (country && normalizeText(user?.country).toLowerCase() !== country) return false
+    if (affiliateId && normalizeText(user?.affiliateId).toLowerCase() !== affiliateId) return false
+    if (brandSet.size > 0 && !brandSet.has(normalizeText(user?.brand).toLowerCase())) return false
+
+    if (search) {
+      const haystack = [
+        user?.clientId,
+        user?.clientName,
+        user?.clientLogin,
+        user?.affiliateId,
+        user?.country,
+        user?.user,
+        user?.brand,
+      ]
+        .map((v) => normalizeText(v).toLowerCase())
+        .join(' | ')
+      if (!haystack.includes(search)) return false
+    }
+
+    return true
+  })
+}
+
+function applyDbLiveSort(users, urlObj) {
+  const sortRaw = normalizeText(urlObj.searchParams.get('sort') || '-clientTimestamp,-clientId')
+  const tokens = sortRaw
+    .split(',')
+    .map((t) => normalizeText(t))
+    .filter(Boolean)
+
+  const allowed = new Set([
+    'clientTimestamp',
+    'clientId',
+    'clientName',
+    'affiliateId',
+    'clientLogin',
+    'country',
+    'status',
+    'net',
+    'deposit',
+    'wd',
+    'trades',
+    'openedTrades',
+    'equity',
+  ])
+
+  const comparators = tokens
+    .map((token) => {
+      const dir = token.startsWith('-') ? -1 : 1
+      const field = token.replace(/^[-+]/, '')
+      if (!allowed.has(field)) return null
+      return { field, dir }
+    })
+    .filter(Boolean)
+
+  const normalizedComparators = comparators.length
+    ? comparators
+    : [{ field: 'clientTimestamp', dir: -1 }, { field: 'clientId', dir: -1 }]
+
+  const sortable = [...users]
+  sortable.sort((a, b) => {
+    for (const cmp of normalizedComparators) {
+      const field = cmp.field
+      const dir = cmp.dir
+
+      let av = a?.[field]
+      let bv = b?.[field]
+
+      if (field === 'clientTimestamp') {
+        av = Date.parse(normalizeText(av))
+        bv = Date.parse(normalizeText(bv))
+      } else if (['clientId', 'net', 'deposit', 'wd', 'trades'].includes(field)) {
+        av = Number(av)
+        bv = Number(bv)
+      } else {
+        av = normalizeText(av).toLowerCase()
+        bv = normalizeText(bv).toLowerCase()
+      }
+
+      if (Number.isFinite(av) && Number.isFinite(bv)) {
+        if (av === bv) continue
+        return av > bv ? dir : -dir
+      }
+
+      const as = normalizeText(av)
+      const bs = normalizeText(bv)
+      if (as === bs) continue
+      return as > bs ? dir : -dir
+    }
+    return 0
+  })
+
+  return {
+    users: sortable,
+    sort: normalizedComparators.map((c) => `${c.dir < 0 ? '-' : '+'}${c.field}`).join(','),
+  }
+}
+
+function getDbLiveOperationalReportTemplates() {
+  return [
+    {
+      id: 'db-live-daily-health',
+      name: 'DB Live Daily Health',
+      cadence: 'daily',
+      output: ['xlsx', 'pdf'],
+      objective: 'Controllo qualita ingestione, freshness e anomalie source mode.',
+      defaultQuery: {
+        range: { from: 'today-1d', to: 'today' },
+        sort: '-clientTimestamp,-clientId',
+        limit: 500,
+      },
+      sections: ['freshness', 'quality', 'warnings', 'top-latest-clients'],
+      targetTeams: ['operations', 'data-quality'],
+    },
+    {
+      id: 'db-live-weekly-retention-focus',
+      name: 'DB Live Weekly Retention Focus',
+      cadence: 'weekly',
+      output: ['xlsx', 'pdf'],
+      objective: 'Vista retention su status, country, affiliate e trend nuovi registrati.',
+      defaultQuery: {
+        range: { from: 'today-7d', to: 'today' },
+        sort: '-clientTimestamp,-clientId',
+        limit: 2000,
+      },
+      sections: ['status-breakdown', 'country-breakdown', 'affiliate-breakdown'],
+      targetTeams: ['retention', 'management'],
+    },
+    {
+      id: 'db-live-monthly-finance-handoff',
+      name: 'DB Live Monthly Finance Handoff',
+      cadence: 'monthly',
+      output: ['xlsx', 'pdf'],
+      objective: 'Consegna finance con metriche net/deposit/wd/trades e campi provenienza.',
+      defaultQuery: {
+        range: { from: 'month-start', to: 'today' },
+        sort: '-net,-deposit',
+        limit: 5000,
+      },
+      sections: ['net-summary', 'deposits-withdrawals', 'provenance-quality'],
+      targetTeams: ['finance', 'management'],
+    },
+  ]
+}
+
+function getDbLiveReportsApiConfig() {
+  return {
+    createPath: normalizeText(env('QLIK_REPORTS_CREATE_PATH') || '/api/v1/reports'),
+    statusPathTemplate: normalizeText(env('QLIK_REPORTS_STATUS_PATH') || '/api/v1/reports/{jobId}'),
+    downloadPathTemplate: normalizeText(env('QLIK_REPORTS_DOWNLOAD_PATH') || '/api/v1/reports/{jobId}/download'),
+    appId: normalizeText(env('QLIK_APP_ID') || env('QLIK_CREOLABS_APP_ID')),
+    defaultSheetId: normalizeText(env('QLIK_REPORTS_DEFAULT_SHEET_ID')),
+  }
+}
+
+function interpolatePathTemplate(template, values = {}) {
+  let output = normalizeText(template)
+  if (!output.startsWith('/')) output = `/${output}`
+  for (const [key, rawValue] of Object.entries(values)) {
+    output = output.replace(new RegExp(`\\{${key}\\}`, 'g'), encodeURIComponent(normalizeText(rawValue)))
+  }
+  return output
+}
+
+function extractReportJobId(data) {
+  const candidates = [
+    data?.id,
+    data?.jobId,
+    data?.requestId,
+    data?.reportId,
+    data?.data?.id,
+    data?.data?.jobId,
+    data?.result?.id,
+  ]
+  for (const value of candidates) {
+    const text = normalizeText(value)
+    if (text) return text
+  }
+  return ''
+}
+
+function normalizeReportJobStatus(raw) {
+  const value = normalizeText(raw).toLowerCase()
+  if (!value) return 'unknown'
+  if (['queued', 'pending', 'created'].includes(value)) return 'queued'
+  if (['running', 'processing', 'in_progress', 'in-progress'].includes(value)) return 'running'
+  if (['done', 'success', 'succeeded', 'completed', 'ready'].includes(value)) return 'completed'
+  if (['error', 'failed', 'failure', 'cancelled', 'canceled'].includes(value)) return 'failed'
+  return value
+}
+
+function resolveReportDownloadUrl(payload) {
+  const candidates = [
+    payload?.downloadUrl,
+    payload?.url,
+    payload?.href,
+    payload?.data?.downloadUrl,
+    payload?.data?.url,
+    payload?.result?.downloadUrl,
+    payload?.result?.url,
+  ]
+  for (const value of candidates) {
+    const text = normalizeText(value)
+    if (text) return text
+  }
+  return ''
+}
+
+function putDbLiveReportJob(job) {
+  const id = normalizeText(job?.id)
+  if (!id) return
+
+  const prev = _dbLiveReportJobsState.jobsById.get(id)
+  const next = {
+    id,
+    templateId: normalizeText(job?.templateId || prev?.templateId),
+    format: normalizeText(job?.format || prev?.format || 'xlsx'),
+    status: normalizeReportJobStatus(job?.status || prev?.status || 'queued'),
+    createdAt: normalizeText(job?.createdAt || prev?.createdAt || new Date().toISOString()),
+    updatedAt: normalizeText(job?.updatedAt || new Date().toISOString()),
+    source: normalizeText(job?.source || prev?.source || 'qlik-reports-api'),
+    upstream: {
+      createPath: normalizeText(job?.upstream?.createPath || prev?.upstream?.createPath),
+      statusPath: normalizeText(job?.upstream?.statusPath || prev?.upstream?.statusPath),
+      downloadPath: normalizeText(job?.upstream?.downloadPath || prev?.upstream?.downloadPath),
+      rawCreate: job?.upstream?.rawCreate || prev?.upstream?.rawCreate || null,
+      rawStatus: job?.upstream?.rawStatus || prev?.upstream?.rawStatus || null,
+    },
+    diagnostics: {
+      lastError: normalizeText(job?.diagnostics?.lastError || prev?.diagnostics?.lastError),
+      lastMessage: normalizeText(job?.diagnostics?.lastMessage || prev?.diagnostics?.lastMessage),
+      statusRaw: normalizeText(job?.diagnostics?.statusRaw || prev?.diagnostics?.statusRaw),
+    },
+    downloadUrl: normalizeText(job?.downloadUrl || prev?.downloadUrl),
+    query: job?.query || prev?.query || null,
+  }
+
+  _dbLiveReportJobsState.jobsById.set(id, next)
+  _dbLiveReportJobsState.history = [
+    { id, updatedAt: next.updatedAt },
+    ..._dbLiveReportJobsState.history.filter((item) => item.id !== id),
+  ].slice(0, DB_LIVE_REPORT_JOBS_HISTORY_MAX)
+}
+
+function getDbLiveReportJob(jobId) {
+  const id = normalizeText(jobId)
+  if (!id) return null
+  return _dbLiveReportJobsState.jobsById.get(id) || null
+}
+
+function listDbLiveReportJobs() {
+  return _dbLiveReportJobsState.history
+    .map((entry) => _dbLiveReportJobsState.jobsById.get(entry.id))
+    .filter(Boolean)
+}
+
+function buildDbLiveReportCreatePayload(reqBody, template, reportsConfig) {
+  const requestedFormat = normalizeText(reqBody?.format || reqBody?.output || 'xlsx').toLowerCase()
+  const format = requestedFormat === 'pdf' ? 'pdf' : 'xlsx'
+  const from = normalizeText(reqBody?.from || reqBody?.range?.from)
+  const to = normalizeText(reqBody?.to || reqBody?.range?.to)
+  const manualRequest = reqBody?.request && typeof reqBody.request === 'object' ? reqBody.request : null
+
+  if (manualRequest) {
+    return {
+      payload: manualRequest,
+      format,
+      query: {
+        from,
+        to,
+      },
+    }
+  }
+
+  const requestPayload = {
+    appId: reportsConfig.appId,
+    templateId: normalizeText(template?.id),
+    output: {
+      format,
+    },
+    metadata: {
+      source: 'creolabs-db-live',
+      templateId: normalizeText(template?.id),
+      generatedAt: new Date().toISOString(),
+    },
+    filters: {
+      from,
+      to,
+    },
+  }
+
+  if (reportsConfig.defaultSheetId) {
+    requestPayload.sheetId = reportsConfig.defaultSheetId
+  }
+
+  return {
+    payload: requestPayload,
+    format,
+    query: {
+      from,
+      to,
+    },
+  }
+}
+
+async function handleCreolabsDbLiveReportsJobs(req, res) {
+  if (req.method !== 'GET' && req.method !== 'POST') return notAllowed(req, res, 'GET, POST')
+
+  if (req.method === 'GET') {
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-reports-jobs-v1',
+          jobs: listDbLiveReportJobs(),
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  try {
+    const reportsConfig = getDbLiveReportsApiConfig()
+    const templateId = normalizeText(req?.body?.templateId)
+    const template = getDbLiveOperationalReportTemplates().find((item) => normalizeText(item?.id) === templateId)
+    if (!template) {
+      return json(
+        res,
+        400,
+        {
+          ok: false,
+          error: 'Unknown report templateId',
+          details: templateId || 'missing templateId',
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    const createInput = buildDbLiveReportCreatePayload(req?.body || {}, template, reportsConfig)
+    const createPath = reportsConfig.createPath
+    let createRaw = null
+    try {
+      createRaw = await qlikPost(config, createPath, createInput.payload)
+    } catch (e) {
+      return json(
+        res,
+        e?.status || 502,
+        {
+          ok: false,
+          error: e?.message || 'Creolabs db-live report job creation failed',
+          details: e?.details || '',
+          diagnostics: {
+            createPath,
+            payload: createInput.payload,
+            hint: 'Provide a valid Qlik Reports body via request override if your tenant requires a different schema.',
+          },
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    const jobId = extractReportJobId(createRaw) || `local-${Date.now()}`
+    const initialStatus = normalizeReportJobStatus(createRaw?.status || createRaw?.state || 'queued')
+
+    putDbLiveReportJob({
+      id: jobId,
+      templateId,
+      format: createInput.format,
+      status: initialStatus,
+      source: 'qlik-reports-api',
+      query: createInput.query,
+      upstream: {
+        createPath,
+        statusPath: interpolatePathTemplate(reportsConfig.statusPathTemplate, { jobId }),
+        downloadPath: interpolatePathTemplate(reportsConfig.downloadPathTemplate, { jobId }),
+        rawCreate: createRaw,
+      },
+      diagnostics: {
+        statusRaw: normalizeText(createRaw?.status || createRaw?.state),
+        lastMessage: normalizeText(createRaw?.message),
+      },
+      downloadUrl: resolveReportDownloadUrl(createRaw),
+    })
+
+    const job = getDbLiveReportJob(jobId)
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-reports-jobs-v1',
+          job,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live report job creation failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveReportsJobStatus(req, res, jobId) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+
+  const knownJob = getDbLiveReportJob(jobId)
+  if (!knownJob) {
+    return json(res, 404, { ok: false, error: 'Report job not found' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  try {
+    const reportsConfig = getDbLiveReportsApiConfig()
+    const statusPath = knownJob?.upstream?.statusPath || interpolatePathTemplate(reportsConfig.statusPathTemplate, { jobId })
+    const statusRaw = await qlikGet(config, statusPath)
+
+    const status = normalizeReportJobStatus(statusRaw?.status || statusRaw?.state || knownJob?.status || 'unknown')
+    const downloadUrl = resolveReportDownloadUrl(statusRaw) || normalizeText(knownJob?.downloadUrl)
+
+    putDbLiveReportJob({
+      id: jobId,
+      status,
+      upstream: {
+        statusPath,
+        rawStatus: statusRaw,
+      },
+      diagnostics: {
+        statusRaw: normalizeText(statusRaw?.status || statusRaw?.state),
+        lastMessage: normalizeText(statusRaw?.message || statusRaw?.details),
+      },
+      downloadUrl,
+    })
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-reports-jobs-v1',
+          job: getDbLiveReportJob(jobId),
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    putDbLiveReportJob({
+      id: jobId,
+      status: 'failed',
+      diagnostics: {
+        lastError: normalizeText(e?.message),
+      },
+    })
+
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live report status failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveReportsJobDownload(req, res, jobId) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+
+  const knownJob = getDbLiveReportJob(jobId)
+  if (!knownJob) {
+    return json(res, 404, { ok: false, error: 'Report job not found' }, { 'Cache-Control': 'no-store' })
+  }
+
+  if (knownJob.downloadUrl) {
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-reports-jobs-v1',
+          job: knownJob,
+          downloadUrl: knownJob.downloadUrl,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  try {
+    const reportsConfig = getDbLiveReportsApiConfig()
+    const downloadPath = knownJob?.upstream?.downloadPath || interpolatePathTemplate(reportsConfig.downloadPathTemplate, { jobId })
+    const downloadRaw = await qlikGet(config, downloadPath)
+    const downloadUrl =
+      (typeof downloadRaw === 'string' && /^https?:\/\//i.test(downloadRaw) ? downloadRaw : '') ||
+      resolveReportDownloadUrl(downloadRaw)
+
+    if (!downloadUrl) {
+      return json(
+        res,
+        409,
+        {
+          ok: false,
+          error: 'Report output is not ready yet',
+          details: 'No download URL available from Qlik Reports API',
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    putDbLiveReportJob({
+      id: jobId,
+      downloadUrl,
+      upstream: {
+        downloadPath,
+      },
+    })
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-reports-jobs-v1',
+          job: getDbLiveReportJob(jobId),
+          downloadUrl,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live report download failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveReportTemplates(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  try {
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-report-templates-v1',
+          generatedAt: new Date().toISOString(),
+          templates: getDbLiveOperationalReportTemplates(),
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live report templates request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLive(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+
+  try {
+    const urlObj = new URL(req.url || '/', 'http://localhost')
+    const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
+    const strictLive = normalizeText(urlObj.searchParams.get('strictLive')) === '1'
+    const markUnmappedIdentity = normalizeText(urlObj.searchParams.get('markUnmappedIdentity') || '1') !== '0'
+    const fromRaw = normalizeText(urlObj.searchParams.get('from'))
+    const toRaw = normalizeText(urlObj.searchParams.get('to'))
+    const hasDateRange = Boolean(fromRaw || toRaw)
+    const fromMs = hasDateRange ? parseIsoDateBoundary(fromRaw || DB_LIVE_BOOTSTRAP_FROM, { endOfDay: false }) : Number.NEGATIVE_INFINITY
+    const toMs = hasDateRange ? parseIsoDateBoundary(toRaw || nowIsoDateOnly(), { endOfDay: true }) : Number.POSITIVE_INFINITY
+    if (hasDateRange && (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs)) {
+      const error = new Error('Invalid date range. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD or omit both to query the full DB')
+      error.status = 400
+      throw error
+    }
+
+    if (forceRefresh) {
+      await runDbLiveIngestionCycle({ reason: 'manual-refresh' })
+    }
+
+    const limit = parsePositiveInt(urlObj.searchParams.get('limit'), 200, 500)
+    const offset = decodeDbLiveCursor(urlObj.searchParams.get('page'))
+
+    let usedFallbackSource = false
+    let sourceUsers = getDbLiveUsersSnapshot()
+    if (!sourceUsers.length && _dbLiveIngestionState.inFlight) {
+      const fallbackDataset = await buildCreolabsRegisteredUsersDataset(req)
+      sourceUsers = Array.isArray(fallbackDataset?.users) ? fallbackDataset.users : []
+      usedFallbackSource = sourceUsers.length > 0
+    }
+
+    // Normalize legacy snapshot rows and backfill sparse identity fields at read-time.
+    const normalizedUsers = sourceUsers.map((user) => {
+      const clientId = normalizeText(user?.clientId)
+      const cachedMeta = getRegisteredUsersMeta(clientId)
+
+      const openedTrades = Number(user?.openedTrades)
+      const tradesFallback = Math.round(toFiniteNumber(user?.trades))
+      const normalizedOpenedTrades = Number.isFinite(openedTrades) && openedTrades > 0
+        ? Math.round(openedTrades)
+        : tradesFallback
+
+      const explicitEquity = Number(user?.equity)
+      const derivedEquity = toFiniteNumber(user?.balance) + toFiniteNumber(user?.openPl)
+      const normalizedEquity = Number.isFinite(explicitEquity) && explicitEquity !== 0
+        ? explicitEquity
+        : derivedEquity
+
+      return {
+        ...user,
+        affiliateId: normalizeText(user?.affiliateId) || normalizeText(cachedMeta?.affiliateId),
+        clientLogin: normalizeText(user?.clientLogin) || normalizeText(cachedMeta?.clientLogin),
+        openedTrades: normalizedOpenedTrades,
+        equity: normalizedEquity,
+      }
+    })
+
+    const identityFallback = new Map()
+    for (const user of normalizedUsers) {
+      const key = buildIdentityFallbackKey(user?.clientName, user?.country, user?.user)
+      if (!key) continue
+
+      if (!identityFallback.has(key)) {
+        identityFallback.set(key, {
+          affiliateIds: new Set(),
+          clientLogins: new Set(),
+        })
+      }
+
+      const bucket = identityFallback.get(key)
+      const affiliateId = normalizeText(user?.affiliateId)
+      const clientLogin = normalizeText(user?.clientLogin)
+      if (affiliateId) bucket.affiliateIds.add(affiliateId)
+      if (clientLogin) bucket.clientLogins.add(clientLogin)
+    }
+
+    sourceUsers = normalizedUsers.map((user) => {
+      const key = buildIdentityFallbackKey(user?.clientName, user?.country, user?.user)
+      if (!key) return user
+
+      const bucket = identityFallback.get(key)
+      if (!bucket) return user
+
+      const affiliateId = normalizeText(user?.affiliateId)
+      const clientLogin = normalizeText(user?.clientLogin)
+
+      const inferredAffiliateId =
+        !affiliateId && bucket.affiliateIds.size === 1
+          ? Array.from(bucket.affiliateIds)[0]
+          : ''
+      const inferredClientLogin =
+        !clientLogin && bucket.clientLogins.size === 1
+          ? Array.from(bucket.clientLogins)[0]
+          : ''
+
+      if (!inferredAffiliateId && !inferredClientLogin) return user
+      return {
+        ...user,
+        affiliateId: affiliateId || inferredAffiliateId,
+        clientLogin: clientLogin || inferredClientLogin,
+      }
+    })
+
+    if (markUnmappedIdentity) {
+      sourceUsers = sourceUsers.map((user) => ({
+        ...user,
+        affiliateId: isMissingIdentityValue(user?.affiliateId) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.affiliateId),
+        clientLogin: isMissingIdentityValue(user?.clientLogin) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.clientLogin),
+      }))
+    }
+
+    const filtered = applyDbLiveFilters(sourceUsers, urlObj)
+    const dateFiltered = hasDateRange
+      ? filtered.filter((user) => {
+          const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+          if (!Number.isFinite(ts)) return false
+          return ts >= fromMs && ts <= toMs
+        })
+      : filtered
+    const sorted = applyDbLiveSort(dateFiltered, urlObj)
+
+    const aggregateDbLiveKpis = (users) => {
+      const rows = Array.isArray(users) ? users : []
+      let net = 0
+      let deposit = 0
+      let wd = 0
+      let trades = 0
+      let closedPl = 0
+      let openPl = 0
+      let ftd = 0
+      let rdp = 0
+      const clientIds = new Set()
+      const affiliates = new Set()
+
+      for (const user of rows) {
+        net += toFiniteNumber(user?.net)
+        deposit += toFiniteNumber(user?.deposit)
+        wd += toFiniteNumber(user?.wd)
+        trades += toFiniteNumber(user?.trades)
+        closedPl += toFiniteNumber(user?.closedPl)
+        openPl += toFiniteNumber(user?.openPl)
+        ftd += toFiniteNumber(user?.ftd)
+        rdp += toFiniteNumber(user?.rdp)
+
+        const clientId = normalizeText(user?.clientId)
+        const affiliateId = normalizeText(user?.affiliateId)
+        if (clientId) clientIds.add(clientId)
+        if (affiliateId && !isMissingIdentityValue(affiliateId)) affiliates.add(affiliateId)
+      }
+
+      return {
+        rows: rows.length,
+        uniqueClients: clientIds.size,
+        uniqueAffiliates: affiliates.size,
+        net,
+        deposit,
+        wd,
+        trades,
+        closedPl,
+        openPl,
+        totalPl: closedPl + openPl,
+        ftd,
+        rdp,
+      }
+    }
+
+    const dbKpis = aggregateDbLiveKpis(sourceUsers)
+    const queryKpis = aggregateDbLiveKpis(dateFiltered)
+
+    const total = sorted.users.length
+    const safeOffset = Math.min(Math.max(0, offset), Math.max(0, total - 1))
+    const pageUsers = sorted.users.slice(safeOffset, safeOffset + limit)
+
+    const hasPrev = safeOffset > 0
+    const hasNext = safeOffset + limit < total
+    const prevOffset = Math.max(0, safeOffset - limit)
+    const nextOffset = safeOffset + limit
+
+    const sourceMode = normalizeText(_dbLiveIngestionState?.lastRun?.sourceMode) || 'n/a'
+    const lastSuccessAt = normalizeText(_dbLiveIngestionState.lastSuccessAt)
+    const lastSuccessMs = Date.parse(lastSuccessAt)
+    const freshnessAgeMs = Number.isFinite(lastSuccessMs) ? Math.max(0, Date.now() - lastSuccessMs) : null
+    const freshnessState = !Number.isFinite(lastSuccessMs)
+      ? 'unknown'
+      : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 2
+        ? 'fresh'
+        : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 6
+          ? 'warm'
+          : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 24
+            ? 'stale'
+            : 'cold'
+
+    const warnings = []
+    if (_dbLiveIngestionState.inFlight && _dbLiveIngestionState.storeByClient.size === 0) {
+      warnings.push('warmup_in_progress')
+    }
+    if (sourceMode === 'no-source') warnings.push('upstream_source_unavailable')
+    if (Number(_dbLiveIngestionState.consecutiveFailures || 0) > 0) warnings.push('ingestion_failures')
+    if (!_dbLiveIngestionState.schedulerStarted) warnings.push('scheduler_not_started')
+
+    const identityMissingCount = dateFiltered.filter(
+      (user) => isMissingIdentityValue(user?.affiliateId) || isMissingIdentityValue(user?.clientLogin)
+    ).length
+    const identityMissingRatio = total > 0 ? identityMissingCount / total : 0
+    const identityMissingCritical = identityMissingRatio >= DB_LIVE_IDENTITY_MISSING_WARN_RATIO
+    if (identityMissingCritical) warnings.push('identity_missing_exceeds_threshold')
+
+    if (strictLive && (sourceMode === 'no-source' || sourceMode === 'n/a')) {
+      const error = new Error('Strict-live mode: upstream source unavailable. DB Live snapshot fallback is disabled.')
+      error.status = 503
+      error.details = {
+        sourceMode,
+        strictLive,
+        warnings,
+      }
+      throw error
+    }
+
+    const qualityScore = Math.max(
+      0,
+      100 -
+        (Number(_dbLiveIngestionState.consecutiveFailures || 0) * 20) -
+        (sourceMode === 'no-source' ? 30 : 0) -
+        (warnings.includes('warmup_in_progress') ? 10 : 0)
+    )
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          meta: {
+            contractVersion: 'db-live-v1.2',
+            sourceRows: {
+              sourceMode,
+              ...(_dbLiveIngestionState?.lastRun?.sourceRows || {}),
+              storedClients: _dbLiveIngestionState.storeByClient.size,
+            },
+            kpis: {
+              scope: 'db-store',
+              ...dbKpis,
+            },
+            queryKpis: {
+              scope: hasDateRange ? 'query-with-date-range' : 'query-with-filters',
+              ...queryKpis,
+            },
+            freshness: {
+              state: freshnessState,
+              ageMs: freshnessAgeMs,
+              intervalMs: DB_LIVE_INGEST_INTERVAL_MS,
+              lastSuccessAt,
+              lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
+              latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+            },
+            quality: {
+              score: qualityScore,
+              warnings,
+              sourceMode,
+              fallbackUsed: usedFallbackSource,
+              consecutiveFailures: Number(_dbLiveIngestionState.consecutiveFailures || 0),
+              identityMissing: {
+                count: identityMissingCount,
+                ratio: identityMissingRatio,
+                thresholdRatio: DB_LIVE_IDENTITY_MISSING_WARN_RATIO,
+                critical: identityMissingCritical,
+                markUnmappedIdentity,
+                unmappedLabel: DB_LIVE_UNMAPPED_LABEL,
+              },
+            },
+            diagnostics: {
+              stateFile: getDbLiveIngestionStateFilePath(),
+              hydratedFromDisk: _dbLiveIngestionState.hydratedFromDisk,
+              schedulerStarted: _dbLiveIngestionState.schedulerStarted,
+              inFlight: _dbLiveIngestionState.inFlight,
+              runCount: _dbLiveIngestionState.runCount,
+              lastRunStatus: normalizeText(_dbLiveIngestionState?.lastRun?.status),
+              lastRunMode: normalizeText(_dbLiveIngestionState?.lastRun?.mode),
+              lastRunDurationMs: Number(_dbLiveIngestionState?.lastRun?.durationMs || 0),
+              lastRunError: normalizeText(_dbLiveIngestionState?.lastRun?.error),
+            },
+            ingestion: {
+              schedulerStarted: _dbLiveIngestionState.schedulerStarted,
+              inFlight: _dbLiveIngestionState.inFlight,
+              runCount: _dbLiveIngestionState.runCount,
+              latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+              lastSuccessAt: normalizeText(_dbLiveIngestionState.lastSuccessAt),
+              lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
+              lastRunStatus: normalizeText(_dbLiveIngestionState?.lastRun?.status),
+            },
+            query: {
+              total,
+              limit,
+              offset: safeOffset,
+              from: fromRaw,
+              to: toRaw,
+              strictLive,
+              markUnmappedIdentity,
+              sort: sorted.sort,
+              search: normalizeText(urlObj.searchParams.get('search')),
+              status: normalizeText(urlObj.searchParams.get('status')),
+              country: normalizeText(urlObj.searchParams.get('country')),
+              affiliateId: normalizeText(urlObj.searchParams.get('affiliateId')),
+              brand: normalizeText(urlObj.searchParams.get('brand')),
+            },
+            warnings,
+          },
+          page: {
+            count: pageUsers.length,
+            hasPrev,
+            hasNext,
+            prev: hasPrev ? encodeDbLiveCursor(prevOffset) : '',
+            next: hasNext ? encodeDbLiveCursor(nextOffset) : '',
+          },
+          users: pageUsers,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveIngestionStatus(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  const trigger = normalizeText(urlObj.searchParams.get('trigger')) === '1'
+  const forceFull = normalizeText(urlObj.searchParams.get('full')) === '1'
+
+  try {
+    let triggeredRun = null
+    if (trigger) {
+      const outcome = await runDbLiveIngestionCycle({ reason: 'status-trigger', forceFull })
+      triggeredRun = outcome?.run || null
+    }
+
+    const lastSuccessAt = normalizeText(_dbLiveIngestionState.lastSuccessAt)
+    const lastSuccessMs = Date.parse(lastSuccessAt)
+    const freshnessAgeMs = Number.isFinite(lastSuccessMs) ? Math.max(0, Date.now() - lastSuccessMs) : null
+    const freshnessState = !Number.isFinite(lastSuccessMs)
+      ? 'unknown'
+      : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 2
+        ? 'fresh'
+        : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 6
+          ? 'warm'
+          : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 24
+            ? 'stale'
+            : 'cold'
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-v1.1',
+          schedulerStarted: _dbLiveIngestionState.schedulerStarted,
+          hydratedFromDisk: _dbLiveIngestionState.hydratedFromDisk,
+          inFlight: _dbLiveIngestionState.inFlight,
+          startedAt: normalizeText(_dbLiveIngestionState.startedAt),
+          lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
+          lastSuccessAt: normalizeText(_dbLiveIngestionState.lastSuccessAt),
+          lastFailureAt: normalizeText(_dbLiveIngestionState.lastFailureAt),
+          consecutiveFailures: Number(_dbLiveIngestionState.consecutiveFailures || 0),
+          latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+          runCount: _dbLiveIngestionState.runCount,
+          totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+          auditLogFile: getDbLiveAuditLogFilePath(),
+          freshness: {
+            state: freshnessState,
+            ageMs: freshnessAgeMs,
+            intervalMs: DB_LIVE_INGEST_INTERVAL_MS,
+            lastSuccessAt,
+          },
+          stateFile: getDbLiveIngestionStateFilePath(),
+          lastRun: _dbLiveIngestionState.lastRun,
+          triggeredRun,
+          runs: _dbLiveIngestionState.runs.slice(0, 20),
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live ingestion status request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveIngestionControl(req, res) {
+  if (req.method !== 'POST') return notAllowed(req, res, 'POST')
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  const action = normalizeText(req?.body?.action).toLowerCase()
+  const forceFull = Boolean(req?.body?.forceFull)
+  const limit = checkDbLiveIngestionControlRateLimit(req)
+
+  if (limit.limited) {
+    appendDbLiveAuditEvent({
+      area: 'db-live-ingestion-control',
+      actor: limit.actor,
+      action,
+      outcome: 'rate-limited',
+      retryAfterSec: limit.retryAfterSec,
+    })
+
+    return json(
+      res,
+      429,
+      {
+        ok: false,
+        error: 'Rate limit exceeded for ingestion control actions',
+        details: `Retry after ${limit.retryAfterSec}s`,
+      },
+      { 'Cache-Control': 'no-store', 'Retry-After': String(limit.retryAfterSec) }
+    )
+  }
+
+  try {
+    if (action === 'clear-store') {
+      _dbLiveIngestionState.storeByClient = new Map()
+      _dbLiveIngestionState.latestWatermark = ''
+      _dbLiveIngestionState.lastRun = {
+        id: `clear-${Date.now()}`,
+        reason: 'manual-clear-store',
+        mode: 'clear',
+        status: 'success',
+        startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(),
+        durationMs: 0,
+        fetchedUsers: 0,
+        upserts: 0,
+        totalStored: 0,
+        sourceMode: 'n/a',
+        sourceRows: {},
+        error: '',
+      }
+      _dbLiveIngestionState.runs.unshift(_dbLiveIngestionState.lastRun)
+      if (_dbLiveIngestionState.runs.length > DB_LIVE_RUNS_HISTORY_MAX) {
+        _dbLiveIngestionState.runs.length = DB_LIVE_RUNS_HISTORY_MAX
+      }
+      persistDbLiveIngestionMeta()
+      appendDbLiveAuditEvent({
+        area: 'db-live-ingestion-control',
+        actor: limit.actor,
+        action,
+        outcome: 'success',
+        totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+      })
+
+      return json(
+        res,
+        200,
+        {
+          ok: true,
+          data: {
+            contractVersion: 'db-live-ingestion-control-v1',
+            action: 'clear-store',
+            totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+            latestWatermark: _dbLiveIngestionState.latestWatermark,
+          },
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    if (action === 'repair-identity') {
+      const outcome = await runDbLiveIdentityRepairCycle({ reason: action })
+
+      appendDbLiveAuditEvent({
+        area: 'db-live-ingestion-control',
+        actor: limit.actor,
+        action,
+        outcome: outcome?.run?.status || 'unknown',
+        runId: normalizeText(outcome?.run?.id),
+        runStatus: normalizeText(outcome?.run?.status),
+        runMode: normalizeText(outcome?.run?.mode),
+        runError: normalizeText(outcome?.run?.error),
+        totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+      })
+
+      return json(
+        res,
+        200,
+        {
+          ok: true,
+          data: {
+            contractVersion: 'db-live-ingestion-control-v1',
+            action,
+            skipped: Boolean(outcome?.skipped),
+            run: outcome?.run || null,
+            repairedClients: Number(outcome?.run?.repairedClients || 0),
+            beforeMissingIdentity: Number(outcome?.run?.sourceRows?.beforeMissingIdentity || 0),
+            afterMissingIdentity: Number(outcome?.run?.sourceRows?.afterMissingIdentity || 0),
+            totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+            latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+          },
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    if (action !== 'refresh' && action !== 'full-refresh') {
+      appendDbLiveAuditEvent({
+        area: 'db-live-ingestion-control',
+        actor: limit.actor,
+        action,
+        outcome: 'invalid-action',
+      })
+
+      return json(
+        res,
+        400,
+        {
+          ok: false,
+          error: 'Unsupported action',
+          details: 'Supported actions: refresh, full-refresh, clear-store, repair-identity',
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    const outcome = await runDbLiveIngestionCycle({
+      reason: action,
+      forceFull: action === 'full-refresh' || forceFull,
+    })
+
+    appendDbLiveAuditEvent({
+      area: 'db-live-ingestion-control',
+      actor: limit.actor,
+      action,
+      outcome: outcome?.run?.status || (outcome?.skipped ? 'skipped' : 'unknown'),
+      runId: normalizeText(outcome?.run?.id),
+      runStatus: normalizeText(outcome?.run?.status),
+      runMode: normalizeText(outcome?.run?.mode),
+      runError: normalizeText(outcome?.run?.error),
+      totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+    })
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'db-live-ingestion-control-v1',
+          action,
+          skipped: Boolean(outcome?.skipped),
+          run: outcome?.run || null,
+          totalStoredClients: _dbLiveIngestionState.storeByClient.size,
+          latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    appendDbLiveAuditEvent({
+      area: 'db-live-ingestion-control',
+      actor: limit.actor,
+      action,
+      outcome: 'error',
+      error: normalizeText(e?.message),
+    })
+
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live ingestion control request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsDbLiveExport(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  hydrateDbLiveIngestionMetaFromDisk()
+
+  try {
+    const urlObj = new URL(req.url || '/', 'http://localhost')
+    const format = normalizeText(urlObj.searchParams.get('format') || 'csv').toLowerCase()
+    const hardLimit = parsePositiveInt(urlObj.searchParams.get('limit'), 5000, DB_LIVE_EXPORT_MAX_LIMIT)
+
+    let users = getDbLiveUsersSnapshot()
+    users = applyDbLiveFilters(users, urlObj)
+    users = applyDbLiveSort(users, urlObj).users
+    users = users.slice(0, hardLimit)
+
+    if (format === 'json') {
+      return json(
+        res,
+        200,
+        {
+          ok: true,
+          data: {
+            contractVersion: 'db-live-export-v1',
+            format: 'json',
+            count: users.length,
+            limit: hardLimit,
+            users,
+          },
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+
+    const columns = [
+      'clientId',
+      'clientName',
+      'brand',
+      'affiliateId',
+      'clientLogin',
+      'user',
+      'country',
+      'clientTimestamp',
+      'status',
+      'openedTrades',
+      'equity',
+      'deposit',
+      'wd',
+      'net',
+      'trades',
+      'ltdDate',
+      'lttDate',
+      'sourcePeriod',
+    ]
+
+    const csv = toCsv(users, columns)
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+    res.statusCode = 200
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Cache-Control', 'no-store')
+    res.setHeader('Content-Disposition', `attachment; filename="db-live-export-${stamp}.csv"`)
+    res.end(csv)
+    return
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs db-live export request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleCreolabsRegisteredUsers(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+
+  try {
+    const dataset = await buildCreolabsRegisteredUsersDataset(req)
+
+    if (dataset.format === 'csv') {
+      const columns = [
+        'clientId',
+        'clientName',
+        'brand',
+        'affiliateId',
+        'clientLogin',
+        'user',
+        'country',
+        'clientTimestamp',
+        'status',
+        'openedTrades',
+        'equity',
+        'ltdDate',
+        'lttDate',
+      ]
+      const csv = toCsv(dataset.users, columns)
+      const filename = `creolabs-registered-users-${new Date(dataset.fromMs).toISOString().slice(0, 10)}_${new Date(dataset.toMs).toISOString().slice(0, 10)}.csv`
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.setHeader('Cache-Control', 'no-store')
+      res.end(csv)
+      return
+    }
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          meta: dataset.meta,
+          users: dataset.users,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Creolabs registered-users request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+function pickLatestLeadFromDatesRows(rows) {
+  let best = null
+  let bestRegistrationTime = -1
+  let bestActivityTime = -1
+  let bestClientIdNum = -1
+
+  const parseIso = (value) => {
+    const raw = normalizeText(value)
+    if (!raw || raw === '-') return -1
+    const t = Date.parse(raw)
+    return Number.isFinite(t) ? t : -1
+  }
+
+  for (const row of rows || []) {
+    const registrationTime = parseIso(row?.clientTimestamp)
+    const ltdTime = parseIso(row?.ltdDate)
+    const lttTime = parseIso(row?.lttDate)
+    const activityTime = Math.max(registrationTime, ltdTime, lttTime)
+
+    const clientIdText = normalizeText(row?.clientId)
+    const clientIdNum = Number(clientIdText)
+    const candidateClientIdNum = Number.isFinite(clientIdNum) ? clientIdNum : -1
+
+    const betterRegistration = registrationTime > bestRegistrationTime
+    const registrationTieBetterActivity = registrationTime === bestRegistrationTime && activityTime > bestActivityTime
+    const fullTieBetterClientId =
+      registrationTime === bestRegistrationTime &&
+      activityTime === bestActivityTime &&
+      candidateClientIdNum > bestClientIdNum
+
+    if (betterRegistration || registrationTieBetterActivity || fullTieBetterClientId) {
+      bestRegistrationTime = registrationTime
+      bestActivityTime = activityTime
+      bestClientIdNum = candidateClientIdNum
+      best = row
+    }
+  }
+
+  return best
+}
+
+function findLatestClientMonthMetaByClientId(clientMonthsRows, clientId) {
+  const target = normalizeText(clientId)
+  if (!target) return null
+
+  const targetNum = Number(target)
+  let best = null
+  let bestRank = -1
+  let bestActivity = -1
+
+  for (const row of clientMonthsRows || []) {
+    const rid = normalizeText(row?.clientId)
+    if (!rid) continue
+    const ridNum = Number(rid)
+    const sameClient =
+      rid === target ||
+      (Number.isFinite(targetNum) && Number.isFinite(ridNum) && ridNum === targetNum)
+    if (!sameClient) continue
+
+    const periodId = normalizeText(row?.periodId)
+    const rank = typeof ymRank === 'function' ? ymRank(periodId) : -1
+    const activityScore =
+      toFiniteNumber(row?.trades) +
+      toFiniteNumber(row?.deposit) +
+      Math.max(0, toFiniteNumber(row?.ftd)) +
+      Math.max(0, toFiniteNumber(row?.rdp))
+
+    if (rank > bestRank || (rank === bestRank && activityScore > bestActivity)) {
+      bestRank = rank
+      bestActivity = activityScore
+      best = row
+    }
+  }
+
+  if (!best) return null
+
+  return {
+    clientId: normalizeText(best?.clientId),
+    clientName: normalizeText(best?.clientName),
+    brand: normalizeText(best?.brand),
+    affiliateId: normalizeText(best?.affiliateId),
+    clientLogin: normalizeText(best?.clientLogin),
+    user: normalizeText(best?.user),
+    country: normalizeText(best?.country),
+    periodId: normalizeText(best?.periodId),
+  }
+}
+
+function findScoreByClientId(scores, clientId) {
+  const target = normalizeText(clientId)
+  if (!target) return null
+
+  const targetNum = Number(target)
+  for (const score of scores || []) {
+    const sid = normalizeText(score?.clientId)
+    if (!sid) continue
+    if (sid === target) return score
+    const sidNum = Number(sid)
+    if (Number.isFinite(targetNum) && Number.isFinite(sidNum) && sidNum === targetNum) return score
+  }
+  return null
+}
+
+async function handleCreolabsLatestLead(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  const bust = urlObj.searchParams.get('bust') === '1'
+
+  if (bust) {
+    clearCreolabsClientVariantCaches()
+  }
+
+  let objectLatestLead = null
+  let objectLatestLeadCached = false
+  try {
+    const objectResolved = await resolveCreolabsLatestLeadFromObject(config)
+    objectLatestLead = objectResolved.data
+    objectLatestLeadCached = Boolean(objectResolved.cached)
+  } catch {
+    objectLatestLead = null
+  }
+
+  let data = null
+  let cached = false
+  let stale = false
+  let cacheAgeMs = null
+
+  if (!bust) {
+    let cacheEntry = getCreolabsClientVariantCache('clientMonths')
+    const pendingAge = cacheEntry?.promiseStartedAt ? Date.now() - cacheEntry.promiseStartedAt : 0
+
+    if (cacheEntry?.promise && pendingAge > CREOLABS_WARMUP_MAX_MS) {
+      // Recover from stuck warmups by resetting in-flight promise.
+      setCreolabsClientVariantCache('clientMonths', null)
+      cacheEntry = null
+    }
+
+    const age = cacheEntry?.fetchedAt ? Date.now() - cacheEntry.fetchedAt : Infinity
+    const hasData = Boolean(cacheEntry?.data)
+    const warm = hasData && age < CREOLABS_CACHE_TTL
+
+    if (warm) {
+      data = cacheEntry.data
+      cached = true
+      cacheAgeMs = age
+    } else {
+      if (hasData) {
+        // Prefer stale data for ms-level test UX while refreshing in background.
+        data = cacheEntry.data
+        cached = true
+        stale = true
+        cacheAgeMs = age
+        if (!cacheEntry?.promise) {
+          resolveCreolabsClientVariant(config, 'clientMonths').catch(() => {})
+        }
+      } else {
+        if (!cacheEntry?.promise) {
+          resolveCreolabsClientVariant(config, 'clientMonths').catch(() => {})
+        }
+
+        if (objectLatestLead) {
+          return json(
+            res,
+            200,
+            {
+              ok: true,
+              data: {
+                cached: false,
+                stale: false,
+                cacheAgeMs: null,
+                sourceRows: {
+                  clientMonths: 0,
+                  clientDates: 0,
+                  clientScores: 0,
+                },
+                source: {
+                  latestLeadObjectId: CREOLABS_LATEST_LEAD_OBJECT_ID,
+                  latestLeadObjectUsed: true,
+                  latestLeadObjectCached: Boolean(objectLatestLeadCached),
+                  variantWarming: true,
+                },
+                latestLead: objectLatestLead,
+                matchedClientScore: null,
+                mergedLeadData: { ...(objectLatestLead || {}) },
+              },
+            },
+            { 'Cache-Control': 'no-store' }
+          )
+        }
+
+        return json(
+          res,
+          202,
+          {
+            ok: false,
+            warming: true,
+            warmingSinceMs: pendingAge > 0 ? Math.max(0, Math.round(pendingAge)) : 0,
+            error: 'Creolabs cache warming in progress. Retry in a few seconds.',
+          },
+          { 'Cache-Control': 'no-store' }
+        )
+      }
+    }
+  }
+
+  if (!data) {
+    try {
+      const resolved = await resolveCreolabsClientVariant(config, 'clientMonths')
+      data = resolved.data
+      cached = resolved.cached
+    } catch (e) {
+      return json(
+        res,
+        e?.status || 502,
+        {
+          ok: false,
+          error: e?.message || 'Creolabs latest-lead request failed',
+          details: e?.details || '',
+        },
+        { 'Cache-Control': 'no-store' }
+      )
+    }
+  }
+
+  const monthsRows = Array.isArray(data?.clientMonths) ? data.clientMonths : []
+  const datesRows = buildDerivedClientDatesRowsFromClientMonths(monthsRows, data?.periodTo)
+  const derivedLatestLead = pickLatestLeadFromDatesRows(datesRows)
+
+  const latestLead = objectLatestLead || derivedLatestLead
+
+  if (!latestLead) {
+    return json(
+      res,
+      404,
+      {
+        ok: false,
+        error: 'No latest lead available from current dataset',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const scores = buildCreolabsClientScores(monthsRows)
+  const matchedClientScore = findScoreByClientId(scores, latestLead?.clientId)
+  const monthMeta = findLatestClientMonthMetaByClientId(monthsRows, latestLead?.clientId)
+  const mergedLeadData = {
+    ...(matchedClientScore || {}),
+    ...(monthMeta || {}),
+    ...(objectLatestLead || {}),
+    ...(latestLead || {}),
+  }
+
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      data: {
+        cached: Boolean(cached),
+        stale: Boolean(stale),
+        cacheAgeMs: Number.isFinite(cacheAgeMs) ? Math.max(0, Math.round(cacheAgeMs)) : null,
+        sourceRows: {
+          clientMonths: monthsRows.length,
+          clientDates: datesRows.length,
+          clientScores: scores.length,
+        },
+        source: {
+          latestLeadObjectId: CREOLABS_LATEST_LEAD_OBJECT_ID,
+          latestLeadObjectUsed: Boolean(objectLatestLead),
+          latestLeadObjectCached: Boolean(objectLatestLeadCached),
+        },
+        latestLead,
+        matchedClientScore,
+        mergedLeadData,
+      },
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+}
+
+async function handleCreolabsBoardSnapshot(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  try {
+    const { data } = await resolveCreolabsClientVariant(config, 'clientMonths')
+    const scores = buildCreolabsClientScores(Array.isArray(data?.clientMonths) ? data.clientMonths : [])
+    const snapshot = buildCreolabsBoardSnapshotFromRows(Array.isArray(data?.clientMonths) ? data.clientMonths : [], scores)
+    return json(res, 200, snapshot, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs board snapshot request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
+}
+
+async function handleCreolabsWeeklyExecutive(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  try {
+    const { data } = await resolveCreolabsClientVariant(config, 'clientMonths')
+    const scores = buildCreolabsClientScores(Array.isArray(data?.clientMonths) ? data.clientMonths : [])
+    const snapshot = buildCreolabsBoardSnapshotFromRows(Array.isArray(data?.clientMonths) ? data.clientMonths : [], scores)
+    const k = snapshot.kpis || {}
+    const comparison = Array.isArray(snapshot.comparison) ? snapshot.comparison : []
+    const attentionRequired = comparison
+      .filter((row) => Number(row?.deltaPct) < 0)
+      .map((row) => ({
+        area: row.kpi,
+        severity: Number(row.deltaPct) < -20 ? 'high' : 'medium',
+        message: `${row.kpi} is down ${Math.abs(Math.round(Number(row.deltaPct) || 0))}% vs previous comparable period`,
+      }))
+
+    const businessHealth = [
+      {
+        area: 'Bullwaves Edge',
+        score: Number(k.closedPl?.deltaPct || 0),
+        status: Number(k.closedPl?.deltaPct || 0) >= 0 ? 'positive' : 'watch',
+        summary: `Closed P&L ${formatCompactCurrency(k.closedPl?.current || 0)} vs previous period`,
+      },
+      {
+        area: 'Net Deposits',
+        score: Number(k.netDeposits?.deltaPct || 0),
+        status: Number(k.netDeposits?.deltaPct || 0) >= 0 ? 'positive' : 'watch',
+        summary: `Net deposits ${formatCompactCurrency(k.netDeposits?.current || 0)}`,
+      },
+      {
+        area: 'Client Activation',
+        score: Number(k.activeUsers?.deltaPct || 0),
+        status: Number(k.activeUsers?.deltaPct || 0) >= 0 ? 'positive' : 'watch',
+        summary: `Active users ${formatNumber(k.activeUsers?.current || 0)}`,
+      },
+    ]
+
+    const intelligenceSignals = [
+      {
+        title: 'FTD momentum',
+        direction: Number(k.ftdCount?.deltaPct || 0) >= 0 ? 'up' : 'down',
+        detail: `FTD ${formatNumber(k.ftdCount?.current || 0)}`,
+      },
+      {
+        title: 'Open P/L pressure',
+        direction: Number(k.openPl?.current || 0) >= 0 ? 'up' : 'watch',
+        detail: `Open P/L ${formatCompactCurrency(k.openPl?.current || 0)}`,
+      },
+      {
+        title: 'Retention proxy',
+        direction: Number(snapshot.funnel?.registrationToQftdPct || 0) >= 50 ? 'up' : 'watch',
+        detail: `${Math.round(Number(snapshot.funnel?.registrationToQftdPct || 0))}% registration to QFTD`,
+      },
+    ]
+
+    const recommendedActions = [
+      {
+        title: 'Protect the top clients',
+        detail: 'Keep the high-value cluster warm and reduce churn risk on at-risk accounts.',
+      },
+      {
+        title: 'Push conversion follow-up',
+        detail: 'Focus on registrations that have not converted to FTD / QFTD yet.',
+      },
+    ]
+
+    return json(
+      res,
+      200,
+      {
+        generatedAt: snapshot.generatedAt,
+        executiveSnapshot: snapshot,
+        businessHealth,
+        intelligenceSignals,
+        attentionRequired,
+        recommendedActions,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs weekly executive request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
+}
+
+async function handleCreolabsLifetimeClusters(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  if (urlObj.searchParams.get('bust') === '1') clearCreolabsClientVariantCaches()
+
+  try {
+    const { data } = await resolveCreolabsClientVariant(config, 'full')
+    const scores = buildCreolabsClientScores(Array.isArray(data?.clients) ? data.clients : [])
+    const clusterData = buildLifetimeClustersFromClients(scores)
+    return json(res, 200, clusterData, { 'Cache-Control': 'no-store' })
+  } catch (e) {
+    return json(res, e?.status || 502, { ok: false, error: e?.message || 'Creolabs lifetime-clusters request failed', details: e?.details || '' }, { 'Cache-Control': 'no-store' })
+  }
 }
 
 async function handleCreolabsClientScores(req, res) {
@@ -2007,6 +6285,50 @@ async function routeQlik(req, res, parts) {
     return handleCreolabsClients(req, res)
   }
 
+  if (head === 'creolabs' && parts[1] === 'latest-lead') {
+    return handleCreolabsLatestLead(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'client-dates') {
+    return handleCreolabsClientDates(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'registered-users') {
+    return handleCreolabsRegisteredUsers(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live') {
+    return handleCreolabsDbLive(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-ingestion-status') {
+    return handleCreolabsDbLiveIngestionStatus(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-ingestion-control') {
+    return handleCreolabsDbLiveIngestionControl(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-export') {
+    return handleCreolabsDbLiveExport(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-report-templates') {
+    return handleCreolabsDbLiveReportTemplates(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && !parts[3]) {
+    return handleCreolabsDbLiveReportsJobs(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && parts[3] && parts[4] === 'status') {
+    return handleCreolabsDbLiveReportsJobStatus(req, res, parts[3])
+  }
+
+  if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && parts[3] && parts[4] === 'download') {
+    return handleCreolabsDbLiveReportsJobDownload(req, res, parts[3])
+  }
+
   if (head === 'creolabs' && parts[1] === 'client-months') {
     return handleCreolabsClientMonths(req, res)
   }
@@ -2031,6 +6353,18 @@ async function routeQlik(req, res, parts) {
     return handleCreolabsClientLists(req, res)
   }
 
+  if (head === 'creolabs' && parts[1] === 'lifetime-clusters') {
+    return handleCreolabsLifetimeClusters(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'board-snapshot') {
+    return handleCreolabsBoardSnapshot(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'weekly-executive') {
+    return handleCreolabsWeeklyExecutive(req, res)
+  }
+
   if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'sheets' && !parts[4]) {
     return handleEngineSheets(req, res, parts[2])
   }
@@ -2044,6 +6378,15 @@ async function routeQlik(req, res, parts) {
     parts[5] === 'objects'
   ) {
     return handleEngineSheetObjects(req, res, parts[2], parts[4])
+  }
+
+  if (
+    head === 'engine' &&
+    parts[1] === 'apps' &&
+    parts[2] &&
+    parts[3] === 'discover'
+  ) {
+    return handleEngineObjectDiscovery(req, res, parts[2])
   }
 
   if (
@@ -2094,3 +6437,9 @@ setTimeout(() => {
   resolveCreolabsClientVariant(config, 'clientMonths')
     .catch(() => {})
 }, 1500)
+
+setTimeout(() => {
+  const config = getConfig()
+  if (!config.hasApiKey && !config.hasOauth) return
+  startDbLiveIngestionScheduler()
+}, 2500)
