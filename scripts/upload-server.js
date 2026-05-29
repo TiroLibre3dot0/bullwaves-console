@@ -6,7 +6,6 @@ const fs = require('fs')
 const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
 const { routeAuth } = require('../serverless/handlers/auth')
-const { routeConvrs } = require('../serverless/handlers/convrs')
 const { routeEmail } = require('../serverless/handlers/email')
 const { routeQlik } = require('../serverless/handlers/qlik')
 const { routeAcuity } = require('../serverless/handlers/acuity')
@@ -788,24 +787,6 @@ app.get('/health', (req, res) => res.json({ ok: true }))
 
 // Alias for console/dev proxy
 app.get('/api/health', (req, res) => res.json({ ok: true }))
-
-app.all('/convrs', (req, res) => routeConvrs(req, res, []))
-app.all('/convrs/*', (req, res) => {
-  const tail = String(req.path || '')
-    .replace(/^\/convrs\/?/, '')
-    .split('/')
-    .filter(Boolean)
-  return routeConvrs(req, res, tail)
-})
-
-app.all('/api/convrs', (req, res) => routeConvrs(req, res, []))
-app.all('/api/convrs/*', (req, res) => {
-  const tail = String(req.path || '')
-    .replace(/^\/api\/convrs\/?/, '')
-    .split('/')
-    .filter(Boolean)
-  return routeConvrs(req, res, tail)
-})
 
 app.all('/api/email', (req, res) => routeEmail(req, res, []))
 app.all('/api/email/*', (req, res) => {

@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { segmentJourneyTemplatesById } from '../src/pages/Retention/segmentJourneyTemplates.js'
 import { segmentJourneyTemplateExtrasById } from '../src/pages/Retention/segmentJourneyTemplateExtras.js'
+import { ALL_TEMPLATES_CATALOG } from '../src/features/sales/data/allTemplatesCatalog.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -12,9 +13,18 @@ const workspaceRoot = path.resolve(__dirname, '..')
 dotenv.config({ path: path.join(workspaceRoot, '.env.sendgrid.local'), override: false })
 dotenv.config({ path: path.join(workspaceRoot, '.env.local'), override: false })
 
-const args = new Set(process.argv.slice(2))
+const cliArgs = process.argv.slice(2)
+const args = new Set(cliArgs)
 const isApply = args.has('--apply')
 const isDryRun = !isApply || args.has('--dry-run')
+
+function readArgValue(flagName) {
+  const index = cliArgs.indexOf(flagName)
+  if (index === -1) return ''
+  return String(cliArgs[index + 1] || '').trim()
+}
+
+const onlyLocalTemplateId = readArgValue('--only-local-template')
 
 const baseUrl = process.env.SENDGRID_BASE_URL || 'https://api.sendgrid.com'
 const apiKey = process.env.SENDGRID_API_KEY || ''
@@ -80,7 +90,41 @@ function buildCatalog() {
     }
   }
 
-  return records.sort((left, right) => left.sendgridTemplateName.localeCompare(right.sendgridTemplateName))
+  // Also include ALL_TEMPLATES_CATALOG (sales / one-off email templates)
+  for (const tpl of ALL_TEMPLATES_CATALOG) {
+    if (String(tpl?.channel || '').toLowerCase() !== 'email') continue
+    if (!tpl?.html || !tpl?.subject) continue
+
+    const locale = String(tpl.language || 'en').split('-')[0].toLowerCase()
+    const sendgridTemplateName = tpl.name.slice(0, 100)
+    // Replace {{unsubscribe}} placeholder with SendGrid ASM tag
+    const htmlContent = tpl.html.replace(/\{\{unsubscribe\}\}/g, '<%asm_group_unsubscribe_raw_url%>')
+
+    records.push({
+      localTemplateId: tpl.id,
+      sendgridTemplateName,
+      legacyTemplateName: null,
+      channel: 'email',
+      locale,
+      variant: 'a',
+      name: tpl.name,
+      description: tpl.description || '',
+      subject: tpl.subject,
+      htmlContent,
+      generatePlainContent: true,
+      plainContent: tpl.description || tpl.name,
+      editor: 'code',
+      timing: null,
+      delay: null,
+      smsText: null,
+      testData: JSON.stringify({ locale, variant: 'a', template_key: tpl.id }),
+    })
+  }
+
+  const sorted = records.sort((left, right) => left.sendgridTemplateName.localeCompare(right.sendgridTemplateName))
+
+  if (!onlyLocalTemplateId) return sorted
+  return sorted.filter((item) => item.localTemplateId === onlyLocalTemplateId)
 }
 
 async function sendgridRequest(method, resourcePath, body) {
@@ -292,6 +336,9 @@ async function main() {
   }
 
   const catalog = buildCatalog()
+  if (onlyLocalTemplateId && !catalog.length) {
+    throw new Error(`No template found for --only-local-template=${onlyLocalTemplateId}`)
+  }
   const summary = {
     generatedAt: new Date().toISOString(),
     mode: isApply ? 'apply' : 'dry-run',
@@ -315,6 +362,9 @@ async function main() {
     await writeOutput(summary)
     console.log(`Dry run complete. Prepared ${catalog.length} SendGrid template records.`)
     console.log(`Target subuser: ${onBehalfOf}`)
+    if (onlyLocalTemplateId) {
+      console.log(`Filtered local template id: ${onlyLocalTemplateId}`)
+    }
     console.log(`Output written to ${outputFile}`)
     return
   }
@@ -331,6 +381,9 @@ async function main() {
   await writeOutput(summary)
   await writeRuntimeRegistry(summary)
   console.log(`Target subuser: ${onBehalfOf}`)
+  if (onlyLocalTemplateId) {
+    console.log(`Filtered local template id: ${onlyLocalTemplateId}`)
+  }
   console.log(`Sync complete. Output written to ${outputFile}`)
 }
 

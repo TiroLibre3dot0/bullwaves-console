@@ -17,6 +17,12 @@ const SENDGRID_ICON_URL = 'https://cdn.mcauto-images-production.sendgrid.net/c49
 
 const ACUITY_TEMPLATES = [
   {
+    id: 'acuity-visual-46',
+    name: 'Bullwaves Acuity Visual #46',
+    subject: 'Key Moves Traders Should Watch This Week',
+    file: 'acuity-visual-46.html',
+  },
+  {
     id: 'market-pulse',
     name: 'Bullwaves - Market Pulse',
     subject: '📈 Market Pulse – {{date}}',
@@ -37,6 +43,7 @@ const ACUITY_TEMPLATES = [
 ]
 
 const TEMPLATE_KEYWORDS = {
+  'acuity-visual-46': 'acuity visual',
   'market-pulse': 'market pulse',
   'trade-alert': 'trade alert',
   'weekly-opportunity': 'weekly opportunity',
@@ -348,6 +355,37 @@ function handlePreview(req, res, templateId) {
     })
 }
 
+function handleSource(req, res, templateId) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET')
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' })
+  }
+
+  const tpl = ACUITY_TEMPLATES.find(t => t.id === templateId)
+  if (!tpl) {
+    return json(res, 404, { ok: false, error: `Template '${templateId}' not found` })
+  }
+
+  const htmlPath = path.join(TEMPLATES_DIR, tpl.file)
+  if (!fs.existsSync(htmlPath)) {
+    return json(res, 404, { ok: false, error: `Template file missing: ${tpl.file}` })
+  }
+
+  const html = fs.readFileSync(htmlPath, 'utf8')
+  return json(
+    res,
+    200,
+    {
+      ok: true,
+      templateId,
+      name: tpl.name,
+      subject: tpl.subject,
+      html,
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+}
+
 async function handleTestSend(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST')
@@ -424,6 +462,10 @@ async function routeAcuity(req, res, parts) {
     const action = parts[1] || ''
     if (action === 'sync') return handleSync(req, res)
     if (action === 'test-send') return handleTestSend(req, res)
+    if (action === 'source') {
+      const templateId = parts[2] || ''
+      return handleSource(req, res, templateId)
+    }
     if (action === 'preview') {
       const templateId = parts[2] || ''
       return handlePreview(req, res, templateId)

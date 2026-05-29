@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green: #00a878;
+  --text: #0d0d0f;
+  --muted: #6b7280;
+  --hint: #9ca3af;
+  --border: #e5e7eb;
+  --border2: #f0f0f2;
+  --bg: #ffffff;
+  --bg2: #f8f8f9;
+  --bg3: #f3f4f6;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--text);
+  padding: 40px 20px 80px;
+  min-height: 100vh;
+}
+
+.wrap { max-width: 1100px; margin: 0 auto; }
+
+.layout { display: flex; gap: 20px; align-items: flex-start; }
+
+/* Left */
+.main { flex: 1; min-width: 0; }
+
+h1 {
+  font-size: 36px; font-weight: 700; letter-spacing: -0.05em;
+  margin-bottom: 24px; line-height: 1;
+}
+
+/* Tabs */
+.tabs-wrap { margin-bottom: 20px; }
+.tabs {
+  display: inline-flex; gap: 2px;
+  background: var(--bg3); border-radius: 10px; padding: 3px;
+}
+.tab {
+  height: 32px; padding: 0 14px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--muted);
+  font: 500 13px 'Inter', sans-serif; cursor: pointer;
+  transition: all .18s; white-space: nowrap;
+}
+.tab.active {
+  background: var(--bg); color: var(--text); font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
+/* Search */
+.search-wrap { position: relative; margin-bottom: 0; }
+.search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--hint); pointer-events: none;
+  display: flex; align-items: center;
+}
+.search-input {
+  width: 100%; height: 40px; padding-left: 36px; padding-right: 14px;
+  border: none; border-bottom: 1px solid var(--border); background: transparent;
+  font: 14px 'Inter', sans-serif; color: var(--text);
+}
+.search-input::placeholder { color: #c4c4cf; }
+.search-input:focus { outline: none; }
+
+/* Table header */
+.table-head {
+  display: flex; align-items: center;
+  padding: 10px 16px; border-bottom: 1px solid var(--border);
+}
+.th-rank { width: 28px; flex-shrink: 0; }
+.th-avatar { width: 44px; flex-shrink: 0; }
+.th-name { flex: 1; }
+.th-cols { display: flex; gap: 40px; flex-shrink: 0; }
+.sort-btn {
+  border: 0; background: none; padding: 4px 0;
+  font: 700 13px 'Inter', sans-serif; cursor: pointer;
+  color: var(--hint); border-bottom: 2px solid transparent;
+  transition: all .18s; min-width: 90px; text-align: right;
+}
+.sort-btn.active { color: var(--text); border-bottom-color: var(--text); }
+.sort-btn:hover { color: var(--text); }
+
+/* Rows */
+.lb-row {
+  display: flex; align-items: center;
+  padding: 14px 16px; border-bottom: 1px solid var(--border2);
+  cursor: default; transition: background .15s;
+}
+.lb-row:hover { background: var(--bg2); }
+.row-rank { width: 28px; flex-shrink: 0; display: flex; align-items: center; }
+.row-rank .num { font-size: 13px; font-weight: 600; color: var(--hint); }
+.row-rank .medal { font-size: 18px; line-height: 1; }
+.row-avatar { width: 44px; flex-shrink: 0; }
+.avatar {
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; color: #fff; letter-spacing: -0.02em; flex-shrink: 0;
+  user-select: none;
+}
+.row-name {
+  flex: 1; min-width: 0; padding-left: 12px;
+  font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  user-select: none;
+}
+.row-cols { display: flex; gap: 40px; align-items: center; flex-shrink: 0; }
+.row-profit {
+  font: 700 15px/1 'Inter', sans-serif;
+  color: var(--green); letter-spacing: -0.03em;
+  min-width: 90px; text-align: right;
+}
+.row-volume {
+  font: 500 14px/1 'Inter', sans-serif;
+  color: var(--hint); letter-spacing: -0.02em;
+  min-width: 90px; text-align: right;
+}
+
+.no-results {
+  padding: 48px 16px; text-align: center;
+  color: var(--hint); font-size: 14px; font-weight: 500;
+  display: none;
+}
+
+/* Right panel */
+.sidebar { width: 320px; flex-shrink: 0; }
+.wins-card {
+  border: 1px solid var(--border); border-radius: 14px;
+  overflow: hidden; background: var(--bg);
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+}
+.wins-head {
+  padding: 16px 18px; border-bottom: 1px solid var(--border2);
+  font-size: 15px; font-weight: 700; letter-spacing: -0.025em;
+}
+.win-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 18px; cursor: default;
+}
+.win-row + .win-row { border-top: 1px solid var(--border2); }
+.win-rank { font-size: 12px; font-weight: 600; color: #c4c4cf; width: 14px; flex-shrink: 0; }
+.win-info { flex: 1; min-width: 0; }
+.win-names {
+  display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
+  margin-bottom: 3px;
+}
+.win-name {
+  font-size: 13px; font-weight: 700; letter-spacing: -0.02em;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 90px; user-select: none;
+}
+.win-market {
+  font-size: 11px; color: var(--hint); font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;
+}
+.win-amounts {
+  display: flex; align-items: center; gap: 4px;
+  font: 400 12px/1 'Inter', sans-serif;
+}
+.win-prev { color: var(--hint); }
+.win-arrow { color: var(--green); display: flex; align-items: center; }
+.win-gain { color: var(--green); font-weight: 600; }
+
+/* Animations */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim { animation: fade-up .3s ease both; }
+
+/* Responsive */
+@media (max-width: 860px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: 100%; }
+}
+@media (max-width: 500px) {
+  h1 { font-size: 28px; }
+  .row-volume { display: none; }
+  .sort-btn:last-child { display: none; }
+  .th-cols { gap: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="layout">
+
+    <!-- Left -->
+    <div class="main">
+      <h1>Leaderboard</h1>
+
+      <div class="tabs-wrap">
+        <div class="tabs">
+          <button class="tab active" onclick="setTab(this)">Today</button>
+          <button class="tab" onclick="setTab(this)">Weekly</button>
+          <button class="tab" onclick="setTab(this)">Monthly</button>
+          <button class="tab" onclick="setTab(this)">All time</button>
+        </div>
+      </div>
+
+      <div class="search-wrap">
+        <span class="search-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+        </span>
+        <input class="search-input" id="search" type="text" placeholder="Search by name" oninput="filterRows()"/>
+      </div>
+
+      <div class="table-head">
+        <div class="th-rank"></div>
+        <div class="th-avatar"></div>
+        <div class="th-name"></div>
+        <div class="th-cols">
+          <button class="sort-btn active" id="sort-profit" onclick="setSort('profit')">Profit / Loss</button>
+          <button class="sort-btn" id="sort-volume" onclick="setSort('volume')">Volume</button>
+        </div>
+      </div>
+
+      <div id="table-body"></div>
+      <div class="no-results" id="no-results">No traders found.</div>
+    </div>
+
+    <!-- Right -->
+    <div class="sidebar">
+      <div class="wins-card">
+        <div class="wins-head">Biggest wins today</div>
+        <div id="wins-body"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const COLORS = [
+  ["#6366f1","#8b5cf6"],["#ec4899","#f43f5e"],["#10b981","#059669"],
+  ["#f59e0b","#ef4444"],["#3b82f6","#06b6d4"],["#8b5cf6","#ec4899"],
+  ["#14b8a6","#6366f1"],["#f97316","#eab308"],["#e879f9","#a855f7"],
+  ["#22d3ee","#10b981"],["#fb7185","#f472b6"],["#a3e635","#4ade80"],
+  ["#fbbf24","#f97316"],["#60a5fa","#818cf8"],["#34d399","#059669"],
+  ["#f87171","#fb923c"],["#c084fc","#e879f9"],["#38bdf8","#0284c7"],
+  ["#4ade80","#16a34a"],["#facc15","#eab308"],
+];
+
+const MARKETS = [
+  "Gold vs Dollar Today","BTC above $70k by EOD","EUR/USD direction",
+  "Oil price spike this week","Fed rate decision","S&P 500 close green",
+  "Tesla earnings beat","NVIDIA ATH today","Apple stock direction","XAU/USD movement",
+  "Crypto market cap","DXY weekly close","JPY strengthens today","Silver rally",
+];
+
+const NAMES = [
+  "LaBradfordSmith22","Tiger200","weflyhigh","aekghas","JPMorgan101",
+  "Countryside","ChloeT1","bossoskil1","AlphaTrader","GoldHunter99",
+  "MarketWolf","TrendPilot","FastEntry","ChartMind","LiquidityKing",
+  "BullRunner","SmartMoney","WavePilot","AlphaEdge","TraderX",
+  "NightOwl42","GreenArrow","PrimeShot","DeepValue","MomentumKid",
+];
+
+// Seeded random so numbers are stable on reload
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+const USERS = Array.from({ length: 25 }, (_, i) => {
+  const r = seededRand(i * 137 + 42);
+  const c = COLORS[i % COLORS.length];
+  const profit = Math.floor((500000 - i * 18000) * (1 + r() * 0.3));
+  const volume = Math.floor(profit * (1.8 + r() * 4));
+  const prev   = Math.floor(profit * (0.65 + r() * 0.2));
+  const gain   = Math.floor(prev * (1.5 + r() * 0.8));
+  return { id: i, name: NAMES[i], profit, volume, prev, gain, market: MARKETS[i % MARKETS.length], c };
+});
+
+let currentSort = "profit";
+let currentSearch = "";
+
+function fmt(n, sign) {
+  const abs = Math.abs(n);
+  let s;
+  if (abs >= 1e6) s = "$" + (abs / 1e6).toFixed(2) + "M";
+  else if (abs >= 1e3) s = "$" + Math.floor(abs / 1e3).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "K";
+  else s = "$" + abs.toLocaleString();
+  return (sign && n > 0) ? "+" + s : s;
+}
+
+function avatarHTML(user, size) {
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*0.38)}px;background:linear-gradient(135deg,${user.c[0]},${user.c[1]})">${user.name[0].toUpperCase()}</div>`;
+}
+
+function rankHTML(rank) {
+  if (rank === 1) return '<span class="medal">&#x1F947;</span>';
+  if (rank === 2) return '<span class="medal">&#x1F948;</span>';
+  if (rank === 3) return '<span class="medal">&#x1F949;</span>';
+  return `<span class="num">${rank}</span>`;
+}
+
+function renderTable() {
+  const body = document.getElementById("table-body");
+  const noRes = document.getElementById("no-results");
+  const q = currentSearch.toLowerCase();
+
+  const list = USERS
+    .filter(u => u.name.toLowerCase().includes(q))
+    .sort((a, b) => currentSort === "profit" ? b.profit - a.profit : b.volume - a.volume);
+
+  if (list.length === 0) {
+    body.innerHTML = "";
+    noRes.style.display = "block";
+    noRes.textContent = q ? `No traders found for "${currentSearch}"` : "No traders found.";
+    return;
+  }
+
+  noRes.style.display = "none";
+  body.innerHTML = list.map((u, i) => `
+    <div class="lb-row anim" style="animation-delay:${i * 28}ms">
+      <div class="row-rank">${rankHTML(i + 1)}</div>
+      <div class="row-avatar">${avatarHTML(u, 36)}</div>
+      <div class="row-name">${u.name}</div>
+      <div class="row-cols">
+        <span class="row-profit">${fmt(u.profit, true)}</span>
+        <span class="row-volume">${fmt(u.volume)}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function renderWins() {
+  const top = USERS.slice(0, 8);
+  document.getElementById("wins-body").innerHTML = top.map((u, i) => `
+    <div class="win-row anim" style="animation-delay:${120 + i * 40}ms">
+      <div class="win-rank">${i + 1}</div>
+      ${avatarHTML(u, 32)}
+      <div class="win-info">
+        <div class="win-names">
+          <span class="win-name">${u.name}</span>
+          <span class="win-market">${u.market}</span>
+        </div>
+        <div class="win-amounts">
+          <span class="win-prev">${fmt(u.prev)}</span>
+          <span class="win-arrow">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#00a878" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </span>
+          <span class="win-gain">${fmt(u.gain)}</span>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function setTab(btn) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  // Re-render with same data (in real app would fetch different data)
+  renderTable();
+}
+
+function setSort(type) {
+  currentSort = type;
+  document.getElementById("sort-profit").classList.toggle("active", type === "profit");
+  document.getElementById("sort-volume").classList.toggle("active", type === "volume");
+  renderTable();
+}
+
+function filterRows() {
+  currentSearch = document.getElementById("search").value;
+  renderTable();
+}
+
+renderTable();
+renderWins();
+</script>
+</body>
+</html>
