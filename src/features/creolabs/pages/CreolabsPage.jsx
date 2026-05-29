@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import FullPageLoader from '../../../components/FullPageLoader'
+import KpiCard from '../../../components/common/KpiCard'
 import { useI18n } from '../../../i18n/I18nContext'
 import { loadCreolabsClientsTable, loadCreolabsIndex } from '../services/creolabsService'
 
@@ -130,6 +131,14 @@ const MONTHS = [
   { id: 'dec', label: 'Dec', n: 12 },
 ]
 
+const RANGE_PRESETS = [
+  { id: '1m', label: '1M' },
+  { id: '3m', label: '3M' },
+  { id: '6m', label: '6M' },
+  { id: '12m', label: '12M' },
+  { id: 'ytd', label: 'YTD' },
+]
+
 function parsePeriodId(periodId) {
   const s = String(periodId || '').trim()
   if (!s) return null
@@ -159,6 +168,40 @@ function formatPeriodLabel(periodId) {
   const p = parsePeriodId(periodId)
   if (!p) return String(periodId || '')
   return `${p.monthLabel} ${p.year}`
+}
+
+function resolveRangePreset(periodIds, presetId) {
+  const ids = Array.isArray(periodIds) ? periodIds : []
+  if (!ids.length) return null
+
+  const lastIdx = ids.length - 1
+  const lastId = ids[lastIdx]
+  const latest = parsePeriodId(lastId)
+
+  const byMonths = (months) => {
+    const startIdx = Math.max(0, lastIdx - (months - 1))
+    return {
+      startId: ids[startIdx],
+      endId: lastId,
+    }
+  }
+
+  if (presetId === '1m') return byMonths(1)
+  if (presetId === '3m') return byMonths(3)
+  if (presetId === '6m') return byMonths(6)
+  if (presetId === '12m') return byMonths(12)
+
+  if (presetId === 'ytd' && latest?.year) {
+    const firstInYear = ids.find((id) => parsePeriodId(id)?.year === latest.year)
+    if (firstInYear) {
+      return {
+        startId: firstInYear,
+        endId: lastId,
+      }
+    }
+  }
+
+  return null
 }
 
 function getClientStableKey(r) {
@@ -241,6 +284,7 @@ export default function CreolabsPage() {
   const [isCustomRange, setIsCustomRange] = useState(false)
   const [rangeStartId, setRangeStartId] = useState('')
   const [rangeEndId, setRangeEndId] = useState('')
+  const [selectedRangePreset, setSelectedRangePreset] = useState('')
 
   const reload = async ({ force = false } = {}) => {
     setError('')
@@ -411,6 +455,23 @@ export default function CreolabsPage() {
     selectedYear,
   ])
 
+  const activeRangeLabel = useMemo(() => {
+    if (!activePeriodIds.length) return 'No period selected'
+    const first = activePeriodIds[0]
+    const last = activePeriodIds[activePeriodIds.length - 1]
+    if (first === last) return formatPeriodLabel(first)
+    return `${formatPeriodLabel(first)} -> ${formatPeriodLabel(last)}`
+  }, [activePeriodIds])
+
+  const applyRangePreset = (presetId) => {
+    const range = resolveRangePreset(allPeriodIds, presetId)
+    if (!range) return
+    setIsCustomRange(true)
+    setRangeStartId(range.startId)
+    setRangeEndId(range.endId)
+    setSelectedRangePreset(presetId)
+  }
+
   const needsClientsTable = useMemo(() => {
     const q = String(query || '').trim()
     return activePeriodIds.length !== 1 || Boolean(q)
@@ -500,6 +561,69 @@ export default function CreolabsPage() {
   const hintTotalRows = computedRows.length
   const hintShownRows = filteredRows.length
 
+  const summaryCards = useMemo(() => {
+    const rows = Array.isArray(filteredRows) ? filteredRows : []
+    const uniqueClients = new Set(rows.map((r) => getRowKey(r)).filter(Boolean)).size
+    const totalNet = rows.reduce((sum, r) => sum + Number(r?.net || 0), 0)
+    const totalDeposit = rows.reduce((sum, r) => sum + Number(r?.deposit || 0), 0)
+    const totalTrades = rows.reduce((sum, r) => sum + Number(r?.trades || 0), 0)
+    const totalPl = rows.reduce((sum, r) => sum + Number(r?.pl || 0), 0)
+    const topRow = rows[0] || null
+    const topMetricKey = activeCfg?.metricKey || 'net'
+    const topMetricValue = Number(topRow?.[topMetricKey] || 0)
+    const topMetricName = String(topRow?.clientName || topRow?.clientId || '—').trim()
+    const topMetricHelper = topRow
+      ? `${topMetricName}${activeCfg?.isCount ? ` · ${numberFmt0.format(topMetricValue)}` : ` · ${numberFmt2.format(topMetricValue)}`}`
+      : 'No rows'
+
+    return [
+      {
+        label: 'Visible rows',
+        value: numberFmt0.format(hintShownRows),
+        helper: `of ${numberFmt0.format(hintTotalRows)} in the current view`,
+        tone: '#e2e8f0',
+      },
+      {
+        label: 'Unique clients',
+        value: numberFmt0.format(uniqueClients),
+        helper: 'Distinct client keys in the filtered rows',
+        tone: '#7dd3fc',
+      },
+      {
+        label: 'Net',
+        value: formatMoneyLike(totalNet),
+        helper: 'Sum of visible net values',
+        tone: '#34d399',
+      },
+      {
+        label: 'Deposits',
+        value: formatMoneyLike(totalDeposit),
+        helper: 'Sum of visible deposits',
+        tone: '#fbbf24',
+      },
+      {
+        label: 'Trades',
+        value: numberFmt0.format(totalTrades),
+        helper: 'Total visible trade count',
+        tone: '#f472b6',
+      },
+      {
+        label: activeCfg ? `Top ${activeCfg.pillLabel}` : 'Top metric',
+        value: activeCfg?.isCount
+          ? numberFmt0.format(topMetricValue)
+          : formatMoneyLike(topMetricValue),
+        helper: topMetricHelper,
+        tone: '#a78bfa',
+      },
+      {
+        label: 'P&L',
+        value: formatMoneyLike(totalPl),
+        helper: 'Sum of visible P&L values',
+        tone: '#22d3ee',
+      },
+    ]
+  }, [activeCfg, filteredRows, hintShownRows, hintTotalRows])
+
   if (loading) {
     return <FullPageLoader progress={40} subtitle={t('common.loading')} />
   }
@@ -526,6 +650,7 @@ export default function CreolabsPage() {
               className={`pill-tab${!selectedYear ? ' active' : ''}`}
               onClick={() => {
                 setIsCustomRange(false)
+                setSelectedRangePreset('')
                 setSelectedYear('')
                 setSelectedMonth('')
               }}
@@ -539,6 +664,7 @@ export default function CreolabsPage() {
                 className={`pill-tab${String(y) === String(selectedYear) ? ' active' : ''}`}
                 onClick={() => {
                   setIsCustomRange(false)
+                  setSelectedRangePreset('')
                   setSelectedYear(String(y))
                 }}
               >
@@ -556,6 +682,7 @@ export default function CreolabsPage() {
               className={`pill-tab${selectedMonth === 'all' ? ' active' : ''}`}
               onClick={() => {
                 setIsCustomRange(false)
+                setSelectedRangePreset('')
                 setSelectedMonth('all')
               }}
             >
@@ -574,6 +701,7 @@ export default function CreolabsPage() {
                   className={`pill-tab${selectedMonth === m.id ? ' active' : ''}`}
                   onClick={() => {
                     setIsCustomRange(false)
+                    setSelectedRangePreset('')
                     setSelectedMonth(m.id)
                   }}
                   disabled={!isAvailable}
@@ -591,16 +719,36 @@ export default function CreolabsPage() {
             <button
               type="button"
               className={`pill-tab${isCustomRange ? ' active' : ''}`}
-              onClick={() => setIsCustomRange((v) => !v)}
+              onClick={() => {
+                setIsCustomRange((v) => {
+                  const next = !v
+                  if (!next) setSelectedRangePreset('')
+                  return next
+                })
+              }}
             >
               {t('creolabs.range.custom')}
             </button>
+
+            {RANGE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                className={`pill-tab${selectedRangePreset === preset.id ? ' active' : ''}`}
+                onClick={() => applyRangePreset(preset.id)}
+              >
+                {preset.label}
+              </button>
+            ))}
 
             {isCustomRange ? (
               <>
                 <select
                   value={rangeStartId}
-                  onChange={(e) => setRangeStartId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedRangePreset('custom')
+                    setRangeStartId(e.target.value)
+                  }}
                   aria-label={t('creolabs.range.start')}
                   className="search-hero-input"
                   style={{ width: 160, fontSize: 13, padding: '8px 10px', borderRadius: 10 }}
@@ -614,7 +762,10 @@ export default function CreolabsPage() {
 
                 <select
                   value={rangeEndId}
-                  onChange={(e) => setRangeEndId(e.target.value)}
+                  onChange={(e) => {
+                    setSelectedRangePreset('custom')
+                    setRangeEndId(e.target.value)
+                  }}
                   aria-label={t('creolabs.range.end')}
                   className="search-hero-input"
                   style={{ width: 160, fontSize: 13, padding: '8px 10px', borderRadius: 10 }}
@@ -638,6 +789,8 @@ export default function CreolabsPage() {
             </span>
             <span style={{ marginLeft: 10 }}>{t('creolabs.periods')}: </span>
             <strong>{numberFmt0.format(activePeriodIds.length || 0)}</strong>
+            <span style={{ marginLeft: 10, color: 'var(--text-muted)' }}>Window: </span>
+            <strong>{activeRangeLabel}</strong>
           </div>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -674,6 +827,35 @@ export default function CreolabsPage() {
           </p>
         </div>
       ) : null}
+
+      <section className="card-block" style={{ marginTop: 12 }}>
+        <div className="card-block-header" style={{ marginBottom: 10 }}>
+          <div>
+            <p className="eyebrow">Snapshot</p>
+            <h3>Riepilogo dati principali</h3>
+            <p className="muted">Controllo rapido del perimetro attivo e dei valori visibili.</p>
+          </div>
+        </div>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+            gap: 12,
+          }}
+        >
+          {summaryCards.map((card) => (
+            <KpiCard
+              key={card.label}
+              label={card.label}
+              value={card.value}
+              helper={card.helper}
+              tone={card.tone}
+              size="sm"
+              density="compact"
+            />
+          ))}
+        </div>
+      </section>
 
       {activeCfg ? (
         <section key={activeBoardId} className="card-block table-card">

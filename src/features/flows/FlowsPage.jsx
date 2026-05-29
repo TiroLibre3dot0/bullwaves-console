@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useI18n } from '../../i18n/I18nContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import { formatEuro, formatNumber } from '../../lib/formatters'
@@ -56,6 +56,16 @@ import {
   edges as masterEdges,
   meta as masterMeta,
 } from '../../flows/masterLifecycleFlow'
+import {
+  nodes as affiliate35575NoFtd3DaysNodes,
+  edges as affiliate35575NoFtd3DaysEdges,
+  meta as affiliate35575NoFtd3DaysMeta,
+} from '../../flows/affiliate35575NoFtd3DaysFlow'
+import {
+  nodes as dormantValueLoginReactivationNodes,
+  edges as dormantValueLoginReactivationEdges,
+  meta as dormantValueLoginReactivationMeta,
+} from '../../flows/dormantValueLoginReactivationFlow'
 
 function randomHex(bytes = 12) {
   try {
@@ -112,6 +122,16 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
         meta: mostConsistentTradersMeta,
         nodes: mostConsistentTradersNodes,
         edges: mostConsistentTradersEdges,
+      },
+      affiliate35575NoFtd3Days: {
+        meta: affiliate35575NoFtd3DaysMeta,
+        nodes: affiliate35575NoFtd3DaysNodes,
+        edges: affiliate35575NoFtd3DaysEdges,
+      },
+      dormantValueLoginReactivation: {
+        meta: dormantValueLoginReactivationMeta,
+        nodes: dormantValueLoginReactivationNodes,
+        edges: dormantValueLoginReactivationEdges,
       },
     }),
     []
@@ -188,6 +208,8 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
           'ftdFirstTrade',
           'preFtdConversion',
           'mostConsistentTraders',
+          'affiliate35575NoFtd3Days',
+          'dormantValueLoginReactivation',
         ],
       }
 
@@ -396,6 +418,20 @@ export default function FlowsPage({ publicMode = false, sharePayload = null }) {
             onClick={() => goFlow('preFtdConversion')}
           >
             {t('flows.tab.preFtdConversion')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'affiliate35575NoFtd3Days' ? 'active' : ''}`}
+            onClick={() => goFlow('affiliate35575NoFtd3Days')}
+          >
+            {t('flows.tab.affiliate35575NoFtd3Days')}
+          </button>
+          <button
+            type="button"
+            className={`tab ${flowId === 'dormantValueLoginReactivation' ? 'active' : ''}`}
+            onClick={() => goFlow('dormantValueLoginReactivation')}
+          >
+            {t('flows.tab.dormantValueLoginReactivation')}
           </button>
 
           {publicMode ? null : (

@@ -53,7 +53,6 @@ const SUPPORT_ALLOWED_VIEWS = new Set([
   'home',
   'supportUserCheck',
   'aiAssistant',
-  'whatsappPerformance',
   'trustpilotGuide',
   'commissionValidationRules',
   'orgChart',
@@ -64,9 +63,9 @@ const SALES_ALLOWED_VIEWS = new Set([
   'home',
   'supportUserCheck',
   'aiAssistant',
-  'whatsappPerformance',
   'trustpilotGuide',
   'commissionValidationRules',
+  'emailMasterTemplate',
   'orgChart',
 ])
 

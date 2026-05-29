@@ -4,7 +4,6 @@ import { fetchQlikSnapshot } from '../services/qlikConsoleService'
 
 const INTERNAL_REPORTS = [
   { label: 'Traders Ranking Rewards', href: '/creolabs' },
-  { label: 'Solitics Journey Report', href: '/solitics' },
   { label: 'Trustpilot Guide', href: '/trustpilot-guide' },
   { label: 'Overview Dashboard', href: '/overview' },
 ]

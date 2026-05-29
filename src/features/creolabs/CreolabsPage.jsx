@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Line } from 'react-chartjs-2'
 import { useQlikStatus } from '../../context/QlikStatusContext'
 import {
-  isQlikApiUnavailableError,
+  canUseCreolabsLocalFallback,
   loadCreolabsQlikClientMonths,
   loadPrimeClientsRankingTable,
   loadPrimeEmailIndex,
@@ -1022,7 +1022,7 @@ export default function CreolabsPage() {
         if (cancelled) return
 
         // Strict policy: fallback only when API is unavailable.
-        if (!isQlikApiUnavailableError(e)) {
+        if (!canUseCreolabsLocalFallback(e)) {
           logCreolabsQlikFallbackBlocked('creolabs overview load', e)
           throw e
         }
@@ -1046,7 +1046,7 @@ export default function CreolabsPage() {
       .catch((e) => {
         if (cancelled) return
         setError(e instanceof Error ? e.message : 'Errore durante il caricamento')
-        reportQlikSource('creolabs-overview', 'local')
+        reportQlikSource('creolabs-overview', null)
       })
       .finally(() => {
         if (!cancelled) {

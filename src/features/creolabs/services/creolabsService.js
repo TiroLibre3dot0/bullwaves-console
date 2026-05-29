@@ -7,14 +7,23 @@ const PRIME_CLIENTS_RANKING_TABLE_URL = '/prime_clients_ranking_table.json'
 const PRIME_EMAIL_INDEX_URL = '/prime_email_index.json'
 const TRADERS_RANKING_REWARDS_TABLE_URL = '/traders_ranking_rewards_table.json'
 const CREOLABS_QLIK_CLIENT_MONTHS_URL = '/api/qlik/creolabs/client-months'
+const CREOLABS_QLIK_CLIENT_DATES_URL = '/api/qlik/creolabs/client-dates'
 const CREOLABS_QLIK_AFFILIATE_MONTH_URL = '/api/qlik/creolabs/affiliate-month'
 const CREOLABS_QLIK_KPIS_URL = '/api/qlik/creolabs/kpis'
 const CREOLABS_QLIK_ANALYTICS_URL = '/api/qlik/creolabs/analytics'
 const CREOLABS_QLIK_CLIENT_SCORES_URL = '/api/qlik/creolabs/client-scores'
+const CREOLABS_QLIK_CLIENT_LISTS_URL = '/api/qlik/creolabs/client-lists'
+const CREOLABS_ALLOW_LOCAL_FALLBACK =
+  String(import.meta?.env?.VITE_CREOLABS_ALLOW_LOCAL_FALLBACK || '').trim() === '1'
 
 export function isQlikApiUnavailableError(err) {
   if (!err) return false
   return err.isQlikUnavailable === true
+}
+
+export function canUseCreolabsLocalFallback(err) {
+  if (!CREOLABS_ALLOW_LOCAL_FALLBACK) return false
+  return isQlikApiUnavailableError(err)
 }
 
 function qlikErrorSummary(err) {
@@ -31,7 +40,7 @@ export function logCreolabsQlikFallbackUsed(context, err) {
 
 export function logCreolabsQlikFallbackBlocked(context, err) {
   console.warn(
-    `[Creolabs][Qlik] ${context}: local fallback blocked because API is reachable (${qlikErrorSummary(err)})`,
+    `[Creolabs][Qlik] ${context}: local fallback blocked (API reachable or policy disabled) (${qlikErrorSummary(err)})`,
     err
   )
 }
@@ -90,6 +99,13 @@ export async function loadCreolabsQlikClientMonths({ force = false } = {}) {
   return loadCreolabsQlikResource(CREOLABS_QLIK_CLIENT_MONTHS_URL, {
     force,
     staleKeys: ['clientMonths'],
+  })
+}
+
+export async function loadCreolabsQlikClientDates({ force = false } = {}) {
+  return loadCreolabsQlikResource(CREOLABS_QLIK_CLIENT_DATES_URL, {
+    force,
+    staleKeys: ['rows'],
   })
 }
 
@@ -216,6 +232,44 @@ export async function loadCreolabsQlikClientScores({ brand = '', force = false }
     throw new Error('Invalid /api/qlik/creolabs/client-scores payload')
   }
   return payload
+}
+
+export async function loadCreolabsQlikClientLists({ days = 30, force = false } = {}) {
+  const d = Number.isFinite(Number(days)) ? Math.max(1, Number(days)) : 30
+  const params = new globalThis.URLSearchParams()
+  params.set('days', String(d))
+  if (force) params.set('bust', '1')
+
+  const qs = params.toString()
+  const url = `${CREOLABS_QLIK_CLIENT_LISTS_URL}${qs ? `?${qs}` : ''}`
+
+  let res
+  try {
+    res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+  } catch (cause) {
+    const err = new Error('Qlik client-lists API unavailable (network error)')
+    err.cause = cause
+    err.isQlikUnavailable = true
+    throw err
+  }
+
+  if (!res.ok) {
+    const err = new Error(`Qlik client-lists API failed (${res.status})`)
+    err.status = res.status
+    err.isQlikUnavailable = false
+    throw err
+  }
+
+  const payload = await res.json()
+  if (!payload?.ok || !payload?.data || typeof payload.data !== 'object') {
+    throw new Error('Invalid /api/qlik/creolabs/client-lists payload')
+  }
+  return payload.data
 }
 
 export async function loadCreolabsIndex({ force = false } = {}) {

@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nContext'
 import { CONSOLE_TOOLS } from '../config/tools'
 import { withReportsVersion } from '../lib/fetchCache'
 import DataInfoModal from './DataInfoModal'
+import SectionFinder from './SectionFinder'
 
 const SUPPORT_NAME_KEYS = ['customername', 'customer_name', 'name', 'fullname']
 const SUPPORT_USERID_KEYS = ['userid', 'user_id', 'user id', 'user']
@@ -572,6 +573,7 @@ export default function Topbar({
   showAdmin = false,
   onToggleSidebar,
   isSidebarOpen = false,
+  onNavigate,
 }) {
   const { t, locale, setLocale, locales } = useI18n()
   const { dataStatus } = useDataStatus()
@@ -1489,6 +1491,7 @@ export default function Topbar({
           )}
         </div>
         <div className="topbar-nav-slot">
+          {typeof onNavigate === 'function' ? <SectionFinder navigate={onNavigate} /> : null}
           <div className="topbar-crm-shell" ref={crmWrapRef}>
             <div className={`topbar-crm-input-wrap${crmSearchOpen ? ' is-open' : ''}`}>
               <span className="topbar-crm-icon" aria-hidden="true">

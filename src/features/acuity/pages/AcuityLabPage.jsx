@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react'
+﻿import { useState, useCallback, useEffect } from 'react'
 
 // ─── Test contacts (management, excl. Filippo & Tamara) ───────────────────────
 
@@ -25,6 +25,51 @@ const TEST_CONTACTS = [
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const JOURNEYS = [
+  {
+    id: 'acuity-visual-46',
+    name: 'Acuity Visual #46',
+    cadence: 'Editoriale · Manuale / Sync SendGrid',
+    description:
+      'Template visuale Acuity con 4 pannelli stacked e CTA al portale Bullwaves, ora gestito direttamente dentro Acuity Lab.',
+    trigger: 'Manuale – campaign launch o resend da Acuity Lab',
+    channel: 'Email',
+    source: ['Acuity image pack', 'Portal CTAs', 'SendGrid'],
+    tags: ['acuity', 'visual', 'campaign'],
+    color: 'sky',
+    steps: [
+      { label: 'Carica visual', note: 'Logo + 4 pannelli Acuity', icon: 'fetch' },
+      { label: 'Verifica CTA', note: 'analysis, news, assets, calendar', icon: 'filter' },
+      { label: 'Preview HTML', note: 'Controllo rendering email', icon: 'compose' },
+      { label: 'Sync SendGrid', note: 'Template pronto per invio', icon: 'send' },
+    ],
+    template: {
+      subject: 'Key Moves Traders Should Watch This Week',
+      preview: 'Hero Acuity + 4 insight panels con CTA al portale Bullwaves',
+      body: [
+        { type: 'header', text: 'Acuity campaign layout' },
+        {
+          type: 'text',
+          text: 'Template visuale statico con immagini Acuity Trading, footer compliance e CTA dirette al portale Bullwaves.',
+        },
+        {
+          type: 'cta',
+          text: 'Access Insights Now',
+          note: '→ portal.bullwaves.com/acuity/analysis-iq',
+        },
+        { type: 'cta', text: 'Spot the Trends', note: '→ portal.bullwaves.com/acuity/news-iq' },
+        {
+          type: 'cta',
+          text: 'Access the Charts',
+          note: '→ portal.bullwaves.com/acuity/assets-overview',
+        },
+        {
+          type: 'cta',
+          text: "See This Week's Calendar",
+          note: '→ portal.bullwaves.com/acuity/calendar',
+        },
+      ],
+    },
+  },
   {
     id: 'market-pulse',
     name: 'Market Pulse',
@@ -602,16 +647,49 @@ const SYNC_OK = 'ok'
 const SYNC_ERROR = 'error'
 
 export default function AcuityLabPage() {
-  const [activeId, setActiveId] = useState('market-pulse')
-  const [tab, setTab] = useState('journey') // 'journey' | 'preview'
+  const [activeId, setActiveId] = useState('acuity-visual-46')
+  const [tab, setTab] = useState('journey') // 'journey' | 'preview' | 'html'
   // always live — no sample toggle
   const [syncState, setSyncState] = useState(SYNC_IDLE)
   const [syncResults, setSyncResults] = useState(null)
   const [testOpen, setTestOpen] = useState(false)
+  const [htmlState, setHtmlState] = useState({ status: 'idle', value: '', error: '' })
+  const [copyState, setCopyState] = useState('idle')
 
   const journey = JOURNEYS.find((j) => j.id === activeId)
   const c = COLOR[journey.color]
-  const vars = VARIABLE_MAP[activeId]
+  const vars = VARIABLE_MAP[activeId] || []
+
+  useEffect(() => {
+    if (tab !== 'html') return
+
+    let cancelled = false
+    setHtmlState((current) =>
+      current.value && current.status === 'ready'
+        ? current
+        : { status: 'loading', value: '', error: '' }
+    )
+
+    fetch(`/api/acuity/templates/source/${activeId}`)
+      .then(async (res) => {
+        const data = await res.json()
+        if (!res.ok || !data?.ok) {
+          throw new Error(data?.error || 'Failed to load template HTML')
+        }
+        if (!cancelled) {
+          setHtmlState({ status: 'ready', value: data.html || '', error: '' })
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setHtmlState({ status: 'error', value: '', error: err.message })
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeId, tab])
 
   const handleSync = useCallback(async () => {
     setSyncState(SYNC_LOADING)
@@ -631,6 +709,20 @@ export default function AcuityLabPage() {
       setSyncResults([{ id: 'error', ok: false, error: err.message }])
     }
   }, [])
+
+  const handleCopyHtml = useCallback(async () => {
+    const html = String(htmlState.value || '')
+    if (!html) return
+
+    try {
+      await navigator.clipboard.writeText(html)
+      setCopyState('copied')
+    } catch {
+      setCopyState('error')
+    }
+
+    window.setTimeout(() => setCopyState('idle'), 1800)
+  }, [htmlState.value])
 
   const syncLabel = {
     [SYNC_IDLE]: 'Sync a SendGrid',
@@ -750,6 +842,7 @@ export default function AcuityLabPage() {
               {[
                 { id: 'journey', label: 'Journey & Template' },
                 { id: 'preview', label: '👁 Anteprima HTML' },
+                { id: 'html', label: '</> HTML' },
               ].map((t) => (
                 <button
                   key={t.id}
@@ -769,6 +862,28 @@ export default function AcuityLabPage() {
                 Live Acuity
               </div>
             )}
+
+            {tab === 'html' && (
+              <button
+                onClick={handleCopyHtml}
+                disabled={htmlState.status !== 'ready' || !htmlState.value}
+                className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  htmlState.status !== 'ready' || !htmlState.value
+                    ? 'border-gray-700 bg-gray-800/60 text-gray-500 cursor-not-allowed'
+                    : copyState === 'copied'
+                      ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300'
+                      : copyState === 'error'
+                        ? 'border-red-500/50 bg-red-500/10 text-red-300'
+                        : 'border-sky-500/40 bg-sky-500/10 text-sky-300 hover:bg-sky-500/15'
+                }`}
+              >
+                {copyState === 'copied'
+                  ? 'Copiato'
+                  : copyState === 'error'
+                    ? 'Errore copia'
+                    : 'Copia HTML'}
+              </button>
+            )}
           </div>
 
           {tab === 'preview' ? (
@@ -780,6 +895,18 @@ export default function AcuityLabPage() {
                 className="w-full"
                 style={{ height: '640px', border: 'none', display: 'block' }}
               />
+            </div>
+          ) : tab === 'html' ? (
+            <div className="rounded-xl border border-gray-600 bg-[#0b1220] overflow-hidden">
+              {htmlState.status === 'loading' ? (
+                <div className="px-4 py-6 text-sm text-gray-400">Caricamento HTML…</div>
+              ) : htmlState.status === 'error' ? (
+                <div className="px-4 py-6 text-sm text-red-300">{htmlState.error}</div>
+              ) : (
+                <pre className="m-0 max-h-[640px] overflow-auto p-4 text-[12px] leading-5 text-slate-200 whitespace-pre-wrap break-words">
+                  {htmlState.value}
+                </pre>
+              )}
             </div>
           ) : (
             <>
@@ -832,36 +959,45 @@ export default function AcuityLabPage() {
                 <p className="mb-3 text-[10px] font-semibold uppercase tracking-widest text-gray-500">
                   Mapping variabili → Acuity API
                 </p>
-                <table className="w-full text-[11px]">
-                  <thead>
-                    <tr className="border-b border-gray-600">
-                      <th className="pb-2 text-left font-semibold text-gray-400 pr-4 w-44">
-                        Variabile template
-                      </th>
-                      <th className="pb-2 text-left font-semibold text-gray-400 pr-4 w-40">
-                        Endpoint Acuity
-                      </th>
-                      <th className="pb-2 text-left font-semibold text-gray-400">Campo risposta</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700/50">
-                    {vars.map((v) => (
-                      <tr key={v.variable}>
-                        <td className="py-1.5 pr-4">
-                          <span className="rounded border border-sky-400/30 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-300">
-                            {v.variable}
-                          </span>
-                        </td>
-                        <td className="py-1.5 pr-4">
-                          <span className="rounded border border-gray-600 bg-gray-700/60 px-1.5 py-0.5 font-mono text-gray-300">
-                            {v.source}
-                          </span>
-                        </td>
-                        <td className="py-1.5 text-gray-400">{v.field}</td>
+                {vars.length > 0 ? (
+                  <table className="w-full text-[11px]">
+                    <thead>
+                      <tr className="border-b border-gray-600">
+                        <th className="pb-2 text-left font-semibold text-gray-400 pr-4 w-44">
+                          Variabile template
+                        </th>
+                        <th className="pb-2 text-left font-semibold text-gray-400 pr-4 w-40">
+                          Endpoint Acuity
+                        </th>
+                        <th className="pb-2 text-left font-semibold text-gray-400">
+                          Campo risposta
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700/50">
+                      {vars.map((v) => (
+                        <tr key={v.variable}>
+                          <td className="py-1.5 pr-4">
+                            <span className="rounded border border-sky-400/30 bg-sky-500/10 px-1.5 py-0.5 font-mono text-sky-300">
+                              {v.variable}
+                            </span>
+                          </td>
+                          <td className="py-1.5 pr-4">
+                            <span className="rounded border border-gray-600 bg-gray-700/60 px-1.5 py-0.5 font-mono text-gray-300">
+                              {v.source}
+                            </span>
+                          </td>
+                          <td className="py-1.5 text-gray-400">{v.field}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="rounded-lg border border-gray-600 bg-gray-900/40 px-3 py-3 text-xs text-gray-400">
+                    Questo template è statico: non usa variabili runtime Acuity oltre al placeholder
+                    di unsubscribe gestito in fase di sync SendGrid.
+                  </div>
+                )}
               </div>
             </>
           )}

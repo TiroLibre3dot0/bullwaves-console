@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQlikStatus } from '../../../context/QlikStatusContext'
 
 import {
-  isQlikApiUnavailableError,
+  canUseCreolabsLocalFallback,
   loadCreolabsQlikAffiliateMonth,
   loadCreolabsAffiliateMonthTable,
   loadCreolabsClientsTable,
@@ -59,7 +59,7 @@ export function useCreolabsBreakdownData() {
           table = { rows: rowsFromApi }
           if (!cancelled) reportQlikSource('creolabs-breakdown', 'api')
         } catch (e) {
-          if (!isQlikApiUnavailableError(e)) {
+          if (!canUseCreolabsLocalFallback(e)) {
             logCreolabsQlikFallbackBlocked('affiliate/payments aggregate load', e)
             throw e
           }
@@ -95,7 +95,7 @@ export function useCreolabsBreakdownData() {
             table = { rows: rowsFromApi }
             if (!cancelled) reportQlikSource('creolabs-breakdown', 'api')
           } catch (e) {
-            if (!isQlikApiUnavailableError(e)) {
+            if (!canUseCreolabsLocalFallback(e)) {
               logCreolabsQlikFallbackBlocked('affiliate/payments aggregate reload', e)
               throw e
             }

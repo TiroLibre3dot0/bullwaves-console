@@ -219,7 +219,6 @@ export default function Sidebar({
         : new Set([
             'supportUserCheck',
             'aiAssistant',
-            'whatsappPerformance',
             'trustpilotGuide',
             'commissionValidationRules',
             'salesMonitoring',
@@ -259,6 +258,30 @@ export default function Sidebar({
           onClick: () => navigate('creolabsClientLists'),
           disabled: disabled('creolabs'),
         },
+        {
+          key: 'creolabsDbLive',
+          label: 'DB Live',
+          icon: 'shield',
+          active: view === 'creolabsDbLive',
+          onClick: () => navigate('creolabsDbLive'),
+          disabled: disabled('creolabs'),
+        },
+        {
+          key: 'creolabsReport',
+          label: 'Creolabs Report',
+          icon: 'layout',
+          active: view === 'creolabsReport',
+          onClick: () => navigate('creolabsReport'),
+          disabled: disabled('creolabs'),
+        },
+        {
+          key: 'creolabsTestEnvironment3',
+          label: 'Test Environment 3.0',
+          icon: 'shield',
+          active: view === 'creolabsTestEnvironment3',
+          onClick: () => navigate('creolabsTestEnvironment3'),
+          disabled: disabled('creolabs'),
+        },
       ],
     },
     {
@@ -271,14 +294,6 @@ export default function Sidebar({
           icon: 'pie',
           active: view === 'affiliate' && affiliateSection === 'analysis',
           onClick: () => goAffiliateSection('analysis'),
-          disabled: disabled('affiliate'),
-        },
-        {
-          key: 'affiliateClientsMoved',
-          label: t('sidebar.affiliate.clientsMoved'),
-          icon: 'chart',
-          active: view === 'affiliate' && affiliateSection === 'clientsMoved',
-          onClick: () => goAffiliateSection('clientsMoved'),
           disabled: disabled('affiliate'),
         },
         {
@@ -298,19 +313,8 @@ export default function Sidebar({
           disabled: disabled('segmentComposition'),
         },
         {
-          key: 'salesMonitoring',
-          label: 'Monitoring',
-          icon: 'chart',
-          active:
-            view === 'salesMonitoring' ||
-            view === 'salesAgentsMonitor' ||
-            view === 'commissionValidationRules',
-          onClick: () => navigate('salesMonitoring'),
-          disabled: disabled('salesMonitoring'),
-        },
-        {
-          key: 'emailMasterTemplate',
-          label: 'Email Master Template',
+          key: 'allTemplates',
+          label: 'All templates',
           icon: 'layout',
           active: view === 'emailMasterTemplate',
           onClick: () => navigate('emailMasterTemplate'),
@@ -322,6 +326,14 @@ export default function Sidebar({
       key: 'board',
       title: 'Board',
       items: [
+        {
+          key: 'boardReportMailStudio',
+          label: 'Report Mail Studio',
+          icon: 'layout',
+          active: view === 'boardReportMailStudio',
+          onClick: () => navigate('boardReportMailStudio'),
+          disabled: disabled('boardReportMailStudio'),
+        },
         {
           key: 'boardAffiliatePayoutSummary',
           label: t('investments.section.affiliatePayoutSummary'),
@@ -367,6 +379,20 @@ export default function Sidebar({
           active: view === 'primeChallengeWidget',
           onClick: () => navigate('primeChallengeWidget'),
           disabled: disabled('primeChallengeWidget'),
+        },
+      ],
+    },
+    {
+      key: 'tradingCompetition',
+      title: 'Trading competition',
+      items: [
+        {
+          key: 'tradingCompetitionLeaderboard',
+          label: 'Leaderboard',
+          icon: 'chart',
+          active: view === 'tradingCompetition',
+          onClick: () => navigate('tradingCompetition'),
+          disabled: disabled('tradingCompetition'),
         },
       ],
     },
@@ -472,14 +498,6 @@ export default function Sidebar({
       title: 'Marketing',
       items: [
         {
-          key: 'whatsappPerformance',
-          label: t('sidebar.whatsappPerformance'),
-          icon: 'chart',
-          active: view === 'whatsappPerformance',
-          onClick: () => navigate('whatsappPerformance'),
-          disabled: disabled('whatsappPerformance'),
-        },
-        {
           key: 'trustpilotGuide',
           label: t('sidebar.trustpilotGuide'),
           icon: 'chart',
@@ -488,42 +506,12 @@ export default function Sidebar({
           disabled: disabled('trustpilotGuide'),
         },
         {
-          key: 'whatsappTemplates',
-          label: t('sidebar.whatsappTemplates'),
-          icon: 'chat',
-          active: view === 'whatsappTemplates',
-          onClick: () => navigate('whatsappTemplates'),
-          disabled: disabled('whatsappTemplates'),
-        },
-        {
           key: 'acuity',
           label: 'ACUITY Lab',
           icon: 'layout',
           active: view === 'acuity',
           onClick: () => navigate('acuity'),
           disabled: disabled('acuity'),
-        },
-        {
-          key: 'customEvents',
-          label: t('sidebar.customEvents'),
-          icon: 'chart',
-          active: view === 'customEvents',
-          onClick: () => navigate('customEvents'),
-          disabled: disabled('customEvents'),
-        },
-      ],
-    },
-    {
-      key: 'solitics',
-      title: 'SOLITICS',
-      items: [
-        {
-          key: 'solitics',
-          label: 'Journey Report',
-          icon: 'layout',
-          active: view === 'solitics',
-          onClick: () => navigate('solitics'),
-          disabled: disabled('solitics'),
         },
       ],
     },
@@ -576,6 +564,25 @@ export default function Sidebar({
           active: view === 'reportsHub',
           onClick: () => navigate('reportsHub'),
           disabled: disabled('reportsHub'),
+        },
+        {
+          key: 'standbySalesMonitoring',
+          label: 'Monitoring',
+          icon: 'chart',
+          active:
+            view === 'salesMonitoring' ||
+            view === 'salesAgentsMonitor' ||
+            view === 'commissionValidationRules',
+          onClick: () => navigate('salesMonitoring'),
+          disabled: disabled('salesMonitoring'),
+        },
+        {
+          key: 'standbyCustomEvents',
+          label: t('sidebar.customEvents'),
+          icon: 'chart',
+          active: view === 'customEvents',
+          onClick: () => navigate('customEvents'),
+          disabled: disabled('customEvents'),
         },
         ...(isAdmin
           ? [

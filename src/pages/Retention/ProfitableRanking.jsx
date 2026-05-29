@@ -5,7 +5,7 @@ import SegmentJourneyModal from './SegmentJourneyModal'
 import { useQlikStatus } from '../../context/QlikStatusContext'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import {
-  isQlikApiUnavailableError,
+  canUseCreolabsLocalFallback,
   loadCreolabsQlikClientScores,
   logCreolabsQlikFallbackBlocked,
   logCreolabsQlikFallbackUsed,
@@ -2451,7 +2451,7 @@ export default function ProfitableRanking({
             return
           } catch (e) {
             // Fallback is exceptional-only: keep local artifact only when API is unavailable.
-            if (!isQlikApiUnavailableError(e)) {
+            if (!canUseCreolabsLocalFallback(e)) {
               logCreolabsQlikFallbackBlocked(`profitable-ranking ${rankingDefinition.key} load`, e)
               throw e
             }

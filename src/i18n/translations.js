@@ -481,8 +481,6 @@ export const translations = {
     'home.action.userCheck': 'Support tool: user checks and investigation flow.',
     'home.action.aiAssistant':
       'Bullwaves support chat for Broker and Prime FAQs with safe escalation.',
-    'home.action.whatsappPerformance':
-      'WhatsApp conversation monitoring with start type and reply status at a glance.',
     'home.action.tasks': 'Task board: plan, execute, review.',
     'home.action.flows': 'User journey flows and conversion checkpoints.',
     'home.action.executiveSuite': 'Executive insights: summary and deep-dive views.',
@@ -543,6 +541,8 @@ export const translations = {
     'flows.tab.reactivation14d': 'Re-Activation (14d)',
     'flows.tab.ftdFirstTrade': 'FTD → First Trade',
     'flows.tab.preFtdConversion': 'Pre-FTD Conversion',
+    'flows.tab.affiliate35575NoFtd3Days': 'Affiliate 35575 — No FTD (3d)',
+    'flows.tab.dormantValueLoginReactivation': 'Dormant Value — Login Reactivation',
     'flows.legend.stepArrow': 'Step (arrow)',
     'flows.legend.influenceArrow': 'Influence (dashed arrow)',
     'flows.legend.clickable': 'Clickable (↗)',
@@ -963,9 +963,7 @@ export const translations = {
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'User check tool',
     'sidebar.aiAssistant': 'AI Assistant',
-    'sidebar.whatsappPerformance': 'WhatsApp Performance',
     'sidebar.trustpilotGuide': 'Trustpilot Guide',
-    'sidebar.whatsappTemplates': 'WhatsApp Templates',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History
@@ -3064,8 +3062,6 @@ export const translations = {
     'home.action.userCheck': 'Strumento Support: controlli utente e flusso di investigazione.',
     'home.action.aiAssistant':
       'Chat di supporto Bullwaves per FAQ Broker e Prime con escalation sicure.',
-    'home.action.whatsappPerformance':
-      'Monitoraggio conversazioni WhatsApp con tipo di avvio e stato risposta a colpo d’occhio.',
     'home.action.tasks': 'Bacheca task: pianifica, esegui, revisiona.',
     'home.action.flows': 'Flussi del journey utente e conversion checkpoints.',
     'home.action.executiveSuite': 'Insight Executive: summary e viste di dettaglio.',
@@ -3126,6 +3122,8 @@ export const translations = {
     'flows.tab.reactivation14d': 'Re-Activation (14d)',
     'flows.tab.ftdFirstTrade': 'FTD → First Trade',
     'flows.tab.preFtdConversion': 'Pre-FTD Conversion',
+    'flows.tab.affiliate35575NoFtd3Days': 'Affiliate 35575 — No FTD (3g)',
+    'flows.tab.dormantValueLoginReactivation': 'Dormant Value — Riattivazione Login',
     'flows.legend.stepArrow': 'Step (freccia)',
     'flows.legend.influenceArrow': 'Influenza (freccia tratteggiata)',
     'flows.legend.clickable': 'Cliccabile (↗)',
@@ -3558,9 +3556,7 @@ export const translations = {
     'sidebar.orgChart': 'Org Chart',
     'sidebar.supportUserCheck': 'User check tool',
     'sidebar.aiAssistant': 'AI Assistant',
-    'sidebar.whatsappPerformance': 'Performance WhatsApp',
     'sidebar.trustpilotGuide': 'Guida Trustpilot',
-    'sidebar.whatsappTemplates': 'Template WhatsApp',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History
@@ -5848,7 +5844,6 @@ export const translations = {
     'sidebar.orgChart': 'Org chart',
     'sidebar.supportUserCheck': 'User check tool',
     'sidebar.trustpilotGuide': 'Trustpilot vodič',
-    'sidebar.whatsappTemplates': 'WhatsApp šabloni',
     'sidebar.upload': 'Upload',
 
     // Weekly Execution History
