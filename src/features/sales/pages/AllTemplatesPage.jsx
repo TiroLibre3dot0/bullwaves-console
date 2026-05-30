@@ -248,6 +248,34 @@ function buildMailFlowSteps(row) {
   return steps.length ? steps : ['—']
 }
 
+function formatShortMessageId(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  if (raw.length <= 14) return raw
+  return `${raw.slice(0, 7)}...${raw.slice(-5)}`
+}
+
+function getLatestTrackingForRecipient(items, recipientEmail) {
+  const normalizedRecipient = String(recipientEmail || '')
+    .trim()
+    .toLowerCase()
+  if (!normalizedRecipient || !Array.isArray(items)) return null
+
+  const matches = items.filter(
+    (item) =>
+      String(item?.to || '')
+        .trim()
+        .toLowerCase() === normalizedRecipient
+  )
+  if (!matches.length) return null
+
+  return matches.sort((left, right) => {
+    const leftTs = Date.parse(String(left?.updatedAt || '')) || 0
+    const rightTs = Date.parse(String(right?.updatedAt || '')) || 0
+    return rightTs - leftTs
+  })[0]
+}
+
 function moneyWithCurrency(value, currencyCode) {
   if (!currencyCode) return '—'
   const amount = Number(value || 0)
@@ -312,6 +340,7 @@ function MarketingCampaignSection({
   selectedCampaignRowKey,
   onSelectCampaignRow,
   trackingMeta,
+  latestTestTracking,
 }) {
   const totals = useMemo(() => {
     const totalBonus = rows.reduce(
@@ -433,6 +462,101 @@ function MarketingCampaignSection({
 
       <div
         style={{
+          borderRadius: 14,
+          padding: 14,
+          background: 'rgba(8,15,29,0.92)',
+          border: '1px solid rgba(125,211,252,0.18)',
+          display: 'grid',
+          gap: 8,
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <div>
+            <div
+              style={{ fontSize: 12, color: '#7dd3fc', fontWeight: 800, letterSpacing: '0.08em' }}
+            >
+              LATEST LIVE TEST
+            </div>
+            <div style={{ marginTop: 4, color: '#f5f9ff', fontWeight: 800 }}>
+              paolo.v@bullwaves.com
+            </div>
+          </div>
+          <span
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: 999,
+              padding: '5px 10px',
+              fontSize: 11,
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.06em',
+              ...(latestTestTracking
+                ? getMailStatusStyle(latestTestTracking.status)
+                : getMailStatusStyle('pending')),
+            }}
+          >
+            {latestTestTracking ? normalizeMailStatus(latestTestTracking.status) : 'no test yet'}
+          </span>
+        </div>
+
+        {latestTestTracking ? (
+          <>
+            <div
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12 }}
+            >
+              <div>
+                <div style={{ fontSize: 11, color: '#93acc5', fontWeight: 800 }}>Message ID</div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700 }}>
+                  {formatShortMessageId(latestTestTracking.messageId)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#93acc5', fontWeight: 800 }}>Flow</div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700 }}>
+                  {buildMailFlowSteps({
+                    mailStatus: latestTestTracking.status,
+                    mailLastEvent: latestTestTracking.lastEvent,
+                    mailOpenCount: latestTestTracking.openCount,
+                    mailClickCount: latestTestTracking.clickCount,
+                  }).join(' → ')}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#93acc5', fontWeight: 800 }}>Open / Click</div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700 }}>
+                  {Number(latestTestTracking.openCount || 0)} /{' '}
+                  {Number(latestTestTracking.clickCount || 0)}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 11, color: '#93acc5', fontWeight: 800 }}>Updated</div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700 }}>
+                  {formatDateTime(latestTestTracking.updatedAt) || '—'}
+                </div>
+              </div>
+            </div>
+            <div style={{ color: '#9ec3df', fontSize: 12 }}>
+              Evidence: after send, open the email, click the link, then wait up to 20s for
+              auto-refresh.
+            </div>
+          </>
+        ) : (
+          <div style={{ color: '#9ec3df', fontSize: 12 }}>
+            No live test found yet for paolo.v@bullwaves.com.
+          </div>
+        )}
+      </div>
+
+      <div
+        style={{
           borderRadius: 16,
           border: '1px solid rgba(255,255,255,0.1)',
           background: 'rgba(2,6,23,0.5)',
@@ -448,14 +572,14 @@ function MarketingCampaignSection({
                   'Rank',
                   'Name',
                   'Email',
+                  'Mail status',
+                  'Engagement',
                   'Trading Account',
                   'User',
                   'Currency',
                   'Net Deposits USD',
                   'Net Deposits Account',
                   'Bonus',
-                  'Mail status',
-                  'Engagement',
                 ].map((header) => (
                   <th
                     key={header}
@@ -493,28 +617,16 @@ function MarketingCampaignSection({
                       {row.rank}
                     </td>
                     <td style={{ padding: '12px 14px', color: '#f8fcff', fontWeight: 700 }}>
-                      {row.name}
+                      <div style={{ display: 'grid', gap: 4 }}>
+                        <div>{row.name}</div>
+                        {row.mailMessageId ? (
+                          <div style={{ fontSize: 10, color: '#89a7c3', fontWeight: 600 }}>
+                            Tracking attached to this client row
+                          </div>
+                        ) : null}
+                      </div>
                     </td>
                     <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>{row.email}</td>
-                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>{row.tradingAccount}</td>
-                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
-                      {row.user || 'Unassigned'}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
-                      {row.accountCurrency}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
-                      {moneyWithCurrency(row.netDepositsUsd, 'USD')}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
-                      {moneyWithCurrency(row.netDepositsAccountCurrency, row.accountCurrency)}
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#f8fcff', fontWeight: 800 }}>
-                      {moneyWithCurrency(
-                        roundToNearestThousand(row.bonusAccountCurrencyRaw || 0),
-                        row.accountCurrency
-                      )}
-                    </td>
                     <td style={{ padding: '12px 14px' }}>
                       <span
                         style={{
@@ -545,7 +657,32 @@ function MarketingCampaignSection({
                         <div style={{ color: '#89a7c3', fontSize: 11 }}>
                           Last event: {row.mailLastEvent || '—'}
                         </div>
+                        {row.mailMessageId ? (
+                          <div style={{ color: '#6fa8d7', fontSize: 10 }}>
+                            Test delivered to paolo.v@bullwaves.com · Msg{' '}
+                            {formatShortMessageId(row.mailMessageId)}
+                          </div>
+                        ) : null}
                       </div>
+                    </td>
+                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>{row.tradingAccount}</td>
+                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
+                      {row.user || 'Unassigned'}
+                    </td>
+                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
+                      {row.accountCurrency}
+                    </td>
+                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
+                      {moneyWithCurrency(row.netDepositsUsd, 'USD')}
+                    </td>
+                    <td style={{ padding: '12px 14px', color: '#bdd0e4' }}>
+                      {moneyWithCurrency(row.netDepositsAccountCurrency, row.accountCurrency)}
+                    </td>
+                    <td style={{ padding: '12px 14px', color: '#f8fcff', fontWeight: 800 }}>
+                      {moneyWithCurrency(
+                        roundToNearestThousand(row.bonusAccountCurrencyRaw || 0),
+                        row.accountCurrency
+                      )}
                     </td>
                   </tr>
                 )
@@ -579,6 +716,7 @@ export default function AllTemplatesPage() {
     lastSyncAt: '',
     error: '',
   })
+  const [backendTrackingItems, setBackendTrackingItems] = useState([])
 
   const campaignRows = useMemo(() => {
     return campaignSourceRows.map((row, index) => {
@@ -626,6 +764,10 @@ export default function AllTemplatesPage() {
       campaignRows[0] ||
       null,
     [campaignRows, selectedCampaignRowKey]
+  )
+  const latestPaoloTestTracking = useMemo(
+    () => getLatestTrackingForRecipient(backendTrackingItems, 'paolo.v@bullwaves.com'),
+    [backendTrackingItems]
   )
 
   const selectedTemplate = useMemo(
@@ -681,6 +823,7 @@ export default function AllTemplatesPage() {
       }
 
       const items = data.items
+      setBackendTrackingItems(items)
       const byMessageId = new Map(
         items.filter((item) => item?.messageId).map((item) => [String(item.messageId).trim(), item])
       )
@@ -969,6 +1112,7 @@ export default function AllTemplatesPage() {
         selectedCampaignRowKey={selectedCampaignRowKey}
         onSelectCampaignRow={handleSelectCampaignRow}
         trackingMeta={campaignTrackingMeta}
+        latestTestTracking={latestPaoloTestTracking}
       />
 
       <div

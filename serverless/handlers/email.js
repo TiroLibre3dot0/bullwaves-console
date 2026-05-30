@@ -336,9 +336,15 @@ function trackSendgridEvent(eventPayload) {
   const next = {
     ...(existing || {}),
     messageId,
-    status: isOpen || isClick ? previousStatus || 'accepted' : trackedStatus,
+    status:
+      isOpen || isClick
+        ? previousStatus && previousStatus !== 'pending'
+          ? previousStatus
+          : 'delivered'
+        : trackedStatus,
     updatedAt: eventTime,
     lastEvent: eventName,
+    to: existing?.to || eventPayload?.email || null,
     openCount: Number(existing?.openCount || 0) + (isOpen ? 1 : 0),
     clickCount: Number(existing?.clickCount || 0) + (isClick ? 1 : 0),
     firstOpenAt: isOpen ? existing?.firstOpenAt || eventTime : existing?.firstOpenAt || null,
@@ -470,6 +476,15 @@ function buildPayload(body, config) {
     from: {
       email: String(body?.fromEmail || config.fromEmail).trim(),
       name: String(body?.fromName || config.fromName).trim() || 'Bullwaves',
+    },
+    tracking_settings: {
+      click_tracking: {
+        enable: true,
+        enable_text: true,
+      },
+      open_tracking: {
+        enable: true,
+      },
     },
   }
 
