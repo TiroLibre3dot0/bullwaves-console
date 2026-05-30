@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ALL_TEMPLATES_CATALOG } from '../data/allTemplatesCatalog'
-import marketingCampaignPreview from '../../../../reports/bonus_preview_converted_by_currency.json'
+import marketingCampaignPreview from '../data/bonus_preview_converted_by_currency.json'
 
 const CAMPAIGN_TRACKING_STORAGE_KEY = 'bullwaves:campaign:mail-tracking:v1'
 const CAMPAIGN_TRACKING_REFRESH_MS = 20000
