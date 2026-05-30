@@ -1,4 +1,5 @@
 const { json, pickHeader, safeParseJsonBody } = require('./_http')
+const fs = require('fs')
 const path = require('path')
 const dotenv = require('dotenv')
 
@@ -10,6 +11,13 @@ dotenv.config({
 const SENDGRID_API = 'https://api.sendgrid.com/v3/mail/send'
 const PRIVATE_PREVIEW_EMAILS = new Set(['paolo.v@bullwaves.com'])
 const PRIVATE_PREVIEW_RECIPIENTS = new Set(['paolo.v@bullwaves.com'])
+const MESSAGE_ID_TRIMMER = /\..*$/
+const TRACKING_STORE_PATH = path.join(__dirname, '..', '..', 'uploads', 'email_tracking_store.json')
+const TRACKING_MAX_EVENTS = 40
+
+const mailTrackingByMessageId = new Map()
+const mailTrackingByNormalizedMessageId = new Map()
+let trackingStoreLoaded = false
 
 function env(name, fallback = '') {
   const value = process.env[name]
@@ -28,6 +36,11 @@ function getConfig() {
     fromEmail: env('SENDGRID_FROM_EMAIL'),
     fromName: env('SENDGRID_FROM_NAME', 'Bullwaves'),
     unsubscribeGroupId: env('SENDGRID_UNSUBSCRIBE_GROUP_ID'),
+    senderName: env('SENDGRID_SENDER_NAME', ''),
+    senderAddress: env('SENDGRID_SENDER_ADDRESS', ''),
+    senderCity: env('SENDGRID_SENDER_CITY', ''),
+    senderState: env('SENDGRID_SENDER_STATE', ''),
+    senderZip: env('SENDGRID_SENDER_ZIP', ''),
   }
 }
 
@@ -54,11 +67,388 @@ function isAllowedRecipient(email) {
   return PRIVATE_PREVIEW_RECIPIENTS.has(normalizeEmail(email))
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+}
+
+function sanitizeRawHtmlFooterPlaceholders(html, body, config) {
+  let output = String(html || '')
+  if (!output) return output
+
+  const senderName = escapeHtml(config.senderName || body?.fromName || config.fromName || 'Bullwaves')
+  const senderAddress = escapeHtml(config.senderAddress)
+  const senderCity = escapeHtml(config.senderCity)
+  const senderState = escapeHtml(config.senderState)
+  const senderZip = escapeHtml(config.senderZip)
+  const fallbackUnsubscribe = `mailto:${encodeURIComponent(config.fromEmail || 'support@bullwaves.com')}?subject=Unsubscribe`
+  const fallbackPreferences = `mailto:${encodeURIComponent(config.fromEmail || 'support@bullwaves.com')}?subject=Email%20Preferences`
+  const unsubscribeUrl = String(body?.unsubscribeUrl || fallbackUnsubscribe).trim()
+  const preferencesUrl = String(body?.unsubscribePreferencesUrl || fallbackPreferences).trim()
+
+  output = output
+    .replaceAll('{{Sender_Name}}', senderName)
+    .replaceAll('{{Sender_Address}}', senderAddress)
+    .replaceAll('{{Sender_City}}', senderCity)
+    .replaceAll('{{Sender_State}}', senderState)
+    .replaceAll('{{Sender_Zip}}', senderZip)
+    .replaceAll('{{{unsubscribe}}}', unsubscribeUrl)
+    .replaceAll('{{unsubscribe}}', unsubscribeUrl)
+    .replaceAll('{{{unsubscribe_preferences}}}', preferencesUrl)
+    .replaceAll('{{unsubscribe_preferences}}', preferencesUrl)
+
+  // If address details are not configured, hide the address paragraph to avoid dangling punctuation.
+  if (!senderAddress && !senderCity && !senderState && !senderZip) {
+    output = output.replace(/<p[^>]*>\s*<span[^>]*Unsubscribe--senderAddress[\s\S]*?<\/p>/gi, '')
+  }
+
+  return output
+}
+
+function ensureTrackingStoreLoaded() {
+  if (trackingStoreLoaded) return
+  trackingStoreLoaded = true
+
+  try {
+    if (!fs.existsSync(TRACKING_STORE_PATH)) return
+    const raw = fs.readFileSync(TRACKING_STORE_PATH, 'utf8')
+    const parsed = JSON.parse(raw)
+    const entries = Array.isArray(parsed?.items) ? parsed.items : []
+
+    for (const entry of entries) {
+      const messageId = String(entry?.messageId || '').trim()
+      if (!messageId) continue
+
+      const normalizedMessageId = normalizeMessageId(messageId)
+      const clean = {
+        messageId,
+        normalizedMessageId,
+        status: String(entry?.status || 'pending').toLowerCase(),
+        acceptedAt: entry?.acceptedAt || null,
+        deliveredAt: entry?.deliveredAt || null,
+        failedAt: entry?.failedAt || null,
+        updatedAt: entry?.updatedAt || null,
+        to: entry?.to || null,
+        fromEmail: entry?.fromEmail || null,
+        fromName: entry?.fromName || null,
+        subject: entry?.subject || null,
+        lastEvent: entry?.lastEvent || null,
+        openCount: Number(entry?.openCount || 0),
+        clickCount: Number(entry?.clickCount || 0),
+        firstOpenAt: entry?.firstOpenAt || null,
+        lastOpenAt: entry?.lastOpenAt || null,
+        firstClickAt: entry?.firstClickAt || null,
+        lastClickAt: entry?.lastClickAt || null,
+        events: Array.isArray(entry?.events) ? entry.events.slice(-TRACKING_MAX_EVENTS) : [],
+      }
+
+      mailTrackingByMessageId.set(messageId, clean)
+      if (normalizedMessageId) {
+        mailTrackingByNormalizedMessageId.set(normalizedMessageId, messageId)
+      }
+    }
+  } catch (error) {
+    console.error('[email-tracking] Failed to load tracking store:', error?.message || error)
+  }
+}
+
+function saveTrackingStoreToDisk() {
+  try {
+    const dir = path.dirname(TRACKING_STORE_PATH)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+    const items = Array.from(mailTrackingByMessageId.values())
+      .sort((a, b) => {
+        const ta = Date.parse(a?.updatedAt || 0) || 0
+        const tb = Date.parse(b?.updatedAt || 0) || 0
+        return tb - ta
+      })
+      .slice(0, 2000)
+
+    fs.writeFileSync(
+      TRACKING_STORE_PATH,
+      JSON.stringify(
+        {
+          updatedAt: new Date().toISOString(),
+          count: items.length,
+          items,
+        },
+        null,
+        2
+      ),
+      'utf8'
+    )
+  } catch (error) {
+    console.error('[email-tracking] Failed to save tracking store:', error?.message || error)
+  }
+}
+
+function normalizeMessageId(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  return raw.replace(MESSAGE_ID_TRIMMER, '').trim()
+}
+
+function toIsoTimestamp(value) {
+  if (value == null || value === '') return new Date().toISOString()
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    const epochMs = value > 1e12 ? value : value * 1000
+    return new Date(epochMs).toISOString()
+  }
+
+  const parsed = Date.parse(String(value))
+  if (Number.isFinite(parsed)) {
+    return new Date(parsed).toISOString()
+  }
+
+  return new Date().toISOString()
+}
+
+function getTrackedStatus(rawStatus) {
+  const status = String(rawStatus || '').trim().toLowerCase()
+
+  if (status === 'accepted' || status === 'processed' || status === 'deferred') return status
+  if (status === 'delivered') return 'delivered'
+  if (status === 'bounce' || status === 'bounced' || status === 'dropped' || status === 'blocked') {
+    return 'failed'
+  }
+
+  return status || 'pending'
+}
+
+function upsertTrackingRecord(record) {
+  ensureTrackingStoreLoaded()
+
+  const messageId = String(record?.messageId || '').trim()
+  if (!messageId) return null
+
+  const normalizedMessageId = normalizeMessageId(messageId)
+  const current = mailTrackingByMessageId.get(messageId)
+  const next = {
+    messageId,
+    normalizedMessageId,
+    status: String(record?.status || current?.status || 'pending').toLowerCase(),
+    acceptedAt: record?.acceptedAt || current?.acceptedAt || null,
+    deliveredAt: record?.deliveredAt || current?.deliveredAt || null,
+    failedAt: record?.failedAt || current?.failedAt || null,
+    updatedAt: record?.updatedAt || current?.updatedAt || new Date().toISOString(),
+    to: record?.to || current?.to || null,
+    fromEmail: record?.fromEmail || current?.fromEmail || null,
+    fromName: record?.fromName || current?.fromName || null,
+    subject: record?.subject || current?.subject || null,
+    lastEvent: record?.lastEvent || current?.lastEvent || null,
+    openCount: Number(record?.openCount ?? current?.openCount ?? 0),
+    clickCount: Number(record?.clickCount ?? current?.clickCount ?? 0),
+    firstOpenAt: record?.firstOpenAt || current?.firstOpenAt || null,
+    lastOpenAt: record?.lastOpenAt || current?.lastOpenAt || null,
+    firstClickAt: record?.firstClickAt || current?.firstClickAt || null,
+    lastClickAt: record?.lastClickAt || current?.lastClickAt || null,
+    events: Array.isArray(record?.events)
+      ? record.events
+      : Array.isArray(current?.events)
+        ? current.events
+        : [],
+  }
+
+  next.events = next.events.slice(-TRACKING_MAX_EVENTS)
+
+  mailTrackingByMessageId.set(messageId, next)
+  if (normalizedMessageId) {
+    mailTrackingByNormalizedMessageId.set(normalizedMessageId, messageId)
+  }
+
+  saveTrackingStoreToDisk()
+
+  return next
+}
+
+function findTrackingRecordByMessageId(messageId) {
+  ensureTrackingStoreLoaded()
+
+  const raw = String(messageId || '').trim()
+  if (!raw) return null
+
+  const direct = mailTrackingByMessageId.get(raw)
+  if (direct) return direct
+
+  const normalized = normalizeMessageId(raw)
+  const mappedMessageId = mailTrackingByNormalizedMessageId.get(normalized)
+  if (mappedMessageId) {
+    const mapped = mailTrackingByMessageId.get(mappedMessageId)
+    if (mapped) return mapped
+  }
+
+  for (const record of mailTrackingByMessageId.values()) {
+    if (record?.normalizedMessageId && record.normalizedMessageId === normalized) {
+      return record
+    }
+  }
+
+  return null
+}
+
+function trackAcceptedSend(messageId, payload) {
+  if (!messageId) return null
+
+  const now = new Date().toISOString()
+  return upsertTrackingRecord({
+    messageId,
+    status: 'accepted',
+    acceptedAt: now,
+    updatedAt: now,
+    to: payload?.personalizations?.[0]?.to?.[0]?.email || null,
+    fromEmail: payload?.from?.email || null,
+    fromName: payload?.from?.name || null,
+    subject: payload?.personalizations?.[0]?.subject || null,
+    openCount: 0,
+    clickCount: 0,
+    lastEvent: 'accepted',
+    events: [
+      {
+        event: 'accepted',
+        at: now,
+      },
+    ],
+  })
+}
+
+function trackSendgridEvent(eventPayload) {
+  const eventName = String(eventPayload?.event || '').trim().toLowerCase()
+  const sgMessageId = String(eventPayload?.sg_message_id || eventPayload?.smtp_id || '').trim()
+  if (!eventName || !sgMessageId) {
+    return { updated: false, reason: 'missing event or sg_message_id' }
+  }
+
+  const existing = findTrackingRecordByMessageId(sgMessageId)
+  const messageId = existing?.messageId || sgMessageId
+  const eventTime = toIsoTimestamp(eventPayload?.timestamp)
+  const trackedStatus = getTrackedStatus(eventName)
+  const existingEvents = Array.isArray(existing?.events) ? existing.events : []
+  const previousStatus = String(existing?.status || 'pending').toLowerCase()
+  const isOpen = eventName === 'open'
+  const isClick = eventName === 'click'
+
+  const next = {
+    ...(existing || {}),
+    messageId,
+    status: isOpen || isClick ? previousStatus || 'accepted' : trackedStatus,
+    updatedAt: eventTime,
+    lastEvent: eventName,
+    openCount: Number(existing?.openCount || 0) + (isOpen ? 1 : 0),
+    clickCount: Number(existing?.clickCount || 0) + (isClick ? 1 : 0),
+    firstOpenAt: isOpen ? existing?.firstOpenAt || eventTime : existing?.firstOpenAt || null,
+    lastOpenAt: isOpen ? eventTime : existing?.lastOpenAt || null,
+    firstClickAt: isClick ? existing?.firstClickAt || eventTime : existing?.firstClickAt || null,
+    lastClickAt: isClick ? eventTime : existing?.lastClickAt || null,
+    events: [
+      ...existingEvents,
+      {
+        event: eventName,
+        at: eventTime,
+        reason: eventPayload?.reason || null,
+        email: eventPayload?.email || null,
+        sgEventId: eventPayload?.sg_event_id || null,
+      },
+    ],
+  }
+
+  if (trackedStatus === 'delivered' && !next.deliveredAt) {
+    next.deliveredAt = eventTime
+  }
+
+  if (trackedStatus === 'failed' && !next.failedAt) {
+    next.failedAt = eventTime
+  }
+
+  upsertTrackingRecord(next)
+  return { updated: true, messageId, status: trackedStatus }
+}
+
 function normalizeContent(body) {
   const subject = String(body?.subject || 'Bullwaves SendGrid test').trim()
   const text = String(body?.text || 'Bullwaves SendGrid test email').trim()
   const html = String(body?.html || `<p>${text}</p>`).trim()
   return { subject, text, html }
+}
+
+function getProxyBaseUrl() {
+  return env('SENDGRID_PROXY_BASE_URL')
+}
+
+function normalizeProxyBaseUrl(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return ''
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw
+}
+
+async function proxyEmailRoute(req, res, parts) {
+  const proxyBaseUrl = normalizeProxyBaseUrl(getProxyBaseUrl())
+  if (!proxyBaseUrl) return false
+
+  const suffix = parts.length ? `/${parts.join('/')}` : ''
+  const url = `${proxyBaseUrl}/api/email${suffix}`
+  const method = String(req.method || 'GET').toUpperCase()
+  const incomingBody = safeParseJsonBody(req)
+
+  const headers = {
+    Accept: 'application/json',
+  }
+
+  const contentType = String(pickHeader(req, 'content-type') || '').trim()
+  if (contentType) headers['Content-Type'] = contentType
+
+  const forwardedHeaders = [
+    'x-bullwaves-user-email',
+    'x-sendgrid-event-secret',
+    'x-sendgrid-test-secret',
+    'authorization',
+  ]
+
+  for (const headerName of forwardedHeaders) {
+    const value = pickHeader(req, headerName)
+    if (value != null && String(value).trim()) {
+      headers[headerName] = String(value)
+    }
+  }
+
+  const fetchOptions = {
+    method,
+    headers,
+  }
+
+  if (method !== 'GET' && method !== 'HEAD' && incomingBody != null) {
+    fetchOptions.body = typeof incomingBody === 'string' ? incomingBody : JSON.stringify(incomingBody)
+    if (!headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json'
+    }
+  }
+
+  try {
+    const response = await fetch(url, fetchOptions)
+    const text = await response.text()
+
+    const responseType = response.headers.get('content-type') || 'application/json; charset=utf-8'
+    res.statusCode = response.status
+    res.setHeader('Content-Type', responseType)
+    res.setHeader('Cache-Control', 'no-store')
+    res.end(text)
+    return true
+  } catch (error) {
+    return json(
+      res,
+      502,
+      {
+        ok: false,
+        error: `Email proxy request failed: ${error?.message || 'unknown error'}`,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
 }
 
 function buildPayload(body, config) {
@@ -100,10 +490,11 @@ function buildPayload(body, config) {
   }
 
   const content = normalizeContent(body)
+  const safeHtml = sanitizeRawHtmlFooterPlaceholders(content.html, body, config)
   payload.personalizations[0].subject = content.subject
   payload.content = [
     { type: 'text/plain', value: content.text },
-    { type: 'text/html', value: content.html },
+    { type: 'text/html', value: safeHtml },
   ]
   return payload
 }
@@ -262,6 +653,8 @@ async function handleSendTest(req, res) {
       )
     }
 
+    const tracked = trackAcceptedSend(result.headers.messageId, payload)
+
     return json(
       res,
       200,
@@ -270,6 +663,7 @@ async function handleSendTest(req, res) {
         accepted: true,
         sendgridStatus: result.status,
         messageId: result.headers.messageId,
+        tracking: tracked,
         request: {
           viewerEmail,
           to,
@@ -294,11 +688,114 @@ async function handleSendTest(req, res) {
 
 async function routeEmail(req, res, parts) {
   const head = parts[0] || ''
+
+  const shouldProxy = Boolean(getProxyBaseUrl()) && head !== 'events'
+  if (shouldProxy) {
+    const proxied = await proxyEmailRoute(req, res, parts)
+    if (proxied) return
+  }
+
   if (head === 'health') return handleHealth(req, res)
+  if (head === 'status') return handleStatus(req, res, parts)
+  if (head === 'events') return handleEvents(req, res)
   if (head === 'send-test') return handleSendTest(req, res)
   return json(res, 404, { ok: false, error: 'Not found' }, { 'Cache-Control': 'no-store' })
 }
 
 module.exports = {
   routeEmail,
+}
+
+async function handleStatus(req, res, parts) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET')
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const viewerEmail = readViewerEmail(req)
+  if (!canAccessPrivatePreview(viewerEmail)) {
+    return json(
+      res,
+      403,
+      {
+        ok: false,
+        error: 'Access denied. This preview is limited to paolo.v@bullwaves.com.',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const rawMessageId = decodeURIComponent(String(parts?.[1] || '').trim())
+  if (!rawMessageId) {
+    ensureTrackingStoreLoaded()
+    const items = Array.from(mailTrackingByMessageId.values())
+      .sort((a, b) => {
+        const ta = Date.parse(a?.updatedAt || 0) || 0
+        const tb = Date.parse(b?.updatedAt || 0) || 0
+        return tb - ta
+      })
+      .slice(0, 100)
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        items,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const tracking = findTrackingRecordByMessageId(rawMessageId)
+  if (!tracking) {
+    return json(
+      res,
+      404,
+      {
+        ok: false,
+        error: 'Message id not found in local tracking store',
+        messageId: rawMessageId,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  return json(res, 200, { ok: true, tracking }, { 'Cache-Control': 'no-store' })
+}
+
+async function handleEvents(req, res) {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST')
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const configSecret = env('SENDGRID_EVENT_WEBHOOK_SECRET')
+  if (configSecret) {
+    const sentSecret = String(pickHeader(req, 'x-sendgrid-event-secret') || '').trim()
+    if (!sentSecret || sentSecret !== configSecret) {
+      return json(res, 401, { ok: false, error: 'Invalid webhook secret' }, { 'Cache-Control': 'no-store' })
+    }
+  }
+
+  const body = safeParseJsonBody(req)
+  const events = Array.isArray(body) ? body : body ? [body] : []
+
+  if (!events.length) {
+    return json(res, 400, { ok: false, error: 'Missing events payload' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const updates = events.map(trackSendgridEvent)
+  const updatedCount = updates.filter((item) => item.updated).length
+
+  return json(
+    res,
+    202,
+    {
+      ok: true,
+      received: events.length,
+      updated: updatedCount,
+    },
+    { 'Cache-Control': 'no-store' }
+  )
 }
