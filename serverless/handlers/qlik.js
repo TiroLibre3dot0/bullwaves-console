@@ -6448,22 +6448,26 @@ async function handleCreolabsDbLive(req, res) {
         ? _creolabsRegisteredLeadsObjectCache.data
         : []
       if (registeredRows.length > 0) {
-      const registeredFiltered = applyDbLiveFilters(registeredRows, urlObj)
-      const registeredScoped = applyRecentScope(registeredFiltered)
-      const registeredDateFiltered = hasDateRange
-        ? registeredScoped.filter((user) => {
-            const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
-            if (!Number.isFinite(ts)) return false
-            return ts >= fromMs && ts <= toMs
-          })
-        : registeredScoped
-      const leadClientIds = new Set(
-        registeredDateFiltered
-          .map((user) => normalizeText(user?.clientId))
-          .filter(Boolean)
-      )
-      registeredLeadsCount = leadClientIds.size
-      registeredLeadsAvailable = true
+        const registeredFiltered = applyDbLiveFilters(registeredRows, urlObj)
+        const registeredScoped = applyRecentScope(registeredFiltered)
+        const registeredDateFiltered = hasDateRange
+          ? registeredScoped.filter((user) => {
+              const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+              if (!Number.isFinite(ts)) return false
+              return ts >= fromMs && ts <= toMs
+            })
+          : registeredScoped
+        const leadClientIds = new Set(
+          registeredDateFiltered
+            .filter((user) => {
+              const normalizedStatus = normalizeText(user?.status).toLowerCase()
+              return !CREOLABS_LEAD_EXCLUDED_STATUSES.has(normalizedStatus)
+            })
+            .map((user) => normalizeText(user?.clientId))
+            .filter(Boolean)
+        )
+        registeredLeadsCount = leadClientIds.size
+        registeredLeadsAvailable = true
       }
     } catch {
       // Leads source unavailable: avoid returning inflated fallback derived from active client-month rows.
