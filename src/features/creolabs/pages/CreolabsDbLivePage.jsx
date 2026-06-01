@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import KpiCard from '../../../components/common/KpiCard'
 
 const DEFAULT_FROM = ''
-const DEFAULT_TO = ''
+const DEFAULT_TO = toIsoDateOnly(new Date())
 const DEFAULT_LIMIT = 200
 const REQUEST_TIMEOUT_MS = 20000
 const DEFAULT_SORT = '-clientTimestamp,-clientId'
@@ -67,6 +67,11 @@ const intFmt = new Intl.NumberFormat('en-GB', {
   minimumFractionDigits: 0,
   maximumFractionDigits: 0,
 })
+
+function toFiniteOrNull(value) {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : null
+}
 
 const primaryButtonStyle = {
   appearance: 'none',
@@ -407,6 +412,7 @@ export default function CreolabsDbLivePage() {
   const [selectedMonths, setSelectedMonths] = useState([])
   const [selectedPeriods, setSelectedPeriods] = useState([])
   const warnedMissingQueryKpisRef = useRef(false)
+  const clearedHiddenFiltersRef = useRef(false)
 
   const yearTabs = useMemo(() => {
     const y = new Date().getFullYear()
@@ -432,11 +438,6 @@ export default function CreolabsDbLivePage() {
 
   const visibleRows = useMemo(() => (Array.isArray(rows) ? rows : []), [rows])
   const summaryCards = useMemo(() => {
-    const toFiniteOrNull = (value) => {
-      const number = Number(value)
-      return Number.isFinite(number) ? number : null
-    }
-
     const formatMoneyOrNA = (value) => {
       const number = toFiniteOrNull(value)
       return number == null ? 'n/a' : moneyFmt.format(number)
@@ -447,19 +448,35 @@ export default function CreolabsDbLivePage() {
       return number == null ? 'n/a' : intFmt.format(number)
     }
 
-    const queryKpis = meta?.queryKpis || null
+    const queryKpis = meta?.volumeKpis || meta?.queryKpis || null
     const hasQueryKpis = Boolean(
       queryKpis && typeof queryKpis === 'object' && Object.keys(queryKpis).length > 0
     )
     const queryTotal = toFiniteOrNull(meta?.query?.total)
     const totalFilteredRows = toFiniteOrNull(queryKpis?.rows) ?? queryTotal ?? visibleRows.length
-    const totalUniqueClients =
+    const fallbackActiveTraders = new Set(
+      visibleRows
+        .filter((row) => {
+          const trades = toFiniteOrNull(row?.trades) ?? 0
+          const openedTrades = toFiniteOrNull(row?.opened_trades ?? row?.openedTrades) ?? 0
+          const closedVolume =
+            toFiniteOrNull(
+              row?.closed_volume ?? row?.closedVolume ?? row?.closedVol ?? row?.volumeClosed
+            ) ?? 0
+          const closedPl = toFiniteOrNull(row?.closed_pl ?? row?.closedPl) ?? 0
+          const openPl = toFiniteOrNull(row?.open_pl ?? row?.openPl) ?? 0
+          return (
+            trades > 0 || openedTrades > 0 || closedVolume > 0 || closedPl !== 0 || openPl !== 0
+          )
+        })
+        .map((row) => String(row?.client_id || row?.clientId || '').trim())
+        .filter(Boolean)
+    ).size
+    const totalActiveTraders =
+      toFiniteOrNull(queryKpis?.activeTraders) ??
       toFiniteOrNull(queryKpis?.uniqueClients) ??
-      new Set(
-        visibleRows
-          .map((row) => String(row?.client_id || row?.clientId || '').trim())
-          .filter(Boolean)
-      ).size
+      fallbackActiveTraders
+    const totalLeads = toFiniteOrNull(queryKpis?.totalLeads)
     const totalUniqueAffiliates =
       toFiniteOrNull(queryKpis?.uniqueAffiliates) ??
       new Set(
@@ -484,6 +501,10 @@ export default function CreolabsDbLivePage() {
     )
     const fallbackFtd = visibleRows.reduce((sum, row) => sum + (toFiniteOrNull(row?.ftd) ?? 0), 0)
     const fallbackRdp = visibleRows.reduce((sum, row) => sum + (toFiniteOrNull(row?.rdp) ?? 0), 0)
+    const fallbackCommission = visibleRows.reduce(
+      (sum, row) => sum + (toFiniteOrNull(row?.ltv_commission) ?? 0),
+      0
+    )
     const totalNet = toFiniteOrNull(queryKpis?.net) ?? fallbackNet
     const totalDeposit = toFiniteOrNull(queryKpis?.deposit) ?? fallbackDeposit
     const totalWd = toFiniteOrNull(queryKpis?.wd) ?? fallbackWd
@@ -491,6 +512,7 @@ export default function CreolabsDbLivePage() {
     const totalPl = toFiniteOrNull(queryKpis?.totalPl) ?? fallbackPl
     const totalFtd = toFiniteOrNull(queryKpis?.ftd) ?? fallbackFtd
     const totalRdp = toFiniteOrNull(queryKpis?.rdp) ?? fallbackRdp
+    const totalCommission = toFiniteOrNull(queryKpis?.commission) ?? fallbackCommission
 
     const queryLimit = toFiniteOrNull(meta?.query?.limit) ?? limit ?? DEFAULT_LIMIT
     const missingIdentity = toFiniteOrNull(meta?.quality?.identityMissing?.count)
@@ -505,10 +527,16 @@ export default function CreolabsDbLivePage() {
         tone: '#e2e8f0',
       },
       {
-        label: 'Unique clients',
-        value: formatIntOrNA(totalUniqueClients),
+        label: 'Active traders',
+        value: formatIntOrNA(totalActiveTraders),
         helper: `Unique affiliates: ${formatIntOrNA(totalUniqueAffiliates)}`,
         tone: '#7dd3fc',
+      },
+      {
+        label: 'Total leads',
+        value: formatIntOrNA(totalLeads),
+        helper: 'Distinct registrations (client timestamp) in selected period',
+        tone: '#93c5fd',
       },
       {
         label: 'Net',
@@ -527,6 +555,12 @@ export default function CreolabsDbLivePage() {
         value: formatMoneyOrNA(totalWd),
         helper: 'Sum on filtered selection',
         tone: '#f472b6',
+      },
+      {
+        label: 'Commission',
+        value: formatMoneyOrNA(totalCommission),
+        helper: '$ Commission Aff from transaction dataset',
+        tone: '#f59e0b',
       },
       {
         label: 'Trades',
@@ -602,12 +636,11 @@ export default function CreolabsDbLivePage() {
     const resetCursor = Boolean(options.resetCursor)
     const effectiveFrom = String(options.from != null ? options.from : from).trim()
     const effectiveTo = String(options.to != null ? options.to : to).trim()
-    const effectiveSearch = String(options.search != null ? options.search : search).trim()
-    const effectiveStatus = String(options.status != null ? options.status : status).trim()
-    const effectiveCountry = String(options.country != null ? options.country : country).trim()
-    const effectiveAffiliateId = String(
-      options.affiliateId != null ? options.affiliateId : affiliateId
-    ).trim()
+    const effectiveScope = String(options.scope != null ? options.scope : 'all').trim() || 'all'
+    const effectiveSearch = ''
+    const effectiveStatus = ''
+    const effectiveCountry = ''
+    const effectiveAffiliateId = ''
     const effectiveSort = String(options.sort != null ? options.sort : sort || DEFAULT_SORT).trim()
     const effectiveBrands = Array.isArray(options.brands)
       ? options.brands.map((item) => String(item || '').trim()).filter(Boolean)
@@ -623,15 +656,12 @@ export default function CreolabsDbLivePage() {
       const query = new globalThis.URLSearchParams()
       if (effectiveFrom) query.set('from', effectiveFrom)
       if (effectiveTo) query.set('to', effectiveTo)
+      query.set('scope', effectiveScope)
       query.set('monthFallback', allowMonthFallback ? '1' : '0')
       query.set('strictLive', strictLive ? '1' : '0')
       query.set('markUnmappedIdentity', markUnmappedIdentity ? '1' : '0')
       query.set('limit', String(effectiveLimit))
       query.set('sort', effectiveSort || DEFAULT_SORT)
-      if (effectiveSearch) query.set('search', effectiveSearch)
-      if (effectiveStatus) query.set('status', effectiveStatus)
-      if (effectiveCountry) query.set('country', effectiveCountry)
-      if (effectiveAffiliateId) query.set('affiliateId', effectiveAffiliateId)
       if (effectiveBrands.length) query.set('brand', effectiveBrands.join(','))
       if (nextCursorArg) query.set('page', nextCursorArg)
 
@@ -696,34 +726,54 @@ export default function CreolabsDbLivePage() {
     loadUsers({ resetCursor: true })
   }, [])
 
+  useEffect(() => {
+    if (clearedHiddenFiltersRef.current) return
+    const hasStaleHiddenFilter = Boolean(
+      String(search || '').trim() ||
+      String(status || '').trim() ||
+      String(country || '').trim() ||
+      String(affiliateId || '').trim()
+    )
+
+    if (!hasStaleHiddenFilter) {
+      clearedHiddenFiltersRef.current = true
+      return
+    }
+
+    clearedHiddenFiltersRef.current = true
+    setSearch('')
+    setStatus('')
+    setCountry('')
+    setAffiliateId('')
+    loadUsers({ resetCursor: true, search: '', status: '', country: '', affiliateId: '' })
+  }, [affiliateId, country, search, status])
+
   const refreshSummaryOnly = useCallback(async () => {
     if (loading || ingestionBusy) return
 
     const effectiveFrom = String(from).trim()
     const effectiveTo = String(to).trim()
-    const effectiveSearch = String(search).trim()
-    const effectiveStatus = String(status).trim()
-    const effectiveCountry = String(country).trim()
-    const effectiveAffiliateId = String(affiliateId).trim()
+    const effectiveSearch = ''
+    const effectiveStatus = ''
+    const effectiveCountry = ''
+    const effectiveAffiliateId = ''
     const effectiveSort = String(sort || DEFAULT_SORT).trim()
     const effectiveBrands = Array.isArray(selectedBrands)
       ? selectedBrands.map((item) => String(item || '').trim()).filter(Boolean)
       : []
+    const effectiveScope = 'all'
 
     try {
       setSummaryRefreshing(true)
       const query = new globalThis.URLSearchParams()
       if (effectiveFrom) query.set('from', effectiveFrom)
       if (effectiveTo) query.set('to', effectiveTo)
+      query.set('scope', effectiveScope)
       query.set('monthFallback', allowMonthFallback ? '1' : '0')
       query.set('strictLive', strictLive ? '1' : '0')
       query.set('markUnmappedIdentity', markUnmappedIdentity ? '1' : '0')
       query.set('limit', '1')
       query.set('sort', effectiveSort || DEFAULT_SORT)
-      if (effectiveSearch) query.set('search', effectiveSearch)
-      if (effectiveStatus) query.set('status', effectiveStatus)
-      if (effectiveCountry) query.set('country', effectiveCountry)
-      if (effectiveAffiliateId) query.set('affiliateId', effectiveAffiliateId)
       if (effectiveBrands.length) query.set('brand', effectiveBrands.join(','))
 
       const res = await fetchWithTimeoutAndRetry(
@@ -1274,10 +1324,15 @@ export default function CreolabsDbLivePage() {
             }}
           >
             <div style={{ fontSize: 11, color: '#93c5fd', textTransform: 'uppercase' }}>
-              Total users
+              Total leads
             </div>
             <div style={{ marginTop: 6, fontSize: 24, fontWeight: 800, color: '#f8fafc' }}>
-              {Number(meta?.query?.total || 0)}
+              {(() => {
+                const leadsValue = toFiniteOrNull(
+                  meta?.volumeKpis?.totalLeads ?? meta?.queryKpis?.totalLeads
+                )
+                return leadsValue == null ? 'n/a' : intFmt.format(leadsValue)
+              })()}
             </div>
           </div>
           <div

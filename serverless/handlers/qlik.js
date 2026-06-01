@@ -3,10 +3,38 @@ const WebSocket = require('ws')
 const fs = require('fs')
 const path = require('path')
 
+function parsePositiveInt(rawValue, fallback, max = Number.MAX_SAFE_INTEGER) {
+  const value = Number(rawValue)
+  if (!Number.isFinite(value) || value <= 0) return fallback
+  return Math.min(max, Math.max(1, Math.trunc(value)))
+}
+
+function parseNonNegativeInt(rawValue, fallback = 0, max = Number.MAX_SAFE_INTEGER) {
+  const value = Number(rawValue)
+  if (!Number.isFinite(value) || value < 0) return fallback
+  return Math.min(max, Math.max(0, Math.trunc(value)))
+}
+
+function parseLimit(rawValue, fallback = 20) {
+  return parsePositiveInt(rawValue, fallback, 100)
+}
+
+function env(name, fallback = '') {
+  const value = process.env?.[name]
+  if (value == null) return fallback
+  return String(value)
+}
+
+function safeText(value) {
+  if (value == null) return ''
+  return String(value)
+}
+
 const ENGINE_CONNECT_TIMEOUT_MS = 30_000
 const ENGINE_CALL_TIMEOUT_MS = 120_000
-const REGISTERED_LEADS_OBJECT_TIMEOUT_MS = parsePositiveInt(env('REGISTERED_LEADS_OBJECT_TIMEOUT_MS'), 25_000, 120_000)
-const REGISTERED_USERS_CLIENT_MONTHS_TIMEOUT_MS = 12_000
+const REGISTERED_LEADS_OBJECT_TIMEOUT_MS = parsePositiveInt(env('REGISTERED_LEADS_OBJECT_TIMEOUT_MS'), 120_000, 300_000)
+const REGISTERED_LEADS_PAGE_SIZE = parsePositiveInt(env('REGISTERED_LEADS_PAGE_SIZE'), 250, 1000)
+const REGISTERED_LEADS_PAGE_PARALLEL = parsePositiveInt(env('REGISTERED_LEADS_PAGE_PARALLEL'), 1, 6)
 const DB_LIVE_INGEST_INTERVAL_MS = parsePositiveInt(env('DB_LIVE_INGEST_INTERVAL_MS'), 15 * 60 * 1000, 24 * 60 * 60 * 1000)
 const DB_LIVE_LOOKBACK_DAYS = 7
 const DB_LIVE_STALE_LOOKBACK_DAYS = 14
@@ -21,11 +49,10 @@ const DB_LIVE_INGEST_CONTROL_MAX_ACTIONS = 6
 const DB_LIVE_AUDIT_LOG_MAX_BYTES = 2 * 1024 * 1024
 const DB_LIVE_IDENTITY_MISSING_WARN_RATIO = 0.01
 const DB_LIVE_UNMAPPED_LABEL = 'UNMAPPED'
-
-function env(name) {
-  const v = process.env[name]
-  return v == null ? '' : String(v).trim()
-}
+const DB_LIVE_MIN_SAFE_USERS = parsePositiveInt(env('DB_LIVE_MIN_SAFE_USERS'), 5_000, 500_000)
+const QLIK_DYNAMIC_CACHE_TTL_MS = 15 * 60 * 1000
+const QLIK_DYNAMIC_ENGINE_PAGE_SIZE = 500
+const QLIK_DYNAMIC_MAX_CACHE_ITEMS = 120
 
 function normalizeTenantUrl(raw) {
   const value = String(raw || '').trim().replace(/\/+$/, '')
@@ -34,24 +61,8 @@ function normalizeTenantUrl(raw) {
   return `https://${value}`
 }
 
-function parseLimit(rawLimit, fallback = 20) {
-  const value = Number(rawLimit)
-  if (Number.isNaN(value) || value <= 0) return fallback
-  return Math.min(100, Math.max(1, value))
-}
-
-function parsePositiveInt(rawValue, fallback, max) {
-  const value = Number(rawValue)
-  if (!Number.isFinite(value) || value <= 0) return fallback
-  return Math.min(max, Math.max(1, Math.trunc(value)))
-}
-
 function normalizeWsTenantUrl(tenantUrl) {
   return String(tenantUrl || '').replace(/^https:\/\//i, 'wss://').replace(/^http:\/\//i, 'ws://')
-}
-
-function safeText(value) {
-  return String(value == null ? '' : value)
 }
 
 function withTimeout(promise, timeoutMs, label) {
@@ -140,6 +151,7 @@ class QlikEngineSession {
       throw new Error('Unable to open Qlik app document')
     }
   }
+
   call(handle, method, params = []) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return Promise.reject(new Error('Engine websocket is not open'))
@@ -261,10 +273,8 @@ function getConfig() {
   const clientId = env('QLIK_OAUTH_CLIENT_ID')
   const clientSecret = env('QLIK_OAUTH_CLIENT_SECRET')
   const scope = env('QLIK_OAUTH_SCOPE') || 'user_default'
-
   const hasOauth = Boolean(clientId && clientSecret)
   const hasApiKey = Boolean(apiKey)
-  const mode = hasOauth ? 'oauth-m2m' : hasApiKey ? 'api-key' : 'none'
 
   return {
     tenant,
@@ -274,7 +284,7 @@ function getConfig() {
     scope,
     hasOauth,
     hasApiKey,
-    mode,
+    mode: hasOauth ? 'oauth-m2m' : hasApiKey ? 'api-key' : 'none',
   }
 }
 
@@ -322,6 +332,7 @@ async function getOauthAccessToken(config) {
   return token
 }
 
+
 async function getAuthHeader(config) {
   if (config.hasOauth) {
     const token = await getOauthAccessToken(config)
@@ -330,7 +341,7 @@ async function getAuthHeader(config) {
   if (config.hasApiKey) {
     return `Bearer ${config.apiKey}`
   }
-  throw new Error('Missing auth configuration')
+  throw new Error('Missing auth configuration. Set OAuth M2M vars or QLIK_API_KEY.')
 }
 
 async function qlikGet(config, pathWithQuery) {
@@ -476,6 +487,347 @@ function ensureConfigured(res) {
   return null
 }
 
+const _qlikDynamicHypercubeCache = new Map()
+
+function buildQlikDynamicCacheKey(endpointName, appId, urlObj) {
+  const normalized = {
+    endpoint: normalizeText(endpointName).toLowerCase(),
+    appId: normalizeText(appId),
+    from: normalizeText(urlObj.searchParams.get('from')),
+    to: normalizeText(urlObj.searchParams.get('to')),
+    brand: normalizeText(urlObj.searchParams.get('brand')).toLowerCase(),
+    affiliateId: normalizeText(urlObj.searchParams.get('affiliateId')).toLowerCase(),
+    clientId: normalizeText(urlObj.searchParams.get('clientId')).toLowerCase(),
+    pageSize: parsePositiveInt(urlObj.searchParams.get('enginePageSize'), QLIK_DYNAMIC_ENGINE_PAGE_SIZE, 2000),
+  }
+  return JSON.stringify(normalized)
+}
+
+function readQlikDynamicCachedDataset(cacheKey) {
+  const entry = _qlikDynamicHypercubeCache.get(cacheKey)
+  if (!entry) return null
+  const age = Date.now() - Number(entry.fetchedAt || 0)
+  if (age > QLIK_DYNAMIC_CACHE_TTL_MS) {
+    _qlikDynamicHypercubeCache.delete(cacheKey)
+    return null
+  }
+  return entry.data
+}
+
+function writeQlikDynamicCachedDataset(cacheKey, data) {
+  _qlikDynamicHypercubeCache.set(cacheKey, {
+    fetchedAt: Date.now(),
+    data,
+  })
+
+  if (_qlikDynamicHypercubeCache.size <= QLIK_DYNAMIC_MAX_CACHE_ITEMS) return
+
+  const oldest = Array.from(_qlikDynamicHypercubeCache.entries())
+    .sort((a, b) => Number(a?.[1]?.fetchedAt || 0) - Number(b?.[1]?.fetchedAt || 0))
+    .slice(0, Math.max(1, _qlikDynamicHypercubeCache.size - QLIK_DYNAMIC_MAX_CACHE_ITEMS))
+
+  for (const [key] of oldest) {
+    _qlikDynamicHypercubeCache.delete(key)
+  }
+}
+
+function qlikCellNumber(cell) {
+  const qNum = Number(cell?.qNum)
+  if (Number.isFinite(qNum)) return qNum
+  const parsed = Number(String(cell?.qText || '').replace(/,/g, ''))
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function normalizePeriodText(value) {
+  const raw = normalizeText(value)
+  if (!raw) return ''
+  const directRank = ymRank(raw)
+  if (directRank > 0) return raw
+  const ms = parseIsoDateBoundary(raw, { endOfDay: false })
+  if (!Number.isFinite(ms)) return raw
+  const d = new Date(ms)
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return `${d.getUTCFullYear()}-${months[d.getUTCMonth()]}`
+}
+
+function getDynamicEndpointDefinition(endpointName) {
+  const baseMeasures = [
+    { key: 'deposits', label: '$ Deposit', expr: 'Sum([Trans Deposit])' },
+    { key: 'withdrawals', label: '$ WD', expr: 'Sum([Trans Withdrawal])' },
+    { key: 'pnl', label: '$ PnL', expr: 'Sum([Trade PL Closed])' },
+    { key: 'commissionAff', label: '$ Commission Aff', expr: 'Alt(Sum([Commission Aff]), Sum([Trans Commission]), 0)' },
+  ]
+
+  const definitions = {
+    'client-months': {
+      dimensions: [
+        { key: 'clientId', label: 'Client ID', expr: '=[Client ID]' },
+        { key: 'brand', label: 'Brand', expr: '=[Brand]' },
+        { key: 'period', label: 'Year Month', expr: '=[Year Month]' },
+        { key: 'affiliateId', label: 'Affiliate ID', expr: '=[Affiliate ID]' },
+      ],
+      measures: baseMeasures,
+      rowPredicate: () => true,
+    },
+    sales: {
+      dimensions: [
+        { key: 'clientId', label: 'Client ID', expr: '=[Client ID]' },
+        { key: 'brand', label: 'Brand', expr: '=[Brand]' },
+        { key: 'period', label: 'Year Month', expr: '=[Year Month]' },
+        { key: 'affiliateId', label: 'Affiliate ID', expr: '=[Affiliate ID]' },
+      ],
+      measures: baseMeasures,
+      rowPredicate: (row) => Math.abs(Number(row?.deposits || 0)) > 0 || Math.abs(Number(row?.pnl || 0)) > 0,
+    },
+    retention: {
+      dimensions: [
+        { key: 'clientId', label: 'Client ID', expr: '=[Client ID]' },
+        { key: 'brand', label: 'Brand', expr: '=[Brand]' },
+        { key: 'period', label: 'Year Month', expr: '=[Year Month]' },
+        { key: 'affiliateId', label: 'Affiliate ID', expr: '=[Affiliate ID]' },
+      ],
+      measures: baseMeasures,
+      rowPredicate: (row) => Math.abs(Number(row?.withdrawals || 0)) > 0 || Math.abs(Number(row?.commissionAff || 0)) > 0,
+    },
+    deposits: {
+      dimensions: [
+        { key: 'clientId', label: 'Client ID', expr: '=[Client ID]' },
+        { key: 'brand', label: 'Brand', expr: '=[Brand]' },
+        { key: 'period', label: 'Year Month', expr: '=[Year Month]' },
+        { key: 'affiliateId', label: 'Affiliate ID', expr: '=[Affiliate ID]' },
+      ],
+      measures: baseMeasures,
+      rowPredicate: (row) => Math.abs(Number(row?.deposits || 0)) > 0 || Math.abs(Number(row?.withdrawals || 0)) > 0,
+    },
+    affiliates: {
+      dimensions: [
+        { key: 'period', label: 'Year Month', expr: '=[Year Month]' },
+        { key: 'affiliateId', label: 'Affiliate ID', expr: '=[Affiliate ID]' },
+        { key: 'brand', label: 'Brand', expr: '=[Brand]' },
+      ],
+      measures: [
+        { key: 'commissionAff', label: '$ Commission Aff', expr: 'Alt(Sum([Commission Aff]), Sum([Trans Commission]), 0)' },
+      ],
+      rowPredicate: () => true,
+    },
+  }
+
+  return definitions[normalizeText(endpointName).toLowerCase()] || null
+}
+
+function buildDynamicHypercubeDefinition(endpointDef, pageSize) {
+  return {
+    qInfo: { qType: 'tmp-qlik-dynamic-endpoint' },
+    qHyperCubeDef: {
+      qDimensions: endpointDef.dimensions.map((dim) => ({
+        qDef: {
+          qFieldDefs: [],
+          qFieldLabels: [dim.label || dim.key],
+          qLabel: dim.label || dim.key,
+          qDef: dim.expr,
+        },
+      })),
+      qMeasures: endpointDef.measures.map((measure) => ({
+        qDef: {
+          qDef: measure.expr,
+          qLabel: measure.label || measure.key,
+        },
+      })),
+      qInitialDataFetch: [{ qTop: 0, qLeft: 0, qHeight: Math.max(1, pageSize), qWidth: endpointDef.dimensions.length + endpointDef.measures.length }],
+    },
+  }
+}
+
+async function fetchSessionHypercubeDataPages(session, objectHandle, totalRows, totalCols, pageSize) {
+  const pages = []
+  for (let top = 0; top < totalRows; top += pageSize) {
+    const height = Math.max(1, Math.min(pageSize, totalRows - top))
+    const page = await session.call(objectHandle, 'GetHyperCubeData', [
+      '/qHyperCubeDef',
+      [{ qTop: top, qLeft: 0, qHeight: height, qWidth: totalCols }],
+    ])
+    const matrix = Array.isArray(page?.qDataPages?.[0]?.qMatrix) ? page.qDataPages[0].qMatrix : []
+    pages.push(...matrix)
+  }
+  return pages
+}
+
+function normalizeDynamicRows(matrixRows, endpointDef) {
+  const dimsCount = endpointDef.dimensions.length
+  return matrixRows.map((row) => {
+    const next = {}
+
+    endpointDef.dimensions.forEach((dim, index) => {
+      const cell = row?.[index]
+      const text = normalizeText(cell?.qText)
+      next[dim.key] = dim.key === 'period' ? normalizePeriodText(text) : text
+    })
+
+    endpointDef.measures.forEach((measure, index) => {
+      const cell = row?.[dimsCount + index]
+      next[measure.key] = qlikCellNumber(cell)
+    })
+
+    if (next.deposits != null || next.withdrawals != null) {
+      next.netDeposit = Number(next.deposits || 0) - Number(next.withdrawals || 0)
+    }
+
+    if (next.clientId == null) next.clientId = ''
+    if (next.brand == null) next.brand = ''
+    if (next.period == null) next.period = ''
+    if (next.deposits == null) next.deposits = 0
+    if (next.withdrawals == null) next.withdrawals = 0
+    if (next.netDeposit == null) next.netDeposit = 0
+    if (next.pnl == null) next.pnl = 0
+    if (next.commissionAff == null) next.commissionAff = 0
+
+    return next
+  })
+}
+
+function applyDynamicQueryFilters(rows, endpointName, urlObj) {
+  const fromRaw = normalizeText(urlObj.searchParams.get('from'))
+  const toRaw = normalizeText(urlObj.searchParams.get('to'))
+  const fromRank = fromRaw ? periodRankFromIsoDate(fromRaw) : -1
+  const toRank = toRaw ? periodRankFromIsoDate(toRaw) : -1
+  const hasPeriodBounds = fromRank > 0 && toRank > 0
+
+  const brandFilter = normalizeText(urlObj.searchParams.get('brand')).toLowerCase()
+  const affiliateFilter = normalizeText(urlObj.searchParams.get('affiliateId')).toLowerCase()
+  const clientFilter = normalizeText(urlObj.searchParams.get('clientId')).toLowerCase()
+
+  const definition = getDynamicEndpointDefinition(endpointName)
+  const rowPredicate = typeof definition?.rowPredicate === 'function' ? definition.rowPredicate : (() => true)
+
+  return rows.filter((row) => {
+    if (hasPeriodBounds) {
+      const periodRank = ymRank(normalizePeriodText(row?.period))
+      if (periodRank > 0 && (periodRank < fromRank || periodRank > toRank)) return false
+    }
+
+    if (brandFilter && normalizeText(row?.brand).toLowerCase() !== brandFilter) return false
+    if (affiliateFilter && normalizeText(row?.affiliateId).toLowerCase() !== affiliateFilter) return false
+    if (clientFilter && normalizeText(row?.clientId).toLowerCase() !== clientFilter) return false
+
+    if (!rowPredicate(row)) return false
+    return true
+  })
+}
+
+async function resolveQlikDynamicEndpointRows(config, endpointName, appId, urlObj) {
+  const endpointDef = getDynamicEndpointDefinition(endpointName)
+  if (!endpointDef) {
+    const error = new Error(`Unknown Qlik dynamic endpoint: ${endpointName}`)
+    error.status = 404
+    throw error
+  }
+
+  const cacheKey = buildQlikDynamicCacheKey(endpointName, appId, urlObj)
+  const cached = readQlikDynamicCachedDataset(cacheKey)
+  if (cached) {
+    return { ...cached, cached: true }
+  }
+
+  const enginePageSize = parsePositiveInt(urlObj.searchParams.get('enginePageSize'), QLIK_DYNAMIC_ENGINE_PAGE_SIZE, 2000)
+
+  const data = await withEngineSession(config, appId, async (session) => {
+    const sessionObjectDef = buildDynamicHypercubeDefinition(endpointDef, enginePageSize)
+    const created = await session.call(session.docHandle, 'CreateSessionObject', [sessionObjectDef])
+    const handle = Number(created?.qReturn?.qHandle || 0)
+    if (!handle) {
+      const error = new Error('Unable to create session HyperCube object')
+      error.status = 502
+      throw error
+    }
+
+    const layoutResult = await session.call(handle, 'GetLayout', [])
+    const cube = unwrapLayout(layoutResult)?.qHyperCube || {}
+    const totalRows = Math.max(0, Number(cube?.qSize?.qcy || 0))
+    const totalCols = Math.max(1, Number(cube?.qSize?.qcx || (endpointDef.dimensions.length + endpointDef.measures.length)))
+
+    const matrixRows = totalRows > 0
+      ? await fetchSessionHypercubeDataPages(session, handle, totalRows, totalCols, enginePageSize)
+      : []
+
+    const normalizedRows = normalizeDynamicRows(matrixRows, endpointDef)
+    const filteredRows = applyDynamicQueryFilters(normalizedRows, endpointName, urlObj)
+
+    return {
+      rows: filteredRows,
+      totalRows: filteredRows.length,
+      sourceRows: normalizedRows.length,
+      engineRows: totalRows,
+      engineCols: totalCols,
+      endpoint: endpointName,
+      appId,
+    }
+  })
+
+  writeQlikDynamicCachedDataset(cacheKey, data)
+  return { ...data, cached: false }
+}
+
+async function handleQlikDynamicEndpoint(req, res, endpointName) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  const appId = normalizeText(req.query?.appId || env('QLIK_APP_ID') || env('QLIK_CREOLABS_APP_ID') || CREOLABS_APP_ID)
+  const urlObj = new URL(req.url || '/', 'http://localhost')
+  const limit = parsePositiveInt(urlObj.searchParams.get('limit'), 500, 5000)
+  const offset = parseNonNegativeInt(urlObj.searchParams.get('offset'), 0, 2_000_000)
+
+  try {
+    const resolved = await resolveQlikDynamicEndpointRows(config, endpointName, appId, urlObj)
+    const rows = Array.isArray(resolved?.rows) ? resolved.rows : []
+    const safeOffset = Math.min(offset, Math.max(0, rows.length))
+    const pageRows = rows.slice(safeOffset, safeOffset + limit)
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'qlik-dynamic-hypercube-v1',
+          endpoint: endpointName,
+          appId,
+          source: 'engine-session-hypercube',
+          cached: Boolean(resolved?.cached),
+          query: {
+            limit,
+            offset: safeOffset,
+            total: rows.length,
+            from: normalizeText(urlObj.searchParams.get('from')),
+            to: normalizeText(urlObj.searchParams.get('to')),
+            brand: normalizeText(urlObj.searchParams.get('brand')),
+            affiliateId: normalizeText(urlObj.searchParams.get('affiliateId')),
+            clientId: normalizeText(urlObj.searchParams.get('clientId')),
+          },
+          diagnostics: {
+            sourceRows: Number(resolved?.sourceRows || 0),
+            engineRows: Number(resolved?.engineRows || 0),
+            engineCols: Number(resolved?.engineCols || 0),
+          },
+          rows: pageRows,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || `Qlik ${endpointName} request failed`,
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
 async function handleUsersMe(req, res) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
   const config = ensureConfigured(res)
@@ -509,6 +861,7 @@ async function handleApps(req, res) {
   if (!config) return
 
   const limit = parseLimit(req.query?.limit, 20)
+
   try {
     const data = await qlikGet(config, `/api/v1/apps?limit=${limit}`)
     return json(res, 200, { ok: true, data }, { 'Cache-Control': 'no-store' })
@@ -795,6 +1148,50 @@ async function handleEngineObjectLayout(req, res, appId, objectId) {
       {
         ok: false,
         error: e?.message || 'Qlik Engine object layout request failed',
+        details: e?.details || '',
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+}
+
+async function handleEngineSessionPing(req, res, appId) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
+
+  try {
+    const data = await withEngineSession(config, appId, async (session) => {
+      const layoutResult = await session.call(session.docHandle, 'GetAppLayout', [])
+      const layout = unwrapLayout(layoutResult)
+      return {
+        appId,
+        docHandle: Number(session.docHandle || 0),
+        appTitle: safeText(layout?.qTitle || layout?.qAppProperties?.title),
+        connectedAt: new Date().toISOString(),
+      }
+    })
+
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        data: {
+          contractVersion: 'engine-session-ping-v1',
+          authMode: config.mode,
+          ...data,
+        },
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  } catch (e) {
+    return json(
+      res,
+      e?.status || 502,
+      {
+        ok: false,
+        error: e?.message || 'Qlik Engine session ping failed',
         details: e?.details || '',
       },
       { 'Cache-Control': 'no-store' }
@@ -1119,6 +1516,14 @@ function ymRank(text) {
   return m ? Number(m[1]) * 100 + (_MON[m[2].toLowerCase()] || 0) : -1
 }
 
+function periodRankFromIsoDate(isoDate) {
+  const ms = parseIsoDateBoundary(isoDate, { endOfDay: false })
+  if (!Number.isFinite(ms)) return -1
+  const d = new Date(ms)
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  return ymRank(`${d.getUTCFullYear()}-${monthNames[d.getUTCMonth()]}`)
+}
+
 let _creolabsClientsCache = null
 let _creolabsSnapshotCache = null
 let _creolabsTradersRankingRewardsTableCache = null
@@ -1130,9 +1535,11 @@ const _creolabsClientVariantCaches = {
 }
 let _creolabsLatestLeadObjectCache = null
 let _creolabsRegisteredLeadsObjectCache = null
+let _creolabsPerformanceSummaryThisMonthCache = null
 let _registeredUsersMetaCacheByClient = new Map()
 let _registeredUsersMetaCacheTouchedAt = 0
 const REGISTERED_USERS_META_CACHE_TTL = 12 * 60 * 60 * 1000
+const PERFORMANCE_SUMMARY_THIS_MONTH_CACHE_TTL = 5 * 60 * 1000
 
 const _dbLiveIngestionState = {
   schedulerStarted: false,
@@ -1167,6 +1574,7 @@ function clearCreolabsClientVariantCaches() {
   _creolabsTradersRankingRewardsTableCache = null
   _creolabsLatestLeadObjectCache = null
   _creolabsRegisteredLeadsObjectCache = null
+  _creolabsPerformanceSummaryThisMonthCache = null
   _registeredUsersMetaCacheByClient = new Map()
   _registeredUsersMetaCacheTouchedAt = 0
 }
@@ -1176,6 +1584,38 @@ const CREOLABS_LATEST_LEAD_OBJECT_TTL = 5 * 60 * 1000
 const CREOLABS_REGISTERED_LEADS_OBJECT_ID = 'ZShKmrn'
 const CREOLABS_REGISTERED_LEADS_OBJECT_TTL = 5 * 60 * 1000
 const CREOLABS_LEAD_EXCLUDED_STATUSES = new Set(['duplicate', 'deleted', 'do not call', 'less than 18'])
+const CREOLABS_PERFORMANCE_SUMMARY_THIS_MONTH_MEASURES = [
+  {
+    key: 'closedPl',
+    label: '$ PL Closed (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trade PL Closed])",
+  },
+  {
+    key: 'ftd',
+    label: '$ FTD (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trans FTD])",
+  },
+  {
+    key: 'deposit',
+    label: '$ Deposit (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trans Deposit])",
+  },
+  {
+    key: 'wd',
+    label: '$ WD (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trans Withdrawal])",
+  },
+  {
+    key: 'net',
+    label: '$ Net (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trans Deposit]) - Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trans Withdrawal])",
+  },
+  {
+    key: 'closedVolume',
+    label: '$ Volume Closed (M)',
+    def: "Sum({$<$(vSelectionsPeriod),[%_FULL_TM_TY]={'1'}>} [Trade Volume Closed] + [Trade Volume Closed IN])",
+  },
+]
 
 function qlikDateNumberToIsoDate(value) {
   const num = Number(value)
@@ -1203,6 +1643,306 @@ function findHeaderIndex(headers, pattern) {
     if (pattern.test(header)) return i
   }
   return -1
+}
+
+function firstDefinedIndex(...indexes) {
+  for (const idx of indexes) {
+    if (Number.isInteger(idx) && idx >= 0) return idx
+  }
+  return -1
+}
+
+function hasCreolabsTradingActivity(user) {
+  const tradesValue = toFiniteNumber(user?.trades)
+  const openedTradesValue = toFiniteNumber(user?.openedTrades ?? user?.opened_trades)
+  const closedVolumeValue = toFiniteNumber(
+    user?.closedVolume ?? user?.closedVol ?? user?.closed_volume ?? user?.volumeClosed
+  )
+  const closedPlValue = toFiniteNumber(user?.closedPl ?? user?.closed_pl)
+  const openPlValue = toFiniteNumber(user?.openPl ?? user?.open_pl)
+  return (
+    tradesValue > 0 ||
+    openedTradesValue > 0 ||
+    closedVolumeValue > 0 ||
+    closedPlValue !== 0 ||
+    openPlValue !== 0
+  )
+}
+
+function aggregateCreolabsUserKpis(users, options = null) {
+  const rows = Array.isArray(users) ? users : []
+  const leadFromMs = Number.isFinite(Number(options?.leadFromMs))
+    ? Number(options?.leadFromMs)
+    : Number.NEGATIVE_INFINITY
+  const leadToMs = Number.isFinite(Number(options?.leadToMs))
+    ? Number(options?.leadToMs)
+    : Number.POSITIVE_INFINITY
+  let net = 0
+  let deposit = 0
+  let wd = 0
+  let trades = 0
+  let openedTrades = 0
+  let closedVolume = 0
+  let closedPl = 0
+  let openPl = 0
+  let ftd = 0
+  let rdp = 0
+  let commission = 0
+  let balance = 0
+  let equity = 0
+  let activeMonths = 0
+
+  let withCommission = 0
+  let withFtd = 0
+  let withDeposit = 0
+  let withWd = 0
+  let withNet = 0
+  let withBalance = 0
+  let withEquity = 0
+
+  const clientIds = new Set()
+  const leadClientIds = new Set()
+  const activeTraderIds = new Set()
+  const affiliates = new Set()
+  const brands = new Set()
+  const countries = new Set()
+  const statuses = new Map()
+
+  for (const user of rows) {
+    const netValue = toFiniteNumber(user?.net)
+    const depositValue = toFiniteNumber(user?.deposit)
+    const wdValue = toFiniteNumber(user?.wd)
+    const tradesValue = toFiniteNumber(user?.trades)
+    const openedTradesValue = toFiniteNumber(user?.openedTrades ?? user?.opened_trades)
+    const closedVolumeValue = toFiniteNumber(
+      user?.closedVolume ?? user?.closedVol ?? user?.closed_volume ?? user?.volumeClosed
+    )
+    const closedPlValue = toFiniteNumber(user?.closedPl)
+    const openPlValue = toFiniteNumber(user?.openPl)
+    const ftdValue = toFiniteNumber(user?.ftd)
+    const rdpValue = toFiniteNumber(user?.rdp)
+    const commissionValue = toFiniteNumber(
+      user?.commission ??
+      user?.commissionAff ??
+      user?.transactionCommission ??
+      user?.transCommission
+    )
+    const balanceValue = toFiniteNumber(user?.balance)
+    const equityValue = toFiniteNumber(user?.equity)
+    const activeMonthsValue = toFiniteNumber(user?.activeMonths)
+
+    net += netValue
+    deposit += depositValue
+    wd += wdValue
+    trades += tradesValue
+    openedTrades += openedTradesValue
+    closedVolume += closedVolumeValue
+    closedPl += closedPlValue
+    openPl += openPlValue
+    ftd += ftdValue
+    rdp += rdpValue
+    commission += commissionValue
+    balance += balanceValue
+    equity += equityValue
+    activeMonths += activeMonthsValue
+
+    if (commissionValue !== 0) withCommission += 1
+    if (ftdValue !== 0) withFtd += 1
+    if (depositValue !== 0) withDeposit += 1
+    if (wdValue !== 0) withWd += 1
+    if (netValue !== 0) withNet += 1
+    if (balanceValue !== 0) withBalance += 1
+    if (equityValue !== 0) withEquity += 1
+
+    const clientId = normalizeText(user?.clientId)
+    const affiliateId = normalizeText(user?.affiliateId)
+    const brand = normalizeText(user?.brand)
+    const country = normalizeText(user?.country)
+    const status = normalizeText(user?.status).toLowerCase()
+
+    if (clientId) clientIds.add(clientId)
+    if (clientId) {
+      const tsMs = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+      if (Number.isFinite(tsMs) && tsMs >= leadFromMs && tsMs <= leadToMs) {
+        leadClientIds.add(clientId)
+      }
+      if (hasCreolabsTradingActivity(user)) {
+        activeTraderIds.add(clientId)
+      }
+    }
+    if (affiliateId && !isMissingIdentityValue(affiliateId)) affiliates.add(affiliateId)
+    if (brand) brands.add(brand)
+    if (country) countries.add(country)
+    if (status) statuses.set(status, (statuses.get(status) || 0) + 1)
+  }
+
+  return {
+    rows: rows.length,
+    uniqueClients: clientIds.size,
+    totalLeads: leadClientIds.size,
+    activeTraders: activeTraderIds.size,
+    uniqueAffiliates: affiliates.size,
+    uniqueBrands: brands.size,
+    uniqueCountries: countries.size,
+    net,
+    deposit,
+    wd,
+    trades,
+    openedTrades,
+    closedVolume,
+    closedPl,
+    openPl,
+    totalPl: closedPl + openPl,
+    ftd,
+    rdp,
+    commission,
+    balance,
+    equity,
+    activeMonths,
+    withCommission,
+    withFtd,
+    withDeposit,
+    withWd,
+    withNet,
+    withBalance,
+    withEquity,
+    statusCounts: Object.fromEntries(statuses.entries()),
+  }
+}
+
+function cellToFiniteNumber(cell) {
+  const qNum = Number(cell?.qNum)
+  if (Number.isFinite(qNum)) return qNum
+  const text = String(cell?.qText || '').replace(/,/g, '')
+  const parsed = Number(text)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+async function evaluateEngineMeasureSet(session, qType, measures) {
+  const normalized = Array.isArray(measures) ? measures.filter((m) => m && m.key && m.def) : []
+  if (!normalized.length) return {}
+
+  const sessionObj = await session.call(session.docHandle, 'CreateSessionObject', [
+    {
+      qInfo: { qType },
+      qHyperCubeDef: {
+        qDimensions: [],
+        qMeasures: normalized.map((m) => ({ qDef: { qDef: m.def, qLabel: m.label || m.key } })),
+        qInitialDataFetch: [{ qTop: 0, qLeft: 0, qHeight: 1, qWidth: normalized.length }],
+      },
+    },
+  ])
+
+  const h = Number(sessionObj?.qReturn?.qHandle || 0)
+  if (!h) throw new Error(`Session object creation failed for ${qType}`)
+
+  const layoutResult = await session.call(h, 'GetLayout', [])
+  const cube = unwrapLayout(layoutResult)?.qHyperCube || {}
+  let row = Array.isArray(cube?.qGrandTotalRow) ? cube.qGrandTotalRow : []
+
+  if (!row.length) {
+    const pageResult = await session.call(h, 'GetHyperCubeData', [
+      '/qHyperCubeDef',
+      [{ qTop: 0, qLeft: 0, qHeight: 1, qWidth: normalized.length }],
+    ])
+    row = pageResult?.qDataPages?.[0]?.qMatrix?.[0] || []
+  }
+
+  const out = {}
+  normalized.forEach((m, idx) => {
+    out[m.key] = cellToFiniteNumber(row[idx])
+  })
+  return out
+}
+
+async function fetchCreolabsPerformanceSummaryThisMonthKpis(config) {
+  return withEngineSession(config, CREOLABS_APP_ID, async (session) => {
+    return evaluateEngineMeasureSet(
+      session,
+      'tmp-performance-summary-this-month',
+      CREOLABS_PERFORMANCE_SUMMARY_THIS_MONTH_MEASURES
+    )
+  })
+}
+
+async function resolveCreolabsPerformanceSummaryThisMonthKpis(config) {
+  const now = Date.now()
+  const age = _creolabsPerformanceSummaryThisMonthCache?.fetchedAt
+    ? now - _creolabsPerformanceSummaryThisMonthCache.fetchedAt
+    : Infinity
+  if (_creolabsPerformanceSummaryThisMonthCache?.data && age < PERFORMANCE_SUMMARY_THIS_MONTH_CACHE_TTL) {
+    return { data: _creolabsPerformanceSummaryThisMonthCache.data, cached: true }
+  }
+
+  if (_creolabsPerformanceSummaryThisMonthCache?.promise) {
+    const data = await _creolabsPerformanceSummaryThisMonthCache.promise
+    return { data, cached: true }
+  }
+
+  const promise = fetchCreolabsPerformanceSummaryThisMonthKpis(config)
+    .then((data) => {
+      _creolabsPerformanceSummaryThisMonthCache = { data, fetchedAt: Date.now(), promise: null }
+      return data
+    })
+    .catch((error) => {
+      if (_creolabsPerformanceSummaryThisMonthCache) {
+        _creolabsPerformanceSummaryThisMonthCache.promise = null
+      }
+      throw error
+    })
+
+  if (!_creolabsPerformanceSummaryThisMonthCache) {
+    _creolabsPerformanceSummaryThisMonthCache = { data: null, fetchedAt: 0, promise }
+  } else {
+    _creolabsPerformanceSummaryThisMonthCache.promise = promise
+  }
+
+  const data = await promise
+  return { data, cached: false }
+}
+
+function toDbLiveMonthRow(row) {
+  const periodId = normalizeText(row?.periodId || row?.year_month || row?.yearMonth)
+  const startDate = monthStartDate(periodId)
+  const endDate = monthEndDate(periodId)
+  const explicitTimestamp = normalizeText(row?.clientTimestamp || row?.client_timestamp)
+  const explicitTimestampMs = Date.parse(explicitTimestamp)
+  const clientTimestamp = Number.isFinite(explicitTimestampMs)
+    ? new Date(explicitTimestampMs).toISOString()
+    : (startDate ? startDate.toISOString() : '')
+  const lastTimeComment = endDate ? endDate.toISOString() : clientTimestamp
+  const plTotal = toFiniteNumber(row?.pl)
+  const closedPl = plTotal
+  const openPl = 0
+  const balance = toFiniteNumber(row?.balance)
+  const equity = toFiniteNumber(row?.equity) || balance + openPl
+  const commissionAff = toFiniteNumber(
+    row?.commissionAff ??
+    row?.transactionCommission ??
+    row?.transCommission ??
+    row?.commission_aff ??
+    row?.['$ Commission Aff']
+  )
+  const commission = toFiniteNumber(row?.commission ?? row?.ltv_commission ?? commissionAff)
+
+  return {
+    ...row,
+    clientTimestamp,
+    kycTimestamp: clientTimestamp,
+    status: normalizeText(row?.status) || 'active',
+    ltdDate: normalizeText(row?.ltdDate),
+    lttDate: normalizeText(row?.lttDate),
+    lastTimeComment: normalizeText(row?.lastTimeComment) || lastTimeComment,
+    closedPl,
+    openPl,
+    commission,
+    commissionAff,
+    balance,
+    equity,
+    openedTrades: Math.round(toFiniteNumber(row?.openedTrades ?? row?.opened_trades ?? row?.trades)),
+    sourceObjectId: CREOLABS_CLIENTS_OBJ,
+    sourcePeriod: periodId,
+  }
 }
 
 function extractIsoDateFromCell(cell) {
@@ -1286,77 +2026,260 @@ async function fetchCreolabsRegisteredLeadsFromObject(config) {
     const objectHandle = Number(objectResult?.qReturn?.qHandle || 0)
     if (!objectHandle) throw new Error('Creolabs registered-leads object not found')
 
-    const layoutResult = await session.call(objectHandle, 'GetLayout', [])
-    const layout = unwrapLayout(layoutResult)
-    const hypercube = layout?.qHyperCube
-    if (!hypercube) throw new Error('Creolabs registered-leads object has no hypercube')
+    const propsResult = await session.call(objectHandle, 'GetProperties', [])
+    const hypercubeDef = propsResult?.qProp?.qHyperCubeDef || propsResult?.qReturn?.qProp?.qHyperCubeDef || null
+    if (!hypercubeDef) throw new Error('Creolabs registered-leads object has no hypercube definition')
 
-    const qSize = hypercube?.qSize || {}
-    const totalRows = Math.max(0, Number(qSize.qcy || 0))
-    const totalCols = Math.max(1, Number(qSize.qcx || 0))
-    if (!totalRows) return []
-
-    const dimensions = Array.isArray(hypercube?.qDimensionInfo)
-      ? hypercube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
+    const dimensions = Array.isArray(hypercubeDef?.qDimensions)
+      ? hypercubeDef.qDimensions.map((d) =>
+        safeText(d?.qDef?.qFieldLabels?.[0] || d?.qDef?.qLabel || d?.qDef?.qFieldDefs?.[0])
+      )
       : []
-    const measures = Array.isArray(hypercube?.qMeasureInfo)
-      ? hypercube.qMeasureInfo.map((m) => safeText(m?.qFallbackTitle || m?.qLabel))
+    const measures = Array.isArray(hypercubeDef?.qMeasures)
+      ? hypercubeDef.qMeasures.map((m) => safeText(m?.qDef?.qLabel || m?.qDef?.qDef))
       : []
     const headers = [...dimensions, ...measures]
 
-    const idxClientTs = findHeaderIndex(headers, /^client\s*timestamp$/i)
-    const idxClientId = findHeaderIndex(headers, /^client\s*id$/i)
-    const idxClientName = findHeaderIndex(headers, /^client\s*name$/i)
-    const idxAffiliateId = findHeaderIndex(headers, /(^|\b)affiliate(\s*id)?(\b|$)/i)
-    const idxClientLogin = findHeaderIndex(headers, /(^|\b)client\s*login(\b|$)/i)
-    const idxBrand = findHeaderIndex(headers, /(^|\b)brand(\b|$)/i)
-    const idxCountry = findHeaderIndex(headers, /^country$/i)
-    const idxStatus = findHeaderIndex(headers, /^status$/i)
-    const idxFtdDate = findHeaderIndex(headers, /^ftd\s*date$/i)
-    const idxLtdDate = findHeaderIndex(headers, /^ltd\s*date$/i)
-    const idxLttDate = findHeaderIndex(headers, /^ltt\s*date$/i)
-    const idxLastContact = findHeaderIndex(headers, /^last\s*time\s*contact$/i)
-    const idxUser = findHeaderIndex(headers, /^user$/i)
-    const idxLtvDeposit = findHeaderIndex(headers, /^ltv\s*deposit$/i)
-    const idxLtvWd = findHeaderIndex(headers, /^ltv\s*withdrawal$/i)
-    const idxLtvCommission = findHeaderIndex(headers, /^ltv\s*commission$/i)
-    const idxLtvPl = findHeaderIndex(headers, /^ltv\s*pl$/i)
-    const idxLtvOpenPl = findHeaderIndex(headers, /^ltv\s*open\s*pl$/i)
-    const idxLtvNet = findHeaderIndex(headers, /^ltv\s*net$/i)
-    const idxLtvBalance = findHeaderIndex(headers, /^ltv\s*balance$/i)
-    const idxTrades = findHeaderIndex(headers, /^#\s*trades$/i)
-    const idxFtdAmount = findHeaderIndex(headers, /^ftd\s*amount$/i)
-    const idxStdAmount = findHeaderIndex(headers, /^std\s*amount$/i)
+    const layoutResult = await session.call(objectHandle, 'GetLayout', [])
+    const layout = unwrapLayout(layoutResult)
+    const layoutCube = layout?.qHyperCube
+    const layoutDimensions = Array.isArray(layoutCube?.qDimensionInfo)
+      ? layoutCube.qDimensionInfo.map((d) => safeText(d?.qFallbackTitle || d?.qGroupFallbackTitles?.[0]))
+      : []
+    const layoutMeasures = Array.isArray(layoutCube?.qMeasureInfo)
+      ? layoutCube.qMeasureInfo.map((m) => safeText(m?.qFallbackTitle || m?.qLabel))
+      : []
+    const layoutHeaders = [...layoutDimensions, ...layoutMeasures]
 
-    if (idxClientId < 0 || idxClientTs < 0) {
-      throw new Error('Creolabs registered-leads object missing required headers')
+    const totalCols = Math.max(1, headers.length || layoutHeaders.length || Number(layoutCube?.qSize?.qcx || 0) || 40)
+
+    let idxClientTs = firstDefinedIndex(
+      findHeaderIndex(headers, /^client\s*timestamp$/i),
+      findHeaderIndex(layoutHeaders, /^client\s*timestamp$/i)
+    )
+    let idxClientId = firstDefinedIndex(
+      findHeaderIndex(headers, /^client\s*id$/i),
+      findHeaderIndex(layoutHeaders, /^client\s*id$/i)
+    )
+    let idxClientName = firstDefinedIndex(
+      findHeaderIndex(headers, /^client\s*name$/i),
+      findHeaderIndex(layoutHeaders, /^client\s*name$/i)
+    )
+    let idxAffiliateId = firstDefinedIndex(
+      findHeaderIndex(headers, /(^|\b)affiliate(\s*id)?(\b|$)/i),
+      findHeaderIndex(layoutHeaders, /(^|\b)affiliate(\s*id)?(\b|$)/i)
+    )
+    let idxClientLogin = firstDefinedIndex(
+      findHeaderIndex(headers, /(^|\b)client\s*login(\b|$)/i),
+      findHeaderIndex(layoutHeaders, /(^|\b)client\s*login(\b|$)/i)
+    )
+    let idxBrand = firstDefinedIndex(
+      findHeaderIndex(headers, /(^|\b)brand(\b|$)/i),
+      findHeaderIndex(layoutHeaders, /(^|\b)brand(\b|$)/i)
+    )
+    let idxCountry = firstDefinedIndex(
+      findHeaderIndex(headers, /^country$/i),
+      findHeaderIndex(layoutHeaders, /^country$/i)
+    )
+    let idxStatus = firstDefinedIndex(
+      findHeaderIndex(headers, /^status$/i),
+      findHeaderIndex(layoutHeaders, /^status$/i)
+    )
+    let idxFtdDate = firstDefinedIndex(
+      findHeaderIndex(headers, /^ftd\s*date$/i),
+      findHeaderIndex(layoutHeaders, /^ftd\s*date$/i)
+    )
+    let idxLtdDate = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltd\s*date$/i),
+      findHeaderIndex(layoutHeaders, /^ltd\s*date$/i)
+    )
+    let idxLttDate = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltt\s*date$/i),
+      findHeaderIndex(layoutHeaders, /^ltt\s*date$/i)
+    )
+    let idxLastContact = firstDefinedIndex(
+      findHeaderIndex(headers, /^last\s*time\s*contact$/i),
+      findHeaderIndex(layoutHeaders, /^last\s*time\s*contact$/i)
+    )
+    let idxUser = firstDefinedIndex(
+      findHeaderIndex(headers, /^user$/i),
+      findHeaderIndex(layoutHeaders, /^user$/i)
+    )
+
+    let idxLtvDeposit = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*deposit$/i),
+      findHeaderIndex(headers, /^\$\s*deposit$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*deposit$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*deposit$/i)
+    )
+    let idxLtvWd = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*withdrawal$/i),
+      findHeaderIndex(headers, /^\$\s*withdrawal$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*withdrawal$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*withdrawal$/i)
+    )
+    let idxLtvCommission = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*commission$/i),
+      findHeaderIndex(headers, /^\$\s*commission(\s*aff)?$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*commission$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*commission(\s*aff)?$/i)
+    )
+    let idxLtvPl = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*pl$/i),
+      findHeaderIndex(headers, /^\$\s*pl$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*pl$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*pl$/i)
+    )
+    let idxLtvOpenPl = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*open\s*pl$/i),
+      findHeaderIndex(headers, /^\$\s*open\s*pl$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*open\s*pl$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*open\s*pl$/i)
+    )
+    let idxLtvNet = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*net$/i),
+      findHeaderIndex(headers, /^\$\s*net$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*net$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*net$/i)
+    )
+    let idxLtvBalance = firstDefinedIndex(
+      findHeaderIndex(headers, /^ltv\s*balance$/i),
+      findHeaderIndex(headers, /^\$\s*balance$/i),
+      findHeaderIndex(layoutHeaders, /^ltv\s*balance$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*balance$/i)
+    )
+    let idxTrades = firstDefinedIndex(
+      findHeaderIndex(headers, /^#\s*trades$/i),
+      findHeaderIndex(headers, /^\$\s*volume$/i),
+      findHeaderIndex(layoutHeaders, /^#\s*trades$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*volume$/i)
+    )
+    let idxFtdAmount = firstDefinedIndex(
+      findHeaderIndex(headers, /^ftd\s*amount$/i),
+      findHeaderIndex(headers, /^\$\s*ftd$/i),
+      findHeaderIndex(layoutHeaders, /^ftd\s*amount$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*ftd$/i)
+    )
+    let idxStdAmount = firstDefinedIndex(
+      findHeaderIndex(headers, /^std\s*amount$/i),
+      findHeaderIndex(headers, /^\$\s*std$/i),
+      findHeaderIndex(layoutHeaders, /^std\s*amount$/i),
+      findHeaderIndex(layoutHeaders, /^\$\s*std$/i)
+    )
+
+    // Stable hard fallback for ZShKmrn column order when labels are weak/missing.
+    if (normalizeText(CREOLABS_REGISTERED_LEADS_OBJECT_ID) === 'zshkmrn') {
+      idxClientTs = firstDefinedIndex(idxClientTs, 2)
+      idxClientId = firstDefinedIndex(idxClientId, 4)
+      idxClientName = firstDefinedIndex(idxClientName, 5)
+      idxCountry = firstDefinedIndex(idxCountry, 6)
+      idxStatus = firstDefinedIndex(idxStatus, 7)
+      idxFtdDate = firstDefinedIndex(idxFtdDate, 8)
+      idxFtdAmount = firstDefinedIndex(idxFtdAmount, 9)
+      idxStdAmount = firstDefinedIndex(idxStdAmount, 11)
+      idxLtvDeposit = firstDefinedIndex(idxLtvDeposit, 12)
+      idxLtvWd = firstDefinedIndex(idxLtvWd, 13)
+      idxLtvNet = firstDefinedIndex(idxLtvNet, 14)
+      idxLtvCommission = firstDefinedIndex(idxLtvCommission, 15)
+      idxLtvPl = firstDefinedIndex(idxLtvPl, 16)
+      idxLtvBalance = firstDefinedIndex(idxLtvBalance, 17)
+      idxTrades = firstDefinedIndex(idxTrades, 18)
+      idxUser = firstDefinedIndex(idxUser, 0)
     }
 
     const inferPage = await session.call(objectHandle, 'GetHyperCubeData', [
       '/qHyperCubeDef',
-      [{ qTop: 0, qLeft: 0, qHeight: Math.min(totalRows, 250), qWidth: Math.min(totalCols, 40) }],
+      [{ qTop: 0, qLeft: 0, qHeight: Math.min(250, REGISTERED_LEADS_PAGE_SIZE), qWidth: Math.min(totalCols, 40) }],
     ])
     const inferMatrix = Array.isArray(inferPage?.qDataPages?.[0]?.qMatrix)
       ? inferPage.qDataPages[0].qMatrix
       : Array.isArray(inferPage?.[0]?.qMatrix)
         ? inferPage[0].qMatrix
         : []
+    if (!inferMatrix.length) return []
+
+    // Some object variants expose weak/missing labels in properties: infer key columns from sample data.
+    if (idxClientId < 0 || idxClientTs < 0) {
+      const sampleWidth = inferMatrix.reduce((max, row) => Math.max(max, Array.isArray(row) ? row.length : 0), 0)
+      let bestTsIdx = -1
+      let bestTsScore = -1
+      let bestIdIdx = -1
+      let bestIdScore = -1
+
+      for (let col = 0; col < sampleWidth; col += 1) {
+        let tsScore = 0
+        let idScore = 0
+        for (const row of inferMatrix) {
+          if (!Array.isArray(row)) continue
+          const cell = row[col]
+          if (extractIsoDateFromAnyCell(cell)) tsScore += 1
+          if (looksLikeClientIdText(cell?.qText)) idScore += 1
+        }
+        if (tsScore > bestTsScore) {
+          bestTsScore = tsScore
+          bestTsIdx = col
+        }
+        if (idScore > bestIdScore) {
+          bestIdScore = idScore
+          bestIdIdx = col
+        }
+      }
+
+      if (idxClientTs < 0 && bestTsScore > 0) idxClientTs = bestTsIdx
+      if (idxClientId < 0 && bestIdScore > 0) {
+        idxClientId = bestIdIdx === idxClientTs ? -1 : bestIdIdx
+      }
+    }
+
+    if (idxClientId < 0 || idxClientTs < 0) {
+      throw new Error('Creolabs registered-leads object missing required headers')
+    }
+
+    const requiredIndexes = [
+      idxClientTs,
+      idxClientId,
+      idxClientName,
+      idxAffiliateId,
+      idxClientLogin,
+      idxBrand,
+      idxCountry,
+      idxStatus,
+      idxFtdDate,
+      idxLtdDate,
+      idxLttDate,
+      idxLastContact,
+      idxUser,
+      idxLtvDeposit,
+      idxLtvWd,
+      idxLtvCommission,
+      idxLtvPl,
+      idxLtvOpenPl,
+      idxLtvNet,
+      idxLtvBalance,
+      idxTrades,
+      idxFtdAmount,
+      idxStdAmount,
+    ].filter((idx) => Number.isInteger(idx) && idx >= 0)
+    const fetchWidth = Math.min(totalCols, Math.max(8, (requiredIndexes.length ? Math.max(...requiredIndexes) : 7) + 1))
+
     const headerOffset = inferLeadObjectHeaderOffset(inferMatrix, idxClientTs, idxClientId)
 
-    // Keep per-request cells under common Qlik limits to avoid 502/timeouts.
-    const pageSize = 300
-    const pageParallel = 2
+    // Keep per-request cells under common Qlik limits and stream until page exhaustion.
+    const pageSize = REGISTERED_LEADS_PAGE_SIZE
+    const pageParallel = REGISTERED_LEADS_PAGE_PARALLEL
+    const maxRowsScan = 250_000
     const offsets = []
-    for (let off = 0; off < totalRows; off += pageSize) offsets.push(off)
+    for (let off = 0; off < maxRowsScan; off += pageSize) offsets.push(off)
 
     const leads = []
-    for (let i = 0; i < offsets.length; i += pageParallel) {
+    let finished = false
+    for (let i = 0; i < offsets.length && !finished; i += pageParallel) {
       const chunk = offsets.slice(i, i + pageParallel)
       const pages = await Promise.all(
         chunk.map((offset) =>
           session.call(objectHandle, 'GetHyperCubeData', [
             '/qHyperCubeDef',
-            [{ qTop: offset, qLeft: 0, qHeight: Math.min(pageSize, totalRows - offset), qWidth: Math.min(totalCols, 40) }],
+            [{ qTop: offset, qLeft: 0, qHeight: pageSize, qWidth: fetchWidth }],
           ])
         )
       )
@@ -1367,6 +2290,11 @@ async function fetchCreolabsRegisteredLeadsFromObject(config) {
           : Array.isArray(page?.[0]?.qMatrix)
             ? page[0].qMatrix
             : []
+
+        if (!matrix.length) {
+          finished = true
+          continue
+        }
 
         for (const row of matrix) {
           if (!Array.isArray(row)) continue
@@ -1439,6 +2367,9 @@ async function resolveCreolabsRegisteredLeadsFromObject(config) {
     return { data, cached: false }
   }
 
+  const previousData = Array.isArray(cache?.data) ? cache.data : null
+  const previousFetchedAt = Number(cache?.fetchedAt || 0)
+
   const promise = fetchCreolabsRegisteredLeadsFromObject(config)
     .then((data) => {
       _creolabsRegisteredLeadsObjectCache = { data, fetchedAt: Date.now(), promise: null }
@@ -1449,9 +2380,22 @@ async function resolveCreolabsRegisteredLeadsFromObject(config) {
       throw e
     })
 
-  _creolabsRegisteredLeadsObjectCache = { data: null, fetchedAt: 0, promise }
-  const data = await promise
-  return { data, cached: false }
+  _creolabsRegisteredLeadsObjectCache = { data: previousData, fetchedAt: previousFetchedAt, promise }
+
+  try {
+    const data = await promise
+    return { data, cached: false }
+  } catch (e) {
+    if (previousData && previousData.length > 0) {
+      return {
+        data: previousData,
+        cached: true,
+        stale: true,
+        staleAgeMs: previousFetchedAt > 0 ? Math.max(0, Date.now() - previousFetchedAt) : null,
+      }
+    }
+    throw e
+  }
 }
 
 async function fetchCreolabsLatestLeadFromObject(config) {
@@ -1930,6 +2874,31 @@ async function resolveCreolabsClientVariant(config, variant) {
   const age = cacheEntry?.fetchedAt ? now - cacheEntry.fetchedAt : Infinity
   if (cacheEntry?.data && age < CREOLABS_CACHE_TTL) {
     return { data: cacheEntry.data, cached: true }
+  }
+
+  if (cacheEntry?.data) {
+    if (!cacheEntry?.promise) {
+      const refreshPromise = resolveCreolabsSnapshot(config)
+        .then((snapshot) => projectCreolabsVariantFromSnapshot(snapshot.data, variant))
+        .then((data) => {
+          setCreolabsClientVariantCache(variant, { data, fetchedAt: Date.now(), promise: null, promiseStartedAt: 0 })
+          return data
+        })
+        .catch((e) => {
+          const current = getCreolabsClientVariantCache(variant)
+          if (current) current.promise = null
+          throw e
+        })
+
+      setCreolabsClientVariantCache(variant, {
+        data: cacheEntry.data,
+        fetchedAt: cacheEntry.fetchedAt,
+        promise: refreshPromise,
+        promiseStartedAt: Date.now(),
+      })
+    }
+
+    return { data: cacheEntry.data, cached: true, stale: true }
   }
 
   if (cacheEntry?.promise) {
@@ -3162,9 +4131,11 @@ function toCsv(rows, columns) {
 }
 
 async function buildCreolabsRegisteredUsersDataset(req) {
+  hydrateDbLiveIngestionMetaFromDisk()
+
   const config = getConfig()
-  if (!config.hasApiKey && !config.hasOauth) {
-    const error = new Error('Qlik handler not configured. Set QLIK_TENANT_URL and auth credentials.')
+  if (!config.hasOauth && !config.hasApiKey) {
+    const error = new Error('Qlik handler not configured. Set QLIK_TENANT_URL and OAuth M2M credentials or QLIK_API_KEY.')
     error.status = 503
     throw error
   }
@@ -3177,6 +4148,8 @@ async function buildCreolabsRegisteredUsersDataset(req) {
   const format = normalizeText(urlObj.searchParams.get('format') || 'json').toLowerCase()
   const allowMonthFallback = normalizeText(urlObj.searchParams.get('monthFallback')) === '1'
   const includeProvenance = normalizeText(urlObj.searchParams.get('provenance')) === '1'
+  const preferLive = normalizeText(urlObj.searchParams.get('preferLive') || '0') === '1'
+  const shouldLoadMonthSource = allowMonthFallback
 
   const fromMs = parseIsoDateBoundary(fromRaw, { endOfDay: false })
   const toMs = parseIsoDateBoundary(toRaw, { endOfDay: true })
@@ -3191,36 +4164,44 @@ async function buildCreolabsRegisteredUsersDataset(req) {
   let latestPeriodTo = ''
   let clientMonthsError = ''
 
-  try {
-    const resolvedClientMonths = await withTimeout(
-      resolveCreolabsClientVariant(config, 'clientMonths'),
-      REGISTERED_USERS_CLIENT_MONTHS_TIMEOUT_MS,
-      'Creolabs client-months for registered-users'
-    )
-    const monthData = resolvedClientMonths?.data || {}
-    monthsRows = Array.isArray(monthData?.clientMonths) ? monthData.clientMonths : []
-    latestPeriodTo = normalizeText(monthData?.periodTo)
-  } catch (monthError) {
-    clientMonthsError = normalizeText(monthError?.message)
-    monthsRows = []
-    latestPeriodTo = ''
-  }
+  if (shouldLoadMonthSource) {
+    if (preferLive) {
+      try {
+        const resolvedClientMonths = await resolveCreolabsClientVariant(config, 'clientMonths')
+        const monthData = resolvedClientMonths?.data || {}
+        monthsRows = Array.isArray(monthData?.clientMonths) ? monthData.clientMonths : []
+        latestPeriodTo = normalizeText(monthData?.periodTo)
+      } catch (monthError) {
+        clientMonthsError = normalizeText(monthError?.message)
+        monthsRows = []
+        latestPeriodTo = ''
+      }
+    } else {
+      const clientMonthsCache = getCreolabsClientVariantCache('clientMonths')
+      if (Array.isArray(clientMonthsCache?.data?.clientMonths) && clientMonthsCache.data.clientMonths.length > 0) {
+        monthsRows = clientMonthsCache.data.clientMonths
+        latestPeriodTo = normalizeText(clientMonthsCache.data?.periodTo)
+      } else {
+        resolveCreolabsClientVariant(config, 'clientMonths').catch(() => {})
+      }
+    }
 
-  let localArtifactRows = []
-  let localArtifactPeriodTo = ''
-  try {
-    const resolvedLocalArtifact = await resolveCreolabsTradersRankingRewardsRows()
-    const artifactData = resolvedLocalArtifact?.data || {}
-    localArtifactRows = Array.isArray(artifactData?.rows) ? artifactData.rows : []
-    localArtifactPeriodTo = normalizeText(artifactData?.periodTo)
-  } catch {
-    localArtifactRows = []
-  }
+    let localArtifactRows = []
+    let localArtifactPeriodTo = ''
+    try {
+      const resolvedLocalArtifact = await resolveCreolabsTradersRankingRewardsRows()
+      const artifactData = resolvedLocalArtifact?.data || {}
+      localArtifactRows = Array.isArray(artifactData?.rows) ? artifactData.rows : []
+      localArtifactPeriodTo = normalizeText(artifactData?.periodTo)
+    } catch {
+      localArtifactRows = []
+    }
 
-  if (!monthsRows.length && localArtifactRows.length > 0) {
-    monthsRows = localArtifactRows
-    monthsFromArtifact = true
-    latestPeriodTo = localArtifactPeriodTo || latestPeriodTo
+    if (!monthsRows.length && localArtifactRows.length > 0) {
+      monthsRows = localArtifactRows
+      monthsFromArtifact = true
+      latestPeriodTo = localArtifactPeriodTo || latestPeriodTo
+    }
   }
 
   const scores = buildCreolabsClientScores(monthsRows)
@@ -3266,39 +4247,6 @@ async function buildCreolabsRegisteredUsersDataset(req) {
     }
   }
 
-  const toDbLiveMonthRow = (row) => {
-    const periodId = normalizeText(row?.periodId || row?.year_month || row?.yearMonth)
-    const startDate = monthStartDate(periodId)
-    const endDate = monthEndDate(periodId)
-    const explicitTimestamp = normalizeText(row?.clientTimestamp || row?.client_timestamp)
-    const explicitTimestampMs = Date.parse(explicitTimestamp)
-    const clientTimestamp = Number.isFinite(explicitTimestampMs)
-      ? new Date(explicitTimestampMs).toISOString()
-      : (startDate ? startDate.toISOString() : '')
-    const lastTimeComment = endDate ? endDate.toISOString() : clientTimestamp
-    const closedPl = toFiniteNumber(row?.closedPl ?? row?.pl)
-    const openPl = toFiniteNumber(row?.openPl)
-    const balance = toFiniteNumber(row?.balance)
-    const equity = toFiniteNumber(row?.equity) || balance + openPl
-
-    return {
-      ...row,
-      clientTimestamp,
-      kycTimestamp: clientTimestamp,
-      status: normalizeText(row?.status) || 'active',
-      ltdDate: normalizeText(row?.ltdDate),
-      lttDate: normalizeText(row?.lttDate),
-      lastTimeComment: normalizeText(row?.lastTimeComment) || lastTimeComment,
-      closedPl,
-      openPl,
-      balance,
-      equity,
-      openedTrades: Math.round(toFiniteNumber(row?.openedTrades ?? row?.opened_trades ?? row?.trades)),
-      sourceObjectId: CREOLABS_CLIENTS_OBJ,
-      sourcePeriod: periodId,
-    }
-  }
-
   let sourceRows = []
   let sourceMode = 'client-months'
   let sourceDiagnostics = {
@@ -3312,57 +4260,83 @@ async function buildCreolabsRegisteredUsersDataset(req) {
     ? _dbLiveIngestionState.storeByClient
     : new Map()
 
+  let leadRows = []
+  let leadCached = false
+  let leadStale = false
+  let leadStaleAgeMs = null
+  let leadObjectError = ''
+
   try {
     const resolvedLeads = await withTimeout(
       resolveCreolabsRegisteredLeadsFromObject(config),
       REGISTERED_LEADS_OBJECT_TIMEOUT_MS,
       'Creolabs registered-leads object'
     )
-    sourceRows = Array.isArray(resolvedLeads?.data) ? resolvedLeads.data : []
+    leadRows = Array.isArray(resolvedLeads?.data) ? resolvedLeads.data : []
+    leadCached = Boolean(resolvedLeads?.cached)
+    leadStale = Boolean(resolvedLeads?.stale)
+    leadStaleAgeMs = Number.isFinite(Number(resolvedLeads?.staleAgeMs))
+      ? Number(resolvedLeads?.staleAgeMs)
+      : null
+  } catch (leadError) {
+    leadObjectError = normalizeText(leadError?.message)
+    leadRows = []
+  }
+
+  if (leadRows.length > 0) {
+    sourceRows = leadRows
     sourceMode = 'lead-object'
     sourceDiagnostics = {
       ...sourceDiagnostics,
-      leadObjectRows: sourceRows.length,
-      leadObjectCached: Boolean(resolvedLeads?.cached),
+      leadObjectRows: leadRows.length,
+      leadObjectCached: leadCached,
+      leadObjectStale: leadStale,
+      leadObjectStaleAgeMs: leadStaleAgeMs,
+      clientMonthsRows: monthsRows.length,
+    }
+  } else {
+    const canUseMonthFallback = allowMonthFallback && monthsRows.length > 0
+    let fallbackRows = canUseMonthFallback ? monthsRows.map(toDbLiveMonthRow) : []
+    let fallbackSourceObjectId = canUseMonthFallback
+      ? (monthsFromArtifact ? 'public/traders_ranking_rewards_table.json' : CREOLABS_CLIENTS_OBJ)
+      : ''
+    let storeFallbackRows = 0
+
+    if (!canUseMonthFallback) {
+      const lastRunSourceMode = normalizeText(_dbLiveIngestionState?.lastRun?.sourceMode).toLowerCase()
+      const storeEligible =
+        lastRunSourceMode === 'lead-object' ||
+        lastRunSourceMode === 'local-artifact-recovery' ||
+        lastRunSourceMode === 'local-artifact'
+
+      if (storeEligible) {
+        const storeUsers = getDbLiveUsersSnapshot()
+        if (storeUsers.length > 0) {
+          fallbackRows = storeUsers.map((row) => ({
+            ...row,
+            sourceObjectId: normalizeText(row?.sourceObjectId || 'db-live-store'),
+          }))
+          storeFallbackRows = fallbackRows.length
+          fallbackSourceObjectId = 'db-live-store'
+        }
+      }
     }
 
-    if (!sourceRows.length && monthsRows.length > 0) {
-      sourceRows = monthsRows.map(toDbLiveMonthRow)
-      sourceMode = monthsFromArtifact ? 'local-artifact' : 'client-months'
-      sourceDiagnostics = {
-        ...sourceDiagnostics,
-        clientMonthsRows: sourceRows.length,
-        sourceObjectId: monthsFromArtifact
-          ? 'public/traders_ranking_rewards_table.json'
-          : CREOLABS_CLIENTS_OBJ,
-      }
-    }
-  } catch (leadError) {
-    if (monthsRows.length > 0) {
-      sourceRows = monthsRows.map(toDbLiveMonthRow)
-      sourceMode = monthsFromArtifact ? 'local-artifact' : 'client-months'
-      sourceDiagnostics = {
-        ...sourceDiagnostics,
-        clientMonthsRows: sourceRows.length,
-        leadObjectRows: 0,
-        leadObjectError: normalizeText(leadError?.message),
-        sourceObjectId: monthsFromArtifact
-          ? 'public/traders_ranking_rewards_table.json'
-          : CREOLABS_CLIENTS_OBJ,
-      }
-    } else {
-      const canUseMonthFallback = allowMonthFallback && monthsRows.length > 0
-      const datesRows = canUseMonthFallback
-        ? buildDerivedClientDatesRowsFromClientMonths(monthsRows, latestPeriodTo)
-        : []
-      sourceRows = datesRows
-      sourceMode = canUseMonthFallback ? 'client-months-fallback' : 'no-source'
-      sourceDiagnostics = {
-        ...sourceDiagnostics,
-        leadObjectRows: 0,
-        fallbackRows: datesRows.length,
-        leadObjectError: normalizeText(leadError?.message),
-      }
+    sourceRows = fallbackRows
+    sourceMode = canUseMonthFallback
+      ? (monthsFromArtifact ? 'local-artifact-fallback' : 'client-months-fallback')
+      : (fallbackRows.length > 0 ? 'db-live-store-fallback' : 'no-source')
+    sourceDiagnostics = {
+      ...sourceDiagnostics,
+      leadObjectRows: 0,
+      leadObjectCached: leadCached,
+      leadObjectStale: leadStale,
+      leadObjectStaleAgeMs: leadStaleAgeMs,
+      leadObjectError,
+      fallbackRows: fallbackRows.length,
+      storeFallbackRows,
+      clientMonthsRows: monthsRows.length,
+      sourceObjectId: fallbackSourceObjectId,
     }
   }
 
@@ -3501,7 +4475,22 @@ async function buildCreolabsRegisteredUsersDataset(req) {
       net: toFiniteNumber(row?.net || score?.net),
       closedPl: toFiniteNumber(row?.closedPl || score?.closedPl),
       openPl: toFiniteNumber(row?.openPl || score?.openPl),
-      commission: toFiniteNumber(row?.commission || score?.commission),
+      commission: toFiniteNumber(
+        row?.commission ??
+        row?.commissionAff ??
+        row?.transactionCommission ??
+        row?.transCommission ??
+        score?.commission ??
+        storeUser?.commission
+      ),
+      commissionAff: toFiniteNumber(
+        row?.commissionAff ??
+        row?.transactionCommission ??
+        row?.transCommission ??
+        row?.commission ??
+        score?.commission ??
+        storeUser?.commission
+      ),
       trades: Math.round(toFiniteNumber(row?.trades || score?.trades)),
       openedTrades: Math.round(openedTradesPicked.value),
       ftd: toFiniteNumber(row?.ftd || score?.ftd),
@@ -3543,10 +4532,44 @@ async function buildCreolabsRegisteredUsersDataset(req) {
     return Number(normalizeText(b.clientId)) - Number(normalizeText(a.clientId))
   })
 
+  const queryKpis = aggregateCreolabsUserKpis(users)
+  let volumeKpis = queryKpis
+  let volumeKpisSource = sourceMode
+
+  if (monthsRows.length > 0) {
+    const monthRowsFiltered = applyDbLiveFilters(monthsRows.map(toDbLiveMonthRow), urlObj).filter((user) => {
+      const ts = normalizeText(user?.clientTimestamp)
+      const tsMs = ts ? Date.parse(ts) : NaN
+      return Number.isFinite(tsMs) && tsMs >= fromMs && tsMs <= toMs
+    })
+    if (monthRowsFiltered.length > 0) {
+      volumeKpis = aggregateCreolabsUserKpis(monthRowsFiltered)
+      volumeKpisSource = monthsFromArtifact ? 'local-artifact' : 'client-months'
+    }
+  }
+
+  if ((sourceMode === 'lead-object') && (volumeKpis === queryKpis)) {
+    const storeSnapshot = getDbLiveUsersSnapshot()
+    if (storeSnapshot.length > users.length) {
+      const storeFiltered = applyDbLiveFilters(storeSnapshot, urlObj).filter((user) => {
+        const ts = normalizeText(user?.clientTimestamp)
+        const tsMs = ts ? Date.parse(ts) : NaN
+        return Number.isFinite(tsMs) && tsMs >= fromMs && tsMs <= toMs
+      })
+      if (storeFiltered.length > 0) {
+        volumeKpis = aggregateCreolabsUserKpis(storeFiltered)
+        volumeKpisSource = 'db-live-store'
+      }
+    }
+  }
+
   const meta = {
     from: new Date(fromMs).toISOString(),
     to: new Date(toMs).toISOString(),
     total: users.length,
+    queryKpis,
+    volumeKpis,
+    volumeKpisSource,
     sourceRows: {
       clientMonths: monthsRows.length,
       leadRows: sourceRows.length,
@@ -3897,12 +4920,13 @@ function persistCreolabsLiveArtifactRows(rows, context = {}) {
   }
 }
 
-function buildDbLiveRunQuery({ from, to, monthFallback = 1, provenance = 1 }) {
+function buildDbLiveRunQuery({ from, to, monthFallback = 1, provenance = 1, preferLive = 1 }) {
   const query = new URLSearchParams()
   query.set('from', normalizeText(from) || DB_LIVE_BOOTSTRAP_FROM)
   query.set('to', normalizeText(to) || nowIsoDateOnly())
   query.set('monthFallback', monthFallback ? '1' : '0')
   query.set('provenance', provenance ? '1' : '0')
+  query.set('preferLive', preferLive ? '1' : '0')
   return `/api/qlik/creolabs/registered-users?${query.toString()}`
 }
 
@@ -4217,12 +5241,46 @@ async function runDbLiveIngestionCycle({ reason = 'manual', forceFull = false } 
     const syntheticReq = { url: buildDbLiveRunQuery({ from: window.from, to: window.to, monthFallback: 1, provenance: 1 }) }
     const dataset = await buildCreolabsRegisteredUsersDataset(syntheticReq)
     const users = Array.isArray(dataset?.users) ? dataset.users : []
+    const baselineStoreSize = _dbLiveIngestionState.storeByClient.size
+    const needsSafetyGuard = window.mode === 'full' || baselineStoreSize === 0
+
+    let effectiveUsers = users
+    let effectiveSourceMode = normalizeText(dataset?.meta?.sourceRows?.sourceMode) || 'n/a'
+    let effectiveSourceRows = dataset?.meta?.sourceRows || {}
+
+    if (needsSafetyGuard && effectiveUsers.length < DB_LIVE_MIN_SAFE_USERS) {
+      let artifactRows = []
+      try {
+        const artifact = await resolveCreolabsTradersRankingRewardsRows()
+        artifactRows = Array.isArray(artifact?.data?.rows) ? artifact.data.rows : []
+      } catch {
+        artifactRows = []
+      }
+
+      if (artifactRows.length >= DB_LIVE_MIN_SAFE_USERS && artifactRows.length > effectiveUsers.length) {
+        effectiveUsers = artifactRows
+        effectiveSourceMode = 'local-artifact-recovery'
+        effectiveSourceRows = {
+          ...effectiveSourceRows,
+          recoveryApplied: true,
+          recoveryReason: 'min-safe-users',
+          recoveryOriginalUsers: users.length,
+          recoveryArtifactRows: artifactRows.length,
+        }
+      } else {
+        const error = new Error(
+          `Safety guard blocked ingestion snapshot: fetched ${effectiveUsers.length} users (< ${DB_LIVE_MIN_SAFE_USERS})`
+        )
+        error.code = 'db_live_min_safe_users'
+        throw error
+      }
+    }
 
     let upserts = 0
     let watermarkMs = Date.parse(normalizeText(_dbLiveIngestionState.latestWatermark))
     if (!Number.isFinite(watermarkMs)) watermarkMs = -1
 
-    for (const user of users) {
+    for (const user of effectiveUsers) {
       const clientId = normalizeText(user?.clientId)
       if (!clientId) continue
       const storeKey = getDbLiveStoreKey(user)
@@ -4244,26 +5302,19 @@ async function runDbLiveIngestionCycle({ reason = 'manual', forceFull = false } 
     _dbLiveIngestionState.runCount += 1
 
     runMeta.status = 'success'
-    runMeta.fetchedUsers = users.length
+  runMeta.fetchedUsers = effectiveUsers.length
     runMeta.upserts = upserts
     runMeta.totalStored = _dbLiveIngestionState.storeByClient.size
-    runMeta.sourceMode = normalizeText(dataset?.meta?.sourceRows?.sourceMode) || 'n/a'
-    runMeta.sourceRows = dataset?.meta?.sourceRows || {}
+  runMeta.sourceMode = effectiveSourceMode
+  runMeta.sourceRows = effectiveSourceRows
 
     try {
-      if (runMeta.sourceMode === 'lead-object') {
-        runMeta.localArtifactSync = persistCreolabsLiveArtifactRows(users, {
-          sourceMode: runMeta.sourceMode,
-          from: window.from,
-          to: window.to,
-        })
-      } else {
-        runMeta.localArtifactSync = {
-          written: false,
-          reason: `sourceMode:${runMeta.sourceMode}`,
-          filePath: getCreolabsLiveArtifactPath(),
-        }
-      }
+      const snapshotRows = Array.from(_dbLiveIngestionState.storeByClient.values())
+      runMeta.localArtifactSync = persistCreolabsLiveArtifactRows(snapshotRows, {
+        sourceMode: runMeta.sourceMode,
+        from: window.from,
+        to: window.to,
+      })
     } catch (artifactError) {
       runMeta.localArtifactSync = {
         written: false,
@@ -4781,6 +5832,16 @@ function buildDbLiveReportCreatePayload(reqBody, template, reportsConfig) {
 }
 
 async function handleCreolabsDbLiveReportsJobs(req, res) {
+  return json(
+    res,
+    410,
+    {
+      ok: false,
+      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+
   if (req.method !== 'GET' && req.method !== 'POST') return notAllowed(req, res, 'GET, POST')
 
   if (req.method === 'GET') {
@@ -4892,6 +5953,16 @@ async function handleCreolabsDbLiveReportsJobs(req, res) {
 }
 
 async function handleCreolabsDbLiveReportsJobStatus(req, res, jobId) {
+  return json(
+    res,
+    410,
+    {
+      ok: false,
+      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
 
   const knownJob = getDbLiveReportJob(jobId)
@@ -4959,6 +6030,16 @@ async function handleCreolabsDbLiveReportsJobStatus(req, res, jobId) {
 }
 
 async function handleCreolabsDbLiveReportsJobDownload(req, res, jobId) {
+  return json(
+    res,
+    410,
+    {
+      ok: false,
+      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
+    },
+    { 'Cache-Control': 'no-store' }
+  )
+
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
 
   const knownJob = getDbLiveReportJob(jobId)
@@ -5073,12 +6154,16 @@ async function handleCreolabsDbLiveReportTemplates(req, res) {
 
 async function handleCreolabsDbLive(req, res) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  const config = ensureConfigured(res)
+  if (!config) return
 
   try {
     const urlObj = new URL(req.url || '/', 'http://localhost')
     const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
     const strictLive = normalizeText(urlObj.searchParams.get('strictLive')) === '1'
     const markUnmappedIdentity = normalizeText(urlObj.searchParams.get('markUnmappedIdentity') || '1') !== '0'
+    const scope = normalizeText(urlObj.searchParams.get('scope') || 'recent').toLowerCase()
+    const recentMonths = parsePositiveInt(urlObj.searchParams.get('recentMonths'), 3, 24)
     const fromRaw = normalizeText(urlObj.searchParams.get('from'))
     const toRaw = normalizeText(urlObj.searchParams.get('to'))
     const hasDateRange = Boolean(fromRaw || toRaw)
@@ -5100,9 +6185,15 @@ async function handleCreolabsDbLive(req, res) {
     let usedFallbackSource = false
     let sourceUsers = getDbLiveUsersSnapshot()
     if (!sourceUsers.length && _dbLiveIngestionState.inFlight) {
-      const fallbackDataset = await buildCreolabsRegisteredUsersDataset(req)
-      sourceUsers = Array.isArray(fallbackDataset?.users) ? fallbackDataset.users : []
-      usedFallbackSource = sourceUsers.length > 0
+      try {
+        const artifact = await resolveCreolabsTradersRankingRewardsRows()
+        const artifactRows = Array.isArray(artifact?.data?.rows) ? artifact.data.rows : []
+        sourceUsers = artifactRows
+        usedFallbackSource = sourceUsers.length > 0
+      } catch {
+        sourceUsers = []
+        usedFallbackSource = false
+      }
     }
 
     // Normalize legacy snapshot rows and backfill sparse identity fields at read-time.
@@ -5186,62 +6277,160 @@ async function handleCreolabsDbLive(req, res) {
     }
 
     const filtered = applyDbLiveFilters(sourceUsers, urlObj)
+
+    const sourcePeriodRank = (user) => {
+      const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
+      const rank = ymRank(periodId)
+      return Number.isFinite(rank) ? rank : -1
+    }
+
+    const sourceActivityMs = (user) => {
+      const candidates = [
+        user?.clientTimestamp,
+        user?.lttDate,
+        user?.ltdDate,
+        user?.lastTimeComment,
+      ]
+      for (const candidate of candidates) {
+        const ms = parseIsoDateBoundary(normalizeText(candidate), { endOfDay: false })
+        if (Number.isFinite(ms)) return ms
+      }
+      return null
+    }
+
+    const applyRecentScope = (rows) => {
+      if (scope === 'all') return rows
+      const latestRank = rows.reduce((max, user) => Math.max(max, sourcePeriodRank(user)), -1)
+      if (latestRank < 0) return rows
+      const cutoffRank = Math.max(0, latestRank - Math.max(1, recentMonths) + 1)
+      const cutoffMs = Date.now() - Math.max(1, recentMonths) * 31 * 24 * 60 * 60 * 1000
+      return rows.filter((user) => {
+        const rank = sourcePeriodRank(user)
+        if (rank >= cutoffRank && rank > 0) return true
+        const activityMs = sourceActivityMs(user)
+        return Number.isFinite(activityMs) ? activityMs >= cutoffMs : false
+      })
+    }
+
+    const recentScopeRows = applyRecentScope(filtered)
+
+    const fromPeriodRank = hasDateRange ? periodRankFromIsoDate(fromRaw || DB_LIVE_BOOTSTRAP_FROM) : -1
+    const toPeriodRank = hasDateRange ? periodRankFromIsoDate(toRaw || nowIsoDateOnly()) : -1
+    const hasPeriodBounds = hasDateRange && fromPeriodRank > 0 && toPeriodRank > 0
+    const nowPeriodRank = periodRankFromIsoDate(nowIsoDateOnly())
+    const isCurrentMonthRange = hasPeriodBounds && fromPeriodRank === nowPeriodRank && toPeriodRank === nowPeriodRank
+
     const dateFiltered = hasDateRange
-      ? filtered.filter((user) => {
+      ? recentScopeRows.filter((user) => {
+          const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
+          const periodRank = ymRank(periodId)
+          if (hasPeriodBounds && periodRank > 0) {
+            return periodRank >= fromPeriodRank && periodRank <= toPeriodRank
+          }
+
           const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
           if (!Number.isFinite(ts)) return false
           return ts >= fromMs && ts <= toMs
         })
-      : filtered
+      : recentScopeRows
     const sorted = applyDbLiveSort(dateFiltered, urlObj)
 
-    const aggregateDbLiveKpis = (users) => {
-      const rows = Array.isArray(users) ? users : []
-      let net = 0
-      let deposit = 0
-      let wd = 0
-      let trades = 0
-      let closedPl = 0
-      let openPl = 0
-      let ftd = 0
-      let rdp = 0
-      const clientIds = new Set()
-      const affiliates = new Set()
+    const dbKpis = aggregateCreolabsUserKpis(sourceUsers)
+    const queryKpis = aggregateCreolabsUserKpis(dateFiltered, {
+      leadFromMs: fromMs,
+      leadToMs: toMs,
+    })
+    let volumeKpis = queryKpis
+    let volumeKpisSource = 'db-live-store'
 
-      for (const user of rows) {
-        net += toFiniteNumber(user?.net)
-        deposit += toFiniteNumber(user?.deposit)
-        wd += toFiniteNumber(user?.wd)
-        trades += toFiniteNumber(user?.trades)
-        closedPl += toFiniteNumber(user?.closedPl)
-        openPl += toFiniteNumber(user?.openPl)
-        ftd += toFiniteNumber(user?.ftd)
-        rdp += toFiniteNumber(user?.rdp)
+    try {
+      let monthRows = []
+      let monthRowsSource = ''
 
-        const clientId = normalizeText(user?.clientId)
-        const affiliateId = normalizeText(user?.affiliateId)
-        if (clientId) clientIds.add(clientId)
-        if (affiliateId && !isMissingIdentityValue(affiliateId)) affiliates.add(affiliateId)
+      const clientMonthsCache = getCreolabsClientVariantCache('clientMonths')
+      if (Array.isArray(clientMonthsCache?.data?.clientMonths) && clientMonthsCache.data.clientMonths.length > 0) {
+        monthRows = clientMonthsCache.data.clientMonths
+        monthRowsSource = 'client-months-cache'
       }
 
-      return {
-        rows: rows.length,
-        uniqueClients: clientIds.size,
-        uniqueAffiliates: affiliates.size,
-        net,
-        deposit,
-        wd,
-        trades,
-        closedPl,
-        openPl,
-        totalPl: closedPl + openPl,
-        ftd,
-        rdp,
+      if (!monthRows.length) {
+        const resolved = await resolveCreolabsClientVariant(config, 'clientMonths')
+        const liveRows = Array.isArray(resolved?.data?.clientMonths) ? resolved.data.clientMonths : []
+        if (liveRows.length > 0) {
+          monthRows = liveRows
+          monthRowsSource = 'client-months-live'
+        }
       }
+
+      if (!monthRows.length) {
+        const artifact = await resolveCreolabsTradersRankingRewardsRows()
+        const artifactRows = Array.isArray(artifact?.data?.rows) ? artifact.data.rows : []
+        if (artifactRows.length > 0) {
+          monthRows = artifactRows
+          monthRowsSource = 'local-artifact'
+        }
+      }
+
+      if (monthRows.length > 0) {
+        let volumeRows = monthRows.map(toDbLiveMonthRow)
+        if (markUnmappedIdentity) {
+          volumeRows = volumeRows.map((user) => ({
+            ...user,
+            affiliateId: isMissingIdentityValue(user?.affiliateId) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.affiliateId),
+            clientLogin: isMissingIdentityValue(user?.clientLogin) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.clientLogin),
+          }))
+        }
+
+        const volumeFiltered = applyDbLiveFilters(volumeRows, urlObj)
+        const volumeScopeRows = applyRecentScope(volumeFiltered)
+        const volumeDateFiltered = hasDateRange
+          ? volumeScopeRows.filter((user) => {
+              const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
+              const periodRank = ymRank(periodId)
+              if (hasPeriodBounds && periodRank > 0) {
+                return periodRank >= fromPeriodRank && periodRank <= toPeriodRank
+              }
+
+              const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+              if (!Number.isFinite(ts)) return false
+              return ts >= fromMs && ts <= toMs
+            })
+          : volumeScopeRows
+
+        if (volumeDateFiltered.length > 0) {
+          volumeKpis = aggregateCreolabsUserKpis(volumeDateFiltered, {
+            leadFromMs: fromMs,
+            leadToMs: toMs,
+          })
+          volumeKpisSource = monthRowsSource || 'client-months'
+        }
+      }
+    } catch {
+      // Keep queryKpis fallback when full-volume source is unavailable.
     }
 
-    const dbKpis = aggregateDbLiveKpis(sourceUsers)
-    const queryKpis = aggregateDbLiveKpis(dateFiltered)
+    if (isCurrentMonthRange) {
+      try {
+        const official = await resolveCreolabsPerformanceSummaryThisMonthKpis(config)
+        const officialData = official?.data || null
+        if (officialData) {
+          volumeKpis = {
+            ...volumeKpis,
+            closedPl: toFiniteNumber(officialData.closedPl),
+            ftd: toFiniteNumber(officialData.ftd),
+            deposit: toFiniteNumber(officialData.deposit),
+            wd: toFiniteNumber(officialData.wd),
+            net: toFiniteNumber(officialData.net),
+            closedVolume: toFiniteNumber(officialData.closedVolume),
+          }
+          volumeKpisSource = official?.cached
+            ? 'qlik-performance-summary-this-month-cache'
+            : 'qlik-performance-summary-this-month'
+        }
+      } catch {
+        // Keep previous volume source when official this-month summary cannot be evaluated.
+      }
+    }
 
     const total = sorted.users.length
     const safeOffset = Math.min(Math.max(0, offset), Math.max(0, total - 1))
@@ -5253,6 +6442,48 @@ async function handleCreolabsDbLive(req, res) {
     const nextOffset = safeOffset + limit
 
     const sourceMode = normalizeText(_dbLiveIngestionState?.lastRun?.sourceMode) || 'n/a'
+    if (volumeKpisSource === 'db-live-store' && sourceMode.toLowerCase().includes('client-months')) {
+      volumeKpisSource = 'db-live-store-client-months'
+    }
+
+    // Leads must reflect real registrations (clientTimestamp in range), not active client-month rows.
+    // Use cache-only lookup here to keep API latency predictable.
+    let registeredLeadsCount = null
+    let registeredLeadsAvailable = false
+    try {
+      const registeredRows = Array.isArray(_creolabsRegisteredLeadsObjectCache?.data)
+        ? _creolabsRegisteredLeadsObjectCache.data
+        : []
+      if (registeredRows.length > 0) {
+      const registeredFiltered = applyDbLiveFilters(registeredRows, urlObj)
+      const registeredScoped = applyRecentScope(registeredFiltered)
+      const registeredDateFiltered = hasDateRange
+        ? registeredScoped.filter((user) => {
+            const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+            if (!Number.isFinite(ts)) return false
+            return ts >= fromMs && ts <= toMs
+          })
+        : registeredScoped
+      const leadClientIds = new Set(
+        registeredDateFiltered
+          .map((user) => normalizeText(user?.clientId))
+          .filter(Boolean)
+      )
+      registeredLeadsCount = leadClientIds.size
+      registeredLeadsAvailable = true
+      }
+    } catch {
+      // Leads source unavailable: avoid returning inflated fallback derived from active client-month rows.
+    }
+
+    if (registeredLeadsAvailable && Number.isFinite(registeredLeadsCount)) {
+      queryKpis.totalLeads = registeredLeadsCount
+      volumeKpis.totalLeads = registeredLeadsCount
+    } else {
+      queryKpis.totalLeads = null
+      volumeKpis.totalLeads = null
+    }
+
     const lastSuccessAt = normalizeText(_dbLiveIngestionState.lastSuccessAt)
     const lastSuccessMs = Date.parse(lastSuccessAt)
     const freshnessAgeMs = Number.isFinite(lastSuccessMs) ? Math.max(0, Date.now() - lastSuccessMs) : null
@@ -5273,6 +6504,7 @@ async function handleCreolabsDbLive(req, res) {
     if (sourceMode === 'no-source') warnings.push('upstream_source_unavailable')
     if (Number(_dbLiveIngestionState.consecutiveFailures || 0) > 0) warnings.push('ingestion_failures')
     if (!_dbLiveIngestionState.schedulerStarted) warnings.push('scheduler_not_started')
+    if (!registeredLeadsAvailable) warnings.push('registered_leads_unavailable')
 
     const identityMissingCount = dateFiltered.filter(
       (user) => isMissingIdentityValue(user?.affiliateId) || isMissingIdentityValue(user?.clientLogin)
@@ -5320,6 +6552,11 @@ async function handleCreolabsDbLive(req, res) {
             queryKpis: {
               scope: hasDateRange ? 'query-with-date-range' : 'query-with-filters',
               ...queryKpis,
+            },
+            volumeKpis: {
+              scope: hasDateRange ? 'full-volume-with-date-range' : 'full-volume-with-filters',
+              source: volumeKpisSource,
+              ...volumeKpis,
             },
             freshness: {
               state: freshnessState,
@@ -5372,6 +6609,8 @@ async function handleCreolabsDbLive(req, res) {
               to: toRaw,
               strictLive,
               markUnmappedIdentity,
+              scope,
+              recentMonths,
               sort: sorted.sort,
               search: normalizeText(urlObj.searchParams.get('search')),
               status: normalizeText(urlObj.searchParams.get('status')),
@@ -5513,6 +6752,7 @@ async function handleCreolabsDbLiveIngestionControl(req, res) {
 
   try {
     if (action === 'clear-store') {
+      _dbLiveIngestionState.inFlight = false
       _dbLiveIngestionState.storeByClient = new Map()
       _dbLiveIngestionState.latestWatermark = ''
       _dbLiveIngestionState.lastRun = {
@@ -6275,6 +7515,11 @@ async function routeQlik(req, res, parts) {
   if (head === 'users' && parts[1] === 'me') return handleUsersMe(req, res)
   if (head === 'items') return handleItems(req, res)
   if (head === 'apps') return handleApps(req, res)
+  if (head === 'sales') return handleQlikDynamicEndpoint(req, res, 'sales')
+  if (head === 'retention') return handleQlikDynamicEndpoint(req, res, 'retention')
+  if (head === 'deposits') return handleQlikDynamicEndpoint(req, res, 'deposits')
+  if (head === 'affiliates') return handleQlikDynamicEndpoint(req, res, 'affiliates')
+  if (head === 'client-months') return handleQlikDynamicEndpoint(req, res, 'client-months')
 
   // Creolabs live PL comparison route
   if (head === 'creolabs' && parts[1] === 'live-pl') {
@@ -6369,6 +7614,10 @@ async function routeQlik(req, res, parts) {
     return handleEngineSheets(req, res, parts[2])
   }
 
+  if (head === 'engine' && parts[1] === 'apps' && parts[2] && parts[3] === 'session' && parts[4] === 'ping') {
+    return handleEngineSessionPing(req, res, parts[2])
+  }
+
   if (
     head === 'engine' &&
     parts[1] === 'apps' &&
@@ -6421,7 +7670,7 @@ module.exports = {
 // Auto-prefetch CREOLABS live PL on module load so the cache is warm before first user request
 setTimeout(() => {
   const config = getConfig()
-  if (!config.hasApiKey && !config.hasOauth) return
+  if (!config.hasOauth && !config.hasApiKey) return
   fetchCreolabsLivePlData(config)
     .then((data) => {
       _creolabsPlCache = { data, fetchedAt: Date.now(), promise: null }
@@ -6433,13 +7682,13 @@ setTimeout(() => {
 
 setTimeout(() => {
   const config = getConfig()
-  if (!config.hasApiKey && !config.hasOauth) return
+  if (!config.hasOauth && !config.hasApiKey) return
   resolveCreolabsClientVariant(config, 'clientMonths')
     .catch(() => {})
 }, 1500)
 
 setTimeout(() => {
   const config = getConfig()
-  if (!config.hasApiKey && !config.hasOauth) return
+  if (!config.hasOauth && !config.hasApiKey) return
   startDbLiveIngestionScheduler()
 }, 2500)

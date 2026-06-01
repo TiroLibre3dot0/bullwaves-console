@@ -47,7 +47,7 @@ const numberFmt2 = new Intl.NumberFormat('en-GB', {
 
 function formatMoneyLike(v) {
   const n = Number(v || 0)
-  return numberFmt2.format(n)
+  return numberFmt0.format(Math.round(n))
 }
 
 function formatRatioPct(v) {
@@ -584,7 +584,7 @@ export default function CreolabsPage() {
         tone: '#e2e8f0',
       },
       {
-        label: 'Unique clients',
+        label: 'Active traders',
         value: numberFmt0.format(uniqueClients),
         helper: 'Distinct client keys in the filtered rows',
         tone: '#7dd3fc',
