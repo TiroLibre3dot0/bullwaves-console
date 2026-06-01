@@ -1582,7 +1582,7 @@ function clearCreolabsClientVariantCaches() {
 const CREOLABS_LATEST_LEAD_OBJECT_ID = 'db41484c-0a43-4f59-a499-381dfceee46c'
 const CREOLABS_LATEST_LEAD_OBJECT_TTL = 5 * 60 * 1000
 const CREOLABS_REGISTERED_LEADS_OBJECT_ID = 'ZShKmrn'
-const CREOLABS_REGISTERED_LEADS_OBJECT_TTL = 5 * 60 * 1000
+const CREOLABS_REGISTERED_LEADS_OBJECT_TTL = 12 * 60 * 60 * 1000
 const CREOLABS_LEAD_EXCLUDED_STATUSES = new Set(['duplicate', 'deleted', 'do not call', 'less than 18'])
 const CREOLABS_PERFORMANCE_SUMMARY_THIS_MONTH_MEASURES = [
   {
@@ -6353,14 +6353,7 @@ async function handleCreolabsDbLive(req, res) {
         monthRowsSource = 'client-months-cache'
       }
 
-      if (!monthRows.length) {
-        const resolved = await resolveCreolabsClientVariant(config, 'clientMonths')
-        const liveRows = Array.isArray(resolved?.data?.clientMonths) ? resolved.data.clientMonths : []
-        if (liveRows.length > 0) {
-          monthRows = liveRows
-          monthRowsSource = 'client-months-live'
-        }
-      }
+      // Do not await live upstream snapshots in the request path: this endpoint must stay responsive.
 
       if (!monthRows.length) {
         const artifact = await resolveCreolabsTradersRankingRewardsRows()
@@ -7686,6 +7679,13 @@ setTimeout(() => {
   resolveCreolabsClientVariant(config, 'clientMonths')
     .catch(() => {})
 }, 1500)
+
+setTimeout(() => {
+  const config = getConfig()
+  if (!config.hasOauth && !config.hasApiKey) return
+  resolveCreolabsRegisteredLeadsFromObject(config)
+    .catch(() => {})
+}, 2000)
 
 setTimeout(() => {
   const config = getConfig()
