@@ -7,6 +7,7 @@ const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
 const { routeAuth } = require('../serverless/handlers/auth')
 const { routeEmail } = require('../serverless/handlers/email')
+const { routeGmail } = require('../serverless/handlers/gmail')
 const { routeQlik } = require('../serverless/handlers/qlik')
 const { routeAcuity } = require('../serverless/handlers/acuity')
 
@@ -788,6 +789,79 @@ app.get('/health', (req, res) => res.json({ ok: true }))
 // Alias for console/dev proxy
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
+app.get('/api/skale/live', (req, res) => {
+  const progressPath = path.join(uploadDir, 'skale-users-db-progress.json')
+  const publicPath = path.join(__dirname, '..', 'public', 'skale', 'skale-users-db.json')
+
+  const candidates = [progressPath, publicPath].filter((p, idx, arr) => arr.indexOf(p) === idx)
+  const existing = candidates.filter((p) => fs.existsSync(p))
+  if (!existing.length) {
+    return res.status(404).json({ ok: false, error: 'skale_data_not_found' })
+  }
+
+  const readJsonWithRetries = (filePath, retries = 2) => {
+    let lastErr = null
+    for (let i = 0; i <= retries; i += 1) {
+      try {
+        const raw = fs.readFileSync(filePath, 'utf8')
+        return { ok: true, payload: JSON.parse(raw), error: null }
+      } catch (e) {
+        lastErr = e
+      }
+    }
+    return { ok: false, payload: null, error: lastErr }
+  }
+
+  let payload = null
+  let sourcePath = ''
+  let lastErr = null
+  for (const filePath of existing) {
+    const result = readJsonWithRetries(filePath, 2)
+    if (result.ok) {
+      payload = result.payload
+      sourcePath = filePath
+      break
+    }
+    lastErr = result.error
+  }
+
+  if (!payload) {
+    return res.status(500).json({ ok: false, error: 'skale_data_read_failed', message: lastErr && lastErr.message })
+  }
+
+  const source = sourcePath.endsWith('skale-users-db-progress.json') ? 'progress' : 'public'
+  const runtime = payload && typeof payload.runtime === 'object' ? payload.runtime : {}
+  const metrics = runtime && typeof runtime.metrics === 'object' ? runtime.metrics : {}
+  payload.runtime = {
+    ...runtime,
+    runId: runtime.runId || null,
+    startedAt: runtime.startedAt || null,
+    finishedAt: runtime.finishedAt || null,
+    phase: runtime.phase || 'idle',
+    isRunning: Boolean(runtime.isRunning),
+    current: Number(runtime.current || 0),
+    total: Number(runtime.total || 0),
+    updatedAt: runtime.updatedAt || payload.generatedAt || null,
+    message: runtime.message || '',
+    metrics: {
+      elapsedSec: Number(metrics.elapsedSec || 0),
+      lagSec: Number(metrics.lagSec || 0),
+      samples: Number(metrics.samples || 0),
+      phaseRatePerMin: Number.isFinite(Number(metrics.phaseRatePerMin)) ? Number(metrics.phaseRatePerMin) : null,
+      etaSec: Number.isFinite(Number(metrics.etaSec)) ? Number(metrics.etaSec) : null,
+      etaText: metrics.etaText || null,
+    },
+  }
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+  res.set('Pragma', 'no-cache')
+  res.set('Expires', '0')
+  return res.json({
+    ...payload,
+    liveSource: source,
+    servedAt: new Date().toISOString(),
+  })
+})
+
 app.all('/api/email', (req, res) => routeEmail(req, res, []))
 app.all('/api/email/*', (req, res) => {
   const tail = String(req.path || '')
@@ -795,6 +869,15 @@ app.all('/api/email/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeEmail(req, res, tail)
+})
+
+app.all('/api/gmail', (req, res) => routeGmail(req, res, []))
+app.all('/api/gmail/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/gmail\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeGmail(req, res, tail)
 })
 
 app.all('/api/qlik', (req, res) => routeQlik(req, res, []))
