@@ -269,8 +269,10 @@ let currentPeriod = 'all';
 let USERS = [];
 let TODAY_USERS = [];
 let loadToken = 0;
+let isLoadingLeaderboard = false;
 
 function showLoader(label) {
+  isLoadingLeaderboard = true;
   const el = document.getElementById('loader');
   const lbl = document.getElementById('loader-label');
   const body = document.getElementById('table-body');
@@ -282,6 +284,7 @@ function showLoader(label) {
 }
 
 function hideLoader() {
+  isLoadingLeaderboard = false;
   const el = document.getElementById('loader');
   if (el) el.classList.remove('visible');
 }
@@ -377,9 +380,13 @@ function dedupeRowsByClient(rows) {
 }
 
 function renderTable() {
-  hideLoader();
   const body = document.getElementById('table-body');
   const noRes = document.getElementById('no-results');
+  if (isLoadingLeaderboard) {
+    if (body) body.innerHTML='';
+    if (noRes) noRes.style.display='none';
+    return;
+  }
   const q = currentSearch.toLowerCase();
   const list = dedupeRowsByClient(USERS)
     .filter(u => u.name.toLowerCase().includes(q))
@@ -462,6 +469,7 @@ async function loadCompetitionData() {
     const users = await fetchLeaderboard(currentSort, currentPeriod);
     if (token !== loadToken) return;
     USERS = users; TODAY_USERS = [];
+    hideLoader();
     renderTable(); renderWins();
   } catch(e) {
     if (token !== loadToken) return;
