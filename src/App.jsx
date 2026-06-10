@@ -40,6 +40,12 @@ const PublicFinanceToolOrganigramSharePage = React.lazy(
 const PublicCommissionValidationRulesSharePage = React.lazy(
   () => import('./pages/share/PublicCommissionValidationRulesSharePage')
 )
+const PublicPhTeamCoverageSharePage = React.lazy(
+  () => import('./pages/share/PublicPhTeamCoverageSharePage')
+)
+const PublicProjectManagementSharePage = React.lazy(
+  () => import('./features/projectManagement/pages/PublicProjectManagementSharePage')
+)
 
 export default function App() {
   const { t } = useI18n()
@@ -121,7 +127,11 @@ export default function App() {
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
     if (p.startsWith('/share/flows/')) return 'flows'
     if (p.startsWith('/share/project-board/')) return 'project-board'
+    if (p === '/share/project-management' || p.startsWith('/share/project-management/'))
+      return 'project-management'
     if (p.startsWith('/share/execution/')) return 'execution'
+    if (p === '/share/ph-team-coverage' || p.startsWith('/share/ph-team-coverage'))
+      return 'ph-team-coverage'
     if (p === '/share/affiliate-reports' || p.startsWith('/share/affiliate-reports/'))
       return 'affiliate-reports'
     if (p.startsWith('/share/affiliate-analysis/')) return 'affiliate-analysis'
@@ -217,6 +227,14 @@ export default function App() {
     )
   }
 
+  if (shareRoute === 'project-management') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicProjectManagementSharePage />
+      </React.Suspense>
+    )
+  }
+
   if (shareRoute === 'finance-tool-organigram') {
     const token = window.location.pathname.split('/').pop()
     return (
@@ -240,6 +258,14 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicExecutionSharePage token={token} />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'ph-team-coverage') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicPhTeamCoverageSharePage />
       </React.Suspense>
     )
   }
