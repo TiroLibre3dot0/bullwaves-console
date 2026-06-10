@@ -23,6 +23,12 @@ const ACUITY_TEMPLATES = [
     file: 'acuity-visual-46.html',
   },
   {
+    id: 'acuity-calendar',
+    name: 'Bullwaves Acuity Calendar',
+    subject: "This Week's Market Calendar at a Glance",
+    file: 'acuity-calendar.html',
+  },
+  {
     id: 'market-pulse',
     name: 'Bullwaves - Market Pulse',
     subject: '📈 Market Pulse – {{date}}',
@@ -44,6 +50,7 @@ const ACUITY_TEMPLATES = [
 
 const TEMPLATE_KEYWORDS = {
   'acuity-visual-46': 'acuity visual',
+  'acuity-calendar': 'acuity calendar',
   'market-pulse': 'market pulse',
   'trade-alert': 'trade alert',
   'weekly-opportunity': 'weekly opportunity',

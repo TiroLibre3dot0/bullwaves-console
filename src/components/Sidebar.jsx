@@ -3,6 +3,7 @@ import { useI18n } from '../i18n/I18nContext'
 
 const RECENT_SECTION_KEYS = new Set([
   'segmentComposition',
+  'masterTemplates',
   'emailMasterTemplate',
   'primeChallengeRanking',
   'primeChallengeWidget',
@@ -211,7 +212,11 @@ export default function Sidebar({
 
   const disabled = (key) => {
     if (customEventsDisabled && key === 'customEvents') return true
-    if (key === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return true
+    if (
+      (key === 'emailMasterTemplate' || key === 'masterTemplates') &&
+      !canAccessEmailMasterTemplate
+    )
+      return true
     if (!supportOnly) return false
     const allowed =
       allowedViews && typeof allowedViews.has === 'function'
@@ -239,48 +244,46 @@ export default function Sidebar({
 
   const sectionGroups = [
     {
-      key: 'creolabs',
-      title: 'CREOLABS',
+      key: 'projectManagement',
+      title: 'Project management',
       items: [
         {
-          key: 'creolabsApps',
-          label: 'Qlik Apps',
-          icon: 'chart',
-          active: view === 'creolabs',
-          onClick: () => navigate('creolabs'),
-          disabled: disabled('creolabs'),
-        },
-        {
-          key: 'creolabsClientLists',
-          label: 'Client Lists (30d)',
-          icon: 'list',
-          active: view === 'creolabsClientLists',
-          onClick: () => navigate('creolabsClientLists'),
-          disabled: disabled('creolabs'),
-        },
-        {
-          key: 'creolabsDbLive',
-          label: 'DB Live',
-          icon: 'shield',
-          active: view === 'creolabsDbLive',
-          onClick: () => navigate('creolabsDbLive'),
-          disabled: disabled('creolabs'),
-        },
-        {
-          key: 'creolabsReport',
-          label: 'Creolabs Report',
+          key: 'projectManagement',
+          label: 'Project management',
           icon: 'layout',
-          active: view === 'creolabsReport',
-          onClick: () => navigate('creolabsReport'),
+          active: view === 'projectManagement',
+          onClick: () => navigate('projectManagement'),
+          disabled: disabled('projectManagement'),
+        },
+      ],
+    },
+    {
+      key: 'creolabs',
+      title: 'DATABASE',
+      items: [
+        {
+          key: 'creolabsNative',
+          label: 'DB Native',
+          icon: 'database',
+          active: view === 'creolabsNative' || view === 'creolabs' || view === 'creolabsReport',
+          onClick: () => navigate('creolabsNative'),
           disabled: disabled('creolabs'),
         },
         {
-          key: 'creolabsTestEnvironment3',
-          label: 'Test Environment 3.0',
-          icon: 'shield',
-          active: view === 'creolabsTestEnvironment3',
-          onClick: () => navigate('creolabsTestEnvironment3'),
-          disabled: disabled('creolabs'),
+          key: 'skale',
+          label: 'Skale',
+          icon: 'layers',
+          active: view === 'skale',
+          onClick: () => navigate('skale'),
+          disabled: disabled('skale'),
+        },
+        {
+          key: 'skaleAccount',
+          label: 'Skale Account',
+          icon: 'user',
+          active: view === 'skaleAccount',
+          onClick: () => navigate('skaleAccount'),
+          disabled: disabled('skale'),
         },
       ],
     },
@@ -311,6 +314,38 @@ export default function Sidebar({
           active: view === 'segmentComposition',
           onClick: () => navigate('segmentComposition'),
           disabled: disabled('segmentComposition'),
+        },
+        {
+          key: 'marketingCampaign',
+          label: 'Marketing campaign',
+          icon: 'mail',
+          active: view === 'marketingCampaign',
+          onClick: () => navigate('marketingCampaign'),
+          disabled: disabled('marketingCampaign'),
+        },
+        {
+          key: 'smsConsole',
+          label: 'SMS Console',
+          icon: 'chat',
+          active: view === 'smsConsole',
+          onClick: () => navigate('smsConsole'),
+          disabled: disabled('smsConsole'),
+        },
+        {
+          key: 'slackConsole',
+          label: 'Slack Inbox',
+          icon: 'chat',
+          active: view === 'slackConsole',
+          onClick: () => navigate('slackConsole'),
+          disabled: disabled('slackConsole'),
+        },
+        {
+          key: 'masterTemplates',
+          label: 'Master templates',
+          icon: 'layout',
+          active: view === 'masterTemplates',
+          onClick: () => navigate('masterTemplates'),
+          disabled: disabled('masterTemplates'),
         },
         {
           key: 'allTemplates',
@@ -393,6 +428,14 @@ export default function Sidebar({
           active: view === 'tradingCompetition',
           onClick: () => navigate('tradingCompetition'),
           disabled: disabled('tradingCompetition'),
+        },
+        {
+          key: 'tradingCompetitionWidget',
+          label: 'Widget',
+          icon: 'layout',
+          active: view === 'tradingCompetitionWidget',
+          onClick: () => navigate('tradingCompetitionWidget'),
+          disabled: disabled('tradingCompetitionWidget'),
         },
       ],
     },

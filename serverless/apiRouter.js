@@ -2,6 +2,9 @@ const { routeAnalytics } = require('./handlers/analytics')
 const { routeAuth } = require('./handlers/auth')
 const { routeQlik } = require('./handlers/qlik')
 const { routeEmail } = require('./handlers/email')
+const { routeSms } = require('./handlers/sms')
+const { routeGmail } = require('./handlers/gmail')
+const { routeSlack } = require('./handlers/slack')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeAcuity } = require('./handlers/acuity')
@@ -56,6 +59,18 @@ async function routeApi(req, res) {
 
   if (scope === 'email') {
     return routeEmail(req, res, parts.slice(1))
+  }
+
+  if (scope === 'sms') {
+    return routeSms(req, res, parts.slice(1))
+  }
+
+  if (scope === 'gmail') {
+    return routeGmail(req, res, parts.slice(1))
+  }
+
+  if (scope === 'slack') {
+    return routeSlack(req, res, parts.slice(1))
   }
 
   if (scope === 'share') {

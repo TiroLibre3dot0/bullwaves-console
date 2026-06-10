@@ -242,7 +242,7 @@ export const translations = {
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
-    'sidebar.creolabs': 'Creolabs',
+    'sidebar.creolabs': 'Database',
     'sidebar.profitableRanking': 'Profitable Ranking',
     'sidebar.salesAgentsMonitor': 'Sales Agents Monitor',
 
@@ -2818,7 +2818,7 @@ export const translations = {
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Eventi custom',
     'sidebar.ranking': 'Ranking',
-    'sidebar.creolabs': 'Creolabs',
+    'sidebar.creolabs': 'Database',
     'sidebar.profitableRanking': 'Profitable Ranking',
     'sidebar.salesAgentsMonitor': 'Monitor Sales Agents',
 
@@ -5431,7 +5431,7 @@ export const translations = {
     'sidebar.flows': 'Flows',
     'sidebar.customEvents': 'Custom Events',
     'sidebar.ranking': 'Ranking',
-    'sidebar.creolabs': 'Creolabs',
+    'sidebar.creolabs': 'Database',
     'sidebar.profitableRanking': 'Profitable Ranking',
     'sidebar.salesAgentsMonitor': 'Monitor Prodajnih Agenata',
 

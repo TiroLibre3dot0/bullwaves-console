@@ -65,6 +65,9 @@ const SALES_ALLOWED_VIEWS = new Set([
   'aiAssistant',
   'trustpilotGuide',
   'commissionValidationRules',
+  'smsConsole',
+  'slackConsole',
+  'masterTemplates',
   'emailMasterTemplate',
   'orgChart',
 ])

@@ -326,9 +326,20 @@ function dedupeKeyFor(row) {
 
 function writeJson(filePath, payload) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true })
+  const content = JSON.stringify(payload, null, 2)
   const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`
-  fs.writeFileSync(tmpPath, JSON.stringify(payload, null, 2), 'utf8')
-  fs.renameSync(tmpPath, filePath)
+  fs.writeFileSync(tmpPath, content, 'utf8')
+  try {
+    fs.renameSync(tmpPath, filePath)
+  } catch (renameErr) {
+    // Windows: file locked by Syncthing or another reader — fall back to direct overwrite.
+    try {
+      fs.unlinkSync(tmpPath)
+    } catch {
+      // ignore cleanup failure
+    }
+    fs.writeFileSync(filePath, content, 'utf8')
+  }
 }
 
 function appendJsonLine(filePath, payload) {

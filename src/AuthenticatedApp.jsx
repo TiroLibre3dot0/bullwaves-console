@@ -40,24 +40,26 @@ const FinanceToolOrganigramPage = lazy(
 const NotionBoard = lazy(() => import('./features/notion/NotionBoard'))
 const ProfitableRanking = lazy(() => import('./pages/Retention/ProfitableRanking'))
 const SalesAgentsMonitor = lazy(() => import('./pages/Retention/SalesAgentsMonitor'))
+const EmailMasterTemplatePage = lazy(() => import('./pages/Retention/EmailMasterTemplatePage'))
 const AllTemplatesPage = lazy(() => import('./features/sales/pages/AllTemplatesPage'))
 const ConsoleHomePage = lazy(() => import('./pages/ConsoleHomePage'))
 const PrimeChallengeWidgetPage = lazy(() => import('./pages/PrimeChallengeWidgetPage'))
 const TradingCompetitionPage = lazy(() => import('./pages/TradingCompetitionPage'))
+const TradingCompetitionWidgetPage = lazy(() => import('./pages/TradingCompetitionWidgetPage'))
 const CommissionValidationRulesPage = lazy(() => import('./pages/CommissionValidationRulesPage'))
 const SalesMonitoringPage = lazy(() => import('./pages/SalesMonitoringPage'))
 const AcuityLabPage = lazy(() => import('./features/acuity/pages/AcuityLabPage'))
+const MarketingCampaignPage = lazy(() => import('./features/sales/pages/MarketingCampaignPage'))
+const SmsConsolePage = lazy(() => import('./features/sms/pages/SmsConsolePage'))
+const SlackInboxPage = lazy(() => import('./features/slack/pages/SlackInboxPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
-const CreolabsPage = lazy(() => import('./features/creolabs/CreolabsPage'))
-const CreolabsClientListsPage = lazy(
-  () => import('./features/creolabs/pages/CreolabsClientListsPage')
-)
-const CreolabsDbLivePage = lazy(() => import('./features/creolabs/pages/CreolabsDbLivePage'))
-const CreolabsReportPage = lazy(() => import('./features/creolabs/pages/CreolabsReportPage'))
-const CreolabsTestEnvironment3Page = lazy(
-  () => import('./features/creolabs/pages/CreolabsTestEnvironment3Page')
+const CreolabsDbNativePage = lazy(() => import('./features/creolabs/pages/CreolabsDbNativePage'))
+const SkalePage = lazy(() => import('./features/skale/pages/SkalePage'))
+const SkaleAccountPage = lazy(() => import('./features/skale/pages/SkaleAccountPage'))
+const ProjectManagementPage = lazy(
+  () => import('./features/projectManagement/pages/ProjectManagementPage')
 )
 const BoardReportMailStudioPage = lazy(
   () => import('./features/board/pages/BoardReportMailStudioPage')
@@ -174,10 +176,15 @@ export default function AuthenticatedApp() {
       primeChallengeRanking: '/prime-challenge/ranking',
       primeChallengeWidget: '/prime-challenge/widget',
       tradingCompetition: '/trading-competition',
+      tradingCompetitionWidget: '/trading-competition/widget',
       commissionValidationRules: '/compliance/commission-validation-rules',
       salesMonitoring: '/sales/monitoring',
+      marketingCampaign: '/sales/marketing-campaign',
+      smsConsole: '/sales/sms-console',
+      slackConsole: '/sales/slack-inbox',
       segmentComposition: '/retention/segment-composition',
       salesAgentsMonitor: '/retention/sales-agents-monitor',
+      masterTemplates: '/retention/master-templates',
       emailMasterTemplate: '/retention/email-master-template',
       fraud: '/fraud',
       orgChart: '/org-chart',
@@ -186,11 +193,12 @@ export default function AuthenticatedApp() {
       supportUserCheck: '/support/user-check',
       aiAssistant: '/support/ai-assistant',
       trustpilotGuide: '/trustpilot-guide',
-      creolabs: '/creolabs',
-      creolabsClientLists: '/creolabs/client-lists',
-      creolabsDbLive: '/creolabs/db-live',
-      creolabsReport: '/creolabs/report',
-      creolabsTestEnvironment3: '/creolabs/test-environment-3-0',
+      creolabs: '/creolabs/native',
+      creolabsClientLists: '/creolabs/native',
+      creolabsNative: '/creolabs/native',
+      skale: '/skale',
+      skaleAccount: '/skale/account',
+      projectManagement: '/project-management',
       boardReportMailStudio: '/board/report-mail-studio',
       reportsHub: '/reports',
       acuity: '/acuity',
@@ -224,12 +232,17 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/prime-challenge/ranking')) return 'primeChallengeRanking'
     if (pathname.startsWith('/prime-challenge/widget')) return 'primeChallengeWidget'
+    if (pathname.startsWith('/trading-competition/widget')) return 'tradingCompetitionWidget'
     if (pathname.startsWith('/trading-competition')) return 'tradingCompetition'
     if (pathname.startsWith('/compliance/commission-validation-rules'))
       return 'commissionValidationRules'
     if (pathname.startsWith('/sales/monitoring')) return 'salesMonitoring'
+    if (pathname.startsWith('/sales/marketing-campaign')) return 'marketingCampaign'
+    if (pathname.startsWith('/sales/sms-console')) return 'smsConsole'
+    if (pathname.startsWith('/sales/slack-inbox')) return 'slackConsole'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
     if (pathname.startsWith('/retention/sales-agents-monitor')) return 'salesAgentsMonitor'
+    if (pathname.startsWith('/retention/master-templates')) return 'masterTemplates'
     if (pathname.startsWith('/retention/email-master-template')) return 'emailMasterTemplate'
     if (pathname.startsWith('/fraud')) return 'fraud'
     if (pathname.startsWith('/org-chart')) return 'orgChart'
@@ -238,13 +251,16 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/support/user-check')) return 'supportUserCheck'
     if (pathname.startsWith('/support/ai-assistant')) return 'aiAssistant'
     if (pathname.startsWith('/trustpilot-guide')) return 'trustpilotGuide'
-    if (pathname.startsWith('/creolabs/client-lists')) return 'creolabsClientLists'
-    if (pathname.startsWith('/creolabs/report')) return 'creolabsReport'
-    if (pathname.startsWith('/creolabs/test-environment-3-0')) return 'creolabsTestEnvironment3'
-    if (pathname.startsWith('/creolabs/test-environment-2-0')) return 'creolabsDbLive'
-    if (pathname.startsWith('/creolabs/test-environment')) return 'creolabsDbLive'
-    if (pathname.startsWith('/creolabs/db-live')) return 'creolabsDbLive'
-    if (pathname.startsWith('/creolabs')) return 'creolabs'
+    if (pathname.startsWith('/creolabs/client-lists')) return 'creolabsNative'
+    if (pathname.startsWith('/creolabs/native')) return 'creolabsNative'
+    if (pathname.startsWith('/creolabs/report')) return 'creolabsNative'
+    if (pathname.startsWith('/project-management')) return 'projectManagement'
+    if (pathname.startsWith('/creolabs/test-environment-2-0')) return 'creolabsNative'
+    if (pathname.startsWith('/creolabs/test-environment')) return 'creolabsNative'
+    if (pathname.startsWith('/creolabs/db-live')) return 'creolabsNative'
+    if (pathname.startsWith('/creolabs')) return 'creolabsNative'
+    if (pathname.startsWith('/skale/account')) return 'skaleAccount'
+    if (pathname.startsWith('/skale')) return 'skale'
     if (pathname.startsWith('/board/report-mail-studio')) return 'boardReportMailStudio'
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/acuity')) return 'acuity'
@@ -271,15 +287,23 @@ export default function AuthenticatedApp() {
       setView('commandCenter')
     }
     if (p === '/creolabs') {
-      window.history.replaceState({ view: 'creolabs' }, '', routes.creolabs)
-      setView('creolabs')
+      window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+      setView('creolabsNative')
+    }
+    if (p && (p.startsWith('/creolabs/client-lists') || p.startsWith('/creolabs/db-live'))) {
+      window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+      setView('creolabsNative')
+    }
+    if (p && p.startsWith('/creolabs/db-live-2')) {
+      window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+      setView('creolabsNative')
     }
     if (
       p &&
       (p.startsWith('/creolabs/test-environment-2-0') || p.startsWith('/creolabs/test-environment'))
     ) {
-      window.history.replaceState({ view: 'creolabsDbLive' }, '', routes.creolabsDbLive)
-      setView('creolabsDbLive')
+      window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+      setView('creolabsNative')
     }
     if (p && p.startsWith('/solitics')) {
       window.history.replaceState({ view: 'reportsHub' }, '', routes.reportsHub)
@@ -287,8 +311,7 @@ export default function AuthenticatedApp() {
     }
   }, [
     routes.commandCenter,
-    routes.creolabs,
-    routes.creolabsDbLive,
+    routes.creolabsNative,
     routes.overview,
     routes.profitableRanking,
     routes.reportsHub,
@@ -395,14 +418,33 @@ export default function AuthenticatedApp() {
         nextPath.startsWith('/creolabs/test-environment-2-0') ||
         nextPath.startsWith('/creolabs/test-environment')
       ) {
-        window.history.replaceState({ view: 'creolabsDbLive' }, '', routes.creolabsDbLive)
-        setView('creolabsDbLive')
+        window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+        setView('creolabsNative')
+        return
+      }
+
+      if (
+        nextPath.startsWith('/creolabs/client-lists') ||
+        nextPath.startsWith('/creolabs/db-live')
+      ) {
+        window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+        setView('creolabsNative')
+        return
+      }
+
+      if (
+        nextPath.startsWith('/creolabs/db-live-2') ||
+        nextPath.startsWith('/creolabs/test-environment-3-0')
+      ) {
+        window.history.replaceState({ view: 'creolabsNative' }, '', routes.creolabsNative)
+        setView('creolabsNative')
         return
       }
 
       if (
         !canAccessEmailMasterTemplate &&
-        nextPath.startsWith('/retention/email-master-template')
+        (nextPath.startsWith('/retention/email-master-template') ||
+          nextPath.startsWith('/retention/master-templates'))
       ) {
         window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
         setView('commandCenter')
@@ -423,7 +465,7 @@ export default function AuthenticatedApp() {
     isAdmin,
     isRestrictedUser,
     routes.commandCenter,
-    routes.creolabsDbLive,
+    routes.creolabsNative,
     routes.projectBoard,
     routes,
     restrictedAllowedViews,
@@ -470,7 +512,7 @@ export default function AuthenticatedApp() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!user) return
-    if (view !== 'emailMasterTemplate') return
+    if (view !== 'emailMasterTemplate' && view !== 'masterTemplates') return
     if (canAccessEmailMasterTemplate) return
 
     window.history.replaceState({ view: 'commandCenter' }, '', routes.commandCenter)
@@ -485,6 +527,7 @@ export default function AuthenticatedApp() {
     if (nextView === 'adminPasswords' && !isAdmin) return
     if (nextView === 'customEvents' && !isAdmin) return
     if (nextView === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return
+    if (nextView === 'masterTemplates' && !canAccessEmailMasterTemplate) return
 
     if (isRestrictedUser && !restrictedAllowedViews.has(nextView)) {
       const fallbackView = restrictedDeniedView
@@ -611,10 +654,15 @@ export default function AuthenticatedApp() {
       primeChallengeRanking: 'prime-challenge-ranking',
       primeChallengeWidget: 'prime-challenge-widget',
       tradingCompetition: 'trading-competition',
+      tradingCompetitionWidget: 'trading-competition-widget',
       commissionValidationRules: 'commission-validation-rules',
       segmentComposition: 'retention-segment-composition',
       salesAgentsMonitor: 'retention-sales-agents-monitor',
+      masterTemplates: 'retention-master-templates',
       salesMonitoring: 'sales-monitoring',
+      marketingCampaign: 'sales-marketing-campaign',
+      smsConsole: 'sales-sms-console',
+      slackConsole: 'sales-slack-inbox',
       emailMasterTemplate: 'retention-email-master-template',
       orgChart: 'org-chart',
       platformUsageBilling: 'platform-usage-billing',
@@ -622,11 +670,9 @@ export default function AuthenticatedApp() {
       supportUserCheck: 'support-user-check',
       aiAssistant: 'support-ai-assistant',
       trustpilotGuide: 'trustpilot-guide',
-      creolabs: 'creolabs-overview',
-      creolabsClientLists: 'creolabs-client-lists',
-      creolabsDbLive: 'creolabs-db-live',
-      creolabsReport: 'creolabs-report',
-      creolabsTestEnvironment3: 'creolabs-test-environment-3-0',
+      creolabs: 'creolabs-db-native',
+      creolabsNative: 'creolabs-db-native',
+      projectManagement: 'project-management',
       boardReportMailStudio: 'board-report-mail-studio',
       reportsHub: 'reports-hub',
       acuity: 'acuity-lab',
@@ -704,10 +750,15 @@ export default function AuthenticatedApp() {
               ) : null}
               {view === 'primeChallengeWidget' ? <PrimeChallengeWidgetPage /> : null}
               {view === 'tradingCompetition' ? <TradingCompetitionPage /> : null}
+              {view === 'tradingCompetitionWidget' ? <TradingCompetitionWidgetPage /> : null}
               {view === 'commissionValidationRules' ? <CommissionValidationRulesPage /> : null}
               {view === 'salesMonitoring' ? <SalesMonitoringPage /> : null}
+              {view === 'marketingCampaign' ? <MarketingCampaignPage /> : null}
+              {view === 'smsConsole' ? <SmsConsolePage /> : null}
+              {view === 'slackConsole' ? <SlackInboxPage /> : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
               {view === 'salesAgentsMonitor' ? <SalesAgentsMonitor /> : null}
+              {view === 'masterTemplates' ? <EmailMasterTemplatePage /> : null}
               {view === 'emailMasterTemplate' ? <AllTemplatesPage /> : null}
               {view === 'fraud' ? <FraudMonitoringDashboard /> : null}
 
@@ -717,11 +768,11 @@ export default function AuthenticatedApp() {
               {view === 'supportUserCheck' ? <SupportUserCheck /> : null}
               {view === 'aiAssistant' ? <BullwavesAIAssistantPage /> : null}
               {view === 'trustpilotGuide' ? <TrustpilotGuidePage /> : null}
-              {view === 'creolabs' ? <CreolabsPage /> : null}
-              {view === 'creolabsClientLists' ? <CreolabsClientListsPage /> : null}
-              {view === 'creolabsDbLive' ? <CreolabsDbLivePage /> : null}
-              {view === 'creolabsReport' ? <CreolabsReportPage /> : null}
-              {view === 'creolabsTestEnvironment3' ? <CreolabsTestEnvironment3Page /> : null}
+              {view === 'creolabs' ? <CreolabsDbNativePage /> : null}
+              {view === 'creolabsNative' ? <CreolabsDbNativePage /> : null}
+              {view === 'skale' ? <SkalePage /> : null}
+              {view === 'skaleAccount' ? <SkaleAccountPage /> : null}
+              {view === 'projectManagement' ? <ProjectManagementPage /> : null}
               {view === 'boardReportMailStudio' ? <BoardReportMailStudioPage /> : null}
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
               {view === 'acuity' ? <AcuityLabPage /> : null}

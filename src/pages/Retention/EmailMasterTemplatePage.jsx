@@ -50,6 +50,87 @@ function normalizeEmail(value) {
     .toLowerCase()
 }
 
+function formatDateTime(value) {
+  const parsed = Date.parse(String(value || ''))
+  if (!Number.isFinite(parsed)) return ''
+  return new Date(parsed).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+function getLatestTrackingForRecipient(items, recipientEmail) {
+  const normalizedRecipient = normalizeEmail(recipientEmail)
+  if (!normalizedRecipient || !Array.isArray(items)) return null
+
+  const matches = items.filter((item) => normalizeEmail(item?.to) === normalizedRecipient)
+  if (!matches.length) return null
+
+  return matches.sort((left, right) => {
+    const leftTs = Date.parse(String(left?.updatedAt || '')) || 0
+    const rightTs = Date.parse(String(right?.updatedAt || '')) || 0
+    return rightTs - leftTs
+  })[0]
+}
+
+function trackingPillStyle(active, tone) {
+  if (!active) {
+    return {
+      background: 'rgba(148,163,184,0.14)',
+      color: '#9fb4c9',
+      border: '1px solid rgba(148,163,184,0.24)',
+    }
+  }
+
+  if (tone === 'click') {
+    return {
+      background: 'rgba(249,115,22,0.16)',
+      color: '#fdba74',
+      border: '1px solid rgba(249,115,22,0.34)',
+    }
+  }
+
+  if (tone === 'open') {
+    return {
+      background: 'rgba(22,163,74,0.16)',
+      color: '#86efac',
+      border: '1px solid rgba(22,163,74,0.34)',
+    }
+  }
+
+  return {
+    background: 'rgba(56,189,248,0.16)',
+    color: '#7dd3fc',
+    border: '1px solid rgba(56,189,248,0.34)',
+  }
+}
+
+function TrackingPill({ label, active, tone }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '28px',
+        padding: '0 10px',
+        borderRadius: '999px',
+        fontSize: '10px',
+        fontWeight: 900,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+        ...trackingPillStyle(active, tone),
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
 function textInputStyle() {
   return {
     minHeight: '42px',
@@ -297,6 +378,7 @@ export default function EmailMasterTemplatePage() {
   const [testSecret, setTestSecret] = useState(() =>
     readStoredValue(SENDGRID_SECRET_STORAGE_KEY, DEFAULT_TEST_SECRET)
   )
+  const [trackingState, setTrackingState] = useState({ loading: true, data: null, error: '' })
   const [firstName, setFirstName] = useState('Paolo')
   const [accountManagerName, setAccountManagerName] = useState('The Bullwaves Team')
   const [ctaUrl, setCtaUrl] = useState('https://portal.bullwaves.com/custom/webtrader')
@@ -420,6 +502,54 @@ export default function EmailMasterTemplatePage() {
     writeStoredValue(SENDGRID_RECIPIENT_STORAGE_KEY, recipient.trim())
   }, [recipient])
 
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadTracking() {
+      if (!viewerEmail) {
+        setTrackingState({ loading: false, data: null, error: 'Sessione utente non disponibile.' })
+        return
+      }
+
+      setTrackingState((current) => ({ ...current, loading: true, error: '' }))
+
+      try {
+        const response = await fetch('/api/email/status', {
+          cache: 'no-store',
+          headers: requestViewerHeaders,
+        })
+        const data = await response.json()
+        if (cancelled) return
+
+        setTrackingState({
+          loading: false,
+          data,
+          error: response.ok ? '' : data?.error || 'Tracking refresh failed',
+        })
+      } catch (error) {
+        if (cancelled) return
+        setTrackingState({
+          loading: false,
+          data: null,
+          error: error?.message || 'Tracking refresh failed',
+        })
+      }
+    }
+
+    loadTracking()
+    const intervalId = window.setInterval(loadTracking, 20000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [requestViewerHeaders, viewerEmail])
+
+  const latestTracking = useMemo(
+    () => getLatestTrackingForRecipient(trackingState?.data?.items || [], recipient),
+    [recipient, trackingState?.data?.items]
+  )
+
   async function refreshEmailHealth() {
     if (!viewerEmail) {
       setEmailHealth({ loading: false, data: null, error: 'Sessione utente non disponibile.' })
@@ -497,6 +627,12 @@ export default function EmailMasterTemplatePage() {
         return
       }
       setSendState({ loading: false, mode, data, error: '' })
+      window.setTimeout(() => {
+        fetch('/api/email/status', {
+          cache: 'no-store',
+          headers: requestViewerHeaders,
+        }).catch(() => {})
+      }, 0)
     } catch (error) {
       setSendState({ loading: false, mode, data: null, error: error?.message || 'Send failed' })
     }
@@ -856,9 +992,10 @@ export default function EmailMasterTemplatePage() {
               <div
                 style={{ marginTop: '6px', fontSize: '14px', color: '#d9e6f2', lineHeight: 1.6 }}
               >
-                {emailHealth.loading
-                  ? 'Controllo configurazione in corso...'
-                  : emailHealth.error ||
+                {trackingState.loading || emailHealth.loading
+                  ? 'Controllo configurazione e tracking in corso...'
+                  : trackingState.error ||
+                    emailHealth.error ||
                     (emailHealth?.data?.configured
                       ? 'Configurazione pronta.'
                       : 'Mancano variabili server-side.')}
@@ -913,7 +1050,8 @@ export default function EmailMasterTemplatePage() {
 
             <div style={{ fontSize: '12px', color: '#8fa6bd', lineHeight: 1.7 }}>
               File locale da compilare: <strong>.env.sendgrid.local</strong>. Il pannello usa{' '}
-              <strong>/api/email/health</strong> e<strong> /api/email/send-test</strong>.
+              <strong>/api/email/health</strong>, <strong>/api/email/status</strong> e{' '}
+              <strong>/api/email/send-test</strong>.
             </div>
           </div>
         </div>
@@ -970,6 +1108,86 @@ export default function EmailMasterTemplatePage() {
           </div>
 
           <div
+            style={{
+              borderRadius: '18px',
+              border: '1px solid rgba(125,211,252,0.16)',
+              background: 'rgba(8,15,29,0.78)',
+              padding: '14px 16px',
+              display: 'grid',
+              gap: '10px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 12,
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    letterSpacing: '0.08em',
+                    textTransform: 'uppercase',
+                    color: '#7dd3fc',
+                  }}
+                >
+                  Tracking summary
+                </div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontSize: 13, fontWeight: 700 }}>
+                  {normalizeEmail(recipient) || PRIVATE_PREVIEW_EMAIL}
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#89a7c3' }}>
+                {trackingState.loading ? 'refreshing...' : trackingState.error || 'live'}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <TrackingPill
+                label={`Sent ${latestTracking?.messageId ? '✓' : '—'}`}
+                active={Boolean(latestTracking?.messageId)}
+                tone="sent"
+              />
+              <TrackingPill
+                label={`Open ${Number(latestTracking?.openCount || 0)}`}
+                active={Number(latestTracking?.openCount || 0) > 0}
+                tone="open"
+              />
+              <TrackingPill
+                label={`Click ${Number(latestTracking?.clickCount || 0)}`}
+                active={Number(latestTracking?.clickCount || 0) > 0}
+                tone="click"
+              />
+            </div>
+
+            <div
+              style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}
+            >
+              <div>
+                <div style={{ fontSize: 10, color: '#8fa6bd', fontWeight: 800 }}>Status</div>
+                <div style={{ marginTop: 4, color: '#f8fcff', fontWeight: 700 }}>
+                  {latestTracking?.status || '—'}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: '#8fa6bd', fontWeight: 800 }}>Last event</div>
+                <div style={{ marginTop: 4, color: '#f8fcff', fontWeight: 700 }}>
+                  {latestTracking?.lastEvent || '—'}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, color: '#8fa6bd', fontWeight: 800 }}>Updated</div>
+                <div style={{ marginTop: 4, color: '#f8fcff', fontWeight: 700 }}>
+                  {latestTracking?.updatedAt ? formatDateTime(latestTracking.updatedAt) : '—'}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
             style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', justifyContent: 'flex-end' }}
           >
             <SelectField
@@ -997,7 +1215,7 @@ export default function EmailMasterTemplatePage() {
           style={{
             display: 'grid',
             gap: '16px',
-            gridTemplateColumns: 'minmax(280px, 340px) minmax(0, 1fr)',
+            gridTemplateColumns: 'minmax(280px, 320px) minmax(0, 1fr)',
           }}
         >
           <div
@@ -1058,7 +1276,7 @@ export default function EmailMasterTemplatePage() {
 
           <div
             style={{
-              minHeight: '72vh',
+              minHeight: '54vh',
               borderRadius: '26px',
               border: '1px solid rgba(255,255,255,0.08)',
               background: 'rgba(255,255,255,0.03)',
@@ -1075,7 +1293,7 @@ export default function EmailMasterTemplatePage() {
               style={{
                 width: device === 'mobile' ? '430px' : '100%',
                 maxWidth: '100%',
-                minHeight: '72vh',
+                minHeight: '54vh',
                 height: '100%',
                 border: 0,
                 display: 'block',
@@ -1091,7 +1309,7 @@ export default function EmailMasterTemplatePage() {
       <section
         style={{
           flex: 1,
-          minHeight: '72vh',
+          minHeight: '54vh',
           borderRadius: '26px',
           border: '1px solid rgba(255,255,255,0.08)',
           background: 'rgba(255,255,255,0.03)',
@@ -1108,7 +1326,7 @@ export default function EmailMasterTemplatePage() {
           style={{
             width: device === 'mobile' ? '402px' : '100%',
             maxWidth: '100%',
-            minHeight: '72vh',
+            minHeight: '54vh',
             height: '100%',
             border: 0,
             display: 'block',

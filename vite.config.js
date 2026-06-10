@@ -135,6 +135,7 @@ export default defineConfig({
       '/api/skale': 'http://localhost:4000',
       '/api/auth': 'http://localhost:4000',
       '/api/email': 'http://localhost:4000',
+      '/api/sms': 'http://localhost:4000',
       '/api/gmail': 'http://localhost:4000',
       '/api/acuity': 'http://localhost:4000',
       '/api/qlik': 'http://localhost:4000',

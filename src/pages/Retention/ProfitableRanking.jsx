@@ -124,12 +124,16 @@ function RankingSpecsModal({
 
   if (!isOpen) return null
 
+  const [focusView, setFocusView] = useState(true)
+  const [expandedRowKey, setExpandedRowKey] = useState(null)
+
   const safeRows = Array.isArray(rows) ? rows : []
   const unassignedRow = safeRows.find((row) => row.key === 'unassigned') || null
   const totalPopulation = safeRows.reduce((acc, row) => acc + Number(row?.memberCount || 0), 0)
   const unassignedCount = Number(unassignedRow?.memberCount || 0)
   const coveredCount = Math.max(0, totalPopulation - unassignedCount)
   const coveragePct = totalPopulation > 0 ? (coveredCount / totalPopulation) * 100 : 0
+  const tableColumnCount = focusView ? 4 : 6
 
   const card = (
     <div
@@ -151,16 +155,45 @@ function RankingSpecsModal({
           </p>
         </div>
 
-        {!standalone ? (
-          <button
-            type="button"
-            className="pill-tab"
-            onClick={onClose}
-            aria-label="Close ranking specifications"
+        <div className="profitable-ranking-specs-modal__actions">
+          <div
+            className="profitable-ranking-specs-modal__view-switch"
+            role="group"
+            aria-label="Table view mode"
           >
-            Close
-          </button>
-        ) : null}
+            <button
+              type="button"
+              className={`pill-tab${focusView ? ' active' : ''}`}
+              onClick={() => {
+                setFocusView(true)
+                setExpandedRowKey(null)
+              }}
+            >
+              Focus View
+            </button>
+            <button
+              type="button"
+              className={`pill-tab${!focusView ? ' active' : ''}`}
+              onClick={() => {
+                setFocusView(false)
+                setExpandedRowKey(null)
+              }}
+            >
+              Full View
+            </button>
+          </div>
+
+          {!standalone ? (
+            <button
+              type="button"
+              className="pill-tab"
+              onClick={onClose}
+              aria-label="Close ranking specifications"
+            >
+              Close
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="profitable-ranking-specs-kpis">
@@ -179,11 +212,13 @@ function RankingSpecsModal({
       </div>
 
       <div className="profitable-ranking-specs-modal__table-wrap">
-        <table className="profitable-ranking-specs-table">
+        <table
+          className={`profitable-ranking-specs-table${focusView ? ' profitable-ranking-specs-table--focus' : ''}`}
+        >
           <thead>
             {typeof onShareTable === 'function' ? (
               <tr className="profitable-ranking-specs-table__share-row">
-                <th colSpan={6}>
+                <th colSpan={tableColumnCount}>
                   <div className="profitable-ranking-specs-table__share-inner">
                     <span className="profitable-ranking-specs-table__share-label">
                       Public sharing link for this table only
@@ -203,10 +238,10 @@ function RankingSpecsModal({
             ) : null}
             <tr>
               <th>Segment</th>
-              <th>Description</th>
               <th>Activity Status</th>
-              <th>Goal</th>
-              <th>Exact Rules</th>
+              {focusView ? <th>Summary</th> : <th>Description</th>}
+              {!focusView ? <th>Goal</th> : null}
+              {!focusView ? <th>Exact Rules</th> : null}
               <th>Members</th>
             </tr>
           </thead>
@@ -235,6 +270,10 @@ function RankingSpecsModal({
                 .map(({ statusName }) => derivedStatusFormula(statusName))
                 .filter((formula) => Boolean(formula))
               const description = String(row?.description || '').trim()
+              const goal = String(row?.goal || '').trim()
+              const rulesPreview = rulesList.slice(0, 2)
+              const remainingRules = Math.max(0, rulesList.length - rulesPreview.length)
+              const isExpanded = expandedRowKey === row.key
               return (
                 <tr
                   key={row.key}
@@ -264,12 +303,45 @@ function RankingSpecsModal({
                         <span className="profitable-ranking-specs-table__group-pill">
                           {row.group}
                         </span>
+                        {focusView ? (
+                          <button
+                            type="button"
+                            className="profitable-ranking-specs-table__details-toggle"
+                            onClick={() =>
+                              setExpandedRowKey((current) => (current === row.key ? null : row.key))
+                            }
+                          >
+                            {isExpanded ? 'Hide details' : 'Show details'}
+                          </button>
+                        ) : null}
                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="profitable-ranking-specs-table__description">
-                      {description || 'No description available.'}
+
+                      {focusView && isExpanded ? (
+                        <div className="profitable-ranking-specs-table__focus-details">
+                          <div>
+                            <strong>Description:</strong>{' '}
+                            {description || 'No description available.'}
+                          </div>
+                          <div>
+                            <strong>Goal:</strong> {goal || 'No goal provided.'}
+                          </div>
+                          {rulesList.length ? (
+                            <div>
+                              <strong>Rules:</strong>
+                              <ul className="profitable-ranking-specs-table__rules-list">
+                                {rulesList.map((rule, idx) => (
+                                  <li
+                                    key={`${row.key}-focus-rule-${idx}`}
+                                    className="profitable-ranking-specs-table__rules-item"
+                                  >
+                                    {rule}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   </td>
                   <td>
@@ -287,7 +359,7 @@ function RankingSpecsModal({
                         <span className="profitable-ranking-specs-table__status-empty">None</span>
                       )}
                     </div>
-                    {activityStatusFormulas.length ? (
+                    {!focusView && activityStatusFormulas.length ? (
                       <ul className="profitable-ranking-specs-table__status-formulas">
                         {activityStatusFormulas.map((formula, idx) => (
                           <li
@@ -301,20 +373,57 @@ function RankingSpecsModal({
                     ) : null}
                   </td>
                   <td>
-                    <div className="profitable-ranking-specs-table__goal">{row.goal}</div>
+                    {focusView ? (
+                      <div className="profitable-ranking-specs-table__summary">
+                        <div className="profitable-ranking-specs-table__summary-line">
+                          {description || 'No description available.'}
+                        </div>
+                        <div className="profitable-ranking-specs-table__summary-line">
+                          <strong>Goal:</strong> {goal || 'No goal provided.'}
+                        </div>
+                        {rulesPreview.length ? (
+                          <ul className="profitable-ranking-specs-table__rules-list profitable-ranking-specs-table__rules-list--compact">
+                            {rulesPreview.map((rule, idx) => (
+                              <li
+                                key={`${row.key}-summary-rule-${idx}`}
+                                className="profitable-ranking-specs-table__rules-item"
+                              >
+                                {rule}
+                              </li>
+                            ))}
+                            {remainingRules > 0 ? (
+                              <li className="profitable-ranking-specs-table__summary-more">
+                                +{remainingRules} more rules
+                              </li>
+                            ) : null}
+                          </ul>
+                        ) : null}
+                      </div>
+                    ) : (
+                      <div className="profitable-ranking-specs-table__description">
+                        {description || 'No description available.'}
+                      </div>
+                    )}
                   </td>
-                  <td>
-                    <ul className="profitable-ranking-specs-table__rules-list">
-                      {rulesList.map((rule, idx) => (
-                        <li
-                          key={`${row.key}-rule-${idx}`}
-                          className="profitable-ranking-specs-table__rules-item"
-                        >
-                          {rule}
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
+                  {!focusView ? (
+                    <td>
+                      <div className="profitable-ranking-specs-table__goal">{goal}</div>
+                    </td>
+                  ) : null}
+                  {!focusView ? (
+                    <td>
+                      <ul className="profitable-ranking-specs-table__rules-list">
+                        {rulesList.map((rule, idx) => (
+                          <li
+                            key={`${row.key}-rule-${idx}`}
+                            className="profitable-ranking-specs-table__rules-item"
+                          >
+                            {rule}
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                  ) : null}
                   <td>
                     <div className="profitable-ranking-specs-table__members-cell">
                       <div className="profitable-ranking-specs-table__count">

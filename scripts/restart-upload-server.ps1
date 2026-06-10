@@ -27,11 +27,30 @@ try {
 $p = Start-Process -FilePath "node" -ArgumentList "scripts\\upload-server.js" -WorkingDirectory $wd -PassThru -WindowStyle Hidden
 Write-Output ("Started PID={0}" -f $p.Id)
 
-# Basic health check
-Start-Sleep -Milliseconds 700
-try {
-  $resp = Invoke-WebRequest -UseBasicParsing ("http://127.0.0.1:{0}/health" -f $Port)
-  Write-Output $resp.Content
-} catch {
-  Write-Output ("Health check failed: {0}" -f $_.Exception.Message)
+# Robust health check: poll long enough for Node bootstrap + any first-load work.
+$healthUrl = "http://127.0.0.1:{0}/health" -f $Port
+$deadline = [DateTime]::UtcNow.AddSeconds(25)
+$healthy = $false
+
+while ([DateTime]::UtcNow -lt $deadline) {
+  try {
+    $resp = Invoke-WebRequest -UseBasicParsing $healthUrl -TimeoutSec 2
+    if ($resp.StatusCode -ge 200 -and $resp.StatusCode -lt 300) {
+      Write-Output $resp.Content
+      $healthy = $true
+      break
+    }
+  } catch {
+    # keep polling until timeout
+  }
+
+  if ($p.HasExited) {
+    throw ("Upload server process exited immediately (PID={0}, ExitCode={1})" -f $p.Id, $p.ExitCode)
+  }
+
+  Start-Sleep -Milliseconds 350
+}
+
+if (-not $healthy) {
+  throw ("Health check failed after restart (URL={0}, PID={1})" -f $healthUrl, $p.Id)
 }

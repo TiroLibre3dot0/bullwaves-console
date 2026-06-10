@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Leaderboard</title>
+<title>Trading Competition — Bullwaves</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -20,196 +20,189 @@
   --bg: #ffffff;
   --bg2: #f8f8f9;
   --bg3: #f3f4f6;
+  --nav-bg: rgba(255,255,255,0.9);
+  --nav-border: rgba(0,0,0,0.08);
 }
+
+html { scroll-behavior: smooth; }
 
 body {
   font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   background: var(--bg);
   color: var(--text);
-  padding: 40px 20px 80px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
+/* Navbar */
+.navbar {
+  position: sticky; top: 0; z-index: 100;
+  height: 58px;
+  background: linear-gradient(90deg, rgba(8,18,22,0.94), rgba(13,29,34,0.92));
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px;
+}
+.navbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; flex-shrink: 0;
+}
+.navbar-logo {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: block;
+  overflow: hidden;
+  background: rgba(255,255,255,0.08);
+}
+.navbar-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.navbar-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; color: #f8fafc; }
+.navbar-subtitle { font-size: 11px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.06em; text-transform: uppercase; }
+.navbar-spacer { flex: 1; }
+.navbar-pills { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 30px; padding: 0 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; text-decoration: none; cursor: pointer;
+  transition: transform .15s, background .15s; white-space: nowrap;
+}
+.pill:hover { transform: translateY(-1px); }
+.pill-outline { border: 1px solid rgba(255,255,255,0.24); background: transparent; color: #e2e8f0; }
+.pill-outline:hover { background: rgba(255,255,255,0.1); color: #ffffff; }
+.pill-green { border: 1px solid rgba(0,168,120,0.3); background: rgba(0,168,120,0.07); color: var(--green); }
+.pill-green:hover { background: rgba(0,168,120,0.14); }
+
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--green); animation: blink 1.4s ease-in-out infinite; flex-shrink: 0;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* Page body */
+.page-body { flex: 1; padding: 32px 20px 60px; }
 .wrap { max-width: 1100px; margin: 0 auto; }
-
 .layout { display: flex; gap: 20px; align-items: flex-start; }
-
-/* Left */
 .main { flex: 1; min-width: 0; }
 
-h1 {
-  font-size: 36px; font-weight: 700; letter-spacing: -0.05em;
-  margin-bottom: 24px; line-height: 1;
-}
+h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 24px; line-height: 1; }
 
 /* Tabs */
 .tabs-wrap { margin-bottom: 20px; }
-.tabs {
-  display: inline-flex; gap: 2px;
-  background: var(--bg3); border-radius: 10px; padding: 3px;
-}
-.tab {
-  height: 32px; padding: 0 14px; border: 0; border-radius: 8px;
-  background: transparent; color: var(--muted);
-  font: 500 13px 'Inter', sans-serif; cursor: pointer;
-  transition: all .18s; white-space: nowrap;
-}
-.tab.active {
-  background: var(--bg); color: var(--text); font-weight: 700;
-  box-shadow: 0 1px 4px rgba(0,0,0,.08);
-}
+.tabs { display: inline-flex; gap: 2px; background: var(--bg3); border-radius: 10px; padding: 3px; }
+.tab { height: 32px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font: 500 13px 'Inter',sans-serif; cursor: pointer; transition: all .18s; white-space: nowrap; }
+.tab.active { background: var(--bg); color: var(--text); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
 
 /* Search */
 .search-wrap { position: relative; margin-bottom: 0; }
-.search-icon {
-  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  color: var(--hint); pointer-events: none;
-  display: flex; align-items: center;
-}
-.search-input {
-  width: 100%; height: 40px; padding-left: 36px; padding-right: 14px;
-  border: none; border-bottom: 1px solid var(--border); background: transparent;
-  font: 14px 'Inter', sans-serif; color: var(--text);
-}
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--hint); pointer-events: none; display: flex; align-items: center; }
+.search-input { width: 100%; height: 40px; padding-left: 36px; padding-right: 14px; border: none; border-bottom: 1px solid var(--border); background: transparent; font: 14px 'Inter',sans-serif; color: var(--text); }
 .search-input::placeholder { color: #c4c4cf; }
 .search-input:focus { outline: none; }
 
 /* Table header */
-.table-head {
-  display: flex; align-items: center;
-  padding: 10px 16px; border-bottom: 1px solid var(--border);
-}
+.table-head { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); }
 .th-rank { width: 28px; flex-shrink: 0; }
 .th-avatar { width: 44px; flex-shrink: 0; }
 .th-name { flex: 1; }
 .th-cols { display: flex; gap: 40px; flex-shrink: 0; }
-.sort-btn {
-  border: 0; background: none; padding: 4px 0;
-  font: 700 13px 'Inter', sans-serif; cursor: pointer;
-  color: var(--hint); border-bottom: 2px solid transparent;
-  transition: all .18s; min-width: 90px; text-align: right;
-}
+.sort-btn { border: 0; background: none; padding: 4px 0; font: 700 13px 'Inter',sans-serif; cursor: pointer; color: var(--hint); border-bottom: 2px solid transparent; transition: all .18s; min-width: 90px; text-align: right; }
 .sort-btn.active { color: var(--text); border-bottom-color: var(--text); }
 .sort-btn:hover { color: var(--text); }
 
+/* Loader */
+.loader-wrap { display: none; padding: 56px 16px; text-align: center; }
+.loader-wrap.visible { display: block; }
+.loader-spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin .7s linear infinite; margin-bottom: 14px; }
+.loader-label { font-size: 13px; font-weight: 600; color: var(--hint); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* Rows */
-.lb-row {
-  display: flex; align-items: center;
-  padding: 14px 16px; border-bottom: 1px solid var(--border2);
-  cursor: default; transition: background .15s;
-}
+.lb-row { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid var(--border2); cursor: default; transition: background .15s; }
 .lb-row:hover { background: var(--bg2); }
 .row-rank { width: 28px; flex-shrink: 0; display: flex; align-items: center; }
 .row-rank .num { font-size: 13px; font-weight: 600; color: var(--hint); }
 .row-rank .medal { font-size: 18px; line-height: 1; }
 .row-avatar { width: 44px; flex-shrink: 0; }
-.avatar {
-  border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-weight: 700; color: #fff; letter-spacing: -0.02em; flex-shrink: 0;
-  user-select: none;
-}
-.row-name {
-  flex: 1; min-width: 0; padding-left: 12px;
-  font-size: 14px; font-weight: 600; letter-spacing: -0.01em;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  user-select: none;
-}
+.avatar { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; letter-spacing: -0.02em; flex-shrink: 0; user-select: none; }
+.row-name { flex: 1; min-width: 0; padding-left: 12px; font-size: 14px; font-weight: 600; letter-spacing: -0.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: none; }
 .row-cols { display: flex; gap: 40px; align-items: center; flex-shrink: 0; }
-.row-profit {
-  font: 700 15px/1 'Inter', sans-serif;
-  color: var(--green); letter-spacing: -0.03em;
-  min-width: 90px; text-align: right;
-}
-.row-volume {
-  font: 500 14px/1 'Inter', sans-serif;
-  color: var(--hint); letter-spacing: -0.02em;
-  min-width: 90px; text-align: right;
-}
+.row-profit { font: 700 15px/1 'Inter',sans-serif; color: var(--green); letter-spacing: -0.03em; min-width: 90px; text-align: right; }
+.row-volume { font: 500 14px/1 'Inter',sans-serif; color: var(--hint); letter-spacing: -0.02em; min-width: 90px; text-align: right; }
+.no-results { padding: 48px 16px; text-align: center; color: var(--hint); font-size: 14px; font-weight: 500; display: none; }
 
-.no-results {
-  padding: 48px 16px; text-align: center;
-  color: var(--hint); font-size: 14px; font-weight: 500;
-  display: none;
-}
-
-/* Right panel */
+/* Sidebar */
 .sidebar { width: 320px; flex-shrink: 0; }
-.wins-card {
-  border: 1px solid var(--border); border-radius: 14px;
-  overflow: hidden; background: var(--bg);
-  box-shadow: 0 1px 3px rgba(0,0,0,.05);
-}
-.wins-head {
-  padding: 16px 18px; border-bottom: 1px solid var(--border2);
-  font-size: 15px; font-weight: 700; letter-spacing: -0.025em;
-}
-.win-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 18px; cursor: default;
-}
+.wins-card { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--bg); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+.wins-head { padding: 16px 18px; border-bottom: 1px solid var(--border2); font-size: 15px; font-weight: 700; letter-spacing: -0.025em; }
+.win-row { display: flex; align-items: center; gap: 10px; padding: 11px 18px; cursor: default; }
 .win-row + .win-row { border-top: 1px solid var(--border2); }
 .win-rank { font-size: 12px; font-weight: 600; color: #c4c4cf; width: 14px; flex-shrink: 0; }
 .win-info { flex: 1; min-width: 0; }
-.win-names {
-  display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap;
-  margin-bottom: 3px;
-}
-.win-name {
-  font-size: 13px; font-weight: 700; letter-spacing: -0.02em;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  max-width: 90px; user-select: none;
-}
-.win-market {
-  font-size: 11px; color: var(--hint); font-weight: 500;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px;
-}
-.win-amounts {
-  display: flex; align-items: center; gap: 4px;
-  font: 400 12px/1 'Inter', sans-serif;
-}
+.win-names { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; margin-bottom: 3px; }
+.win-name { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px; user-select: none; }
+.win-market { font-size: 11px; color: var(--hint); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100px; }
+.win-amounts { display: flex; align-items: center; gap: 4px; font: 400 12px/1 'Inter',sans-serif; }
 .win-prev { color: var(--hint); }
 .win-arrow { color: var(--green); display: flex; align-items: center; }
 .win-gain { color: var(--green); font-weight: 600; }
 
-/* Animations */
-@keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Footer */
+.footer {
+  background: var(--nav-bg); border-top: 1px solid var(--nav-border);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  height: 52px; display: flex; align-items: center; padding: 0 20px; gap: 16px;
 }
+.footer-brand { display: flex; align-items: center; gap: 8px; text-decoration: none; flex-shrink: 0; }
+.footer-logo { width: 20px; height: 20px; border-radius: 6px; display: block; overflow: hidden; }
+.footer-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.footer-name { font-size: 12px; font-weight: 800; letter-spacing: -0.02em; color: var(--muted); }
+.footer-spacer { flex: 1; }
+.footer-note { font-size: 11px; color: var(--hint); font-weight: 500; }
+
+/* Animations */
+@keyframes fade-up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .anim { animation: fade-up .3s ease both; }
 
 /* Responsive */
-@media (max-width: 860px) {
-  .layout { flex-direction: column; }
-  .sidebar { width: 100%; }
-}
-@media (max-width: 500px) {
-  h1 { font-size: 28px; }
-  .row-volume { display: none; }
-  .sort-btn:last-child { display: none; }
-  .th-cols { gap: 0; }
-}
+@media (max-width: 860px) { .layout{flex-direction:column} .sidebar{width:100%} }
+@media (max-width: 600px) { .navbar-subtitle{display:none} .pill-outline{display:none} }
+@media (max-width: 500px) { h1{font-size:28px} .row-volume{display:none} .sort-btn:last-child{display:none} .th-cols{gap:0} }
 </style>
 </head>
 <body>
 
+<nav class="navbar">
+  <a class="navbar-brand" href="https://bullwaves.com" target="_blank" rel="noopener noreferrer">
+    <div class="navbar-logo">
+      <img src="/Logo.png" alt="Bullwaves logo" loading="eager" decoding="async"/>
+    </div>
+    <div>
+      <div class="navbar-title">Bullwaves</div>
+      <div class="navbar-subtitle">Trading Competition</div>
+    </div>
+  </a>
+  <div class="navbar-spacer"></div>
+  <div class="navbar-pills">
+    <span class="live-dot"></span>
+    <a class="pill pill-outline" href="/trading-competition-preview.html" target="_blank" rel="noopener noreferrer">Live preview ↗</a>
+    <a class="pill pill-green" href="/trading-competition/widget">Widget setup</a>
+  </div>
+</nav>
+
+<div class="page-body">
 <div class="wrap">
   <div class="layout">
-
-    <!-- Left -->
     <div class="main">
       <h1>Leaderboard</h1>
-
       <div class="tabs-wrap">
         <div class="tabs">
-          <button class="tab active" onclick="setTab(this)">Today</button>
+          <button class="tab" onclick="setTab(this)">Today</button>
           <button class="tab" onclick="setTab(this)">Weekly</button>
           <button class="tab" onclick="setTab(this)">Monthly</button>
-          <button class="tab" onclick="setTab(this)">All time</button>
+          <button class="tab active" onclick="setTab(this)">All time</button>
         </div>
       </div>
-
       <div class="search-wrap">
         <span class="search-icon">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -218,7 +211,6 @@ h1 {
         </span>
         <input class="search-input" id="search" type="text" placeholder="Search by name" oninput="filterRows()"/>
       </div>
-
       <div class="table-head">
         <div class="th-rank"></div>
         <div class="th-avatar"></div>
@@ -228,23 +220,39 @@ h1 {
           <button class="sort-btn" id="sort-volume" onclick="setSort('volume')">Volume</button>
         </div>
       </div>
-
+      <div class="loader-wrap" id="loader">
+        <div class="loader-spinner"></div>
+        <div class="loader-label" id="loader-label">Loading leaderboard…</div>
+      </div>
       <div id="table-body"></div>
       <div class="no-results" id="no-results">No traders found.</div>
     </div>
-
-    <!-- Right -->
     <div class="sidebar">
       <div class="wins-card">
-        <div class="wins-head">Biggest wins today</div>
+        <div class="wins-head">Biggest wins</div>
         <div id="wins-body"></div>
       </div>
     </div>
-
   </div>
 </div>
+</div>
+
+<footer class="footer">
+  <a class="footer-brand" href="https://bullwaves.com" target="_blank" rel="noopener noreferrer">
+    <div class="footer-logo">
+      <img src="/Logo.png" alt="Bullwaves logo" loading="lazy" decoding="async"/>
+    </div>
+    <span class="footer-name">Bullwaves</span>
+  </a>
+  <div class="footer-spacer"></div>
+  <div class="footer-note">Real-time trading competition · Powered by DB Native</div>
+</footer>
 
 <script>
+const AFFILIATE_ID = '35272';
+const REFRESH_MS = 60000;
+const LEADERBOARD_LIMIT = 200;
+
 const COLORS = [
   ["#6366f1","#8b5cf6"],["#ec4899","#f43f5e"],["#10b981","#059669"],
   ["#f59e0b","#ef4444"],["#3b82f6","#06b6d4"],["#8b5cf6","#ec4899"],
@@ -255,99 +263,153 @@ const COLORS = [
   ["#4ade80","#16a34a"],["#facc15","#eab308"],
 ];
 
-const MARKETS = [
-  "Gold vs Dollar Today","BTC above $70k by EOD","EUR/USD direction",
-  "Oil price spike this week","Fed rate decision","S&P 500 close green",
-  "Tesla earnings beat","NVIDIA ATH today","Apple stock direction","XAU/USD movement",
-  "Crypto market cap","DXY weekly close","JPY strengthens today","Silver rally",
-];
+let currentSort = 'profit';
+let currentSearch = '';
+let currentPeriod = 'all';
+let USERS = [];
+let TODAY_USERS = [];
+let loadToken = 0;
 
-const NAMES = [
-  "LaBradfordSmith22","Tiger200","weflyhigh","aekghas","JPMorgan101",
-  "Countryside","ChloeT1","bossoskil1","AlphaTrader","GoldHunter99",
-  "MarketWolf","TrendPilot","FastEntry","ChartMind","LiquidityKing",
-  "BullRunner","SmartMoney","WavePilot","AlphaEdge","TraderX",
-  "NightOwl42","GreenArrow","PrimeShot","DeepValue","MomentumKid",
-];
-
-// Seeded random so numbers are stable on reload
-function seededRand(seed) {
-  let s = seed;
-  return function() {
-    s = (s * 1664525 + 1013904223) & 0xffffffff;
-    return (s >>> 0) / 0xffffffff;
-  };
+function showLoader(label) {
+  const el = document.getElementById('loader');
+  const lbl = document.getElementById('loader-label');
+  const body = document.getElementById('table-body');
+  const noRes = document.getElementById('no-results');
+  if (el) el.classList.add('visible');
+  if (lbl) lbl.textContent = label || 'Loading…';
+  if (body) body.innerHTML = '';
+  if (noRes) noRes.style.display = 'none';
 }
 
-const USERS = Array.from({ length: 25 }, (_, i) => {
-  const r = seededRand(i * 137 + 42);
-  const c = COLORS[i % COLORS.length];
-  const profit = Math.floor((500000 - i * 18000) * (1 + r() * 0.3));
-  const volume = Math.floor(profit * (1.8 + r() * 4));
-  const prev   = Math.floor(profit * (0.65 + r() * 0.2));
-  const gain   = Math.floor(prev * (1.5 + r() * 0.8));
-  return { id: i, name: NAMES[i], profit, volume, prev, gain, market: MARKETS[i % MARKETS.length], c };
-});
+function hideLoader() {
+  const el = document.getElementById('loader');
+  if (el) el.classList.remove('visible');
+}
 
-let currentSort = "profit";
-let currentSearch = "";
+function toYmd(d) {
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth()+1).padStart(2,'0');
+  const day = String(d.getUTCDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function subtractDays(d, days) {
+  return new Date(d.getTime() - Math.max(0, Number(days||0)) * 86400000);
+}
+
+function getDateRange(periodId) {
+  const now = new Date();
+  if (periodId === 'today') { const y = toYmd(now); return {from:y, to:y}; }
+  if (periodId === 'weekly') return {from: toYmd(subtractDays(now,6)), to: toYmd(now)};
+  if (periodId === 'monthly') {
+    const s = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    return {from: toYmd(s), to: toYmd(now)};
+  }
+  return {from:'', to:''};
+}
+
+function periodLabel(id) {
+  if (id === 'today') return "Loading today's traders…";
+  if (id === 'weekly') return "Loading this week's traders…";
+  if (id === 'monthly') return "Loading this month's traders…";
+  return 'Loading leaderboard…';
+}
+
+function periodFromTabButton(btn) {
+  const txt = String(btn?.textContent||'').trim().toLowerCase();
+  if (txt === 'today') return 'today';
+  if (txt === 'weekly') return 'weekly';
+  if (txt === 'monthly') return 'monthly';
+  return 'all';
+}
 
 function fmt(n, sign) {
-  const abs = Math.abs(n);
+  const abs = Math.abs(Number(n||0));
   let s;
-  if (abs >= 1e6) s = "$" + (abs / 1e6).toFixed(2) + "M";
-  else if (abs >= 1e3) s = "$" + Math.floor(abs / 1e3).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "K";
-  else s = "$" + abs.toLocaleString();
-  return (sign && n > 0) ? "+" + s : s;
+  if (abs >= 1e6) s = "$"+(abs/1e6).toFixed(2)+"M";
+  else if (abs >= 1e3) s = "$"+Math.floor(abs/1e3).toString().replace(/\B(?=(\d{3})+(?!\d))/g,",")+"K";
+  else s = "$"+abs.toLocaleString();
+  return (sign && Number(n||0) > 0) ? "+"+s : (Number(n||0) < 0 ? "-"+s : s);
 }
 
 function avatarHTML(user, size) {
-  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*0.38)}px;background:linear-gradient(135deg,${user.c[0]},${user.c[1]})">${user.name[0].toUpperCase()}</div>`;
+  const c = user.c || COLORS[0];
+  const first = String(user.name||'?').trim().charAt(0).toUpperCase()||'?';
+  return `<div class="avatar" style="width:${size}px;height:${size}px;font-size:${Math.floor(size*0.38)}px;background:linear-gradient(135deg,${c[0]},${c[1]})">${first}</div>`;
 }
 
 function rankHTML(rank) {
-  if (rank === 1) return '<span class="medal">&#x1F947;</span>';
-  if (rank === 2) return '<span class="medal">&#x1F948;</span>';
-  if (rank === 3) return '<span class="medal">&#x1F949;</span>';
+  if (rank===1) return '<span class="medal">&#x1F947;</span>';
+  if (rank===2) return '<span class="medal">&#x1F948;</span>';
+  if (rank===3) return '<span class="medal">&#x1F949;</span>';
   return `<span class="num">${rank}</span>`;
 }
 
+function normalizeUserRow(row, i) {
+  const closedPl = Number(row?.closedPl||row?.profit||0);
+  const trades = Number(row?.trades||row?.volume||0);
+  const country = String(row?.country||'').trim()||'N/A';
+  const clientLogin = String(row?.clientLogin||'').trim()||'N/A';
+  const name = String(row?.clientName||'').trim()||`Client ${String(row?.clientId||'').trim()||'Unknown'}`;
+  const positive = Math.max(0, closedPl);
+  return {
+    id: `${String(row?.clientId||'').trim()}-${String(row?.clientLogin||'').trim()}`||`row-${i}`,
+    name, profit: closedPl,
+    volume: Number.isFinite(trades) ? Math.max(0, Math.round(trades)) : 0,
+    prev: Math.max(0, Math.round(positive*0.75)),
+    gain: Math.max(0, Math.round(positive)),
+    market: `${country} · ${clientLogin}`,
+    c: COLORS[i % COLORS.length],
+  };
+}
+
+function dedupeRowsByClient(rows) {
+  const m = new Map();
+  for (const row of Array.isArray(rows)?rows:[]) {
+    const key = String(row?.id||'').trim()||String(row?.name||'').trim();
+    const ts = Date.parse(String(row?.clientTimestamp||''));
+    const prev = m.get(key);
+    if (!prev) { m.set(key, row); continue; }
+    const pts = Date.parse(String(prev?.clientTimestamp||''));
+    if (Number.isFinite(ts) && (!Number.isFinite(pts)||ts>=pts)) m.set(key,row);
+  }
+  return Array.from(m.values());
+}
+
 function renderTable() {
-  const body = document.getElementById("table-body");
-  const noRes = document.getElementById("no-results");
+  hideLoader();
+  const body = document.getElementById('table-body');
+  const noRes = document.getElementById('no-results');
   const q = currentSearch.toLowerCase();
-
-  const list = USERS
+  const list = dedupeRowsByClient(USERS)
     .filter(u => u.name.toLowerCase().includes(q))
-    .sort((a, b) => currentSort === "profit" ? b.profit - a.profit : b.volume - a.volume);
-
-  if (list.length === 0) {
-    body.innerHTML = "";
-    noRes.style.display = "block";
-    noRes.textContent = q ? `No traders found for "${currentSearch}"` : "No traders found.";
+    .sort((a,b) => currentSort==='profit' ? b.profit-a.profit : b.volume-a.volume);
+  if (!list.length) {
+    body.innerHTML='';
+    noRes.style.display='block';
+    noRes.textContent = q ? `No traders found for "${currentSearch}"` : 'No traders found.';
     return;
   }
-
-  noRes.style.display = "none";
-  body.innerHTML = list.map((u, i) => `
-    <div class="lb-row anim" style="animation-delay:${i * 28}ms">
-      <div class="row-rank">${rankHTML(i + 1)}</div>
-      <div class="row-avatar">${avatarHTML(u, 36)}</div>
+  noRes.style.display='none';
+  body.innerHTML = list.map((u,i) => `
+    <div class="lb-row anim" style="animation-delay:${i*20}ms">
+      <div class="row-rank">${rankHTML(i+1)}</div>
+      <div class="row-avatar">${avatarHTML(u,36)}</div>
       <div class="row-name">${u.name}</div>
       <div class="row-cols">
-        <span class="row-profit">${fmt(u.profit, true)}</span>
-        <span class="row-volume">${fmt(u.volume)}</span>
+        <span class="row-profit">${fmt(u.profit,true)}</span>
+        <span class="row-volume">${u.volume.toLocaleString()}</span>
       </div>
-    </div>
-  `).join("");
+    </div>`).join('');
 }
 
 function renderWins() {
-  const top = USERS.slice(0, 8);
-  document.getElementById("wins-body").innerHTML = top.map((u, i) => `
-    <div class="win-row anim" style="animation-delay:${120 + i * 40}ms">
-      <div class="win-rank">${i + 1}</div>
-      ${avatarHTML(u, 32)}
+  const source = dedupeRowsByClient(TODAY_USERS.length?TODAY_USERS:USERS);
+  const top = source.filter(u=>Number(u.gain||0)>0).sort((a,b)=>b.gain-a.gain).slice(0,8);
+  document.getElementById('wins-body').innerHTML = top.map((u,i) => `
+    <div class="win-row anim" style="animation-delay:${120+i*40}ms">
+      <div class="win-rank">${i+1}</div>
+      ${avatarHTML(u,32)}
       <div class="win-info">
         <div class="win-names">
           <span class="win-name">${u.name}</span>
@@ -363,31 +425,64 @@ function renderWins() {
           <span class="win-gain">${fmt(u.gain)}</span>
         </div>
       </div>
-    </div>
-  `).join("");
-}
-
-function setTab(btn) {
-  document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  // Re-render with same data (in real app would fetch different data)
-  renderTable();
+    </div>`).join('');
 }
 
 function setSort(type) {
   currentSort = type;
-  document.getElementById("sort-profit").classList.toggle("active", type === "profit");
-  document.getElementById("sort-volume").classList.toggle("active", type === "volume");
-  renderTable();
+  document.getElementById('sort-profit').classList.toggle('active', type==='profit');
+  document.getElementById('sort-volume').classList.toggle('active', type==='volume');
+  loadCompetitionData();
 }
 
 function filterRows() {
-  currentSearch = document.getElementById("search").value;
+  currentSearch = document.getElementById('search').value;
   renderTable();
 }
 
-renderTable();
-renderWins();
+async function fetchLeaderboard(sortBy, periodId) {
+  const params = new URLSearchParams();
+  params.set('affiliateId', AFFILIATE_ID);
+  params.set('limit', String(LEADERBOARD_LIMIT));
+  params.set('sortBy', sortBy||'profit');
+  const range = getDateRange(periodId||'all');
+  if (range.from) params.set('from', range.from);
+  if (range.to) params.set('to', range.to);
+  const res = await fetch(`/api/qlik/creolabs/db-native/leaderboard?${params.toString()}`, {cache:'no-store'});
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const payload = await res.json();
+  const entries = Array.isArray(payload?.data?.leaderboard) ? payload.data.leaderboard : [];
+  return entries.map(normalizeUserRow);
+}
+
+async function loadCompetitionData() {
+  const token = ++loadToken;
+  showLoader(periodLabel(currentPeriod));
+  try {
+    const users = await fetchLeaderboard(currentSort, currentPeriod);
+    if (token !== loadToken) return;
+    USERS = users; TODAY_USERS = [];
+    renderTable(); renderWins();
+  } catch(e) {
+    if (token !== loadToken) return;
+    USERS = []; TODAY_USERS = [];
+    hideLoader();
+    document.getElementById('wins-body').innerHTML='';
+    const noRes = document.getElementById('no-results');
+    noRes.style.display='block';
+    noRes.textContent='Unable to load leaderboard right now.';
+  }
+}
+
+function setTab(btn) {
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  currentPeriod = periodFromTabButton(btn);
+  loadCompetitionData();
+}
+
+loadCompetitionData();
+window.setInterval(loadCompetitionData, REFRESH_MS);
 </script>
 </body>
 </html>

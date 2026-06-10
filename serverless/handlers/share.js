@@ -222,6 +222,10 @@ async function routeShare(req, res, parts) {
     return handleShareTokenGet(req, res, 'pboard', getTokenFrom(parts, 1))
   }
 
+  if (head === 'pelican-network-integration' && parts.length === 2) {
+    return handleShareTokenGet(req, res, 'plcn', getTokenFrom(parts, 1))
+  }
+
   if (head === 'execution' && parts.length === 2) {
     return handleShareTokenGet(req, res, 'exec', getTokenFrom(parts, 1))
   }
@@ -272,6 +276,10 @@ async function routeShare(req, res, parts) {
 
   if (head === 'create-project-board') {
     return handleCreateShare(req, res, 'pboard', 'pboard', 60 * 60 * 24 * 90)
+  }
+
+  if (head === 'create-pelican-network-integration') {
+    return handleCreateShare(req, res, 'pelican', 'plcn', 60 * 60 * 24 * 90)
   }
 
   if (head === 'create-execution') {

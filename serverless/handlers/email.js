@@ -14,6 +14,16 @@ const PRIVATE_PREVIEW_RECIPIENTS = new Set(['paolo.v@bullwaves.com'])
 const MESSAGE_ID_TRIMMER = /\..*$/
 const TRACKING_STORE_PATH = path.join(__dirname, '..', '..', 'uploads', 'email_tracking_store.json')
 const TRACKING_MAX_EVENTS = 40
+const CAMPAIGN_PREVIEW_PATH = path.join(
+  __dirname,
+  '..',
+  '..',
+  'src',
+  'features',
+  'sales',
+  'data',
+  'bonus_preview_converted_by_currency.json'
+)
 
 const mailTrackingByMessageId = new Map()
 const mailTrackingByNormalizedMessageId = new Map()
@@ -28,6 +38,16 @@ function normalizeEmail(value) {
   return String(value || '')
     .trim()
     .toLowerCase()
+}
+
+function normalizeAgentName(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
 }
 
 function getConfig() {
@@ -63,8 +83,70 @@ function canAccessPrivatePreview(email) {
   return PRIVATE_PREVIEW_EMAILS.has(normalizeEmail(email))
 }
 
+function getAllowedRecipients() {
+  const configured = String(env('SENDGRID_ALLOWED_RECIPIENTS', ''))
+    .split(',')
+    .map((item) => normalizeEmail(item))
+    .filter((item) => isValidEmail(item))
+
+  if (configured.length) return new Set(configured)
+  return PRIVATE_PREVIEW_RECIPIENTS
+}
+
 function isAllowedRecipient(email) {
-  return PRIVATE_PREVIEW_RECIPIENTS.has(normalizeEmail(email))
+  const allowAllRecipients = String(env('SENDGRID_ALLOW_ALL_RECIPIENTS', '')).trim() === '1'
+  if (allowAllRecipients) return isValidEmail(email)
+  return getAllowedRecipients().has(normalizeEmail(email))
+}
+
+function normalizeRecipientList(value) {
+  const source = Array.isArray(value) ? value : String(value || '').split(',')
+  const out = []
+  const seen = new Set()
+
+  for (const item of source) {
+    const email = normalizeEmail(typeof item === 'string' ? item : item?.email)
+    if (!email || !isValidEmail(email) || seen.has(email)) continue
+    seen.add(email)
+    out.push(email)
+  }
+
+  return out
+}
+
+function parsePreviewRows() {
+  try {
+    // Keep a static require so serverless bundlers can include this JSON file.
+    // eslint-disable-next-line global-require, import/no-dynamic-require
+    const bundled = require('../../src/features/sales/data/bonus_preview_converted_by_currency.json')
+    const bundledRows = Array.isArray(bundled?.rows) ? bundled.rows : []
+    if (bundledRows.length) return bundledRows
+  } catch {
+    // Fallback to fs read for local/dev execution.
+  }
+
+  try {
+    const raw = fs.readFileSync(CAMPAIGN_PREVIEW_PATH, 'utf8')
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.rows) ? parsed.rows : []
+  } catch (error) {
+    console.error('[email-agent-clients] Failed to read preview rows:', error?.message || error)
+    return []
+  }
+}
+
+function formatCurrency(value, currency) {
+  const amount = Number(value || 0)
+  if (!currency) return '—'
+  try {
+    return new Intl.NumberFormat('en-GB', {
+      style: 'currency',
+      currency: String(currency),
+      maximumFractionDigits: 0,
+    }).format(amount)
+  } catch {
+    return `${amount.toFixed(0)} ${String(currency).toUpperCase()}`
+  }
 }
 
 function escapeHtml(value) {
@@ -459,6 +541,8 @@ async function proxyEmailRoute(req, res, parts) {
 
 function buildPayload(body, config) {
   const to = String(body?.to || '').trim()
+  const cc = normalizeRecipientList(body?.cc)
+  const bcc = normalizeRecipientList(body?.bcc)
   const subject = String(body?.subject || '').trim()
   const templateId = String(body?.templateId || '').trim()
   const dynamicTemplateData =
@@ -471,6 +555,8 @@ function buildPayload(body, config) {
     personalizations: [
       {
         to: [{ email: to }],
+        ...(cc.length ? { cc: cc.map((email) => ({ email })) } : {}),
+        ...(bcc.length ? { bcc: bcc.map((email) => ({ email })) } : {}),
       },
     ],
     from: {
@@ -582,7 +668,7 @@ async function handleHealth(req, res) {
       },
       access: {
         viewerEmail,
-        recipientLock: Array.from(PRIVATE_PREVIEW_RECIPIENTS),
+        recipientLock: Array.from(getAllowedRecipients()),
       },
     },
     { 'Cache-Control': 'no-store' }
@@ -628,6 +714,8 @@ async function handleSendTest(req, res) {
   }
 
   const to = String(body?.to || '').trim()
+  const ccRecipients = normalizeRecipientList(body?.cc)
+  const bccRecipients = normalizeRecipientList(body?.bcc)
   const fromEmail = String(body?.fromEmail || config.fromEmail).trim()
 
   if (!isValidEmail(to)) {
@@ -646,11 +734,32 @@ async function handleSendTest(req, res) {
     )
   }
 
+  const additionalRecipients = [...ccRecipients, ...bccRecipients]
+  const disallowed = additionalRecipients.find((email) => !isAllowedRecipient(email))
+  if (disallowed) {
+    return json(
+      res,
+      403,
+      {
+        ok: false,
+        error: `Recipient locked. ${disallowed} is not allowed by SENDGRID_ALLOWED_RECIPIENTS.`,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
   if (!isValidEmail(fromEmail)) {
     return json(res, 400, { ok: false, error: 'Missing or invalid field: fromEmail' }, { 'Cache-Control': 'no-store' })
   }
 
-  const payload = buildPayload(body, config)
+  const payload = buildPayload(
+    {
+      ...body,
+      cc: ccRecipients,
+      bcc: bccRecipients,
+    },
+    config
+  )
 
   try {
     const result = await sendgridSend(payload, config.apiKey)
@@ -682,6 +791,8 @@ async function handleSendTest(req, res) {
         request: {
           viewerEmail,
           to,
+          cc: ccRecipients,
+          bccCount: bccRecipients.length,
           fromEmail: payload.from.email,
           fromName: payload.from.name,
           templateId: payload.template_id || null,
@@ -701,16 +812,224 @@ async function handleSendTest(req, res) {
   }
 }
 
+function renderAgentClientsPage({ agentName, campaignName, rows }) {
+  const safeAgent = escapeHtml(agentName || 'Agent')
+  const safeCampaign = escapeHtml(campaignName || 'Global Exclusive Tradable Bonus')
+  const list = Array.isArray(rows) ? rows : []
+
+  const totalBonusUsd = list.reduce((sum, row) => {
+    const usdToAccountRate = Number(row?.usdToAccountRate || 0)
+    const bonusRaw =
+      Number(row?.officialBonusAccountCurrencyRaw || 0) || Number(row?.bonusAccountCurrencyRaw || 0)
+    if (!usdToAccountRate) return sum
+    return sum + bonusRaw / usdToAccountRate
+  }, 0)
+
+  const rowsHtml = list
+    .map((row, index) => {
+      const bonus = formatCurrency(Number(row?.bonusAccountCurrencyRaw || 0), row?.accountCurrency)
+      const officialBonus = formatCurrency(
+        Number(row?.officialBonusAccountCurrencyRaw || 0) || Number(row?.bonusAccountCurrencyRaw || 0),
+        row?.accountCurrency
+      )
+      const netUsd = formatCurrency(Number(row?.netDepositsUsd || 0), 'USD')
+      const name = escapeHtml(row?.name || '—')
+      const email = escapeHtml(row?.email || '—')
+      const account = escapeHtml(row?.tradingAccount || '—')
+      const owner = escapeHtml(row?.user || '—')
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${name}</td>
+          <td>${email}</td>
+          <td>${account}</td>
+          <td>${bonus}</td>
+          <td>${officialBonus}</td>
+          <td>${netUsd}</td>
+          <td>${owner}</td>
+        </tr>
+      `
+    })
+    .join('')
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>${safeAgent} Clients | Bullwaves</title>
+    <style>
+      :root {
+        --bg: #f2f6ff;
+        --panel: #ffffff;
+        --ink: #0f172a;
+        --muted: #5b6b84;
+        --line: #dce6f5;
+        --brand: #0f2a57;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 22px auto;
+        padding: 0 12px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .hero {
+        background: linear-gradient(135deg, #0b1b3a 0%, #15408a 100%);
+        color: #fff;
+        padding: 18px 20px;
+      }
+      .hero h1 {
+        margin: 6px 0 0;
+        font-size: 26px;
+      }
+      .hero p {
+        margin: 8px 0 0;
+        color: #dbe8ff;
+        font-size: 13px;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chip {
+        background: #edf4ff;
+        border: 1px solid #d7e3fb;
+        color: var(--brand);
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .table-wrap { overflow-x: auto; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 860px;
+      }
+      th {
+        background: var(--brand);
+        color: #dbe8ff;
+        text-align: left;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 10px 9px;
+      }
+      td {
+        border-top: 1px solid var(--line);
+        padding: 9px;
+        font-size: 13px;
+      }
+      .empty {
+        padding: 24px 20px;
+        color: var(--muted);
+      }
+      .footer {
+        padding: 14px 20px 20px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="panel">
+        <header class="hero">
+          <img src="https://bullwaves-console.vercel.app/Logo.png" alt="Bullwaves" width="152" style="display:block;width:152px;max-width:152px;height:auto;border:0;" />
+          <h1>${safeAgent} Client Table</h1>
+          <p>${safeCampaign}</p>
+        </header>
+        <div class="meta">
+          <div class="chip">Clients: ${list.length}</div>
+          <div class="chip">Official Bonus (USD): ${formatCurrency(totalBonusUsd, 'USD')}</div>
+        </div>
+        ${
+          list.length
+            ? `<div class="table-wrap"><table><thead><tr><th>#</th><th>Client</th><th>Email</th><th>Account</th><th>Bonus</th><th>Official Bonus</th><th>Net USD</th><th>Owner</th></tr></thead><tbody>${rowsHtml}</tbody></table></div>`
+            : '<div class="empty">No clients found for this view.</div>'
+        }
+        <div class="footer">Bullwaves LTD · Internal Marketing Operations View</div>
+      </section>
+    </div>
+  </body>
+</html>`
+}
+
+async function handleAgentClientsPublic(req, res) {
+  if (req.method !== 'GET') {
+    res.setHeader('Allow', 'GET')
+    return json(res, 405, { ok: false, error: 'Method Not Allowed' }, { 'Cache-Control': 'no-store' })
+  }
+
+  const reqUrl = new URL(req.url, 'http://localhost')
+  const agentParam = reqUrl.searchParams.get('agent')
+  const campaignParam = reqUrl.searchParams.get('campaign')
+  const format = String(reqUrl.searchParams.get('format') || '').trim().toLowerCase()
+  const normalizedAgent = normalizeAgentName(agentParam)
+  const includeAllAgents = !normalizedAgent || normalizedAgent === 'all'
+
+  const allRows = parsePreviewRows()
+  const filteredRows = includeAllAgents
+    ? allRows
+    : allRows.filter((row) => normalizeAgentName(row?.user) === normalizedAgent)
+  const displayAgentName = includeAllAgents ? 'All Sales Agents' : (filteredRows[0]?.user || agentParam || 'Agent')
+  const campaignName = campaignParam || 'Global Exclusive Tradable Bonus'
+
+  if (format === 'json') {
+    return json(
+      res,
+      200,
+      {
+        ok: true,
+        agent: displayAgentName,
+        scope: includeAllAgents ? 'all' : 'single-agent',
+        campaign: campaignName,
+        count: filteredRows.length,
+        rows: filteredRows,
+      },
+      { 'Cache-Control': 'no-store' }
+    )
+  }
+
+  const html = renderAgentClientsPage({
+    agentName: displayAgentName,
+    campaignName,
+    rows: filteredRows,
+  })
+
+  res.statusCode = 200
+  res.setHeader('Content-Type', 'text/html; charset=utf-8')
+  res.setHeader('Cache-Control', 'no-store')
+  res.end(html)
+}
+
 async function routeEmail(req, res, parts) {
   const head = parts[0] || ''
 
-  const shouldProxy = Boolean(getProxyBaseUrl()) && head !== 'events'
+  const shouldProxy = Boolean(getProxyBaseUrl()) && head !== 'events' && head !== 'agent-clients'
   if (shouldProxy) {
     const proxied = await proxyEmailRoute(req, res, parts)
     if (proxied) return
   }
 
   if (head === 'health') return handleHealth(req, res)
+  if (head === 'agent-clients') return handleAgentClientsPublic(req, res)
   if (head === 'status') return handleStatus(req, res, parts)
   if (head === 'events') return handleEvents(req, res)
   if (head === 'send-test') return handleSendTest(req, res)

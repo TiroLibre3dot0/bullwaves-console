@@ -17,6 +17,7 @@ const SECTION_TO_VIEW = {
   'prime-challenge-widget': 'primeChallengeWidget',
   'retention-segment-composition': 'segmentComposition',
   'retention-sales-agents-monitor': 'salesAgentsMonitor',
+  'retention-master-templates': 'masterTemplates',
   'retention-email-master-template': 'emailMasterTemplate',
   'org-chart': 'orgChart',
   'platform-usage-billing': 'platformUsageBilling',

@@ -1615,7 +1615,7 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
   {
     id: 'bullwaves-global-exclusive-tradable-bonus-en',
     name: 'Bullwaves Global Exclusive Tradable Bonus',
-    subject: 'Your exclusive tradable bonus is ready',
+    subject: 'A June exclusive, 20% of your losses credited back.',
     description:
       'Promotional no-deposit bonus email with hero, CTA login button, T&C link, and compliance disclaimer.',
     language: 'en',
@@ -1793,7 +1793,7 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
                                                                 <table class="module preheader preheader-hide" role="module" data-type="preheader" border="0" cellpadding="0" cellspacing="0" width="100%" style="display:none !important; mso-hide:all; visibility:hidden; opacity:0; color:transparent; height:0; width:0;">
                                                                     <tr>
                                                                         <td role="module-content">
-                                                                            <p>No deposit needed. Your exclusive tradable bonus is ready.</p>
+                                                                            <p>A one time tradable credit, available only for selected Bullwaves traders.</p>
                                                                         </td>
                                                                     </tr>
                                                                 </table>
@@ -1816,7 +1816,7 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
                                                                             <td style="padding:24px 0px 0px 0px; line-height:36px; text-align:inherit;" height="100%" valign="top" bgcolor="" role="module-content">
                                                                                 <div>
                                                                                     <h3 style="text-align:inherit; margin:0;">
-                                                                                        <span style="font-size:30px; line-height:36px;">Your exclusive tradable bonus is ready</span>
+                                                                                        <span style="font-size:30px; line-height:36px;">A June exclusive, 20% of your losses credited back</span>
                                                                                     </h3>
                                                                                 </div>
                                                                             </td>
@@ -1837,9 +1837,23 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
                                                                                     <div style="font-family:inherit; text-align:inherit;"><br></div>
 
                                                                                     <div style="font-family:inherit; text-align:inherit;">
-                                                                                        <span style="font-size:16px;">You&apos;ve received an exclusive tradable bonus of </span>
+                                                                                        <span style="font-size:16px;">This June, Bullwaves is giving something back to a very limited group of selected traders.</span>
+                                                                                    </div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;"><br></div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;">
+                                                                                        <span style="font-size:16px;">You have been selected for a one time premium deal, we are crediting back </span>
+                                                                                        <span style="font-size:16px;"><strong>20% of your recent losses</strong></span>
+                                                                                        <span style="font-size:16px;"> as a special tradable credit.</span>
+                                                                                    </div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;"><br></div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;">
+                                                                                        <span style="font-size:16px;">Your credited amount is </span>
                                                                                         <span style="font-size:16px;"><strong>[Bonus Amount]</strong></span>
-                                                                                        <span style="font-size:16px;"> in your trading account </span>
+                                                                                        <span style="font-size:16px;">, and it has been added directly to your trading account </span>
                                                                                         <span style="font-size:16px;"><strong>[Trading Account ID]</strong></span>
                                                                                         <span style="font-size:16px;">.</span>
                                                                                     </div>
@@ -1847,7 +1861,13 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
                                                                                     <div style="font-family:inherit; text-align:inherit;"><br></div>
 
                                                                                     <div style="font-family:inherit; text-align:inherit;">
-                                                                                        <span style="font-size:16px;">No deposit is needed. Your bonus is ready to use, and any profits generated from this bonus are fully withdrawable </span>
+                                                                                        <span style="font-size:16px;">No deposit is needed. This is a limited June credit created to give selected clients a new opportunity to trade again with support from Bullwaves.</span>
+                                                                                    </div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;"><br></div>
+
+                                                                                    <div style="font-family:inherit; text-align:inherit;">
+                                                                                        <span style="font-size:16px;">Any profits generated from this credit are fully withdrawable </span>
                                                                                         <span style="font-size:16px;">(</span>
                                                                                         <a href="https://cdn.prod.website-files.com/67176a06e72aae95337ce8a0/6a19816c40cd582a05327df9_Exclusive%20Credit%20Bonus%20Promotion%20T%26Cs%2029052026.pdf" target="_blank" style="color:#1188E6; text-decoration:underline;">
                                                                                             <span style="font-size:16px;">Terms and Conditions apply</span>
@@ -1858,7 +1878,7 @@ Over-the-counter derivatives are complex instruments and come with a high risk o
                                                                                     <div style="font-family:inherit; text-align:inherit;"><br></div>
 
                                                                                     <div style="font-family:inherit; text-align:inherit;">
-                                                                                        <span style="font-size:16px;">Log in now and start trading.</span>
+                                                                                        <span style="font-size:16px;">Log in now and use the credit added to your account.</span>
                                                                                     </div>
                                                                                 </div>
                                                                             </td>

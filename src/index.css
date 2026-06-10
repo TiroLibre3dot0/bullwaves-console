@@ -4223,6 +4223,19 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   border-bottom: 1px solid rgba(255,255,255,0.06);
 }
 
+.profitable-ranking-specs-modal__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.profitable-ranking-specs-modal__view-switch {
+  display: inline-flex;
+  gap: 8px;
+}
+
 .profitable-ranking-specs-kpis {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4383,6 +4396,36 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   flex-wrap: wrap;
 }
 
+.profitable-ranking-specs-table__details-toggle {
+  appearance: none;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.6);
+  color: #dbeafe;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profitable-ranking-specs-table__details-toggle:hover {
+  border-color: rgba(125, 211, 252, 0.6);
+  background: rgba(2, 132, 199, 0.18);
+}
+
+.profitable-ranking-specs-table__focus-details {
+  margin-top: 6px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  background: rgba(15, 23, 42, 0.42);
+  color: rgba(226, 232, 240, 0.94);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .profitable-ranking-specs-table__group-pill {
   display: inline-flex;
   align-items: center;
@@ -4485,6 +4528,10 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   gap: 2px;
 }
 
+.profitable-ranking-specs-table__rules-list--compact {
+  margin-top: 6px;
+}
+
 .profitable-ranking-specs-table__rules-item {
   color: rgba(226,232,240,0.96);
   line-height: 1.32;
@@ -4511,6 +4558,24 @@ select option, select optgroup{background:var(--card);color:var(--text)}
   gap: 2px;
 }
 
+.profitable-ranking-specs-table__summary {
+  display: grid;
+  gap: 6px;
+}
+
+.profitable-ranking-specs-table__summary-line {
+  color: rgba(226,232,240,0.95);
+  line-height: 1.35;
+}
+
+.profitable-ranking-specs-table__summary-more {
+  list-style: none;
+  margin-left: -16px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .profitable-ranking-specs-table th:nth-child(1),
 .profitable-ranking-specs-table td:nth-child(1) { width: 16%; }
 
@@ -4528,6 +4593,18 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 
 .profitable-ranking-specs-table th:nth-child(6),
 .profitable-ranking-specs-table td:nth-child(6) { width: 8%; }
+
+.profitable-ranking-specs-table--focus th:nth-child(1),
+.profitable-ranking-specs-table--focus td:nth-child(1) { width: 24%; }
+
+.profitable-ranking-specs-table--focus th:nth-child(2),
+.profitable-ranking-specs-table--focus td:nth-child(2) { width: 22%; }
+
+.profitable-ranking-specs-table--focus th:nth-child(3),
+.profitable-ranking-specs-table--focus td:nth-child(3) { width: 42%; }
+
+.profitable-ranking-specs-table--focus th:nth-child(4),
+.profitable-ranking-specs-table--focus td:nth-child(4) { width: 12%; }
 
 @media (max-width: 1440px) {
   .profitable-ranking-specs-modal {
@@ -4582,6 +4659,14 @@ select option, select optgroup{background:var(--card);color:var(--text)}
 
   .profitable-ranking-specs-kpis {
     grid-template-columns: 1fr;
+  }
+
+  .profitable-ranking-specs-modal__actions {
+    justify-content: flex-start;
+  }
+
+  .profitable-ranking-specs-modal__view-switch {
+    width: 100%;
   }
 
   .profitable-ranking-specs-table__rules {

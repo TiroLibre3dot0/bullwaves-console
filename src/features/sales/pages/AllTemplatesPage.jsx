@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ALL_TEMPLATES_CATALOG } from '../data/allTemplatesCatalog'
 import marketingCampaignPreview from '../data/bonus_preview_converted_by_currency.json'
@@ -253,6 +254,71 @@ function formatShortMessageId(value) {
   if (!raw) return ''
   if (raw.length <= 14) return raw
   return `${raw.slice(0, 7)}...${raw.slice(-5)}`
+}
+
+function getTrackingStepStyle(active, tone) {
+  if (!active) {
+    return {
+      background: 'rgba(148,163,184,0.14)',
+      color: '#9fb4c9',
+      border: '1px solid rgba(148,163,184,0.22)',
+    }
+  }
+
+  if (tone === 'click') {
+    return {
+      background: 'rgba(249,115,22,0.18)',
+      color: '#fdba74',
+      border: '1px solid rgba(249,115,22,0.38)',
+    }
+  }
+
+  if (tone === 'open') {
+    return {
+      background: 'rgba(22,163,74,0.18)',
+      color: '#86efac',
+      border: '1px solid rgba(22,163,74,0.38)',
+    }
+  }
+
+  return {
+    background: 'rgba(56,189,248,0.18)',
+    color: '#7dd3fc',
+    border: '1px solid rgba(56,189,248,0.38)',
+  }
+}
+
+function TrackingStepPill({ label, active, tone }) {
+  return (
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 999,
+        padding: '4px 10px',
+        fontSize: 10,
+        fontWeight: 900,
+        textTransform: 'uppercase',
+        letterSpacing: '0.06em',
+        whiteSpace: 'nowrap',
+        ...getTrackingStepStyle(active, tone),
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+function getTrackingSnapshot(row) {
+  const sent = Boolean(row?.mailMessageId || normalizeMailStatus(row?.mailStatus) !== 'pending')
+  const opened =
+    Number(row?.mailOpenCount || 0) > 0 ||
+    row?.mailLastEvent === 'open' ||
+    row?.mailLastEvent === 'click'
+  const clicked = Number(row?.mailClickCount || 0) > 0 || row?.mailLastEvent === 'click'
+
+  return { sent, opened, clicked }
 }
 
 function getLatestTrackingForRecipient(items, recipientEmail) {
@@ -573,6 +639,7 @@ function MarketingCampaignSection({
                   'Name',
                   'Email',
                   'Mail status',
+                  'Tracking',
                   'Engagement',
                   'Trading Account',
                   'User',
@@ -601,6 +668,7 @@ function MarketingCampaignSection({
             <tbody>
               {rows.map((row) => {
                 const statusStyle = getMailStatusStyle(row.mailStatus)
+                const tracking = getTrackingSnapshot(row)
                 const rowKey = toCampaignRowKey(row)
                 const isActive = rowKey === selectedCampaignRowKey
                 return (
@@ -648,6 +716,13 @@ function MarketingCampaignSection({
                           {formatDateTime(row.mailUpdatedAt)}
                         </div>
                       ) : null}
+                    </td>
+                    <td style={{ padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        <TrackingStepPill label="Sent" active={tracking.sent} tone="sent" />
+                        <TrackingStepPill label="Open" active={tracking.opened} tone="open" />
+                        <TrackingStepPill label="Click" active={tracking.clicked} tone="click" />
+                      </div>
                     </td>
                     <td style={{ padding: '12px 14px', color: '#bdd0e4', fontSize: 12 }}>
                       <div style={{ display: 'grid', gap: 4 }}>
@@ -1107,14 +1182,6 @@ export default function AllTemplatesPage() {
         </p>
       </header>
 
-      <MarketingCampaignSection
-        rows={campaignRows}
-        selectedCampaignRowKey={selectedCampaignRowKey}
-        onSelectCampaignRow={handleSelectCampaignRow}
-        trackingMeta={campaignTrackingMeta}
-        latestTestTracking={latestPaoloTestTracking}
-      />
-
       <div
         style={{
           display: 'grid',
@@ -1256,6 +1323,23 @@ export default function AllTemplatesPage() {
             </div>
           </div>
           <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              <TrackingStepPill
+                label={`Sent ${latestPaoloTestTracking?.messageId ? '✓' : '—'}`}
+                active={Boolean(latestPaoloTestTracking?.messageId)}
+                tone="sent"
+              />
+              <TrackingStepPill
+                label={`Open ${Number(latestPaoloTestTracking?.openCount || 0)}`}
+                active={Number(latestPaoloTestTracking?.openCount || 0) > 0}
+                tone="open"
+              />
+              <TrackingStepPill
+                label={`Click ${Number(latestPaoloTestTracking?.clickCount || 0)}`}
+                active={Number(latestPaoloTestTracking?.clickCount || 0) > 0}
+                tone="click"
+              />
+            </div>
             <div
               style={{ fontSize: 12, color: '#93acc5', letterSpacing: '0.07em', fontWeight: 800 }}
             >

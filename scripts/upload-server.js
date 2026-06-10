@@ -7,9 +7,17 @@ const { exec, spawn } = require('child_process')
 const dotenv = require('dotenv')
 const { routeAuth } = require('../serverless/handlers/auth')
 const { routeEmail } = require('../serverless/handlers/email')
+const { routeSms } = require('../serverless/handlers/sms')
 const { routeGmail } = require('../serverless/handlers/gmail')
+const { routeSlack } = require('../serverless/handlers/slack')
 const { routeQlik } = require('../serverless/handlers/qlik')
 const { routeAcuity } = require('../serverless/handlers/acuity')
+
+process.on('unhandledRejection', (reason) => {
+  const message = reason?.stack || reason?.message || String(reason || 'unknown error')
+  console.warn('[upload-server] unhandledRejection intercepted; keeping process alive')
+  console.warn(message)
+})
 
 const projectRoot = path.join(__dirname, '..')
 ;['.env.sendgrid.local', '.env.server.local', '.env.server', '.env.local', '.env'].forEach((name) => {
@@ -789,6 +797,605 @@ app.get('/health', (req, res) => res.json({ ok: true }))
 // Alias for console/dev proxy
 app.get('/api/health', (req, res) => res.json({ ok: true }))
 
+const SKALE_AUTH_URL = 'https://client.api.skaleapps.io/api/authorisation'
+const SKALE_API_URL = 'https://client.api.skaleapps.io/api/v-2'
+let skaleTokenCache = { token: '', fetchedAt: 0 }
+
+function normalizeEmail(value) {
+  return String(value || '').trim().toLowerCase()
+}
+
+function normalizeDigits(value) {
+  return String(value || '').replace(/[^0-9]/g, '')
+}
+
+function pickFirstText(...values) {
+  for (const value of values) {
+    const text = String(value || '').trim()
+    if (text) return text
+  }
+  return ''
+}
+
+function readJsonWithRetries(filePath, retries = 2) {
+  let lastErr = null
+  for (let i = 0; i <= retries; i += 1) {
+    try {
+      const raw = fs.readFileSync(filePath, 'utf8')
+      return { ok: true, payload: JSON.parse(raw), error: null }
+    } catch (e) {
+      lastErr = e
+    }
+  }
+  return { ok: false, payload: null, error: lastErr }
+}
+
+function readSkaleSnapshotPayload() {
+  const progressPath = path.join(uploadDir, 'skale-users-db-progress.json')
+  const publicPath = path.join(__dirname, '..', 'public', 'skale', 'skale-users-db.json')
+  const candidates = [progressPath, publicPath].filter((p, idx, arr) => arr.indexOf(p) === idx)
+  const existing = candidates.filter((p) => fs.existsSync(p))
+  if (!existing.length) return { ok: false, payload: null }
+
+  for (const filePath of existing) {
+    const result = readJsonWithRetries(filePath, 2)
+    if (result.ok) return { ok: true, payload: result.payload }
+  }
+  return { ok: false, payload: null }
+}
+
+const skaleContactCachePath = path.join(uploadDir, 'skale-contact-cache.json')
+
+function normalizeContactEntry(value) {
+  if (typeof value === 'string') {
+    return {
+      phone: String(value || '').trim(),
+      country: '',
+      updatedAt: '',
+    }
+  }
+
+  if (!value || typeof value !== 'object') {
+    return {
+      phone: '',
+      country: '',
+      updatedAt: '',
+    }
+  }
+
+  return {
+    phone: String(value.phone || '').trim(),
+    country: String(value.country || '').trim(),
+    updatedAt: String(value.updatedAt || '').trim(),
+  }
+}
+
+function readSkaleContactCache() {
+  const empty = { byRowKey: {}, byAccount: {}, byEmail: {}, updatedAt: '' }
+  if (!fs.existsSync(skaleContactCachePath)) return empty
+
+  try {
+    const raw = fs.readFileSync(skaleContactCachePath, 'utf8')
+    const parsed = JSON.parse(raw)
+
+    const byRowKey = {}
+    const byAccount = {}
+    const byEmail = {}
+
+    for (const [k, v] of Object.entries(parsed?.byRowKey || {})) {
+      const key = String(k || '').trim()
+      if (!key) continue
+      byRowKey[key] = normalizeContactEntry(v)
+    }
+
+    for (const [k, v] of Object.entries(parsed?.byAccount || {})) {
+      const key = normalizeDigits(k)
+      if (!key) continue
+      byAccount[key] = normalizeContactEntry(v)
+    }
+
+    for (const [k, v] of Object.entries(parsed?.byEmail || {})) {
+      const key = normalizeEmail(k)
+      if (!key) continue
+      byEmail[key] = normalizeContactEntry(v)
+    }
+
+    return {
+      byRowKey,
+      byAccount,
+      byEmail,
+      updatedAt: String(parsed?.updatedAt || '').trim(),
+    }
+  } catch {
+    return empty
+  }
+}
+
+function writeSkaleContactCache(cache) {
+  try {
+    fs.writeFileSync(skaleContactCachePath, JSON.stringify(cache, null, 2), 'utf8')
+  } catch {
+    // Ignore cache write errors to avoid breaking API behavior.
+  }
+}
+
+async function skaleAuthToken() {
+  const clientId = String(process.env.SKALE_CLIENT_ID || '').trim()
+  const clientSecret = String(process.env.SKALE_CLIENT_SECRET || '').trim()
+  if (!clientId || !clientSecret) {
+    throw new Error('Missing SKALE_CLIENT_ID / SKALE_CLIENT_SECRET')
+  }
+
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: clientId,
+    client_secret: clientSecret,
+  })
+
+  const resp = await fetch(SKALE_AUTH_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body,
+  })
+  const data = await resp.json()
+  const token = String(data?.access_token || '').trim()
+  if (!token) throw new Error(`Skale auth failed: ${JSON.stringify(data).slice(0, 300)}`)
+  skaleTokenCache = { token, fetchedAt: Date.now() }
+  return token
+}
+
+async function skaleRequest(requestName, params = {}, allowRetry = true) {
+  const tokenFreshEnough = skaleTokenCache.token && Date.now() - skaleTokenCache.fetchedAt < 55 * 60 * 1000
+  const token = tokenFreshEnough ? skaleTokenCache.token : await skaleAuthToken()
+
+  const body = new URLSearchParams({
+    access_token: token,
+    request: requestName,
+  })
+
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v == null) continue
+    const text = String(v).trim()
+    if (!text) continue
+    body.set(k, text)
+  }
+
+  const resp = await fetch(SKALE_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body,
+  })
+
+  const payload = await resp.json()
+  if (String(payload?.error || '').toLowerCase() === 'invalid_token' && allowRetry) {
+    skaleTokenCache = { token: '', fetchedAt: 0 }
+    return skaleRequest(requestName, params, false)
+  }
+  return payload
+}
+
+function rowSummary(row) {
+  const account = row?.accountDetails?.object || {}
+  const lead = row?.leadStatus?.object || {}
+  const udbe = Array.isArray(row?.userDetails?.data) && row.userDetails.data.length ? row.userDetails.data[0] : {}
+
+  return {
+    leadId: pickFirstText(row?.leadId, account?.lead_id, lead?.id),
+    mtId: pickFirstText(account?.mt4_account, row?.accountNumber, udbe?.tp_accounts_general_info?.[0]?.acc),
+    email: pickFirstText(account?.email, udbe?.email1, row?.email),
+    phone: pickFirstText(account?.phone, udbe?.phone),
+    name: pickFirstText(account?.accountname, lead?.lead_name, udbe?.accountname, row?.candidateName),
+    country: pickFirstText(account?.country, lead?.registration_country),
+  }
+}
+
+function matchScoreFromSummary(summary, queryText) {
+  const q = String(queryText || '').trim().toLowerCase()
+  if (!q) return 0
+
+  const fields = [
+    summary?.leadId,
+    summary?.mtId,
+    summary?.email,
+    summary?.phone,
+    summary?.name,
+    summary?.country,
+  ].map((v) => String(v || '').toLowerCase())
+
+  let score = 0
+  for (const value of fields) {
+    if (!value) continue
+    if (value === q) score += 60
+    else if (value.startsWith(q)) score += 35
+    else if (value.includes(q)) score += 14
+  }
+  return score
+}
+
+function buildSnapshotSeeds(rows, queryText, maxSeeds = 30) {
+  const q = String(queryText || '').trim().toLowerCase()
+  const scored = []
+
+  for (const row of rows || []) {
+    const summary = rowSummary(row)
+    const score = matchScoreFromSummary(summary, q)
+    if (score <= 0) continue
+    scored.push({
+      seedSource: 'snapshot',
+      score,
+      leadId: summary.leadId,
+      accountNumber: summary.mtId,
+      email: summary.email,
+      phone: summary.phone,
+      name: summary.name,
+    })
+  }
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored.slice(0, maxSeeds)
+}
+
+function buildDirectSeeds(queryText) {
+  const q = String(queryText || '').trim()
+  const out = []
+  if (!q) return out
+
+  const email = normalizeEmail(q)
+  const digits = normalizeDigits(q)
+
+  if (email.includes('@')) {
+    out.push({ seedSource: 'direct-email', score: 100, email })
+  }
+
+  if (digits.length >= 5) {
+    out.push({ seedSource: 'direct-account', score: 95, accountNumber: digits })
+    out.push({ seedSource: 'direct-lead', score: 80, leadId: digits })
+  }
+
+  return out
+}
+
+function dedupeSeeds(seeds) {
+  const map = new Map()
+  for (const seed of seeds || []) {
+    const key = [
+      normalizeDigits(seed?.accountNumber),
+      normalizeEmail(seed?.email),
+      String(seed?.leadId || '').trim(),
+      normalizeDigits(seed?.phone),
+      String(seed?.name || '').trim().toLowerCase(),
+    ].join('|')
+
+    if (!map.has(key)) {
+      map.set(key, seed)
+      continue
+    }
+    const prev = map.get(key)
+    if (Number(seed?.score || 0) > Number(prev?.score || 0)) map.set(key, seed)
+  }
+  return Array.from(map.values())
+}
+
+async function enrichSeed(seed) {
+  const enriched = {
+    summary: {
+      leadId: String(seed?.leadId || '').trim(),
+      mtId: String(seed?.accountNumber || '').trim(),
+      email: String(seed?.email || '').trim(),
+      phone: String(seed?.phone || '').trim(),
+      name: String(seed?.name || '').trim(),
+      country: '',
+    },
+    accountDetails: null,
+    userDetails: null,
+    leadStatus: null,
+    score: Number(seed?.score || 0),
+    source: seed?.seedSource || 'unknown',
+  }
+
+  if (enriched.summary.mtId) {
+    enriched.accountDetails = await skaleRequest('GetAccountDetails', { account_number: enriched.summary.mtId })
+  }
+
+  if (enriched.summary.leadId) {
+    enriched.leadStatus = await skaleRequest('GetLeadStatus', { lead_id: enriched.summary.leadId })
+  }
+
+  const leadObj = enriched.leadStatus?.object || {}
+  if (!enriched.summary.mtId && Array.isArray(leadObj?.MT4_accounts) && leadObj.MT4_accounts.length) {
+    enriched.summary.mtId = String(leadObj.MT4_accounts[0] || '').trim()
+    if (enriched.summary.mtId) {
+      enriched.accountDetails = await skaleRequest('GetAccountDetails', { account_number: enriched.summary.mtId })
+    }
+  }
+
+  const accountObj = enriched.accountDetails?.object || {}
+  if (!enriched.summary.leadId) {
+    enriched.summary.leadId = pickFirstText(accountObj?.lead_id, leadObj?.id)
+  }
+
+  if (!enriched.summary.email) {
+    enriched.summary.email = pickFirstText(accountObj?.email, leadObj?.email, leadObj?.email1)
+  }
+
+  if (enriched.summary.email) {
+    enriched.userDetails = await skaleRequest('GetUserDetailsByEmail', { email: enriched.summary.email })
+  }
+
+  const udbe = Array.isArray(enriched.userDetails?.data) && enriched.userDetails.data.length
+    ? enriched.userDetails.data[0]
+    : {}
+
+  enriched.summary.name = pickFirstText(
+    accountObj?.accountname,
+    leadObj?.lead_name,
+    udbe?.accountname,
+    enriched.summary.name
+  )
+  enriched.summary.phone = pickFirstText(accountObj?.phone, udbe?.phone, enriched.summary.phone)
+  enriched.summary.country = pickFirstText(accountObj?.country, leadObj?.registration_country)
+  enriched.summary.mtId = pickFirstText(accountObj?.mt4_account, enriched.summary.mtId)
+
+  return enriched
+}
+
+async function mapWithConcurrency(items, concurrency, worker) {
+  const list = Array.isArray(items) ? items : []
+  const max = Math.max(1, Number(concurrency || 1))
+  const out = new Array(list.length)
+  let cursor = 0
+
+  async function runOne() {
+    while (true) {
+      const idx = cursor
+      cursor += 1
+      if (idx >= list.length) return
+      // eslint-disable-next-line no-await-in-loop
+      out[idx] = await worker(list[idx], idx)
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(max, list.length) }, () => runOne())
+  await Promise.all(workers)
+  return out
+}
+
+app.post('/api/skale/phones', async (req, res) => {
+  const rows = Array.isArray(req.body?.rows) ? req.body.rows : []
+  const forceLiveRaw = req.body?.forceLive
+  const forceLive = forceLiveRaw === true || String(forceLiveRaw || '').trim().toLowerCase() === 'true' || String(forceLiveRaw || '').trim() === '1'
+  const concurrencyRaw = Number(req.body?.concurrency || 4)
+  const concurrency = Math.max(1, Math.min(8, Number.isFinite(concurrencyRaw) ? concurrencyRaw : 4))
+
+  if (!rows.length) {
+    return res.status(400).json({ ok: false, error: 'missing_rows' })
+  }
+
+  try {
+    const snapshotResult = readSkaleSnapshotPayload()
+    const snapshotRows = Array.isArray(snapshotResult?.payload?.rows) ? snapshotResult.payload.rows : []
+    const cacheStore = readSkaleContactCache()
+
+    const byMt = new Map()
+    const byEmail = new Map()
+    const byMtCountry = new Map()
+    const byEmailCountry = new Map()
+    const byCacheRowKey = new Map(Object.entries(cacheStore.byRowKey || {}))
+    const byCacheAccount = new Map(Object.entries(cacheStore.byAccount || {}))
+    const byCacheEmail = new Map(Object.entries(cacheStore.byEmail || {}))
+    for (const snapRow of snapshotRows) {
+      const summary = rowSummary(snapRow)
+      const mt = normalizeDigits(summary?.mtId)
+      const email = normalizeEmail(summary?.email)
+      const phone = pickFirstText(summary?.phone)
+      const country = pickFirstText(summary?.country)
+      if (mt && phone && !byMt.has(mt)) byMt.set(mt, phone)
+      if (email && phone && !byEmail.has(email)) byEmail.set(email, phone)
+      if (mt && country && !byMtCountry.has(mt)) byMtCountry.set(mt, country)
+      if (email && country && !byEmailCountry.has(email)) byEmailCountry.set(email, country)
+    }
+
+    const normalizedRows = rows.slice(0, 300).map((row, idx) => {
+      const account = normalizeDigits(row?.tradingAccount || row?.account || row?.mtId)
+      const email = normalizeEmail(row?.email)
+      const rowKey = String(row?.rowKey || `${account}:${email || idx}`).trim()
+      return { rowKey, account, email }
+    })
+
+    let cacheHits = 0
+
+    const resultRows = await mapWithConcurrency(normalizedRows, concurrency, async (row) => {
+      let phone = ''
+      let country = ''
+      let source = ''
+      let error = ''
+
+      const cachedRowKey = byCacheRowKey.get(row.rowKey)
+      const cachedByAccount = row.account ? byCacheAccount.get(row.account) : null
+      const cachedByEmail = row.email ? byCacheEmail.get(row.email) : null
+      const cachedEntry = normalizeContactEntry(cachedRowKey || cachedByAccount || cachedByEmail)
+
+      if (cachedEntry.phone || cachedEntry.country) {
+        phone = cachedEntry.phone
+        country = cachedEntry.country
+        source = 'cache'
+        cacheHits += 1
+      }
+
+      if (!phone && row.account && byMt.has(row.account)) {
+        phone = String(byMt.get(row.account) || '').trim()
+        source = 'snapshot'
+      } else if (!phone && row.email && byEmail.has(row.email)) {
+        phone = String(byEmail.get(row.email) || '').trim()
+        source = 'snapshot'
+      }
+
+      if (!country && row.account && byMtCountry.has(row.account)) {
+        country = String(byMtCountry.get(row.account) || '').trim()
+      } else if (!country && row.email && byEmailCountry.has(row.email)) {
+        country = String(byEmailCountry.get(row.email) || '').trim()
+      }
+
+      // Run live lookups when data is incomplete after cache/snapshot.
+      if (forceLive && (!phone || !country)) {
+        try {
+          if (row.account && (!phone || !country)) {
+            const accountDetails = await skaleRequest('GetAccountDetails', { account_number: row.account })
+            const accountPhone = pickFirstText(accountDetails?.object?.phone)
+            const accountCountry = pickFirstText(accountDetails?.object?.country)
+            if (accountPhone) {
+              phone = accountPhone
+              source = 'live:GetAccountDetails'
+            }
+            if (!country && accountCountry) country = accountCountry
+          }
+
+          if (row.email && (!phone || !country)) {
+            const userDetails = await skaleRequest('GetUserDetailsByEmail', { email: row.email })
+            const user = Array.isArray(userDetails?.data) && userDetails.data.length ? userDetails.data[0] : null
+            const userPhone = pickFirstText(user?.phone)
+            const userCountry = pickFirstText(user?.country)
+            if (userPhone) {
+              phone = userPhone
+              source = 'live:GetUserDetailsByEmail'
+            }
+            if (!country && userCountry) country = userCountry
+          }
+        } catch (e) {
+          error = e?.message || 'live_lookup_failed'
+        }
+      }
+
+      return {
+        rowKey: row.rowKey,
+        account: row.account,
+        email: row.email,
+        phone: phone || '',
+        country: country || '',
+        source: source || (phone ? 'unknown' : 'none'),
+        error,
+      }
+    })
+
+    const phones = {}
+    const countries = {}
+    const sources = {}
+    const errors = {}
+
+    const nextCache = {
+      byRowKey: { ...(cacheStore.byRowKey || {}) },
+      byAccount: { ...(cacheStore.byAccount || {}) },
+      byEmail: { ...(cacheStore.byEmail || {}) },
+      updatedAt: new Date().toISOString(),
+    }
+
+    for (const row of resultRows) {
+      if (!row?.rowKey) continue
+      phones[row.rowKey] = String(row.phone || '')
+      countries[row.rowKey] = String(row.country || '')
+      sources[row.rowKey] = String(row.source || 'none')
+      if (row.error) errors[row.rowKey] = String(row.error)
+
+      const hasData = String(row.phone || '').trim() || String(row.country || '').trim()
+      if (!hasData) continue
+
+      const entry = {
+        phone: String(row.phone || '').trim(),
+        country: String(row.country || '').trim(),
+        updatedAt: nextCache.updatedAt,
+      }
+
+      nextCache.byRowKey[row.rowKey] = entry
+      if (row.account) nextCache.byAccount[row.account] = entry
+      if (row.email) nextCache.byEmail[row.email] = entry
+    }
+
+    writeSkaleContactCache(nextCache)
+
+    return res.json({
+      ok: true,
+      count: resultRows.length,
+      matched: resultRows.filter((item) => String(item?.phone || '').trim()).length,
+      cacheHits,
+      phones,
+      countries,
+      sources,
+      errors,
+    })
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      error: 'skale_phone_lookup_failed',
+      message: err?.message || 'Skale phone lookup failed',
+    })
+  }
+})
+
+app.all('/api/skale/account-search', async (req, res) => {
+  if (req.method !== 'GET' && req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'method_not_allowed' })
+  }
+
+  const query = String(req.body?.query || req.query?.q || '').trim()
+  const limitRaw = Number(req.body?.limit || req.query?.limit || 8)
+  const limit = Math.max(1, Math.min(20, Number.isFinite(limitRaw) ? limitRaw : 8))
+
+  if (!query || query.length < 2) {
+    return res.status(400).json({ ok: false, error: 'invalid_query', message: 'Please provide at least 2 characters.' })
+  }
+
+  try {
+    const snapshotResult = readSkaleSnapshotPayload()
+    const rows = Array.isArray(snapshotResult?.payload?.rows) ? snapshotResult.payload.rows : []
+
+    const seeds = dedupeSeeds([
+      ...buildDirectSeeds(query),
+      ...buildSnapshotSeeds(rows, query, Math.max(limit * 3, 30)),
+    ])
+
+    const selectedSeeds = seeds.slice(0, Math.max(limit * 2, 10))
+    const results = []
+    for (const seed of selectedSeeds) {
+      // Keep requests serial to avoid overloading Skale APIs.
+      // Single-search UX still remains responsive for this page.
+      const enriched = await enrichSeed(seed)
+      const matchScore = matchScoreFromSummary(enriched.summary, query)
+      if (matchScore <= 0 && Number(seed?.score || 0) <= 0) continue
+      const completenessScore =
+        Number(Boolean(enriched?.accountDetails?.object)) * 30 +
+        Number(Boolean(enriched?.userDetails?.data?.length)) * 20 +
+        Number(Boolean(enriched?.leadStatus?.object)) * 15 +
+        Number(Boolean(String(enriched?.summary?.leadId || '').trim())) * 8 +
+        Number(Boolean(String(enriched?.summary?.mtId || '').trim())) * 8
+
+      enriched.score = Number(seed?.score || 0) + matchScore + completenessScore
+      results.push(enriched)
+      if (results.length >= limit) break
+    }
+
+    results.sort((a, b) => Number(b?.score || 0) - Number(a?.score || 0))
+
+    return res.json({
+      ok: true,
+      query,
+      count: results.length,
+      results,
+    })
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      error: 'skale_account_search_failed',
+      message: err?.message || 'Skale account search failed',
+    })
+  }
+})
+
 app.get('/api/skale/live', (req, res) => {
   const progressPath = path.join(uploadDir, 'skale-users-db-progress.json')
   const publicPath = path.join(__dirname, '..', 'public', 'skale', 'skale-users-db.json')
@@ -797,19 +1404,6 @@ app.get('/api/skale/live', (req, res) => {
   const existing = candidates.filter((p) => fs.existsSync(p))
   if (!existing.length) {
     return res.status(404).json({ ok: false, error: 'skale_data_not_found' })
-  }
-
-  const readJsonWithRetries = (filePath, retries = 2) => {
-    let lastErr = null
-    for (let i = 0; i <= retries; i += 1) {
-      try {
-        const raw = fs.readFileSync(filePath, 'utf8')
-        return { ok: true, payload: JSON.parse(raw), error: null }
-      } catch (e) {
-        lastErr = e
-      }
-    }
-    return { ok: false, payload: null, error: lastErr }
   }
 
   let payload = null
@@ -871,6 +1465,15 @@ app.all('/api/email/*', (req, res) => {
   return routeEmail(req, res, tail)
 })
 
+app.all('/api/sms', (req, res) => routeSms(req, res, []))
+app.all('/api/sms/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/sms\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeSms(req, res, tail)
+})
+
 app.all('/api/gmail', (req, res) => routeGmail(req, res, []))
 app.all('/api/gmail/*', (req, res) => {
   const tail = String(req.path || '')
@@ -878,6 +1481,15 @@ app.all('/api/gmail/*', (req, res) => {
     .split('/')
     .filter(Boolean)
   return routeGmail(req, res, tail)
+})
+
+app.all('/api/slack', (req, res) => routeSlack(req, res, []))
+app.all('/api/slack/*', (req, res) => {
+  const tail = String(req.path || '')
+    .replace(/^\/api\/slack\/?/, '')
+    .split('/')
+    .filter(Boolean)
+  return routeSlack(req, res, tail)
 })
 
 app.all('/api/qlik', (req, res) => routeQlik(req, res, []))
@@ -907,4 +1519,16 @@ app.all('/api/acuity/*', (req, res) => {
   return routeAcuity(req, res, tail)
 })
 
-app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))
+const server = app.listen(port, () => console.log(`Upload server listening on http://localhost:${port}`))
+
+server.on('error', (err) => {
+  if (err && err.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use.`)
+    console.error('Another upload server instance is likely already running.')
+    console.error('Use: npm run upload:server:restart')
+    process.exit(1)
+    return
+  }
+
+  throw err
+})

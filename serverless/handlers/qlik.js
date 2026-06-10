@@ -41,15 +41,42 @@ const DB_LIVE_STALE_LOOKBACK_DAYS = 14
 const DB_LIVE_RECOVERY_LOOKBACK_DAYS = 30
 const DB_LIVE_BOOTSTRAP_FROM = '2024-01-01'
 const DB_LIVE_RUNS_HISTORY_MAX = 40
-const DB_LIVE_REPORT_JOBS_HISTORY_MAX = 80
 const DB_LIVE_STORE_USERS_MAX = 200_000
-const DB_LIVE_EXPORT_MAX_LIMIT = 20_000
 const DB_LIVE_INGEST_CONTROL_WINDOW_MS = 5 * 60 * 1000
 const DB_LIVE_INGEST_CONTROL_MAX_ACTIONS = 6
 const DB_LIVE_AUDIT_LOG_MAX_BYTES = 2 * 1024 * 1024
 const DB_LIVE_IDENTITY_MISSING_WARN_RATIO = 0.01
 const DB_LIVE_UNMAPPED_LABEL = 'UNMAPPED'
 const DB_LIVE_MIN_SAFE_USERS = parsePositiveInt(env('DB_LIVE_MIN_SAFE_USERS'), 5_000, 500_000)
+const CREOLABS_NATIVE_API_URL = env('CREOLABS_NATIVE_API_URL')
+const CREOLABS_NATIVE_API_KEY = env('CREOLABS_NATIVE_API_KEY')
+const CREOLABS_NATIVE_PAGE_LIMIT = 50_000
+const CREOLABS_NATIVE_FETCH_TIMEOUT_MS = parsePositiveInt(env('CREOLABS_NATIVE_FETCH_TIMEOUT_MS'), 45_000, 180_000)
+const CREOLABS_NATIVE_SYNC_PAGE_SIZE = parsePositiveInt(env('CREOLABS_NATIVE_SYNC_PAGE_SIZE'), 10_000, CREOLABS_NATIVE_PAGE_LIMIT)
+const CREOLABS_NATIVE_SYNC_MAX_PAGES = parsePositiveInt(env('CREOLABS_NATIVE_SYNC_MAX_PAGES'), 500, 5000)
+const DB_NATIVE_MAX_STALE_MS = parsePositiveInt(env('DB_NATIVE_MAX_STALE_MS'), 60 * 60 * 1000, 24 * 60 * 60 * 1000)
+const DB_NATIVE_AUTO_REFRESH_INTERVAL_MS = parsePositiveInt(env('DB_NATIVE_AUTO_REFRESH_INTERVAL_MS'), 6 * 60 * 60 * 1000, 48 * 60 * 60 * 1000)
+const DB_NATIVE_CONTRACT_VERSION = 'db-native-v1.0'
+const DB_NATIVE_REPORT_COLUMNS = Object.freeze([
+  Object.freeze({ key: 'affiliate_id', apiField: 'affiliateId', label: 'Affiliate ID', type: 'text' }),
+  Object.freeze({ key: 'client_id', apiField: 'clientId', label: 'Client ID', type: 'text' }),
+  Object.freeze({ key: 'client_name', apiField: 'clientName', label: 'Client Name', type: 'text' }),
+  Object.freeze({ key: 'client_login', apiField: 'clientLogin', label: 'Client LOGIN', type: 'text' }),
+  Object.freeze({ key: 'user', apiField: 'user', label: 'User', type: 'text' }),
+  Object.freeze({ key: 'country', apiField: 'country', label: 'Country', type: 'text' }),
+  Object.freeze({ key: 'date', apiField: 'date', fallbackApiField: 'clientTimestamp', label: 'DATE', type: 'date' }),
+  Object.freeze({ key: 'balance', apiField: 'balance', label: '$ Balance', type: 'money' }),
+  Object.freeze({ key: 'ltv_commission', apiField: 'commission', label: 'LTV Commission', type: 'money' }),
+  Object.freeze({ key: 'closed_pl', apiField: 'closedPl', label: '$ Closed PL', type: 'money' }),
+  Object.freeze({ key: 'open_pl', apiField: 'openPl', label: '$ Open PL', type: 'money' }),
+  Object.freeze({ key: 'trades', apiField: 'trades', label: '# Trades', type: 'int' }),
+  Object.freeze({ key: 'ftd', apiField: 'ftd', label: '$ FTD', type: 'money' }),
+  Object.freeze({ key: 'rdp', apiField: 'rdp', label: '$ RDP', type: 'money' }),
+  Object.freeze({ key: 'deposit', apiField: 'deposit', label: '$ Deposit', type: 'money' }),
+  Object.freeze({ key: 'wd', apiField: 'wd', label: '$ WD', type: 'money' }),
+  Object.freeze({ key: 'net', apiField: 'net', label: '$ Net', type: 'money' }),
+  Object.freeze({ key: 'equity', apiField: 'equity', label: '$ Equity', type: 'money' }),
+])
 const QLIK_DYNAMIC_CACHE_TTL_MS = 15 * 60 * 1000
 const QLIK_DYNAMIC_ENGINE_PAGE_SIZE = 500
 const QLIK_DYNAMIC_MAX_CACHE_ITEMS = 120
@@ -1373,7 +1400,7 @@ async function handleEngineObjectDiscovery(req, res, appId) {
 
 // Known object IDs for CREOLABS live data (discovered via Engine scan)
 const CREOLABS_APP_ID = 'c6f37daa-0278-42b0-ab9b-813d2b9aafeb'
-// "Previous Month" table – contains per-account PL filtered for the most recent period
+// "Previous Month" table ÔÇô contains per-account PL filtered for the most recent period
 // Dims: Brand, Affiliate, User, Client Name, Client ID, Client LOGIN, LOGIN, Country
 // Meas col 5 = "$ PL", col 3 = "$ Deposit", col 4 = "$ WD", col 10 = "# Accounts"
 const CREOLABS_APR_OBJ = '53c14348-64ce-48a2-a8c7-5fcfc983be32'
@@ -1558,12 +1585,23 @@ const _dbLiveIngestionState = {
   runs: [],
 }
 
-const _dbLiveIngestionControlRate = new Map()
-
-const _dbLiveReportJobsState = {
-  jobsById: new Map(),
-  history: [],
+const _dbNativeStoreState = {
+  hydratedFromDisk: false,
+  inFlight: null,
+  rows: [],
+  report: null,
+  schema: null,
+  filters: null,
+  warnings: [],
+  generatedAt: '',
+  updatedAt: '',
+  sourcePaging: null,
 }
+
+const _dbNativeLeaderboardCache = new Map()
+const DB_NATIVE_LEADERBOARD_CACHE_MS = 60 * 1000
+
+const _dbLiveIngestionControlRate = new Map()
 
 function clearCreolabsClientVariantCaches() {
   for (const key of Object.keys(_creolabsClientVariantCaches)) {
@@ -2957,12 +2995,12 @@ async function handleCreolabsClients(req, res) {
  * rolling window of the last `days` calendar days (default 30).
  *
  * Because data is month-granular, any month whose end-of-month falls on or
- * after the cutoff date is included (e.g. for May 5 with days=30 → Apr+May).
+ * after the cutoff date is included (e.g. for May 5 with days=30 ÔåÆ Apr+May).
  *
  * Lists:
- *   deposited  – clients with deposit > 0 in the window
- *   withdrawn  – clients with wd > 0 in the window
- *   inProfit   – clients with (closedPl + openPl) > 0 in the window
+ *   deposited  ÔÇô clients with deposit > 0 in the window
+ *   withdrawn  ÔÇô clients with wd > 0 in the window
+ *   inProfit   ÔÇô clients with (closedPl + openPl) > 0 in the window
  */
 async function handleCreolabsClientLists(req, res) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
@@ -2982,7 +3020,7 @@ async function handleCreolabsClientLists(req, res) {
     // Determine which periodIds fall within the last `days` days.
     const now = new Date()
     const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
-    // Include any month whose last day >= cutoff → month rank >= cutoff month rank.
+    // Include any month whose last day >= cutoff ÔåÆ month rank >= cutoff month rank.
     const cutoffRank = cutoff.getFullYear() * 100 + (cutoff.getMonth() + 1)
 
     // Collect period labels that are in range (for metadata).
@@ -4629,6 +4667,18 @@ function nowIsoDateOnly() {
   return isoDateOnlyFromMs(Date.now())
 }
 
+function localIsoDateOnlyFromMs(ms) {
+  const d = new Date(ms)
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+function nowLocalIsoDateOnly() {
+  return localIsoDateOnlyFromMs(Date.now())
+}
+
 function subtractDaysIsoDateOnly(isoDate, days) {
   const ms = parseIsoDateBoundary(isoDate, { endOfDay: false })
   if (!Number.isFinite(ms)) return nowIsoDateOnly()
@@ -5624,910 +5674,764 @@ function applyDbLiveSort(users, urlObj) {
   }
 }
 
-function getDbLiveOperationalReportTemplates() {
-  return [
-    {
-      id: 'db-live-daily-health',
-      name: 'DB Live Daily Health',
-      cadence: 'daily',
-      output: ['xlsx', 'pdf'],
-      objective: 'Controllo qualita ingestione, freshness e anomalie source mode.',
-      defaultQuery: {
-        range: { from: 'today-1d', to: 'today' },
-        sort: '-clientTimestamp,-clientId',
-        limit: 500,
-      },
-      sections: ['freshness', 'quality', 'warnings', 'top-latest-clients'],
-      targetTeams: ['operations', 'data-quality'],
-    },
-    {
-      id: 'db-live-weekly-retention-focus',
-      name: 'DB Live Weekly Retention Focus',
-      cadence: 'weekly',
-      output: ['xlsx', 'pdf'],
-      objective: 'Vista retention su status, country, affiliate e trend nuovi registrati.',
-      defaultQuery: {
-        range: { from: 'today-7d', to: 'today' },
-        sort: '-clientTimestamp,-clientId',
-        limit: 2000,
-      },
-      sections: ['status-breakdown', 'country-breakdown', 'affiliate-breakdown'],
-      targetTeams: ['retention', 'management'],
-    },
-    {
-      id: 'db-live-monthly-finance-handoff',
-      name: 'DB Live Monthly Finance Handoff',
-      cadence: 'monthly',
-      output: ['xlsx', 'pdf'],
-      objective: 'Consegna finance con metriche net/deposit/wd/trades e campi provenienza.',
-      defaultQuery: {
-        range: { from: 'month-start', to: 'today' },
-        sort: '-net,-deposit',
-        limit: 5000,
-      },
-      sections: ['net-summary', 'deposits-withdrawals', 'provenance-quality'],
-      targetTeams: ['finance', 'management'],
-    },
-  ]
+function normalizeNativeColumnKey(value) {
+  return normalizeText(value).toLowerCase().replace(/[^a-z0-9]+/g, '')
 }
 
-function getDbLiveReportsApiConfig() {
+function buildNativeRowAccessor(row) {
+  const map = new Map()
+  if (!row || typeof row !== 'object') return map
+  for (const [key, value] of Object.entries(row)) {
+    const normalized = normalizeNativeColumnKey(key)
+    if (!normalized || map.has(normalized)) continue
+    map.set(normalized, value)
+  }
+  return map
+}
+
+function getNativeValue(accessor, aliases = []) {
+  for (const alias of aliases) {
+    const normalized = normalizeNativeColumnKey(alias)
+    if (!normalized) continue
+    if (accessor.has(normalized)) return accessor.get(normalized)
+  }
+  return ''
+}
+
+function parseNativeNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  const text = normalizeText(value).replace(/,/g, '')
+  const parsed = Number(text)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function normalizeNativeIsoDate(value) {
+  const raw = normalizeText(value)
+  if (!raw) return ''
+  const ms = Date.parse(raw)
+  if (!Number.isFinite(ms)) return raw
+  return new Date(ms).toISOString()
+}
+
+function mapCreolabsNativeRow(row) {
+  const accessor = buildNativeRowAccessor(row)
+  const clientTimestamp = normalizeNativeIsoDate(
+    getNativeValue(accessor, [
+      'clientTimestamp',
+      'client timestamp',
+      'registration date',
+      'registered date',
+      'created at',
+      'created_at',
+      'date',
+      'Client Timestamp',
+    ])
+  )
+  const rawDate = normalizeText(
+    getNativeValue(accessor, ['date', 'registration date', 'registered date', 'created at'])
+  )
   return {
-    createPath: normalizeText(env('QLIK_REPORTS_CREATE_PATH') || '/api/v1/reports'),
-    statusPathTemplate: normalizeText(env('QLIK_REPORTS_STATUS_PATH') || '/api/v1/reports/{jobId}'),
-    downloadPathTemplate: normalizeText(env('QLIK_REPORTS_DOWNLOAD_PATH') || '/api/v1/reports/{jobId}/download'),
-    appId: normalizeText(env('QLIK_APP_ID') || env('QLIK_CREOLABS_APP_ID')),
-    defaultSheetId: normalizeText(env('QLIK_REPORTS_DEFAULT_SHEET_ID')),
+    clientId: normalizeText(getNativeValue(accessor, ['clientId', 'client id', 'client_id', 'Client ID'])),
+    clientName: normalizeText(getNativeValue(accessor, ['clientName', 'client name', 'name', 'Client Name'])),
+    clientLogin: normalizeText(getNativeValue(accessor, ['clientLogin', 'client login', 'login', 'Client LOGIN'])),
+    affiliateId: normalizeText(getNativeValue(accessor, ['affiliateId', 'affiliate id', 'affiliate', 'Client Affiliate ID'])),
+    user: normalizeText(getNativeValue(accessor, ['user', 'agent', 'sales agent', 'retention agent', 'Client User'])),
+    country: normalizeText(getNativeValue(accessor, ['country', 'country code', 'Client Country'])),
+    brand: normalizeText(getNativeValue(accessor, ['brand', 'Client User Type'])),
+    status: normalizeText(getNativeValue(accessor, ['status'])),
+    clientTimestamp,
+    date: rawDate || (clientTimestamp ? clientTimestamp.slice(0, 10) : ''),
+    balance: parseNativeNumber(getNativeValue(accessor, ['balance', '$ balance', 'Client Balance'])),
+    commission: parseNativeNumber(getNativeValue(accessor, ['commission', 'ltv commission', 'commission aff', 'Client Commission'])),
+    closedPl: parseNativeNumber(getNativeValue(accessor, ['closedPl', 'closed pl', '$ closed pl', 'Client PL Closed'])),
+    openPl: parseNativeNumber(getNativeValue(accessor, ['openPl', 'open pl', '$ open pl', 'Client PL Open'])),
+    trades: Math.round(parseNativeNumber(getNativeValue(accessor, ['trades', '# trades']))),
+    openedTrades: Math.round(parseNativeNumber(getNativeValue(accessor, ['openedTrades', 'opened trades']))),
+    ftd: parseNativeNumber(getNativeValue(accessor, ['ftd', '$ ftd', 'Client FTD Amount'])),
+    rdp: parseNativeNumber(getNativeValue(accessor, ['rdp', '$ rdp'])),
+    deposit: parseNativeNumber(getNativeValue(accessor, ['deposit', '$ deposit', 'deposits', 'Client Deposit'])),
+    wd: parseNativeNumber(getNativeValue(accessor, ['wd', '$ wd', 'withdrawal', 'withdrawals', 'Client Withdrawal'])),
+    net: parseNativeNumber(getNativeValue(accessor, ['net', '$ net', 'Client Net'])),
+    equity: parseNativeNumber(getNativeValue(accessor, ['equity', '$ equity', 'Client Equity'])),
+    raw: row,
   }
 }
 
-function interpolatePathTemplate(template, values = {}) {
-  let output = normalizeText(template)
-  if (!output.startsWith('/')) output = `/${output}`
-  for (const [key, rawValue] of Object.entries(values)) {
-    output = output.replace(new RegExp(`\\{${key}\\}`, 'g'), encodeURIComponent(normalizeText(rawValue)))
+function aggregateDbNativeCatalogKpis(rows) {
+  const list = Array.isArray(rows) ? rows : []
+  const base = aggregateCreolabsUserKpis(list, { leadCountMode: 'row' })
+
+  let leadsSum = 0
+  let leadsSignalCount = 0
+  let ftdCountSum = 0
+  let ftdCountSignalCount = 0
+  let ftdVolumeSum = 0
+  let ftdVolumeSignalCount = 0
+  let rdpSum = 0
+  let rdpSignalCount = 0
+  let wdSum = 0
+  let wdSignalCount = 0
+  let depositSum = 0
+  let depositSignalCount = 0
+  let closedPlSum = 0
+
+  for (const row of list) {
+    const accessor = buildNativeRowAccessor(row?.raw && typeof row.raw === 'object' ? row.raw : row)
+
+    const leadsRaw = parseNativeNumber(
+      getNativeValue(accessor, ['Client # Clients', '# Leads', 'client # clients', 'client # leads'])
+    )
+    if (leadsRaw !== 0) leadsSignalCount += 1
+    leadsSum += leadsRaw
+
+    const ftdIndRaw = parseNativeNumber(
+      getNativeValue(accessor, ['Trans FTD Ind', 'trans ftd ind', 'FTD Ind', 'ftd ind'])
+    )
+    const ftdInd = ftdIndRaw !== 0 ? ftdIndRaw : (toFiniteNumber(row?.ftd) > 0 ? 1 : 0)
+    if (ftdIndRaw !== 0 || toFiniteNumber(row?.ftd) > 0) ftdCountSignalCount += 1
+    ftdCountSum += ftdInd
+
+    const ftdVolumeRaw = parseNativeNumber(
+      getNativeValue(accessor, ['Trans FTD', '$ FTD', 'Client FTD (USD)', 'Client FTD Amount'])
+    )
+    const ftdVolume = ftdVolumeRaw !== 0 ? ftdVolumeRaw : toFiniteNumber(row?.ftd)
+    if (ftdVolumeRaw !== 0 || toFiniteNumber(row?.ftd) !== 0) ftdVolumeSignalCount += 1
+    ftdVolumeSum += ftdVolume
+
+    const rdpRaw = parseNativeNumber(getNativeValue(accessor, ['Trans RDP', 'Client RDP (USD)', 'RDP']))
+    const rdpValue = rdpRaw !== 0 ? rdpRaw : toFiniteNumber(row?.rdp)
+    if (rdpRaw !== 0 || toFiniteNumber(row?.rdp) !== 0) rdpSignalCount += 1
+    rdpSum += rdpValue
+
+    const wdRaw = parseNativeNumber(getNativeValue(accessor, ['Trans Withdrawal', 'Client Withdrawal']))
+    const wdValue = wdRaw !== 0 ? wdRaw : toFiniteNumber(row?.wd)
+    if (wdRaw !== 0 || toFiniteNumber(row?.wd) !== 0) wdSignalCount += 1
+    wdSum += wdValue
+
+    const depositRaw = parseNativeNumber(getNativeValue(accessor, ['Trans Deposit', 'Client Deposit']))
+    const depositValue = depositRaw !== 0 ? depositRaw : toFiniteNumber(row?.deposit)
+    if (depositRaw !== 0 || toFiniteNumber(row?.deposit) !== 0) depositSignalCount += 1
+    depositSum += depositValue
+
+    closedPlSum += toFiniteNumber(row?.closedPl)
   }
-  return output
-}
 
-function extractReportJobId(data) {
-  const candidates = [
-    data?.id,
-    data?.jobId,
-    data?.requestId,
-    data?.reportId,
-    data?.data?.id,
-    data?.data?.jobId,
-    data?.result?.id,
-  ]
-  for (const value of candidates) {
-    const text = normalizeText(value)
-    if (text) return text
+  const leads = leadsSignalCount > 0 ? leadsSum : base.totalLeads
+  const ftdCount = ftdCountSignalCount > 0 ? ftdCountSum : base.withFtd
+  const ftdVolume = ftdVolumeSignalCount > 0 ? ftdVolumeSum : base.ftd
+  const rdp = rdpSignalCount > 0 ? rdpSum : base.rdp
+  const wd = wdSignalCount > 0 ? wdSum : base.wd
+  const deposit = depositSignalCount > 0 ? depositSum : base.deposit
+  const net = deposit - wd
+
+  return {
+    ...base,
+    totalLeads: leads,
+    withFtd: ftdCount,
+    ftd: ftdVolume,
+    rdp,
+    wd,
+    deposit,
+    net,
+    closedPl: closedPlSum,
   }
-  return ''
 }
 
-function normalizeReportJobStatus(raw) {
-  const value = normalizeText(raw).toLowerCase()
-  if (!value) return 'unknown'
-  if (['queued', 'pending', 'created'].includes(value)) return 'queued'
-  if (['running', 'processing', 'in_progress', 'in-progress'].includes(value)) return 'running'
-  if (['done', 'success', 'succeeded', 'completed', 'ready'].includes(value)) return 'completed'
-  if (['error', 'failed', 'failure', 'cancelled', 'canceled'].includes(value)) return 'failed'
-  return value
-}
-
-function resolveReportDownloadUrl(payload) {
-  const candidates = [
-    payload?.downloadUrl,
-    payload?.url,
-    payload?.href,
-    payload?.data?.downloadUrl,
-    payload?.data?.url,
-    payload?.result?.downloadUrl,
-    payload?.result?.url,
-  ]
-  for (const value of candidates) {
-    const text = normalizeText(value)
-    if (text) return text
+async function fetchCreolabsNativeApiPayload({ forceRefresh = false, offset = 0, limit = 200 } = {}) {
+  if (!CREOLABS_NATIVE_API_URL || !CREOLABS_NATIVE_API_KEY) {
+    const error = new Error('Creolabs Native API not configured. Set CREOLABS_NATIVE_API_URL and CREOLABS_NATIVE_API_KEY.')
+    error.status = 501
+    throw error
   }
-  return ''
-}
 
-function putDbLiveReportJob(job) {
-  const id = normalizeText(job?.id)
-  if (!id) return
+  const safeOffset = parseNonNegativeInt(offset, 0)
+  const safeLimit = parsePositiveInt(limit, 200, CREOLABS_NATIVE_PAGE_LIMIT)
+  const upstreamUrl = new URL(CREOLABS_NATIVE_API_URL)
+  upstreamUrl.searchParams.set('format', 'json')
+  upstreamUrl.searchParams.set('shape', 'rows')
+  upstreamUrl.searchParams.set('limit', String(safeLimit))
+  upstreamUrl.searchParams.set('offset', String(safeOffset))
+  if (forceRefresh) upstreamUrl.searchParams.set('refresh', 'true')
 
-  const prev = _dbLiveReportJobsState.jobsById.get(id)
-  const next = {
-    id,
-    templateId: normalizeText(job?.templateId || prev?.templateId),
-    format: normalizeText(job?.format || prev?.format || 'xlsx'),
-    status: normalizeReportJobStatus(job?.status || prev?.status || 'queued'),
-    createdAt: normalizeText(job?.createdAt || prev?.createdAt || new Date().toISOString()),
-    updatedAt: normalizeText(job?.updatedAt || new Date().toISOString()),
-    source: normalizeText(job?.source || prev?.source || 'qlik-reports-api'),
-    upstream: {
-      createPath: normalizeText(job?.upstream?.createPath || prev?.upstream?.createPath),
-      statusPath: normalizeText(job?.upstream?.statusPath || prev?.upstream?.statusPath),
-      downloadPath: normalizeText(job?.upstream?.downloadPath || prev?.upstream?.downloadPath),
-      rawCreate: job?.upstream?.rawCreate || prev?.upstream?.rawCreate || null,
-      rawStatus: job?.upstream?.rawStatus || prev?.upstream?.rawStatus || null,
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), CREOLABS_NATIVE_FETCH_TIMEOUT_MS)
+  let response = null
+  try {
+    response = await fetch(upstreamUrl.toString(), {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+        'x-api-key': CREOLABS_NATIVE_API_KEY,
+        Authorization: `Bearer ${CREOLABS_NATIVE_API_KEY}`,
+      },
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (error?.name === 'AbortError') {
+      const timeoutError = new Error(`Creolabs Native API timed out after ${CREOLABS_NATIVE_FETCH_TIMEOUT_MS}ms`)
+      timeoutError.status = 504
+      throw timeoutError
+    }
+    throw error
+  } finally {
+    clearTimeout(timer)
+  }
+
+  const payload = await response.json().catch(() => null)
+  if (!response.ok || !payload || !Array.isArray(payload.data)) {
+    const error = new Error(payload?.error || payload?.message || `Creolabs Native API failed (${response.status})`)
+    error.status = response.status || 502
+    throw error
+  }
+
+  return {
+    rows: payload.data,
+    paging: payload.paging || {
+      offset: safeOffset,
+      limit: safeLimit,
+      returned: Array.isArray(payload.data) ? payload.data.length : 0,
+      total: Array.isArray(payload.data) ? payload.data.length : 0,
+      hasMore: false,
     },
-    diagnostics: {
-      lastError: normalizeText(job?.diagnostics?.lastError || prev?.diagnostics?.lastError),
-      lastMessage: normalizeText(job?.diagnostics?.lastMessage || prev?.diagnostics?.lastMessage),
-      statusRaw: normalizeText(job?.diagnostics?.statusRaw || prev?.diagnostics?.statusRaw),
-    },
-    downloadUrl: normalizeText(job?.downloadUrl || prev?.downloadUrl),
-    query: job?.query || prev?.query || null,
+    report: payload.report || null,
+    schema: payload.schema || null,
+    filters: payload.filters || null,
+    generatedAt: normalizeText(payload.generatedAt),
+    warnings: Array.isArray(payload.warnings) ? payload.warnings : [],
+    fromCache: Boolean(payload.fromCache),
+    _cache: { hit: false, ageMs: 0 },
   }
-
-  _dbLiveReportJobsState.jobsById.set(id, next)
-  _dbLiveReportJobsState.history = [
-    { id, updatedAt: next.updatedAt },
-    ..._dbLiveReportJobsState.history.filter((item) => item.id !== id),
-  ].slice(0, DB_LIVE_REPORT_JOBS_HISTORY_MAX)
 }
 
-function getDbLiveReportJob(jobId) {
-  const id = normalizeText(jobId)
-  if (!id) return null
-  return _dbLiveReportJobsState.jobsById.get(id) || null
+function getDbNativeStoreFilePath() {
+  const fromEnv = normalizeText(env('DB_NATIVE_STORE_FILE'))
+  if (fromEnv) return fromEnv
+  return path.join(process.cwd(), 'uploads', 'db-native-store.json')
 }
 
-function listDbLiveReportJobs() {
-  return _dbLiveReportJobsState.history
-    .map((entry) => _dbLiveReportJobsState.jobsById.get(entry.id))
-    .filter(Boolean)
+function persistDbNativeStore() {
+  try {
+    const targetFile = getDbNativeStoreFilePath()
+    const dir = path.dirname(targetFile)
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+    const payload = {
+      contractVersion: 'db-native-store-v1',
+      updatedAt: new Date().toISOString(),
+      generatedAt: normalizeText(_dbNativeStoreState.generatedAt),
+      sourcePaging: _dbNativeStoreState.sourcePaging || null,
+      report: _dbNativeStoreState.report || null,
+      schema: _dbNativeStoreState.schema || null,
+      filters: _dbNativeStoreState.filters || null,
+      warnings: Array.isArray(_dbNativeStoreState.warnings) ? _dbNativeStoreState.warnings : [],
+      rows: Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows : [],
+    }
+
+    const temp = `${targetFile}.tmp`
+    fs.writeFileSync(temp, JSON.stringify(payload, null, 2), 'utf8')
+    fs.renameSync(temp, targetFile)
+    return true
+  } catch {
+    return false
+  }
 }
 
-function buildDbLiveReportCreatePayload(reqBody, template, reportsConfig) {
-  const requestedFormat = normalizeText(reqBody?.format || reqBody?.output || 'xlsx').toLowerCase()
-  const format = requestedFormat === 'pdf' ? 'pdf' : 'xlsx'
-  const from = normalizeText(reqBody?.from || reqBody?.range?.from)
-  const to = normalizeText(reqBody?.to || reqBody?.range?.to)
-  const manualRequest = reqBody?.request && typeof reqBody.request === 'object' ? reqBody.request : null
+function hydrateDbNativeStoreFromDisk() {
+  if (_dbNativeStoreState.hydratedFromDisk) return
+  _dbNativeStoreState.hydratedFromDisk = true
 
-  if (manualRequest) {
+  try {
+    const targetFile = getDbNativeStoreFilePath()
+    if (!fs.existsSync(targetFile)) return
+    const raw = fs.readFileSync(targetFile, 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return
+
+    _dbNativeStoreState.rows = Array.isArray(parsed.rows) ? parsed.rows : []
+    _dbNativeStoreState.report = parsed.report || null
+    _dbNativeStoreState.schema = parsed.schema || null
+    _dbNativeStoreState.filters = parsed.filters || null
+    _dbNativeStoreState.warnings = Array.isArray(parsed.warnings) ? parsed.warnings : []
+    _dbNativeStoreState.generatedAt = normalizeText(parsed.generatedAt)
+    _dbNativeStoreState.updatedAt = normalizeText(parsed.updatedAt)
+    _dbNativeStoreState.sourcePaging = parsed.sourcePaging || null
+  } catch {
+    _dbNativeStoreState.rows = []
+  }
+}
+
+async function syncDbNativeStore({ forceRefresh = false } = {}) {
+  if (_dbNativeStoreState.inFlight) return _dbNativeStoreState.inFlight
+
+  const promise = (async () => {
+    let offset = 0
+    let pageCount = 0
+    let hasMore = true
+    const collectedRows = []
+    let lastPayload = null
+
+    while (hasMore) {
+      if (pageCount >= CREOLABS_NATIVE_SYNC_MAX_PAGES) {
+        const error = new Error(`DB Native sync exceeded max pages (${CREOLABS_NATIVE_SYNC_MAX_PAGES})`)
+        error.status = 502
+        throw error
+      }
+
+      const payload = await fetchCreolabsNativeApiPayload({
+        forceRefresh: forceRefresh && pageCount === 0,
+        offset,
+        limit: CREOLABS_NATIVE_SYNC_PAGE_SIZE,
+      })
+      pageCount += 1
+      lastPayload = payload
+
+      const mapped = Array.isArray(payload.rows) ? payload.rows.map(mapCreolabsNativeRow) : []
+      if (mapped.length) collectedRows.push(...mapped)
+
+      const paging = payload?.paging || {}
+      const returned = parseNonNegativeInt(paging?.returned, mapped.length)
+      const total = parseNonNegativeInt(paging?.total, collectedRows.length)
+      const offsetNext = offset + returned
+      hasMore = Boolean(paging?.hasMore) || (returned > 0 && offsetNext < total)
+
+      if (!hasMore || returned <= 0) break
+      offset = offsetNext
+    }
+
+    _dbNativeStoreState.rows = collectedRows
+    _dbNativeStoreState.report = lastPayload?.report || null
+    _dbNativeStoreState.schema = lastPayload?.schema || null
+    _dbNativeStoreState.filters = lastPayload?.filters || null
+    _dbNativeStoreState.warnings = Array.isArray(lastPayload?.warnings) ? lastPayload.warnings : []
+    _dbNativeStoreState.generatedAt = normalizeText(lastPayload?.generatedAt) || new Date().toISOString()
+    _dbNativeStoreState.updatedAt = new Date().toISOString()
+    _dbNativeStoreState.sourcePaging = {
+      pageSize: CREOLABS_NATIVE_SYNC_PAGE_SIZE,
+      pagesFetched: pageCount,
+      totalRows: collectedRows.length,
+      lastPaging: lastPayload?.paging || null,
+      forceRefresh: Boolean(forceRefresh),
+    }
+
+    persistDbNativeStore()
     return {
-      payload: manualRequest,
-      format,
-      query: {
-        from,
-        to,
-      },
+      rows: _dbNativeStoreState.rows,
+      report: _dbNativeStoreState.report,
+      schema: _dbNativeStoreState.schema,
+      filters: _dbNativeStoreState.filters,
+      warnings: _dbNativeStoreState.warnings,
+      generatedAt: _dbNativeStoreState.generatedAt,
+      updatedAt: _dbNativeStoreState.updatedAt,
+      sourcePaging: _dbNativeStoreState.sourcePaging,
     }
-  }
+  })()
 
-  const requestPayload = {
-    appId: reportsConfig.appId,
-    templateId: normalizeText(template?.id),
-    output: {
-      format,
-    },
-    metadata: {
-      source: 'creolabs-db-live',
-      templateId: normalizeText(template?.id),
-      generatedAt: new Date().toISOString(),
-    },
-    filters: {
-      from,
-      to,
-    },
+  _dbNativeStoreState.inFlight = promise
+  try {
+    return await promise
+  } finally {
+    _dbNativeStoreState.inFlight = null
   }
+}
 
-  if (reportsConfig.defaultSheetId) {
-    requestPayload.sheetId = reportsConfig.defaultSheetId
-  }
+function applyDbNativeFilters(users, urlObj) {
+  const search = normalizeText(urlObj.searchParams.get('search')).toLowerCase()
+  const status = normalizeText(urlObj.searchParams.get('status')).toLowerCase()
+  const country = normalizeText(urlObj.searchParams.get('country')).toLowerCase()
+  const affiliateId = normalizeText(urlObj.searchParams.get('affiliateId')).toLowerCase()
+  const clientFilter = normalizeText(urlObj.searchParams.get('client') || urlObj.searchParams.get('clientId')).toLowerCase()
+  const agentFilter = normalizeText(urlObj.searchParams.get('user') || urlObj.searchParams.get('agent')).toLowerCase()
+  const brands = normalizeText(urlObj.searchParams.get('brand'))
+    .split(',')
+    .map((value) => normalizeText(value).toLowerCase())
+    .filter(Boolean)
+  const brandSet = new Set(brands)
+
+  return users.filter((user) => {
+    if (status && normalizeText(user?.status).toLowerCase() !== status) return false
+    if (country && normalizeText(user?.country).toLowerCase() !== country) return false
+    if (affiliateId && !normalizeText(user?.affiliateId).toLowerCase().includes(affiliateId)) return false
+    if (clientFilter) {
+      const haystack = [user?.clientId, user?.clientName, user?.clientLogin]
+        .map((value) => normalizeText(value).toLowerCase())
+        .join(' | ')
+      if (!haystack.includes(clientFilter)) return false
+    }
+    if (agentFilter && !normalizeText(user?.user).toLowerCase().includes(agentFilter)) return false
+    if (brandSet.size > 0 && !brandSet.has(normalizeText(user?.brand).toLowerCase())) return false
+    if (search) {
+      const haystack = [
+        user?.affiliateId,
+        user?.clientId,
+        user?.clientName,
+        user?.clientLogin,
+        user?.user,
+        user?.country,
+        user?.brand,
+        user?.date,
+      ]
+        .map((value) => normalizeText(value).toLowerCase())
+        .join(' | ')
+      if (!haystack.includes(search)) return false
+    }
+    return true
+  })
+}
+
+function applyDbNativeSort(users, urlObj) {
+  const sortRaw = normalizeText(urlObj.searchParams.get('sort') || '-date,-clientId')
+  const tokens = sortRaw.split(',').map((token) => normalizeText(token)).filter(Boolean)
+  const allowed = new Set(['date', 'clientId', 'clientName', 'affiliateId', 'clientLogin', 'user', 'country', 'balance', 'commission', 'closedPl', 'openPl', 'trades', 'ftd', 'rdp', 'deposit', 'wd', 'net', 'equity'])
+  const comparators = tokens
+    .map((token) => {
+      const dir = token.startsWith('-') ? -1 : 1
+      const field = token.replace(/^[-+]/, '')
+      if (!allowed.has(field)) return null
+      return { field, dir }
+    })
+    .filter(Boolean)
+
+  const normalizedComparators = comparators.length ? comparators : [{ field: 'date', dir: -1 }, { field: 'clientId', dir: -1 }]
+  const sortable = [...users]
+  sortable.sort((a, b) => {
+    for (const cmp of normalizedComparators) {
+      const { field, dir } = cmp
+      let av = a?.[field]
+      let bv = b?.[field]
+      if (field === 'date') {
+        av = Date.parse(normalizeText(av))
+        bv = Date.parse(normalizeText(bv))
+      } else if (['balance', 'commission', 'closedPl', 'openPl', 'trades', 'ftd', 'rdp', 'deposit', 'wd', 'net', 'equity'].includes(field)) {
+        av = Number(av)
+        bv = Number(bv)
+      } else {
+        av = normalizeText(av).toLowerCase()
+        bv = normalizeText(bv).toLowerCase()
+      }
+
+      if (Number.isFinite(av) && Number.isFinite(bv)) {
+        if (av === bv) continue
+        return av > bv ? dir : -dir
+      }
+
+      const as = normalizeText(av)
+      const bs = normalizeText(bv)
+      if (as === bs) continue
+      return as > bs ? dir : -dir
+    }
+    return 0
+  })
 
   return {
-    payload: requestPayload,
-    format,
-    query: {
-      from,
-      to,
-    },
+    users: sortable,
+    sort: normalizedComparators.map((c) => `${c.dir < 0 ? '-' : '+'}${c.field}`).join(','),
   }
 }
 
-async function handleCreolabsDbLiveReportsJobs(req, res) {
-  return json(
-    res,
-    410,
-    {
-      ok: false,
-      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
-    },
-    { 'Cache-Control': 'no-store' }
-  )
+function buildLatestDbNativeSnapshotRows(users) {
+  const rows = Array.isArray(users) ? users : []
+  const byClient = new Map()
 
-  if (req.method !== 'GET' && req.method !== 'POST') return notAllowed(req, res, 'GET, POST')
+  for (const row of rows) {
+    const clientId = normalizeText(row?.clientId)
+    if (!clientId) continue
 
-  if (req.method === 'GET') {
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-reports-jobs-v1',
-          jobs: listDbLiveReportJobs(),
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-
-  const config = ensureConfigured(res)
-  if (!config) return
-
-  try {
-    const reportsConfig = getDbLiveReportsApiConfig()
-    const templateId = normalizeText(req?.body?.templateId)
-    const template = getDbLiveOperationalReportTemplates().find((item) => normalizeText(item?.id) === templateId)
-    if (!template) {
-      return json(
-        res,
-        400,
-        {
-          ok: false,
-          error: 'Unknown report templateId',
-          details: templateId || 'missing templateId',
-        },
-        { 'Cache-Control': 'no-store' }
-      )
+    const rowMs = Date.parse(normalizeText(row?.clientTimestamp || row?.date))
+    const nextTs = Number.isFinite(rowMs) ? rowMs : Number.NEGATIVE_INFINITY
+    const prev = byClient.get(clientId)
+    if (!prev) {
+      byClient.set(clientId, row)
+      continue
     }
 
-    const createInput = buildDbLiveReportCreatePayload(req?.body || {}, template, reportsConfig)
-    const createPath = reportsConfig.createPath
-    let createRaw = null
-    try {
-      createRaw = await qlikPost(config, createPath, createInput.payload)
-    } catch (e) {
-      return json(
-        res,
-        e?.status || 502,
-        {
-          ok: false,
-          error: e?.message || 'Creolabs db-live report job creation failed',
-          details: e?.details || '',
-          diagnostics: {
-            createPath,
-            payload: createInput.payload,
-            hint: 'Provide a valid Qlik Reports body via request override if your tenant requires a different schema.',
-          },
-        },
-        { 'Cache-Control': 'no-store' }
-      )
+    const prevMs = Date.parse(normalizeText(prev?.clientTimestamp || prev?.date))
+    const prevTs = Number.isFinite(prevMs) ? prevMs : Number.NEGATIVE_INFINITY
+    if (nextTs >= prevTs) byClient.set(clientId, row)
+  }
+
+  return Array.from(byClient.values())
+}
+
+function resolveDbNativeRowIsoDate(row) {
+  const ts = Date.parse(normalizeText(row?.clientTimestamp))
+  if (Number.isFinite(ts)) return isoDateOnlyFromMs(ts)
+
+  const dateText = normalizeText(row?.date)
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return dateText
+
+  const fallbackTs = Date.parse(normalizeText(row?.date))
+  if (!Number.isFinite(fallbackTs)) return ''
+  return isoDateOnlyFromMs(fallbackTs)
+}
+
+async function handleCreolabsDbNativeLeaderboard(req, res) {
+  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+  try {
+    hydrateDbNativeStoreFromDisk()
+    const urlObj = new URL(req.url || '/', 'http://localhost')
+    const affiliateId = normalizeText(urlObj.searchParams.get('affiliateId'))
+    const topN = Math.min(parsePositiveInt(urlObj.searchParams.get('limit'), 100, 500), 500)
+    const sortBy = urlObj.searchParams.get('sortBy') === 'volume' ? 'volume' : 'profit'
+    const fromRaw = normalizeText(urlObj.searchParams.get('from'))
+    const toRaw = normalizeText(urlObj.searchParams.get('to'))
+    const hasExplicitDateFilter = Boolean(fromRaw || toRaw)
+
+    let fromMs = Number.NEGATIVE_INFINITY
+    let toMs = Number.POSITIVE_INFINITY
+    if (hasExplicitDateFilter) {
+      if (fromRaw) fromMs = parseIsoDateBoundary(fromRaw, { endOfDay: false })
+      if (toRaw) toMs = parseIsoDateBoundary(toRaw, { endOfDay: true })
+      if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
+        const error = new Error('Invalid date range. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD')
+        error.status = 400
+        throw error
+      }
+    }
+    const fromIso = Number.isFinite(fromMs) ? isoDateOnlyFromMs(fromMs) : ''
+    const toIso = Number.isFinite(toMs) ? isoDateOnlyFromMs(toMs) : ''
+
+    const cacheKey = [
+      affiliateId || '',
+      topN,
+      sortBy,
+      fromIso,
+      toIso,
+      _dbNativeStoreState.updatedAt || '',
+      Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows.length : 0,
+    ].join('|')
+    const cached = _dbNativeLeaderboardCache.get(cacheKey)
+    const nowMs = Date.now()
+    if (cached && cached.expiresAt > nowMs) {
+      return json(res, 200, cached.payload, { 'Cache-Control': 'no-store' })
     }
 
-    const jobId = extractReportJobId(createRaw) || `local-${Date.now()}`
-    const initialStatus = normalizeReportJobStatus(createRaw?.status || createRaw?.state || 'queued')
+    const allRows = Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows : []
+    const rawCandidates = affiliateId
+      ? allRows.filter((raw) => {
+          const aff = normalizeText(
+            raw?.affiliateId ||
+              raw?.affiliate_id ||
+              raw?.affiliate ||
+              raw?.['Client Affiliate ID'] ||
+              raw?.['Affiliate ID']
+          )
+          return aff === affiliateId
+        })
+      : allRows
+    const mapped = rawCandidates.map(mapCreolabsNativeRow)
 
-    putDbLiveReportJob({
-      id: jobId,
-      templateId,
-      format: createInput.format,
-      status: initialStatus,
-      source: 'qlik-reports-api',
-      query: createInput.query,
-      upstream: {
-        createPath,
-        statusPath: interpolatePathTemplate(reportsConfig.statusPathTemplate, { jobId }),
-        downloadPath: interpolatePathTemplate(reportsConfig.downloadPathTemplate, { jobId }),
-        rawCreate: createRaw,
-      },
-      diagnostics: {
-        statusRaw: normalizeText(createRaw?.status || createRaw?.state),
-        lastMessage: normalizeText(createRaw?.message),
-      },
-      downloadUrl: resolveReportDownloadUrl(createRaw),
-    })
+    const byClient = new Map()
+    for (const r of mapped) {
+      const key = normalizeText(r.clientId) || normalizeText(r.clientLogin) || normalizeText(r.clientName)
+      if (!key) continue
+      if (affiliateId && normalizeText(r.affiliateId) !== affiliateId) continue
 
-    const job = getDbLiveReportJob(jobId)
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-reports-jobs-v1',
-          job,
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live report job creation failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
+      const rowIso = resolveDbNativeRowIsoDate(r)
+      const rowTsRaw = Date.parse(normalizeText(r.clientTimestamp))
+      const rowTs = Number.isFinite(rowTsRaw)
+        ? rowTsRaw
+        : (rowIso ? Date.parse(`${rowIso}T00:00:00.000Z`) : Number.NaN)
 
-async function handleCreolabsDbLiveReportsJobStatus(req, res, jobId) {
-  return json(
-    res,
-    410,
-    {
-      ok: false,
-      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
-    },
-    { 'Cache-Control': 'no-store' }
-  )
+      let state = byClient.get(key)
+      if (!state) {
+        state = {
+          latestAll: null,
+          latestAllTs: Number.NEGATIVE_INFINITY,
+          latestInRange: null,
+          latestInRangeTs: Number.NEGATIVE_INFINITY,
+          baselineBefore: null,
+          baselineBeforeTs: Number.NEGATIVE_INFINITY,
+        }
+        byClient.set(key, state)
+      }
 
-  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
+      if (Number.isFinite(rowTs) && rowTs >= state.latestAllTs) {
+        state.latestAll = r
+        state.latestAllTs = rowTs
+      }
 
-  const knownJob = getDbLiveReportJob(jobId)
-  if (!knownJob) {
-    return json(res, 404, { ok: false, error: 'Report job not found' }, { 'Cache-Control': 'no-store' })
-  }
-
-  const config = ensureConfigured(res)
-  if (!config) return
-
-  try {
-    const reportsConfig = getDbLiveReportsApiConfig()
-    const statusPath = knownJob?.upstream?.statusPath || interpolatePathTemplate(reportsConfig.statusPathTemplate, { jobId })
-    const statusRaw = await qlikGet(config, statusPath)
-
-    const status = normalizeReportJobStatus(statusRaw?.status || statusRaw?.state || knownJob?.status || 'unknown')
-    const downloadUrl = resolveReportDownloadUrl(statusRaw) || normalizeText(knownJob?.downloadUrl)
-
-    putDbLiveReportJob({
-      id: jobId,
-      status,
-      upstream: {
-        statusPath,
-        rawStatus: statusRaw,
-      },
-      diagnostics: {
-        statusRaw: normalizeText(statusRaw?.status || statusRaw?.state),
-        lastMessage: normalizeText(statusRaw?.message || statusRaw?.details),
-      },
-      downloadUrl,
-    })
-
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-reports-jobs-v1',
-          job: getDbLiveReportJob(jobId),
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    putDbLiveReportJob({
-      id: jobId,
-      status: 'failed',
-      diagnostics: {
-        lastError: normalizeText(e?.message),
-      },
-    })
-
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live report status failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
-
-async function handleCreolabsDbLiveReportsJobDownload(req, res, jobId) {
-  return json(
-    res,
-    410,
-    {
-      ok: false,
-      error: 'Report export endpoints are disabled by policy. /api/v1/reports integration is not allowed.',
-    },
-    { 'Cache-Control': 'no-store' }
-  )
-
-  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
-
-  const knownJob = getDbLiveReportJob(jobId)
-  if (!knownJob) {
-    return json(res, 404, { ok: false, error: 'Report job not found' }, { 'Cache-Control': 'no-store' })
-  }
-
-  if (knownJob.downloadUrl) {
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-reports-jobs-v1',
-          job: knownJob,
-          downloadUrl: knownJob.downloadUrl,
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-
-  const config = ensureConfigured(res)
-  if (!config) return
-
-  try {
-    const reportsConfig = getDbLiveReportsApiConfig()
-    const downloadPath = knownJob?.upstream?.downloadPath || interpolatePathTemplate(reportsConfig.downloadPathTemplate, { jobId })
-    const downloadRaw = await qlikGet(config, downloadPath)
-    const downloadUrl =
-      (typeof downloadRaw === 'string' && /^https?:\/\//i.test(downloadRaw) ? downloadRaw : '') ||
-      resolveReportDownloadUrl(downloadRaw)
-
-    if (!downloadUrl) {
-      return json(
-        res,
-        409,
-        {
-          ok: false,
-          error: 'Report output is not ready yet',
-          details: 'No download URL available from Qlik Reports API',
-        },
-        { 'Cache-Control': 'no-store' }
-      )
+      if (!hasExplicitDateFilter) continue
+      if (!rowIso) continue
+      if (fromIso && rowIso < fromIso) {
+        if (Number.isFinite(rowTs) && rowTs >= state.baselineBeforeTs) {
+          state.baselineBefore = r
+          state.baselineBeforeTs = rowTs
+        }
+        continue
+      }
+      if (toIso && rowIso > toIso) continue
+      if (Number.isFinite(rowTs) && rowTs >= state.latestInRangeTs) {
+        state.latestInRange = r
+        state.latestInRangeTs = rowTs
+      }
     }
 
-    putDbLiveReportJob({
-      id: jobId,
-      downloadUrl,
-      upstream: {
-        downloadPath,
+    const clients = []
+    for (const state of byClient.values()) {
+      if (!hasExplicitDateFilter) {
+        if (state.latestAll) clients.push(state.latestAll)
+        continue
+      }
+      if (!state.latestInRange) continue
+
+      const row = { ...state.latestInRange }
+      const baseline = state.baselineBefore
+      if (baseline && fromIso) {
+        row.closedPl = toFiniteNumber(state.latestInRange.closedPl) - toFiniteNumber(baseline.closedPl)
+        row.trades = Math.max(0, Math.round(toFiniteNumber(state.latestInRange.trades) - toFiniteNumber(baseline.trades)))
+      } else {
+        row.closedPl = toFiniteNumber(state.latestInRange.closedPl)
+        row.trades = Math.max(0, Math.round(toFiniteNumber(state.latestInRange.trades)))
+      }
+      clients.push(row)
+    }
+
+    const filteredClients = clients.filter((row) => {
+      if (!(hasExplicitDateFilter && sortBy === 'profit')) return true
+      return Math.abs(toFiniteNumber(row?.closedPl)) > 0.00001
+    })
+    filteredClients.sort((a, b) => sortBy === 'volume' ? b.trades - a.trades : b.closedPl - a.closedPl)
+    const top = filteredClients.slice(0, topN)
+
+    const entries = top.map((r, i) => ({
+      rank: i + 1,
+      clientId: r.clientId,
+      clientName: r.clientName,
+      clientLogin: r.clientLogin,
+      country: r.country,
+      affiliateId: r.affiliateId,
+      closedPl: r.closedPl,
+      trades: r.trades,
+    }))
+
+    const payload = {
+      ok: true,
+      data: {
+        leaderboard: entries,
+        total: filteredClients.length,
+        topN,
+        sortBy,
+        affiliateId: affiliateId || null,
+        from: fromRaw || null,
+        to: toRaw || null,
+        updatedAt: _dbNativeStoreState.updatedAt || null,
       },
+    }
+
+    _dbNativeLeaderboardCache.set(cacheKey, {
+      expiresAt: nowMs + DB_NATIVE_LEADERBOARD_CACHE_MS,
+      payload,
     })
 
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-reports-jobs-v1',
-          job: getDbLiveReportJob(jobId),
-          downloadUrl,
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live report download failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
+    return json(res, 200, payload, { 'Cache-Control': 'no-store' })
+  } catch (err) {
+    return json(res, err.status || 500, { ok: false, error: err.message || 'Internal error' })
   }
 }
 
-async function handleCreolabsDbLiveReportTemplates(req, res) {
+async function handleCreolabsDbNative(req, res) {
   if (req.method !== 'GET') return notAllowed(req, res, 'GET')
-  try {
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-report-templates-v1',
-          generatedAt: new Date().toISOString(),
-          templates: getDbLiveOperationalReportTemplates(),
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live report templates request failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
-
-async function handleCreolabsDbLive(req, res) {
-  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
-  const config = ensureConfigured(res)
-  if (!config) return
 
   try {
     const urlObj = new URL(req.url || '/', 'http://localhost')
-    const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
-    const strictLive = normalizeText(urlObj.searchParams.get('strictLive')) === '1'
-    const markUnmappedIdentity = normalizeText(urlObj.searchParams.get('markUnmappedIdentity') || '1') !== '0'
-    const scope = normalizeText(urlObj.searchParams.get('scope') || 'recent').toLowerCase()
-    const recentMonths = parsePositiveInt(urlObj.searchParams.get('recentMonths'), 3, 24)
+    const limit = parsePositiveInt(urlObj.searchParams.get('limit'), 200, CREOLABS_NATIVE_PAGE_LIMIT)
+    const offset = decodeDbLiveCursor(urlObj.searchParams.get('page'))
     const fromRaw = normalizeText(urlObj.searchParams.get('from'))
     const toRaw = normalizeText(urlObj.searchParams.get('to'))
-    const hasDateRange = Boolean(fromRaw || toRaw)
-    const fromMs = hasDateRange ? parseIsoDateBoundary(fromRaw || DB_LIVE_BOOTSTRAP_FROM, { endOfDay: false }) : Number.NEGATIVE_INFINITY
-    const toMs = hasDateRange ? parseIsoDateBoundary(toRaw || nowIsoDateOnly(), { endOfDay: true }) : Number.POSITIVE_INFINITY
-    if (hasDateRange && (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs)) {
-      const error = new Error('Invalid date range. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD or omit both to query the full DB')
-      error.status = 400
-      throw error
-    }
+    const hasExplicitDateFilter = Boolean(fromRaw || toRaw)
+    const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
 
-    if (forceRefresh) {
-      await runDbLiveIngestionCycle({ reason: 'manual-refresh' })
-    }
-
-    const limit = parsePositiveInt(urlObj.searchParams.get('limit'), 200, 500)
-    const offset = decodeDbLiveCursor(urlObj.searchParams.get('page'))
-
-    let usedFallbackSource = false
-    let sourceUsers = getDbLiveUsersSnapshot()
-    if (!sourceUsers.length && _dbLiveIngestionState.inFlight) {
-      try {
-        const artifact = await resolveCreolabsTradersRankingRewardsRows()
-        const artifactRows = Array.isArray(artifact?.data?.rows) ? artifact.data.rows : []
-        sourceUsers = artifactRows
-        usedFallbackSource = sourceUsers.length > 0
-      } catch {
-        sourceUsers = []
-        usedFallbackSource = false
+    let fromMs = Number.NEGATIVE_INFINITY
+    let toMs = Number.POSITIVE_INFINITY
+    if (hasExplicitDateFilter) {
+      if (fromRaw) fromMs = parseIsoDateBoundary(fromRaw, { endOfDay: false })
+      if (toRaw) toMs = parseIsoDateBoundary(toRaw, { endOfDay: true })
+      if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || fromMs > toMs) {
+        const error = new Error('Invalid date range. Use ?from=YYYY-MM-DD&to=YYYY-MM-DD')
+        error.status = 400
+        throw error
       }
     }
 
-    // Normalize legacy snapshot rows and backfill sparse identity fields at read-time.
-    const normalizedUsers = sourceUsers.map((user) => {
-      const clientId = normalizeText(user?.clientId)
-      const cachedMeta = getRegisteredUsersMeta(clientId)
+    hydrateDbNativeStoreFromDisk()
 
-      const openedTrades = Number(user?.openedTrades)
-      const tradesFallback = Math.round(toFiniteNumber(user?.trades))
-      const normalizedOpenedTrades = Number.isFinite(openedTrades) && openedTrades > 0
-        ? Math.round(openedTrades)
-        : tradesFallback
-
-      const explicitEquity = Number(user?.equity)
-      const derivedEquity = toFiniteNumber(user?.balance) + toFiniteNumber(user?.openPl)
-      const normalizedEquity = Number.isFinite(explicitEquity) && explicitEquity !== 0
-        ? explicitEquity
-        : derivedEquity
-
-      return {
-        ...user,
-        affiliateId: normalizeText(user?.affiliateId) || normalizeText(cachedMeta?.affiliateId),
-        clientLogin: normalizeText(user?.clientLogin) || normalizeText(cachedMeta?.clientLogin),
-        openedTrades: normalizedOpenedTrades,
-        equity: normalizedEquity,
-      }
-    })
-
-    const identityFallback = new Map()
-    for (const user of normalizedUsers) {
-      const key = buildIdentityFallbackKey(user?.clientName, user?.country, user?.user)
-      if (!key) continue
-
-      if (!identityFallback.has(key)) {
-        identityFallback.set(key, {
-          affiliateIds: new Set(),
-          clientLogins: new Set(),
-        })
-      }
-
-      const bucket = identityFallback.get(key)
-      const affiliateId = normalizeText(user?.affiliateId)
-      const clientLogin = normalizeText(user?.clientLogin)
-      if (affiliateId) bucket.affiliateIds.add(affiliateId)
-      if (clientLogin) bucket.clientLogins.add(clientLogin)
+    let nativeStore = {
+      rows: _dbNativeStoreState.rows,
+      report: _dbNativeStoreState.report,
+      schema: _dbNativeStoreState.schema,
+      filters: _dbNativeStoreState.filters,
+      warnings: _dbNativeStoreState.warnings,
+      generatedAt: _dbNativeStoreState.generatedAt,
+      updatedAt: _dbNativeStoreState.updatedAt,
+      sourcePaging: _dbNativeStoreState.sourcePaging,
     }
 
-    sourceUsers = normalizedUsers.map((user) => {
-      const key = buildIdentityFallbackKey(user?.clientName, user?.country, user?.user)
-      if (!key) return user
+    const nowMs = Date.now()
+    const todayIsoUtc = nowIsoDateOnly()
+    const storeGeneratedMs = Date.parse(normalizeText(nativeStore.generatedAt || nativeStore.updatedAt))
+    const initialCacheAgeMs = Number.isFinite(storeGeneratedMs) ? Math.max(0, nowMs - storeGeneratedMs) : Number.MAX_SAFE_INTEGER
+    const storeGeneratedUtcIso = Number.isFinite(storeGeneratedMs) ? isoDateOnlyFromMs(storeGeneratedMs) : ''
+    const staleByAge = initialCacheAgeMs > DB_NATIVE_MAX_STALE_MS
+    const staleByDay = !storeGeneratedUtcIso || storeGeneratedUtcIso !== todayIsoUtc
 
-      const bucket = identityFallback.get(key)
-      if (!bucket) return user
+    const shouldSync =
+      forceRefresh ||
+      !Array.isArray(nativeStore.rows) ||
+      nativeStore.rows.length === 0 ||
+      staleByAge ||
+      staleByDay
 
-      const affiliateId = normalizeText(user?.affiliateId)
-      const clientLogin = normalizeText(user?.clientLogin)
-
-      const inferredAffiliateId =
-        !affiliateId && bucket.affiliateIds.size === 1
-          ? Array.from(bucket.affiliateIds)[0]
-          : ''
-      const inferredClientLogin =
-        !clientLogin && bucket.clientLogins.size === 1
-          ? Array.from(bucket.clientLogins)[0]
-          : ''
-
-      if (!inferredAffiliateId && !inferredClientLogin) return user
-      return {
-        ...user,
-        affiliateId: affiliateId || inferredAffiliateId,
-        clientLogin: clientLogin || inferredClientLogin,
-      }
-    })
-
-    if (markUnmappedIdentity) {
-      sourceUsers = sourceUsers.map((user) => ({
-        ...user,
-        affiliateId: isMissingIdentityValue(user?.affiliateId) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.affiliateId),
-        clientLogin: isMissingIdentityValue(user?.clientLogin) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.clientLogin),
-      }))
+    let syncTriggered = false
+    if (shouldSync) {
+      syncTriggered = true
+      nativeStore = await syncDbNativeStore({ forceRefresh: forceRefresh || staleByAge || staleByDay })
     }
 
-    const filtered = applyDbLiveFilters(sourceUsers, urlObj)
+    const effectiveStoreGeneratedMs = Date.parse(normalizeText(nativeStore.generatedAt || nativeStore.updatedAt))
+    const cacheAgeMs = Number.isFinite(effectiveStoreGeneratedMs) ? Math.max(0, nowMs - effectiveStoreGeneratedMs) : 0
 
-    const sourcePeriodRank = (user) => {
-      const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
-      const rank = ymRank(periodId)
-      return Number.isFinite(rank) ? rank : -1
-    }
-
-    const sourceActivityMs = (user) => {
-      const candidates = [
-        user?.clientTimestamp,
-        user?.lttDate,
-        user?.ltdDate,
-        user?.lastTimeComment,
-      ]
-      for (const candidate of candidates) {
-        const ms = parseIsoDateBoundary(normalizeText(candidate), { endOfDay: false })
-        if (Number.isFinite(ms)) return ms
-      }
-      return null
-    }
-
-    const applyRecentScope = (rows) => {
-      if (scope === 'all') return rows
-      const latestRank = rows.reduce((max, user) => Math.max(max, sourcePeriodRank(user)), -1)
-      if (latestRank < 0) return rows
-      const cutoffRank = Math.max(0, latestRank - Math.max(1, recentMonths) + 1)
-      const cutoffMs = Date.now() - Math.max(1, recentMonths) * 31 * 24 * 60 * 60 * 1000
-      return rows.filter((user) => {
-        const rank = sourcePeriodRank(user)
-        if (rank >= cutoffRank && rank > 0) return true
-        const activityMs = sourceActivityMs(user)
-        return Number.isFinite(activityMs) ? activityMs >= cutoffMs : false
-      })
-    }
-
-    const recentScopeRows = applyRecentScope(filtered)
-
-    const fromPeriodRank = hasDateRange ? periodRankFromIsoDate(fromRaw || DB_LIVE_BOOTSTRAP_FROM) : -1
-    const toPeriodRank = hasDateRange ? periodRankFromIsoDate(toRaw || nowIsoDateOnly()) : -1
-    const hasPeriodBounds = hasDateRange && fromPeriodRank > 0 && toPeriodRank > 0
-    const nowPeriodRank = periodRankFromIsoDate(nowIsoDateOnly())
-    const isCurrentMonthRange = hasPeriodBounds && fromPeriodRank === nowPeriodRank && toPeriodRank === nowPeriodRank
-
-    const dateFiltered = hasDateRange
-      ? recentScopeRows.filter((user) => {
-          const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
-          const periodRank = ymRank(periodId)
-          if (hasPeriodBounds && periodRank > 0) {
-            return periodRank >= fromPeriodRank && periodRank <= toPeriodRank
-          }
-
-          const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
+    const mappedRows = Array.isArray(nativeStore.rows) ? nativeStore.rows : []
+    const dateFiltered = hasExplicitDateFilter
+      ? mappedRows.filter((user) => {
+          const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp || user?.date), { endOfDay: false })
           if (!Number.isFinite(ts)) return false
           return ts >= fromMs && ts <= toMs
         })
-      : recentScopeRows
-    const sorted = applyDbLiveSort(dateFiltered, urlObj)
+      : mappedRows
 
-    const dbKpis = aggregateCreolabsUserKpis(sourceUsers)
-    const queryKpis = aggregateCreolabsUserKpis(dateFiltered, {
-      leadFromMs: fromMs,
-      leadToMs: toMs,
-    })
-    let volumeKpis = queryKpis
-    let volumeKpisSource = 'db-live-store'
-
-    try {
-      let monthRows = []
-      let monthRowsSource = ''
-
-      const clientMonthsCache = getCreolabsClientVariantCache('clientMonths')
-      if (Array.isArray(clientMonthsCache?.data?.clientMonths) && clientMonthsCache.data.clientMonths.length > 0) {
-        monthRows = clientMonthsCache.data.clientMonths
-        monthRowsSource = 'client-months-cache'
-      }
-
-      // Do not await live upstream snapshots in the request path: this endpoint must stay responsive.
-
-      if (!monthRows.length) {
-        const artifact = await resolveCreolabsTradersRankingRewardsRows()
-        const artifactRows = Array.isArray(artifact?.data?.rows) ? artifact.data.rows : []
-        if (artifactRows.length > 0) {
-          monthRows = artifactRows
-          monthRowsSource = 'local-artifact'
-        }
-      }
-
-      if (monthRows.length > 0) {
-        let volumeRows = monthRows.map(toDbLiveMonthRow)
-        if (markUnmappedIdentity) {
-          volumeRows = volumeRows.map((user) => ({
-            ...user,
-            affiliateId: isMissingIdentityValue(user?.affiliateId) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.affiliateId),
-            clientLogin: isMissingIdentityValue(user?.clientLogin) ? DB_LIVE_UNMAPPED_LABEL : normalizeText(user?.clientLogin),
-          }))
-        }
-
-        const volumeFiltered = applyDbLiveFilters(volumeRows, urlObj)
-        const volumeScopeRows = applyRecentScope(volumeFiltered)
-        const volumeDateFiltered = hasDateRange
-          ? volumeScopeRows.filter((user) => {
-              const periodId = normalizeText(user?.sourcePeriod || user?.periodId || user?.year_month)
-              const periodRank = ymRank(periodId)
-              if (hasPeriodBounds && periodRank > 0) {
-                return periodRank >= fromPeriodRank && periodRank <= toPeriodRank
-              }
-
-              const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
-              if (!Number.isFinite(ts)) return false
-              return ts >= fromMs && ts <= toMs
-            })
-          : volumeScopeRows
-
-        if (volumeDateFiltered.length > 0) {
-          volumeKpis = aggregateCreolabsUserKpis(volumeDateFiltered, {
-            leadFromMs: fromMs,
-            leadToMs: toMs,
-          })
-          volumeKpisSource = monthRowsSource || 'client-months'
-        }
-      }
-    } catch {
-      // Keep queryKpis fallback when full-volume source is unavailable.
-    }
-
-    if (isCurrentMonthRange) {
-      try {
-        const official = await resolveCreolabsPerformanceSummaryThisMonthKpis(config)
-        const officialData = official?.data || null
-        if (officialData) {
-          volumeKpis = {
-            ...volumeKpis,
-            closedPl: toFiniteNumber(officialData.closedPl),
-            ftd: toFiniteNumber(officialData.ftd),
-            deposit: toFiniteNumber(officialData.deposit),
-            wd: toFiniteNumber(officialData.wd),
-            net: toFiniteNumber(officialData.net),
-            closedVolume: toFiniteNumber(officialData.closedVolume),
-          }
-          volumeKpisSource = official?.cached
-            ? 'qlik-performance-summary-this-month-cache'
-            : 'qlik-performance-summary-this-month'
-        }
-      } catch {
-        // Keep previous volume source when official this-month summary cannot be evaluated.
-      }
-    }
-
+    const filtered = applyDbNativeFilters(dateFiltered, urlObj)
+    const sorted = applyDbNativeSort(filtered, urlObj)
     const total = sorted.users.length
     const safeOffset = Math.min(Math.max(0, offset), Math.max(0, total - 1))
     const pageUsers = sorted.users.slice(safeOffset, safeOffset + limit)
+    const upstreamReturned = pageUsers.length
 
     const hasPrev = safeOffset > 0
     const hasNext = safeOffset + limit < total
     const prevOffset = Math.max(0, safeOffset - limit)
-    const nextOffset = safeOffset + limit
+    const nextOffset = safeOffset + upstreamReturned
 
-    const sourceMode = normalizeText(_dbLiveIngestionState?.lastRun?.sourceMode) || 'n/a'
-    if (volumeKpisSource === 'db-live-store' && sourceMode.toLowerCase().includes('client-months')) {
-      volumeKpisSource = 'db-live-store-client-months'
-    }
+    const snapshotRows = buildLatestDbNativeSnapshotRows(sorted.users)
+    const todayIso = nowIsoDateOnly()
+    const yesterdayIso = subtractDaysIsoDateOnly(todayIso, 1)
+    const monthPrefix = todayIso.slice(0, 7)
+    // Use the full unfiltered store for monthly/daily KPIs so UI filters
+    // on the grid do not distort the current-month aggregates.
+    const allStoreRows = Array.isArray(mappedRows) ? mappedRows : []
+    const currentMonthRows = allStoreRows.filter((row) => {
+      const iso = resolveDbNativeRowIsoDate(row)
+      return iso.startsWith(monthPrefix) && iso <= todayIso
+    })
+    const currentDayRows = allStoreRows.filter((row) => resolveDbNativeRowIsoDate(row) === todayIso)
+    const previousDayRows = allStoreRows.filter((row) => resolveDbNativeRowIsoDate(row) === yesterdayIso)
+    const currentMonthSnapshotRows = buildLatestDbNativeSnapshotRows(currentMonthRows)
+    const currentDaySnapshotRows = buildLatestDbNativeSnapshotRows(currentDayRows)
+    const previousDaySnapshotRows = buildLatestDbNativeSnapshotRows(previousDayRows)
 
-    // Leads must reflect real registrations (clientTimestamp in range), not active client-month rows.
-    // Use cache-only lookup here to keep API latency predictable.
-    let registeredLeadsCount = null
-    let registeredLeadsAvailable = false
-    try {
-      const registeredRows = Array.isArray(_creolabsRegisteredLeadsObjectCache?.data)
-        ? _creolabsRegisteredLeadsObjectCache.data
-        : []
-      if (registeredRows.length > 0) {
-        const registeredFiltered = applyDbLiveFilters(registeredRows, urlObj)
-        const registeredScoped = applyRecentScope(registeredFiltered)
-        const registeredDateFiltered = hasDateRange
-          ? registeredScoped.filter((user) => {
-              const ts = parseIsoDateBoundary(normalizeText(user?.clientTimestamp), { endOfDay: false })
-              if (!Number.isFinite(ts)) return false
-              return ts >= fromMs && ts <= toMs
-            })
-          : registeredScoped
-        const leadClientIds = new Set(
-          registeredDateFiltered
-            .filter((user) => {
-              const normalizedStatus = normalizeText(user?.status).toLowerCase()
-              return !CREOLABS_LEAD_EXCLUDED_STATUSES.has(normalizedStatus)
-            })
-            .map((user) => normalizeText(user?.clientId))
-            .filter(Boolean)
-        )
-        registeredLeadsCount = leadClientIds.size
-        registeredLeadsAvailable = true
-      }
-    } catch {
-      // Leads source unavailable: avoid returning inflated fallback derived from active client-month rows.
-    }
-
-    if (registeredLeadsAvailable && Number.isFinite(registeredLeadsCount)) {
-      queryKpis.totalLeads = registeredLeadsCount
-      volumeKpis.totalLeads = registeredLeadsCount
-    } else {
-      queryKpis.totalLeads = null
-      volumeKpis.totalLeads = null
-    }
-
-    const lastSuccessAt = normalizeText(_dbLiveIngestionState.lastSuccessAt)
-    const lastSuccessMs = Date.parse(lastSuccessAt)
-    const freshnessAgeMs = Number.isFinite(lastSuccessMs) ? Math.max(0, Date.now() - lastSuccessMs) : null
-    const freshnessState = !Number.isFinite(lastSuccessMs)
-      ? 'unknown'
-      : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 2
-        ? 'fresh'
-        : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 6
-          ? 'warm'
-          : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 24
-            ? 'stale'
-            : 'cold'
-
-    const warnings = []
-    if (_dbLiveIngestionState.inFlight && _dbLiveIngestionState.storeByClient.size === 0) {
-      warnings.push('warmup_in_progress')
-    }
-    if (sourceMode === 'no-source') warnings.push('upstream_source_unavailable')
-    if (Number(_dbLiveIngestionState.consecutiveFailures || 0) > 0) warnings.push('ingestion_failures')
-    if (!_dbLiveIngestionState.schedulerStarted) warnings.push('scheduler_not_started')
-    if (!registeredLeadsAvailable) warnings.push('registered_leads_unavailable')
-
-    const identityMissingCount = dateFiltered.filter(
-      (user) => isMissingIdentityValue(user?.affiliateId) || isMissingIdentityValue(user?.clientLogin)
-    ).length
-    const identityMissingRatio = total > 0 ? identityMissingCount / total : 0
-    const identityMissingCritical = identityMissingRatio >= DB_LIVE_IDENTITY_MISSING_WARN_RATIO
-    if (identityMissingCritical) warnings.push('identity_missing_exceeds_threshold')
-
-    if (strictLive && (sourceMode === 'no-source' || sourceMode === 'n/a')) {
-      const error = new Error('Strict-live mode: upstream source unavailable. DB Live snapshot fallback is disabled.')
-      error.status = 503
-      error.details = {
-        sourceMode,
-        strictLive,
-        warnings,
-      }
-      throw error
-    }
-
-    const qualityScore = Math.max(
-      0,
-      100 -
-        (Number(_dbLiveIngestionState.consecutiveFailures || 0) * 20) -
-        (sourceMode === 'no-source' ? 30 : 0) -
-        (warnings.includes('warmup_in_progress') ? 10 : 0)
-    )
+    const queryKpis = aggregateDbNativeCatalogKpis(snapshotRows)
+    const currentMonthKpis = aggregateDbNativeCatalogKpis(currentMonthSnapshotRows)
+    const currentDayKpis = aggregateDbNativeCatalogKpis(currentDaySnapshotRows)
+    const previousDayKpis = aggregateDbNativeCatalogKpis(previousDaySnapshotRows)
 
     return json(
       res,
@@ -6536,67 +6440,66 @@ async function handleCreolabsDbLive(req, res) {
         ok: true,
         data: {
           meta: {
-            contractVersion: 'db-live-v1.2',
+            contractVersion: DB_NATIVE_CONTRACT_VERSION,
+            parityMode: 'native-local-db',
+            reportName: normalizeText(nativeStore?.report?.name || 'DB Native'),
+            reportColumns: DB_NATIVE_REPORT_COLUMNS,
             sourceRows: {
-              sourceMode,
-              ...(_dbLiveIngestionState?.lastRun?.sourceRows || {}),
-              storedClients: _dbLiveIngestionState.storeByClient.size,
-            },
-            kpis: {
-              scope: 'db-store',
-              ...dbKpis,
+              sourceMode: 'native-local-db',
+              sourceSnapshot: 'db-native-store',
+              updatedAt: normalizeText(nativeStore.generatedAt),
+              cached: !syncTriggered,
+              cacheAgeMs: Number.isFinite(cacheAgeMs) ? cacheAgeMs : 0,
+              upstreamRows: Array.isArray(nativeStore.rows) ? nativeStore.rows.length : 0,
+              upstreamTotal: Array.isArray(nativeStore.rows) ? nativeStore.rows.length : total,
+              upstreamReturned,
+              upstreamFromCache: !syncTriggered,
             },
             queryKpis: {
-              scope: hasDateRange ? 'query-with-date-range' : 'query-with-filters',
+              scope: 'latest-per-client-with-filters',
               ...queryKpis,
             },
             volumeKpis: {
-              scope: hasDateRange ? 'full-volume-with-date-range' : 'full-volume-with-filters',
-              source: volumeKpisSource,
-              ...volumeKpis,
+              scope: 'latest-per-client-with-filters',
+              source: 'native-local-db',
+              ...queryKpis,
             },
-            freshness: {
-              state: freshnessState,
-              ageMs: freshnessAgeMs,
-              intervalMs: DB_LIVE_INGEST_INTERVAL_MS,
-              lastSuccessAt,
-              lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
-              latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
+            currentMonthKpis: {
+              scope: 'latest-per-client-current-month-local',
+              referenceDate: todayIso,
+              ...currentMonthKpis,
+            },
+            currentDayKpis: {
+              scope: 'latest-per-client-current-day-local',
+              referenceDate: todayIso,
+              ...currentDayKpis,
+            },
+            previousDayKpis: {
+              scope: 'latest-per-client-previous-day-local',
+              referenceDate: yesterdayIso,
+              ...previousDayKpis,
             },
             quality: {
-              score: qualityScore,
-              warnings,
-              sourceMode,
-              fallbackUsed: usedFallbackSource,
-              consecutiveFailures: Number(_dbLiveIngestionState.consecutiveFailures || 0),
-              identityMissing: {
-                count: identityMissingCount,
-                ratio: identityMissingRatio,
-                thresholdRatio: DB_LIVE_IDENTITY_MISSING_WARN_RATIO,
-                critical: identityMissingCritical,
-                markUnmappedIdentity,
-                unmappedLabel: DB_LIVE_UNMAPPED_LABEL,
-              },
+              score: Array.isArray(nativeStore.warnings) && nativeStore.warnings.length ? 90 : 100,
+              warnings: Array.isArray(nativeStore.warnings) ? nativeStore.warnings : [],
+              sourceMode: 'native-local-db',
+              fallbackUsed: false,
+              consecutiveFailures: 0,
             },
             diagnostics: {
-              stateFile: getDbLiveIngestionStateFilePath(),
-              hydratedFromDisk: _dbLiveIngestionState.hydratedFromDisk,
-              schedulerStarted: _dbLiveIngestionState.schedulerStarted,
-              inFlight: _dbLiveIngestionState.inFlight,
-              runCount: _dbLiveIngestionState.runCount,
-              lastRunStatus: normalizeText(_dbLiveIngestionState?.lastRun?.status),
-              lastRunMode: normalizeText(_dbLiveIngestionState?.lastRun?.mode),
-              lastRunDurationMs: Number(_dbLiveIngestionState?.lastRun?.durationMs || 0),
-              lastRunError: normalizeText(_dbLiveIngestionState?.lastRun?.error),
+              reportId: normalizeText(nativeStore?.report?.publicId || nativeStore?.report?.id),
+              schemaColumns: Array.isArray(nativeStore?.schema?.columns) ? nativeStore.schema.columns.length : 0,
+              storeFile: toWorkspaceRelativePath(getDbNativeStoreFilePath()),
+              storeUpdatedAt: normalizeText(nativeStore?.updatedAt),
             },
-            ingestion: {
-              schedulerStarted: _dbLiveIngestionState.schedulerStarted,
-              inFlight: _dbLiveIngestionState.inFlight,
-              runCount: _dbLiveIngestionState.runCount,
-              latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
-              lastSuccessAt: normalizeText(_dbLiveIngestionState.lastSuccessAt),
-              lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
-              lastRunStatus: normalizeText(_dbLiveIngestionState?.lastRun?.status),
+            nativeApi: {
+              report: nativeStore.report || null,
+              schema: nativeStore.schema || null,
+              filters: nativeStore.filters || null,
+              generatedAt: normalizeText(nativeStore.generatedAt),
+              warnings: Array.isArray(nativeStore.warnings) ? nativeStore.warnings : [],
+              fromCache: !forceRefresh,
+              sourcePaging: nativeStore.sourcePaging || null,
             },
             query: {
               total,
@@ -6604,18 +6507,16 @@ async function handleCreolabsDbLive(req, res) {
               offset: safeOffset,
               from: fromRaw,
               to: toRaw,
-              strictLive,
-              markUnmappedIdentity,
-              scope,
-              recentMonths,
               sort: sorted.sort,
               search: normalizeText(urlObj.searchParams.get('search')),
               status: normalizeText(urlObj.searchParams.get('status')),
               country: normalizeText(urlObj.searchParams.get('country')),
               affiliateId: normalizeText(urlObj.searchParams.get('affiliateId')),
               brand: normalizeText(urlObj.searchParams.get('brand')),
+              client: normalizeText(urlObj.searchParams.get('client') || urlObj.searchParams.get('clientId')),
+              user: normalizeText(urlObj.searchParams.get('user') || urlObj.searchParams.get('agent')),
+              refresh: forceRefresh,
             },
-            warnings,
           },
           page: {
             count: pageUsers.length,
@@ -6635,346 +6536,7 @@ async function handleCreolabsDbLive(req, res) {
       e?.status || 502,
       {
         ok: false,
-        error: e?.message || 'Creolabs db-live request failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
-
-async function handleCreolabsDbLiveIngestionStatus(req, res) {
-  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
-  hydrateDbLiveIngestionMetaFromDisk()
-
-  const urlObj = new URL(req.url || '/', 'http://localhost')
-  const trigger = normalizeText(urlObj.searchParams.get('trigger')) === '1'
-  const forceFull = normalizeText(urlObj.searchParams.get('full')) === '1'
-
-  try {
-    let triggeredRun = null
-    if (trigger) {
-      const outcome = await runDbLiveIngestionCycle({ reason: 'status-trigger', forceFull })
-      triggeredRun = outcome?.run || null
-    }
-
-    const lastSuccessAt = normalizeText(_dbLiveIngestionState.lastSuccessAt)
-    const lastSuccessMs = Date.parse(lastSuccessAt)
-    const freshnessAgeMs = Number.isFinite(lastSuccessMs) ? Math.max(0, Date.now() - lastSuccessMs) : null
-    const freshnessState = !Number.isFinite(lastSuccessMs)
-      ? 'unknown'
-      : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 2
-        ? 'fresh'
-        : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 6
-          ? 'warm'
-          : freshnessAgeMs <= DB_LIVE_INGEST_INTERVAL_MS * 24
-            ? 'stale'
-            : 'cold'
-
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-v1.1',
-          schedulerStarted: _dbLiveIngestionState.schedulerStarted,
-          hydratedFromDisk: _dbLiveIngestionState.hydratedFromDisk,
-          inFlight: _dbLiveIngestionState.inFlight,
-          startedAt: normalizeText(_dbLiveIngestionState.startedAt),
-          lastRunAt: normalizeText(_dbLiveIngestionState.lastRunAt),
-          lastSuccessAt: normalizeText(_dbLiveIngestionState.lastSuccessAt),
-          lastFailureAt: normalizeText(_dbLiveIngestionState.lastFailureAt),
-          consecutiveFailures: Number(_dbLiveIngestionState.consecutiveFailures || 0),
-          latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
-          runCount: _dbLiveIngestionState.runCount,
-          totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-          auditLogFile: getDbLiveAuditLogFilePath(),
-          freshness: {
-            state: freshnessState,
-            ageMs: freshnessAgeMs,
-            intervalMs: DB_LIVE_INGEST_INTERVAL_MS,
-            lastSuccessAt,
-          },
-          stateFile: getDbLiveIngestionStateFilePath(),
-          lastRun: _dbLiveIngestionState.lastRun,
-          triggeredRun,
-          runs: _dbLiveIngestionState.runs.slice(0, 20),
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live ingestion status request failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
-
-async function handleCreolabsDbLiveIngestionControl(req, res) {
-  if (req.method !== 'POST') return notAllowed(req, res, 'POST')
-  hydrateDbLiveIngestionMetaFromDisk()
-
-  const action = normalizeText(req?.body?.action).toLowerCase()
-  const forceFull = Boolean(req?.body?.forceFull)
-  const limit = checkDbLiveIngestionControlRateLimit(req)
-
-  if (limit.limited) {
-    appendDbLiveAuditEvent({
-      area: 'db-live-ingestion-control',
-      actor: limit.actor,
-      action,
-      outcome: 'rate-limited',
-      retryAfterSec: limit.retryAfterSec,
-    })
-
-    return json(
-      res,
-      429,
-      {
-        ok: false,
-        error: 'Rate limit exceeded for ingestion control actions',
-        details: `Retry after ${limit.retryAfterSec}s`,
-      },
-      { 'Cache-Control': 'no-store', 'Retry-After': String(limit.retryAfterSec) }
-    )
-  }
-
-  try {
-    if (action === 'clear-store') {
-      _dbLiveIngestionState.inFlight = false
-      _dbLiveIngestionState.storeByClient = new Map()
-      _dbLiveIngestionState.latestWatermark = ''
-      _dbLiveIngestionState.lastRun = {
-        id: `clear-${Date.now()}`,
-        reason: 'manual-clear-store',
-        mode: 'clear',
-        status: 'success',
-        startedAt: new Date().toISOString(),
-        finishedAt: new Date().toISOString(),
-        durationMs: 0,
-        fetchedUsers: 0,
-        upserts: 0,
-        totalStored: 0,
-        sourceMode: 'n/a',
-        sourceRows: {},
-        error: '',
-      }
-      _dbLiveIngestionState.runs.unshift(_dbLiveIngestionState.lastRun)
-      if (_dbLiveIngestionState.runs.length > DB_LIVE_RUNS_HISTORY_MAX) {
-        _dbLiveIngestionState.runs.length = DB_LIVE_RUNS_HISTORY_MAX
-      }
-      persistDbLiveIngestionMeta()
-      appendDbLiveAuditEvent({
-        area: 'db-live-ingestion-control',
-        actor: limit.actor,
-        action,
-        outcome: 'success',
-        totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-      })
-
-      return json(
-        res,
-        200,
-        {
-          ok: true,
-          data: {
-            contractVersion: 'db-live-ingestion-control-v1',
-            action: 'clear-store',
-            totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-            latestWatermark: _dbLiveIngestionState.latestWatermark,
-          },
-        },
-        { 'Cache-Control': 'no-store' }
-      )
-    }
-
-    if (action === 'repair-identity') {
-      const outcome = await runDbLiveIdentityRepairCycle({ reason: action })
-
-      appendDbLiveAuditEvent({
-        area: 'db-live-ingestion-control',
-        actor: limit.actor,
-        action,
-        outcome: outcome?.run?.status || 'unknown',
-        runId: normalizeText(outcome?.run?.id),
-        runStatus: normalizeText(outcome?.run?.status),
-        runMode: normalizeText(outcome?.run?.mode),
-        runError: normalizeText(outcome?.run?.error),
-        totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-      })
-
-      return json(
-        res,
-        200,
-        {
-          ok: true,
-          data: {
-            contractVersion: 'db-live-ingestion-control-v1',
-            action,
-            skipped: Boolean(outcome?.skipped),
-            run: outcome?.run || null,
-            repairedClients: Number(outcome?.run?.repairedClients || 0),
-            beforeMissingIdentity: Number(outcome?.run?.sourceRows?.beforeMissingIdentity || 0),
-            afterMissingIdentity: Number(outcome?.run?.sourceRows?.afterMissingIdentity || 0),
-            totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-            latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
-          },
-        },
-        { 'Cache-Control': 'no-store' }
-      )
-    }
-
-    if (action !== 'refresh' && action !== 'full-refresh') {
-      appendDbLiveAuditEvent({
-        area: 'db-live-ingestion-control',
-        actor: limit.actor,
-        action,
-        outcome: 'invalid-action',
-      })
-
-      return json(
-        res,
-        400,
-        {
-          ok: false,
-          error: 'Unsupported action',
-          details: 'Supported actions: refresh, full-refresh, clear-store, repair-identity',
-        },
-        { 'Cache-Control': 'no-store' }
-      )
-    }
-
-    const outcome = await runDbLiveIngestionCycle({
-      reason: action,
-      forceFull: action === 'full-refresh' || forceFull,
-    })
-
-    appendDbLiveAuditEvent({
-      area: 'db-live-ingestion-control',
-      actor: limit.actor,
-      action,
-      outcome: outcome?.run?.status || (outcome?.skipped ? 'skipped' : 'unknown'),
-      runId: normalizeText(outcome?.run?.id),
-      runStatus: normalizeText(outcome?.run?.status),
-      runMode: normalizeText(outcome?.run?.mode),
-      runError: normalizeText(outcome?.run?.error),
-      totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-    })
-
-    return json(
-      res,
-      200,
-      {
-        ok: true,
-        data: {
-          contractVersion: 'db-live-ingestion-control-v1',
-          action,
-          skipped: Boolean(outcome?.skipped),
-          run: outcome?.run || null,
-          totalStoredClients: _dbLiveIngestionState.storeByClient.size,
-          latestWatermark: normalizeText(_dbLiveIngestionState.latestWatermark),
-        },
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  } catch (e) {
-    appendDbLiveAuditEvent({
-      area: 'db-live-ingestion-control',
-      actor: limit.actor,
-      action,
-      outcome: 'error',
-      error: normalizeText(e?.message),
-    })
-
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live ingestion control request failed',
-        details: e?.details || '',
-      },
-      { 'Cache-Control': 'no-store' }
-    )
-  }
-}
-
-async function handleCreolabsDbLiveExport(req, res) {
-  if (req.method !== 'GET') return notAllowed(req, res, 'GET')
-  hydrateDbLiveIngestionMetaFromDisk()
-
-  try {
-    const urlObj = new URL(req.url || '/', 'http://localhost')
-    const format = normalizeText(urlObj.searchParams.get('format') || 'csv').toLowerCase()
-    const hardLimit = parsePositiveInt(urlObj.searchParams.get('limit'), 5000, DB_LIVE_EXPORT_MAX_LIMIT)
-
-    let users = getDbLiveUsersSnapshot()
-    users = applyDbLiveFilters(users, urlObj)
-    users = applyDbLiveSort(users, urlObj).users
-    users = users.slice(0, hardLimit)
-
-    if (format === 'json') {
-      return json(
-        res,
-        200,
-        {
-          ok: true,
-          data: {
-            contractVersion: 'db-live-export-v1',
-            format: 'json',
-            count: users.length,
-            limit: hardLimit,
-            users,
-          },
-        },
-        { 'Cache-Control': 'no-store' }
-      )
-    }
-
-    const columns = [
-      'clientId',
-      'clientName',
-      'brand',
-      'affiliateId',
-      'clientLogin',
-      'user',
-      'country',
-      'clientTimestamp',
-      'status',
-      'openedTrades',
-      'equity',
-      'deposit',
-      'wd',
-      'net',
-      'trades',
-      'ltdDate',
-      'lttDate',
-      'sourcePeriod',
-    ]
-
-    const csv = toCsv(users, columns)
-    const stamp = new Date().toISOString().replace(/[:.]/g, '-')
-    res.statusCode = 200
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
-    res.setHeader('Cache-Control', 'no-store')
-    res.setHeader('Content-Disposition', `attachment; filename="db-live-export-${stamp}.csv"`)
-    res.end(csv)
-    return
-  } catch (e) {
-    return json(
-      res,
-      e?.status || 502,
-      {
-        ok: false,
-        error: e?.message || 'Creolabs db-live export request failed',
+        error: e?.message || 'Creolabs db-native request failed',
         details: e?.details || '',
       },
       { 'Cache-Control': 'no-store' }
@@ -7540,35 +7102,51 @@ async function routeQlik(req, res, parts) {
   }
 
   if (head === 'creolabs' && parts[1] === 'db-live') {
-    return handleCreolabsDbLive(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live endpoint removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-2') {
+    return json(res, 410, { ok: false, error: 'DB Live 2 endpoint removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-native' && parts[2] === 'leaderboard') {
+    return handleCreolabsDbNativeLeaderboard(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-native') {
+    return handleCreolabsDbNative(req, res)
+  }
+
+  if (head === 'creolabs' && parts[1] === 'db-live-contract') {
+    return json(res, 410, { ok: false, error: 'DB Live contract endpoint removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'db-live-ingestion-status') {
-    return handleCreolabsDbLiveIngestionStatus(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live ingestion endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'db-live-ingestion-control') {
-    return handleCreolabsDbLiveIngestionControl(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live ingestion endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'db-live-export') {
-    return handleCreolabsDbLiveExport(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live export endpoint removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'db-live-report-templates') {
-    return handleCreolabsDbLiveReportTemplates(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live report endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && !parts[3]) {
-    return handleCreolabsDbLiveReportsJobs(req, res)
+    return json(res, 410, { ok: false, error: 'DB Live report endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && parts[3] && parts[4] === 'status') {
-    return handleCreolabsDbLiveReportsJobStatus(req, res, parts[3])
+    return json(res, 410, { ok: false, error: 'DB Live report endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'reports' && parts[2] === 'jobs' && parts[3] && parts[4] === 'download') {
-    return handleCreolabsDbLiveReportsJobDownload(req, res, parts[3])
+    return json(res, 410, { ok: false, error: 'DB Live report endpoints removed. Use /api/qlik/creolabs/db-native' }, { 'Cache-Control': 'no-store' })
   }
 
   if (head === 'creolabs' && parts[1] === 'client-months') {
@@ -7691,8 +7269,15 @@ setTimeout(() => {
     .catch(() => {})
 }, 2000)
 
+// DB Live scheduler intentionally disabled: system now runs on DB Native only.
+
+// DB Native: auto-refresh the local store every DB_NATIVE_AUTO_REFRESH_INTERVAL_MS (default 6h)
 setTimeout(() => {
-  const config = getConfig()
-  if (!config.hasOauth && !config.hasApiKey) return
-  startDbLiveIngestionScheduler()
-}, 2500)
+  if (!CREOLABS_NATIVE_API_URL || !CREOLABS_NATIVE_API_KEY) return
+  setInterval(() => {
+    syncDbNativeStore({ forceRefresh: true })
+      .catch((err) => {
+        console.warn('[db-native] scheduled auto-refresh failed:', err?.message || String(err))
+      })
+  }, DB_NATIVE_AUTO_REFRESH_INTERVAL_MS)
+}, 10_000) // initial delay to let server fully boot

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-26T07:30:12.004Z",
+  "generatedAt": "2026-06-10T10:50:16.600Z",
   "source": "src/pages/orgChartData.js",
   "sections": [
     {
@@ -302,6 +302,36 @@
           "title": "Sales Manager",
           "division": "Acquisition",
           "department": "Sales - Conversion"
+        },
+        {
+          "name": "Ernest Bautista",
+          "title": "Sales Agent (PH Team)",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Cruisel John Sanoy",
+          "title": "Sales Agent (PH Team)",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Migs Dy",
+          "title": "Sales Agent (PH Team)",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Jhuna Mae Masayon",
+          "title": "Sales Agent (PH Team)",
+          "division": "Acquisition",
+          "department": "Sales - Conversion"
+        },
+        {
+          "name": "Milen Hristov",
+          "title": "Sales Manager",
+          "division": "Acquisition",
+          "department": "Sales - Retention"
         }
       ]
     },
@@ -334,6 +364,24 @@
           "department": "Affiliate Manager"
         },
         {
+          "name": "Anninos Antoniou",
+          "title": "Head of Affiliates",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Nikolas Panayiotou",
+          "title": "Senior Affiliate Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
+          "name": "Alara Odbay",
+          "title": "Affiliate Manager",
+          "division": "Acquisition",
+          "department": "Affiliate Manager"
+        },
+        {
           "name": "Kenneath Gamayon",
           "title": "Affiliate Manager",
           "division": "Acquisition",
@@ -362,6 +410,18 @@
           "title": "Creators",
           "division": "Support",
           "department": "Support Team"
+        },
+        {
+          "name": "Andreas Charalampous",
+          "title": "Senior Market Research Analyst",
+          "division": "Acquisition",
+          "department": "Marketing"
+        },
+        {
+          "name": "Robertas Sycius",
+          "title": "Content Creator",
+          "division": "Acquisition",
+          "department": "Marketing"
         },
         {
           "name": "Alexander O'Neil",

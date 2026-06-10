@@ -304,9 +304,7 @@ function buildLegalFooterHtml(mode, content) {
 }
 
 function buildSendgridSubjectTemplate(subject) {
-  return String(subject || '')
-    .replace(/\{\{#if\s+first_name\}\}\{\{first_name\}\},?\s*\{\{\/if\}\}/g, '')
-    .trim()
+  return String(subject || '').trim()
 }
 
 function buildDefaultSendgridTestData(overrides = {}) {
@@ -1000,19 +998,24 @@ ${legalFooter}
 }
 
 function makeVariant(spec, templateKey) {
-  const lang = spec?.html?.lang || 'en'
+  const lang = spec?.lang || spec?.html?.lang || 'en'
   const normalizedDescription = normalizeLocalizedText(lang, spec.description)
   const normalizedSubject = normalizeLocalizedText(lang, spec.subject)
   const iconGuide = spec?.iconGuide || spec?.html?.iconGuide || null
+  const hasRawHtml = typeof spec?.rawHtml === 'string' && spec.rawHtml.trim().length > 0
+  const html = hasRawHtml ? spec.rawHtml : buildSegmentEmailHtml(spec.html, { templateKey })
+  const sendgridHtml = hasRawHtml
+    ? spec.sendgridHtml || spec.rawHtml
+    : buildSegmentEmailHtml(spec.html, { mode: 'sendgrid', templateKey })
 
   return {
     name: spec.name,
     description: normalizedDescription,
     subject: normalizedSubject,
     iconGuide,
-    html: buildSegmentEmailHtml(spec.html, { templateKey }),
+    html,
     sendgridSubject: buildSendgridSubjectTemplate(normalizedSubject),
-    sendgridHtml: buildSegmentEmailHtml(spec.html, { mode: 'sendgrid', templateKey }),
+    sendgridHtml,
     sendgridTestData: buildDefaultSendgridTestData({
       locale: lang,
       ...(spec.sendgridTestData || {}),
@@ -1020,11 +1023,21 @@ function makeVariant(spec, templateKey) {
   }
 }
 
-export function makeLocaleVariants(a, b, templateKey = '') {
+export function makeLocaleVariants(a, b, cOrTemplateKey = null, templateKey = '') {
+  const isLegacyTemplateKeyArg = typeof cOrTemplateKey === 'string'
+  const c = isLegacyTemplateKeyArg ? null : cOrTemplateKey
+  const resolvedTemplateKey = isLegacyTemplateKeyArg ? cOrTemplateKey : templateKey
+
+  const variants = {
+    a: makeVariant(a, resolvedTemplateKey),
+    b: makeVariant(b, resolvedTemplateKey),
+  }
+
+  if (c) {
+    variants.c = makeVariant(c, resolvedTemplateKey)
+  }
+
   return {
-    variants: {
-      a: makeVariant(a, templateKey),
-      b: makeVariant(b, templateKey),
-    },
+    variants,
   }
 }

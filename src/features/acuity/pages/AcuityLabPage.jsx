@@ -71,6 +71,39 @@ const JOURNEYS = [
     },
   },
   {
+    id: 'acuity-calendar',
+    name: 'Acuity Calendar',
+    cadence: 'Editoriale · Manuale / Sync SendGrid',
+    description:
+      'Template visuale statico dedicato al calendario Acuity, con sequenza stacked di pannelli e branding Bullwaves.',
+    trigger: 'Manuale – campaign launch o resend da Acuity Lab',
+    channel: 'Email',
+    source: ['Acuity image pack', 'Calendar visuals', 'SendGrid'],
+    tags: ['acuity', 'calendar', 'visual'],
+    color: 'sky',
+    steps: [
+      { label: 'Carica visual', note: 'Logo + 5 pannelli calendario', icon: 'fetch' },
+      { label: 'Verifica ordine', note: 'Sequenza logo, 2, 4, 6, 8, 10', icon: 'filter' },
+      { label: 'Preview HTML', note: 'Controllo rendering email', icon: 'compose' },
+      { label: 'Sync SendGrid', note: 'Template pronto per invio', icon: 'send' },
+    ],
+    template: {
+      subject: "This Week's Market Calendar at a Glance",
+      preview: 'Logo Bullwaves + 5 pannelli verticali del calendario Acuity',
+      body: [
+        { type: 'header', text: 'Acuity calendar layout' },
+        {
+          type: 'text',
+          text: 'Template visuale statico con pack immagini Acuity dedicato al calendario, ottimizzato per preview e sync diretto da Acuity Lab.',
+        },
+        {
+          type: 'text',
+          text: 'Stack immagini: logo, 2.png, 4.png, 6.png, 8.png, 10.png.',
+        },
+      ],
+    },
+  },
+  {
     id: 'market-pulse',
     name: 'Market Pulse',
     cadence: 'Giornaliero · 08:30',
@@ -744,7 +777,7 @@ export default function AcuityLabPage() {
         <div>
           <h1 className="text-base font-semibold text-gray-100">Acuity · Email Journeys</h1>
           <p className="mt-0.5 text-xs text-gray-400">
-            Contenuti Acuity Trading API → template SendGrid · 3 journey pronti da implementare
+            Template Acuity Trading e visual email pronti per preview HTML e sync SendGrid
           </p>
         </div>
         <div className="flex items-center gap-2">

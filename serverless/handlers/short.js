@@ -36,6 +36,7 @@ async function resolveShare(req, token) {
       'affrep',
       'mplan',
       'pboard',
+      'pelican',
       'exec',
       'tpguide',
       'comval',
@@ -60,6 +61,8 @@ function destinationFor(prefix, token, payload) {
   if (prefix === 'affrep') return `/share/affiliate-reports/${encodeURIComponent(token)}`
   if (prefix === 'mplan') return `/share/marketing-plan/${encodeURIComponent(token)}`
   if (prefix === 'pboard') return `/share/project-board/${encodeURIComponent(token)}`
+  if (prefix === 'pelican')
+    return `/share/pelican-network-integration/${encodeURIComponent(token)}`
   if (prefix === 'exec') return `/share/execution/${encodeURIComponent(token)}`
   if (prefix === 'tpguide') return `/share/trustpilot-guide/${encodeURIComponent(token)}`
   if (prefix === 'comval')

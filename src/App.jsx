@@ -34,6 +34,9 @@ const PublicTrustpilotGuideSharePage = React.lazy(
 const PublicProfitableRankingSharePage = React.lazy(
   () => import('./pages/share/PublicProfitableRankingSharePage')
 )
+const PublicTradingCompetitionSharePage = React.lazy(
+  () => import('./pages/share/PublicTradingCompetitionSharePage')
+)
 const PublicFinanceToolOrganigramSharePage = React.lazy(
   () => import('./features/platform-usage/pages/PublicFinanceToolOrganigramSharePage')
 )
@@ -122,6 +125,7 @@ export default function App() {
     )
       return 'commission-validation-rules'
     if (p === '/share/affiliate-payout-summary') return 'affiliate-payout-summary'
+    if (p.startsWith('/share/trading-competition')) return 'trading-competition'
     if (p.startsWith('/share/weekly-map/')) return 'weekly-map'
     if (p.startsWith('/share/weekly-execution-history/')) return 'weekly-execution-history'
     if (p.startsWith('/share/marketing-plan/')) return 'marketing-plan'
@@ -291,6 +295,14 @@ export default function App() {
     return (
       <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
         <PublicAffiliatePayoutSummarySharePage />
+      </React.Suspense>
+    )
+  }
+
+  if (shareRoute === 'trading-competition') {
+    return (
+      <React.Suspense fallback={<FullPageLoader progress={20} subtitle={t('common.loading')} />}>
+        <PublicTradingCompetitionSharePage />
       </React.Suspense>
     )
   }

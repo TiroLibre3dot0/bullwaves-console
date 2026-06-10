@@ -1,6 +1,20 @@
 import { makeLocaleVariants } from './segmentJourneyTemplateBuilder.js'
 import { additionalSegmentJourneyTemplatesById } from './additionalSegmentJourneyTemplates.js'
 import { createJourneyIconSelection } from './emailJourneyIconRegistry.js'
+import unfundedWelcomeValueVariantCEnRawHtml from './templates/unfunded_welcome_value_variant_c_en.html?raw'
+import unfundedWelcomeValueVariantCItRawHtml from './templates/unfunded_welcome_value_variant_c_it.html?raw'
+import unfundedNoDeposit48hVariantCEnRawHtml from './templates/unfunded_no_deposit_48h_variant_c_en.html?raw'
+import unfundedNoDeposit48hVariantCItRawHtml from './templates/unfunded_no_deposit_48h_variant_c_it.html?raw'
+import unfundedDepositTradeManagerVariantCEnRawHtml from './templates/unfunded_deposit_trade_account_manager_variant_c_en.html?raw'
+import unfundedDepositTradeManagerVariantCItRawHtml from './templates/unfunded_deposit_trade_account_manager_variant_c_it.html?raw'
+import unfundedFundingPathRecoveryVariantCEnRawHtml from './templates/unfunded_funding_path_recovery_variant_c_en.html?raw'
+import unfundedFundingPathRecoveryVariantCItRawHtml from './templates/unfunded_funding_path_recovery_variant_c_it.html?raw'
+import unfundedFirstTradeOnboardingVariantCEnRawHtml from './templates/unfunded_first_trade_onboarding_variant_c_en.html?raw'
+import unfundedFirstTradeOnboardingVariantCItRawHtml from './templates/unfunded_first_trade_onboarding_variant_c_it.html?raw'
+import unfundedSoftReEntryNoFtdVariantCEnRawHtml from './templates/unfunded_soft_re_entry_no_ftd_variant_c_en.html?raw'
+import unfundedSoftReEntryNoFtdVariantCItRawHtml from './templates/unfunded_soft_re_entry_no_ftd_variant_c_it.html?raw'
+import unfundedFirstDepositPushVariantCEnRawHtml from './templates/unfunded_first_deposit_push_variant_c_en.html?raw'
+import unfundedFirstDepositPushVariantCItRawHtml from './templates/unfunded_first_deposit_push_variant_c_it.html?raw'
 
 const UNFUNDED_ICON_SETS = {
   welcomeTrust: createJourneyIconSelection({
@@ -191,6 +205,15 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Unlock Your Access',
             ctaHelper: 'Enter your area and take the first step',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Welcome + Value Proposition C',
+          description:
+            'Offer-rich welcome variant aligned with the latest value proposition layout and stronger benefits framing.',
+          subject: '{{#if first_name}}{{first_name}}, {{/if}}Your Account Is Ready to Trade.',
+          lang: 'en',
+          iconGuide: UNFUNDED_ICON_SETS.welcomeValue.iconGuide,
+          rawHtml: unfundedWelcomeValueVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -253,6 +276,16 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Sblocca il tuo Accesso',
             ctaHelper: 'Entra nella tua area e fai il primo passo',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Welcome + Proposta di Valore C',
+          description:
+            'Variante welcome orientata ai benefici concreti con impostazione commerciale piu diretta e completa.',
+          subject:
+            '{{#if first_name}}{{first_name}}, {{/if}}Il Tuo Account È Pronto Per Fare Trading.',
+          lang: 'it',
+          iconGuide: UNFUNDED_ICON_SETS.welcomeValue.iconGuide,
+          rawHtml: unfundedWelcomeValueVariantCItRawHtml,
         }
       ),
     },
@@ -447,6 +480,15 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Start Deposit Now',
             ctaHelper: 'Open the deposit section and complete the step',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - +48hr No Deposit C',
+          description:
+            'HTML-driven +48hr no-deposit variant centered on bonus activation and clear next steps.',
+          subject: 'Make Your First Deposit Today & We Will Double it',
+          lang: 'en',
+          iconGuide: UNFUNDED_ICON_SETS.accountActivationReminder.iconGuide,
+          rawHtml: unfundedNoDeposit48hVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -506,6 +548,15 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Avvia il Deposito Ora',
             ctaHelper: 'Apri la sezione deposito e completa il passaggio',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - +48h Nessun Deposito C',
+          description:
+            'Variante +48h no-deposito basata su HTML, con focus su bonus del 100% e passaggi operativi chiari.',
+          subject: 'Effettua Oggi il Tuo Primo Deposito e Lo Raddoppieremo',
+          lang: 'it',
+          iconGuide: UNFUNDED_ICON_SETS.accountActivationReminder.iconGuide,
+          rawHtml: unfundedNoDeposit48hVariantCItRawHtml,
         }
       ),
     },
@@ -551,7 +602,7 @@ export const segmentJourneyTemplatesById = {
           subject: 'Your first activity is in place. Dedicated guidance is now available.',
           html: {
             lang: 'en',
-            skin: 'dark',
+            skin: 'light',
             ctaUrl: `https://wa.me/35799514794?text=${encodeURIComponent('Hi Bullwaves, I completed my first deposit and opened my first trade. I would like to connect with my dedicated account manager.')}`,
             title: 'You activated fast',
             heroTitle: 'Now protect your momentum',
@@ -572,6 +623,22 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Speak with Your Account Manager',
             ctaHelper: 'Open WhatsApp — your manager replies directly',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - +48hr Deposit + Trade C',
+          description:
+            'HTML-driven post-deposit follow-up focused on account manager support and immediate next actions.',
+          subject: 'Your First Trade is Open. Meet Your Account Manager.',
+          lang: 'en',
+          rawHtml: unfundedDepositTradeManagerVariantCEnRawHtml,
+        },
+        {
+          name: 'Unfunded Newcomers - +48h Deposito + Trade C',
+          description:
+            'Follow-up post-deposito basato su HTML, focalizzato sul supporto dell account manager e sui prossimi passi immediati.',
+          subject: 'Il Tuo Primo Trade È Aperto. Incontra il Tuo Account Manager.',
+          lang: 'it',
+          rawHtml: unfundedDepositTradeManagerVariantCItRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -612,7 +679,7 @@ export const segmentJourneyTemplatesById = {
           subject: 'La tua prima operatività è avviata. Ora hai una guida dedicata.',
           html: {
             lang: 'it',
-            skin: 'dark',
+            skin: 'light',
             ctaUrl: `https://wa.me/35799514794?text=${encodeURIComponent('Ciao Bullwaves, ho completato il primo deposito e aperto il primo trade. Vorrei essere messo in contatto con il mio account manager dedicato.')}`,
             title: 'Hai attivato rapidamente il conto',
             heroTitle: 'Ora proteggi lo slancio',
@@ -634,6 +701,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Parla con il tuo Account Manager',
             ctaHelper: 'Apri WhatsApp — il tuo manager risponde direttamente',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - +48h Deposito + Trade C',
+          description:
+            'Follow-up post-deposito basato su HTML, focalizzato sul supporto dell account manager e sui prossimi passi immediati.',
+          subject: 'Il tuo primo trade è aperto. Incontra il tuo account manager.',
+          lang: 'it',
+          rawHtml: unfundedDepositTradeManagerVariantCItRawHtml,
         }
       ),
     },
@@ -706,6 +781,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Open the Deposit Route Now',
             ctaHelper: 'Open the deposit path and move the process forward',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Deposit Intent Recovery C',
+          description:
+            'HTML-driven recovery variant focused on a clear next move, simple options, and practical clarity.',
+          subject: 'Your account is ready to continue. The deposit path is still open.',
+          lang: 'en',
+          rawHtml: unfundedFundingPathRecoveryVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -774,6 +857,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Apri Ora il Percorso Deposito',
             ctaHelper: 'Apri il percorso deposito e fai avanzare il processo',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Recupero Intento Deposito C',
+          description:
+            'Variante basata su HTML focalizzata su una prossima mossa chiara, opzioni semplici e chiarezza pratica.',
+          subject: 'Il Tuo Account È Pronto. Il Percorso di Deposito È Ancora Aperto.',
+          lang: 'it',
+          rawHtml: unfundedFundingPathRecoveryVariantCItRawHtml,
         }
       ),
     },
@@ -846,6 +937,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Continue the Activation Path',
             ctaHelper: 'Return to the platform and continue from your funded account',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - First Deposit Push C',
+          description:
+            'HTML-driven post-deposit activation variant focused on AI market intelligence and the next trading step.',
+          subject: 'Trade with real-time AI market intelligence.',
+          lang: 'en',
+          rawHtml: unfundedFirstDepositPushVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -915,6 +1014,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Continua il Percorso Attivo',
             ctaHelper: 'Rientra in piattaforma e continua dal tuo account finanziato',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Primo Deposito C',
+          description:
+            'Variante basata su HTML focalizzata su intelligence di mercato AI e sul passaggio operativo successivo.',
+          subject: 'Fai Trading con l’Intelligenza di Mercato AI in Tempo Reale',
+          lang: 'it',
+          rawHtml: unfundedFirstDepositPushVariantCItRawHtml,
         }
       ),
     },
@@ -985,6 +1092,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Speak with Your Account Manager',
             ctaHelper: 'Open WhatsApp — your manager replies directly',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - First Trade Onboarding C',
+          description:
+            'HTML-driven onboarding variant focused on dedicated support, structure, and real-time AI market intelligence.',
+          subject: 'Your first deposit is complete. Meet your account manager.',
+          lang: 'en',
+          rawHtml: unfundedFirstTradeOnboardingVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -1053,6 +1168,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Parla con il tuo Account Manager',
             ctaHelper: 'Apri WhatsApp — il tuo manager risponde direttamente',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Onboarding Primo Trade C',
+          description:
+            'Variante basata su HTML focalizzata su supporto dedicato, struttura e intelligence di mercato AI in tempo reale.',
+          subject: 'Il Tuo Primo Deposito È Completato. Incontra il Tuo Account Manager.',
+          lang: 'it',
+          rawHtml: unfundedFirstTradeOnboardingVariantCItRawHtml,
         }
       ),
     },
@@ -1124,6 +1247,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Return to Your Account',
             ctaHelper: 'Re-enter with a lighter next step',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Re-entry Nurture C',
+          description:
+            'HTML-driven soft re-entry variant focused on reactivation, retained benefits, and simple continuation.',
+          subject: 'Still considering Bullwaves? It is easier than you think.',
+          lang: 'en',
+          rawHtml: unfundedSoftReEntryNoFtdVariantCEnRawHtml,
         }
       ),
       it: makeLocaleVariants(
@@ -1191,6 +1322,14 @@ export const segmentJourneyTemplatesById = {
             ctaLabel: 'Torna al tuo Account',
             ctaHelper: 'Rientra con un passo più leggero',
           },
+        },
+        {
+          name: 'Unfunded Newcomers - Riattivazione Soft C',
+          description:
+            'Variante basata su HTML focalizzata su riattivazione soft, benefici ancora disponibili e continuità semplice.',
+          subject: 'Stai Ancora Valutando Bullwaves? È Più Semplice di Quanto Pensi',
+          lang: 'it',
+          rawHtml: unfundedSoftReEntryNoFtdVariantCItRawHtml,
         }
       ),
     },
