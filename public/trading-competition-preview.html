@@ -218,6 +218,14 @@ h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 
 /* Animations */
 @keyframes fade-up { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .anim { animation: fade-up .3s ease both; }
+@keyframes reveal-soft {
+  0% { opacity: 0; transform: translateY(12px) scale(0.995); filter: blur(4px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.reveal-soft {
+  animation: reveal-soft .42s cubic-bezier(.2,.7,.2,1) both;
+  will-change: transform, opacity, filter;
+}
 
 /* Responsive */
 @media (max-width: 860px) { .layout{flex-direction:column} .sidebar{width:100%} }
@@ -334,6 +342,7 @@ let USERS = [];
 let TODAY_USERS = [];
 let loadToken = 0;
 let isLoadingLeaderboard = false;
+let hasPlayedFirstReveal = false;
 
 function showLoader(label, options = {}) {
   const overlay = options.overlay !== false;
@@ -464,8 +473,9 @@ function renderTable() {
     return;
   }
   noRes.style.display='none';
+  const useFirstReveal = !hasPlayedFirstReveal;
   body.innerHTML = list.map((u,i) => `
-    <div class="lb-row anim" style="animation-delay:${i*20}ms">
+    <div class="lb-row ${useFirstReveal ? 'reveal-soft' : 'anim'}" style="animation-delay:${i*20}ms">
       <div class="row-rank">${rankHTML(i+1)}</div>
       <div class="row-avatar">${avatarHTML(u,36)}</div>
       <div class="row-name">${u.name}</div>
@@ -479,8 +489,9 @@ function renderTable() {
 function renderWins() {
   const source = dedupeRowsByClient(TODAY_USERS.length?TODAY_USERS:USERS);
   const top = source.filter(u=>Number(u.gain||0)>0).sort((a,b)=>b.gain-a.gain).slice(0,8);
+  const useFirstReveal = !hasPlayedFirstReveal;
   document.getElementById('wins-body').innerHTML = top.map((u,i) => `
-    <div class="win-row anim" style="animation-delay:${120+i*40}ms">
+    <div class="win-row ${useFirstReveal ? 'reveal-soft' : 'anim'}" style="animation-delay:${120+i*40}ms">
       <div class="win-rank">${i+1}</div>
       ${avatarHTML(u,32)}
       <div class="win-info">
@@ -538,6 +549,7 @@ async function loadCompetitionData(options = {}) {
     USERS = users; TODAY_USERS = [];
     hideLoader();
     renderTable(); renderWins();
+    if (users.length && !hasPlayedFirstReveal) hasPlayedFirstReveal = true;
   } catch(e) {
     if (token !== loadToken) return;
     USERS = []; TODAY_USERS = [];
