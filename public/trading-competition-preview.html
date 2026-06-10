@@ -43,6 +43,7 @@ body {
   background: linear-gradient(90deg, rgba(5,12,18,0.9), rgba(8,20,28,0.86));
   border-bottom: 1px solid rgba(148,163,184,0.22);
   backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+  transition: padding .22s ease, background .22s ease;
 }
 .navbar-shell {
   max-width: 1180px;
@@ -54,6 +55,7 @@ body {
   box-shadow: 0 16px 36px rgba(2,6,23,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
   display: flex; align-items: center; gap: 14px;
   padding: 8px 12px;
+  transition: min-height .22s ease, padding .22s ease, border-radius .22s ease, box-shadow .22s ease;
 }
 .navbar-brand {
   display: flex; align-items: center; gap: 10px;
@@ -65,12 +67,26 @@ body {
   overflow: hidden;
   background: rgba(255,255,255,0.1);
   box-shadow: 0 0 0 1px rgba(255,255,255,0.12);
+  transition: width .22s ease, height .22s ease, border-radius .22s ease;
 }
 .navbar-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
-.navbar-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; color: #f8fafc; }
-.navbar-subtitle { font-size: 11px; font-weight: 700; color: #cbd5e1; letter-spacing: 0.07em; text-transform: uppercase; }
+.navbar-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; color: #f8fafc; transition: font-size .22s ease; }
+.navbar-subtitle { font-size: 11px; font-weight: 700; color: #cbd5e1; letter-spacing: 0.07em; text-transform: uppercase; transition: opacity .2s ease, transform .2s ease; }
 .navbar-spacer { flex: 1; }
 .navbar-pills { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+.navbar.is-shrunk { padding: 6px 12px; }
+.navbar.is-shrunk .navbar-shell {
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(2,6,23,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.navbar.is-shrunk .navbar-logo { width: 28px; height: 28px; border-radius: 9px; }
+.navbar.is-shrunk .navbar-title { font-size: 14px; }
+.navbar.is-shrunk .navbar-subtitle { opacity: 0.78; transform: translateY(-1px); }
+.navbar.is-shrunk .pill { height: 29px; padding: 0 12px; }
+.navbar.is-shrunk .live-dot { transform: scale(0.9); }
 
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -415,6 +431,8 @@ let isLoadingLeaderboard = false;
 let hasPlayedFirstReveal = false;
 let loaderProgress = 0;
 let loaderProgressTimer = null;
+let navbarRafId = 0;
+let lastShrinkState = null;
 
 function setLoaderProgress(value) {
   loaderProgress = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
@@ -457,6 +475,23 @@ function hideLoader() {
     if (overlayEl) overlayEl.classList.add('is-hidden');
     setLoaderProgress(0);
   }, 180);
+}
+
+function applyNavbarShrink() {
+  const nav = document.querySelector('.navbar');
+  if (!nav) return;
+  const shouldShrink = window.scrollY > 28;
+  if (shouldShrink === lastShrinkState) return;
+  nav.classList.toggle('is-shrunk', shouldShrink);
+  lastShrinkState = shouldShrink;
+}
+
+function onNavbarScroll() {
+  if (navbarRafId) return;
+  navbarRafId = window.requestAnimationFrame(() => {
+    navbarRafId = 0;
+    applyNavbarShrink();
+  });
 }
 
 function toYmd(d) {
@@ -664,6 +699,8 @@ function setTab(btn) {
 }
 
 loadCompetitionData();
+applyNavbarShrink();
+window.addEventListener('scroll', onNavbarScroll, { passive: true });
 window.setInterval(() => loadCompetitionData({ overlay: false }), REFRESH_MS);
 </script>
 </body>
