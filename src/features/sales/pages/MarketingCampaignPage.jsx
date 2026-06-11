@@ -667,28 +667,49 @@ function normalizePhoneForWhatsApp(value) {
   return hasPlus ? `+${digits}` : digits
 }
 
+function parseDbNativeLogins(value) {
+  return String(value || '')
+    .split(/[|,]/)
+    .map((item) => String(item || '').trim())
+    .filter(Boolean)
+}
+
 const CONTACT_ENRICHMENT_CACHE_KEY = 'bw:marketing-campaign:contact-enrichment:v1'
+const CONTACT_ENRICHMENT_CACHE_TTL_MS = 15 * 60 * 1000
+
+function hasFreshContactEnrichmentCache(lastSyncAt, ttlMs = CONTACT_ENRICHMENT_CACHE_TTL_MS) {
+  const parsed = Date.parse(String(lastSyncAt || ''))
+  if (!Number.isFinite(parsed)) return false
+  return Date.now() - parsed <= Number(ttlMs || 0)
+}
 
 function loadContactEnrichmentCache() {
   try {
     const raw = window.localStorage.getItem(CONTACT_ENRICHMENT_CACHE_KEY)
-    if (!raw) return { phones: {}, countries: {}, lastSyncAt: '' }
+    if (!raw) return { phones: {}, countries: {}, metrics: {}, lastSyncAt: '' }
     const parsed = JSON.parse(raw)
     return {
       phones: typeof parsed?.phones === 'object' && parsed.phones ? parsed.phones : {},
       countries: typeof parsed?.countries === 'object' && parsed.countries ? parsed.countries : {},
+      metrics: typeof parsed?.metrics === 'object' && parsed.metrics ? parsed.metrics : {},
       lastSyncAt: String(parsed?.lastSyncAt || '').trim(),
     }
   } catch {
-    return { phones: {}, countries: {}, lastSyncAt: '' }
+    return { phones: {}, countries: {}, metrics: {}, lastSyncAt: '' }
   }
 }
 
-function saveContactEnrichmentCache({ phones = {}, countries = {}, lastSyncAt = '' }) {
+function saveContactEnrichmentCache({
+  phones = {},
+  countries = {},
+  metrics = {},
+  lastSyncAt = '',
+}) {
   try {
     const payload = {
       phones,
       countries,
+      metrics,
       lastSyncAt: String(lastSyncAt || '').trim(),
     }
     window.localStorage.setItem(CONTACT_ENRICHMENT_CACHE_KEY, JSON.stringify(payload))
@@ -733,6 +754,59 @@ function inferLanguageFromCountry(value) {
   return ''
 }
 
+function parseSkaleMetricValue(value) {
+  if (value == null || value === '') return null
+  const n = Number(String(value).replace(/,/g, '').trim())
+  return Number.isFinite(n) ? n : null
+}
+
+function toCountryInitials(value) {
+  const raw = String(value || '').trim()
+  if (!raw) return '—'
+  const words = raw
+    .replace(/[^a-zA-Z\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+  if (!words.length) return '—'
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
+  return `${words[0][0] || ''}${words[1][0] || ''}`.toUpperCase()
+}
+
+function ContactPresenceIcon({ type = 'mail', active = false, title = '' }) {
+  const stroke = active ? '#22c55e' : '#64748b'
+  const glow = active ? 'rgba(34,197,94,0.18)' : 'rgba(100,116,139,0.18)'
+
+  return (
+    <span
+      title={title}
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 999,
+        border: `1px solid ${active ? 'rgba(34,197,94,0.45)' : 'rgba(100,116,139,0.45)'}`,
+        background: glow,
+        display: 'inline-grid',
+        placeItems: 'center',
+      }}
+    >
+      {type === 'phone' ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M5.2 3.8c.8-.8 2-.8 2.8 0l1.8 1.8c.7.7.8 1.8.2 2.6l-1.2 1.7c-.2.3-.2.7 0 1 .8 1.5 2 2.9 3.5 4 .3.2.8.2 1 0l1.8-1.2c.8-.6 1.9-.5 2.6.2l1.8 1.8c.8.8.8 2 0 2.8l-1 1c-1.1 1.1-2.9 1.5-4.4.9-2.8-1.1-5.3-3.1-7.3-5.9-1.8-2.4-2.9-4.8-3.2-7.2-.2-1.2.2-2.4 1.1-3.3l1.3-1.2Z"
+            stroke={stroke}
+            strokeWidth="1.6"
+          />
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 6h16v12H4V6Z" stroke={stroke} strokeWidth="1.6" />
+          <path d="m4 7 8 6 8-6" stroke={stroke} strokeWidth="1.6" />
+        </svg>
+      )}
+    </span>
+  )
+}
+
 function TemplatePreviewFrame({ html, title }) {
   return (
     <iframe
@@ -771,7 +845,16 @@ export default function MarketingCampaignPage() {
   const [phoneByAccountId, setPhoneByAccountId] = useState({})
   const [countryByRowKey, setCountryByRowKey] = useState({})
   const [countryByAccountId, setCountryByAccountId] = useState({})
-  const [phoneMeta, setPhoneMeta] = useState({ lastSyncAt: '', error: '' })
+  const [skaleMetricsByRowKey, setSkaleMetricsByRowKey] = useState({})
+  const [skaleMetricsByAccountId, setSkaleMetricsByAccountId] = useState({})
+  const [skaleMetricsMeta, setSkaleMetricsMeta] = useState({
+    lastSyncAt: '',
+    error: '',
+    source: '',
+  })
+  const [phoneMeta, setPhoneMeta] = useState({ lastSyncAt: '', error: '', source: '' })
+  const [isSkaleRefreshRunning, setIsSkaleRefreshRunning] = useState(false)
+  const [skaleRefreshRequest, setSkaleRefreshRequest] = useState({ nonce: 0, force: false })
   const [selectedRowKey, setSelectedRowKey] = useState(() =>
     campaignSourceRows.length ? toCampaignRowKey(campaignSourceRows[0]) : ''
   )
@@ -791,21 +874,18 @@ export default function MarketingCampaignPage() {
   const rows = useMemo(() => {
     return campaignSourceRows.map((row, index) => {
       const rowKey = toCampaignRowKey(row)
+      const tradingAccountId = String(row?.tradingAccount || '').trim()
       const tracking = trackingByRowKey[rowKey] || null
+      const skaleMetrics =
+        skaleMetricsByRowKey[rowKey] || skaleMetricsByAccountId[tradingAccountId] || null
       return {
         ...row,
         rank: index + 1,
         phone: String(
-          phoneByRowKey[rowKey] ||
-            phoneByAccountId[String(row?.tradingAccount || '').trim()] ||
-            row.phone ||
-            ''
+          phoneByRowKey[rowKey] || phoneByAccountId[tradingAccountId] || row.phone || ''
         ).trim(),
         country: String(
-          countryByRowKey[rowKey] ||
-            countryByAccountId[String(row?.tradingAccount || '').trim()] ||
-            row.country ||
-            ''
+          countryByRowKey[rowKey] || countryByAccountId[tradingAccountId] || row.country || ''
         ).trim(),
         activityStatus: getActivityStatus(row),
         mailStatus: normalizeMailStatus(tracking?.status || row.mailStatus || 'pending'),
@@ -814,6 +894,9 @@ export default function MarketingCampaignPage() {
         mailLastEvent: tracking?.lastEvent || null,
         mailOpenCount: Number(tracking?.openCount || 0),
         mailClickCount: Number(tracking?.clickCount || 0),
+        skaleClosedPl: parseSkaleMetricValue(skaleMetrics?.closedPl),
+        skaleOpenPl: parseSkaleMetricValue(skaleMetrics?.openPl),
+        skaleWd: parseSkaleMetricValue(skaleMetrics?.wd),
       }
     })
   }, [
@@ -823,6 +906,8 @@ export default function MarketingCampaignPage() {
     phoneByAccountId,
     countryByRowKey,
     countryByAccountId,
+    skaleMetricsByRowKey,
+    skaleMetricsByAccountId,
   ])
 
   const visibleRows = useMemo(() => {
@@ -910,11 +995,15 @@ export default function MarketingCampaignPage() {
     let cancelled = false
 
     async function loadPhonesFromSkale() {
+      setIsSkaleRefreshRunning(true)
       try {
+        const forceRefresh = Boolean(skaleRefreshRequest?.force)
         const cache = loadContactEnrichmentCache()
         const cachedPhones = typeof cache?.phones === 'object' && cache.phones ? cache.phones : {}
         const cachedCountries =
           typeof cache?.countries === 'object' && cache.countries ? cache.countries : {}
+        const cachedMetrics =
+          typeof cache?.metrics === 'object' && cache.metrics ? cache.metrics : {}
 
         const cachedPhonesByAccount = {}
         for (const [rowKey, value] of Object.entries(cachedPhones)) {
@@ -930,11 +1019,24 @@ export default function MarketingCampaignPage() {
           if (accountId && country && !cachedCountriesByAccount[accountId])
             cachedCountriesByAccount[accountId] = country
         }
+        const cachedMetricsByAccount = {}
+        for (const [rowKey, value] of Object.entries(cachedMetrics)) {
+          const accountId = String(rowKey || '').split(':')[0] || ''
+          if (accountId && !cachedMetricsByAccount[accountId]) {
+            cachedMetricsByAccount[accountId] = {
+              closedPl: parseSkaleMetricValue(value?.closedPl),
+              openPl: parseSkaleMetricValue(value?.openPl),
+              wd: parseSkaleMetricValue(value?.wd),
+            }
+          }
+        }
 
         setPhoneByRowKey(cachedPhones)
         setPhoneByAccountId(cachedPhonesByAccount)
         setCountryByRowKey(cachedCountries)
         setCountryByAccountId(cachedCountriesByAccount)
+        setSkaleMetricsByRowKey(cachedMetrics)
+        setSkaleMetricsByAccountId(cachedMetricsByAccount)
 
         const payloadRows = campaignSourceRows
           .map((row) => ({
@@ -946,113 +1048,153 @@ export default function MarketingCampaignPage() {
           }))
           .filter((row) => row.rowKey && (row.tradingAccount || row.email))
 
-        if (!payloadRows.length) return
-
-        const missingRows = payloadRows.filter((row) => {
-          const cachedPhone = String(cachedPhones[row.rowKey] || '').trim()
-          const cachedCountry = String(cachedCountries[row.rowKey] || '').trim()
-          return !cachedPhone || !cachedCountry
-        })
-
-        if (!missingRows.length) {
-          setPhoneMeta({
-            lastSyncAt: cache?.lastSyncAt || new Date().toISOString(),
-            error: '',
+        if (payloadRows.length) {
+          const cacheIsFresh = !forceRefresh && hasFreshContactEnrichmentCache(cache?.lastSyncAt)
+          const cacheIsComplete = payloadRows.every((row) => {
+            const phone = String(cachedPhones[row.rowKey] || '').trim()
+            const country = String(cachedCountries[row.rowKey] || '').trim()
+            const metrics = cachedMetrics[row.rowKey] || null
+            const hasMetrics = metrics && (metrics.closedPl != null || metrics.openPl != null)
+            return phone && country && hasMetrics
           })
-          return
-        }
 
-        async function fetchContactEnrichment(rowsToFetch, forceLive) {
-          if (!rowsToFetch.length) {
-            return { phones: {}, countries: {}, sources: {} }
+          if (cacheIsFresh && cacheIsComplete) {
+            const cachedAt = cache?.lastSyncAt || new Date().toISOString()
+            setPhoneMeta({ lastSyncAt: cachedAt, error: '', source: 'cache' })
+            setSkaleMetricsMeta({
+              lastSyncAt: cachedAt,
+              error: '',
+              source: 'cache',
+            })
+            setIsSkaleRefreshRunning(false)
+            return
           }
 
-          const response = await fetch('/api/skale/phones', {
-            method: 'POST',
-            headers: {
-              'content-type': 'application/json',
-            },
-            body: JSON.stringify({
-              rows: rowsToFetch,
-              forceLive,
-              concurrency: forceLive ? 2 : 4,
-            }),
-          })
-          const data = await response.json().catch(() => null)
-          if (!response.ok || !data?.ok || typeof data?.phones !== 'object') {
-            throw new Error(data?.message || data?.error || 'Skale phone lookup failed')
+          async function fetchContactEnrichment(rowsToFetch, forceLive) {
+            if (!rowsToFetch.length) {
+              return { phones: {}, countries: {}, metrics: {}, sources: {} }
+            }
+
+            const response = await fetch('/api/skale/phones', {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+              },
+              body: JSON.stringify({
+                rows: rowsToFetch,
+                forceLive,
+                includeMetrics: true,
+                concurrency: forceLive ? 2 : 4,
+              }),
+            })
+            const data = await response.json().catch(() => null)
+            if (!response.ok || !data?.ok || typeof data?.phones !== 'object') {
+              throw new Error(data?.message || data?.error || 'Skale phone lookup failed')
+            }
+
+            return {
+              phones: typeof data?.phones === 'object' && data.phones ? data.phones : {},
+              countries:
+                typeof data?.countries === 'object' && data.countries ? data.countries : {},
+              metrics: typeof data?.metrics === 'object' && data.metrics ? data.metrics : {},
+              sources: typeof data?.sources === 'object' && data.sources ? data.sources : {},
+            }
           }
 
-          return {
-            phones: typeof data?.phones === 'object' && data.phones ? data.phones : {},
-            countries: typeof data?.countries === 'object' && data.countries ? data.countries : {},
-            sources: typeof data?.sources === 'object' && data.sources ? data.sources : {},
-          }
-        }
-
-        const snapshotPass = await fetchContactEnrichment(missingRows, false)
-        if (cancelled) return
-
-        const missingAfterSnapshot = missingRows.filter((row) => {
-          const phone = String(snapshotPass.phones?.[row.rowKey] || '').trim()
-          const country = String(snapshotPass.countries?.[row.rowKey] || '').trim()
-          return !phone || !country
-        })
-
-        let livePass = { phones: {}, countries: {} }
-        if (missingAfterSnapshot.length) {
-          livePass = await fetchContactEnrichment(missingAfterSnapshot, true)
+          const snapshotPass = await fetchContactEnrichment(payloadRows, false)
           if (cancelled) return
-        }
 
-        const mergedPhones = { ...cachedPhones }
-        const mergedCountries = { ...cachedCountries }
-        const normalized = {}
-        const normalizedCountries = {}
-        const byAccount = {}
-        const byAccountCountry = {}
-        const mergedFromApiPhones = { ...snapshotPass.phones, ...livePass.phones }
-        const mergedFromApiCountries = { ...snapshotPass.countries, ...livePass.countries }
+          const missingAfterSnapshot = payloadRows.filter((row) => {
+            const phone = String(snapshotPass.phones?.[row.rowKey] || '').trim()
+            const country = String(snapshotPass.countries?.[row.rowKey] || '').trim()
+            const metrics = snapshotPass.metrics?.[row.rowKey] || null
+            const hasMetrics = metrics && (metrics.closedPl != null || metrics.openPl != null)
+            return !phone || !country || !hasMetrics
+          })
 
-        for (const [rowKey, value] of Object.entries(mergedFromApiPhones || {})) {
-          const phone = String(value || '').trim()
-          mergedPhones[rowKey] = phone
-          normalized[rowKey] = phone
-          const accountId = String(rowKey || '').split(':')[0] || ''
-          if (accountId && phone && !byAccount[accountId]) {
-            byAccount[accountId] = phone
+          let livePass = { phones: {}, countries: {}, metrics: {} }
+          if (missingAfterSnapshot.length) {
+            livePass = await fetchContactEnrichment(missingAfterSnapshot, true)
+            if (cancelled) return
           }
-        }
-        for (const [rowKey, value] of Object.entries(mergedFromApiCountries || {})) {
-          const country = String(value || '').trim()
-          mergedCountries[rowKey] = country
-          normalizedCountries[rowKey] = country
-          const accountId = String(rowKey || '').split(':')[0] || ''
-          if (accountId && country && !byAccountCountry[accountId]) {
-            byAccountCountry[accountId] = country
+
+          const mergedPhones = { ...cachedPhones }
+          const mergedCountries = { ...cachedCountries }
+          const normalized = {}
+          const normalizedCountries = {}
+          const mergedMetrics = { ...snapshotPass.metrics, ...livePass.metrics }
+          const metricsByAccount = {}
+          const byAccount = {}
+          const byAccountCountry = {}
+          const mergedFromApiPhones = { ...snapshotPass.phones, ...livePass.phones }
+          const mergedFromApiCountries = { ...snapshotPass.countries, ...livePass.countries }
+
+          for (const [rowKey, value] of Object.entries(mergedFromApiPhones || {})) {
+            const phone = String(value || '').trim()
+            mergedPhones[rowKey] = phone
+            normalized[rowKey] = phone
+            const accountId = String(rowKey || '').split(':')[0] || ''
+            if (accountId && phone && !byAccount[accountId]) {
+              byAccount[accountId] = phone
+            }
           }
+          for (const [rowKey, value] of Object.entries(mergedFromApiCountries || {})) {
+            const country = String(value || '').trim()
+            mergedCountries[rowKey] = country
+            normalizedCountries[rowKey] = country
+            const accountId = String(rowKey || '').split(':')[0] || ''
+            if (accountId && country && !byAccountCountry[accountId]) {
+              byAccountCountry[accountId] = country
+            }
+          }
+          for (const [rowKey, value] of Object.entries(mergedMetrics || {})) {
+            const accountId = String(rowKey || '').split(':')[0] || ''
+            if (accountId && !metricsByAccount[accountId]) {
+              metricsByAccount[accountId] = {
+                closedPl: parseSkaleMetricValue(value?.closedPl),
+                openPl: parseSkaleMetricValue(value?.openPl),
+                wd: parseSkaleMetricValue(value?.wd),
+              }
+            }
+          }
+
+          const mergedPhoneByAccount = { ...cachedPhonesByAccount, ...byAccount }
+          const mergedCountryByAccount = { ...cachedCountriesByAccount, ...byAccountCountry }
+          const syncAt = new Date().toISOString()
+
+          setPhoneByRowKey({ ...cachedPhones, ...normalized })
+          setPhoneByAccountId(mergedPhoneByAccount)
+          setCountryByRowKey({ ...cachedCountries, ...normalizedCountries })
+          setCountryByAccountId(mergedCountryByAccount)
+          setSkaleMetricsByRowKey(mergedMetrics)
+          setSkaleMetricsByAccountId(metricsByAccount)
+          setSkaleMetricsMeta({
+            lastSyncAt: syncAt,
+            error: '',
+            source: 'live',
+          })
+          setPhoneMeta({ lastSyncAt: syncAt, error: '', source: 'live' })
+          saveContactEnrichmentCache({
+            phones: mergedPhones,
+            countries: mergedCountries,
+            metrics: mergedMetrics,
+            lastSyncAt: syncAt,
+          })
         }
-
-        const mergedPhoneByAccount = { ...cachedPhonesByAccount, ...byAccount }
-        const mergedCountryByAccount = { ...cachedCountriesByAccount, ...byAccountCountry }
-        const syncAt = new Date().toISOString()
-
-        setPhoneByRowKey({ ...cachedPhones, ...normalized })
-        setPhoneByAccountId(mergedPhoneByAccount)
-        setCountryByRowKey({ ...cachedCountries, ...normalizedCountries })
-        setCountryByAccountId(mergedCountryByAccount)
-        setPhoneMeta({ lastSyncAt: syncAt, error: '' })
-        saveContactEnrichmentCache({
-          phones: mergedPhones,
-          countries: mergedCountries,
-          lastSyncAt: syncAt,
-        })
       } catch (error) {
         if (cancelled) return
         setPhoneMeta({
           lastSyncAt: '',
           error: error?.message || 'Phone sync failed',
+          source: '',
         })
+        setSkaleMetricsMeta({
+          lastSyncAt: '',
+          error: error?.message || 'Skale metrics sync failed',
+          source: '',
+        })
+      } finally {
+        if (!cancelled) setIsSkaleRefreshRunning(false)
       }
     }
 
@@ -1060,7 +1202,11 @@ export default function MarketingCampaignPage() {
     return () => {
       cancelled = true
     }
-  }, [campaignSourceRows])
+  }, [campaignSourceRows, skaleRefreshRequest])
+
+  function refreshSkaleData() {
+    setSkaleRefreshRequest({ nonce: Date.now(), force: true })
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -1287,14 +1433,26 @@ export default function MarketingCampaignPage() {
 
   const totals = useMemo(() => {
     return {
-      totalRows: rows.length,
-      delivered: rows.filter((row) => normalizeMailStatus(row.mailStatus) === 'delivered').length,
-      failed: rows.filter((row) => normalizeMailStatus(row.mailStatus) === 'failed').length,
-      engaged: rows.filter(
+      totalRows: visibleRows.length,
+      delivered: visibleRows.filter((row) => normalizeMailStatus(row.mailStatus) === 'delivered')
+        .length,
+      failed: visibleRows.filter((row) => normalizeMailStatus(row.mailStatus) === 'failed').length,
+      pending: visibleRows.filter((row) => {
+        const status = normalizeMailStatus(row.mailStatus)
+        return status !== 'delivered' && status !== 'failed'
+      }).length,
+      active: visibleRows.filter((row) => String(row.activityStatus || '') === 'active').length,
+      noActive: visibleRows.filter((row) => String(row.activityStatus || '') === 'no active')
+        .length,
+      engaged: visibleRows.filter(
         (row) => Number(row.mailOpenCount || 0) > 0 || Number(row.mailClickCount || 0) > 0
       ).length,
+      closedPl: visibleRows.reduce((sum, row) => sum + Number(row.skaleClosedPl || 0), 0),
+      openPl: visibleRows.reduce((sum, row) => sum + Number(row.skaleOpenPl || 0), 0),
+      wdKnown: visibleRows.some((row) => row.skaleWd != null),
+      wd: visibleRows.reduce((sum, row) => sum + Number(row.skaleWd || 0), 0),
     }
-  }, [rows])
+  }, [visibleRows])
 
   const agentCards = useMemo(() => {
     const byAgent = new Map()
@@ -1563,8 +1721,28 @@ export default function MarketingCampaignPage() {
   const summaryCards = [
     { label: 'Total clients', value: totals.totalRows, tone: 'rgba(56,189,248,0.5)' },
     { label: 'Delivered', value: totals.delivered, tone: 'rgba(34,197,94,0.52)' },
+    { label: 'Pending', value: totals.pending, tone: 'rgba(250,204,21,0.5)' },
     { label: 'Failed', value: totals.failed, tone: 'rgba(248,113,113,0.5)' },
-    { label: 'Engaged', value: totals.engaged, tone: 'rgba(251,191,36,0.55)' },
+    { label: 'Active', value: totals.active, tone: 'rgba(74,222,128,0.45)' },
+    { label: 'No active', value: totals.noActive, tone: 'rgba(251,191,36,0.55)' },
+    {
+      label: 'Closed PL',
+      value: moneyWithCurrency(totals.closedPl, selectedRow?.accountCurrency || 'USD'),
+      tone: 'rgba(45,212,191,0.52)',
+    },
+    {
+      label: 'Open PL',
+      value: moneyWithCurrency(totals.openPl, selectedRow?.accountCurrency || 'USD'),
+      tone: 'rgba(96,165,250,0.52)',
+    },
+    {
+      label: 'WD',
+      value: totals.wdKnown
+        ? moneyWithCurrency(totals.wd, selectedRow?.accountCurrency || 'USD')
+        : 'n/a',
+      tone: 'rgba(251,146,60,0.52)',
+    },
+    { label: 'Engaged', value: totals.engaged, tone: 'rgba(251,191,36,0.42)' },
   ]
 
   const cardBaseStyle = {
@@ -1753,12 +1931,46 @@ export default function MarketingCampaignPage() {
         </div>
       </div>
 
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button
+          type="button"
+          onClick={refreshSkaleData}
+          disabled={isSkaleRefreshRunning}
+          style={{
+            border: '1px solid rgba(125,211,252,0.36)',
+            color: '#dff6ff',
+            background: isSkaleRefreshRunning
+              ? 'rgba(30,64,175,0.18)'
+              : 'linear-gradient(180deg, rgba(30,64,175,0.44), rgba(30,64,175,0.24))',
+            borderRadius: 999,
+            padding: '6px 12px',
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: isSkaleRefreshRunning ? 'wait' : 'pointer',
+            opacity: isSkaleRefreshRunning ? 0.72 : 1,
+          }}
+        >
+          {isSkaleRefreshRunning ? 'Aggiornamento dati...' : 'Aggiorna dati Skale'}
+        </button>
+      </div>
+
       <div style={{ color: phoneMeta.error ? '#fca5a5' : '#9db4c9', fontSize: 12 }}>
         {phoneMeta.error
           ? `Phone sync: ${phoneMeta.error}`
           : phoneMeta.lastSyncAt
-            ? `Contact cache sync ${formatDateTime(phoneMeta.lastSyncAt)}`
+            ? phoneMeta.source === 'cache'
+              ? `Contact cache sync ${formatDateTime(phoneMeta.lastSyncAt)} (cache)`
+              : `Contact cache sync ${formatDateTime(phoneMeta.lastSyncAt)}`
             : 'Contact cache sync in progress...'}
+      </div>
+      <div style={{ color: skaleMetricsMeta.error ? '#fca5a5' : '#9db4c9', fontSize: 12 }}>
+        {skaleMetricsMeta.error
+          ? `Skale metrics: ${skaleMetricsMeta.error}`
+          : skaleMetricsMeta.lastSyncAt
+            ? skaleMetricsMeta.source === 'cache'
+              ? `Skale metrics sync ${formatDateTime(skaleMetricsMeta.lastSyncAt)} (cache)`
+              : `Skale metrics sync ${formatDateTime(skaleMetricsMeta.lastSyncAt)}`
+            : 'Skale metrics sync in progress...'}
       </div>
 
       <div
@@ -1771,19 +1983,22 @@ export default function MarketingCampaignPage() {
         }}
       >
         <div style={{ maxHeight: '44vh', overflow: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1460 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1320 }}>
             <thead>
               <tr style={{ background: 'rgba(8,15,29,0.98)' }}>
                 {[
                   '#',
                   'Client',
-                  'Email',
-                  'Phone Number',
-                  'Country / Lang',
+                  'Mail',
+                  'Phone',
+                  'Country',
                   'Status',
                   'Activity status',
                   'Tracking',
                   'Trading account',
+                  'Closed PL',
+                  'Open PL',
+                  'WD',
                   'Assigned to',
                   'Currency',
                   'Net USD',
@@ -1851,25 +2066,30 @@ export default function MarketingCampaignPage() {
                     >
                       {row.name}
                     </td>
+                    <td style={{ padding: '7px 10px', textAlign: 'center' }}>
+                      <ContactPresenceIcon
+                        type="mail"
+                        active={Boolean(String(row.email || '').trim())}
+                        title={row.email ? 'Email presente' : 'Email assente'}
+                      />
+                    </td>
+                    <td style={{ padding: '7px 10px', textAlign: 'center' }}>
+                      <ContactPresenceIcon
+                        type="phone"
+                        active={Boolean(String(row.phone || '').trim())}
+                        title={row.phone ? 'Phone presente' : 'Phone assente'}
+                      />
+                    </td>
                     <td
                       style={{
                         padding: '7px 10px',
-                        color: '#bdd0e4',
+                        color: '#d6e6f7',
                         whiteSpace: 'nowrap',
-                        maxWidth: 240,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        fontWeight: 800,
+                        letterSpacing: '0.05em',
                       }}
                     >
-                      {row.email}
-                    </td>
-                    <td style={{ padding: '7px 10px', color: '#bdd0e4', whiteSpace: 'nowrap' }}>
-                      {row.phone || '—'}
-                    </td>
-                    <td style={{ padding: '7px 10px', color: '#bdd0e4', whiteSpace: 'nowrap' }}>
-                      {row.country
-                        ? `${row.country}${inferLanguageFromCountry(row.country) ? ` (${inferLanguageFromCountry(row.country)})` : ''}`
-                        : '—'}
+                      {toCountryInitials(row.country)}
                     </td>
                     <td style={{ padding: '7px 10px' }}>
                       <span
@@ -1928,6 +2148,21 @@ export default function MarketingCampaignPage() {
                     <td style={{ padding: '7px 10px', color: '#bdd0e4', whiteSpace: 'nowrap' }}>
                       {row.tradingAccount}
                     </td>
+                    <td style={{ padding: '7px 10px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                      {row.skaleClosedPl == null
+                        ? 'n/a'
+                        : moneyWithCurrency(row.skaleClosedPl, row.accountCurrency)}
+                    </td>
+                    <td style={{ padding: '7px 10px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                      {row.skaleOpenPl == null
+                        ? 'n/a'
+                        : moneyWithCurrency(row.skaleOpenPl, row.accountCurrency)}
+                    </td>
+                    <td style={{ padding: '7px 10px', color: '#e2e8f0', whiteSpace: 'nowrap' }}>
+                      {row.skaleWd == null
+                        ? 'n/a'
+                        : moneyWithCurrency(row.skaleWd, row.accountCurrency)}
+                    </td>
                     <td style={{ padding: '7px 10px', color: '#bdd0e4', whiteSpace: 'nowrap' }}>
                       {row.user || 'Unassigned'}
                     </td>
@@ -1969,7 +2204,7 @@ export default function MarketingCampaignPage() {
               {!visibleRows.length ? (
                 <tr>
                   <td
-                    colSpan={13}
+                    colSpan={17}
                     style={{
                       padding: '16px 12px',
                       color: '#9db4c9',
@@ -2007,7 +2242,7 @@ export default function MarketingCampaignPage() {
             aria-label="Email preview"
             onClick={(event) => event.stopPropagation()}
             style={{
-              width: 'min(1180px, 100%)',
+              width: 'min(1260px, 100%)',
               maxHeight: 'min(92vh, 980px)',
               borderRadius: 20,
               overflow: 'hidden',
@@ -2169,6 +2404,57 @@ export default function MarketingCampaignPage() {
                 </div>
                 <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700, fontSize: 12 }}>
                   {selectedRow.mailOpenCount || 0} open · {selectedRow.mailClickCount || 0} click
+                </div>
+              </div>
+              <div style={{ ...cardBaseStyle, borderRadius: 10, minHeight: 58 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: '#93acc5',
+                    letterSpacing: '0.08em',
+                    fontWeight: 800,
+                  }}
+                >
+                  Closed PL
+                </div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700, fontSize: 12 }}>
+                  {selectedRow.skaleClosedPl == null
+                    ? 'n/a'
+                    : moneyWithCurrency(selectedRow.skaleClosedPl, selectedRow.accountCurrency)}
+                </div>
+              </div>
+              <div style={{ ...cardBaseStyle, borderRadius: 10, minHeight: 58 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: '#93acc5',
+                    letterSpacing: '0.08em',
+                    fontWeight: 800,
+                  }}
+                >
+                  Open PL
+                </div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700, fontSize: 12 }}>
+                  {selectedRow.skaleOpenPl == null
+                    ? 'n/a'
+                    : moneyWithCurrency(selectedRow.skaleOpenPl, selectedRow.accountCurrency)}
+                </div>
+              </div>
+              <div style={{ ...cardBaseStyle, borderRadius: 10, minHeight: 58 }}>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: '#93acc5',
+                    letterSpacing: '0.08em',
+                    fontWeight: 800,
+                  }}
+                >
+                  WD
+                </div>
+                <div style={{ marginTop: 4, color: '#d9ecff', fontWeight: 700, fontSize: 12 }}>
+                  {selectedRow.skaleWd == null
+                    ? 'n/a'
+                    : moneyWithCurrency(selectedRow.skaleWd, selectedRow.accountCurrency)}
                 </div>
               </div>
               <div style={{ ...cardBaseStyle, borderRadius: 10, minHeight: 58 }}>

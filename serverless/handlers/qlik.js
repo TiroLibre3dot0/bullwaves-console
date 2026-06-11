@@ -6170,6 +6170,7 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
     hydrateDbNativeStoreFromDisk()
     const urlObj = new URL(req.url || '/', 'http://localhost')
     const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
+    const plMode = normalizeText(urlObj.searchParams.get('plMode')).toLowerCase() === 'open' ? 'open' : 'closed'
     const affiliateId = normalizeText(urlObj.searchParams.get('affiliateId'))
     const topN = Math.min(parsePositiveInt(urlObj.searchParams.get('limit'), 100, 500), 500)
     const sortBy = urlObj.searchParams.get('sortBy') === 'volume' ? 'volume' : 'profit'
@@ -6214,6 +6215,7 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
       affiliateId || '',
       topN,
       sortBy,
+      plMode,
       fromIso,
       toIso,
       _dbNativeStoreState.updatedAt || '',
@@ -6305,11 +6307,22 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
       clients.push(row)
     }
 
-    const filteredClients = clients.filter((row) => {
-      if (!(hasExplicitDateFilter && sortBy === 'profit')) return true
-      return Math.abs(toFiniteNumber(row?.closedPl)) > 0.00001
+    const enrichedClients = clients.map((row) => {
+      const closedPl = toFiniteNumber(row?.closedPl)
+      const openPl = toFiniteNumber(row?.openPl)
+      return {
+        ...row,
+        closedPl,
+        openPl,
+        profitMetric: plMode === 'open' ? openPl : closedPl,
+      }
     })
-    filteredClients.sort((a, b) => sortBy === 'volume' ? b.trades - a.trades : b.closedPl - a.closedPl)
+
+    const filteredClients = enrichedClients.filter((row) => {
+      if (!(hasExplicitDateFilter && sortBy === 'profit')) return true
+      return Math.abs(toFiniteNumber(row?.profitMetric)) > 0.00001
+    })
+    filteredClients.sort((a, b) => sortBy === 'volume' ? b.trades - a.trades : b.profitMetric - a.profitMetric)
     const top = filteredClients.slice(0, topN)
 
     const entries = top.map((r, i) => ({
@@ -6320,6 +6333,9 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
       country: r.country,
       affiliateId: r.affiliateId,
       closedPl: r.closedPl,
+      openPl: r.openPl,
+      profitMetric: r.profitMetric,
+      profit: r.profitMetric,
       trades: r.trades,
     }))
 
@@ -6330,6 +6346,7 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
         total: filteredClients.length,
         topN,
         sortBy,
+        plMode,
         affiliateId: affiliateId || null,
         from: fromRaw || null,
         to: toRaw || null,

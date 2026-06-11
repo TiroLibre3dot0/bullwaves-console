@@ -25,7 +25,7 @@ const ACUITY_TEMPLATES = [
   {
     id: 'acuity-calendar',
     name: 'Bullwaves Acuity Calendar',
-    subject: "This Week's Market Calendar at a Glance",
+    subject: "Don't Trade Blind - This Week's Key Events Are Here",
     file: 'acuity-calendar.html',
   },
   {

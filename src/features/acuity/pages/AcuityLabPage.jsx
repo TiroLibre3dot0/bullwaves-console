@@ -88,7 +88,7 @@ const JOURNEYS = [
       { label: 'Sync SendGrid', note: 'Template pronto per invio', icon: 'send' },
     ],
     template: {
-      subject: "This Week's Market Calendar at a Glance",
+      subject: "Don't Trade Blind - This Week's Key Events Are Here",
       preview: 'Logo Bullwaves + 5 pannelli verticali del calendario Acuity',
       body: [
         { type: 'header', text: 'Acuity calendar layout' },

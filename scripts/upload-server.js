@@ -995,6 +995,26 @@ function rowSummary(row) {
   }
 }
 
+function parseSkaleMoney(value) {
+  const raw = String(value ?? '').trim().replace(/,/g, '')
+  if (!raw) return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+function pickSkaleMetrics(row) {
+  const user = Array.isArray(row?.userDetails?.data) && row.userDetails.data.length ? row.userDetails.data[0] : null
+  const snapshot = Array.isArray(user?.tp_accounts_last_snapshot_info) && user.tp_accounts_last_snapshot_info.length
+    ? user.tp_accounts_last_snapshot_info[0]
+    : null
+
+  return {
+    closedPl: parseSkaleMoney(snapshot?.closed_pnl),
+    openPl: parseSkaleMoney(snapshot?.open_pnl),
+    wd: null,
+  }
+}
+
 function matchScoreFromSummary(summary, queryText) {
   const q = String(queryText || '').trim().toLowerCase()
   if (!q) return 0
@@ -1170,6 +1190,8 @@ app.post('/api/skale/phones', async (req, res) => {
   const rows = Array.isArray(req.body?.rows) ? req.body.rows : []
   const forceLiveRaw = req.body?.forceLive
   const forceLive = forceLiveRaw === true || String(forceLiveRaw || '').trim().toLowerCase() === 'true' || String(forceLiveRaw || '').trim() === '1'
+  const includeMetricsRaw = req.body?.includeMetrics
+  const includeMetrics = includeMetricsRaw === true || String(includeMetricsRaw || '').trim().toLowerCase() === 'true' || String(includeMetricsRaw || '').trim() === '1'
   const concurrencyRaw = Number(req.body?.concurrency || 4)
   const concurrency = Math.max(1, Math.min(8, Number.isFinite(concurrencyRaw) ? concurrencyRaw : 4))
 
@@ -1186,11 +1208,14 @@ app.post('/api/skale/phones', async (req, res) => {
     const byEmail = new Map()
     const byMtCountry = new Map()
     const byEmailCountry = new Map()
+    const byMtMetrics = new Map()
+    const byEmailMetrics = new Map()
     const byCacheRowKey = new Map(Object.entries(cacheStore.byRowKey || {}))
     const byCacheAccount = new Map(Object.entries(cacheStore.byAccount || {}))
     const byCacheEmail = new Map(Object.entries(cacheStore.byEmail || {}))
     for (const snapRow of snapshotRows) {
       const summary = rowSummary(snapRow)
+      const metrics = pickSkaleMetrics(snapRow)
       const mt = normalizeDigits(summary?.mtId)
       const email = normalizeEmail(summary?.email)
       const phone = pickFirstText(summary?.phone)
@@ -1199,6 +1224,8 @@ app.post('/api/skale/phones', async (req, res) => {
       if (email && phone && !byEmail.has(email)) byEmail.set(email, phone)
       if (mt && country && !byMtCountry.has(mt)) byMtCountry.set(mt, country)
       if (email && country && !byEmailCountry.has(email)) byEmailCountry.set(email, country)
+      if (mt && metrics && (metrics.closedPl != null || metrics.openPl != null) && !byMtMetrics.has(mt)) byMtMetrics.set(mt, metrics)
+      if (email && metrics && (metrics.closedPl != null || metrics.openPl != null) && !byEmailMetrics.has(email)) byEmailMetrics.set(email, metrics)
     }
 
     const normalizedRows = rows.slice(0, 300).map((row, idx) => {
@@ -1215,6 +1242,7 @@ app.post('/api/skale/phones', async (req, res) => {
       let country = ''
       let source = ''
       let error = ''
+      let metrics = includeMetrics ? { closedPl: null, openPl: null, wd: null } : null
 
       const cachedRowKey = byCacheRowKey.get(row.rowKey)
       const cachedByAccount = row.account ? byCacheAccount.get(row.account) : null
@@ -1242,30 +1270,49 @@ app.post('/api/skale/phones', async (req, res) => {
         country = String(byEmailCountry.get(row.email) || '').trim()
       }
 
+      if (includeMetrics) {
+        if (row.account && byMtMetrics.has(row.account)) {
+          metrics = byMtMetrics.get(row.account)
+        } else if (row.email && byEmailMetrics.has(row.email)) {
+          metrics = byEmailMetrics.get(row.email)
+        }
+      }
+
+      const needContact = !phone || !country
+      const needMetrics = includeMetrics && (!metrics || (metrics.closedPl == null && metrics.openPl == null))
+
       // Run live lookups when data is incomplete after cache/snapshot.
-      if (forceLive && (!phone || !country)) {
+      if (forceLive && (needContact || needMetrics)) {
         try {
-          if (row.account && (!phone || !country)) {
+          let resolvedEmail = row.email
+
+          if (row.account && (needContact || needMetrics)) {
             const accountDetails = await skaleRequest('GetAccountDetails', { account_number: row.account })
             const accountPhone = pickFirstText(accountDetails?.object?.phone)
             const accountCountry = pickFirstText(accountDetails?.object?.country)
+            const accountEmail = normalizeEmail(accountDetails?.object?.email)
             if (accountPhone) {
               phone = accountPhone
               source = 'live:GetAccountDetails'
             }
             if (!country && accountCountry) country = accountCountry
+            if (!resolvedEmail && accountEmail) resolvedEmail = accountEmail
           }
 
-          if (row.email && (!phone || !country)) {
-            const userDetails = await skaleRequest('GetUserDetailsByEmail', { email: row.email })
+          if (resolvedEmail && (needContact || needMetrics)) {
+            const userDetails = await skaleRequest('GetUserDetailsByEmail', { email: resolvedEmail })
             const user = Array.isArray(userDetails?.data) && userDetails.data.length ? userDetails.data[0] : null
             const userPhone = pickFirstText(user?.phone)
             const userCountry = pickFirstText(user?.country)
+            const liveMetrics = pickSkaleMetrics({ userDetails })
             if (userPhone) {
               phone = userPhone
               source = 'live:GetUserDetailsByEmail'
             }
             if (!country && userCountry) country = userCountry
+            if (includeMetrics && (liveMetrics.closedPl != null || liveMetrics.openPl != null)) {
+              metrics = liveMetrics
+            }
           }
         } catch (e) {
           error = e?.message || 'live_lookup_failed'
@@ -1278,6 +1325,7 @@ app.post('/api/skale/phones', async (req, res) => {
         email: row.email,
         phone: phone || '',
         country: country || '',
+        metrics,
         source: source || (phone ? 'unknown' : 'none'),
         error,
       }
@@ -1285,6 +1333,7 @@ app.post('/api/skale/phones', async (req, res) => {
 
     const phones = {}
     const countries = {}
+    const metrics = {}
     const sources = {}
     const errors = {}
 
@@ -1299,6 +1348,13 @@ app.post('/api/skale/phones', async (req, res) => {
       if (!row?.rowKey) continue
       phones[row.rowKey] = String(row.phone || '')
       countries[row.rowKey] = String(row.country || '')
+      if (includeMetrics) {
+        metrics[row.rowKey] = {
+          closedPl: row?.metrics?.closedPl ?? null,
+          openPl: row?.metrics?.openPl ?? null,
+          wd: row?.metrics?.wd ?? null,
+        }
+      }
       sources[row.rowKey] = String(row.source || 'none')
       if (row.error) errors[row.rowKey] = String(row.error)
 
@@ -1325,8 +1381,14 @@ app.post('/api/skale/phones', async (req, res) => {
       cacheHits,
       phones,
       countries,
+      metrics,
       sources,
       errors,
+      metricsWindow: includeMetrics
+        ? {
+            source: 'skale-snapshot-live',
+          }
+        : null,
     })
   } catch (err) {
     return res.status(500).json({
