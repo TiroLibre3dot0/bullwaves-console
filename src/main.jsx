@@ -11,12 +11,25 @@ import { initAnalytics } from './utils/analytics'
 
 initAnalytics()
 
-// DEV safeguard: stale PWA service workers can mask local UI changes.
-// Keep this DEV-only to avoid touching production installs.
-if (import.meta.env.DEV && typeof window !== 'undefined') {
+// Safeguard for stale PWA service workers that can mask leaderboard/API updates.
+// In PROD we only apply it on trading competition public-facing routes.
+const pathname = typeof window !== 'undefined' ? window.location.pathname : ''
+const shouldClearSwInProd =
+  /^\/(trading-competition(?:\/widget)?|share\/trading-competition)(?:\/|$)/.test(pathname)
+
+if ((import.meta.env.DEV || shouldClearSwInProd) && typeof window !== 'undefined') {
   try {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((regs) => {
+        if (!regs?.length) return
+        const reloadKey = '_tc_sw_cleared_once'
+        if (shouldClearSwInProd && !sessionStorage.getItem(reloadKey)) {
+          sessionStorage.setItem(reloadKey, '1')
+          Promise.all((regs || []).map((r) => r.unregister())).finally(() => {
+            window.location.reload()
+          })
+          return
+        }
         for (const r of regs || []) r.unregister()
       })
     }
