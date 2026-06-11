@@ -547,6 +547,36 @@ function periodFromTabButton(btn) {
   return 'all';
 }
 
+function formatYmdLabel(ymd) {
+  const m = String(ymd || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return String(ymd || '');
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return d.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+function timeframeText(periodId) {
+  if (periodId === 'all') return 'all time';
+  const r = getDateRange(periodId);
+  if (!r.from || !r.to) return 'selected timeframe';
+  if (periodId === 'today') return `today (${formatYmdLabel(r.from)})`;
+  if (periodId === 'monthly') return `this month (${formatYmdLabel(r.from)} - ${formatYmdLabel(r.to)})`;
+  if (periodId === 'weekly') return `this week (${formatYmdLabel(r.from)} - ${formatYmdLabel(r.to)})`;
+  return `${formatYmdLabel(r.from)} - ${formatYmdLabel(r.to)}`;
+}
+
+function noTradersMessage(periodId, searchText) {
+  const tf = timeframeText(periodId);
+  const q = String(searchText || '').trim();
+  if (q) return `No traders found for "${q}" in ${tf}.`;
+  if (periodId === 'today') return `No trading data yet for ${tf}.`;
+  return `No traders found in ${tf}.`;
+}
+
 function fmt(n, sign) {
   const abs = Math.abs(Number(n||0));
   let s;
@@ -615,7 +645,7 @@ function renderTable() {
   if (!list.length) {
     body.innerHTML='';
     noRes.style.display='block';
-    noRes.textContent = q ? `No traders found for "${currentSearch}"` : 'No traders found.';
+    noRes.textContent = noTradersMessage(currentPeriod, currentSearch);
     return;
   }
   noRes.style.display='none';
