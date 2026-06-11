@@ -410,6 +410,19 @@ h1 { font-size: 36px; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 
 </footer>
 
 <script>
+// Deregister any Vite/Workbox service worker that may intercept API calls on this standalone page.
+(function clearSW() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.getRegistrations().then(function(regs) {
+    if (!regs.length) return;
+    if (sessionStorage.getItem('_sw_cleared')) return;
+    sessionStorage.setItem('_sw_cleared', '1');
+    Promise.all(regs.map(function(r) { return r.unregister(); })).then(function() {
+      window.location.reload();
+    });
+  });
+})();
+
 const AFFILIATE_ID = '35272';
 const REFRESH_MS = 60000;
 const LEADERBOARD_LIMIT = 200;
