@@ -6169,6 +6169,7 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
   try {
     hydrateDbNativeStoreFromDisk()
     const urlObj = new URL(req.url || '/', 'http://localhost')
+    const forceRefresh = normalizeText(urlObj.searchParams.get('refresh')) === '1'
     const affiliateId = normalizeText(urlObj.searchParams.get('affiliateId'))
     const topN = Math.min(parsePositiveInt(urlObj.searchParams.get('limit'), 100, 500), 500)
     const sortBy = urlObj.searchParams.get('sortBy') === 'volume' ? 'volume' : 'profit'
@@ -6190,6 +6191,25 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
     const fromIso = Number.isFinite(fromMs) ? isoDateOnlyFromMs(fromMs) : ''
     const toIso = Number.isFinite(toMs) ? isoDateOnlyFromMs(toMs) : ''
 
+    let nativeRows = Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows : []
+    const nowMs = Date.now()
+    const todayIsoUtc = nowIsoDateOnly()
+    const storeGeneratedMs = Date.parse(normalizeText(_dbNativeStoreState.generatedAt || _dbNativeStoreState.updatedAt))
+    const cacheAgeMs = Number.isFinite(storeGeneratedMs) ? Math.max(0, nowMs - storeGeneratedMs) : Number.MAX_SAFE_INTEGER
+    const storeGeneratedUtcIso = Number.isFinite(storeGeneratedMs) ? isoDateOnlyFromMs(storeGeneratedMs) : ''
+    const staleByAge = cacheAgeMs > DB_NATIVE_MAX_STALE_MS
+    const staleByDay = !storeGeneratedUtcIso || storeGeneratedUtcIso !== todayIsoUtc
+    const shouldSync = forceRefresh || !nativeRows.length || staleByAge || staleByDay
+
+    if (shouldSync) {
+      try {
+        const synced = await syncDbNativeStore({ forceRefresh: forceRefresh || staleByAge || staleByDay })
+        nativeRows = Array.isArray(synced?.rows) ? synced.rows : nativeRows
+      } catch {
+        // Keep serving available in-memory/disk rows when upstream sync is unavailable.
+      }
+    }
+
     const cacheKey = [
       affiliateId || '',
       topN,
@@ -6197,15 +6217,14 @@ async function handleCreolabsDbNativeLeaderboard(req, res) {
       fromIso,
       toIso,
       _dbNativeStoreState.updatedAt || '',
-      Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows.length : 0,
+      Array.isArray(nativeRows) ? nativeRows.length : 0,
     ].join('|')
     const cached = _dbNativeLeaderboardCache.get(cacheKey)
-    const nowMs = Date.now()
     if (cached && cached.expiresAt > nowMs) {
       return json(res, 200, cached.payload, { 'Cache-Control': 'no-store' })
     }
 
-    const allRows = Array.isArray(_dbNativeStoreState.rows) ? _dbNativeStoreState.rows : []
+    const allRows = Array.isArray(nativeRows) ? nativeRows : []
     const rawCandidates = affiliateId
       ? allRows.filter((raw) => {
           const aff = normalizeText(
