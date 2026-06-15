@@ -139,42 +139,50 @@ export default function SalesAgentsMonitor() {
   const [error, setError] = useState('')
   const [artifact, setArtifact] = useState(null)
   const [fileName, setFileName] = useState('')
+  const [sourceMode, setSourceMode] = useState('api')
+  const [lastLoadedAt, setLastLoadedAt] = useState(null)
   const [showBackToTop, setShowBackToTop] = useState(false)
 
-  const [timeframe, setTimeframe] = useState('last12')
+  const [timeframe, setTimeframe] = useState('month')
   const [selectedYear, setSelectedYear] = useState(null)
   const [selectedMonthKey, setSelectedMonthKey] = useState('')
 
   const [selectedAgents, setSelectedAgents] = useState([])
-  const [agentSearch, setAgentSearch] = useState('')
+  const [agentQuery, setAgentQuery] = useState('')
   const [focusSalesTeamOnly, setFocusSalesTeamOnly] = useState(false)
+  const [focusRetentionTeamOnly, setFocusRetentionTeamOnly] = useState(false)
 
   const todayRef = useRef(new Date())
   const loadReqRef = useRef(0)
   const pageRootRef = useRef(null)
 
-  const loadFromConsoleArtifact = useCallback(async () => {
-    const reqId = (loadReqRef.current = loadReqRef.current + 1)
-    setError('')
-    setLoading(true)
-    try {
-      const payload = await loadCreolabsQlikClientMonths({ force: false })
-      const clientMonths = Array.isArray(payload?.data?.clientMonths)
-        ? payload.data.clientMonths
-        : []
-      const rows = mapQlikClientMonthsToSalesRows(clientMonths)
-      const headers = Object.keys(rows[0] || {})
-      if (loadReqRef.current !== reqId) return
-      setFileName('Qlik CREOLABS API (live)')
-      setArtifact({ rows, headers })
-      reportQlikSource('sales-agents-monitor', 'api')
-    } catch (e) {
-      const msg = String(e?.message || '').trim() || 'Qlik API unavailable'
-      if (loadReqRef.current === reqId) setError(msg)
-    } finally {
-      if (loadReqRef.current === reqId) setLoading(false)
-    }
-  }, [reportQlikSource])
+  const loadFromConsoleArtifact = useCallback(
+    async ({ force = false } = {}) => {
+      const reqId = (loadReqRef.current = loadReqRef.current + 1)
+      setError('')
+      setLoading(true)
+      try {
+        const payload = await loadCreolabsQlikClientMonths({ force })
+        const clientMonths = Array.isArray(payload?.data?.clientMonths)
+          ? payload.data.clientMonths
+          : []
+        const rows = mapQlikClientMonthsToSalesRows(clientMonths)
+        const headers = Object.keys(rows[0] || {})
+        if (loadReqRef.current !== reqId) return
+        setFileName('Qlik CREOLABS API (live)')
+        setSourceMode(payload?.data?.cached ? 'cached' : 'api')
+        setLastLoadedAt(new Date())
+        setArtifact({ rows, headers })
+        reportQlikSource('sales-agents-monitor', 'api')
+      } catch (e) {
+        const msg = String(e?.message || '').trim() || 'Qlik API unavailable'
+        if (loadReqRef.current === reqId) setError(msg)
+      } finally {
+        if (loadReqRef.current === reqId) setLoading(false)
+      }
+    },
+    [reportQlikSource]
+  )
 
   useEffect(() => {
     if (!artifact) loadFromConsoleArtifact()
@@ -209,15 +217,65 @@ export default function SalesAgentsMonitor() {
   const rawRows = artifact?.rows || []
   const rawHeaders = artifact?.headers || []
 
-  const salesTeamLookup = useMemo(() => {
+  const businessDevelopmentRoles = useMemo(() => {
     const byId = Array.isArray(orgChartSections)
       ? orgChartSections.find((s) => String(s?.id || '') === 'business-development')
       : null
-    const roles = Array.isArray(byId?.roles) ? byId.roles : []
+    return Array.isArray(byId?.roles) ? byId.roles : []
+  }, [])
+
+  const salesTeamLookup = useMemo(() => {
+    const members = [
+      'Jake Morgan',
+      'jake.m@bullwaves.com',
+      'Ernest Medalla Bautista',
+      'Ernest Bautista',
+      'ernestmedallabautista96@gmail.com',
+      'ernest.bautista@bullwaves.com',
+      'Cruiseljohn',
+      'Cruisel John',
+      'Cruisel John Sanoy',
+      'cruiseljohn@gmail.com',
+      'csanoy@bullwaves.com',
+      'Jhunamae Masayon',
+      'Jhuna Mae Masayon',
+      'jhunamae.masayon@gmail.com',
+      'jmasayon@bullwaves.com',
+      'Santiagangelo Tabian',
+      'Santiangelo Tabian',
+      'Santiago Angelo Tabian',
+      'Santi Tabian',
+      'santiagangelo.tabian@gmail.com',
+      'Nicoangelo Calingasan2',
+      'Nicoangelo Calingasan',
+      'nicoangelo.calingasan2@gmail.com',
+    ]
 
     const keys = new Set()
-    for (const role of roles) {
+    for (const member of members) {
+      const raw = String(member || '').trim()
+      const email = raw.toLowerCase()
+      const local = email.includes('@') ? email.split('@')[0] : ''
+      const localSpaced = local.replace(/[._-]+/g, ' ').trim()
+      const candidates = [raw, local, localSpaced]
+      for (const c of candidates) {
+        const k = normalizeKey(c)
+        if (k) keys.add(k)
+      }
+    }
+    return keys
+  }, [])
+
+  const retentionTeamLookup = useMemo(() => {
+    const retentionSeeds = ['orlin', 'gabriela', 'milen', 'uros', 'imran', 'imram']
+
+    const keys = new Set()
+    for (const role of businessDevelopmentRoles) {
       const fullName = String(role?.name || '').trim()
+      const fullKey = normalizeKey(fullName)
+      const isIncluded = retentionSeeds.some((seed) => fullKey.includes(seed))
+      if (!isIncluded) continue
+
       const email = String(role?.email || '')
         .trim()
         .toLowerCase()
@@ -231,7 +289,10 @@ export default function SalesAgentsMonitor() {
       }
     }
     return keys
-  }, [])
+  }, [businessDevelopmentRoles])
+
+  const salesConversionTeamCount = 6
+  const retentionTeamCount = 5
 
   const isSalesTeamAgent = useCallback(
     (agentValue) => {
@@ -249,6 +310,24 @@ export default function SalesAgentsMonitor() {
       return false
     },
     [salesTeamLookup]
+  )
+
+  const isRetentionTeamAgent = useCallback(
+    (agentValue) => {
+      const raw = String(agentValue || '').trim()
+      if (!raw) return false
+
+      const key = normalizeKey(raw)
+      if (!key) return false
+      if (retentionTeamLookup.has(key)) return true
+
+      for (const memberKey of retentionTeamLookup) {
+        if (!memberKey || memberKey.length < 5) continue
+        if (key.includes(memberKey) || memberKey.includes(key)) return true
+      }
+      return false
+    },
+    [retentionTeamLookup]
   )
 
   const periodConfig = useMemo(() => {
@@ -330,7 +409,7 @@ export default function SalesAgentsMonitor() {
     return [...set].sort((a, b) => b - a)
   }, [extractPeriod, rawRows])
 
-  const monthOptionsForSelectedYear = useMemo(() => {
+  const availableMonthOptionsForSelectedYear = useMemo(() => {
     const targetYear = Number(selectedYear)
     if (!Number.isFinite(targetYear)) return []
 
@@ -343,27 +422,43 @@ export default function SalesAgentsMonitor() {
     return [...set].sort((a, b) => b - a)
   }, [extractPeriod, rawRows, selectedYear])
 
+  const monthOptionsForSelectedYear = useMemo(
+    () => Array.from({ length: 12 }, (_, idx) => 12 - idx),
+    []
+  )
+
   useEffect(() => {
     if (!yearOptions.length) return
     if (selectedYear && yearOptions.includes(selectedYear)) return
-    setSelectedYear(yearOptions[0])
+    const currentYear =
+      todayRef.current instanceof Date
+        ? todayRef.current.getUTCFullYear()
+        : new Date().getUTCFullYear()
+    setSelectedYear(yearOptions.includes(currentYear) ? currentYear : yearOptions[0])
   }, [selectedYear, yearOptions])
 
   useEffect(() => {
     if (timeframe !== 'month') return
-    if (!selectedYear || !monthOptionsForSelectedYear.length) return
+    if (!selectedYear || !availableMonthOptionsForSelectedYear.length) return
 
     const currentMonth = Number(String(selectedMonthKey || '').slice(5, 7))
     if (
       String(selectedMonthKey || '').startsWith(`${selectedYear}-`) &&
-      monthOptionsForSelectedYear.includes(currentMonth)
+      availableMonthOptionsForSelectedYear.includes(currentMonth)
     ) {
       return
     }
 
-    const latestMonth = monthOptionsForSelectedYear[0]
-    setSelectedMonthKey(`${selectedYear}-${String(latestMonth).padStart(2, '0')}`)
-  }, [monthOptionsForSelectedYear, selectedMonthKey, selectedYear, timeframe])
+    const now = todayRef.current instanceof Date ? todayRef.current : new Date()
+    const currentYear = now.getUTCFullYear()
+    const currentMonthNumber = now.getUTCMonth() + 1
+    const preferredMonth =
+      selectedYear === currentYear &&
+      availableMonthOptionsForSelectedYear.includes(currentMonthNumber)
+        ? currentMonthNumber
+        : availableMonthOptionsForSelectedYear[0]
+    setSelectedMonthKey(`${selectedYear}-${String(preferredMonth).padStart(2, '0')}`)
+  }, [availableMonthOptionsForSelectedYear, selectedMonthKey, selectedYear, timeframe])
 
   const filteredRows = useMemo(() => {
     const list = Array.isArray(rawRows) ? rawRows : []
@@ -404,14 +499,9 @@ export default function SalesAgentsMonitor() {
   }, [artifact, filteredRows, rawHeaders])
 
   const agentOptions = dataset?.agentUsers || []
-
-  const agentSearchLower = String(agentSearch || '')
+  const agentQueryLower = String(agentQuery || '')
     .trim()
     .toLowerCase()
-  const filteredAgentOptions = useMemo(() => {
-    if (!agentSearchLower) return agentOptions
-    return agentOptions.filter((a) => String(a).toLowerCase().includes(agentSearchLower))
-  }, [agentOptions, agentSearchLower])
 
   const filteredClients = useMemo(() => {
     const list = Array.isArray(dataset?.clients) ? dataset.clients : []
@@ -421,11 +511,32 @@ export default function SalesAgentsMonitor() {
 
     return list.filter((c) => {
       const agent = String(c?.agentUser || 'Unassigned').trim() || 'Unassigned'
+      const agentLower = agent.toLowerCase()
       if (selectedAgentSet.size && !selectedAgentSet.has(agent)) return false
-      if (focusSalesTeamOnly && !isSalesTeamAgent(agent)) return false
+      if (!selectedAgentSet.size && agentQueryLower && !agentLower.includes(agentQueryLower))
+        return false
+      if (focusSalesTeamOnly || focusRetentionTeamOnly) {
+        const inSales = isSalesTeamAgent(agent)
+        const inRetention = isRetentionTeamAgent(agent)
+        const include =
+          focusSalesTeamOnly && focusRetentionTeamOnly
+            ? inSales || inRetention
+            : focusSalesTeamOnly
+              ? inSales
+              : inRetention
+        if (!include) return false
+      }
       return true
     })
-  }, [dataset?.clients, focusSalesTeamOnly, isSalesTeamAgent, selectedAgents])
+  }, [
+    agentQueryLower,
+    dataset?.clients,
+    focusRetentionTeamOnly,
+    focusSalesTeamOnly,
+    isRetentionTeamAgent,
+    isSalesTeamAgent,
+    selectedAgents,
+  ])
 
   const salesAgentRows = useMemo(() => {
     const map = new Map()
@@ -506,6 +617,13 @@ export default function SalesAgentsMonitor() {
     }
     return { latestLabel: latest, prevLabel: prev, byAgent }
   }, [dataset?.schema, extractPeriod, filteredRows, periodAvailable])
+
+  const canPopulateMomColumn = useMemo(() => {
+    if (!latestPeriodNetByAgent.prevLabel) return false
+    const now = todayRef.current instanceof Date ? todayRef.current : new Date()
+    const currentPeriodKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+    return latestPeriodNetByAgent.latestLabel !== currentPeriodKey
+  }, [latestPeriodNetByAgent.latestLabel, latestPeriodNetByAgent.prevLabel])
 
   const bestSixAgents = useMemo(() => {
     const base = salesAgentRows.slice(0, 6)
@@ -769,16 +887,14 @@ export default function SalesAgentsMonitor() {
     }
   }, [selectedAgentCountryBreakdown])
 
-  const periodSummaryText =
-    timeframe === 'month' && selectedMonthKey
-      ? formatPeriodLabel(selectedMonthKey)
-      : timeframe === 'year' && selectedYear
-        ? `Anno ${selectedYear}`
-        : timeframe === 'all'
-          ? 'Tutti i periodi'
-          : 'Ultimi 12 mesi'
-
   const showOverlayLoader = Boolean(loading)
+  const freshnessLabel = lastLoadedAt
+    ? lastLoadedAt.toLocaleTimeString('it-IT', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      })
+    : '--'
 
   const headerCellStyle = {
     padding: '10px 12px',
@@ -801,6 +917,22 @@ export default function SalesAgentsMonitor() {
     cursor: 'help',
     textDecoration: 'underline dotted rgba(255,255,255,0.24)',
     textUnderlineOffset: 3,
+  }
+
+  const stickyColRank = {
+    position: 'sticky',
+    left: 0,
+    zIndex: 3,
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
+  }
+
+  const stickyColAgent = {
+    position: 'sticky',
+    left: 56,
+    zIndex: 3,
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
   }
 
   const sectionCardStyle = {
@@ -834,9 +966,6 @@ export default function SalesAgentsMonitor() {
     fontWeight: 600,
   }
 
-  const activeRatePct =
-    salesAgentKpis.clients > 0 ? (salesAgentKpis.activeClients / salesAgentKpis.clients) * 100 : 0
-  const selectedAgentCount = selectedAgents.length
   const personalCountryMetricLabel =
     selectedAgentCountryBreakdown[0]?.metricLabel === 'net' ? 'net deposit' : 'deposit'
 
@@ -865,333 +994,230 @@ export default function SalesAgentsMonitor() {
           className="page-header sales-agent-monitor-header"
           style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          <div className="sales-agent-monitor-hero">
-            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--intro">
-              <p className="page-label">{t('salesAgentsMonitor.section')}</p>
-              <h1 className="page-title">{t('salesAgentsMonitor.title')}</h1>
-              <p className="page-subtitle">{t('salesAgentsMonitor.subtitle')}</p>
-              <div className="sales-agent-monitor-sourceRow">
-                <span className="sales-agent-monitor-sourceLabel">Source</span>
-                <span className="sales-agent-monitor-sourceValue">
-                  {fileName || t('salesAgentsMonitor.dataSource')}
+          <section className="sales-agent-monitor-summaryStrip">
+            <div className="sales-agent-monitor-summaryRow">
+              <article className="sales-agent-monitor-summaryCard">
+                <span className="sales-agent-monitor-summaryLabel">
+                  {t('salesAgentsMonitor.kpi.agents')}
                 </span>
-              </div>
-              <div className="sales-agent-monitor-chipRow">
-                <span className="sales-agent-monitor-chip">Periodo: {periodSummaryText}</span>
-                <span className="sales-agent-monitor-chip">
-                  Agenti visibili: {fmtInt(salesAgentKpis.agents)}
-                </span>
-                <span className="sales-agent-monitor-chip">
-                  Clienti attivi: {fmtInt(activeRatePct)}%
-                </span>
-                <span className="sales-agent-monitor-chip sales-agent-monitor-chip--accent">
-                  {isPersonalMode ? `Focus: ${selectedAgentName}` : 'Vista team'}
-                </span>
-              </div>
-            </section>
+                <strong className="sales-agent-monitor-summaryValue">
+                  {fmtInt(salesAgentKpis.agents)}
+                </strong>
+              </article>
 
-            <section className="sales-agent-monitor-heroCard sales-agent-monitor-heroCard--filters">
-              <div className="sales-agent-monitor-panelHeader">
-                <div>
-                  <p style={sectionEyebrowStyle}>Controlli</p>
-                  <h2 style={sectionTitleStyle}>Filtro e focus</h2>
-                  <p style={sectionSubtitleStyle}>
-                    Riduci il rumore scegliendo periodo, team o singolo agente.
-                  </p>
+              <article className="sales-agent-monitor-summaryCard">
+                <span className="sales-agent-monitor-summaryLabel">
+                  {t('salesAgentsMonitor.kpi.activeClients')}
+                </span>
+                <strong className="sales-agent-monitor-summaryValue">
+                  {fmtInt(salesAgentKpis.activeClients)}
+                </strong>
+              </article>
+
+              <article className="sales-agent-monitor-summaryCard">
+                <span className="sales-agent-monitor-summaryLabel">
+                  {t('salesAgentsMonitor.kpi.totalDeposit')}
+                </span>
+                <strong className="sales-agent-monitor-summaryValue">
+                  {fmtMoney0(salesAgentKpis.totalDeposit)}
+                </strong>
+              </article>
+
+              <article className="sales-agent-monitor-summaryCard">
+                <span className="sales-agent-monitor-summaryLabel">
+                  {t('salesAgentsMonitor.kpi.totalNet')}
+                </span>
+                <strong className="sales-agent-monitor-summaryValue">
+                  {fmtMoney0(salesAgentKpis.totalNet)}
+                </strong>
+              </article>
+
+              <article className="sales-agent-monitor-summaryCard">
+                <span className="sales-agent-monitor-summaryLabel">
+                  {t('salesAgentsMonitor.kpi.avgNetPerAgent')}
+                </span>
+                <strong className="sales-agent-monitor-summaryValue">
+                  {fmtMoney0(salesAgentKpis.avgNetPerAgent)}
+                </strong>
+              </article>
+
+              <article className="sales-agent-monitor-summaryCard sales-agent-monitor-summaryCard--status">
+                <div className="sales-agent-monitor-summaryMeta">
+                  <span className="sales-agent-monitor-sourceBadge sales-agent-monitor-sourceBadge--neutral">
+                    Fonte: {sourceMode === 'cached' ? 'Cached snapshot' : 'Live API'}
+                  </span>
+                  <span className="sales-agent-monitor-sourceBadge sales-agent-monitor-sourceBadge--neutral">
+                    Aggiornato: {freshnessLabel}
+                  </span>
                 </div>
-              </div>
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
-                  gap: 12,
-                  width: '100%',
-                }}
-              >
-                <div
-                  className="ranking-filter-field"
-                  style={{
-                    minWidth: 0,
-                    padding: 12,
-                    borderRadius: 14,
-                    background: 'linear-gradient(180deg, rgba(15,23,42,0.88), rgba(8,15,30,0.78))',
-                    border: '1px solid rgba(56,189,248,0.16)',
-                    boxShadow: '0 10px 28px rgba(2, 8, 23, 0.18)',
-                  }}
+                <button
+                  type="button"
+                  className="sales-agent-monitor-refreshBtn"
+                  onClick={() => loadFromConsoleArtifact({ force: true })}
+                  disabled={loading}
                 >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      gap: 10,
-                      flexWrap: 'wrap',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <span className="ranking-filter-label" style={{ marginBottom: 0 }}>
-                      Periodo
-                    </span>
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      <span
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: 999,
-                          background: 'rgba(34,211,238,0.12)',
-                          border: '1px solid rgba(34,211,238,0.22)',
-                          color: 'rgba(186,230,253,0.96)',
-                          fontSize: 11,
-                          fontWeight: 800,
-                        }}
-                      >
-                        {periodSummaryText}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setTimeframe('last12')
-                          setSelectedMonthKey('')
-                        }}
-                        style={{
-                          border: '1px solid rgba(255,255,255,0.12)',
-                          background: 'rgba(255,255,255,0.04)',
-                          color: 'rgba(255,255,255,0.86)',
-                          borderRadius: 999,
-                          padding: '4px 8px',
-                          fontSize: 11,
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        Reset
-                      </button>
-                    </div>
-                  </div>
+                  {loading ? 'Aggiornamento...' : 'Aggiorna dati'}
+                </button>
+              </article>
+            </div>
+          </section>
 
+          <section
+            className="sales-agent-monitor-filterRow sales-agent-monitor-heroCard sales-agent-monitor-heroCard--filters"
+            style={{ padding: 12 }}
+          >
+            <div>
+              <div className="sales-agent-monitor-filterMenus">
+                <div
+                  className="ranking-filter-field sales-agent-monitor-filterUnit"
+                  style={{ minWidth: 160, flexShrink: 0 }}
+                >
                   {periodAvailable ? (
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: 8,
+                    <select
+                      value={timeframe === 'month' || timeframe === 'year' ? 'custom' : timeframe}
+                      onChange={(e) => {
+                        const next = String(e.target.value || 'last12')
+                        if (next === 'custom') {
+                          setTimeframe(selectedMonthKey ? 'month' : 'year')
+                          return
+                        }
+                        setTimeframe(next)
+                        if (next === 'all' || next === 'last12') setSelectedMonthKey('')
                       }}
+                      className="search-hero-input ranking-filter-input"
+                      style={{ minHeight: 40 }}
+                      aria-label="Intervallo periodo"
                     >
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            marginBottom: 6,
-                            color: 'var(--text-muted)',
-                            fontSize: 10,
-                            fontWeight: 900,
-                            letterSpacing: 0.4,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          Vista
-                        </div>
-                        <select
-                          value={
-                            timeframe === 'month' || timeframe === 'year' ? 'custom' : timeframe
-                          }
-                          onChange={(e) => {
-                            const next = String(e.target.value || 'last12')
-                            if (next === 'custom') {
-                              setTimeframe(selectedMonthKey ? 'month' : 'year')
-                              return
-                            }
-                            setTimeframe(next)
-                            if (next === 'all' || next === 'last12') setSelectedMonthKey('')
-                          }}
-                          className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
-                        >
-                          <option value="last12">Ultimi 12 mesi</option>
-                          <option value="custom">Personalizzato</option>
-                          <option value="all">Tutti</option>
-                        </select>
-                      </div>
-
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            marginBottom: 6,
-                            color: 'var(--text-muted)',
-                            fontSize: 10,
-                            fontWeight: 900,
-                            letterSpacing: 0.4,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          Anno
-                        </div>
-                        <select
-                          value={selectedYear || ''}
-                          onChange={(e) => {
-                            const year = Number(e.target.value || 0) || null
-                            setSelectedYear(year)
-                            setSelectedMonthKey('')
-                            if (year) setTimeframe('year')
-                          }}
-                          className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
-                        >
-                          {yearOptions.map((year) => (
-                            <option key={`year-${year}`} value={year}>
-                              {year}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div style={{ minWidth: 0 }}>
-                        <div
-                          style={{
-                            marginBottom: 6,
-                            color: 'var(--text-muted)',
-                            fontSize: 10,
-                            fontWeight: 900,
-                            letterSpacing: 0.4,
-                            textTransform: 'uppercase',
-                          }}
-                        >
-                          Mese
-                        </div>
-                        <select
-                          value={selectedMonthKey || ''}
-                          onChange={(e) => {
-                            const periodKey = String(e.target.value || '')
-                            if (!periodKey) {
-                              setSelectedMonthKey('')
-                              setTimeframe(selectedYear ? 'year' : 'all')
-                              return
-                            }
-                            setSelectedMonthKey(periodKey)
-                            setTimeframe('month')
-                          }}
-                          className="search-hero-input ranking-filter-input"
-                          style={{ minHeight: 38 }}
-                          disabled={!selectedYear}
-                        >
-                          <option value="">Tutti i mesi</option>
-                          {monthOptionsForSelectedYear.map((month) => {
-                            const value = `${selectedYear}-${String(month).padStart(2, '0')}`
-                            return (
-                              <option key={`month-${value}`} value={value}>
-                                {formatPeriodLabel(value)}
-                              </option>
-                            )
-                          })}
-                        </select>
-                      </div>
-                    </div>
+                      <option value="last12">Ultimi 12 mesi</option>
+                      <option value="custom">Personalizzato</option>
+                      <option value="all">Tutti</option>
+                    </select>
                   ) : null}
                 </div>
 
                 <div
-                  className="ranking-filter-field ranking-filter-field--agent"
-                  style={{ minWidth: 0, flexShrink: 0 }}
+                  className="ranking-filter-field sales-agent-monitor-filterUnit"
+                  style={{ minWidth: 140, flexShrink: 0 }}
                 >
-                  <span className="ranking-filter-label">
-                    {t('salesAgentsMonitor.filterByAgent')}
-                  </span>
-                  <label
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      marginBottom: 8,
-                      fontSize: 12,
-                      color: 'var(--text-muted)',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={focusSalesTeamOnly}
-                      onChange={(e) => setFocusSalesTeamOnly(Boolean(e.target.checked))}
-                      style={{ accentColor: 'var(--accent-primary)' }}
-                    />
-                    <span>
-                      {t('salesAgentsMonitor.focusSalesTeamOnly')} ({salesTeamLookup.size})
-                    </span>
-                  </label>
-                  <input
-                    type="text"
-                    className="search-hero-input ranking-filter-input"
-                    value={agentSearch}
-                    onChange={(e) => setAgentSearch(String(e.target.value || ''))}
-                    placeholder={t('salesAgentsMonitor.searchAgents')}
-                  />
                   <select
-                    value={selectedAgentName}
+                    value={selectedYear || ''}
                     onChange={(e) => {
-                      const value = String(e.target.value || '')
-                      setSelectedAgents(value ? [value] : [])
+                      const year = Number(e.target.value || 0) || null
+                      setSelectedYear(year)
+                      setSelectedMonthKey('')
+                      if (year) setTimeframe('year')
                     }}
-                    className="search-hero-input ranking-filter-input ranking-filter-agents"
+                    className="search-hero-input ranking-filter-input"
                     style={{ minHeight: 40 }}
+                    aria-label="Anno"
                   >
-                    <option value="">{t('salesAgentsMonitor.personal.selectPlaceholder')}</option>
-                    {filteredAgentOptions.map((a) => (
-                      <option key={String(a)} value={String(a)}>
-                        {a}
+                    {yearOptions.map((year) => (
+                      <option key={`year-${year}`} value={year}>
+                        {year}
                       </option>
                     ))}
                   </select>
                 </div>
-              </div>
-            </section>
-          </div>
 
-          <section className="sales-agent-monitor-kpiShell">
-            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 10 }}>
-              <div>
-                <p style={sectionEyebrowStyle}>Sintesi</p>
-                <h2 style={sectionTitleStyle}>Snapshot operativo</h2>
+                <div
+                  className="ranking-filter-field sales-agent-monitor-filterUnit"
+                  style={{ minWidth: 170, flexShrink: 0 }}
+                >
+                  <select
+                    value={selectedMonthKey || ''}
+                    onChange={(e) => {
+                      const periodKey = String(e.target.value || '')
+                      if (!periodKey) {
+                        setSelectedMonthKey('')
+                        setTimeframe(selectedYear ? 'year' : 'all')
+                        return
+                      }
+                      setSelectedMonthKey(periodKey)
+                      setTimeframe('month')
+                    }}
+                    className="search-hero-input ranking-filter-input"
+                    style={{ minHeight: 40 }}
+                    disabled={!selectedYear}
+                    aria-label="Mese"
+                  >
+                    <option value="">Tutti i mesi</option>
+                    {monthOptionsForSelectedYear.map((month) => {
+                      const value = `${selectedYear}-${String(month).padStart(2, '0')}`
+                      const hasData = availableMonthOptionsForSelectedYear.includes(month)
+                      return (
+                        <option key={`month-${value}`} value={value}>
+                          {formatPeriodLabel(value)}
+                          {hasData ? '' : ' (no data)'}
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+
+                <div
+                  className="ranking-filter-field sales-agent-monitor-filterUnit"
+                  style={{ minWidth: 300, flexShrink: 0 }}
+                >
+                  <input
+                    type="text"
+                    className="search-hero-input ranking-filter-input ranking-filter-agents"
+                    value={agentQuery}
+                    onChange={(e) => {
+                      const rawValue = String(e.target.value || '')
+                      setAgentQuery(rawValue)
+
+                      const normalized = rawValue.trim().toLowerCase()
+                      if (!normalized) {
+                        setSelectedAgents([])
+                        return
+                      }
+
+                      const exactMatch = agentOptions.find(
+                        (a) =>
+                          String(a || '')
+                            .trim()
+                            .toLowerCase() === normalized
+                      )
+                      setSelectedAgents(exactMatch ? [String(exactMatch)] : [])
+                    }}
+                    list="sales-agent-options"
+                    style={{ minHeight: 40 }}
+                    placeholder={t('salesAgentsMonitor.personal.selectPlaceholder')}
+                    aria-label={t('salesAgentsMonitor.filterByAgent')}
+                  />
+                  <datalist id="sales-agent-options">
+                    {agentOptions.map((a) => (
+                      <option key={String(a)} value={String(a)} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <label
+                  className="ranking-filter-field sales-agent-monitor-filterUnit sales-agent-monitor-filterUnit--check"
+                  style={{ minWidth: 190, flexShrink: 0 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={focusSalesTeamOnly}
+                    onChange={(e) => setFocusSalesTeamOnly(Boolean(e.target.checked))}
+                    style={{ accentColor: 'var(--accent-primary)' }}
+                  />
+                  <span>Sales-conversion team ({salesConversionTeamCount})</span>
+                </label>
+
+                <label
+                  className="ranking-filter-field sales-agent-monitor-filterUnit sales-agent-monitor-filterUnit--check"
+                  style={{ minWidth: 210, flexShrink: 0 }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={focusRetentionTeamOnly}
+                    onChange={(e) => setFocusRetentionTeamOnly(Boolean(e.target.checked))}
+                    style={{ accentColor: 'var(--accent-primary)' }}
+                  />
+                  <span>Retention team ({retentionTeamCount})</span>
+                </label>
               </div>
-              <p className="sales-agent-monitor-kpiNote">
-                Depositi, net e copertura attiva aggiornati sul perimetro filtrato.
-              </p>
-            </div>
-            <div className="sales-agent-monitor-kpiGrid">
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.agents')}
-                value={fmtInt(salesAgentKpis.agents)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.activeClients')}
-                value={fmtInt(salesAgentKpis.activeClients)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.totalDeposit')}
-                value={fmtMoney0(salesAgentKpis.totalDeposit)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.totalNet')}
-                value={fmtMoney0(salesAgentKpis.totalNet)}
-                size="sm"
-                density="compact"
-              />
-              <KpiCard
-                label={t('salesAgentsMonitor.kpi.avgNetPerAgent')}
-                value={fmtMoney0(salesAgentKpis.avgNetPerAgent)}
-                size="sm"
-                density="compact"
-              />
             </div>
           </section>
         </header>
@@ -1212,7 +1238,237 @@ export default function SalesAgentsMonitor() {
           </div>
         ) : null}
 
-        {/* ── HERO SECTION: overview vs personal ── */}
+        <section
+          className="sales-agent-monitor-section"
+          style={{ ...sectionCardStyle, padding: 18 }}
+        >
+          <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
+            <div>
+              <p style={sectionEyebrowStyle}>Ranking</p>
+              <h2 style={sectionTitleStyle}>Ranking agenti</h2>
+              <p style={sectionSubtitleStyle}>
+                Classifica completa per confrontare in modo ordinato performance e trend.
+              </p>
+            </div>
+            <div className="sales-agent-monitor-miniStat">
+              <span className="sales-agent-monitor-miniStatLabel">Agenti visibili</span>
+              <span className="sales-agent-monitor-miniStatValue">
+                {fmtInt(salesAgentRows.length)}
+              </span>
+            </div>
+          </div>
+          <div
+            className="ranking-table-scroll hide-scrollbar"
+            tabIndex={0}
+            aria-label="Sales agents table"
+            style={{
+              overflowY: 'visible',
+              maxHeight: 'none',
+              overflowX: 'auto',
+              overscrollBehavior: 'auto',
+            }}
+          >
+            <table
+              className="table payout-unified-table ranking-table sticky-metrics-table"
+              style={{
+                width: '100%',
+                minWidth: 1380,
+                borderCollapse: 'separate',
+                borderSpacing: 0,
+              }}
+            >
+              <thead>
+                <tr>
+                  <th
+                    style={{ ...headerCellStyle, ...stickyColRank, textAlign: 'left', width: 56 }}
+                  >
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.rank')}>
+                      {t('salesAgentsMonitor.table.rank')}
+                    </span>
+                  </th>
+                  <th
+                    style={{ ...headerCellStyle, ...stickyColAgent, textAlign: 'left', width: 200 }}
+                  >
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.agent')}>
+                      {t('salesAgentsMonitor.table.agent')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.clients')}>
+                      {t('salesAgentsMonitor.table.clients')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.active')}>
+                      {t('salesAgentsMonitor.table.active')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.deposit')}>
+                      {t('salesAgentsMonitor.table.deposit')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.wd')}>
+                      {t('salesAgentsMonitor.table.wd')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.net')}>
+                      {t('salesAgentsMonitor.table.net')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.closedPl')}>
+                      {t('salesAgentsMonitor.table.closedPl')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.trades')}>
+                      {t('salesAgentsMonitor.table.trades')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span
+                      style={metricLabelStyle}
+                      title={t('salesAgentsMonitor.tooltip.netPerClient')}
+                    >
+                      {t('salesAgentsMonitor.table.netPerClient')}
+                    </span>
+                  </th>
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span
+                      style={metricLabelStyle}
+                      title={t('salesAgentsMonitor.tooltip.tradesPerClient')}
+                    >
+                      {t('salesAgentsMonitor.table.tradesPerClient')}
+                    </span>
+                  </th>
+                  {latestPeriodNetByAgent.latestLabel ? (
+                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                      Net {latestPeriodNetByAgent.latestLabel}
+                    </th>
+                  ) : null}
+                  {latestPeriodNetByAgent.prevLabel ? (
+                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                      Net {latestPeriodNetByAgent.prevLabel}
+                    </th>
+                  ) : null}
+                  <th style={{ ...headerCellStyle, textAlign: 'right' }}>
+                    <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.momDelta')}>
+                      {t('salesAgentsMonitor.table.momDelta')}
+                    </span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {salesAgentRows.map((r, idx) => {
+                  const trend = latestPeriodNetByAgent.byAgent.get(r.agent) || {
+                    latest: 0,
+                    prev: 0,
+                  }
+                  const delta = Number(trend.latest || 0) - Number(trend.prev || 0)
+                  const deltaTone = toneFromDelta(delta)
+                  const deltaColor =
+                    deltaTone === 'up'
+                      ? 'rgba(16, 185, 129, 0.95)'
+                      : deltaTone === 'down'
+                        ? 'rgba(248, 113, 113, 0.95)'
+                        : 'var(--text-muted)'
+
+                  return (
+                    <tr
+                      key={r.agent}
+                      style={{ background: idx % 2 ? 'rgba(255,255,255,0.008)' : 'transparent' }}
+                    >
+                      <td
+                        style={{
+                          ...bodyCellStyle,
+                          ...stickyColRank,
+                          textAlign: 'left',
+                          fontWeight: 800,
+                          background: idx % 2 ? 'rgba(11,16,28,0.94)' : 'rgba(7,12,22,0.94)',
+                        }}
+                      >
+                        {idx + 1}
+                      </td>
+                      <td
+                        style={{
+                          ...bodyCellStyle,
+                          ...stickyColAgent,
+                          textAlign: 'left',
+                          fontWeight: 800,
+                          background: idx % 2 ? 'rgba(11,16,28,0.9)' : 'rgba(7,12,22,0.9)',
+                        }}
+                      >
+                        {r.agent}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>{fmtInt(r.clients)}</td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtInt(r.activeClients)}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtMoney0(r.deposit)}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtMoney0(r.withdrawals)}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>{fmtMoney0(r.net)}</td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtMoney0(r.closedPL)}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>{fmtInt(r.trades)}</td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtMoney0(r.netPerClient)}
+                      </td>
+                      <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                        {fmtNum2(r.tradesPerClient)}
+                      </td>
+                      {latestPeriodNetByAgent.latestLabel ? (
+                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                          {fmtMoney0(trend.latest)}
+                        </td>
+                      ) : null}
+                      {latestPeriodNetByAgent.prevLabel ? (
+                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
+                          {fmtMoney0(trend.prev)}
+                        </td>
+                      ) : null}
+                      <td
+                        style={{
+                          ...bodyCellStyle,
+                          textAlign: 'right',
+                          fontWeight: 800,
+                          color: canPopulateMomColumn ? deltaColor : 'var(--text-muted)',
+                        }}
+                      >
+                        {canPopulateMomColumn ? fmtSignedMoney0(delta) : '--'}
+                      </td>
+                    </tr>
+                  )
+                })}
+                {!salesAgentRows.length ? (
+                  <tr>
+                    <td
+                      colSpan={
+                        latestPeriodNetByAgent.latestLabel
+                          ? latestPeriodNetByAgent.prevLabel
+                            ? 14
+                            : 13
+                          : 12
+                      }
+                      style={{ ...bodyCellStyle, padding: 14, color: 'var(--text-muted)' }}
+                    >
+                      {t('salesAgentsMonitor.table.noAgents')}
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* ── INSIGHTS SECTION: overview vs personal ── */}
         {!isPersonalMode ? (
           <section
             className="sales-agent-monitor-section"
@@ -1252,11 +1508,13 @@ export default function SalesAgentsMonitor() {
                 return (
                   <article
                     key={`top-${agent.agent}`}
+                    className="sales-agent-monitor-reveal"
                     style={{
                       borderRadius: 10,
                       border: '1px solid rgba(255,255,255,0.1)',
                       background: 'rgba(9,14,22,0.6)',
                       padding: 10,
+                      animationDelay: `${Math.min(360, agent.rank * 40)}ms`,
                     }}
                   >
                     <div
@@ -1298,6 +1556,22 @@ export default function SalesAgentsMonitor() {
                   </article>
                 )
               })}
+              {loading && !bestSixAgents.length
+                ? Array.from({ length: 6 }).map((_, idx) => (
+                    <article
+                      key={`top-skeleton-${idx}`}
+                      className="sales-agent-monitor-skeletonCard"
+                      style={{ animationDelay: `${idx * 60}ms` }}
+                    >
+                      <div className="sales-agent-monitor-skeletonLine" style={{ width: '72%' }} />
+                      <div
+                        className="sales-agent-monitor-skeletonLine"
+                        style={{ width: '48%', height: 18, marginTop: 10 }}
+                      />
+                      <div className="sales-agent-monitor-skeletonLine" style={{ width: '90%' }} />
+                    </article>
+                  ))
+                : null}
               {!bestSixAgents.length ? (
                 <div style={{ color: 'var(--text-muted)', fontWeight: 700, fontSize: 12 }}>
                   {t('salesAgentsMonitor.top6.empty')}
@@ -1790,11 +2064,13 @@ export default function SalesAgentsMonitor() {
                 {agentsWithAlerts.map((alert) => (
                   <article
                     key={`alert-${alert.agent}`}
+                    className="sales-agent-monitor-reveal"
                     style={{
                       borderRadius: 12,
                       border: '1px solid rgba(248,113,113,0.24)',
                       background: 'linear-gradient(180deg, rgba(127,29,29,0.2), rgba(9,14,22,0.5))',
                       padding: 12,
+                      animationDelay: `${Math.min(420, alert.issues.length * 30)}ms`,
                     }}
                   >
                     <div
@@ -1843,235 +2119,7 @@ export default function SalesAgentsMonitor() {
           </section>
         ) : null}
 
-        {isPersonalMode ? (
-          <section
-            className="sales-agent-monitor-section"
-            style={{ ...sectionCardStyle, padding: 18 }}
-          >
-            <div className="sales-agent-monitor-panelHeader" style={{ marginBottom: 14 }}>
-              <div>
-                <p style={sectionEyebrowStyle}>Dettaglio</p>
-                <h2 style={sectionTitleStyle}>Tabella comparativa</h2>
-                <p style={sectionSubtitleStyle}>
-                  Metriche complete per confrontare gli agenti sul perimetro attuale.
-                </p>
-              </div>
-              <div className="sales-agent-monitor-miniStat">
-                <span className="sales-agent-monitor-miniStatLabel">Agenti selezionati</span>
-                <span className="sales-agent-monitor-miniStatValue">
-                  {fmtInt(selectedAgentCount)}
-                </span>
-              </div>
-            </div>
-            <div
-              className="ranking-table-scroll hide-scrollbar"
-              tabIndex={0}
-              aria-label="Sales agents table"
-              style={{
-                overflowY: 'visible',
-                maxHeight: 'none',
-                overflowX: 'auto',
-                overscrollBehavior: 'auto',
-              }}
-            >
-              <table
-                className="table payout-unified-table ranking-table sticky-metrics-table"
-                style={{
-                  width: '100%',
-                  minWidth: 1380,
-                  borderCollapse: 'separate',
-                  borderSpacing: 0,
-                }}
-              >
-                <thead>
-                  <tr>
-                    <th style={{ ...headerCellStyle, textAlign: 'left', width: 56 }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.rank')}>
-                        {t('salesAgentsMonitor.table.rank')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'left', width: 200 }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.agent')}>
-                        {t('salesAgentsMonitor.table.agent')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span
-                        style={metricLabelStyle}
-                        title={t('salesAgentsMonitor.tooltip.clients')}
-                      >
-                        {t('salesAgentsMonitor.table.clients')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.active')}>
-                        {t('salesAgentsMonitor.table.active')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span
-                        style={metricLabelStyle}
-                        title={t('salesAgentsMonitor.tooltip.deposit')}
-                      >
-                        {t('salesAgentsMonitor.table.deposit')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.wd')}>
-                        {t('salesAgentsMonitor.table.wd')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.net')}>
-                        {t('salesAgentsMonitor.table.net')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span
-                        style={metricLabelStyle}
-                        title={t('salesAgentsMonitor.tooltip.closedPl')}
-                      >
-                        {t('salesAgentsMonitor.table.closedPl')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span style={metricLabelStyle} title={t('salesAgentsMonitor.tooltip.trades')}>
-                        {t('salesAgentsMonitor.table.trades')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span
-                        style={metricLabelStyle}
-                        title={t('salesAgentsMonitor.tooltip.netPerClient')}
-                      >
-                        {t('salesAgentsMonitor.table.netPerClient')}
-                      </span>
-                    </th>
-                    <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                      <span
-                        style={metricLabelStyle}
-                        title={t('salesAgentsMonitor.tooltip.tradesPerClient')}
-                      >
-                        {t('salesAgentsMonitor.table.tradesPerClient')}
-                      </span>
-                    </th>
-                    {latestPeriodNetByAgent.latestLabel ? (
-                      <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                        Net {latestPeriodNetByAgent.latestLabel}
-                      </th>
-                    ) : null}
-                    {latestPeriodNetByAgent.prevLabel ? (
-                      <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                        Net {latestPeriodNetByAgent.prevLabel}
-                      </th>
-                    ) : null}
-                    {latestPeriodNetByAgent.prevLabel ? (
-                      <th style={{ ...headerCellStyle, textAlign: 'right' }}>
-                        <span
-                          style={metricLabelStyle}
-                          title={t('salesAgentsMonitor.tooltip.momDelta')}
-                        >
-                          {t('salesAgentsMonitor.table.momDelta')}
-                        </span>
-                      </th>
-                    ) : null}
-                  </tr>
-                </thead>
-                <tbody>
-                  {salesAgentRows.map((r, idx) => {
-                    const trend = latestPeriodNetByAgent.byAgent.get(r.agent) || {
-                      latest: 0,
-                      prev: 0,
-                    }
-                    const delta = Number(trend.latest || 0) - Number(trend.prev || 0)
-                    const deltaTone = toneFromDelta(delta)
-                    const deltaColor =
-                      deltaTone === 'up'
-                        ? 'rgba(16, 185, 129, 0.95)'
-                        : deltaTone === 'down'
-                          ? 'rgba(248, 113, 113, 0.95)'
-                          : 'var(--text-muted)'
-
-                    return (
-                      <tr
-                        key={r.agent}
-                        style={{ background: idx % 2 ? 'rgba(255,255,255,0.008)' : 'transparent' }}
-                      >
-                        <td style={{ ...bodyCellStyle, textAlign: 'left', fontWeight: 800 }}>
-                          {idx + 1}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'left', fontWeight: 800 }}>
-                          {r.agent}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtInt(r.clients)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtInt(r.activeClients)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtMoney0(r.deposit)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtMoney0(r.withdrawals)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>{fmtMoney0(r.net)}</td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtMoney0(r.closedPL)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>{fmtInt(r.trades)}</td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtMoney0(r.netPerClient)}
-                        </td>
-                        <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                          {fmtNum2(r.tradesPerClient)}
-                        </td>
-                        {latestPeriodNetByAgent.latestLabel ? (
-                          <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                            {fmtMoney0(trend.latest)}
-                          </td>
-                        ) : null}
-                        {latestPeriodNetByAgent.prevLabel ? (
-                          <td style={{ ...bodyCellStyle, textAlign: 'right' }}>
-                            {fmtMoney0(trend.prev)}
-                          </td>
-                        ) : null}
-                        {latestPeriodNetByAgent.prevLabel ? (
-                          <td
-                            style={{
-                              ...bodyCellStyle,
-                              textAlign: 'right',
-                              fontWeight: 800,
-                              color: deltaColor,
-                            }}
-                          >
-                            {fmtSignedMoney0(delta)}
-                          </td>
-                        ) : null}
-                      </tr>
-                    )
-                  })}
-                  {!salesAgentRows.length ? (
-                    <tr>
-                      <td
-                        colSpan={
-                          latestPeriodNetByAgent.prevLabel
-                            ? 14
-                            : latestPeriodNetByAgent.latestLabel
-                              ? 12
-                              : 11
-                        }
-                        style={{ ...bodyCellStyle, padding: 14, color: 'var(--text-muted)' }}
-                      >
-                        {t('salesAgentsMonitor.table.noAgents')}
-                      </td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ) : (
+        {!isPersonalMode ? (
           <section
             className="sales-agent-monitor-section sales-agent-monitor-cta"
             style={{
@@ -2089,7 +2137,7 @@ export default function SalesAgentsMonitor() {
               {t('salesAgentsMonitor.personal.ctaSubtitle')}
             </div>
           </section>
-        )}
+        ) : null}
       </div>
 
       <button
