@@ -11,6 +11,15 @@ const PH_DAY_LABEL = {
   sat: 'Saturday',
   sun: 'Sunday',
 }
+const PH_WEEKDAY_TO_KEY = {
+  Mon: 'mon',
+  Tue: 'tue',
+  Wed: 'wed',
+  Thu: 'thu',
+  Fri: 'fri',
+  Sat: 'sat',
+  Sun: 'sun',
+}
 const PH_GRID_START = 4
 const PH_GRID_END = 22
 const PH_HOUR_PX = 24
@@ -132,9 +141,66 @@ function phHeatColor(count) {
   return '#22c55e'
 }
 
+function phPrevDay(dayKey) {
+  const idx = PH_DAYS.indexOf(dayKey)
+  if (idx < 0) return 'sun'
+  return PH_DAYS[(idx + PH_DAYS.length - 1) % PH_DAYS.length]
+}
+
+function getUkLiveSnapshot(now = new Date()) {
+  const dayText = now.toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short' })
+  const timeText = now.toLocaleString('en-GB', {
+    timeZone: 'Europe/London',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  const [hourStr, minuteStr] = String(timeText || '00:00').split(':')
+  const day = PH_WEEKDAY_TO_KEY[String(dayText || '').trim()] || 'mon'
+  const hour = Number.parseInt(hourStr, 10)
+  const minute = Number.parseInt(minuteStr, 10)
+  return {
+    day,
+    hour: Number.isFinite(hour) ? hour : 0,
+    minute: Number.isFinite(minute) ? minute : 0,
+  }
+}
+
+function phIsAgentOnDutyNow(agent, live) {
+  if (!agent || !live) return false
+  const sameDayShift = agent.schedule[live.day]
+  const prevDayShift = agent.schedule[phPrevDay(live.day)]
+
+  const onSameDay =
+    sameDayShift != null && live.hour >= sameDayShift.s && live.hour < Math.min(sameDayShift.e, 24)
+
+  const onPrevDayOvernight =
+    prevDayShift != null && prevDayShift.e > 24 && live.hour < prevDayShift.e - 24
+
+  return onSameDay || onPrevDayOvernight
+}
+
+function phIsAgentLiveInColumn(agent, columnDay, live) {
+  if (!agent || !live) return false
+  const prevDay = phPrevDay(live.day)
+
+  if (columnDay === live.day) {
+    const shift = agent.schedule[columnDay]
+    return shift != null && live.hour >= shift.s && live.hour < Math.min(shift.e, 24)
+  }
+
+  if (columnDay === prevDay) {
+    const shift = agent.schedule[columnDay]
+    return shift != null && shift.e > 24 && live.hour < shift.e - 24
+  }
+
+  return false
+}
+
 export default function PublicPhTeamCoverageSharePage() {
   const [view, setView] = useState('calendar')
   const [hoveredShift, setHoveredShift] = useState(null)
+  const [liveTick, setLiveTick] = useState(() => Date.now())
   const [viewport, setViewport] = useState(() => {
     if (typeof window === 'undefined') return { w: 1440, h: 900 }
     return { w: window.innerWidth, h: window.innerHeight }
@@ -180,6 +246,25 @@ export default function PublicPhTeamCoverageSharePage() {
   useEffect(() => {
     if (view !== 'calendar') setHoveredShift(null)
   }, [view])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const id = window.setInterval(() => setLiveTick(Date.now()), 30000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  const liveSnapshot = useMemo(() => getUkLiveSnapshot(new Date(liveTick)), [liveTick])
+
+  const onDutyNowAgents = useMemo(() => {
+    return PH_AGENTS.filter((agent) => phIsAgentOnDutyNow(agent, liveSnapshot))
+  }, [liveSnapshot])
+
+  const liveLabel = useMemo(() => {
+    const day = PH_DAY_LABEL[liveSnapshot.day] || liveSnapshot.day
+    const hh = String(liveSnapshot.hour).padStart(2, '0')
+    const mm = String(liveSnapshot.minute).padStart(2, '0')
+    return `${day} ${hh}:${mm} UK`
+  }, [liveSnapshot])
 
   const kpis = useMemo(() => {
     const totalHours = PH_AGENTS.reduce((acc, agent) => acc + Number(agent.weeklyHours || 0), 0)
@@ -373,6 +458,7 @@ export default function PublicPhTeamCoverageSharePage() {
                           (a) => phShiftPos(a.schedule[day], hourPx) != null
                         )
                         const isWeekend = di >= 5
+                        const isLiveDay = day === liveSnapshot.day
                         return (
                           <div key={day} style={{ flex: 1, minWidth: 0 }}>
                             <div
@@ -392,9 +478,22 @@ export default function PublicPhTeamCoverageSharePage() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 letterSpacing: '0.02em',
+                                boxShadow: isLiveDay ? 'inset 0 -2px 0 #2563eb' : 'none',
                               }}
                             >
                               {PH_DAY_SHORT[di]}
+                              {isLiveDay ? (
+                                <span
+                                  style={{
+                                    marginLeft: 6,
+                                    fontSize: 9,
+                                    fontWeight: 900,
+                                    color: '#1d4ed8',
+                                  }}
+                                >
+                                  LIVE
+                                </span>
+                              ) : null}
                             </div>
                             <div
                               style={{
@@ -421,6 +520,25 @@ export default function PublicPhTeamCoverageSharePage() {
                                   }}
                                 />
                               ))}
+                              {isLiveDay &&
+                              liveSnapshot.hour >= PH_GRID_START &&
+                              liveSnapshot.hour < PH_GRID_END ? (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    left: 0,
+                                    right: 0,
+                                    top:
+                                      (liveSnapshot.hour +
+                                        liveSnapshot.minute / 60 -
+                                        PH_GRID_START) *
+                                      hourPx,
+                                    borderTop: '2px solid #2563eb',
+                                    zIndex: 15,
+                                    pointerEvents: 'none',
+                                  }}
+                                />
+                              ) : null}
                               {dayAgents.map((agent, ai) => {
                                 const pos = phShiftPos(agent.schedule[day], hourPx)
                                 if (!pos) return null
@@ -428,6 +546,7 @@ export default function PublicPhTeamCoverageSharePage() {
                                   hoveredShift &&
                                   hoveredShift.agentId === agent.id &&
                                   hoveredShift.day === day
+                                const isLiveNow = phIsAgentLiveInColumn(agent, day, liveSnapshot)
                                 const colW = 100 / dayAgents.length
                                 return (
                                   <div
@@ -451,11 +570,13 @@ export default function PublicPhTeamCoverageSharePage() {
                                       fontWeight: 800,
                                       overflow: 'hidden',
                                       cursor: 'default',
-                                      zIndex: isHov ? 20 : 2,
-                                      opacity: hoveredShift && !isHov ? 0.35 : 1,
-                                      boxShadow: isHov
-                                        ? `0 14px 28px ${agent.color}33`
-                                        : '0 4px 10px rgba(15,23,42,0.06)',
+                                      zIndex: isHov || isLiveNow ? 20 : 2,
+                                      opacity: hoveredShift && !isHov && !isLiveNow ? 0.35 : 1,
+                                      boxShadow: isLiveNow
+                                        ? `0 0 0 2px ${agent.color}, 0 14px 28px ${agent.color}44`
+                                        : isHov
+                                          ? `0 14px 28px ${agent.color}33`
+                                          : '0 4px 10px rgba(15,23,42,0.06)',
                                       transition:
                                         'opacity 110ms ease, box-shadow 110ms ease, transform 110ms ease',
                                       transform: isHov ? 'translateY(-1px)' : 'translateY(0)',
@@ -475,6 +596,22 @@ export default function PublicPhTeamCoverageSharePage() {
                                       <div style={{ fontSize: 8, opacity: 0.85, marginTop: 1 }}>
                                         {pos.startLabel}-{pos.endLabel}
                                         {pos.clipped ? '+' : ''}
+                                      </div>
+                                    ) : null}
+                                    {isLiveNow ? (
+                                      <div
+                                        style={{
+                                          marginTop: 2,
+                                          fontSize: 8,
+                                          fontWeight: 900,
+                                          color: '#0f172a',
+                                          background: '#bfdbfe',
+                                          borderRadius: 999,
+                                          display: 'inline-flex',
+                                          padding: '1px 6px',
+                                        }}
+                                      >
+                                        ON NOW
                                       </div>
                                     ) : null}
                                   </div>
@@ -680,6 +817,68 @@ export default function PublicPhTeamCoverageSharePage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div
+              style={{
+                border: '1px solid #3b82f6',
+                borderRadius: 22,
+                background: 'linear-gradient(180deg, #eff6ff 0%, #e0ecff 100%)',
+                padding: '14px 16px',
+                boxShadow: '0 16px 30px rgba(37,99,235,0.12)',
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 10,
+                  fontWeight: 900,
+                  color: '#1d4ed8',
+                  letterSpacing: '0.14em',
+                  marginBottom: 8,
+                }}
+              >
+                ON DUTY NOW
+              </div>
+              <div style={{ fontSize: 12, color: '#1e3a8a', fontWeight: 700, marginBottom: 10 }}>
+                {liveLabel}
+              </div>
+              {onDutyNowAgents.length ? (
+                <div style={{ display: 'grid', gap: 7 }}>
+                  {onDutyNowAgents.map((agent) => (
+                    <div
+                      key={agent.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        border: '1px solid #bfdbfe',
+                        borderRadius: 12,
+                        background: '#ffffff',
+                        padding: '8px 10px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          background: agent.color,
+                          flexShrink: 0,
+                          display: 'inline-block',
+                        }}
+                      />
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>
+                        {agent.name}
+                      </span>
+                      <span style={{ fontSize: 11, color: '#64748b' }}>{agent.role}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: '#475569' }}>
+                  No active shifts in the current hour.
+                </div>
+              )}
             </div>
 
             <div

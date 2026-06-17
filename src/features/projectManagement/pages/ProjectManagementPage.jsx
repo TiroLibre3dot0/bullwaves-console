@@ -91,6 +91,15 @@ const PH_AGENTS = [
 ]
 const PH_DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 const PH_DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+const PH_WEEKDAY_TO_KEY = {
+  Mon: 'mon',
+  Tue: 'tue',
+  Wed: 'wed',
+  Thu: 'thu',
+  Fri: 'fri',
+  Sat: 'sat',
+  Sun: 'sun',
+}
 const PH_GRID_START = 4
 const PH_GRID_END = 22
 const PH_HOUR_PX = 32
@@ -122,6 +131,62 @@ function phHeatColor(count) {
   if (count === 1) return '#fde68a'
   if (count === 2) return '#86efac'
   return '#22c55e'
+}
+
+function phPrevDay(dayKey) {
+  const idx = PH_DAYS.indexOf(dayKey)
+  if (idx < 0) return 'sun'
+  return PH_DAYS[(idx + PH_DAYS.length - 1) % PH_DAYS.length]
+}
+
+function getUkLiveSnapshot(now = new Date()) {
+  const dayText = now.toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short' })
+  const timeText = now.toLocaleString('en-GB', {
+    timeZone: 'Europe/London',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  const [hourStr, minuteStr] = String(timeText || '00:00').split(':')
+  const day = PH_WEEKDAY_TO_KEY[String(dayText || '').trim()] || 'mon'
+  const hour = Number.parseInt(hourStr, 10)
+  const minute = Number.parseInt(minuteStr, 10)
+  return {
+    day,
+    hour: Number.isFinite(hour) ? hour : 0,
+    minute: Number.isFinite(minute) ? minute : 0,
+  }
+}
+
+function phIsAgentOnDutyNow(agent, live) {
+  if (!agent || !live) return false
+  const sameDayShift = agent.schedule[live.day]
+  const prevDayShift = agent.schedule[phPrevDay(live.day)]
+
+  const onSameDay =
+    sameDayShift != null && live.hour >= sameDayShift.s && live.hour < Math.min(sameDayShift.e, 24)
+
+  const onPrevDayOvernight =
+    prevDayShift != null && prevDayShift.e > 24 && live.hour < prevDayShift.e - 24
+
+  return onSameDay || onPrevDayOvernight
+}
+
+function phIsAgentLiveInColumn(agent, columnDay, live) {
+  if (!agent || !live) return false
+  const prevDay = phPrevDay(live.day)
+
+  if (columnDay === live.day) {
+    const shift = agent.schedule[columnDay]
+    return shift != null && live.hour >= shift.s && live.hour < Math.min(shift.e, 24)
+  }
+
+  if (columnDay === prevDay) {
+    const shift = agent.schedule[columnDay]
+    return shift != null && shift.e > 24 && live.hour < shift.e - 24
+  }
+
+  return false
 }
 
 function formatHourLabel(hour24) {
@@ -413,6 +478,87 @@ const BASE_PROJECTS = [
         status: 'done',
         owner: 'Bullwaves',
         section: 'Launch',
+      },
+    ],
+  },
+  {
+    id: 'ypf-prime-challenge-migration',
+    title: 'Prime Challenge - FunderPro to YPF migration',
+    summary:
+      'Operational migration board to move Prime Challenge stack from FunderPro to YourPropFirm (YPF).',
+    status: 'inProgress',
+    lastUpdated: '2026-06-17',
+    theme: {
+      cardBg: '#e7f0ff',
+      cardBorder: '#90b4ff',
+      cardAccent: '#1d4ed8',
+    },
+    tasks: [
+      {
+        id: 'ypf-001',
+        title: 'Kickoff sync completed with YPF account team and migration scope recap shared',
+        status: 'done',
+        owner: 'Bullwaves + YPF',
+        section: 'Launch',
+      },
+      {
+        id: 'ypf-002',
+        title:
+          'Onboarding dependencies collected from YPF (Broker MT, BridgerPay PSP, 24/7 support, API + dashboard docs)',
+        status: 'done',
+        owner: 'YPF',
+        section: 'Infrastructure',
+      },
+      {
+        id: 'ypf-003',
+        title: 'Schedule and complete onboarding call window (Mon/Tue) despite timezone mismatch',
+        status: 'inProgress',
+        owner: 'Bullwaves',
+        section: 'Launch',
+      },
+      {
+        id: 'ypf-004',
+        title:
+          'Prepare and deliver dashboard branding pack (logo light/dark PNG, subdomain, primary hex, favicon)',
+        status: 'todo',
+        owner: 'Marketing + Ops',
+        section: 'Branding',
+      },
+      {
+        id: 'ypf-005',
+        title: 'Complete and submit YPF customer card sheet for dashboard deployment',
+        status: 'todo',
+        owner: 'Operations',
+        section: 'Compliance',
+      },
+      {
+        id: 'ypf-006',
+        title:
+          'Export and deliver legacy migration payload from previous provider (users, accounts, orders, affiliates)',
+        status: 'todo',
+        owner: 'Tech Team',
+        section: 'Infrastructure',
+      },
+      {
+        id: 'ypf-007',
+        title: 'Provide BridgerPay PSP API key to YPF via private secure channel',
+        status: 'inProgress',
+        owner: 'Finance + Tech',
+        section: 'Infrastructure',
+      },
+      {
+        id: 'ypf-008',
+        title: 'Add Head of Dealing to shared channel and align credential handover owner',
+        status: 'done',
+        owner: 'Bullwaves',
+        section: 'Launch',
+      },
+      {
+        id: 'ypf-009',
+        title: 'Finalize dealing credentials package and send to YPF integration team',
+        status: 'inProgress',
+        owner: 'Dealing Ops',
+        section: 'Infrastructure',
       },
     ],
   },
@@ -828,7 +974,7 @@ function sortTasksByStatus(tasks) {
   })
 }
 
-export default function ProjectManagementPage() {
+export default function ProjectManagementPage({ initialProjectId = null }) {
   const { user } = useAuth()
   const [activeSubsection, setActiveSubsection] = useState('projectManagement')
   const [activeProjectId, setActiveProjectId] = useState(null)
@@ -837,6 +983,7 @@ export default function ProjectManagementPage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [scheduleView, setScheduleView] = useState('calendar')
   const [hoveredShift, setHoveredShift] = useState(null)
+  const [liveTick, setLiveTick] = useState(() => Date.now())
   const [shareCopied, setShareCopied] = useState(false)
   const [calendarScrollTop, setCalendarScrollTop] = useState(0)
   const [gmailTopicsState, setGmailTopicsState] = useState({
@@ -866,6 +1013,18 @@ export default function ProjectManagementPage() {
     const h = Math.min(PH_GRID_END - 1, Math.max(PH_GRID_START, PH_GRID_START + offsetHours))
     return formatHourLabel(h)
   }, [calendarScrollTop])
+  const liveSnapshot = useMemo(() => getUkLiveSnapshot(new Date(liveTick)), [liveTick])
+  const onDutyNowAgents = useMemo(
+    () => PH_AGENTS.filter((agent) => phIsAgentOnDutyNow(agent, liveSnapshot)),
+    [liveSnapshot]
+  )
+  const liveLabel = useMemo(() => {
+    const dayIdx = PH_DAYS.indexOf(liveSnapshot.day)
+    const dayLabel = dayIdx >= 0 ? PH_DAY_SHORT[dayIdx] : liveSnapshot.day
+    const hh = String(liveSnapshot.hour).padStart(2, '0')
+    const mm = String(liveSnapshot.minute).padStart(2, '0')
+    return `${dayLabel} ${hh}:${mm} UK`
+  }, [liveSnapshot])
 
   const activeProject = useMemo(() => {
     if (!activeProjectId) return null
@@ -953,6 +1112,18 @@ export default function ProjectManagementPage() {
       if (raf) window.cancelAnimationFrame(raf)
     }
   }, [activeProjectId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+    const id = window.setInterval(() => setLiveTick(Date.now()), 30000)
+    return () => window.clearInterval(id)
+  }, [])
+
+  useEffect(() => {
+    if (!initialProjectId) return
+    setActiveSubsection('projectManagement')
+    setActiveProjectId(initialProjectId)
+  }, [initialProjectId])
 
   useEffect(() => {
     if (activeSubsection !== 'gmail') return
@@ -2539,6 +2710,7 @@ export default function ProjectManagementPage() {
                             (a) => phShiftPos(a.schedule[day]) != null
                           )
                           const isWeekend = di >= 5
+                          const isLiveDay = day === liveSnapshot.day
                           return (
                             <div key={day} style={{ flex: 1, minWidth: 0 }}>
                               {/* Day header */}
@@ -2559,9 +2731,22 @@ export default function ProjectManagementPage() {
                                   display: 'flex',
                                   alignItems: 'center',
                                   justifyContent: 'center',
+                                  boxShadow: isLiveDay ? 'inset 0 -2px 0 #1d4ed8' : 'none',
                                 }}
                               >
                                 {PH_DAY_SHORT[di]}
+                                {isLiveDay ? (
+                                  <span
+                                    style={{
+                                      marginLeft: 6,
+                                      fontSize: 9,
+                                      fontWeight: 900,
+                                      color: '#1d4ed8',
+                                    }}
+                                  >
+                                    LIVE
+                                  </span>
+                                ) : null}
                               </div>
                               {/* Column body */}
                               <div
@@ -2600,6 +2785,25 @@ export default function ProjectManagementPage() {
                                     }}
                                   />
                                 ))}
+                                {isLiveDay &&
+                                liveSnapshot.hour >= PH_GRID_START &&
+                                liveSnapshot.hour < PH_GRID_END ? (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      right: 0,
+                                      top:
+                                        (liveSnapshot.hour +
+                                          liveSnapshot.minute / 60 -
+                                          PH_GRID_START) *
+                                        PH_HOUR_PX,
+                                      borderTop: '2px solid #1d4ed8',
+                                      zIndex: 14,
+                                      pointerEvents: 'none',
+                                    }}
+                                  />
+                                ) : null}
                                 {/* Agent pills */}
                                 {dayAgents.map((agent, ai) => {
                                   const pos = phShiftPos(agent.schedule[day])
@@ -2608,6 +2812,7 @@ export default function ProjectManagementPage() {
                                     hoveredShift &&
                                     hoveredShift.agentId === agent.id &&
                                     hoveredShift.day === day
+                                  const isLiveNow = phIsAgentLiveInColumn(agent, day, liveSnapshot)
                                   const colW = 100 / dayAgents.length
                                   return (
                                     <div
@@ -2631,9 +2836,13 @@ export default function ProjectManagementPage() {
                                         fontWeight: 800,
                                         overflow: 'hidden',
                                         cursor: 'default',
-                                        zIndex: isHov ? 20 : 2,
-                                        opacity: hoveredShift && !isHov ? 0.35 : 1,
-                                        boxShadow: isHov ? `0 4px 14px ${agent.color}55` : 'none',
+                                        zIndex: isHov || isLiveNow ? 20 : 2,
+                                        opacity: hoveredShift && !isHov && !isLiveNow ? 0.35 : 1,
+                                        boxShadow: isLiveNow
+                                          ? `0 0 0 2px ${agent.color}, 0 6px 16px ${agent.color}66`
+                                          : isHov
+                                            ? `0 4px 14px ${agent.color}55`
+                                            : 'none',
                                         transition: 'opacity 110ms ease, box-shadow 110ms ease',
                                         boxSizing: 'border-box',
                                       }}
@@ -2651,6 +2860,22 @@ export default function ProjectManagementPage() {
                                         <div style={{ fontSize: 9, opacity: 0.9, marginTop: 1 }}>
                                           {pos.startLabel}–{pos.endLabel}
                                           {pos.clipped ? '+' : ''}
+                                        </div>
+                                      ) : null}
+                                      {isLiveNow ? (
+                                        <div
+                                          style={{
+                                            marginTop: 2,
+                                            fontSize: 8,
+                                            fontWeight: 900,
+                                            color: '#0f172a',
+                                            background: '#bfdbfe',
+                                            borderRadius: 999,
+                                            display: 'inline-flex',
+                                            padding: '1px 6px',
+                                          }}
+                                        >
+                                          ON NOW
                                         </div>
                                       ) : null}
                                     </div>
@@ -2849,6 +3074,54 @@ export default function ProjectManagementPage() {
                   }}
                 >
                   SCHEDULE SUMMARY
+                </div>
+                <div
+                  style={{
+                    border: '1px solid #93c5fd',
+                    borderRadius: 12,
+                    background: '#eff6ff',
+                    padding: '8px 10px',
+                    marginBottom: 10,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      color: '#1d4ed8',
+                      letterSpacing: '0.08em',
+                      fontWeight: 900,
+                      marginBottom: 5,
+                    }}
+                  >
+                    ON DUTY NOW
+                  </div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#1e3a8a', marginBottom: 6 }}>
+                    {liveLabel}
+                  </div>
+                  {onDutyNowAgents.length ? (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {onDutyNowAgents.map((agent) => (
+                        <span
+                          key={agent.id}
+                          style={{
+                            fontSize: 10,
+                            fontWeight: 800,
+                            color: '#0f172a',
+                            background: '#ffffff',
+                            border: `1px solid ${agent.color}66`,
+                            borderRadius: 999,
+                            padding: '2px 8px',
+                          }}
+                        >
+                          {agent.name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: 11, color: '#475569' }}>
+                      No active shifts in the current hour.
+                    </div>
+                  )}
                 </div>
                 <div
                   style={{
