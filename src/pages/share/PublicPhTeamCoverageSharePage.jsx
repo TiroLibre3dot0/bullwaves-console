@@ -148,9 +148,9 @@ function phPrevDay(dayKey) {
 }
 
 function getUkLiveSnapshot(now = new Date()) {
-  const dayText = now.toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short' })
+  const dayText = now.toLocaleString('en-GB', { timeZone: 'Europe/Rome', weekday: 'short' })
   const timeText = now.toLocaleString('en-GB', {
-    timeZone: 'Europe/London',
+    timeZone: 'Europe/Rome',
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -267,7 +267,7 @@ export default function PublicPhTeamCoverageSharePage() {
     const hh = String(liveSnapshot.hour).padStart(2, '0')
     const mm = String(liveSnapshot.minute).padStart(2, '0')
     const ss = String(liveSnapshot.second || 0).padStart(2, '0')
-    return `${day} ${hh}:${mm}:${ss} UK`
+    return `${day} ${hh}:${mm}:${ss} Rome`
   }, [liveSnapshot])
 
   const kpis = useMemo(() => {
@@ -363,16 +363,15 @@ export default function PublicPhTeamCoverageSharePage() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gap: 8 }}>
+          <div style={{ display: 'grid', gap: 8, justifyItems: 'end' }}>
             <div
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 gap: 10,
                 border: '1px solid #1e3a8a',
                 borderRadius: 12,
-                padding: '8px 10px',
+                padding: '8px 12px',
                 background: 'linear-gradient(180deg, #0b1220 0%, #0f172a 100%)',
                 boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.18)',
               }}
@@ -380,7 +379,7 @@ export default function PublicPhTeamCoverageSharePage() {
               <span
                 style={{ fontSize: 10, fontWeight: 900, color: '#93c5fd', letterSpacing: '0.12em' }}
               >
-                UK LIVE CLOCK
+                ROME LIVE CLOCK
               </span>
               <span
                 style={{
@@ -436,6 +435,39 @@ export default function PublicPhTeamCoverageSharePage() {
               >
                 Heatmap
               </button>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                gap: 8,
+                flexWrap: 'wrap',
+                justifyContent: 'flex-end',
+              }}
+            >
+              {kpis.map((kpi) => (
+                <div
+                  key={kpi.label}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 8,
+                    border: '1px solid rgba(147,197,253,0.28)',
+                    borderRadius: 999,
+                    padding: '7px 12px',
+                    background: 'rgba(15,23,42,0.65)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+                  }}
+                >
+                  <span style={{ fontSize: 10, color: '#94a3b8', fontWeight: 800 }}>
+                    {kpi.label}
+                  </span>
+                  <strong
+                    style={{ fontSize: 13, color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}
+                  >
+                    {kpi.value}
+                  </strong>
+                </div>
+              ))}
             </div>
           </div>
         </header>
@@ -611,20 +643,21 @@ export default function PublicPhTeamCoverageSharePage() {
                                       fontWeight: 800,
                                       overflow: 'hidden',
                                       cursor: 'default',
-                                      zIndex: isHov || isLiveNow ? 20 : 2,
-                                      opacity: hoveredShift && !isHov && !isLiveNow ? 0.35 : 1,
+                                      zIndex: isHov || isLiveNow ? 24 : 2,
+                                      opacity: hoveredShift && !isHov && !isLiveNow ? 0.14 : 1,
+                                      filter:
+                                        hoveredShift && !isHov && !isLiveNow
+                                          ? 'saturate(0.5) brightness(0.82)'
+                                          : 'none',
                                       boxShadow: isLiveNow
-                                        ? `0 0 0 2px ${agent.color}, 0 14px 28px ${agent.color}44`
+                                        ? `0 0 0 3px ${agent.color}, 0 18px 34px ${agent.color}60`
                                         : isHov
                                           ? `0 14px 28px ${agent.color}33`
                                           : '0 4px 10px rgba(15,23,42,0.06)',
                                       transition:
                                         'opacity 110ms ease, box-shadow 110ms ease, transform 110ms ease',
-                                      transform: isHov
-                                        ? 'translateY(-1px)'
-                                        : isLiveNow
-                                          ? 'translateY(-1px)'
-                                          : 'translateY(0)',
+                                      transform:
+                                        isHov || isLiveNow ? 'translateY(-1px)' : 'translateY(0)',
                                       animation: isLiveNow
                                         ? 'phLivePulse 1.25s ease-in-out infinite'
                                         : 'none',
@@ -652,11 +685,12 @@ export default function PublicPhTeamCoverageSharePage() {
                                           marginTop: 2,
                                           fontSize: 8,
                                           fontWeight: 900,
-                                          color: '#0f172a',
-                                          background: '#bfdbfe',
+                                          color: '#eff6ff',
+                                          background: '#1d4ed8',
                                           borderRadius: 999,
                                           display: 'inline-flex',
-                                          padding: '1px 6px',
+                                          padding: '2px 7px',
+                                          boxShadow: '0 0 0 1px rgba(255,255,255,0.28)',
                                         }}
                                       >
                                         ON NOW
@@ -814,81 +848,41 @@ export default function PublicPhTeamCoverageSharePage() {
           >
             <div
               style={{
-                border: '1px solid #6b7a90',
-                borderRadius: 22,
-                background:
-                  'linear-gradient(180deg, rgba(244,248,255,0.98) 0%, rgba(226,235,246,0.96) 100%)',
-                padding: isDesktop ? '16px 16px 18px' : '13px 13px 15px',
-                boxShadow: '0 18px 34px rgba(15,23,42,0.10), inset 0 1px 0 rgba(255,255,255,0.75)',
-              }}
-            >
-              <div
-                style={{
-                  fontSize: 10,
-                  fontWeight: 900,
-                  color: '#5c6f87',
-                  letterSpacing: '0.14em',
-                  marginBottom: 10,
-                }}
-              >
-                SCHEDULE SUMMARY
-              </div>
-              <div style={{ display: 'grid', gap: 7 }}>
-                {kpis.map((kpi) => (
-                  <div
-                    key={kpi.label}
-                    style={{
-                      border: '1px solid #7a889c',
-                      borderRadius: 16,
-                      background: 'linear-gradient(180deg, #ffffff 0%, #f3f7fd 100%)',
-                      padding: '10px 12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 8,
-                      boxShadow: '0 8px 18px rgba(15,23,42,0.05)',
-                    }}
-                  >
-                    <div style={{ fontSize: 11, color: '#52657f', fontWeight: 700 }}>
-                      {kpi.label}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 14,
-                        fontWeight: 900,
-                        color: '#0f172a',
-                        textAlign: 'right',
-                      }}
-                    >
-                      {kpi.value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div
-              style={{
                 border: '1px solid #3b82f6',
                 borderRadius: 22,
-                background: 'linear-gradient(180deg, #eff6ff 0%, #e0ecff 100%)',
+                background:
+                  'linear-gradient(180deg, rgba(11,18,32,0.98) 0%, rgba(15,23,42,0.98) 100%)',
                 padding: '14px 16px',
-                boxShadow: '0 16px 30px rgba(37,99,235,0.12)',
+                boxShadow: '0 18px 34px rgba(2,6,23,0.32), inset 0 1px 0 rgba(255,255,255,0.04)',
               }}
             >
               <div
                 style={{
                   fontSize: 10,
                   fontWeight: 900,
-                  color: '#1d4ed8',
+                  color: '#93c5fd',
                   letterSpacing: '0.14em',
                   marginBottom: 8,
                 }}
               >
-                ON DUTY NOW
+                ROME LIVE CLOCK
               </div>
-              <div style={{ fontSize: 12, color: '#1e3a8a', fontWeight: 700, marginBottom: 10 }}>
+              <div
+                style={{
+                  fontSize: isDesktop ? 24 : 20,
+                  lineHeight: 1,
+                  color: '#eff6ff',
+                  fontWeight: 900,
+                  letterSpacing: '-0.02em',
+                  fontVariantNumeric: 'tabular-nums',
+                  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                  marginBottom: 10,
+                }}
+              >
                 {liveLabel}
+              </div>
+              <div style={{ fontSize: 10, color: '#93c5fd', fontWeight: 800, marginBottom: 10 }}>
+                LIVE SHIFTS IN VIEW
               </div>
               {onDutyNowAgents.length ? (
                 <div style={{ display: 'grid', gap: 7 }}>
@@ -899,9 +893,9 @@ export default function PublicPhTeamCoverageSharePage() {
                         display: 'flex',
                         alignItems: 'center',
                         gap: 8,
-                        border: '1px solid #bfdbfe',
+                        border: '1px solid rgba(147,197,253,0.24)',
                         borderRadius: 12,
-                        background: '#ffffff',
+                        background: 'rgba(15,23,42,0.82)',
                         padding: '8px 10px',
                       }}
                     >
@@ -915,15 +909,15 @@ export default function PublicPhTeamCoverageSharePage() {
                           display: 'inline-block',
                         }}
                       />
-                      <span style={{ fontSize: 12, fontWeight: 800, color: '#0f172a' }}>
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#eff6ff' }}>
                         {agent.name}
                       </span>
-                      <span style={{ fontSize: 11, color: '#64748b' }}>{agent.role}</span>
+                      <span style={{ fontSize: 11, color: '#94a3b8' }}>{agent.role}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div style={{ fontSize: 12, color: '#475569' }}>
+                <div style={{ fontSize: 12, color: '#cbd5e1' }}>
                   No active shifts in the current hour.
                 </div>
               )}
