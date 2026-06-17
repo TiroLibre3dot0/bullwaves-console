@@ -153,16 +153,19 @@ function getUkLiveSnapshot(now = new Date()) {
     timeZone: 'Europe/London',
     hour: '2-digit',
     minute: '2-digit',
+    second: '2-digit',
     hour12: false,
   })
-  const [hourStr, minuteStr] = String(timeText || '00:00').split(':')
+  const [hourStr, minuteStr, secondStr] = String(timeText || '00:00:00').split(':')
   const day = PH_WEEKDAY_TO_KEY[String(dayText || '').trim()] || 'mon'
   const hour = Number.parseInt(hourStr, 10)
   const minute = Number.parseInt(minuteStr, 10)
+  const second = Number.parseInt(secondStr, 10)
   return {
     day,
     hour: Number.isFinite(hour) ? hour : 0,
     minute: Number.isFinite(minute) ? minute : 0,
+    second: Number.isFinite(second) ? second : 0,
   }
 }
 
@@ -249,7 +252,7 @@ export default function PublicPhTeamCoverageSharePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
-    const id = window.setInterval(() => setLiveTick(Date.now()), 30000)
+    const id = window.setInterval(() => setLiveTick(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [])
 
@@ -263,7 +266,8 @@ export default function PublicPhTeamCoverageSharePage() {
     const day = PH_DAY_LABEL[liveSnapshot.day] || liveSnapshot.day
     const hh = String(liveSnapshot.hour).padStart(2, '0')
     const mm = String(liveSnapshot.minute).padStart(2, '0')
-    return `${day} ${hh}:${mm} UK`
+    const ss = String(liveSnapshot.second || 0).padStart(2, '0')
+    return `${day} ${hh}:${mm}:${ss} UK`
   }, [liveSnapshot])
 
   const kpis = useMemo(() => {
@@ -318,6 +322,9 @@ export default function PublicPhTeamCoverageSharePage() {
         color: '#1f2937',
       }}
     >
+      <style>
+        {`@keyframes phLivePulse { 0% { transform: scale(1); } 50% { transform: scale(1.04); } 100% { transform: scale(1); } }`}
+      </style>
       <div style={{ width: '100%', margin: '0 auto', display: 'grid', gap: 14 }}>
         <header
           style={{
@@ -356,48 +363,80 @@ export default function PublicPhTeamCoverageSharePage() {
             </div>
           </div>
 
-          <div
-            style={{
-              display: 'inline-flex',
-              gap: 6,
-              border: '1px solid #334155',
-              borderRadius: 12,
-              padding: 4,
-              background: '#0b1220',
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setView('calendar')}
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div
               style={{
-                border: '1px solid transparent',
-                borderRadius: 10,
-                padding: '8px 12px',
-                fontWeight: 800,
-                fontSize: 12,
-                cursor: 'pointer',
-                background: view === 'calendar' ? '#1e3a8a' : 'transparent',
-                color: view === 'calendar' ? '#dbeafe' : '#9fb0c7',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 10,
+                border: '1px solid #1e3a8a',
+                borderRadius: 12,
+                padding: '8px 10px',
+                background: 'linear-gradient(180deg, #0b1220 0%, #0f172a 100%)',
+                boxShadow: 'inset 0 0 0 1px rgba(59,130,246,0.18)',
               }}
             >
-              Calendar
-            </button>
-            <button
-              type="button"
-              onClick={() => setView('heatmap')}
+              <span
+                style={{ fontSize: 10, fontWeight: 900, color: '#93c5fd', letterSpacing: '0.12em' }}
+              >
+                UK LIVE CLOCK
+              </span>
+              <span
+                style={{
+                  fontSize: 13,
+                  fontWeight: 900,
+                  color: '#dbeafe',
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {liveLabel}
+              </span>
+            </div>
+
+            <div
               style={{
-                border: '1px solid transparent',
-                borderRadius: 10,
-                padding: '8px 12px',
-                fontWeight: 800,
-                fontSize: 12,
-                cursor: 'pointer',
-                background: view === 'heatmap' ? '#14532d' : 'transparent',
-                color: view === 'heatmap' ? '#dcfce7' : '#9fb0c7',
+                display: 'inline-flex',
+                gap: 6,
+                border: '1px solid #334155',
+                borderRadius: 12,
+                padding: 4,
+                background: '#0b1220',
               }}
             >
-              Heatmap
-            </button>
+              <button
+                type="button"
+                onClick={() => setView('calendar')}
+                style={{
+                  border: '1px solid transparent',
+                  borderRadius: 10,
+                  padding: '8px 12px',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  background: view === 'calendar' ? '#1e3a8a' : 'transparent',
+                  color: view === 'calendar' ? '#dbeafe' : '#9fb0c7',
+                }}
+              >
+                Calendar
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('heatmap')}
+                style={{
+                  border: '1px solid transparent',
+                  borderRadius: 10,
+                  padding: '8px 12px',
+                  fontWeight: 800,
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  background: view === 'heatmap' ? '#14532d' : 'transparent',
+                  color: view === 'heatmap' ? '#dcfce7' : '#9fb0c7',
+                }}
+              >
+                Heatmap
+              </button>
+            </div>
           </div>
         </header>
 
@@ -534,6 +573,8 @@ export default function PublicPhTeamCoverageSharePage() {
                                         PH_GRID_START) *
                                       hourPx,
                                     borderTop: '2px solid #2563eb',
+                                    boxShadow:
+                                      '0 0 0 1px rgba(37,99,235,0.16), 0 0 14px rgba(37,99,235,0.42)',
                                     zIndex: 15,
                                     pointerEvents: 'none',
                                   }}
@@ -579,7 +620,14 @@ export default function PublicPhTeamCoverageSharePage() {
                                           : '0 4px 10px rgba(15,23,42,0.06)',
                                       transition:
                                         'opacity 110ms ease, box-shadow 110ms ease, transform 110ms ease',
-                                      transform: isHov ? 'translateY(-1px)' : 'translateY(0)',
+                                      transform: isHov
+                                        ? 'translateY(-1px)'
+                                        : isLiveNow
+                                          ? 'translateY(-1px)'
+                                          : 'translateY(0)',
+                                      animation: isLiveNow
+                                        ? 'phLivePulse 1.25s ease-in-out infinite'
+                                        : 'none',
                                       boxSizing: 'border-box',
                                     }}
                                   >
