@@ -511,7 +511,7 @@ const buildMonthLabel = (row) => {
     ]
     return `${monthNames[m]} ${y}`
   }
-  return '�'
+  return 'Unknown'
 }
 
 const formatDelta = (value) => {
@@ -662,18 +662,18 @@ const formatMonthYear = (year, monthIndex) => {
   ]
   const m = Number(monthIndex)
   const y = Number(year)
-  if (!Number.isFinite(m) || !Number.isFinite(y) || m < 0 || m > 11) return '�'
+  if (!Number.isFinite(m) || !Number.isFinite(y) || m < 0 || m > 11) return 'Unknown'
   return `${monthNames[m]} ${y}`
 }
 
 const formatMonthRange = (startId, endId) => {
-  if (startId === null || endId === null) return '�'
+  if (startId === null || endId === null) return 'Unknown'
   const s = partsFromMonthId(startId)
   const e = partsFromMonthId(endId)
   const a = formatMonthYear(s.year, s.monthIndex)
   const b = formatMonthYear(e.year, e.monthIndex)
   if (a === b) return a
-  return `${a} � ${b}`
+  return `${a} - ${b}`
 }
 
 function buildRollingPeriodContext(rows, periodType, t) {
@@ -711,7 +711,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
       type: periodType,
       startId: null,
       endId: null,
-      label: '�',
+      label: 'Unknown',
       hasPrevious: false,
       prevStartId: null,
       prevEndId: null,
@@ -772,7 +772,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
       type: 'ytd',
       startId,
       endId,
-      label: `${t('shareAffiliateReports.period.ytd') || 'Year to date'}: ${jan} � ${formatMonthYear(end.year, end.monthIndex)}`,
+      label: `${t('shareAffiliateReports.period.ytd') || 'Year to date'}: ${jan} - ${formatMonthYear(end.year, end.monthIndex)}`,
       hasPrevious,
       prevStartId: hasPrevious ? prevStartId : null,
       prevEndId: hasPrevious ? prevEndId : null,
@@ -783,7 +783,7 @@ function buildRollingPeriodContextFromBounds(bounds, periodType, t) {
     type: periodType,
     startId: null,
     endId: null,
-    label: '�',
+    label: 'Unknown',
     hasPrevious: false,
     prevStartId: null,
     prevEndId: null,
@@ -825,18 +825,18 @@ function periodSortValue(row, periodType) {
 }
 
 function labelForPeriodKey(periodType, key, fallbackLabel) {
-  if (periodType === 'monthly') return fallbackLabel || String(key || '�')
+  if (periodType === 'monthly') return fallbackLabel || String(key || 'Unknown')
   const k = String(key || '')
   if (periodType === 'quarterly') {
     const m = k.match(/^(\d{4})-Q([1-4])$/)
-    return m ? `Q${m[2]} ${m[1]}` : k || '�'
+    return m ? `Q${m[2]} ${m[1]}` : k || 'Unknown'
   }
   if (periodType === 'semi-annual') {
     const m = k.match(/^(\d{4})-H([1-2])$/)
-    return m ? `H${m[2]} ${m[1]}` : k || '�'
+    return m ? `H${m[2]} ${m[1]}` : k || 'Unknown'
   }
-  if (periodType === 'annual') return k || '�'
-  return k || '�'
+  if (periodType === 'annual') return k || 'Unknown'
+  return k || 'Unknown'
 }
 
 function directionFromDelta(delta, deadband = 0.00001) {
@@ -849,7 +849,7 @@ function trendWord(t, dir) {
   if (dir === 'up') return t('shareAffiliateAnalysis.comparison.up') || 'Up'
   if (dir === 'down') return t('shareAffiliateAnalysis.comparison.down') || 'Down'
   if (dir === 'flat') return t('shareAffiliateAnalysis.comparison.flat') || 'Flat'
-  return '�'
+  return 'Flat'
 }
 
 function AffiliateExecutiveCumulativeChart({
@@ -863,7 +863,7 @@ function AffiliateExecutiveCumulativeChart({
 }) {
   if (!data || data.length === 0) return null
 
-  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '[hidden]' : formatEuro(value))
 
   const colors = {
     regs: '#ffffff',
@@ -1025,10 +1025,10 @@ function AffiliateExecutiveCumulativeChart({
   const step = Math.max(1, Math.ceil(series.length / maxXlabels))
 
   const formatEuroShort = (v) => {
-    if (maskFinancials) return '���'
+    if (maskFinancials) return '[hidden]'
     const n = Number(v || 0)
     const sign = n < 0 ? '-' : ''
-    return `${sign}�${formatNumberShort(Math.abs(n))}`
+    return `${sign}EUR ${formatNumberShort(Math.abs(n))}`
   }
 
   const conversionMarker = (() => {
@@ -1315,7 +1315,7 @@ function AffiliateExecutiveCumulativeChart({
                   const gap = 6
 
                   const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
-                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} � Never dep. (Avg)`
+                  const labelText = `${formatPercent(conversionMarker.noDepositPct, 1)} - Never dep. (Avg)`
 
                   const maxX = W - padR - 6
                   const minX = padL + 6
@@ -1583,10 +1583,37 @@ function PublicAffiliateReportsEntryView({
   locale,
   setLocale,
   affiliates,
+  allAffiliates = [],
   shareBase,
   maskFinancials = false,
 }) {
-  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '[hidden]' : formatEuro(value))
+  const [searchQuery, setSearchQuery] = useState('')
+  const searchAffiliateLabel = (() => {
+    const value = t('shareAffiliateReports.header.searchAffiliate')
+    return value && value !== 'shareAffiliateReports.header.searchAffiliate'
+      ? value
+      : 'Search affiliate by name or rank'
+  })()
+  const noAffiliateMatchLabel = (() => {
+    const value = t('shareAffiliateReports.header.noAffiliateMatch')
+    return value && value !== 'shareAffiliateReports.header.noAffiliateMatch'
+      ? value
+      : 'No affiliate matches this search.'
+  })()
+
+  const visibleAffiliates = useMemo(() => {
+    const query = String(searchQuery || '')
+      .trim()
+      .toLowerCase()
+    if (!query) return affiliates
+
+    return (allAffiliates || []).filter((a) => {
+      const name = String(a?.affiliate || '').toLowerCase()
+      const rank = String(a?.rank || '')
+      return name.includes(query) || rank.includes(query)
+    })
+  }, [affiliates, allAffiliates, searchQuery])
 
   const maskedBadge = maskFinancials ? (
     <span
@@ -1645,7 +1672,7 @@ function PublicAffiliateReportsEntryView({
                 margin: '6px 0 4px',
               }}
             >
-              {t('shareAffiliateReports.header.title') || 'Affiliate Performance � Board View'}
+              {t('shareAffiliateReports.header.title') || 'Affiliate Performance - Board View'}
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: 13, margin: 0 }}>
               {t('shareAffiliateReports.header.note') ||
@@ -1663,11 +1690,32 @@ function PublicAffiliateReportsEntryView({
             gap: 12,
           }}
         >
-          {affiliates.map((a, idx) => {
+          <div style={{ gridColumn: '1 / -1' }}>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={searchAffiliateLabel}
+              aria-label={searchAffiliateLabel}
+              style={{
+                width: '100%',
+                borderRadius: 12,
+                border: '1px solid rgba(255,255,255,0.10)',
+                background: 'rgba(255,255,255,0.03)',
+                color: 'var(--text)',
+                padding: '12px 14px',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+          </div>
+
+          {visibleAffiliates.map((a, idx) => {
             const status = statusFromProfit(t, a.profit || 0)
             const rank = typeof a.rank === 'number' ? a.rank : idx + 1
-            const total = affiliates.length || 20
-            const weightLabel = Number.isFinite(a.weightPct) ? formatPercent(a.weightPct, 1) : '�'
+            const total = searchQuery.trim()
+              ? visibleAffiliates.length || 0
+              : affiliates.length || 20
+            const weightLabel = Number.isFinite(a.weightPct) ? formatPercent(a.weightPct, 1) : 'N/A'
 
             const rightTag = (
               <div
@@ -1708,7 +1756,7 @@ function PublicAffiliateReportsEntryView({
               <Card
                 key={a.affiliate}
                 title={a.affiliate}
-                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${fmtEuro(a.netDeposits || 0)} � ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${fmtEuro(a.pl || 0)} � ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
+                subtitle={`${t('shareAffiliateReports.card.netDeposits') || 'Net Deposits'}: ${fmtEuro(a.netDeposits || 0)} | ${t('shareAffiliateReports.card.pl') || 'P&L'}: ${fmtEuro(a.pl || 0)} | ${t('shareAffiliateReports.card.weight') || 'Weight'}: ${weightLabel}`}
                 rightTag={rightTag}
                 onClick={() => {
                   const next = `${shareBase}/${encodeAffiliateId(a.affiliate)}`
@@ -1717,11 +1765,25 @@ function PublicAffiliateReportsEntryView({
               />
             )
           })}
+
+          {searchQuery.trim() && !visibleAffiliates.length ? (
+            <div
+              style={{
+                gridColumn: '1 / -1',
+                padding: '10px 12px',
+                color: 'rgba(255,255,255,0.58)',
+                fontSize: 13,
+                lineHeight: 1.45,
+              }}
+            >
+              {noAffiliateMatchLabel}
+            </div>
+          ) : null}
         </div>
 
         <div style={{ marginTop: 14, fontSize: 11, color: 'var(--muted)' }}>
           {t('shareAffiliateReports.footer.note') ||
-            'Board view is read-only. Data source: internal Affiliate ? Analysis.'}
+            'Board view is read-only. Data source: internal Affiliate Analysis.'}
         </div>
       </div>
     </div>
@@ -1753,9 +1815,9 @@ function PublicAffiliateReportsDetailView({
   const current = report?.currentKpis || null
   const previous = report?.previousKpis || null
 
-  const fmtEuro = (value) => (maskFinancials ? '���' : formatEuro(value))
+  const fmtEuro = (value) => (maskFinancials ? '[hidden]' : formatEuro(value))
   const fmtSensitivePercent = (value, decimals = 1) =>
-    maskFinancials ? '���' : formatPercent(value, decimals)
+    maskFinancials ? '[hidden]' : formatPercent(value, decimals)
 
   const maskedBadge = maskFinancials ? (
     <span
@@ -1776,6 +1838,19 @@ function PublicAffiliateReportsDetailView({
   ) : null
 
   const [affiliatePickerOpen, setAffiliatePickerOpen] = useState(false)
+  const [affiliateSearch, setAffiliateSearch] = useState('')
+  const searchAffiliateLabel = (() => {
+    const value = t('shareAffiliateReports.header.searchAffiliate')
+    return value && value !== 'shareAffiliateReports.header.searchAffiliate'
+      ? value
+      : 'Search affiliate by name or rank'
+  })()
+  const noAffiliateMatchLabel = (() => {
+    const value = t('shareAffiliateReports.header.noAffiliateMatch')
+    return value && value !== 'shareAffiliateReports.header.noAffiliateMatch'
+      ? value
+      : 'No affiliate matches this search.'
+  })()
   const [switchingAffiliate, setSwitchingAffiliate] = useState(false)
   const affiliatePickerWrapRef = React.useRef(null)
   const prevSelectedAffiliateRef = React.useRef({
@@ -1976,6 +2051,18 @@ function PublicAffiliateReportsDetailView({
 
     return list
   }, [affiliates, selectedAffiliateName])
+
+  const filteredAffiliateOptions = useMemo(() => {
+    const query = String(affiliateSearch || '')
+      .trim()
+      .toLowerCase()
+    if (!query) return affiliateOptions
+
+    return affiliateOptions.filter((a) => {
+      const name = String(a.affiliate || '').toLowerCase()
+      return name.includes(query) || String(a.rank || '').includes(query)
+    })
+  }, [affiliateOptions, affiliateSearch])
   const conversionRate = useMemo(() => {
     const regs = Number(current?.registrations || 0)
     const ftd = Number(current?.ftd || 0)
@@ -2149,7 +2236,7 @@ function PublicAffiliateReportsDetailView({
         {strengths.map((s, idx) => (
           <React.Fragment key={idx}>
             {renderParts(s)}
-            {idx < strengths.length - 1 ? <span style={{ opacity: 0.6 }}> � </span> : null}
+            {idx < strengths.length - 1 ? <span style={{ opacity: 0.6 }}> | </span> : null}
           </React.Fragment>
         ))}
       </>
@@ -2942,7 +3029,7 @@ function PublicAffiliateReportsDetailView({
                       }}
                       aria-label={t('common.close') || 'Close'}
                     >
-                      �
+                      Close
                     </button>
                   </div>
 
@@ -2950,132 +3037,171 @@ function PublicAffiliateReportsDetailView({
                     style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '4px 0 8px' }}
                   />
 
-                  {affiliateOptions.slice(0, 30).map((a) => {
-                    const name = String(a.affiliate)
-                    const rank = Number(a.rank || 0)
-                    const s = statusFromProfit(t, Number(a.profit || 0))
-                    const nd =
-                      a.netDeposits === null || a.netDeposits === undefined
-                        ? null
-                        : Number(a.netDeposits)
-                    const pl = a.pl === null || a.pl === undefined ? null : Number(a.pl)
-                    const roi = a.roi === null || a.roi === undefined ? null : Number(a.roi)
+                  <div style={{ padding: '0 2px 8px' }}>
+                    <input
+                      value={affiliateSearch}
+                      onChange={(e) => setAffiliateSearch(e.target.value)}
+                      autoFocus
+                      placeholder={searchAffiliateLabel}
+                      aria-label={searchAffiliateLabel}
+                      style={{
+                        width: '100%',
+                        borderRadius: 12,
+                        border: '1px solid rgba(255,255,255,0.10)',
+                        background: 'rgba(255,255,255,0.03)',
+                        color: 'var(--text)',
+                        padding: '10px 12px',
+                        fontSize: 13,
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
 
-                    return (
-                      <button
-                        key={name}
-                        type="button"
-                        role="option"
-                        onClick={() => {
-                          if (normalizeKey(name) === normalizeKey(selectedAffiliateName)) {
+                  {filteredAffiliateOptions.length ? (
+                    filteredAffiliateOptions.slice(0, 50).map((a) => {
+                      const name = String(a.affiliate)
+                      const rank = Number(a.rank || 0)
+                      const s = statusFromProfit(t, Number(a.profit || 0))
+                      const nd =
+                        a.netDeposits === null || a.netDeposits === undefined
+                          ? null
+                          : Number(a.netDeposits)
+                      const pl = a.pl === null || a.pl === undefined ? null : Number(a.pl)
+                      const roi = a.roi === null || a.roi === undefined ? null : Number(a.roi)
+
+                      return (
+                        <button
+                          key={name}
+                          type="button"
+                          role="option"
+                          onClick={() => {
+                            if (normalizeKey(name) === normalizeKey(selectedAffiliateName)) {
+                              setAffiliatePickerOpen(false)
+                              return
+                            }
                             setAffiliatePickerOpen(false)
-                            return
-                          }
-                          setAffiliatePickerOpen(false)
-                          setSwitchingAffiliate(true)
-                          openAffiliateHref(name)
-                        }}
-                        style={{
-                          width: '100%',
-                          textAlign: 'left',
-                          padding: '10px 10px',
-                          borderRadius: 12,
-                          border: '1px solid rgba(255,255,255,0.06)',
-                          background: 'rgba(255,255,255,0.02)',
-                          color: 'rgba(255,255,255,0.88)',
-                          cursor: 'pointer',
-                          marginBottom: 8,
-                        }}
-                      >
-                        <div
+                            setSwitchingAffiliate(true)
+                            openAffiliateHref(name)
+                          }}
                           style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 10,
+                            width: '100%',
+                            textAlign: 'left',
+                            padding: '10px 10px',
+                            borderRadius: 12,
+                            border: '1px solid rgba(255,255,255,0.06)',
+                            background: 'rgba(255,255,255,0.02)',
+                            color: 'rgba(255,255,255,0.88)',
+                            cursor: 'pointer',
+                            marginBottom: 8,
                           }}
                         >
                           <div
-                            style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 10,
+                            }}
                           >
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 10,
+                                minWidth: 0,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  minWidth: 40,
+                                  height: 22,
+                                  padding: '0 8px',
+                                  borderRadius: 999,
+                                  border: '1px solid rgba(255,255,255,0.10)',
+                                  background: 'rgba(255,255,255,0.02)',
+                                  color: 'rgba(255,255,255,0.70)',
+                                  fontWeight: 950,
+                                  fontSize: 12,
+                                }}
+                                title={t('shareAffiliateReports.kpi.rank') || 'Rank'}
+                              >
+                                #{rank || 'Unknown'}
+                              </span>
+                              <div style={{ minWidth: 0 }}>
+                                <div
+                                  style={{
+                                    fontWeight: 1000,
+                                    fontSize: 14,
+                                    color: 'rgba(255,255,255,0.92)',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  {name}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: 11,
+                                    color: 'rgba(255,255,255,0.55)',
+                                    fontWeight: 850,
+                                    marginTop: 2,
+                                    display: 'flex',
+                                    gap: 10,
+                                    flexWrap: 'wrap',
+                                  }}
+                                >
+                                  <span>
+                                    {t('shareAffiliateAnalysis.metric.netDeposits') ||
+                                      'Net Deposits'}
+                                    : {nd === null ? '-' : fmtEuro(nd)}
+                                  </span>
+                                  <span>
+                                    {t('shareAffiliateAnalysis.metric.pl') || 'P&L'}:{' '}
+                                    {pl === null ? '-' : fmtEuro(pl)}
+                                  </span>
+                                  <span>
+                                    {t('shareAffiliateAnalysis.metric.roi') || 'ROI'}:{' '}
+                                    {roi === null ? '-' : fmtSensitivePercent(roi, 1)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
                             <span
                               style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                minWidth: 40,
-                                height: 22,
-                                padding: '0 8px',
+                                padding: '6px 10px',
                                 borderRadius: 999,
                                 border: '1px solid rgba(255,255,255,0.10)',
                                 background: 'rgba(255,255,255,0.02)',
-                                color: 'rgba(255,255,255,0.70)',
+                                color: s.tone,
                                 fontWeight: 950,
                                 fontSize: 12,
+                                whiteSpace: 'nowrap',
+                                flex: '0 0 auto',
                               }}
-                              title={t('shareAffiliateReports.kpi.rank') || 'Rank'}
                             >
-                              #{rank || '�'}
+                              {s.label}
                             </span>
-                            <div style={{ minWidth: 0 }}>
-                              <div
-                                style={{
-                                  fontWeight: 1000,
-                                  fontSize: 14,
-                                  color: 'rgba(255,255,255,0.92)',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {name}
-                              </div>
-                              <div
-                                style={{
-                                  fontSize: 11,
-                                  color: 'rgba(255,255,255,0.55)',
-                                  fontWeight: 850,
-                                  marginTop: 2,
-                                  display: 'flex',
-                                  gap: 10,
-                                  flexWrap: 'wrap',
-                                }}
-                              >
-                                <span>
-                                  {t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-                                  : {nd === null ? '�' : fmtEuro(nd)}
-                                </span>
-                                <span>
-                                  {t('shareAffiliateAnalysis.metric.pl') || 'P&L'}:{' '}
-                                  {pl === null ? '�' : fmtEuro(pl)}
-                                </span>
-                                <span>
-                                  {t('shareAffiliateAnalysis.metric.roi') || 'ROI'}:{' '}
-                                  {roi === null ? '�' : fmtSensitivePercent(roi, 1)}
-                                </span>
-                              </div>
-                            </div>
                           </div>
-
-                          <span
-                            style={{
-                              padding: '6px 10px',
-                              borderRadius: 999,
-                              border: '1px solid rgba(255,255,255,0.10)',
-                              background: 'rgba(255,255,255,0.02)',
-                              color: s.tone,
-                              fontWeight: 950,
-                              fontSize: 12,
-                              whiteSpace: 'nowrap',
-                              flex: '0 0 auto',
-                            }}
-                          >
-                            {s.label}
-                          </span>
-                        </div>
-                      </button>
-                    )
-                  })}
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        color: 'rgba(255,255,255,0.58)',
+                        fontSize: 13,
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      {noAffiliateMatchLabel}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
@@ -3086,10 +3212,10 @@ function PublicAffiliateReportsDetailView({
                 'Affiliate registrations'
               }
               value={
-                affiliateRegistrations === null ? '�' : formatNumberShort(affiliateRegistrations)
+                affiliateRegistrations === null ? '-' : formatNumberShort(affiliateRegistrations)
               }
               tone={'rgba(34,211,238,0.95)'}
-              meta={selectedPeriodLabel || '�'}
+              meta={selectedPeriodLabel || 'Unknown'}
             />
             <CompactMetric
               label={
@@ -3097,7 +3223,7 @@ function PublicAffiliateReportsDetailView({
               }
               value={
                 companyRegistrations === null || companyRegistrations === undefined
-                  ? '�'
+                  ? '-'
                   : formatNumberShort(companyRegistrations)
               }
               tone={'var(--text)'}
@@ -3207,7 +3333,7 @@ function PublicAffiliateReportsDetailView({
               ))}
             </select>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.60)', fontWeight: 850 }}>
-              {selectedPeriodLabel || '�'}
+              {selectedPeriodLabel || 'Unknown'}
             </div>
           </div>
 
@@ -3253,12 +3379,12 @@ function PublicAffiliateReportsDetailView({
           >
             <StripItem
               label={t('shareAffiliateReports.metric.ftdClients') || 'FTD clients'}
-              value={ftd === null ? '�' : formatNumberShort(ftd)}
+              value={ftd === null ? '-' : formatNumberShort(ftd)}
               tone={'#10b981'}
             />
             <StripItem
               label={t('shareAffiliateReports.metric.qftdClients') || 'QFTD clients'}
-              value={qftd === null ? '�' : formatNumberShort(qftd)}
+              value={qftd === null ? '-' : formatNumberShort(qftd)}
               tone={'#f59e0b'}
             />
             <StripItem
@@ -3267,24 +3393,24 @@ function PublicAffiliateReportsDetailView({
                 depositsCount === null || depositsCount === undefined
                   ? registrationsDepositsAgg.error
                     ? 'N/A'
-                    : '�'
+                    : '-'
                   : formatNumberShort(depositsCount)
               }
               tone={'rgba(148,163,184,0.95)'}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.netDeposits') || 'Net Deposits'}
-              value={netDeposits === null ? '�' : fmtEuro(netDeposits)}
+              value={netDeposits === null ? '-' : fmtEuro(netDeposits)}
               tone={toneForSigned(netDeposits)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.pl') || 'P&L'}
-              value={pl === null ? '�' : fmtEuro(pl)}
+              value={pl === null ? '-' : fmtEuro(pl)}
               tone={toneForSigned(pl)}
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.payments') || 'Payments'}
-              value={paymentsTotal === null ? '�' : fmtEuro(paymentsTotal)}
+              value={paymentsTotal === null ? '-' : fmtEuro(paymentsTotal)}
               tone={
                 paymentsTotal !== null && Number(paymentsTotal) < 0
                   ? toneForSigned(paymentsTotal)
@@ -3293,7 +3419,7 @@ function PublicAffiliateReportsDetailView({
             />
             <StripItem
               label={t('shareAffiliateAnalysis.metric.roi') || 'ROI'}
-              value={roi === null ? '�' : fmtSensitivePercent(roi, 1)}
+              value={roi === null ? '-' : fmtSensitivePercent(roi, 1)}
               tone={roi !== null && roi < 0 ? '#ef4444' : '#22c55e'}
             />
           </div>
@@ -3407,11 +3533,11 @@ function PublicAffiliateReportsDetailView({
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
               <Badge
                 label={t('shareAffiliateReports.metric.cr') || 'CR%'}
-                value={conversionRate === null ? '�' : formatPercent(conversionRate, 1)}
+                value={conversionRate === null ? '-' : formatPercent(conversionRate, 1)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.losingRatio') || 'Losing ratio% (P&L/ND)'}
-                value={losingRatioPct === null ? '�' : fmtSensitivePercent(losingRatioPct, 2)}
+                value={losingRatioPct === null ? '-' : fmtSensitivePercent(losingRatioPct, 2)}
               />
               <Badge
                 label={t('shareAffiliateReports.metric.arpu') || 'ARPU'}
@@ -3434,7 +3560,7 @@ function PublicAffiliateReportsDetailView({
                 }
                 value={
                   avgDepositsCountPerFtdUser === null
-                    ? '�'
+                    ? '-'
                     : Number(avgDepositsCountPerFtdUser || 0).toFixed(1)
                 }
               />
@@ -3592,6 +3718,7 @@ export default function PublicAffiliateAnalysisSharePage({
   period,
   boardMode = false,
   maskFinancials = false,
+  trustedInternalAccess = false,
 }) {
   const { t, locale, setLocale } = useI18n()
   const { user: viewer } = useAuth()
@@ -3612,9 +3739,11 @@ export default function PublicAffiliateAnalysisSharePage({
       const segs = String(window.location.pathname || '')
         .split('/')
         .filter(Boolean)
-      if (segs[0] !== 'share' || segs[1] !== 'affiliate-reports') return
+      const isInternalRoute = trustedInternalAccess && segs[0] === 'affiliate-performance'
+      const isShareRoute = segs[0] === 'share' && segs[1] === 'affiliate-reports'
+      if (!isInternalRoute && !isShareRoute) return
 
-      const baseIndex = boardMode ? 2 : 3
+      const baseIndex = isInternalRoute ? 1 : boardMode ? 2 : 3
       const pathAffiliate = segs[baseIndex] || ''
       const pathPeriod = segs[baseIndex + 1] || ''
 
@@ -3622,9 +3751,10 @@ export default function PublicAffiliateAnalysisSharePage({
       setPeriodType(normalizePeriodType(pathPeriod) || 'since-ever')
     }
 
+    syncFromPath()
     window.addEventListener('popstate', syncFromPath)
     return () => window.removeEventListener('popstate', syncFromPath)
-  }, [boardMode])
+  }, [boardMode, trustedInternalAccess])
 
   const { mediaRows, payments, loading, error } = useMediaPaymentsData()
 
@@ -3663,6 +3793,14 @@ export default function PublicAffiliateAnalysisSharePage({
     let alive = true
     setValidating(true)
 
+    if (trustedInternalAccess && viewer) {
+      setIsValidToken(true)
+      setValidating(false)
+      return () => {
+        alive = false
+      }
+    }
+
     if (!authToken) {
       setIsValidToken(false)
       setValidating(false)
@@ -3680,7 +3818,7 @@ export default function PublicAffiliateAnalysisSharePage({
     return () => {
       alive = false
     }
-  }, [authToken])
+  }, [authToken, trustedInternalAccess, viewer])
 
   const routePeriodType = useMemo(() => normalizePeriodType(period), [period])
   useEffect(() => {
@@ -3822,10 +3960,10 @@ export default function PublicAffiliateAnalysisSharePage({
       .reduce((acc, r) => acc + (Number(r?.registrations || 0) || 0), 0)
   }, [mediaRows, effectivePeriodType, periodContext])
 
-  const top20Affiliates = useMemo(() => {
+  const allAffiliates = useMemo(() => {
     const byAffiliate = new Map()
     const ensure = (name) => {
-      const key = String(name || '�')
+      const key = String(name || 'Unknown')
       if (!byAffiliate.has(key)) byAffiliate.set(key, { affiliate: key, media: [], payments: [] })
       return byAffiliate.get(key)
     }
@@ -3845,7 +3983,7 @@ export default function PublicAffiliateAnalysisSharePage({
           roi: kpis.roi || 0,
         }
       })
-      .filter((a) => a.affiliate && a.affiliate !== '�')
+      .filter((a) => a.affiliate && a.affiliate !== 'Unknown')
       .filter((a) => (a.netDeposits || 0) !== 0 || (a.pl || 0) !== 0 || (a.payments || 0) !== 0)
 
     const totalAbsPayments = all.reduce((acc, a) => acc + Math.abs(Number(a.payments || 0)), 0)
@@ -3859,12 +3997,12 @@ export default function PublicAffiliateAnalysisSharePage({
       })
       .sort(
         (a, b) =>
-          Math.abs(Number(b.payments || 0)) - Math.abs(Number(a.payments || 0)) ||
-          (b.profit || 0) - (a.profit || 0)
+          Number(b.payments || 0) - Number(a.payments || 0) || (b.profit || 0) - (a.profit || 0)
       )
-      .slice(0, 20)
       .map((a, idx) => ({ ...a, rank: idx + 1 }))
   }, [mediaRows, payments])
+
+  const top20Affiliates = useMemo(() => allAffiliates.slice(0, 20), [allAffiliates])
 
   const report = useMemo(() => {
     if (!selectedAffiliateName) return null
@@ -4214,13 +4352,14 @@ export default function PublicAffiliateAnalysisSharePage({
 
   const shareBase = useMemo(() => {
     const origin = getPublicShareOrigin()
+    if (trustedInternalAccess) return `${origin}/affiliate-performance`
     if (boardMode) return `${origin}/share/affiliate-reports`
     const cleanToken = String(token || '').trim()
     if (cleanToken.startsWith('share_local_')) {
       return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
     }
     return `${origin}/share/affiliate-reports/${encodeURIComponent(cleanToken)}`
-  }, [token, boardMode])
+  }, [token, boardMode, trustedInternalAccess])
 
   const onSelectAffiliate = useMemo(() => {
     return (name) => {
@@ -4340,6 +4479,7 @@ export default function PublicAffiliateAnalysisSharePage({
         locale={locale}
         setLocale={setLocale}
         affiliates={top20Affiliates}
+        allAffiliates={allAffiliates}
         shareBase={shareBase}
         maskFinancials={effectiveMaskFinancials}
       />
@@ -4353,13 +4493,13 @@ export default function PublicAffiliateAnalysisSharePage({
       setLocale={setLocale}
       shareBase={shareBase}
       selectedAffiliateId={selectedAffiliateNumericId}
-      affiliates={top20Affiliates}
+      affiliates={allAffiliates}
       selectedAffiliateName={selectedAffiliateName}
       periodType={effectivePeriodType}
       setPeriodType={setPeriodType}
       onSelectAffiliate={onSelectAffiliate}
       onSelectPeriod={onSelectPeriod}
-      selectedPeriodLabel={periodContext?.label || '�'}
+      selectedPeriodLabel={periodContext?.label || 'Unknown'}
       highlightStartId={effectivePeriodType !== 'since-ever' ? periodContext?.startId : null}
       highlightEndId={effectivePeriodType !== 'since-ever' ? periodContext?.endId : null}
       companyRegistrations={companyRegistrations}

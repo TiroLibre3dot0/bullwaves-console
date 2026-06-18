@@ -7,6 +7,7 @@ const RECENT_SECTION_KEYS = new Set([
   'emailMasterTemplate',
   'primeChallengeRanking',
   'primeChallengeWidget',
+  'primeChallengeYpfMigration',
 ])
 
 function SidebarNewBadge() {
@@ -202,12 +203,16 @@ export default function Sidebar({
   customEventsDisabled,
   canAccessEmailMasterTemplate,
   isAdmin,
+  isStefanProfile = false,
+  showRestrictedSections = false,
   navigate,
   goExecutiveSection,
   goAffiliateSection,
 }) {
   const { t } = useI18n()
   const [isStandbyOpen, setIsStandbyOpen] = useState(false)
+  const [collapsedSections, setCollapsedSections] = useState({})
+  const toggleSection = (key) => setCollapsedSections((prev) => ({ ...prev, [key]: !prev[key] }))
   const trustpilotOnlyMode = accessMode === 'trustpilotOnly'
 
   const disabled = (key) => {
@@ -243,6 +248,64 @@ export default function Sidebar({
   }
 
   const sectionGroups = [
+    ...(isStefanProfile
+      ? [
+          {
+            key: 'stefanInterest',
+            title: "Stefan's interest",
+            items: [
+              {
+                key: 'overviewLast24',
+                label: 'Overview',
+                icon: 'home',
+                active: view === 'overview',
+                onClick: () => navigate('overviewLast24'),
+                disabled: disabled('overview'),
+              },
+              {
+                key: 'fraud',
+                label: t('sidebar.fraud'),
+                icon: 'shield',
+                active: view === 'fraud',
+                onClick: () => navigate('fraud'),
+                disabled: disabled('fraud'),
+              },
+              {
+                key: 'affiliatePerformanceStefan',
+                label: 'Affiliate performance',
+                icon: 'pie',
+                active: view === 'affiliatePerformance',
+                onClick: () => navigate('affiliatePerformance'),
+                disabled: disabled('affiliate'),
+              },
+              {
+                key: 'affiliatePayoutSummaryStefan',
+                label: t('investments.section.affiliatePayoutSummary'),
+                icon: 'card',
+                active: view === 'affiliate' && affiliateSection === 'payments',
+                onClick: () => goAffiliateSection('payments'),
+                disabled: disabled('affiliate'),
+              },
+              {
+                key: 'primeChallengeRankingStefan',
+                label: 'Prime Challenge Ranking',
+                icon: 'chart',
+                active: view === 'primeChallengeRanking',
+                onClick: () => navigate('primeChallengeRanking'),
+                disabled: disabled('primeChallengeRanking'),
+              },
+              {
+                key: 'profitableRankingStefan',
+                label: t('sidebar.profitableRanking'),
+                icon: 'chart',
+                active: view === 'profitableRanking',
+                onClick: () => navigate('profitableRanking'),
+                disabled: disabled('profitableRanking'),
+              },
+            ],
+          },
+        ]
+      : []),
     {
       key: 'projectManagement',
       title: 'Project management',
@@ -285,6 +348,14 @@ export default function Sidebar({
           onClick: () => navigate('skaleAccount'),
           disabled: disabled('skale'),
         },
+        {
+          key: 'fxboMigration',
+          label: 'FXBO migration',
+          icon: 'layers',
+          active: view === 'fxboMigration',
+          onClick: () => navigate('fxboMigration'),
+          disabled: disabled('fxboMigration'),
+        },
       ],
     },
     {
@@ -322,6 +393,14 @@ export default function Sidebar({
           active: view === 'marketingCampaign',
           onClick: () => navigate('marketingCampaign'),
           disabled: disabled('marketingCampaign'),
+        },
+        {
+          key: 'customerIoConsole',
+          label: 'Customer.io Console',
+          icon: 'chat',
+          active: view === 'customerIoConsole',
+          onClick: () => navigate('customerIoConsole'),
+          disabled: disabled('customerIoConsole'),
         },
         {
           key: 'smsConsole',
@@ -414,6 +493,14 @@ export default function Sidebar({
           active: view === 'primeChallengeWidget',
           onClick: () => navigate('primeChallengeWidget'),
           disabled: disabled('primeChallengeWidget'),
+        },
+        {
+          key: 'primeChallengeYpfMigration',
+          label: 'YPF migration',
+          icon: 'layout',
+          active: view === 'primeChallengeYpfMigration',
+          onClick: () => navigate('primeChallengeYpfMigration'),
+          disabled: disabled('primeChallengeYpfMigration'),
         },
       ],
     },
@@ -609,6 +696,14 @@ export default function Sidebar({
           disabled: disabled('reportsHub'),
         },
         {
+          key: 'standbySoliticsInsights',
+          label: 'Solitics insights',
+          icon: 'chart',
+          active: view === 'soliticsInsights',
+          onClick: () => navigate('soliticsInsights'),
+          disabled: disabled('soliticsInsights'),
+        },
+        {
           key: 'standbySalesMonitoring',
           label: 'Monitoring',
           icon: 'chart',
@@ -647,81 +742,136 @@ export default function Sidebar({
     ? sectionGroups.filter((section) => section.key === 'support')
     : sectionGroups
 
+  const filteredSectionGroups = visibleSectionGroups
+    .map((section) => {
+      // For restricted profiles (Stefan): keep non-Stefan sections but mark them as restricted
+      if (!showRestrictedSections && section.key !== 'stefanInterest') {
+        const items = section.items.map((item) => ({
+          ...item,
+          disabled: true,
+          onClick: undefined,
+          subitems: Array.isArray(item.subitems)
+            ? item.subitems.map((s) => ({ ...s, disabled: true, onClick: undefined }))
+            : item.subitems,
+        }))
+        return { ...section, items, restricted: true }
+      }
+
+      if (showRestrictedSections) return section
+
+      const items = section.items
+        .map((item) => {
+          const subitems = Array.isArray(item.subitems)
+            ? item.subitems.filter((subitem) => !subitem.disabled)
+            : item.subitems
+
+          if (item.disabled) return null
+          if (Array.isArray(item.subitems) && item.subitems.length && !subitems.length) return null
+
+          return {
+            ...item,
+            subitems,
+          }
+        })
+        .filter(Boolean)
+
+      if (!items.length) return null
+
+      return {
+        ...section,
+        items,
+      }
+    })
+    .filter(Boolean)
+
   return (
     <div className="sidebar">
-      {visibleSectionGroups.map((section) => (
-        <section key={section.key} className={`sidebar-section sidebar-section--${section.key}`}>
-          {section.key === 'standby' ? (
-            <button
-              type="button"
-              className="sidebar-title"
-              onClick={() => setIsStandbyOpen((open) => !open)}
-              aria-expanded={isStandbyOpen}
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <span>{section.title}</span>
-              <span aria-hidden="true" style={{ opacity: 0.8 }}>
-                {isStandbyOpen ? '▾' : '▸'}
-              </span>
-            </button>
-          ) : (
-            <div className="sidebar-title">
-              <span>{section.title}</span>
-            </div>
-          )}
+      {filteredSectionGroups.map((section) => {
+        const isStandby = section.key === 'standby'
+        const isRestricted = section.restricted === true
+        // Restricted sections (non-stefan-interest for Stefan): collapsible, collapsed by default
+        const isCollapsible = isStandby || isRestricted
+        const isOpen = isStandby
+          ? isStandbyOpen
+          : isRestricted
+            ? !(collapsedSections[section.key] !== false) // default collapsed
+            : true
 
-          <div
-            className="sidebar-list"
-            style={section.key === 'standby' && !isStandbyOpen ? { display: 'none' } : undefined}
-          >
-            {section.items.map((item) => (
-              <div key={item.key}>
-                <button
-                  disabled={item.disabled}
-                  type="button"
-                  className={`sidebar-item sidebar-main tab ${item.active ? 'active' : ''}`}
-                  onClick={item.onClick}
-                >
-                  <span className="sidebar-item__content">
-                    <span className="sidebar-item__icon" aria-hidden="true">
-                      <Icon name={item.icon} />
-                    </span>
-                    <span className="sidebar-item__label">
-                      <SidebarItemLabel label={item.label} itemKey={item.key} />
-                    </span>
-                  </span>
-                </button>
-
-                {Array.isArray(item.subitems) && item.subitems.length ? (
-                  <div className="sidebar-subsection">
-                    {item.subitems.map((subitem) => (
-                      <button
-                        key={subitem.key}
-                        disabled={subitem.disabled}
-                        type="button"
-                        className={`sidebar-item sidebar-subitem tab ${subitem.active ? 'active' : ''}`}
-                        onClick={subitem.onClick}
-                      >
-                        <span className="sidebar-item__content">
-                          <span className="sidebar-item__icon" aria-hidden="true">
-                            <Icon name={subitem.icon} size={14} />
-                          </span>
-                          <span className="sidebar-item__label">{subitem.label}</span>
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
+        return (
+          <section key={section.key} className={`sidebar-section sidebar-section--${section.key}`}>
+            {isCollapsible ? (
+              <button
+                type="button"
+                className="sidebar-title"
+                onClick={() =>
+                  isStandby ? setIsStandbyOpen((open) => !open) : toggleSection(section.key)
+                }
+                aria-expanded={isOpen}
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  opacity: isRestricted ? 0.45 : 1,
+                  cursor: 'pointer',
+                }}
+              >
+                <span>{section.title}</span>
+                <span aria-hidden="true" style={{ opacity: 0.8 }}>
+                  {isOpen ? '▾' : '▸'}
+                </span>
+              </button>
+            ) : (
+              <div className="sidebar-title">
+                <span>{section.title}</span>
               </div>
-            ))}
-          </div>
-        </section>
-      ))}
+            )}
+
+            <div className="sidebar-list" style={!isOpen ? { display: 'none' } : undefined}>
+              {section.items.map((item) => (
+                <div key={item.key}>
+                  <button
+                    disabled={item.disabled}
+                    type="button"
+                    className={`sidebar-item sidebar-main tab ${item.active ? 'active' : ''}`}
+                    onClick={item.onClick}
+                  >
+                    <span className="sidebar-item__content">
+                      <span className="sidebar-item__icon" aria-hidden="true">
+                        <Icon name={item.icon} />
+                      </span>
+                      <span className="sidebar-item__label">
+                        <SidebarItemLabel label={item.label} itemKey={item.key} />
+                      </span>
+                    </span>
+                  </button>
+
+                  {Array.isArray(item.subitems) && item.subitems.length ? (
+                    <div className="sidebar-subsection">
+                      {item.subitems.map((subitem) => (
+                        <button
+                          key={subitem.key}
+                          disabled={subitem.disabled}
+                          type="button"
+                          className={`sidebar-item sidebar-subitem tab ${subitem.active ? 'active' : ''}`}
+                          onClick={subitem.onClick}
+                        >
+                          <span className="sidebar-item__content">
+                            <span className="sidebar-item__icon" aria-hidden="true">
+                              <Icon name={subitem.icon} size={14} />
+                            </span>
+                            <span className="sidebar-item__label">{subitem.label}</span>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      })}
     </div>
   )
 }

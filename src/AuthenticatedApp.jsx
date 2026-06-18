@@ -18,6 +18,10 @@ const ExecutionHubPage = lazy(() => import('./features/execution/ExecutionHubPag
 const FlowsPage = lazy(() => import('./features/flows/FlowsPage'))
 const ExecutiveSuite = lazy(() => import('./features/executive/pages/ExecutiveSuite'))
 const AffiliateHub = lazy(() => import('./features/affiliate/pages/AffiliateHub'))
+const PublicAffiliateAnalysisSharePage = lazy(
+  () => import('./features/affiliate-analysis/pages/PublicAffiliateAnalysisSharePage')
+)
+const AFFILIATE_PERFORMANCE_TOKEN = 'share_local_317rccbafberxt00'
 const ProfitAnalysisPage = lazy(() => import('./pages/ProfitAnalysisPage'))
 const CommentsAnalysisPage = lazy(() => import('./pages/CommentsAnalysisPage'))
 const FraudMonitoringDashboard = lazy(() => import('./components/FraudMonitoringDashboard'))
@@ -50,14 +54,17 @@ const CommissionValidationRulesPage = lazy(() => import('./pages/CommissionValid
 const SalesMonitoringPage = lazy(() => import('./pages/SalesMonitoringPage'))
 const AcuityLabPage = lazy(() => import('./features/acuity/pages/AcuityLabPage'))
 const MarketingCampaignPage = lazy(() => import('./features/sales/pages/MarketingCampaignPage'))
+const CustomerIoConsolePage = lazy(() => import('./features/sales/pages/CustomerIoConsolePage'))
 const SmsConsolePage = lazy(() => import('./features/sms/pages/SmsConsolePage'))
 const SlackInboxPage = lazy(() => import('./features/slack/pages/SlackInboxPage'))
 const ExternalReportsHubPage = lazy(
   () => import('./features/reportsHub/pages/ExternalReportsHubPage')
 )
+const SoliticsInsightsPage = lazy(() => import('./features/reportsHub/pages/SoliticsInsightsPage'))
 const CreolabsDbNativePage = lazy(() => import('./features/creolabs/pages/CreolabsDbNativePage'))
 const SkalePage = lazy(() => import('./features/skale/pages/SkalePage'))
 const SkaleAccountPage = lazy(() => import('./features/skale/pages/SkaleAccountPage'))
+const FxboMigrationPage = lazy(() => import('./features/fxbo/pages/FxboMigrationPage'))
 const ProjectManagementPage = lazy(
   () => import('./features/projectManagement/pages/ProjectManagementPage')
 )
@@ -104,8 +111,11 @@ export default function AuthenticatedApp() {
     pathToAffiliateSection(window.location.pathname)
   )
 
-  const { user } = useAuth()
+  const { user, realUser, isImpersonating, stopImpersonation } = useAuth()
   const normalizedEmail = user?.email?.toLowerCase() || ''
+  const normalizedName = String(user?.name || '')
+    .trim()
+    .toLowerCase()
   const accessMode = getAccessMode(user)
   const isAdmin = accessMode === 'admin'
   const canAccessEmailMasterTemplate = Boolean(
@@ -118,6 +128,45 @@ export default function AuthenticatedApp() {
   )
   const restrictedLandingView = getLandingViewForAccessMode(accessMode)
   const restrictedDeniedView = getDeniedViewForAccessMode(accessMode)
+
+  const isStefanPopovskiProfile =
+    normalizedEmail === 'partners@bullwaves.com' || normalizedName === 'stefan popovski'
+  const isPaoloVulloProfile =
+    normalizedEmail === 'paolo.v@bullwaves.com' || normalizedName === 'paolo vullo'
+
+  const stefanAllowedViews = useMemo(
+    () =>
+      new Set([
+        'home',
+        'projectManagement',
+        'affiliate',
+        'affiliatePerformance',
+        'profitableRanking',
+        'segmentComposition',
+        'marketingCampaign',
+        'customerIoConsole',
+        'smsConsole',
+        'slackConsole',
+        'masterTemplates',
+        'emailMasterTemplate',
+        'primeChallengeRanking',
+        'primeChallengeWidget',
+        'primeChallengeYpfMigration',
+        'orgChart',
+        'overview',
+        'fraud',
+      ]),
+    []
+  )
+
+  const isEffectivelyRestricted = Boolean(isRestrictedUser || isStefanPopovskiProfile)
+  const effectiveAllowedViews = isStefanPopovskiProfile
+    ? stefanAllowedViews
+    : restrictedAllowedViews
+  const effectiveLandingView = isStefanPopovskiProfile
+    ? 'affiliatePerformance'
+    : restrictedLandingView
+  const effectiveDeniedView = isStefanPopovskiProfile ? 'home' : restrictedDeniedView
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
     if (typeof window === 'undefined') return true
@@ -175,11 +224,13 @@ export default function AuthenticatedApp() {
       profitableRanking: '/retention/profitable-ranking',
       primeChallengeRanking: '/prime-challenge/ranking',
       primeChallengeWidget: '/prime-challenge/widget',
+      primeChallengeYpfMigration: '/prime-challenge/ypf-migration',
       tradingCompetition: '/trading-competition',
       tradingCompetitionWidget: '/trading-competition/widget',
       commissionValidationRules: '/compliance/commission-validation-rules',
       salesMonitoring: '/sales/monitoring',
       marketingCampaign: '/sales/marketing-campaign',
+      customerIoConsole: '/sales/customerio',
       smsConsole: '/sales/sms-console',
       slackConsole: '/sales/slack-inbox',
       segmentComposition: '/retention/segment-composition',
@@ -198,15 +249,19 @@ export default function AuthenticatedApp() {
       creolabsNative: '/creolabs/native',
       skale: '/skale',
       skaleAccount: '/skale/account',
+      fxboMigration: '/database/fxbo-migration',
       projectManagement: '/project-management',
       boardReportMailStudio: '/board/report-mail-studio',
       reportsHub: '/reports',
+      soliticsInsights: '/reports/solitics-insights',
       acuity: '/acuity',
       customEvents: '/custom-events',
       upload: '/upload',
       notion: '/notion',
       admin: '/admin',
       adminPasswords: '/admin/passwords',
+      overviewLast24: '/overview?range=last24&source=both&kpi=all',
+      affiliatePerformance: '/affiliate-performance',
     }),
     []
   )
@@ -224,6 +279,7 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/overview')) return 'overview'
     if (pathname.startsWith('/flows')) return 'flows'
     if (pathname.startsWith('/executive')) return 'executive'
+    if (pathname.startsWith('/affiliate-performance')) return 'affiliatePerformance'
     if (pathname.startsWith('/analysis')) return 'affiliate'
     if (pathname.startsWith('/affiliate')) return 'affiliate'
     if (pathname.startsWith('/trader-points')) return 'traderPointsSimulator'
@@ -232,12 +288,14 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/retention/profitable-ranking')) return 'profitableRanking'
     if (pathname.startsWith('/prime-challenge/ranking')) return 'primeChallengeRanking'
     if (pathname.startsWith('/prime-challenge/widget')) return 'primeChallengeWidget'
+    if (pathname.startsWith('/prime-challenge/ypf-migration')) return 'primeChallengeYpfMigration'
     if (pathname.startsWith('/trading-competition/widget')) return 'tradingCompetitionWidget'
     if (pathname.startsWith('/trading-competition')) return 'tradingCompetition'
     if (pathname.startsWith('/compliance/commission-validation-rules'))
       return 'commissionValidationRules'
     if (pathname.startsWith('/sales/monitoring')) return 'salesMonitoring'
     if (pathname.startsWith('/sales/marketing-campaign')) return 'marketingCampaign'
+    if (pathname.startsWith('/sales/customerio')) return 'customerIoConsole'
     if (pathname.startsWith('/sales/sms-console')) return 'smsConsole'
     if (pathname.startsWith('/sales/slack-inbox')) return 'slackConsole'
     if (pathname.startsWith('/retention/segment-composition')) return 'segmentComposition'
@@ -261,7 +319,9 @@ export default function AuthenticatedApp() {
     if (pathname.startsWith('/creolabs')) return 'creolabsNative'
     if (pathname.startsWith('/skale/account')) return 'skaleAccount'
     if (pathname.startsWith('/skale')) return 'skale'
+    if (pathname.startsWith('/database/fxbo-migration')) return 'fxboMigration'
     if (pathname.startsWith('/board/report-mail-studio')) return 'boardReportMailStudio'
+    if (pathname.startsWith('/reports/solitics-insights')) return 'soliticsInsights'
     if (pathname.startsWith('/reports')) return 'reportsHub'
     if (pathname.startsWith('/acuity')) return 'acuity'
     if (pathname.startsWith('/custom-events')) return 'customEvents'
@@ -361,40 +421,49 @@ export default function AuthenticatedApp() {
 
     const onPop = () => {
       const nextPath = window.location.pathname
-      if (isRestrictedUser) {
+      if (isEffectivelyRestricted) {
         if (
-          restrictedAllowedViews?.has('supportUserCheck') &&
+          effectiveAllowedViews?.has('supportUserCheck') &&
           nextPath.startsWith('/support/user-check')
         ) {
           setView('supportUserCheck')
           return
         }
         if (
-          restrictedAllowedViews?.has('trustpilotGuide') &&
+          effectiveAllowedViews?.has('trustpilotGuide') &&
           nextPath.startsWith('/trustpilot-guide')
         ) {
           setView('trustpilotGuide')
           return
         }
         if (
-          restrictedAllowedViews?.has('aiAssistant') &&
+          effectiveAllowedViews?.has('aiAssistant') &&
           nextPath.startsWith('/support/ai-assistant')
         ) {
           setView('aiAssistant')
           return
         }
-        if (restrictedAllowedViews?.has('orgChart') && nextPath.startsWith('/org-chart')) {
+        if (effectiveAllowedViews?.has('orgChart') && nextPath.startsWith('/org-chart')) {
           setView('orgChart')
           return
         }
-        if (restrictedAllowedViews?.has('upload') && nextPath.startsWith('/upload')) {
+        if (effectiveAllowedViews?.has('upload') && nextPath.startsWith('/upload')) {
           setView('upload')
           return
         }
 
-        const deniedPath = routes[restrictedDeniedView] || routes.home
-        window.history.replaceState({ view: restrictedDeniedView }, '', deniedPath)
-        setView(restrictedDeniedView)
+        const nextView = pathToView(nextPath)
+        if (effectiveAllowedViews?.has(nextView)) {
+          setView(nextView)
+          if (nextView === 'affiliate') {
+            setAffiliateSection(pathToAffiliateSection(nextPath))
+          }
+          return
+        }
+
+        const deniedPath = routes[effectiveDeniedView] || routes.home
+        window.history.replaceState({ view: effectiveDeniedView }, '', deniedPath)
+        setView(effectiveDeniedView)
         return
       }
 
@@ -463,13 +532,13 @@ export default function AuthenticatedApp() {
   }, [
     canAccessEmailMasterTemplate,
     isAdmin,
-    isRestrictedUser,
+    isEffectivelyRestricted,
     routes.commandCenter,
     routes.creolabsNative,
     routes.projectBoard,
     routes,
-    restrictedAllowedViews,
-    restrictedDeniedView,
+    effectiveAllowedViews,
+    effectiveDeniedView,
   ])
 
   useEffect(() => {
@@ -479,25 +548,25 @@ export default function AuthenticatedApp() {
 
   useEffect(() => {
     if (!user) return
-    if (!isRestrictedUser) return
+    if (!isEffectivelyRestricted) return
     const p = window.location.pathname
-    const landingPath = routes[restrictedLandingView] || routes.home
+    const landingPath = routes[effectiveLandingView] || routes.home
     if (p !== landingPath) {
-      window.history.replaceState({ view: restrictedLandingView }, '', landingPath)
+      window.history.replaceState({ view: effectiveLandingView }, '', landingPath)
     }
-    setView(restrictedLandingView)
-  }, [restrictedLandingView, routes, user, isRestrictedUser])
+    setView(effectiveLandingView)
+  }, [effectiveLandingView, routes, user, isEffectivelyRestricted])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!user) return
-    if (isRestrictedUser) return
+    if (isEffectivelyRestricted) return
 
     // Canonicalize legacy root route to Home.
     if (window.location.pathname === '/') {
       window.history.replaceState({ view: 'home' }, '', routes.home)
     }
-  }, [user, isRestrictedUser, routes.home])
+  }, [user, isEffectivelyRestricted, routes.home])
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -529,8 +598,11 @@ export default function AuthenticatedApp() {
     if (nextView === 'emailMasterTemplate' && !canAccessEmailMasterTemplate) return
     if (nextView === 'masterTemplates' && !canAccessEmailMasterTemplate) return
 
-    if (isRestrictedUser && !restrictedAllowedViews.has(nextView)) {
-      const fallbackView = restrictedDeniedView
+    // Resolve aliases before any restriction check so allowedViews can use the canonical key
+    const resolvedView = nextView === 'overviewLast24' ? 'overview' : nextView
+
+    if (isEffectivelyRestricted && !effectiveAllowedViews.has(resolvedView)) {
+      const fallbackView = effectiveDeniedView
       const nextPath = routes[fallbackView] || routes.home
       if (window.location.pathname !== nextPath) {
         window.history.pushState({ view: fallbackView }, '', nextPath)
@@ -540,11 +612,22 @@ export default function AuthenticatedApp() {
     }
 
     const nextPath =
-      nextView === 'affiliate' ? affiliateSectionToPath(affiliateSection) : routes[nextView] || '/'
-    if (window.location.pathname !== nextPath) {
-      window.history.pushState({ view: nextView }, '', nextPath)
+      nextView === 'affiliate'
+        ? affiliateSectionToPath(affiliateSection)
+        : routes[nextView] || routes[resolvedView] || '/'
+    if (window.location.pathname + window.location.search !== nextPath) {
+      window.history.pushState({ view: resolvedView }, '', nextPath)
     }
-    setView(nextView)
+    setView(resolvedView)
+  }
+
+  const exitPreview = () => {
+    stopImpersonation()
+    const nextPath = routes.home
+    if (window.location.pathname !== nextPath) {
+      window.history.replaceState({ view: 'home' }, '', nextPath)
+    }
+    setView('home')
   }
 
   const goExecutiveSection = (section) => {
@@ -653,6 +736,7 @@ export default function AuthenticatedApp() {
       profitableRanking: 'retention-profitable-ranking',
       primeChallengeRanking: 'prime-challenge-ranking',
       primeChallengeWidget: 'prime-challenge-widget',
+      primeChallengeYpfMigration: 'prime-challenge-ypf-migration',
       tradingCompetition: 'trading-competition',
       tradingCompetitionWidget: 'trading-competition-widget',
       commissionValidationRules: 'commission-validation-rules',
@@ -661,6 +745,7 @@ export default function AuthenticatedApp() {
       masterTemplates: 'retention-master-templates',
       salesMonitoring: 'sales-monitoring',
       marketingCampaign: 'sales-marketing-campaign',
+      customerIoConsole: 'sales-customerio-console',
       smsConsole: 'sales-sms-console',
       slackConsole: 'sales-slack-inbox',
       emailMasterTemplate: 'retention-email-master-template',
@@ -672,9 +757,11 @@ export default function AuthenticatedApp() {
       trustpilotGuide: 'trustpilot-guide',
       creolabs: 'creolabs-db-native',
       creolabsNative: 'creolabs-db-native',
+      fxboMigration: 'fxbo-migration',
       projectManagement: 'project-management',
       boardReportMailStudio: 'board-report-mail-studio',
       reportsHub: 'reports-hub',
+      soliticsInsights: 'reports-solitics-insights',
       acuity: 'acuity-lab',
       upload: 'upload',
       traderPointsSimulator: 'trader-points',
@@ -703,12 +790,14 @@ export default function AuthenticatedApp() {
             view={view}
             executiveSection={executiveSection}
             affiliateSection={affiliateSection}
-            supportOnly={isRestrictedUser}
-            allowedViews={restrictedAllowedViews}
+            supportOnly={isEffectivelyRestricted}
+            allowedViews={effectiveAllowedViews}
             accessMode={accessMode}
             customEventsDisabled={!isAdmin}
             canAccessEmailMasterTemplate={canAccessEmailMasterTemplate}
             isAdmin={isAdmin}
+            isStefanProfile={isStefanPopovskiProfile}
+            showRestrictedSections={isPaoloVulloProfile}
             navigate={navigate}
             goExecutiveSection={goExecutiveSection}
             goAffiliateSection={goAffiliateSection}
@@ -716,12 +805,68 @@ export default function AuthenticatedApp() {
         </aside>
         <main className="dashboard-content">
           <div className="dashboard-inner">
+            {isImpersonating ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  borderRadius: 14,
+                  border: '1px solid rgba(56,189,248,0.28)',
+                  background: 'linear-gradient(135deg, rgba(8,47,73,0.92), rgba(12,74,110,0.82))',
+                  boxShadow: '0 16px 40px rgba(2, 132, 199, 0.12)',
+                }}
+              >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: '#7dd3fc',
+                    }}
+                  >
+                    Preview mode
+                  </div>
+                  <div style={{ color: '#e0f2fe', fontSize: 15, fontWeight: 700 }}>
+                    {`Previewing as ${user?.name || user?.email || 'selected user'}`}
+                  </div>
+                  <div style={{ color: '#bae6fd', fontSize: 12 }}>
+                    {`Real session: ${realUser?.name || realUser?.email || 'Admin user'}`}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={exitPreview}
+                  style={{
+                    border: '1px solid rgba(186,230,253,0.35)',
+                    background: 'rgba(255,255,255,0.08)',
+                    color: '#f0f9ff',
+                    padding: '9px 14px',
+                    borderRadius: 10,
+                    fontSize: 12,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  Exit preview
+                </button>
+              </div>
+            ) : null}
             <Suspense fallback={<FullPageLoader progress={20} minHeight="60vh" />}>
               {view === 'home' ? (
                 <ConsoleHomePage
                   user={user}
-                  supportOnly={isRestrictedUser}
-                  allowedViews={restrictedAllowedViews}
+                  supportOnly={isEffectivelyRestricted}
+                  allowedViews={effectiveAllowedViews}
+                  profileVariant={isStefanPopovskiProfile ? 'stefan-popovski' : 'default'}
                   onNavigate={navigate}
                 />
               ) : null}
@@ -742,6 +887,15 @@ export default function AuthenticatedApp() {
               {view === 'affiliate' ? (
                 <AffiliateHub section={affiliateSection} onSectionChange={setAffiliateSection} />
               ) : null}
+              {view === 'affiliatePerformance' ? (
+                <PublicAffiliateAnalysisSharePage
+                  token={AFFILIATE_PERFORMANCE_TOKEN}
+                  affiliateId=""
+                  period=""
+                  boardMode={false}
+                  trustedInternalAccess
+                />
+              ) : null}
               {view === 'analysis' ? <CommentsAnalysisPage mode="transfersOnly" /> : null}
               {view === 'traderPointsSimulator' ? <TraderPointsSimulatorPage /> : null}
               {view === 'profitableRanking' ? <ProfitableRanking definitionKey="traders" /> : null}
@@ -749,11 +903,15 @@ export default function AuthenticatedApp() {
                 <ProfitableRanking definitionKey="prime_challenge" />
               ) : null}
               {view === 'primeChallengeWidget' ? <PrimeChallengeWidgetPage /> : null}
+              {view === 'primeChallengeYpfMigration' ? (
+                <ProjectManagementPage initialProjectId="ypf-prime-challenge-migration" />
+              ) : null}
               {view === 'tradingCompetition' ? <TradingCompetitionPage /> : null}
               {view === 'tradingCompetitionWidget' ? <TradingCompetitionWidgetPage /> : null}
               {view === 'commissionValidationRules' ? <CommissionValidationRulesPage /> : null}
               {view === 'salesMonitoring' ? <SalesMonitoringPage /> : null}
               {view === 'marketingCampaign' ? <MarketingCampaignPage /> : null}
+              {view === 'customerIoConsole' ? <CustomerIoConsolePage /> : null}
               {view === 'smsConsole' ? <SmsConsolePage /> : null}
               {view === 'slackConsole' ? <SlackInboxPage /> : null}
               {view === 'segmentComposition' ? <ProfitableRanking segmentsOnly /> : null}
@@ -772,9 +930,11 @@ export default function AuthenticatedApp() {
               {view === 'creolabsNative' ? <CreolabsDbNativePage /> : null}
               {view === 'skale' ? <SkalePage /> : null}
               {view === 'skaleAccount' ? <SkaleAccountPage /> : null}
+              {view === 'fxboMigration' ? <FxboMigrationPage /> : null}
               {view === 'projectManagement' ? <ProjectManagementPage /> : null}
               {view === 'boardReportMailStudio' ? <BoardReportMailStudioPage /> : null}
               {view === 'reportsHub' ? <ExternalReportsHubPage /> : null}
+              {view === 'soliticsInsights' ? <SoliticsInsightsPage /> : null}
               {view === 'acuity' ? <AcuityLabPage /> : null}
               {view === 'customEvents' && isAdmin ? <CustomEventsPage /> : null}
               {view === 'upload' ? <UploadReportsPage /> : null}

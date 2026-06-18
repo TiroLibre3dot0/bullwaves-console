@@ -9,7 +9,7 @@ export default function UploadReportsPage() {
   const [reportType, setReportType] = useState('payments')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [serverProgress, setServerProgress] = useState(0)
-  const [status, setStatus] = useState('')
+  const [status, setStatus] = useState('Ready to upload.')
   const [resultText, setResultText] = useState('')
   const [resultData, setResultData] = useState(null)
   const [errorData, setErrorData] = useState(null)
@@ -630,6 +630,17 @@ export default function UploadReportsPage() {
               setServerProgress(pct)
             }
             if (msg.message) setStatus(msg.message)
+          } else if (msg.type === 'warning') {
+            sawTerminalMessage = true
+            if (msg.message) setStatus(`Warning: ${msg.message}`)
+            const details = String(msg.details || '').trim()
+            setResultText((prev) => {
+              const base = String(prev || '').trim()
+              const nextLine = details
+                ? `WARNING: ${msg.message} (${details})`
+                : `WARNING: ${msg.message}`
+              return base ? `${base}\n${nextLine}` : nextLine
+            })
           } else if (msg.type === 'result') {
             sawTerminalMessage = true
             setResultData(msg.data || msg)
@@ -670,7 +681,14 @@ export default function UploadReportsPage() {
           setResultText(xhr.responseText || '')
         }
       } else if (!sawTerminalMessage) {
-        setResultText(xhr.responseText || '')
+        const raw = String(xhr.responseText || '').trim()
+        if (raw) {
+          setResultText(raw)
+        } else if (ok) {
+          setResultText('Upload completed, but the server returned an empty response body.')
+        } else {
+          setResultText('No response body received from server.')
+        }
       }
       setStatus(ok ? t('upload.status.done') : `${t('upload.status.failed')} (HTTP ${xhr.status}).`)
 
@@ -846,7 +864,7 @@ export default function UploadReportsPage() {
               minHeight: 90,
             }}
           >
-            {resultText || t('upload.emptyDash')}
+            {resultText || 'No response yet. Upload a file to see details.'}
           </pre>
         ) : null}
       </div>
