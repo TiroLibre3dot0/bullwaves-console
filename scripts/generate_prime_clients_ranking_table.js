@@ -1,25 +1,37 @@
 /*
 Generate a JSON artifact consumed by the shared ranking pages.
 
-Input:
-  CREOLABS/Prime Clients Ranking.xlsx
+Input (first match wins, newest file used):
+  CREOLABS/Prime Ranking.csv          ← preferred when present
+  CREOLABS/Prime Clients Ranking.xlsx ← fallback
 
 Output:
   public/prime_clients_ranking_table.json
 
 Notes:
-  - Uses exceljs streaming reader to avoid OOM on larger XLSX files.
-  - Reads the FIRST sheet only.
+  - Supports both CSV (papaparse) and XLSX (exceljs streaming reader).
+  - Reads the FIRST sheet only for XLSX.
 */
 
 const fs = require('fs')
 const path = require('path')
 const ExcelJS = require('exceljs')
+const Papa = require('papaparse')
 
 const ROOT_DIR = path.join(__dirname, '..')
 const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
-const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
+const DEFAULT_INPUT_XLSX_PATH = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
+const DEFAULT_INPUT_CSV_PATH = path.join(CREOLABS_DIR, 'Prime Ranking.csv')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'prime_clients_ranking_table.json')
+
+function pickInputPath() {
+  const candidates = [DEFAULT_INPUT_XLSX_PATH, DEFAULT_INPUT_CSV_PATH]
+    .filter((p) => fs.existsSync(p))
+    .map((p) => ({ p, mtimeMs: Number(fs.statSync(p)?.mtimeMs || 0) }))
+  if (!candidates.length) return null
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
+  return candidates[0].p
+}
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms))
@@ -133,57 +145,66 @@ function cellToJsonValue(v) {
   return v
 }
 
-async function main() {
-  const inputPath = DEFAULT_INPUT_PATH
-
-  if (!fs.existsSync(inputPath)) {
-    console.log(
-      `SKIP Prime Clients Ranking generator (missing input): ${path.relative(ROOT_DIR, inputPath)}`
-    )
-    process.exit(0)
-  }
-
+async function readRowsFromXlsx(inputPath) {
   const rows = []
   let headers = null
-
   const workbook = new ExcelJS.stream.xlsx.WorkbookReader(inputPath, {
     entries: 'emit',
     sharedStrings: 'cache',
     styles: 'cache',
     worksheets: 'emit',
   })
-
   let sheetCount = 0
-
   for await (const worksheetReader of workbook) {
     sheetCount += 1
     if (sheetCount > 1) break
-
     for await (const row of worksheetReader) {
       const values = Array.isArray(row.values) ? row.values.slice(1) : []
-
       if (!headers) {
-        const rawHeaders = values.map((v) => asString(v).trim())
-        headers = ensureUniqueHeaders(rawHeaders)
+        headers = ensureUniqueHeaders(values.map((v) => asString(v).trim()))
         continue
       }
-
       let hasAny = false
       for (const v of values) {
-        if (v !== null && v !== undefined && String(v).trim() !== '') {
-          hasAny = true
-          break
-        }
+        if (v !== null && v !== undefined && String(v).trim() !== '') { hasAny = true; break }
       }
       if (!hasAny) continue
-
-      const compactRow = []
-      for (let i = 0; i < headers.length; i += 1) {
-        compactRow.push(cellToJsonValue(values[i]))
-      }
-      rows.push(compactRow)
+      rows.push(headers.map((_, i) => cellToJsonValue(values[i])))
     }
   }
+  return { headers: headers || [], rows }
+}
+
+function readRowsFromCsv(inputPath) {
+  const text = fs.readFileSync(inputPath, 'utf8')
+  const parsed = Papa.parse(text, { header: false, skipEmptyLines: 'greedy' })
+  const tableRows = Array.isArray(parsed?.data) ? parsed.data : []
+  const headers = ensureUniqueHeaders((tableRows[0] || []).map((v) => asString(v).trim()))
+  const rows = []
+  for (let r = 1; r < tableRows.length; r++) {
+    const values = Array.isArray(tableRows[r]) ? tableRows[r] : []
+    let hasAny = false
+    for (const v of values) {
+      if (v !== null && v !== undefined && String(v).trim() !== '') { hasAny = true; break }
+    }
+    if (!hasAny) continue
+    rows.push(headers.map((_, i) => cellToJsonValue(values[i])))
+  }
+  return { headers, rows }
+}
+
+async function main() {
+  const inputPath = pickInputPath()
+
+  if (!inputPath) {
+    console.log(
+      `SKIP Prime Clients Ranking generator (missing input): ${DEFAULT_INPUT_CSV_PATH} or ${DEFAULT_INPUT_XLSX_PATH}`
+    )
+    process.exit(0)
+  }
+
+  const ext = path.extname(inputPath).toLowerCase()
+  const { headers, rows } = ext === '.csv' ? readRowsFromCsv(inputPath) : await readRowsFromXlsx(inputPath)
 
   const out = {
     format: 'header-array-rows-v1',
@@ -191,7 +212,7 @@ async function main() {
     source: path.relative(ROOT_DIR, inputPath).replace(/\\/g, '/'),
     sheetIndex: 0,
     rowCount: rows.length,
-    headers: headers || [],
+    headers,
     rows,
   }
 

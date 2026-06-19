@@ -25,10 +25,15 @@ const CREOLABS_DIR = path.join(ROOT, 'CREOLABS')
 const ORG_DATA = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
 
 const TRADERS_REWARDS_XLSX = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const TRADERS_REWARDS_CSV = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.csv')
 const PRIME_CLIENTS_RANKING_XLSX = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
+const PRIME_CLIENTS_RANKING_CSV = path.join(CREOLABS_DIR, 'Prime Ranking.csv')
 
 function listCreolabsSources() {
-  return safeStat(TRADERS_REWARDS_XLSX).exists ? [TRADERS_REWARDS_XLSX] : []
+  const out = []
+  if (safeStat(TRADERS_REWARDS_XLSX).exists) out.push(TRADERS_REWARDS_XLSX)
+  if (safeStat(TRADERS_REWARDS_CSV).exists) out.push(TRADERS_REWARDS_CSV)
+  return out
 }
 
 function parseArgs(argv) {
@@ -215,19 +220,19 @@ function main() {
     { artifact: artifacts.shareOrgPeople, sources: [ORG_DATA], name: 'share/org-chart-people.json' },
     {
       artifact: artifacts.tradersRankingRewardsTable,
-      sources: [TRADERS_REWARDS_XLSX],
+      sources: [TRADERS_REWARDS_XLSX, TRADERS_REWARDS_CSV],
       name: 'traders_ranking_rewards_table.json',
       optional: true,
     },
     {
       artifact: artifacts.primeClientsRankingTable,
-      sources: [PRIME_CLIENTS_RANKING_XLSX],
+      sources: [PRIME_CLIENTS_RANKING_XLSX, PRIME_CLIENTS_RANKING_CSV],
       name: 'prime_clients_ranking_table.json',
       optional: true,
     },
     {
       artifact: artifacts.primeContestEmbed,
-      sources: [PRIME_CLIENTS_RANKING_XLSX],
+      sources: [PRIME_CLIENTS_RANKING_XLSX, PRIME_CLIENTS_RANKING_CSV],
       name: 'embed/prime-contest.json',
       optional: true,
     },
