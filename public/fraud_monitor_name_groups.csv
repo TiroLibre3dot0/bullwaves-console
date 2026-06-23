@@ -1,4 +1,20 @@
 name,country,count,members_user_ids,members_accounts
+ivica majetic,croatia,4,"bullwaves-1292358|bullwaves-799013|bullwaves-79246|bullwaves-79246""","2008726|,""12/15/2025 11:08:21|906060|906060"
+kyle dickens,united kingdom,3,"bullwaves-1292349|bullwaves-787797|bullwaves-787797""",2008725|3003322|3003322
+harry turner,united kingdom,3,"bullwaves-1292327|bullwaves-899522|bullwaves-899522""","3022051,3022053|3008673|3008673"
+mohammed hasan,united kingdom,3,"bullwaves-1292199|bullwaves-500899|bullwaves-500899""",3022045|1213167|1213167
+bradley harris,united kingdom,3,"bullwaves-1292178|bullwaves-331143|bullwaves-331143""",2008716|945146|945146
+mohammed aljanabi,canada,3,"bullwaves-1292112|bullwaves-776344|bullwaves-776344""",2008714|3002658|3002658
+russell bennett,united kingdom,4,"bullwaves-1291394|bullwaves-1093775|bullwaves-284008|bullwaves-284008""",2008701|2005028|938322|938322
+aida tahiri,united kingdom,3,"bullwaves-1291169|bullwaves-815666|bullwaves-815666""",3021963|3004186|3004186
+mehmet demiroglu,united kingdom,3,"bullwaves-1291098|bullwaves-758884|bullwaves-758884""",3021959|3001748|3001748
+nicola hadgraft,united kingdom,4,"bullwaves-1290900|bullwaves-1223443|bullwaves-936891|bullwaves-936891""","2008694|3019402|3010455,3010462|3010455,3010462"
+colleen taylor,united kingdom,2,bullwaves-1290362|bullwaves-1263963,|3020848
+mohamedaziz aloui,tunisia,2,bullwaves-1290054|bullwaves-1289965,3021917|3021914
+hammouda sassi,tunisia,2,bullwaves-1289938|bullwaves-1268506,3021912|3021029
+liam hunter,united kingdom,2,bullwaves-1289749|bullwaves-1184457,3021905|2006773
+almagul baidalina,kazakhstan,2,bullwaves-1289766|bullwaves-1286257,3021906|3021799
+konrad piatek,poland,3,"bullwaves-1289703|bullwaves-860101|bullwaves-860101""",3021902|3006662|3006662
 lewis davies,united kingdom,5,"bullwaves-1288872|bullwaves-109322|bullwaves-109322""|bullwaves-52073|bullwaves-52073""",3021878|910515|910515|902609|902609
 john smith,united kingdom,7,"bullwaves-1288800|bullwaves-731194|bullwaves-731194""|bullwaves-694567|bullwaves-694567""|bullwaves-573627|bullwaves-573627""",2008672|2000042|2000042|1316200|1316200|1302582|1302582
 jason smit,australia,3,"bullwaves-1288745|bullwaves-576837|bullwaves-576837""",2008671|1302982|1302982
@@ -297,7 +313,6 @@ dwayne gayle,jamaica,2,bullwaves-1223837|bullwaves-1223768,2007530|
 lee parker,united kingdom,4,"bullwaves-1223635|bullwaves-802499|bullwaves-384916|bullwaves-384916""","3019411|,""12/15/2025 11:11:58|951894|951894"
 callum watson,united kingdom,5,"bullwaves-1223562|bullwaves-928782|bullwaves-928782""|bullwaves-531834|bullwaves-531834""",2007521|3010147|3010147|1217090|1217090
 vinay patel,united kingdom,5,"bullwaves-1223494|bullwaves-831605|bullwaves-831605""|bullwaves-733176|bullwaves-733176""",2007519|3005060|3005060|3000303|3000303
-nicola hadgraft,united kingdom,3,"bullwaves-1223443|bullwaves-936891|bullwaves-936891""","3019402|3010455,3010462|3010455,3010462"
 richez sykes,australia,2,bullwaves-1223032|bullwaves-1221204,2007510|3019313
 alen huseinagic,bosnia and herzegovina,2,bullwaves-1222896|bullwaves-1161739,3019378|
 shedrack sunday,nigeria,3,"bullwaves-1222784|bullwaves-255498|bullwaves-255498""",2007503|933944|933944
@@ -878,7 +893,6 @@ karne mallard,australia,3,"bullwaves-1094380|bullwaves-210669|bullwaves-210669""
 peter onobi,nigeria,3,"bullwaves-1094285|bullwaves-1015553""|bullwaves-1015553",2005047|3013795|3013795
 graham robertson,united kingdom,5,"bullwaves-1094236|bullwaves-591591|bullwaves-591591""|bullwaves-128185|bullwaves-128185""",2005045|1304809|1304809|913361|913361
 tevita nabura,new zealand,2,bullwaves-1094139|bullwaves-1094146,2005043|3015833
-russell bennett,united kingdom,3,"bullwaves-1093775|bullwaves-284008|bullwaves-284008""",2005028|938322|938322
 ryan wilson,united kingdom,5,"bullwaves-1093727|bullwaves-387931|bullwaves-387931""|bullwaves-250315|bullwaves-250315""",3015825|952239|952239|932986|932986
 jack robinson,united kingdom,3,"bullwaves-1093652|bullwaves-134395|bullwaves-134395""",2005023|914399|914399
 cristian szabo,united kingdom,2,bullwaves-1093384|bullwaves-1093300,2005014|3015817
@@ -7503,7 +7517,6 @@ ozair puda,united arab emirates,2,"bullwaves-899749|bullwaves-899749""",3008677|
 abdul afzal,united kingdom,2,"bullwaves-899703|bullwaves-899703""",3008675|3008675
 abdul hussain,united kingdom,6,"bullwaves-899666|bullwaves-899666""|bullwaves-871872|bullwaves-871872""|bullwaves-227141|bullwaves-227141""","2001920|2001920,2001921|3007198|3007198|929061|929061,3010178"
 hamza chaudry,united kingdom,2,"bullwaves-899693|bullwaves-899693""",3008674|3008674
-harry turner,united kingdom,2,"bullwaves-899522|bullwaves-899522""",3008673|3008673
 kyle pearson,united kingdom,2,"bullwaves-899503|bullwaves-899503""",3008671|3008671
 marc radley,united arab emirates,2,"bullwaves-899509|bullwaves-899509""",3008672|3008672
 joshua ramessar,united kingdom,2,"bullwaves-899477|bullwaves-899477""",3008670|3008670
@@ -9510,7 +9523,6 @@ richie hyslop,new zealand,2,"bullwaves-860169|bullwaves-860169""",3006668|300666
 lewis mulhall,united kingdom,2,"bullwaves-860149|bullwaves-860149""","3006665,3006666,3006667|3006665,3006666,3006667"
 maman tapu,indonesia,2,"bullwaves-860119|bullwaves-860119""",3006664|3006664
 louis frater,united kingdom,2,"bullwaves-860105|bullwaves-860105""",3006663|3006663
-konrad piatek,poland,2,"bullwaves-860101|bullwaves-860101""",3006662|3006662
 kulpreet singh,australia,2,"bullwaves-860097|bullwaves-860097""",3006661|3006661
 shafeeq shah,australia,2,"bullwaves-860068|bullwaves-860068""",3006659|3006659
 jose carlo munoz,united kingdom,2,"bullwaves-860071|bullwaves-860071""",3006660|3006660
@@ -12096,7 +12108,6 @@ gabriel mitrovic,malta,2,"bullwaves-815690|bullwaves-815690""",3004189|3004189
 ian murungi,kenya,2,"bullwaves-815692|bullwaves-815692""",3004190|3004190
 mary amulong,united kingdom,2,"bullwaves-815670|bullwaves-815670""",3004187|3004187
 timothy wirjantoro,indonesia,2,"bullwaves-815678|bullwaves-815678""",3004188|3004188
-aida tahiri,united kingdom,2,"bullwaves-815666|bullwaves-815666""",3004186|3004186
 matthew pearman,united kingdom,3,"bullwaves-815655|bullwaves-376334|bullwaves-376334""",",""12/18/2025 20:58:05|950929|950929"
 lester hurt,united kingdom,2,"bullwaves-815648|bullwaves-815648""",2001077|2001077
 zaheer loke,united kingdom,2,"bullwaves-815641|bullwaves-815641""",3004184|3004184
@@ -18129,7 +18140,6 @@ niko kozel,slovenia,3,"bullwaves-799387|bullwaves-116106|bullwaves-116106""",","
 konrad zsombori,romania,5,"bullwaves-800018|bullwaves-160979|bullwaves-160979""|bullwaves-125405|bullwaves-125405""",",""12/15/2025 11:09:21|918767|918767|912879|912879"
 valentinas paulauskas,ireland,3,"bullwaves-798995|bullwaves-78093|bullwaves-78093""",",""12/15/2025 11:08:20|300141|300141"
 bright omobude,france,3,"bullwaves-798965|bullwaves-76765|bullwaves-76765""",",""12/15/2025 11:08:18|905655|905655"
-ivica majetic,croatia,3,"bullwaves-799013|bullwaves-79246|bullwaves-79246""",",""12/15/2025 11:08:21|906060|906060"
 vladimir vavrinak,slovakia,3,"bullwaves-798751|bullwaves-63148|bullwaves-63148""",",""12/15/2025 11:08:04|903991|903991"
 liny mathews,united arab emirates,3,"bullwaves-799916|bullwaves-152663|bullwaves-152663""",",""12/15/2025 11:09:16|917265|917583"
 pitigala arachchige gavein pitigala,australia,3,"bullwaves-799631|bullwaves-132422|bullwaves-132422""",",""12/15/2025 11:09:00|914115|914115"
@@ -20177,7 +20187,6 @@ muhammad ayub,pakistan,2,"bullwaves-787844|bullwaves-787844""",2000822|2000822
 efstathios martinis,greece,2,"bullwaves-787838|bullwaves-787838""","2000821,2000864|2000821,2000864"
 luis likaxhiu,italy,2,"bullwaves-787818|bullwaves-787818""","3003324,3003444|3003324,3003444"
 kdeep singh,canada,2,"bullwaves-787807|bullwaves-787807""",3003323|3003323
-kyle dickens,united kingdom,2,"bullwaves-787797|bullwaves-787797""",3003322|3003322
 dawain kenny,united kingdom,2,"bullwaves-787770|bullwaves-787770""",3003320|3003320
 kevin kolev,bulgaria,2,"bullwaves-787747|bullwaves-787747""",3003319|3003319
 jermain thompson,united kingdom,2,"bullwaves-787743|bullwaves-787743""","3003318,3003321|3003318,3003321"
@@ -20876,7 +20885,6 @@ simon livingstone,kenya,2,"bullwaves-776394|bullwaves-776394""",3002662|3002662
 hamas ali,united kingdom,2,"bullwaves-776390|bullwaves-776390""",3002661|3002661
 hanggha prayoga,indonesia,2,"bullwaves-776377|bullwaves-776377""",3002660|3002660
 mario barbani,italy,2,"bullwaves-776361|bullwaves-776361""","3002659,3003108|3002659,3003108"
-mohammed aljanabi,canada,2,"bullwaves-776344|bullwaves-776344""",3002658|3002658
 kyle gresham,united kingdom,2,"bullwaves-776333|bullwaves-776333""",3002657|3002657
 michael goodridge,united kingdom,2,"bullwaves-776326|bullwaves-776326""",3002655|3002655
 louis laycock,united kingdom,2,"bullwaves-776329|bullwaves-776329""",3002656|3002656
@@ -21803,7 +21811,6 @@ koray poulter,united kingdom,2,"bullwaves-758932|bullwaves-758932""",3001752|300
 leonardo ghigino,italy,2,"bullwaves-758920|bullwaves-758920""",3001751|3001751
 abdullah bahsa,australia,2,"bullwaves-758917|bullwaves-758917""",3001750|3001750
 abdulkadir ahmed,united kingdom,2,"bullwaves-758888|bullwaves-758888""",3001749|3001749
-mehmet demiroglu,united kingdom,2,"bullwaves-758884|bullwaves-758884""",3001748|3001748
 cornelly hok-ahin,netherlands,2,"bullwaves-758880|bullwaves-758880""",3001747|3001747
 haashim sadiq,united kingdom,2,"bullwaves-758869|bullwaves-758869""",3001745|3001745
 shanthale marsdin,aruba,2,"bullwaves-758873|bullwaves-758873""",3001746|3001746
@@ -38474,7 +38481,6 @@ muhammed kaif,pakistan,4,"bullwaves-500964|bullwaves-500945|bullwaves-500907|bul
 mateusz stasiak,poland,2,"bullwaves-500922|bullwaves-500922""",1213171|1213171
 kaine parry,united kingdom,2,"bullwaves-500935|bullwaves-500935""",1213172|1213172
 stefan cioara,unknown country,2,"bullwaves-500912|bullwaves-500912""",1213170|1213170
-mohammed hasan,united kingdom,2,"bullwaves-500899|bullwaves-500899""",1213167|1213167
 ngoni muza,zimbabwe,2,"bullwaves-500896|bullwaves-500896""",1213166|1213166
 tharussan kanagasabai,united kingdom,2,"bullwaves-500892|bullwaves-500892""",1213165|1213165
 gabriel cojocaru,romania,2,"bullwaves-500880|bullwaves-500880""",1213163|1213163
@@ -49264,7 +49270,6 @@ sbonelo thabang,south africa,2,"bullwaves-331186|bullwaves-331186""",945152|9451
 eslam salaheldin,united arab emirates,2,"bullwaves-331162|bullwaves-331162""",945148|945148
 andrew brincat,australia,2,"bullwaves-331177|bullwaves-331177""",945151|945151
 naveen reddy nevoori,australia,2,"bullwaves-331174|bullwaves-331174""",945150|945150
-bradley harris,united kingdom,2,"bullwaves-331143|bullwaves-331143""",945146|945146
 esben johannsen,denmark,2,"bullwaves-331106|bullwaves-331106""",945142|945142
 jerome ruddock,united kingdom,2,"bullwaves-331114|bullwaves-331114""",945143|945143
 james endersby,united kingdom,2,"bullwaves-331072|bullwaves-331072""",945136|945136

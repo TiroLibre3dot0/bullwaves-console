@@ -1,13 +1,13 @@
 {
   "kind": "prime-contest-embed",
-  "generatedAt": "2026-06-10T18:40:11.698Z",
-  "sourceGeneratedAt": "2026-06-10T18:39:59.742Z",
-  "periodKey": "2026-03",
+  "generatedAt": "2026-06-23T13:30:32.822Z",
+  "sourceGeneratedAt": "2026-06-23T13:30:16.125Z",
+  "periodKey": "2026-05",
   "periodLabel": "Active in last 180 days",
-  "updatedAtLabel": "10 Jun 2026, 18:40",
+  "updatedAtLabel": "23 Jun 2026, 13:30",
   "summary": {
-    "totalContestants": 239,
-    "totalPayoutAmount": 320590
+    "totalContestants": 232,
+    "totalPayoutAmount": 286534
   },
   "rows": [
     {
@@ -15,7 +15,7 @@
       "displayName": "Miles C.",
       "country": "GB",
       "payoutAmount": 9349,
-      "totalTrades": 167
+      "totalTrades": 219
     },
     {
       "rank": 2,
@@ -33,122 +33,122 @@
     },
     {
       "rank": 4,
+      "displayName": "Jordi R.",
+      "country": "ES",
+      "payoutAmount": 7277,
+      "totalTrades": 382
+    },
+    {
+      "rank": 5,
       "displayName": "Charles D.",
       "country": "GB",
       "payoutAmount": 7093,
       "totalTrades": 145
     },
     {
-      "rank": 5,
+      "rank": 6,
       "displayName": "Michele M.",
       "country": "CH",
-      "payoutAmount": 6672,
+      "payoutAmount": 6673,
       "totalTrades": 293
     },
     {
-      "rank": 6,
-      "displayName": "Craig P.",
-      "country": "GB",
+      "rank": 7,
+      "displayName": "Marko V.",
+      "country": "HR",
       "payoutAmount": 6000,
-      "totalTrades": 662
+      "totalTrades": 323
     },
     {
-      "rank": 7,
+      "rank": 8,
       "displayName": "Barry N.",
       "country": "NL",
       "payoutAmount": 6000,
       "totalTrades": 96
     },
     {
-      "rank": 8,
-      "displayName": "Marko V.",
-      "country": "HR",
-      "payoutAmount": 6000,
-      "totalTrades": 265
-    },
-    {
       "rank": 9,
       "displayName": "Ayodeji O.",
       "country": "CA",
       "payoutAmount": 5558,
-      "totalTrades": 1878
+      "totalTrades": 1979
     },
     {
       "rank": 10,
       "displayName": "Mihaly O.",
       "country": "NL",
       "payoutAmount": 5548,
-      "totalTrades": 96
+      "totalTrades": 97
     },
     {
       "rank": 11,
-      "displayName": "Matthew F.",
-      "country": "GB",
-      "payoutAmount": 5540,
-      "totalTrades": 188
-    },
-    {
-      "rank": 12,
       "displayName": "Oleg C.",
       "country": "MD",
       "payoutAmount": 5520,
       "totalTrades": 199
     },
     {
-      "rank": 13,
+      "rank": 12,
       "displayName": "Santiago G.",
       "country": "DE",
       "payoutAmount": 5484,
       "totalTrades": 87
     },
     {
-      "rank": 14,
-      "displayName": "Jordi R.",
-      "country": "ES",
-      "payoutAmount": 5193,
-      "totalTrades": 366
-    },
-    {
-      "rank": 15,
+      "rank": 13,
       "displayName": "Wayne H.",
       "country": "GB",
       "payoutAmount": 4813,
-      "totalTrades": 466
+      "totalTrades": 545
     },
     {
-      "rank": 16,
-      "displayName": "Stevason G.",
-      "country": "GB",
-      "payoutAmount": 4800,
-      "totalTrades": 355
-    },
-    {
-      "rank": 17,
+      "rank": 14,
       "displayName": "Alessandro S.",
       "country": "IT",
       "payoutAmount": 4725,
-      "totalTrades": 230
+      "totalTrades": 250
     },
     {
-      "rank": 18,
-      "displayName": "Valentina B.",
-      "country": "IT",
-      "payoutAmount": 4284,
-      "totalTrades": 179
-    },
-    {
-      "rank": 19,
+      "rank": 15,
       "displayName": "Andrea S.",
       "country": "IT",
       "payoutAmount": 4257,
       "totalTrades": 206
     },
     {
-      "rank": 20,
+      "rank": 16,
       "displayName": "Shankar P.",
       "country": "AE",
       "payoutAmount": 4078,
       "totalTrades": 235
+    },
+    {
+      "rank": 17,
+      "displayName": "Zana M.",
+      "country": "GB",
+      "payoutAmount": 4056,
+      "totalTrades": 733
+    },
+    {
+      "rank": 18,
+      "displayName": "Francesco D.",
+      "country": "IT",
+      "payoutAmount": 3974,
+      "totalTrades": 128
+    },
+    {
+      "rank": 19,
+      "displayName": "Giuseppe S.",
+      "country": "IT",
+      "payoutAmount": 3872,
+      "totalTrades": 861
+    },
+    {
+      "rank": 20,
+      "displayName": "Roberto F.",
+      "country": "IT",
+      "payoutAmount": 3773,
+      "totalTrades": 1006
     }
   ]
 }
