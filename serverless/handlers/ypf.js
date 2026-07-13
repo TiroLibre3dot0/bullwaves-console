@@ -3,7 +3,15 @@ const path = require('path')
 const crypto = require('crypto')
 const { json, pickHeader, safeParseJsonBody } = require('./_http')
 
-const STORE_PATH = path.join(__dirname, '..', '..', 'uploads', 'ypf_webhook_events.json')
+function resolveStorePath() {
+  // Vercel serverless: writable area is /tmp. Local dev keeps using project uploads/.
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join('/tmp', 'ypf_webhook_events.json')
+  }
+  return path.join(__dirname, '..', '..', 'uploads', 'ypf_webhook_events.json')
+}
+
+const STORE_PATH = resolveStorePath()
 const MAX_EVENTS = 2000
 
 function env(name, fallback = '') {
