@@ -101,6 +101,7 @@ function inferEventType(payload) {
   const candidates = [
     payload.event,
     payload.eventType,
+    payload.webhookType,
     payload.type,
     payload.name,
     payload.topic,
