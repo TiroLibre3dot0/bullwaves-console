@@ -8,6 +8,9 @@ const { routeSlack } = require('./handlers/slack')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeAcuity } = require('./handlers/acuity')
+const { routeBrokeree } = require('./handlers/brokeree')
+const { routeReports } = require('./handlers/reports')
+const { routeYpf } = require('./handlers/ypf')
 
 function json(res, status, payload, headers) {
   res.statusCode = status
@@ -83,6 +86,18 @@ async function routeApi(req, res) {
 
   if (scope === 'acuity') {
     return routeAcuity(req, res, parts.slice(1))
+  }
+
+  if (scope === 'brokeree') {
+    return routeBrokeree(req, res, parts.slice(1))
+  }
+
+  if (scope === 'reports') {
+    return routeReports(req, res, parts.slice(1))
+  }
+
+  if (scope === 'ypf') {
+    return routeYpf(req, res, parts.slice(1))
   }
 
   return json(res, 404, { ok: false, error: 'Not found' })
