@@ -8,9 +8,20 @@ const { routeSlack } = require('./handlers/slack')
 const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeAcuity } = require('./handlers/acuity')
-const { routeBrokeree } = require('./handlers/brokeree')
-const { routeReports } = require('./handlers/reports')
 const { routeYpf } = require('./handlers/ypf')
+
+function optionalRoute(modulePath, exportName) {
+  try {
+    const mod = require(modulePath)
+    const route = mod?.[exportName]
+    return typeof route === 'function' ? route : null
+  } catch {
+    return null
+  }
+}
+
+const routeBrokeree = optionalRoute('./handlers/brokeree', 'routeBrokeree')
+const routeReports = optionalRoute('./handlers/reports', 'routeReports')
 
 function json(res, status, payload, headers) {
   res.statusCode = status
@@ -88,11 +99,11 @@ async function routeApi(req, res) {
     return routeAcuity(req, res, parts.slice(1))
   }
 
-  if (scope === 'brokeree') {
+  if (scope === 'brokeree' && routeBrokeree) {
     return routeBrokeree(req, res, parts.slice(1))
   }
 
-  if (scope === 'reports') {
+  if (scope === 'reports' && routeReports) {
     return routeReports(req, res, parts.slice(1))
   }
 
