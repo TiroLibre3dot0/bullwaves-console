@@ -61,7 +61,7 @@ export default function FraudMonitoringDashboard() {
   const [modalCase, setModalCase] = useState(null)
   const [isCommissionsModalOpen, setIsCommissionsModalOpen] = useState(false)
   const [reviewedIds, setReviewedIds] = useState(new Set())
-  const [nameGroups, setNameGroups] = useState(null)
+  const [nameGroups, setNameGroups] = useState([])
   const [useNameGroups, setUseNameGroups] = useState(false)
   const [groupMinCount, setGroupMinCount] = useState(9)
   const [mediaSummary, setMediaSummary] = useState({ ftd: 0, qftd: 0, totalCpa: 0 })
@@ -100,7 +100,7 @@ export default function FraudMonitoringDashboard() {
         // Reset loading flags/state for a clean re-load.
         setMediaLoaded(false)
         setCsvLoaded(false)
-        setNameGroups(null)
+        setNameGroups([])
         return v
       })
     }
@@ -127,16 +127,16 @@ export default function FraudMonitoringDashboard() {
   const sum = (arr) => arr.reduce((a, b) => a + b, 0)
 
   const initialLoading = useMemo(() => {
-    // loading covers seed cases; mediaLoaded/csvLoaded cover CSV parsing; nameGroups starts as null
-    return !!loading || !mediaLoaded || !csvLoaded || nameGroups === null
-  }, [loading, mediaLoaded, csvLoaded, nameGroups])
+    // Name groups are a large optional enrichment; do not block the primary dashboard render on them.
+    return !!loading || !mediaLoaded || !csvLoaded
+  }, [loading, mediaLoaded, csvLoaded])
 
   const initialProgress = useMemo(() => {
     const steps = [
       { done: !loading },
       { done: !!mediaLoaded },
       { done: !!csvLoaded },
-      { done: nameGroups !== null },
+      { done: true },
     ]
     const doneCount = steps.reduce((s, x) => s + (x.done ? 1 : 0), 0)
     return (doneCount / steps.length) * 100
