@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-14T16:43:12.525Z",
+  "generatedAt": "2026-07-24T06:46:46.620Z",
   "source": "src/pages/orgChartData.js",
   "sections": [
     {
@@ -61,7 +61,7 @@
       "roles": [
         {
           "name": "Operations (Area)",
-          "title": "Responsible: Francesco",
+          "title": "Responsible: Paolo",
           "division": "Operations",
           "department": "Operations"
         },
@@ -246,13 +246,13 @@
       "roles": [
         {
           "name": "Roberta Jovanovic",
-          "title": "Sales Coordinator",
+          "title": "Revenue Operations Manager",
           "division": "Acquisition",
-          "department": "Sales - Conversion",
-          "crossTeamRole": "Facilitator",
+          "department": "Revenue Operations",
+          "crossTeamRole": "Revenue Coordinator",
           "facilitatorFor": [
             "Sales",
-            "Customer Support"
+            "Retention"
           ]
         },
         {
@@ -265,7 +265,7 @@
           "name": "Imran Hossain",
           "title": "Business Development Manager",
           "division": "Acquisition",
-          "department": "Sales - Conversion"
+          "department": "Sales - Retention"
         },
         {
           "name": "Orlin Simovonyan",
@@ -280,28 +280,10 @@
           "department": "Sales - Retention"
         },
         {
-          "name": "Ghassan Zaghdoud",
-          "title": "Head of MENA",
-          "division": "Acquisition",
-          "department": "Sales - Dubai"
-        },
-        {
-          "name": "Mohammed Fayiz Abdurahiman",
-          "title": "Business Development Manager - Dubai",
-          "division": "Acquisition",
-          "department": "BDM - Dubai"
-        },
-        {
-          "name": "Hashem Jalajel",
-          "title": "Business Development Manager",
-          "division": "Acquisition",
-          "department": "BDM"
-        },
-        {
           "name": "Uros Radic",
           "title": "Sales Manager",
           "division": "Acquisition",
-          "department": "Sales - Conversion"
+          "department": "Sales - Retention"
         },
         {
           "name": "Ernest Bautista",
@@ -343,12 +325,6 @@
           "name": "Stefan Popovski",
           "title": "Shareholder / Affiliation Lead",
           "division": "Shareholder",
-          "department": "Affiliate Manager"
-        },
-        {
-          "name": "Saad Shahzad",
-          "title": "Affiliate Marketing Manager",
-          "division": "Acquisition",
           "department": "Affiliate Manager"
         },
         {
