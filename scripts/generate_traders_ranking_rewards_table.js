@@ -15,10 +15,12 @@ Notes:
 const fs = require('fs')
 const path = require('path')
 const ExcelJS = require('exceljs')
+const Papa = require('papaparse')
 
 const ROOT_DIR = path.join(__dirname, '..')
 const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
-const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const DEFAULT_INPUT_XLSX_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const DEFAULT_INPUT_CSV_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.csv')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'traders_ranking_rewards_table.json')
 
 async function sleep(ms) {
@@ -147,14 +149,20 @@ function cellToJsonValue(v) {
   return v
 }
 
-async function main() {
-  const inputPath = DEFAULT_INPUT_PATH
+function pickInputPath() {
+  const candidates = [DEFAULT_INPUT_XLSX_PATH, DEFAULT_INPUT_CSV_PATH]
+    .filter((p) => fs.existsSync(p))
+    .map((p) => {
+      const st = fs.statSync(p)
+      return { p, mtimeMs: Number(st?.mtimeMs || 0) }
+    })
 
-  if (!fs.existsSync(inputPath)) {
-    console.log(`SKIP Traders Ranking Rewards generator (missing input): ${path.relative(ROOT_DIR, inputPath)}`)
-    process.exit(0)
-  }
+  if (!candidates.length) return null
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
+  return candidates[0].p
+}
 
+async function readRowsFromXlsx(inputPath) {
   const rows = []
   let headers = null
 
@@ -199,13 +207,62 @@ async function main() {
     }
   }
 
+  return { headers: headers || [], rows }
+}
+
+function readRowsFromCsv(inputPath) {
+  const text = fs.readFileSync(inputPath, 'utf8')
+  const parsed = Papa.parse(text, {
+    header: false,
+    skipEmptyLines: 'greedy',
+  })
+
+  const tableRows = Array.isArray(parsed?.data) ? parsed.data : []
+  const rawHeaders = (tableRows[0] || []).map((v) => asString(v).trim())
+  const headers = ensureUniqueHeaders(rawHeaders)
+
+  const rows = []
+  for (let r = 1; r < tableRows.length; r += 1) {
+    const values = Array.isArray(tableRows[r]) ? tableRows[r] : []
+    let hasAny = false
+    for (const v of values) {
+      if (v !== null && v !== undefined && String(v).trim() !== '') {
+        hasAny = true
+        break
+      }
+    }
+    if (!hasAny) continue
+
+    const compactRow = []
+    for (let i = 0; i < headers.length; i += 1) {
+      compactRow.push(cellToJsonValue(values[i]))
+    }
+    rows.push(compactRow)
+  }
+
+  return { headers, rows }
+}
+
+async function main() {
+  const inputPath = pickInputPath()
+
+  if (!inputPath) {
+    console.log(
+      `SKIP Traders Ranking Rewards generator (missing input): ${path.relative(ROOT_DIR, DEFAULT_INPUT_XLSX_PATH)} or ${path.relative(ROOT_DIR, DEFAULT_INPUT_CSV_PATH)}`
+    )
+    process.exit(0)
+  }
+
+  const ext = path.extname(inputPath).toLowerCase()
+  const { headers, rows } = ext === '.csv' ? readRowsFromCsv(inputPath) : await readRowsFromXlsx(inputPath)
+
   const out = {
     format: 'header-array-rows-v1',
     generatedAt: new Date().toISOString(),
     source: path.relative(ROOT_DIR, inputPath).replace(/\\/g, '/'),
     sheetIndex: 0,
     rowCount: rows.length,
-    headers: headers || [],
+    headers,
     rows,
   }
 

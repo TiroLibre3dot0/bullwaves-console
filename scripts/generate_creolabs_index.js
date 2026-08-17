@@ -17,10 +17,12 @@ Notes:
 const fs = require('fs')
 const path = require('path')
 const ExcelJS = require('exceljs')
+const Papa = require('papaparse')
 
 const ROOT_DIR = path.join(__dirname, '..')
 const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
-const DEFAULT_INPUT_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const DEFAULT_INPUT_XLSX_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
+const DEFAULT_INPUT_CSV_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.csv')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'creolabs_index.json')
 const OUT_TABLE_PATH = path.join(ROOT_DIR, 'public', 'creolabs_clients_table.json')
 const OUT_AFF_MONTH_PATH = path.join(ROOT_DIR, 'public', 'creolabs_affiliate_month.json')
@@ -194,8 +196,19 @@ function periodIdFromFilename(filePath) {
 }
 
 function listCreolabsInputs() {
-  if (fs.existsSync(DEFAULT_INPUT_PATH)) return [DEFAULT_INPUT_PATH]
-  return []
+  const candidates = [DEFAULT_INPUT_XLSX_PATH, DEFAULT_INPUT_CSV_PATH]
+    .filter((p) => fs.existsSync(p))
+    .map((p) => {
+      const st = fs.statSync(p)
+      return { p, mtimeMs: Number(st?.mtimeMs || 0) }
+    })
+
+  if (!candidates.length) return []
+
+  // Avoid double-counting the same dataset when both CSV and XLSX are present.
+  // Use the newest source file.
+  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
+  return [candidates[0].p]
 }
 
 function monthSortKey(id) {
@@ -275,7 +288,9 @@ async function main() {
     // Treat Creolabs inputs as optional in multi-project environments.
     // Write empty artifacts so builds/dev servers don't fail just because
     // the XLSX isn't present on a given machine.
-    console.warn(`[Creolabs] Traders Ranking Rewards source not found: ${DEFAULT_INPUT_PATH}`)
+    console.warn(
+      `[Creolabs] Traders Ranking Rewards source not found: ${DEFAULT_INPUT_XLSX_PATH} or ${DEFAULT_INPUT_CSV_PATH}`
+    )
     console.warn('[Creolabs] Writing empty artifacts so downstream pages keep working')
 
     const emptySource = null
@@ -361,130 +376,146 @@ async function main() {
     }
     const filePeriodFallback = periodIdFromFilename(inputPath) || fallbackPeriodIdFromDate(mtime || new Date())
 
-    const workbook = new ExcelJS.stream.xlsx.WorkbookReader(inputPath, {
-      entries: 'emit',
-      sharedStrings: 'cache',
-      styles: 'cache',
-      worksheets: 'emit',
-    })
+    const consumeValues = (values) => {
+      totalRows += 1
 
-    for await (const worksheetReader of workbook) {
-      // Use the first sheet only.
-      for await (const row of worksheetReader) {
-        totalRows += 1
-        const values = Array.isArray(row.values) ? row.values.slice(1) : []
-
-        if (!headers) {
-          headers = values.map((v) => asString(v).trim())
-          headerToIdx = new Map(headers.map((h, i) => [normHeader(h), i]))
-          continue
-        }
-
-        // Prefer the explicit monthly key from Traders Ranking Rewards.
-        // If it's ever missing, keep the old synthetic-period fallback.
-        const yearMonthRaw = getAny(values, headerToIdx, [
-          'year_month',
-          'Year Month',
-          'YearMonth',
-          'Period',
-          'Month',
-          'Report Month',
-        ])
-
-        const explicitPeriod = parseYearMonthId(yearMonthRaw)
-        if (explicitPeriod) sawExplicitPeriod = true
-        const yearMonth = explicitPeriod || filePeriodFallback
-
-        const clientId = pickTitleCase(getAny(values, headerToIdx, ['client_id', 'Client ID', 'ID']))
-        const clientLogin = pickTitleCase(
-          getAny(values, headerToIdx, ['client_login', 'Client LOGIN', 'Client Login', 'Login'])
-        )
-        const clientName = pickTitleCase(
-          getAny(values, headerToIdx, ['client_name', 'Client Name', 'Client'])
-        )
-        const clientKey = getClientKey({ clientId, clientLogin, clientName })
-
-        const affiliateId = asString(
-          getAny(values, headerToIdx, ['affiliate_id', 'Affiliate ID'])
-        ).trim()
-        const user = asString(getAny(values, headerToIdx, ['user', 'User'])).trim()
-        const country = asString(getAny(values, headerToIdx, ['country', 'Country'])).trim()
-        const brand = asString(getAny(values, headerToIdx, ['brand', 'Brand'])).trim()
-
-        const commission = parseNumber(
-          getAny(values, headerToIdx, ['ltv_commission', 'LTV Commission', 'Commission'])
-        )
-
-        const deposit = parseNumber(getAny(values, headerToIdx, ['deposit', '$ Deposit', 'Deposits']))
-        const wd = parseNumber(getAny(values, headerToIdx, ['wd', '$ WD', 'Withdrawal', 'Withdrawals']))
-        const net = parseNumber(getAny(values, headerToIdx, ['net', '$ Net', 'Net Deposit']))
-        const trades = Math.max(
-          0,
-          Math.floor(parseNumber(getAny(values, headerToIdx, ['trades', '# Trades', 'num_trades'])))
-        )
-
-        // Traders Ranking Rewards exposes closed/open PL; keep explicit PL as a fallback.
-        const plExplicit = parseNumber(getAny(values, headerToIdx, ['$ PL', 'pl']))
-        const closedPl = parseNumber(
-          getAny(values, headerToIdx, ['closed_pl', '$ Closed PL', 'Closed PL'])
-        )
-        const openPl = parseNumber(
-          getAny(values, headerToIdx, ['open_pl', '$ Open PL', 'Open PL'])
-        )
-        const pl = plExplicit || closedPl + openPl
-
-        const balance = parseNumber(getAny(values, headerToIdx, ['balance', '$ Balance']))
-
-        periodSet.add(yearMonth)
-        dataRows += 1
-
-        let per = aggByPeriod.get(yearMonth)
-        if (!per) {
-          per = new Map()
-          aggByPeriod.set(yearMonth, per)
-        }
-
-        let agg = per.get(clientKey)
-        if (!agg) {
-          agg = {
-            clientId,
-            clientLogin,
-            clientName,
-            affiliateId,
-            user,
-            country,
-            brand,
-            deposit: 0,
-            wd: 0,
-            net: 0,
-            pl: 0,
-            trades: 0,
-            balance: 0,
-            commission: 0,
-          }
-          per.set(clientKey, agg)
-        }
-
-        // Keep most descriptive identity fields if present.
-        if (clientId !== '—' && agg.clientId === '—') agg.clientId = clientId
-        if (clientLogin !== '—' && agg.clientLogin === '—') agg.clientLogin = clientLogin
-        if (clientName !== '—' && agg.clientName === '—') agg.clientName = clientName
-        if (affiliateId && !agg.affiliateId) agg.affiliateId = affiliateId
-        if (user && !agg.user) agg.user = user
-        if (country && !agg.country) agg.country = country
-        if (brand && !agg.brand) agg.brand = brand
-
-        agg.deposit += deposit
-        agg.wd += wd
-        agg.net += net
-        agg.pl += pl
-        agg.trades += trades
-        agg.commission += commission
-        // Balance isn't additive, but summing is still a stable proxy; keep last non-zero.
-        if (balance) agg.balance = balance
+      if (!headers) {
+        headers = values.map((v) => asString(v).trim())
+        headerToIdx = new Map(headers.map((h, i) => [normHeader(h), i]))
+        return
       }
 
-      break
+      // Prefer the explicit monthly key from Traders Ranking Rewards.
+      // If it's ever missing, keep the old synthetic-period fallback.
+      const yearMonthRaw = getAny(values, headerToIdx, [
+        'year_month',
+        'Year Month',
+        'YearMonth',
+        'Period',
+        'Month',
+        'Report Month',
+      ])
+
+      const explicitPeriod = parseYearMonthId(yearMonthRaw)
+      if (explicitPeriod) sawExplicitPeriod = true
+      const yearMonth = explicitPeriod || filePeriodFallback
+
+      const clientId = pickTitleCase(getAny(values, headerToIdx, ['client_id', 'Client ID', 'ID']))
+      const clientLogin = pickTitleCase(
+        getAny(values, headerToIdx, ['client_login', 'Client LOGIN', 'Client Login', 'Login'])
+      )
+      const clientName = pickTitleCase(
+        getAny(values, headerToIdx, ['client_name', 'Client Name', 'Client'])
+      )
+      const clientKey = getClientKey({ clientId, clientLogin, clientName })
+
+      const affiliateId = asString(
+        getAny(values, headerToIdx, ['affiliate_id', 'Affiliate ID'])
+      ).trim()
+      const user = asString(getAny(values, headerToIdx, ['user', 'User'])).trim()
+      const country = asString(getAny(values, headerToIdx, ['country', 'Country'])).trim()
+      const brand = asString(getAny(values, headerToIdx, ['brand', 'Brand'])).trim()
+
+      const commission = parseNumber(
+        getAny(values, headerToIdx, ['ltv_commission', 'LTV Commission', 'Commission'])
+      )
+
+      const deposit = parseNumber(getAny(values, headerToIdx, ['deposit', '$ Deposit', 'Deposits']))
+      const wd = parseNumber(getAny(values, headerToIdx, ['wd', '$ WD', 'Withdrawal', 'Withdrawals']))
+      const net = parseNumber(getAny(values, headerToIdx, ['net', '$ Net', 'Net Deposit']))
+      const trades = Math.max(
+        0,
+        Math.floor(parseNumber(getAny(values, headerToIdx, ['trades', '# Trades', 'num_trades'])))
+      )
+
+      // Traders Ranking Rewards exposes closed/open PL; keep explicit PL as a fallback.
+      const plExplicit = parseNumber(getAny(values, headerToIdx, ['$ PL', 'pl']))
+      const closedPl = parseNumber(
+        getAny(values, headerToIdx, ['closed_pl', '$ Closed PL', 'Closed PL'])
+      )
+      const openPl = parseNumber(
+        getAny(values, headerToIdx, ['open_pl', '$ Open PL', 'Open PL'])
+      )
+      const pl = plExplicit || closedPl + openPl
+
+      const balance = parseNumber(getAny(values, headerToIdx, ['balance', '$ Balance']))
+
+      periodSet.add(yearMonth)
+      dataRows += 1
+
+      let per = aggByPeriod.get(yearMonth)
+      if (!per) {
+        per = new Map()
+        aggByPeriod.set(yearMonth, per)
+      }
+
+      let agg = per.get(clientKey)
+      if (!agg) {
+        agg = {
+          clientId,
+          clientLogin,
+          clientName,
+          affiliateId,
+          user,
+          country,
+          brand,
+          deposit: 0,
+          wd: 0,
+          net: 0,
+          pl: 0,
+          trades: 0,
+          balance: 0,
+          commission: 0,
+        }
+        per.set(clientKey, agg)
+      }
+
+      // Keep most descriptive identity fields if present.
+      if (clientId !== '—' && agg.clientId === '—') agg.clientId = clientId
+      if (clientLogin !== '—' && agg.clientLogin === '—') agg.clientLogin = clientLogin
+      if (clientName !== '—' && agg.clientName === '—') agg.clientName = clientName
+      if (affiliateId && !agg.affiliateId) agg.affiliateId = affiliateId
+      if (user && !agg.user) agg.user = user
+      if (country && !agg.country) agg.country = country
+      if (brand && !agg.brand) agg.brand = brand
+
+      agg.deposit += deposit
+      agg.wd += wd
+      agg.net += net
+      agg.pl += pl
+      agg.trades += trades
+      agg.commission += commission
+      // Balance isn't additive, but summing is still a stable proxy; keep last non-zero.
+      if (balance) agg.balance = balance
+    }
+
+    if (path.extname(inputPath).toLowerCase() === '.csv') {
+      const text = fs.readFileSync(inputPath, 'utf8')
+      const parsed = Papa.parse(text, {
+        header: false,
+        skipEmptyLines: 'greedy',
+      })
+      const csvRows = Array.isArray(parsed?.data) ? parsed.data : []
+      for (const raw of csvRows) {
+        const values = Array.isArray(raw) ? raw : []
+        consumeValues(values)
+      }
+    } else {
+      const workbook = new ExcelJS.stream.xlsx.WorkbookReader(inputPath, {
+        entries: 'emit',
+        sharedStrings: 'cache',
+        styles: 'cache',
+        worksheets: 'emit',
+      })
+
+      for await (const worksheetReader of workbook) {
+        // Use the first sheet only.
+        for await (const row of worksheetReader) {
+          const values = Array.isArray(row.values) ? row.values.slice(1) : []
+          consumeValues(values)
+        }
+        break
+      }
     }
   }
 
