@@ -25,12 +25,9 @@ const DEFAULT_INPUT_CSV_PATH = path.join(CREOLABS_DIR, 'Prime Ranking.csv')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'prime_clients_ranking_table.json')
 
 function pickInputPath() {
-  const candidates = [DEFAULT_INPUT_XLSX_PATH, DEFAULT_INPUT_CSV_PATH]
-    .filter((p) => fs.existsSync(p))
-    .map((p) => ({ p, mtimeMs: Number(fs.statSync(p)?.mtimeMs || 0) }))
-  if (!candidates.length) return null
-  candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
-  return candidates[0].p
+  if (fs.existsSync(DEFAULT_INPUT_CSV_PATH)) return DEFAULT_INPUT_CSV_PATH
+  if (fs.existsSync(DEFAULT_INPUT_XLSX_PATH)) return DEFAULT_INPUT_XLSX_PATH
+  return null
 }
 
 async function sleep(ms) {
