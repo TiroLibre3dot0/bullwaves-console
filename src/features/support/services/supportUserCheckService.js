@@ -3,7 +3,7 @@
 import Papa from 'papaparse'
 import { withReportsVersion } from '../../../lib/fetchCache'
 
-const SUPPORT_USERS_INDEX_URL = '/support_users_index.json'
+const SUPPORT_USERS_INDEX_URLS = ['/support_users_index.json', '/support_users_search_index.json']
 
 // Caches and maps
 let _cache = null
@@ -290,23 +290,26 @@ function resolveMapValueToRows(mapValue, rows) {
 }
 
 async function tryLoadSupportUsersIndex(versionNow) {
-  try {
-    const url = versionNow
-      ? `${SUPPORT_USERS_INDEX_URL}?v=${encodeURIComponent(versionNow)}`
-      : SUPPORT_USERS_INDEX_URL
-    const res = await fetch(url, { cache: 'no-store' })
-    if (!res || !res.ok) return null
+  for (const sourceUrl of SUPPORT_USERS_INDEX_URLS) {
+    try {
+      const url = versionNow
+        ? `${sourceUrl}?v=${encodeURIComponent(versionNow)}`
+        : sourceUrl
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res || !res.ok) continue
 
-    const text = await res.text()
-    if (!text || looksLikeHtml(text)) return null
+      const text = await res.text()
+      if (!text || looksLikeHtml(text)) continue
 
-    const json = JSON.parse(text)
-    if (!json || !Array.isArray(json.rows)) return null
+      const json = JSON.parse(text)
+      if (!json || !Array.isArray(json.rows)) continue
 
-    return json
-  } catch {
-    return null
+      return json
+    } catch {
+      // Try the next available index before falling back to CSV parsing.
+    }
   }
+  return null
 }
 
 function papaParseAsync(text, config) {
