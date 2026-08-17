@@ -297,7 +297,7 @@ export default function FraudMonitoringDashboard() {
 
     Papa.parse(url, {
       download: true,
-      worker: true,
+      worker: false,
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
@@ -412,7 +412,7 @@ export default function FraudMonitoringDashboard() {
 
     Papa.parse(url, {
       download: true,
-      worker: true,
+      worker: false,
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
