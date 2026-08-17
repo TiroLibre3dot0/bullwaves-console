@@ -3,8 +3,36 @@ import { parseCsv } from './csv'
 const textCache = new Map()
 const csvRowsCache = new Map()
 
+const LIVE_CELLXPERT_REPORT_PATHS = {
+  '/Media Report.csv': '/api/cellxpert/media-report.csv',
+  '/01012025 to 12072025 Media Report.csv': '/api/cellxpert/media-report.csv',
+  '/Payments Report.csv': '/api/cellxpert/payments-report.csv',
+  '/commissions.csv': '/api/cellxpert/payments-report.csv',
+  '/Registrations Report.csv': '/api/cellxpert/registrations-report.csv',
+  '/01012023 to 01112026 Registrations Report.csv': '/api/cellxpert/registrations-report.csv',
+  '/affiliate_index.json': '/api/cellxpert/affiliate-index.json',
+  '/affiliate_kpi_index.json': '/api/cellxpert/affiliate-kpi-index.json',
+}
+
+export function resolveLiveReportPath(path) {
+  const rawPath = String(path || '')
+  try {
+    if (window?.localStorage?.getItem('bw_disable_cellxpert_live_reports') === '1') {
+      return rawPath
+    }
+  } catch {
+    // Browser storage is optional; live API remains the default.
+  }
+
+  const [pathname, query = ''] = rawPath.split('?')
+  const mappedPath = LIVE_CELLXPERT_REPORT_PATHS[pathname] || rawPath
+  if (mappedPath === rawPath || !query) return mappedPath
+  const sep = mappedPath.includes('?') ? '&' : '?'
+  return `${mappedPath}${sep}${query}`
+}
+
 export function withReportsVersion(path) {
-  const encodedPath = encodeURI(String(path || ''))
+  const encodedPath = encodeURI(resolveLiveReportPath(path))
   let v = null
   try {
     v =

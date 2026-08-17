@@ -23,12 +23,13 @@ import { buildAffiliateInsights } from '../insights/affiliateInsightEngine'
 import { trackPublicShareOpen } from '../../../utils/analytics'
 import { getPublicShareOrigin } from '../../../utils/publicShareOrigin'
 import { useAuth } from '../../../context/AuthContext'
+import { resolveLiveReportPath } from '../../../lib/fetchCache'
 
 const REGISTRATIONS_CANDIDATES = [
   '/Registrations Report.csv',
   '/01012023 to 01112026 Registrations Report.csv',
 ]
-const AFFILIATE_INDEX_URL = '/affiliate_index.json'
+const AFFILIATE_INDEX_URL = '/api/cellxpert/affiliate-index.json'
 
 let __bwShareAffiliateIndexCache = null
 let __bwShareRegistrationsDepositAggCache = null
@@ -92,7 +93,7 @@ function buildVersionedUrl(path) {
   const v = getReportsVersion()
 
   const rawPath = String(path || '')
-  const encodedPath = encodeURI(rawPath)
+  const encodedPath = encodeURI(resolveLiveReportPath(rawPath))
   const sep = encodedPath.includes('?') ? '&' : '?'
   const withVersion = v ? `${encodedPath}${sep}v=${encodeURIComponent(String(v))}` : encodedPath
 

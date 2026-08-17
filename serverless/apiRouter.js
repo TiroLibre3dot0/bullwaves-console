@@ -9,6 +9,7 @@ const { routeShare } = require('./handlers/share')
 const { routeShort } = require('./handlers/short')
 const { routeAcuity } = require('./handlers/acuity')
 const { routeYpf } = require('./handlers/ypf')
+const { routeCellxpert } = require('./handlers/cellxpert')
 
 function optionalRoute(modulePath, exportName) {
   try {
@@ -109,6 +110,10 @@ async function routeApi(req, res) {
 
   if (scope === 'ypf') {
     return routeYpf(req, res, parts.slice(1))
+  }
+
+  if (scope === 'cellxpert') {
+    return routeCellxpert(req, res, parts.slice(1))
   }
 
   return json(res, 404, { ok: false, error: 'Not found' })

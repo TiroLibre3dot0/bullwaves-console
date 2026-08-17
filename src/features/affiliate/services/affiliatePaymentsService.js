@@ -67,8 +67,8 @@ function pickValue(row, hmap, candidates) {
 
 export async function buildAffiliatePaymentsMap(opts = {}) {
   // opts.paths can override default public CSV paths
-  const regsPath = opts.registrationsPath || '/Registrations Report.csv'
-  const paymentsPath = opts.paymentsPath || '/Payments Report.csv'
+  const regsPath = opts.registrationsPath || '/api/cellxpert/registrations-report.csv'
+  const paymentsPath = opts.paymentsPath || '/api/cellxpert/payments-report.csv'
 
   const [regs, pays] = await Promise.all([
     loadCsv(regsPath),

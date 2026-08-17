@@ -1,0 +1,23 @@
+node_modules
+.git
+.tmp
+dist
+/artifacts
+/uploads
+/outputs
+/data
+/chats
+/reports
+/docs
+/CREOLABS
+/Invoice providers
+/Organigramma
+/Project management docs
+/questionnaire clients
+*.xlsx
+*.pdf
+*.mhtml
+public/*.csv
+public/*Report*.csv
+public/raw
+public/skale

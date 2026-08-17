@@ -14,7 +14,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend)
 const CPA_EUR = 650
 const DEFAULT_COST_FROM = 2287
 const DEFAULT_COMMENTS_CANDIDATE_URLS = ['/comments.csv', '/Comments Report.csv']
-const AFFILIATE_INDEX_URL = '/affiliate_index.json'
+const AFFILIATE_INDEX_URL = '/api/cellxpert/affiliate-index.json'
 
 const toInt = (val) => {
   if (val === null || val === undefined) return null

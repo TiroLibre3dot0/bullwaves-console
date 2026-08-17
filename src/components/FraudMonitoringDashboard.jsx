@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import Papa from 'papaparse'
 import FullPageLoader from './FullPageLoader'
 import { useI18n } from '../i18n/I18nContext'
+import { resolveLiveReportPath } from '../lib/fetchCache'
 
 let __bwFraudMediaCache = null
 let __bwFraudRegistrationsCache = null
@@ -28,7 +29,7 @@ function buildVersionedCsvUrl(path) {
   const v = getReportsVersion()
 
   const rawPath = String(path || '')
-  const encodedPath = encodeURI(rawPath)
+  const encodedPath = encodeURI(resolveLiveReportPath(rawPath))
   const sep = encodedPath.includes('?') ? '&' : '?'
   const withVersion = v ? `${encodedPath}${sep}v=${encodeURIComponent(String(v))}` : encodedPath
 

@@ -5,6 +5,7 @@ import { loadCellxAffiliateMonthTable } from '../services/cellxService'
 
 export function useCellxInvestmentsData({ includePayments = true } = {}) {
   const [rows, setRows] = useState([])
+  const [mediaSource, setMediaSource] = useState('/cellx_affiliate_month.json')
   const [loadingMedia, setLoadingMedia] = useState(true)
   const [errorMedia, setErrorMedia] = useState(null)
 
@@ -18,7 +19,10 @@ export function useCellxInvestmentsData({ includePayments = true } = {}) {
       try {
         const table = await loadCellxAffiliateMonthTable({ force: false })
         const nextRows = Array.isArray(table?.rows) ? table.rows : []
-        if (!cancelled) setRows(nextRows)
+        if (!cancelled) {
+          setRows(nextRows)
+          setMediaSource(table?.live ? 'cellxpert-admin-api' : table?.source || '/cellx_affiliate_month.json')
+        }
       } catch (e) {
         if (!cancelled) {
           setRows([])
@@ -34,7 +38,10 @@ export function useCellxInvestmentsData({ includePayments = true } = {}) {
         try {
           const table = await loadCellxAffiliateMonthTable({ force: true })
           const nextRows = Array.isArray(table?.rows) ? table.rows : []
-          if (!cancelled) setRows(nextRows)
+          if (!cancelled) {
+            setRows(nextRows)
+            setMediaSource(table?.live ? 'cellxpert-admin-api' : table?.source || '/cellx_affiliate_month.json')
+          }
         } catch {
           // ignore
         }
@@ -98,7 +105,7 @@ export function useCellxInvestmentsData({ includePayments = true } = {}) {
     payments: payments.data,
     loading: includePayments ? loadingMedia || payments.loading : loadingMedia,
     error: errorMedia || payments.error,
-    mediaSource: '/cellx_affiliate_month.json',
+    mediaSource,
     paymentsSource: payments.sourcePath,
     monthOptions,
     affiliateOptions,
