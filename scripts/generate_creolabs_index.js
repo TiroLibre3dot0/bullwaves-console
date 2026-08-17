@@ -3,6 +3,8 @@ Generate lightweight JSON artifacts consumed by the Creolabs page and unified in
 
 Input:
   CREOLABS/Traders Ranking Rewards.xlsx
+  CREOLABS/Traders Ranking Rewards.csv
+  CREOLABS/CreoLabs Breakdown.csv
 
 Output:
   public/creolabs_index.json
@@ -12,6 +14,8 @@ Notes:
   - Aggregates by (Year Month, Client) and exports Top-N leaderboards.
   - Keeps the legacy `creolabs_*` artifact shapes so existing pages can consume
     a single source of truth derived from Traders Ranking Rewards.
+  - CreoLabs Breakdown is loaded as a secondary source with cross-source
+    de-duplication, so overlapping rows do not inflate financial totals.
 */
 
 const fs = require('fs')
@@ -23,6 +27,7 @@ const ROOT_DIR = path.join(__dirname, '..')
 const CREOLABS_DIR = path.join(ROOT_DIR, 'CREOLABS')
 const DEFAULT_INPUT_XLSX_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
 const DEFAULT_INPUT_CSV_PATH = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.csv')
+const BREAKDOWN_CSV_PATH = path.join(CREOLABS_DIR, 'CreoLabs Breakdown.csv')
 const OUT_PATH = path.join(ROOT_DIR, 'public', 'creolabs_index.json')
 const OUT_TABLE_PATH = path.join(ROOT_DIR, 'public', 'creolabs_clients_table.json')
 const OUT_AFF_MONTH_PATH = path.join(ROOT_DIR, 'public', 'creolabs_affiliate_month.json')
@@ -208,7 +213,9 @@ function listCreolabsInputs() {
   // Avoid double-counting the same dataset when both CSV and XLSX are present.
   // Use the newest source file.
   candidates.sort((a, b) => b.mtimeMs - a.mtimeMs)
-  return [candidates[0].p]
+  const inputs = [candidates[0].p]
+  if (fs.existsSync(BREAKDOWN_CSV_PATH)) inputs.push(BREAKDOWN_CSV_PATH)
+  return inputs
 }
 
 function monthSortKey(id) {
@@ -248,6 +255,30 @@ function getClientKey({ clientId, clientLogin, clientName }) {
   const base = `${a}::${b}`
   if (base !== '::') return base
   return c ? `name::${c}` : 'client'
+}
+
+function getSourceRowKey({
+  periodId,
+  clientId,
+  clientLogin,
+  clientName,
+  affiliateId,
+  deposit,
+  wd,
+  net,
+  pl,
+  trades,
+}) {
+  return [
+    safeKeyPart(periodId),
+    getClientKey({ clientId, clientLogin, clientName }),
+    safeKeyPart(affiliateId),
+    Number(deposit || 0).toFixed(6),
+    Number(wd || 0).toFixed(6),
+    Number(net || 0).toFixed(6),
+    Number(pl || 0).toFixed(6),
+    String(Math.max(0, Math.floor(Number(trades || 0) || 0))),
+  ].join('::')
 }
 
 function sortDescNumber(a, b) {
@@ -363,6 +394,8 @@ async function main() {
 
   let totalRows = 0
   let dataRows = 0
+  let duplicateSourceRows = 0
+  const seenSourceRowKeys = new Set()
 
   for (const inputPath of inputFiles) {
     let headers = null
@@ -439,6 +472,24 @@ async function main() {
       const pl = plExplicit || closedPl + openPl
 
       const balance = parseNumber(getAny(values, headerToIdx, ['balance', '$ Balance']))
+
+      const sourceRowKey = getSourceRowKey({
+        periodId: yearMonth,
+        clientId,
+        clientLogin,
+        clientName,
+        affiliateId,
+        deposit,
+        wd,
+        net,
+        pl,
+        trades,
+      })
+      if (seenSourceRowKeys.has(sourceRowKey)) {
+        duplicateSourceRows += 1
+        return
+      }
+      seenSourceRowKeys.add(sourceRowKey)
 
       periodSet.add(yearMonth)
       dataRows += 1
@@ -635,6 +686,7 @@ async function main() {
       dataRows,
       periods: periods.length,
       inputFiles: inputFiles.length,
+      duplicateSourceRows,
       derivedSnapshotDeltas,
     },
   }
@@ -655,6 +707,7 @@ async function main() {
       periods: periods.length,
       clientsRows: clientsTableRows.length,
       inputFiles: inputFiles.length,
+      duplicateSourceRows,
     },
   }
 
@@ -675,6 +728,7 @@ async function main() {
       periods: periods.length,
       rows: affiliateMonthRows.length,
       inputFiles: inputFiles.length,
+      duplicateSourceRows,
     },
   }
 

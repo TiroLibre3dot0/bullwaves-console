@@ -1,9 +1,12 @@
 {
   "version": 1,
-  "generatedAt": "2026-08-17T09:38:10.188Z",
-  "source": "CREOLABS/Traders Ranking Rewards.csv",
+  "generatedAt": "2026-08-17T11:04:17.593Z",
+  "source": [
+    "CREOLABS/Traders Ranking Rewards.csv",
+    "CREOLABS/CreoLabs Breakdown.csv"
+  ],
   "topN": 50,
-  "now": "2026-08-17T09:38:10.188Z",
+  "now": "2026-08-17T11:04:17.593Z",
   "reportPeriods": [
     {
       "id": "-",
@@ -93947,10 +93950,11 @@
     }
   },
   "stats": {
-    "totalRows": 233610,
+    "totalRows": 366636,
     "dataRows": 233609,
     "periods": 32,
-    "inputFiles": 1,
+    "inputFiles": 2,
+    "duplicateSourceRows": 133025,
     "derivedSnapshotDeltas": false
   }
 }

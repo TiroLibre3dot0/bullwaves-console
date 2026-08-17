@@ -26,6 +26,7 @@ const ORG_DATA = path.join(ROOT, 'src', 'pages', 'orgChartData.js')
 
 const TRADERS_REWARDS_XLSX = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.xlsx')
 const TRADERS_REWARDS_CSV = path.join(CREOLABS_DIR, 'Traders Ranking Rewards.csv')
+const CREOLABS_BREAKDOWN_CSV = path.join(CREOLABS_DIR, 'CreoLabs Breakdown.csv')
 const PRIME_CLIENTS_RANKING_XLSX = path.join(CREOLABS_DIR, 'Prime Clients Ranking.xlsx')
 const PRIME_CLIENTS_RANKING_CSV = path.join(CREOLABS_DIR, 'Prime Ranking.csv')
 
@@ -33,6 +34,7 @@ function listCreolabsSources() {
   const out = []
   if (safeStat(TRADERS_REWARDS_XLSX).exists) out.push(TRADERS_REWARDS_XLSX)
   if (safeStat(TRADERS_REWARDS_CSV).exists) out.push(TRADERS_REWARDS_CSV)
+  if (safeStat(CREOLABS_BREAKDOWN_CSV).exists) out.push(CREOLABS_BREAKDOWN_CSV)
   return out
 }
 
