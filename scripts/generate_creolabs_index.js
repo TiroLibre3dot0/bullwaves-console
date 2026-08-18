@@ -317,12 +317,17 @@ async function main() {
   const inputFiles = listCreolabsInputs()
   if (!inputFiles.length) {
     // Treat Creolabs inputs as optional in multi-project environments.
-    // Write empty artifacts so builds/dev servers don't fail just because
-    // the XLSX isn't present on a given machine.
+    // Preserve existing artifacts so builds/deploys don't wipe populated data
+    // just because the XLSX isn't present on a given machine.
     console.warn(
       `[Creolabs] Traders Ranking Rewards source not found: ${DEFAULT_INPUT_XLSX_PATH} or ${DEFAULT_INPUT_CSV_PATH}`
     )
-    console.warn('[Creolabs] Writing empty artifacts so downstream pages keep working')
+    if (fs.existsSync(OUT_PATH) && fs.existsSync(OUT_TABLE_PATH) && fs.existsSync(OUT_AFF_MONTH_PATH)) {
+      console.warn('[Creolabs] Existing artifacts found; preserving them')
+      return
+    }
+
+    console.warn('[Creolabs] No existing artifacts found; writing empty artifacts so downstream pages keep working')
 
     const emptySource = null
     const emptyIndex = {
