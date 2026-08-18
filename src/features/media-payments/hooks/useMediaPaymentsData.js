@@ -5,8 +5,12 @@ import { monthMetaFromDate, parseMonthFirstDate, parseMonthLabel } from '../../.
 import { withReportsVersion } from '../../../lib/fetchCache'
 import { useCsvData } from '../../shared/hooks/useCsvData'
 
-const MEDIA_CANDIDATES = ['/Media Report.csv', '/01012025 to 12072025 Media Report.csv']
-const PAYMENT_CANDIDATES = ['/Payments Report.csv', '/commissions.csv']
+const MEDIA_CANDIDATES = [
+  '/api/cellxpert/media-report.csv',
+  '/Media Report.csv',
+  '/01012025 to 12072025 Media Report.csv',
+]
+const PAYMENT_CANDIDATES = ['/api/cellxpert/payments-report.csv', '/Payments Report.csv', '/commissions.csv']
 
 const pick = (row, keys, fallback = '') => {
   for (const k of keys) {
@@ -262,7 +266,7 @@ export function useMediaReportWorker() {
 
 // Non-worker PapaParse loader for Media Report.
 // Useful fallback when WebWorker parsing fails or the CSV contains tricky quoting/newlines.
-export function useMediaReportNoWorker() {
+export function useMediaReportNoWorker({ enabled = true } = {}) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -290,6 +294,14 @@ export function useMediaReportNoWorker() {
 
   const load = useCallback(
     (force = false) => {
+      if (!enabled) {
+        setData([])
+        setSourcePath(null)
+        setError(null)
+        setLoading(false)
+        return
+      }
+
       const runId = (runIdRef.current += 1)
       setLoading(true)
       setError(null)
@@ -338,12 +350,19 @@ export function useMediaReportNoWorker() {
       void force
       tryCandidate(0)
     },
-    [versionKey]
+    [enabled, versionKey]
   )
 
   useEffect(() => {
+    if (!enabled) {
+      setData([])
+      setSourcePath(null)
+      setError(null)
+      setLoading(false)
+      return
+    }
     load(false)
-  }, [load])
+  }, [enabled, load])
 
   return {
     data,
@@ -574,7 +593,7 @@ export function usePaymentsReport({ enabled = true } = {}) {
 function useMediaReportSmart() {
   const worker = useMediaReportWorker()
   const [fallbackEnabled, setFallbackEnabled] = useState(false)
-  const fallback = useMediaReportNoWorker()
+  const fallback = useMediaReportNoWorker({ enabled: fallbackEnabled })
   const [cachedEnabled, setCachedEnabled] = useState(false)
   // Final safety-net: cached fetch + robust CSV parser (handles tricky quoting/newlines).
   // Enabled only when both PapaParse download modes fail or yield empty data.
@@ -630,10 +649,9 @@ function useMediaReportSmart() {
 }
 
 export function useMediaPaymentsData({ includePayments = true } = {}) {
-  // Media Report is a critical input for affiliate analytics.
-  // Prefer the cached fetch + robust parser pipeline (handles quoted newlines + delimiter detection)
-  // to avoid silent failures that would zero out all KPIs.
-  const media = useMediaReportCsv({ enabled: true })
+  // Media Report is a critical input and can be large when loaded from Cellxpert.
+  // Prefer worker parsing to keep Affiliate views responsive, then fall back if needed.
+  const media = useMediaReportSmart()
   const payments = usePaymentsReport({ enabled: includePayments })
 
   // Safety net: if a previous session cached an empty Media Report parse, force-refresh once.

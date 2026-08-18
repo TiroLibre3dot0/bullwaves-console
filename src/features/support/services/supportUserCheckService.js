@@ -3,7 +3,7 @@
 import Papa from 'papaparse'
 import { withReportsVersion } from '../../../lib/fetchCache'
 
-const SUPPORT_USERS_INDEX_URLS = ['/support_users_index.json', '/support_users_search_index.json']
+const SUPPORT_USERS_INDEX_URLS = ['/support_users_search_index.json', '/support_users_index.json']
 
 // Caches and maps
 let _cache = null
@@ -312,6 +312,90 @@ async function tryLoadSupportUsersIndex(versionNow) {
   return null
 }
 
+function rowHasPositionCount(row) {
+  if (!row || typeof row !== 'object') return false
+  return ['positioncount', 'position_count', 'position count'].some((key) => {
+    const n = parsePositionCountValue(row[key])
+    return n != null && n <= 100000
+  })
+}
+
+function parsePositionCountValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  const n = Number(raw.replace(/[^0-9.-]+/g, ''))
+  if (!Number.isFinite(n) || n < 0) return null
+  return Math.round(n)
+}
+
+function setBestPositionCount(map, key, value) {
+  if (!map || !key) return
+  const n = parsePositionCountValue(value)
+  if (n == null) return
+  const prev = map.get(key)
+  if (prev == null || n > prev) map.set(key, n)
+}
+
+async function loadLiveRegistrationPositionCountMaps(versionNow) {
+  const url = versionNow
+    ? `/Registrations Report.csv?v=${encodeURIComponent(versionNow)}`
+    : '/Registrations Report.csv'
+  const res = await fetch(encodeURI(url), { cache: 'no-store' })
+  if (!res || !res.ok) return null
+  const text = await res.text()
+  if (!text || looksLikeHtml(text)) return null
+
+  const parsed = await papaParseAsync(text, {
+    header: true,
+    skipEmptyLines: true,
+    worker: true,
+  })
+  const rows = Array.isArray(parsed?.data) ? parsed.data : []
+  if (!rows.length) return null
+
+  const byUserId = new Map()
+  const byMt5 = new Map()
+  for (const row of rows) {
+    const positionCount =
+      row?.position_count ?? row?.positioncount ?? row?.['Position Count'] ?? row?.positionCount
+    if (positionCount === undefined || positionCount === null || String(positionCount).trim() === '') continue
+
+    const uidKey = digitsOnly(stripOuterQuotes(row?.user_id || row?.userid || row?.user || ''))
+    if (uidKey) setBestPositionCount(byUserId, uidKey, positionCount)
+
+    const mt5Key = digitsOnly(stripOuterQuotes(row?.mt5_account || row?.mt5account || row?.mt5 || ''))
+    if (mt5Key) setBestPositionCount(byMt5, mt5Key, positionCount)
+  }
+
+  return { byUserId, byMt5 }
+}
+
+async function enrichRowsWithLivePositionCounts(rows, versionNow) {
+  const list = Array.isArray(rows) ? rows : []
+  if (!list.length || list.every(rowHasPositionCount)) return list
+
+  try {
+    const maps = await loadLiveRegistrationPositionCountMaps(versionNow)
+    if (!maps || (!maps.byUserId?.size && !maps.byMt5?.size)) return list
+
+    for (const row of list) {
+      const uidKey = digitsOnly(stripOuterQuotes(row?.userid || row?.user_id || row?.user || ''))
+      const mt5Key = digitsOnly(stripOuterQuotes(row?.mt5account || row?.mt5_account || row?.mt5 || ''))
+      const positionCount =
+        (uidKey && maps.byUserId.get(uidKey) != null ? maps.byUserId.get(uidKey) : null) ??
+        (mt5Key && maps.byMt5.get(mt5Key) != null ? maps.byMt5.get(mt5Key) : null)
+      if (positionCount == null) continue
+      if (positionCount > 100000) continue
+      row.positioncount = String(positionCount)
+      row.position_count = String(positionCount)
+    }
+  } catch {
+    // Keep the fast support index usable even if the live enrichment source is unavailable.
+  }
+
+  return list
+}
+
 function papaParseAsync(text, config) {
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
@@ -333,6 +417,7 @@ export async function loadCsvRows(force = false) {
     // Defensive: sanitize + dedup to handle malformed exports (e.g. userid with a trailing quote)
     // and to avoid showing duplicate rows in the UI.
     _cache = sanitizeAndDedupSupportRows(index.rows)
+    _cache = await enrichRowsWithLivePositionCounts(_cache, versionNow)
     _parsedCount = _cache.length
     _firstRowKeys = Object.keys(_cache[0] || {})
 

@@ -1,13 +1,13 @@
 {
   "kind": "prime-contest-embed",
-  "generatedAt": "2026-08-17T11:05:23.492Z",
-  "sourceGeneratedAt": "2026-08-17T11:05:05.525Z",
+  "generatedAt": "2026-08-18T12:08:15.595Z",
+  "sourceGeneratedAt": "2026-08-18T12:07:47.167Z",
   "periodKey": "2026-07",
   "periodLabel": "Active in last 180 days",
-  "updatedAtLabel": "17 Aug 2026, 11:05",
+  "updatedAtLabel": "18 Aug 2026, 12:08",
   "summary": {
-    "totalContestants": 221,
-    "totalPayoutAmount": 241170
+    "totalContestants": 215,
+    "totalPayoutAmount": 236298
   },
   "rows": [
     {
@@ -15,7 +15,7 @@
       "displayName": "Miles C.",
       "country": "GB",
       "payoutAmount": 9349,
-      "totalTrades": 224
+      "totalTrades": 231
     },
     {
       "rank": 2,
@@ -106,7 +106,7 @@
       "displayName": "Kamran H.",
       "country": "GB",
       "payoutAmount": 3599,
-      "totalTrades": 84
+      "totalTrades": 85
     },
     {
       "rank": 15,

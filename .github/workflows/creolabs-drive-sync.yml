@@ -1,0 +1,40 @@
+name: Sync Creolabs Drive exports
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Drive exports currently appear around 04:06 Europe/Rome.
+    # Run after that window. During CEST this is 04:45 Rome, during CET 03:45 Rome.
+    - cron: '45 2 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Creolabs exports and regenerate artifacts
+        run: npm run creolabs:sync-drive:verify
+
+      - name: Commit updated Creolabs data
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore(data): sync creolabs drive exports'
+          file_pattern: |
+            public/creolabs_*.json
+            public/traders_ranking_rewards_table.json
+            public/prime_email_index.json
+            public/embed/prime-contest.json

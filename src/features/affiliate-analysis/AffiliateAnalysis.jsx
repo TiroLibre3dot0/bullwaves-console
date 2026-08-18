@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CardSection from '../../components/common/CardSection'
 import { getPublicShareOrigin } from '../../utils/publicShareOrigin'
 import KpiCard from '../../components/common/KpiCard'
@@ -114,10 +114,15 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
       const data = await resp.json().catch(() => null)
       const token = data?.token
       if (resp.ok && token && String(token).startsWith('share_')) {
-        href = `${shareOrigin}/s/${encodeURIComponent(token)}`
+        href = `${shareOrigin}/share/affiliate-reports/${encodeURIComponent(token)}`
       }
     } catch {
       // ignore
+    }
+
+    if (!href && !isLocalhost) {
+      const affiliatePath = selectedAffiliate ? `/${encodeURIComponent(selectedAffiliate)}` : ''
+      href = `${shareOrigin}/share/affiliate-reports${affiliatePath}`
     }
 
     // Local dev fallback (Vite dev doesn't run serverless functions): store a marker in localStorage.

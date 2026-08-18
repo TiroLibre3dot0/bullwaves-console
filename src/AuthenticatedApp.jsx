@@ -398,8 +398,15 @@ export default function AuthenticatedApp() {
 
     if (!isNewSession) return
 
+    const currentPath = window.location.pathname || '/'
+    const shouldUseHomeLanding = currentPath === '/' || currentPath.startsWith('/home')
+    if (!shouldUseHomeLanding) {
+      setView(pathToView(currentPath))
+      return
+    }
+
     const nextPath = routes.home
-    if (window.location.pathname !== nextPath) {
+    if (currentPath !== nextPath) {
       window.history.replaceState({ view: 'home' }, '', nextPath)
     }
     setView('home')

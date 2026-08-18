@@ -495,6 +495,20 @@ export default function SupportUserCheck({ shareConfig = null }) {
     const jobId = schedule(async () => {
       try {
         const BOT_LIST_SIZE = 50
+        try {
+          const resp = await fetch('/support_bot_candidates.json', { cache: 'no-store' })
+          const data = resp && resp.ok ? await resp.json() : null
+          const precomputedRows = Array.isArray(data?.rows) ? data.rows : []
+          if (precomputedRows.length) {
+            if (!mounted) return
+            setBotCandidates(precomputedRows.slice(0, BOT_LIST_SIZE))
+            setBotListMissingPositionCount(false)
+            return
+          }
+        } catch {
+          // Fall back to client-side computation below.
+        }
+
         const rows = await loadCsvRows()
         const safeRows = Array.isArray(rows) ? rows : []
 

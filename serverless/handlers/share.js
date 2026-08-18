@@ -1,6 +1,90 @@
 const crypto = require('crypto')
+const { Buffer } = require('buffer')
 const { json, pickHeader, safeParseJsonBody } = require('./_http')
 const { hasKvEnv, kvExpire, kvGetJson, kvLpushJson, kvSetJson } = require('./kv')
+
+function base64UrlEncode(value) {
+  return Buffer.from(String(value), 'utf8').toString('base64url')
+}
+
+function base64UrlDecode(value) {
+  return Buffer.from(String(value || ''), 'base64url').toString('utf8')
+}
+
+function getShareSecret() {
+  return String(
+    process.env.SHARE_TOKEN_SECRET ||
+      process.env.AUTH_SECRET ||
+      process.env.CONSOLE_CREDENTIALS ||
+      ''
+  ).trim()
+}
+
+function signStatelessShareBody(body) {
+  const secret = getShareSecret()
+  if (!secret) return ''
+  return crypto.createHmac('sha256', secret).update(String(body)).digest('base64url')
+}
+
+function makeStatelessShareToken(expectedK, prefix, payload, ttlSeconds) {
+  const ttl = Number(ttlSeconds)
+  const now = Date.now()
+  const envelope = {
+    v: 1,
+    p: prefix,
+    k: expectedK,
+    exp: Number.isFinite(ttl) && ttl > 0 ? now + Math.trunc(ttl) * 1000 : null,
+    payload,
+  }
+  const body = base64UrlEncode(JSON.stringify(envelope))
+  const sig = signStatelessShareBody(body)
+  if (!sig) return ''
+  return `share_${prefix}_${body}.${sig}`
+}
+
+function readStatelessShareToken(expectedK, prefix, token) {
+  const clean = String(token || '').trim()
+  const marker = `share_${prefix}_`
+  if (!clean.startsWith(marker)) return null
+
+  const rest = clean.slice(marker.length)
+  const dot = rest.lastIndexOf('.')
+  if (dot <= 0) return { ok: false, error: 'Invalid token' }
+
+  const body = rest.slice(0, dot)
+  const sig = rest.slice(dot + 1)
+  const expectedSig = signStatelessShareBody(body)
+  if (!expectedSig) return { ok: false, error: 'Share token secret not configured' }
+
+  const a = Buffer.from(sig)
+  const b = Buffer.from(expectedSig)
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    return { ok: false, error: 'Invalid token' }
+  }
+
+  let envelope = null
+  try {
+    envelope = JSON.parse(base64UrlDecode(body))
+  } catch {
+    return { ok: false, error: 'Invalid token' }
+  }
+
+  if (!envelope || envelope.p !== prefix || envelope.k !== expectedK) {
+    return { ok: false, error: 'Invalid token' }
+  }
+
+  const exp = Number(envelope.exp)
+  if (Number.isFinite(exp) && exp > 0 && Date.now() > exp) {
+    return { ok: false, error: 'Expired token' }
+  }
+
+  const payload = envelope.payload
+  if (!payload || typeof payload !== 'object' || payload.k !== expectedK) {
+    return { ok: false, error: 'Invalid payload' }
+  }
+
+  return { ok: true, payload }
+}
 
 function getTokenFrom(parts, idx) {
   const tok = parts[idx]
@@ -60,6 +144,17 @@ async function handleShareTokenGet(req, res, prefix, token) {
     return json(res, 405, { ok: false, error: 'Method Not Allowed' })
   }
 
+  const expectedK = prefix === 'affrep' ? 'affrep' : null
+  if (expectedK) {
+    const stateless = readStatelessShareToken(expectedK, prefix, token || req.query?.token || '')
+    if (stateless?.ok) {
+      return json(res, 200, { ok: true, payload: stateless.payload })
+    }
+    if (stateless && !stateless.ok) {
+      return json(res, 404, { ok: false, error: stateless.error || 'Not found' })
+    }
+  }
+
   if (!hasKvEnv()) {
     return json(res, 501, {
       ok: false,
@@ -73,7 +168,13 @@ async function handleShareTokenGet(req, res, prefix, token) {
   }
 
   const key = `${prefix}:${t}`
-  const payload = await kvGetJson(key)
+  let payload = null
+  try {
+    payload = await kvGetJson(key)
+  } catch (e) {
+    console.error('[share] failed to read KV share token:', e?.message || String(e))
+    return json(res, 503, { ok: false, error: 'Share storage unavailable' })
+  }
 
   if (!payload) {
     return json(res, 404, { ok: false, error: 'Not found' })
@@ -162,13 +263,6 @@ async function handleCreateShare(req, res, expectedK, prefix, ttlSeconds) {
     return json(res, 405, { ok: false, error: 'Method Not Allowed' })
   }
 
-  if (!hasKvEnv()) {
-    return json(res, 501, {
-      ok: false,
-      error: 'Share storage not configured (missing KV env).',
-    })
-  }
-
   const body = safeParseJsonBody(req)
   const payload = body?.payload
 
@@ -180,11 +274,28 @@ async function handleCreateShare(req, res, expectedK, prefix, ttlSeconds) {
     return json(res, 400, { ok: false, error: 'Invalid payload key' })
   }
 
+  if (prefix === 'affrep') {
+    const token = makeStatelessShareToken(expectedK, prefix, payload, ttlSeconds)
+    if (token) return json(res, 200, { ok: true, token })
+  }
+
+  if (!hasKvEnv()) {
+    return json(res, 501, {
+      ok: false,
+      error: 'Share storage not configured (missing KV env).',
+    })
+  }
+
   const token = `share_${crypto.randomBytes(12).toString('hex')}`
   const key = `${prefix}:${token}`
-  await kvSetJson(key, payload, ttlSeconds)
-  // Also store a small mapping for fast short-link resolution.
-  await kvSetJson(`smap:${token}`, { p: prefix, k: expectedK, t: Date.now() }, ttlSeconds)
+  try {
+    await kvSetJson(key, payload, ttlSeconds)
+    // Also store a small mapping for fast short-link resolution.
+    await kvSetJson(`smap:${token}`, { p: prefix, k: expectedK, t: Date.now() }, ttlSeconds)
+  } catch (e) {
+    console.error('[share] failed to write KV share token:', e?.message || String(e))
+    return json(res, 503, { ok: false, error: 'Share storage unavailable' })
+  }
   return json(res, 200, { ok: true, token })
 }
 
