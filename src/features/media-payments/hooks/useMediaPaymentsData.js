@@ -42,6 +42,7 @@ const parseMediaRow = (r) => {
     monthIndex: monthMeta.monthIndex,
     year: monthMeta.year,
     affiliate: String(pick(r, ['Affiliate', 'affiliate'], '—')).trim(),
+    affiliateId: String(pick(r, ['uid', 'UID', 'Affiliate Id', 'affiliate_id'], '')).trim(),
     uid: String(pick(r, ['uid', 'UID'], '')).trim(),
     impressions: cleanNumber(pick(r, ['Impressions', 'impressions'])),
     uniqueImpressions: cleanNumber(pick(r, ['Unique Impressions', 'unique_impressions'])),

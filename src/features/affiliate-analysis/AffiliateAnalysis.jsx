@@ -12,6 +12,7 @@ import {
 } from '../../lib/formatters'
 import YearSelector from '../../components/common/YearSelector'
 import { useMediaPaymentsData } from '../media-payments/hooks/useMediaPaymentsData'
+import { loadCellxAffiliateMonthTable } from '../cellx/services/cellxService'
 import AnalysisEngine from './components/AnalysisEngine'
 import { buildWeeklyAffiliateReport } from './utils/buildWeeklyAffiliateReport'
 import { computeCohortBreakEvenForAffiliate } from './utils/computeCohortBreakEvenForAffiliate'
@@ -29,11 +30,70 @@ const badgeTone = (t, profit) => {
   return { label: t('affiliateAnalysis.badge.atRisk'), color: '#ef4444' }
 }
 
+const matchesAffiliate = (value, row) => {
+  const sel = normalizeKey(value)
+  if (!sel) return false
+  return [row?.affiliate, row?.affiliateId, row?.uid].some(
+    (candidate) => normalizeKey(candidate) === sel
+  )
+}
+
+const monthRowMatchesYear = (row, selectedYear) => {
+  if (!selectedYear || selectedYear === 'all') return true
+  return String(row?.year || '') === String(selectedYear)
+}
+
+const aggregateFastAffiliateRows = (
+  rows = [],
+  selectedYear = 'all',
+  affiliateNameById = new Map()
+) => {
+  const byAffiliate = new Map()
+  rows.forEach((row) => {
+    if (!monthRowMatchesYear(row, selectedYear)) return
+    const affiliateId = String(row?.affiliateId || row?.uid || row?.affiliateName || '').trim()
+    const rawName = String(row?.affiliateName || row?.affiliate || '').trim()
+    const affiliateName =
+      affiliateNameById.get(normalizeKey(affiliateId)) ||
+      (rawName && rawName !== affiliateId ? rawName : '') ||
+      affiliateId
+    if (!affiliateName) return
+    const key = normalizeKey(affiliateName || affiliateId)
+    const entry = byAffiliate.get(key) || {
+      affiliate: affiliateName,
+      affiliateId,
+      pl: 0,
+      netDeposits: 0,
+      payments: 0,
+    }
+    entry.affiliate = affiliateName
+    entry.affiliateId = affiliateId || entry.affiliateId
+    entry.pl += Number(row?.pl) || 0
+    entry.netDeposits += Number(row?.netDeposits) || 0
+    entry.payments += Number(row?.commission) || 0
+    byAffiliate.set(key, entry)
+  })
+
+  return Array.from(byAffiliate.values())
+    .map((entry) => ({ ...entry, profit: (entry.pl || 0) - (entry.payments || 0) }))
+    .sort((a, b) => (b.profit || 0) - (a.profit || 0))
+}
+
 export default function AffiliateAnalysis({ initialAffiliate = '', initialYear = '' } = {}) {
   const { t } = useI18n()
-  const { mediaRows, payments, affiliateOptions } = useMediaPaymentsData()
   const [selectedAffiliate, setSelectedAffiliate] = useState('')
   const [selectedYear, setSelectedYear] = useState('all')
+  const {
+    mediaRows,
+    payments,
+    affiliateOptions,
+    loading: fullDataLoading,
+  } = useMediaPaymentsData({
+    includePayments: Boolean(selectedAffiliate),
+  })
+  const [fastAffiliateRows, setFastAffiliateRows] = useState([])
+  const [fastAffiliateMeta, setFastAffiliateMeta] = useState(null)
+  const [fastAffiliateLoading, setFastAffiliateLoading] = useState(true)
   const [top10CohortRows, setTop10CohortRows] = useState([])
   const [shareBusy, setShareBusy] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
@@ -177,15 +237,41 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
 
   const filteredMedia = useMemo(() => {
     if (!selectedAffiliate) return []
-    const sel = normalizeKey(selectedAffiliate)
-    return mediaRows.filter((r) => matchesYear(r) && normalizeKey(r.affiliate) === sel)
+    return mediaRows.filter((r) => matchesYear(r) && matchesAffiliate(selectedAffiliate, r))
   }, [mediaRows, selectedAffiliate, selectedYear])
 
   const filteredPayments = useMemo(() => {
     if (!selectedAffiliate) return []
-    const sel = normalizeKey(selectedAffiliate)
-    return payments.filter((p) => matchesYear(p) && normalizeKey(p.affiliate) === sel)
+    return payments.filter((p) => matchesYear(p) && matchesAffiliate(selectedAffiliate, p))
   }, [payments, selectedAffiliate, selectedYear])
+
+  useEffect(() => {
+    let cancelled = false
+    setFastAffiliateLoading(true)
+    loadCellxAffiliateMonthTable()
+      .then((table) => {
+        if (cancelled) return
+        setFastAffiliateRows(Array.isArray(table?.rows) ? table.rows : [])
+        setFastAffiliateMeta({
+          source: table?.live
+            ? 'cellxpert-admin-api'
+            : table?.source || '/cellx_affiliate_month.json',
+          generatedAt: table?.generatedAt || null,
+        })
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFastAffiliateRows([])
+          setFastAffiliateMeta(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setFastAffiliateLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     loadTop10CohortData()
@@ -199,6 +285,25 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
       setDataStatus(status)
     }
   }, [mediaRows])
+
+  const affiliateNameById = useMemo(() => {
+    const map = new Map()
+    mediaRows.forEach((row) => {
+      const id = normalizeKey(row.affiliateId || row.uid)
+      const name = String(row.affiliate || '').trim()
+      if (id && name && name !== '—') map.set(id, name)
+    })
+    return map
+  }, [mediaRows])
+
+  const fastTopAffiliates = useMemo(() => {
+    return aggregateFastAffiliateRows(fastAffiliateRows, selectedYear, affiliateNameById)
+      .map((entry) => ({
+        ...entry,
+        hasCohort: filterTop10CohortRowsForAffiliate(top10CohortRows, entry.affiliate).length > 0,
+      }))
+      .slice(0, 10)
+  }, [affiliateNameById, fastAffiliateRows, selectedYear, top10CohortRows])
 
   const topAffiliates = useMemo(() => {
     const profitByAffiliate = new Map()
@@ -232,6 +337,9 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
 
     return list.sort((a, b) => (b.profit || 0) - (a.profit || 0)).slice(0, 10)
   }, [mediaRows, payments, top10CohortRows])
+
+  const visibleTopAffiliates = payments.length > 0 ? topAffiliates : fastTopAffiliates
+  const topAffiliatesSource = payments.length > 0 ? 'full' : 'summary'
 
   const totals = useMemo(() => {
     if (!selectedAffiliate) return null
@@ -467,6 +575,29 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
     <CardSection
       title={t('affiliateAnalysis.topAffiliates.title')}
       subtitle={t('affiliateAnalysis.topAffiliates.subtitle')}
+      actions={
+        <span
+          style={{
+            padding: '5px 9px',
+            borderRadius: 999,
+            border: '1px solid rgba(255,255,255,0.10)',
+            background:
+              topAffiliatesSource === 'full' ? 'rgba(34,197,94,0.10)' : 'rgba(34,211,238,0.08)',
+            color: topAffiliatesSource === 'full' ? '#86efac' : '#67e8f9',
+            fontSize: 11,
+            fontWeight: 800,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {fastAffiliateLoading
+            ? 'Loading live summary'
+            : topAffiliatesSource === 'full'
+              ? 'Full data'
+              : fastAffiliateMeta?.source === 'cellxpert-admin-api'
+                ? 'Live summary'
+                : 'Cached summary'}
+        </span>
+      }
     >
       <div
         style={{
@@ -475,20 +606,23 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
           gap: 10,
         }}
       >
-        {topAffiliates.map((a) => {
-          const isActive = selectedAffiliate === a.affiliate
+        {visibleTopAffiliates.map((a) => {
+          const isActive = matchesAffiliate(selectedAffiliate, a)
           return (
             <button
-              key={a.affiliate}
-              onClick={() => setSelectedAffiliate(a.affiliate)}
+              key={a.affiliateId || a.affiliate}
+              onClick={() => setSelectedAffiliate(a.affiliate || a.affiliateId)}
               className="card card-global"
               style={{
-                padding: 10,
+                padding: 12,
                 textAlign: 'left',
                 border: isActive ? '1px solid #22d3ee' : '1px solid rgba(255,255,255,0.08)',
-                background: isActive ? 'rgba(34,211,238,0.06)' : 'rgba(255,255,255,0.02)',
+                background: isActive
+                  ? 'rgba(34,211,238,0.06)'
+                  : 'linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))',
                 cursor: 'pointer',
                 transition: 'transform 120ms ease, border-color 120ms ease',
+                minHeight: 94,
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px)'
@@ -498,6 +632,11 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
               }}
             >
               <div style={{ fontWeight: 700, marginBottom: 4 }}>{a.affiliate || '—'}</div>
+              {a.affiliateId && normalizeKey(a.affiliateId) !== normalizeKey(a.affiliate) && (
+                <div style={{ fontSize: 11, color: '#94a3b8', marginBottom: 6 }}>
+                  ID {a.affiliateId}
+                </div>
+              )}
               <div style={{ fontSize: 12, color: '#cbd5e1' }}>
                 {t('affiliateAnalysis.topAffiliates.profit', { value: formatEuro(a.profit || 0) })}
               </div>
@@ -512,10 +651,33 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
           )
         })}
       </div>
+      {!fastAffiliateLoading && visibleTopAffiliates.length === 0 && (
+        <div style={{ color: '#9ca3af', fontSize: 13, padding: 12 }}>
+          {t('affiliateAnalysis.empty.selectAffiliate')}
+        </div>
+      )}
     </CardSection>
   )
 
-  const renderAnalysis = !emptyState && totals && analysisReport && (
+  const detailLoading = Boolean(selectedAffiliate && fullDataLoading)
+
+  const renderDetailLoading = detailLoading && (
+    <div
+      className="card card-global"
+      style={{
+        padding: 18,
+        border: '1px solid rgba(255,255,255,0.10)',
+        background: 'rgba(255,255,255,0.025)',
+        color: '#cbd5e1',
+        fontSize: 13,
+        fontWeight: 700,
+      }}
+    >
+      Loading full affiliate data...
+    </div>
+  )
+
+  const renderAnalysis = !emptyState && !detailLoading && totals && analysisReport && (
     <>
       <button
         onClick={() => setSelectedAffiliate('')}
@@ -806,6 +968,7 @@ export default function AffiliateAnalysis({ initialAffiliate = '', initialYear =
         </div>
       )}
 
+      {selectedAffiliate && renderDetailLoading}
       {selectedAffiliate && renderAnalysis}
     </div>
   )
