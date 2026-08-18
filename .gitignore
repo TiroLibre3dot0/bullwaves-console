@@ -76,6 +76,7 @@ tmp-*.log
 
 # Local XLSX sources (keep local, JSON artifact is versioned)
 CREOLABS/Traders Ranking Rewards.xlsx
+CREOLABS/*.csv
 CREOLABS/~$*.xlsx
 
 # Prime ranking JSON artifact (81 MB) — served via Qlik API, no longer versioned

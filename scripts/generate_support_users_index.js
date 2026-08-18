@@ -22,6 +22,7 @@ const Papa = require('papaparse')
 const PUBLIC_DIR = path.join(__dirname, '..', 'public')
 const OUT_PATH = path.join(PUBLIC_DIR, 'support_users_index.json')
 const QUICK_OUT_PATH = path.join(PUBLIC_DIR, 'support_users_search_index.json')
+const BOT_CANDIDATES_OUT_PATH = path.join(PUBLIC_DIR, 'support_bot_candidates.json')
 
 const FORCE = process.argv.includes('--force')
 
@@ -110,6 +111,168 @@ function rowNonEmptyScore(row) {
     if (v !== undefined && v !== null && String(v).trim() !== '') score += 1
   }
   return score
+}
+
+function parsePositionCountValue(value) {
+  const raw = String(value ?? '').trim()
+  if (!raw) return null
+  const n = Number(raw.replace(/[^0-9.-]+/g, ''))
+  if (!Number.isFinite(n) || n < 0 || n > 100000) return null
+  return Math.round(n)
+}
+
+function parseFlexibleDate(value) {
+  if (value == null) return null
+  const s = String(value).trim()
+  if (!s) return null
+
+  const parts = s.split(/\s+/, 2)
+  const d = (parts[0] || '').split('/')
+  if (d.length >= 3) {
+    let a = parseInt(d[0], 10)
+    let b = parseInt(d[1], 10)
+    const yyyy = parseInt(d[2], 10)
+    if (Number.isFinite(a) && Number.isFinite(b) && Number.isFinite(yyyy)) {
+      let mm = a
+      let dd = b
+      if (a > 12) {
+        dd = a
+        mm = b
+      }
+      let hh = 0
+      let mi = 0
+      let ss = 0
+      if (parts[1]) {
+        const tp = parts[1].split(':')
+        hh = parseInt(tp[0] || '0', 10)
+        mi = parseInt(tp[1] || '0', 10)
+        ss = parseInt(tp[2] || '0', 10)
+      }
+      const dt = new Date(yyyy, mm - 1, dd, hh, mi, ss)
+      if (!Number.isNaN(dt.getTime())) return dt
+    }
+  }
+
+  const dt = new Date(s)
+  return Number.isNaN(dt.getTime()) ? null : dt
+}
+
+function toNum(value) {
+  if (value == null || value === '') return 0
+  const n = Number(String(value).replace(/[^0-9.-]+/g, ''))
+  return Number.isFinite(n) ? n : 0
+}
+
+function computeBotIntel(row, now = new Date()) {
+  const positions = parsePositionCountValue(row.positioncount)
+  if (positions == null || positions <= 0) return null
+
+  const regDate = parseFlexibleDate(row.registrationdate)
+  if (!regDate) return null
+
+  const ageDays = Math.max(1, Math.floor((now.getTime() - regDate.getTime()) / (1000 * 60 * 60 * 24)))
+  const positionsPerDay = positions / ageDays
+  const earlyHyper = ageDays <= 7 && (positions >= 200 || positionsPerDay >= 30)
+  const isPotentialBot = earlyHyper || (positionsPerDay >= 50 && positions >= 100)
+  const botScore = positionsPerDay * 2 + positions / 50 + (earlyHyper ? 100 : 0)
+
+  let tier = 'inactive'
+  if (positionsPerDay < 1) tier = 'low'
+  else if (positionsPerDay < 5) tier = 'active'
+  else if (positionsPerDay < 20) tier = 'high'
+  else tier = 'hyper'
+
+  return {
+    ageDays,
+    positions,
+    positionsPerDay,
+    withdrawals: Math.trunc(toNum(row.withdrawals)),
+    withdrawalRatio: toNum(row.totaldeposits) > 0 ? toNum(row.withdrawals) / Math.max(toNum(row.totaldeposits), 1) : null,
+    tier,
+    signals: [],
+    isPotentialBot,
+    botScore,
+    thresholds: {
+      lowMax: 1,
+      activeMax: 5,
+      highMax: 20,
+      earlyDays: 7,
+      earlyPositions: 200,
+      earlyPositionsPerDay: 30,
+      veryHighPositionsPerDay: 50,
+    },
+  }
+}
+
+function buildBotCandidates(rows, generatedAt, source) {
+  const BOT_LIST_SIZE = 50
+  const CANDIDATE_POOL = 400
+  const now = new Date()
+  const pool = []
+
+  function pushTopByPositions(item) {
+    if (pool.length < CANDIDATE_POOL) {
+      pool.push(item)
+      return
+    }
+    let minIdx = 0
+    let minVal = pool[0]?.positions || 0
+    for (let i = 1; i < pool.length; i += 1) {
+      const v = pool[i]?.positions || 0
+      if (v < minVal) {
+        minVal = v
+        minIdx = i
+      }
+    }
+    if ((item?.positions || 0) > minVal) pool[minIdx] = item
+  }
+
+  for (const row of rows || []) {
+    const positions = parsePositionCountValue(row.positioncount)
+    if (!positions) continue
+    pushTopByPositions({ row, positions })
+  }
+
+  const scored = []
+  for (const item of pool) {
+    const intel = computeBotIntel(item.row, now)
+    if (!intel || intel.positions == null) continue
+    scored.push({
+      raw: {
+        customername: item.row.customername || '',
+        userid: item.row.userid || '',
+        mt5account: item.row.mt5account || '',
+        affiliateid: item.row.affiliateid || '',
+        status: item.row.status || '',
+        country: item.row.country || '',
+        registrationdate: item.row.registrationdate || '',
+        totaldeposits: item.row.totaldeposits || '',
+        netdeposits: item.row.netdeposits || '',
+        withdrawals: item.row.withdrawals || '',
+        positioncount: item.row.positioncount || '',
+        position_count: item.row.positioncount || '',
+        volume: item.row.volume || '',
+        pl: item.row.pl || '',
+      },
+      intel,
+      affiliateName: null,
+      regDate: item.row.registrationdate || null,
+    })
+  }
+
+  scored.sort((a, b) => {
+    const botDelta = Number(b?.intel?.isPotentialBot || false) - Number(a?.intel?.isPotentialBot || false)
+    if (botDelta) return botDelta
+    return (b?.intel?.botScore || 0) - (a?.intel?.botScore || 0)
+  })
+
+  return {
+    version: 1,
+    generatedAt,
+    source,
+    total: Math.min(scored.length, BOT_LIST_SIZE),
+    rows: scored.slice(0, BOT_LIST_SIZE),
+  }
 }
 
 function buildDedupKey(row) {
@@ -271,6 +434,9 @@ function main() {
       email: pickFieldNormalized(r, ['email', 'customeremail']),
     }
 
+    const cleanPositionCount = parsePositionCountValue(outRow.positioncount)
+    outRow.positioncount = cleanPositionCount == null ? '' : String(cleanPositionCount)
+
     // Search index (hot path during typing)
     outRow.__searchIndex = [
       outRow.userid,
@@ -347,12 +513,15 @@ function main() {
       customername: row.customername || '',
       userid: row.userid || '',
       mt5account: row.mt5account || '',
+      registrationdate: row.registrationdate || '',
       affiliateid: row.affiliateid || '',
       status: row.status || '',
       country: row.country || '',
       totaldeposits: row.totaldeposits || '',
       netdeposits: row.netdeposits || '',
       withdrawals: row.withdrawals || '',
+      positioncount: row.positioncount || '',
+      position_count: row.positioncount || '',
       volume: row.volume || '',
       pl: row.pl || '',
       __searchIndex: row.__searchIndex || '',
@@ -361,11 +530,14 @@ function main() {
 
   fs.writeFileSync(OUT_PATH, JSON.stringify(out), 'utf8')
   fs.writeFileSync(QUICK_OUT_PATH, JSON.stringify(quickOut), 'utf8')
+  const botCandidatesOut = buildBotCandidates(rows, generatedAt, path.basename(inputPath))
+  fs.writeFileSync(BOT_CANDIDATES_OUT_PATH, JSON.stringify(botCandidatesOut), 'utf8')
 
   const fullSizeMb = (fs.statSync(OUT_PATH).size / (1024 * 1024)).toFixed(2)
   const quickSizeMb = (fs.statSync(QUICK_OUT_PATH).size / (1024 * 1024)).toFixed(2)
+  const botSizeKb = (fs.statSync(BOT_CANDIDATES_OUT_PATH).size / 1024).toFixed(1)
   console.log(
-    `Generated ${rows.length} support users -> ${path.relative(process.cwd(), OUT_PATH)} (${fullSizeMb} MB), ${path.relative(process.cwd(), QUICK_OUT_PATH)} (${quickSizeMb} MB)`
+    `Generated ${rows.length} support users -> ${path.relative(process.cwd(), OUT_PATH)} (${fullSizeMb} MB), ${path.relative(process.cwd(), QUICK_OUT_PATH)} (${quickSizeMb} MB), ${path.relative(process.cwd(), BOT_CANDIDATES_OUT_PATH)} (${botSizeKb} KB)`
   )
 }
 
